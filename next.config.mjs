@@ -1,5 +1,4 @@
 import { withSentryConfig } from '@sentry/nextjs'
-import { withAxiom } from '@axiomhq/nextjs'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -8,7 +7,7 @@ const nextConfig = {
   },
 }
 
-export default withAxiom(withSentryConfig(nextConfig, {
+export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: true,
@@ -17,4 +16,4 @@ export default withAxiom(withSentryConfig(nextConfig, {
     disable: !process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
   telemetry: false,
-}))
+})
