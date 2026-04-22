@@ -16,7 +16,7 @@ import {
   Building2,
   UserCircle,
 } from 'lucide-react'
-import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types'
+import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import { formatDistanceToNow, format } from 'date-fns'
 import { CandidateStatusSelect } from '@/components/candidates/candidate-status-select'
 import { CandidateNotes } from '@/components/candidates/candidate-notes'

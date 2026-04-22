@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { VacancyActions } from '@/components/vacancies/vacancy-actions'
-import { VACANCY_STATUS_COLORS } from '@/lib/types'
+import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 
 interface VacancyStatusOption {
   id: string

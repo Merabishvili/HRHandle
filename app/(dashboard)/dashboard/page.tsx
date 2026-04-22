@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { VACANCY_STATUS_COLORS } from '@/lib/types'
+import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 
 interface CandidateRow {
   id: string

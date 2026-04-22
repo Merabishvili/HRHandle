@@ -12,7 +12,7 @@ import {
   Shield,
   Globe,
 } from 'lucide-react'
-import { PRICING_PLANS } from '@/lib/types'
+import { PRICING_PLANS } from '@/lib/types/subscription'
 
 export default function LandingPage() {
   return (

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, Zap } from 'lucide-react'
-import { PRICING_PLANS } from '@/lib/types'
+import { PRICING_PLANS } from '@/lib/types/subscription'
 
 interface ProfileRow {
   id: string

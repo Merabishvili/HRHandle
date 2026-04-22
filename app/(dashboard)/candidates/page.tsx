@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { CandidateStatusActions } from '@/components/candidates/candidate-status-actions'
-import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types'
+import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import { formatDistanceToNow } from 'date-fns'
 
 const PAGE_SIZE = 20

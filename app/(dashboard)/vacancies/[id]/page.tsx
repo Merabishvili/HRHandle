@@ -15,10 +15,8 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  VACANCY_STATUS_COLORS,
-  CANDIDATE_GENERAL_STATUS_COLORS,
-} from '@/lib/types'
+import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
+import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 
 interface VacancyRow {
   id: string
