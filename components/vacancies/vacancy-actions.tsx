@@ -1,55 +1,72 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { updateVacancyStatus, deleteVacancy } from '@/lib/actions/vacancies'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import type { VacancyStatus } from '@/lib/types'
+
+interface VacancyStatusOption {
+  id: string
+  name: string
+  code: 'draft' | 'open' | 'on_hold' | 'closed' | 'archived'
+}
 
 interface VacancyActionsProps {
   vacancyId: string
-  currentStatus: VacancyStatus
+  currentStatusId: string | null
+  statusOptions: VacancyStatusOption[]
 }
 
-export function VacancyActions({ vacancyId, currentStatus }: VacancyActionsProps) {
+export function VacancyActions({
+  vacancyId,
+  currentStatusId,
+  statusOptions,
+}: VacancyActionsProps) {
   const router = useRouter()
 
-  const updateStatus = async (status: VacancyStatus) => {
-    const supabase = createClient()
-    await supabase
-      .from('vacancies')
-      .update({ status })
-      .eq('id', vacancyId)
+  const handleStatusChange = async (statusId: string) => {
+    await updateVacancyStatus(vacancyId, statusId)
     router.refresh()
   }
 
-  const deleteVacancy = async () => {
+  const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this vacancy? This action cannot be undone.')) {
       return
     }
-    const supabase = createClient()
-    await supabase.from('vacancies').delete().eq('id', vacancyId)
-    router.refresh()
+    const result = await deleteVacancy(vacancyId)
+    if (result.success) {
+      router.refresh()
+    }
   }
+
+  const openStatus = statusOptions.find((s) => s.code === 'open')
+  const onHoldStatus = statusOptions.find((s) => s.code === 'on_hold')
+  const closedStatus = statusOptions.find((s) => s.code === 'closed')
+  const archivedStatus = statusOptions.find((s) => s.code === 'archived')
 
   return (
     <>
-      {currentStatus !== 'active' && (
-        <DropdownMenuItem onClick={() => updateStatus('active')}>
-          Set as Active
+      {openStatus && currentStatusId !== openStatus.id && (
+        <DropdownMenuItem onClick={() => handleStatusChange(openStatus.id)}>
+          Set as Open
         </DropdownMenuItem>
       )}
-      {currentStatus !== 'paused' && currentStatus !== 'draft' && (
-        <DropdownMenuItem onClick={() => updateStatus('paused')}>
-          Pause vacancy
+      {onHoldStatus && currentStatusId !== onHoldStatus.id && (
+        <DropdownMenuItem onClick={() => handleStatusChange(onHoldStatus.id)}>
+          Put On Hold
         </DropdownMenuItem>
       )}
-      {currentStatus !== 'closed' && (
-        <DropdownMenuItem onClick={() => updateStatus('closed')}>
-          Close vacancy
+      {closedStatus && currentStatusId !== closedStatus.id && (
+        <DropdownMenuItem onClick={() => handleStatusChange(closedStatus.id)}>
+          Close Vacancy
         </DropdownMenuItem>
       )}
-      <DropdownMenuItem onClick={deleteVacancy} className="text-destructive">
-        Delete vacancy
+      {archivedStatus && currentStatusId !== archivedStatus.id && (
+        <DropdownMenuItem onClick={() => handleStatusChange(archivedStatus.id)}>
+          Archive Vacancy
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+        Delete Vacancy
       </DropdownMenuItem>
     </>
   )

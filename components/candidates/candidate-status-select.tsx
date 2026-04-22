@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { updateCandidateStatus } from '@/lib/actions/candidates'
 import {
   Select,
   SelectContent,
@@ -9,43 +9,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { CandidateStatus } from '@/lib/types'
+
+interface CandidateGeneralStatusOption {
+  id: string
+  name: string
+  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+}
 
 interface CandidateStatusSelectProps {
   candidateId: string
-  currentStatus: CandidateStatus
+  currentStatusId: string | null
+  statusOptions: CandidateGeneralStatusOption[]
 }
 
-const statusOptions: { value: CandidateStatus; label: string }[] = [
-  { value: 'new', label: 'New' },
-  { value: 'screening', label: 'Screening' },
-  { value: 'interview', label: 'Interview' },
-  { value: 'offer', label: 'Offer' },
-  { value: 'hired', label: 'Hired' },
-  { value: 'rejected', label: 'Rejected' },
-]
-
-export function CandidateStatusSelect({ candidateId, currentStatus }: CandidateStatusSelectProps) {
+export function CandidateStatusSelect({
+  candidateId,
+  currentStatusId,
+  statusOptions,
+}: CandidateStatusSelectProps) {
   const router = useRouter()
 
-  const updateStatus = async (status: CandidateStatus) => {
-    const supabase = createClient()
-    await supabase
-      .from('candidates')
-      .update({ status })
-      .eq('id', candidateId)
+  const handleChange = async (generalStatusId: string) => {
+    await updateCandidateStatus(candidateId, generalStatusId)
     router.refresh()
   }
 
   return (
-    <Select value={currentStatus} onValueChange={updateStatus}>
-      <SelectTrigger className="w-[140px]">
-        <SelectValue />
+    <Select value={currentStatusId || ''} onValueChange={handleChange}>
+      <SelectTrigger className="w-[160px]">
+        <SelectValue placeholder="Select status" />
       </SelectTrigger>
       <SelectContent>
         {statusOptions.map((status) => (
-          <SelectItem key={status.value} value={status.value}>
-            {status.label}
+          <SelectItem key={status.id} value={status.id}>
+            {status.name}
           </SelectItem>
         ))}
       </SelectContent>

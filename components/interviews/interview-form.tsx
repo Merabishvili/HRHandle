@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { createInterview } from '@/lib/actions/interviews'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,14 +16,38 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
-import type { InterviewType, Candidate, Vacancy, Profile } from '@/lib/types'
+import type { InterviewType } from '@/lib/types'
+
+interface InterviewCandidateOption {
+  id: string
+  first_name: string
+  last_name: string
+}
+
+interface InterviewVacancyOption {
+  id: string
+  title: string
+}
+
+interface InterviewApplicationOption {
+  id: string
+  candidate_id: string
+  vacancy_id: string
+}
+
+interface InterviewTeamMemberOption {
+  id: string
+  full_name: string
+}
 
 interface InterviewFormProps {
-  candidates: Pick<Candidate, 'id' | 'full_name' | 'vacancy_id'>[]
-  vacancies: Pick<Vacancy, 'id' | 'title'>[]
-  teamMembers: Pick<Profile, 'id' | 'full_name'>[]
+  candidates: InterviewCandidateOption[]
+  vacancies: InterviewVacancyOption[]
+  applications: InterviewApplicationOption[]
+  teamMembers: InterviewTeamMemberOption[]
   defaultCandidateId?: string
   defaultVacancyId?: string
+  defaultApplicationId?: string
 }
 
 const interviewTypes: { value: InterviewType; label: string }[] = [
@@ -40,74 +64,147 @@ const durationOptions = [
   { value: 120, label: '2 hours' },
 ]
 
-export function InterviewForm({ 
-  candidates, 
-  vacancies, 
+function getCandidateFullName(candidate: InterviewCandidateOption): string {
+  return `${candidate.first_name} ${candidate.last_name}`.trim()
+}
+
+export function InterviewForm({
+  candidates,
+  vacancies,
+  applications,
   teamMembers,
   defaultCandidateId,
-  defaultVacancyId 
+  defaultVacancyId,
+  defaultApplicationId,
 }: InterviewFormProps) {
   const router = useRouter()
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [candidateId, setCandidateId] = useState(defaultCandidateId || '')
   const [vacancyId, setVacancyId] = useState(defaultVacancyId || '')
+  const [applicationId, setApplicationId] = useState(defaultApplicationId || '')
   const [interviewerId, setInterviewerId] = useState('')
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('')
   const [duration, setDuration] = useState(60)
   const [type, setType] = useState<InterviewType>('video')
 
-  // When candidate changes, auto-select their vacancy
+  const candidateApplications = useMemo(() => {
+    if (!candidateId) return []
+    return applications.filter((application) => application.candidate_id === candidateId)
+  }, [applications, candidateId])
+
+  const availableVacancies = useMemo(() => {
+    if (!candidateId) return vacancies
+
+    const vacancyIds = new Set(candidateApplications.map((application) => application.vacancy_id))
+    return vacancies.filter((vacancy) => vacancyIds.has(vacancy.id))
+  }, [candidateApplications, candidateId, vacancies])
+
   const handleCandidateChange = (id: string) => {
     setCandidateId(id)
-    const candidate = candidates.find(c => c.id === id)
-    if (candidate?.vacancy_id && !vacancyId) {
-      setVacancyId(candidate.vacancy_id)
+
+    const relatedApplications = applications.filter((application) => application.candidate_id === id)
+
+    if (relatedApplications.length === 1) {
+      setApplicationId(relatedApplications[0].id)
+      setVacancyId(relatedApplications[0].vacancy_id)
+      return
     }
+
+    if (relatedApplications.length > 1) {
+      setApplicationId('')
+      setVacancyId('')
+      return
+    }
+
+    setApplicationId('')
+    setVacancyId('')
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsLoading(true)
+  const handleVacancyChange = (id: string) => {
+    setVacancyId(id)
 
-    if (!candidateId || !vacancyId || !scheduledDate || !scheduledTime) {
-      setError('Please fill in all required fields')
-      setIsLoading(false)
+    if (!candidateId) {
+      setApplicationId('')
       return
+    }
+
+    const matchedApplication = applications.find(
+      (application) => application.candidate_id === candidateId && application.vacancy_id === id
+    )
+
+    setApplicationId(matchedApplication?.id || '')
+  }
+
+  const handleInterviewerChange = (value: string) => {
+    setInterviewerId(value === 'none' ? '' : value)
+  }
+
+  const validateForm = (): string | null => {
+    if (!candidateId) return 'Please select a candidate.'
+    if (!vacancyId) return 'Please select a vacancy.'
+    if (!scheduledDate) return 'Please select a date.'
+    if (!scheduledTime) return 'Please select a time.'
+
+    const matchedApplication = applications.find(
+      (application) => application.candidate_id === candidateId && application.vacancy_id === vacancyId
+    )
+
+    if (!matchedApplication) {
+      return 'The selected candidate is not linked to the selected vacancy through an application.'
     }
 
     const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`)
+    if (Number.isNaN(scheduledAt.getTime())) {
+      return 'Scheduled date/time is invalid.'
+    }
 
     if (scheduledAt < new Date()) {
-      setError('Interview must be scheduled in the future')
-      setIsLoading(false)
+      return 'Interview must be scheduled in the future.'
+    }
+
+    return null
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError(null)
+
+    const validationError = validateForm()
+    if (validationError) {
+      setError(validationError)
       return
     }
 
-    const supabase = createClient()
+    setIsLoading(true)
 
-    const { error: insertError } = await supabase
-      .from('interviews')
-      .insert({
-        candidate_id: candidateId,
-        vacancy_id: vacancyId,
-        interviewer_id: interviewerId || null,
-        scheduled_at: scheduledAt.toISOString(),
-        duration_minutes: duration,
-        type,
-      })
+    const matchedApplication = applications.find(
+      (a) => a.candidate_id === candidateId && a.vacancy_id === vacancyId
+    )
+    const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`)
 
-    if (insertError) {
-      setError(insertError.message)
+    const result = await createInterview({
+      candidate_id: candidateId,
+      vacancy_id: vacancyId,
+      application_id: applicationId || matchedApplication?.id || null,
+      interviewer_id: interviewerId || null,
+      scheduled_at: scheduledAt.toISOString(),
+      duration_minutes: duration,
+      type,
+    })
+
+    if (!result.success) {
+      setError(result.error)
       setIsLoading(false)
       return
     }
 
     router.push('/interviews')
     router.refresh()
+    setIsLoading(false)
   }
 
   return (
@@ -121,14 +218,15 @@ export function InterviewForm({
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Interview Details</CardTitle>
-          <CardDescription>Who is being interviewed and for what position?</CardDescription>
+          <CardDescription>Who is being interviewed and for which vacancy?</CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="candidate">Candidate *</Label>
             <Select
               value={candidateId}
-              onValueChange={handleCandidateChange}
+              onValueChange={(value: string) => handleCandidateChange(value)}
               disabled={isLoading}
             >
               <SelectTrigger id="candidate">
@@ -137,7 +235,7 @@ export function InterviewForm({
               <SelectContent>
                 {candidates.map((candidate) => (
                   <SelectItem key={candidate.id} value={candidate.id}>
-                    {candidate.full_name}
+                    {getCandidateFullName(candidate)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -145,30 +243,33 @@ export function InterviewForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="vacancy">Position *</Label>
+            <Label htmlFor="vacancy">Vacancy *</Label>
             <Select
               value={vacancyId}
-              onValueChange={setVacancyId}
-              disabled={isLoading}
+              onValueChange={(value: string) => handleVacancyChange(value)}
+              disabled={isLoading || !candidateId}
             >
               <SelectTrigger id="vacancy">
-                <SelectValue placeholder="Select a position" />
+                <SelectValue placeholder={candidateId ? 'Select a vacancy' : 'Select candidate first'} />
               </SelectTrigger>
               <SelectContent>
-                {vacancies.map((vacancy) => (
+                {availableVacancies.map((vacancy) => (
                   <SelectItem key={vacancy.id} value={vacancy.id}>
                     {vacancy.title}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-sm text-muted-foreground">
+              Only vacancies linked to the selected candidate through applications are shown.
+            </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="interviewer">Interviewer</Label>
             <Select
-              value={interviewerId}
-              onValueChange={setInterviewerId}
+              value={interviewerId || 'none'}
+              onValueChange={(value: string) => handleInterviewerChange(value)}
               disabled={isLoading}
             >
               <SelectTrigger id="interviewer">
@@ -192,6 +293,7 @@ export function InterviewForm({
           <CardTitle>Schedule</CardTitle>
           <CardDescription>When and how will the interview take place?</CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -200,19 +302,20 @@ export function InterviewForm({
                 id="date"
                 type="date"
                 value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScheduledDate(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
                 required
                 disabled={isLoading}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="time">Time *</Label>
               <Input
                 id="time"
                 type="time"
                 value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScheduledTime(e.target.value)}
                 required
                 disabled={isLoading}
               />
@@ -224,35 +327,36 @@ export function InterviewForm({
               <Label htmlFor="duration">Duration</Label>
               <Select
                 value={duration.toString()}
-                onValueChange={(v) => setDuration(parseInt(v))}
+                onValueChange={(value: string) => setDuration(parseInt(value, 10))}
                 disabled={isLoading}
               >
                 <SelectTrigger id="duration">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {durationOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value.toString()}>
-                      {opt.label}
+                  {durationOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value.toString()}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="type">Interview Type</Label>
               <Select
                 value={type}
-                onValueChange={(v: InterviewType) => setType(v)}
+                onValueChange={(value: string) => setType(value as InterviewType)}
                 disabled={isLoading}
               >
                 <SelectTrigger id="type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {interviewTypes.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                  {interviewTypes.map((interviewType) => (
+                    <SelectItem key={interviewType.value} value={interviewType.value}>
+                      {interviewType.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -271,6 +375,7 @@ export function InterviewForm({
         >
           Cancel
         </Button>
+
         <Button type="submit" disabled={isLoading}>
           {isLoading ? (
             <>

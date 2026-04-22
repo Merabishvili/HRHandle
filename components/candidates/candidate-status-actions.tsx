@@ -1,58 +1,55 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { updateCandidateStatus, deleteCandidate } from '@/lib/actions/candidates'
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
-import type { CandidateStatus } from '@/lib/types'
+
+interface CandidateGeneralStatusOption {
+  id: string
+  name: string
+  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+}
 
 interface CandidateStatusActionsProps {
   candidateId: string
-  currentStatus: CandidateStatus
+  currentStatusId: string | null
+  statusOptions: CandidateGeneralStatusOption[]
 }
 
-const statusOptions: { value: CandidateStatus; label: string }[] = [
-  { value: 'new', label: 'New' },
-  { value: 'screening', label: 'Screening' },
-  { value: 'interview', label: 'Interview' },
-  { value: 'offer', label: 'Offer' },
-  { value: 'hired', label: 'Hired' },
-  { value: 'rejected', label: 'Rejected' },
-]
-
-export function CandidateStatusActions({ candidateId, currentStatus }: CandidateStatusActionsProps) {
+export function CandidateStatusActions({
+  candidateId,
+  currentStatusId,
+  statusOptions,
+}: CandidateStatusActionsProps) {
   const router = useRouter()
 
-  const updateStatus = async (status: CandidateStatus) => {
-    const supabase = createClient()
-    await supabase
-      .from('candidates')
-      .update({ status })
-      .eq('id', candidateId)
+  const handleStatusChange = async (generalStatusId: string) => {
+    await updateCandidateStatus(candidateId, generalStatusId)
     router.refresh()
   }
 
-  const deleteCandidate = async () => {
+  const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this candidate? This action cannot be undone.')) {
       return
     }
-    const supabase = createClient()
-    await supabase.from('candidates').delete().eq('id', candidateId)
-    router.push('/candidates')
-    router.refresh()
+    const result = await deleteCandidate(candidateId)
+    if (result.success) {
+      router.push('/candidates')
+    }
   }
 
   return (
     <>
       <DropdownMenuSeparator />
       {statusOptions
-        .filter((s) => s.value !== currentStatus)
+        .filter((status) => status.id !== currentStatusId)
         .map((status) => (
-          <DropdownMenuItem key={status.value} onClick={() => updateStatus(status.value)}>
-            Move to {status.label}
+          <DropdownMenuItem key={status.id} onClick={() => handleStatusChange(status.id)}>
+            Move to {status.name}
           </DropdownMenuItem>
         ))}
       <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={deleteCandidate} className="text-destructive">
+      <DropdownMenuItem onClick={handleDelete} className="text-destructive">
         Delete candidate
       </DropdownMenuItem>
     </>

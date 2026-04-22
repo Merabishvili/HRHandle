@@ -83,8 +83,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: var(--font-geist-sans), 'Geist', 'Geist Fallback';
+  --font-mono: var(--font-geist-mono), 'Geist Mono', 'Geist Mono Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -131,6 +131,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  html,
+  body {
+    min-height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
   }

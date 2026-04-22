@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { createVacancy, updateVacancy } from '@/lib/actions/vacancies'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,81 +17,123 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
-import type { Vacancy, VacancyFormData, EmploymentType, VacancyStatus } from '@/lib/types'
+import type {
+  Vacancy,
+  VacancyFormData,
+  EmploymentType,
+  Sector,
+  VacancyStatus,
+} from '@/lib/types'
 
 interface VacancyFormProps {
   vacancy?: Vacancy
-  organizationId: string
-  userId: string
+  sectors: Sector[]
+  statusOptions: VacancyStatus[]
 }
 
 const employmentTypes: { value: EmploymentType; label: string }[] = [
-  { value: 'full-time', label: 'Full-time' },
-  { value: 'part-time', label: 'Part-time' },
+  { value: 'full_time', label: 'Full-time' },
+  { value: 'part_time', label: 'Part-time' },
   { value: 'contract', label: 'Contract' },
   { value: 'internship', label: 'Internship' },
 ]
 
-const statusOptions: { value: VacancyStatus; label: string }[] = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'active', label: 'Active' },
-  { value: 'paused', label: 'Paused' },
-  { value: 'closed', label: 'Closed' },
-]
-
-export function VacancyForm({ vacancy, organizationId, userId }: VacancyFormProps) {
+export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState<VacancyFormData>({
     title: vacancy?.title || '',
+    sector_id: vacancy?.sector_id || null,
+    status_id: vacancy?.status_id || null,
     department: vacancy?.department || '',
     location: vacancy?.location || '',
-    employment_type: vacancy?.employment_type || 'full-time',
-    salary_min: vacancy?.salary_min || undefined,
-    salary_max: vacancy?.salary_max || undefined,
+    employment_type: vacancy?.employment_type || 'full_time',
+    hiring_manager_name: vacancy?.hiring_manager_name || '',
+    salary_min: vacancy?.salary_min ?? null,
+    salary_max: vacancy?.salary_max ?? null,
     salary_currency: vacancy?.salary_currency || 'USD',
+    openings_count: vacancy?.openings_count || 1,
+    start_date: vacancy?.start_date || '',
+    end_date: vacancy?.end_date || null,
     description: vacancy?.description || '',
     requirements: vacancy?.requirements || '',
-    status: vacancy?.status || 'draft',
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const validateForm = (): string | null => {
+    if (!formData.title.trim()) return 'Job title is required.'
+    if (!formData.start_date) return 'Start date is required.'
+    if (!formData.description.trim()) return 'Description is required.'
+    if (!formData.sector_id) return 'Sector is required.'
+    if (!formData.status_id) return 'Status is required.'
+
+    if ((formData.openings_count || 0) < 1) {
+      return 'Openings count must be at least 1.'
+    }
+
+    if (
+      formData.salary_min != null &&
+      formData.salary_max != null &&
+      formData.salary_max < formData.salary_min
+    ) {
+      return 'Maximum salary must be greater than or equal to minimum salary.'
+    }
+
+    if (
+      formData.end_date &&
+      formData.start_date &&
+      new Date(formData.end_date) < new Date(formData.start_date)
+    ) {
+      return 'End date cannot be earlier than start date.'
+    }
+
+    return null
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
+
+    const validationError = validateForm()
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
     setIsLoading(true)
 
-    const supabase = createClient()
-
     const payload = {
-      ...formData,
-      organization_id: organizationId,
-      created_by: vacancy ? undefined : userId,
-      salary_min: formData.salary_min || null,
-      salary_max: formData.salary_max || null,
+      title: formData.title.trim(),
+      sector_id: formData.sector_id,
+      status_id: formData.status_id,
+      department: formData.department?.trim() || null,
+      location: formData.location?.trim() || null,
+      employment_type: formData.employment_type || null,
+      hiring_manager_name: formData.hiring_manager_name?.trim() || null,
+      salary_min: formData.salary_min ?? null,
+      salary_max: formData.salary_max ?? null,
+      salary_currency: formData.salary_currency || 'USD',
+      openings_count: formData.openings_count || 1,
+      start_date: formData.start_date,
+      end_date: formData.end_date || null,
+      description: formData.description.trim(),
+      requirements: formData.requirements?.trim() || null,
     }
 
-    let result
-    if (vacancy) {
-      result = await supabase
-        .from('vacancies')
-        .update(payload)
-        .eq('id', vacancy.id)
-    } else {
-      result = await supabase
-        .from('vacancies')
-        .insert(payload)
-    }
+    const result = vacancy
+      ? await updateVacancy(vacancy.id, payload)
+      : await createVacancy(payload)
 
-    if (result.error) {
-      setError(result.error.message)
+    if (!result.success) {
+      setError(result.error)
       setIsLoading(false)
       return
     }
 
     router.push('/vacancies')
     router.refresh()
+    setIsLoading(false)
   }
 
   return (
@@ -105,19 +147,68 @@ export function VacancyForm({ vacancy, organizationId, userId }: VacancyFormProp
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
-          <CardDescription>The main details about this position.</CardDescription>
+          <CardDescription>The main details about this vacancy.</CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Job Title *</Label>
+            <Label htmlFor="title">Position Title *</Label>
             <Input
               id="title"
               placeholder="e.g. Senior Software Engineer"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
               required
               disabled={isLoading}
             />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="sector_id">Sector *</Label>
+              <Select
+                value={formData.sector_id || ''}
+                onValueChange={(value: string) =>
+                  setFormData({ ...formData, sector_id: value || null })
+                }
+                disabled={isLoading}
+              >
+                <SelectTrigger id="sector_id">
+                  <SelectValue placeholder="Select sector" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sectors.map((sector) => (
+                    <SelectItem key={sector.id} value={sector.id}>
+                      {sector.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status_id">Status *</Label>
+              <Select
+                value={formData.status_id || ''}
+                onValueChange={(value: string) =>
+                  setFormData({ ...formData, status_id: value || null })
+                }
+                disabled={isLoading}
+              >
+                <SelectTrigger id="status_id">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status.id} value={status.id}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -126,30 +217,35 @@ export function VacancyForm({ vacancy, organizationId, userId }: VacancyFormProp
               <Input
                 id="department"
                 placeholder="e.g. Engineering"
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                value={formData.department || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, department: e.target.value })
+                }
                 disabled={isLoading}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               <Input
                 id="location"
-                placeholder="e.g. New York, NY or Remote"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder="e.g. Tbilisi or Remote"
+                value={formData.location || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
                 disabled={isLoading}
               />
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="employment_type">Employment Type</Label>
               <Select
-                value={formData.employment_type}
-                onValueChange={(value: EmploymentType) => 
-                  setFormData({ ...formData, employment_type: value })
+                value={formData.employment_type || 'full_time'}
+                onValueChange={(value: string) =>
+                  setFormData({ ...formData, employment_type: value as EmploymentType })
                 }
                 disabled={isLoading}
               >
@@ -165,26 +261,35 @@ export function VacancyForm({ vacancy, organizationId, userId }: VacancyFormProp
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value: VacancyStatus) => 
-                  setFormData({ ...formData, status: value })
+              <Label htmlFor="openings_count">Openings Count</Label>
+              <Input
+                id="openings_count"
+                type="number"
+                min={1}
+                value={formData.openings_count ?? 1}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({
+                    ...formData,
+                    openings_count: e.target.value ? Number(e.target.value) : 1,
+                  })
                 }
                 disabled={isLoading}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="hiring_manager_name">Hiring Manager</Label>
+              <Input
+                id="hiring_manager_name"
+                placeholder="e.g. Nino Beridze"
+                value={formData.hiring_manager_name || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, hiring_manager_name: e.target.value })
+                }
+                disabled={isLoading}
+              />
             </div>
           </div>
         </CardContent>
@@ -192,10 +297,40 @@ export function VacancyForm({ vacancy, organizationId, userId }: VacancyFormProp
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Compensation</CardTitle>
-          <CardDescription>Salary range for this position (optional).</CardDescription>
+          <CardTitle>Dates and Compensation</CardTitle>
+          <CardDescription>Vacancy timeline and salary range.</CardDescription>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="start_date">Start Date *</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, start_date: e.target.value })
+                }
+                required
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="end_date">End Date</Label>
+              <Input
+                id="end_date"
+                type="date"
+                value={formData.end_date || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, end_date: e.target.value || null })
+                }
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="salary_min">Minimum Salary</Label>
@@ -203,33 +338,41 @@ export function VacancyForm({ vacancy, organizationId, userId }: VacancyFormProp
                 id="salary_min"
                 type="number"
                 placeholder="50000"
-                value={formData.salary_min || ''}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  salary_min: e.target.value ? parseInt(e.target.value) : undefined 
-                })}
+                value={formData.salary_min ?? ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({
+                    ...formData,
+                    salary_min: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
                 disabled={isLoading}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="salary_max">Maximum Salary</Label>
               <Input
                 id="salary_max"
                 type="number"
                 placeholder="80000"
-                value={formData.salary_max || ''}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  salary_max: e.target.value ? parseInt(e.target.value) : undefined 
-                })}
+                value={formData.salary_max ?? ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({
+                    ...formData,
+                    salary_max: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
                 disabled={isLoading}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="salary_currency">Currency</Label>
               <Select
-                value={formData.salary_currency}
-                onValueChange={(value) => setFormData({ ...formData, salary_currency: value })}
+                value={formData.salary_currency || 'USD'}
+                onValueChange={(value: string) =>
+                  setFormData({ ...formData, salary_currency: value })
+                }
                 disabled={isLoading}
               >
                 <SelectTrigger id="salary_currency">
@@ -239,7 +382,7 @@ export function VacancyForm({ vacancy, organizationId, userId }: VacancyFormProp
                   <SelectItem value="USD">USD</SelectItem>
                   <SelectItem value="EUR">EUR</SelectItem>
                   <SelectItem value="GBP">GBP</SelectItem>
-                  <SelectItem value="CAD">CAD</SelectItem>
+                  <SelectItem value="GEL">GEL</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -249,28 +392,34 @@ export function VacancyForm({ vacancy, organizationId, userId }: VacancyFormProp
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Job Details</CardTitle>
+          <CardTitle>Vacancy Details</CardTitle>
           <CardDescription>Describe the role and requirements.</CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="description">Job Description</Label>
+            <Label htmlFor="description">Description *</Label>
             <Textarea
               id="description"
-              placeholder="Describe the role, responsibilities, and what a typical day looks like..."
+              placeholder="Describe the role, responsibilities, and expectations..."
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               disabled={isLoading}
               rows={6}
             />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="requirements">Requirements</Label>
             <Textarea
               id="requirements"
-              placeholder="List the skills, experience, and qualifications required..."
-              value={formData.requirements}
-              onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
+              placeholder="List skills, qualifications, and experience requirements..."
+              value={formData.requirements || ''}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setFormData({ ...formData, requirements: e.target.value })
+              }
               disabled={isLoading}
               rows={6}
             />
@@ -287,6 +436,7 @@ export function VacancyForm({ vacancy, organizationId, userId }: VacancyFormProp
         >
           Cancel
         </Button>
+
         <Button type="submit" disabled={isLoading}>
           {isLoading ? (
             <>

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { createCandidate, updateCandidate } from '@/lib/actions/candidates'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,67 +17,95 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
-import type { Candidate, CandidateFormData, Vacancy } from '@/lib/types'
+import type {
+  Candidate,
+  CandidateFormData,
+  Vacancy,
+  CandidateGeneralStatus,
+  ApplicationStatus,
+} from '@/lib/types'
 
 interface CandidateFormProps {
   candidate?: Candidate
   vacancies: Vacancy[]
-  organizationId: string
   defaultVacancyId?: string
+  candidateStatuses: CandidateGeneralStatus[]
+  defaultApplicationStatusId?: string | null
+  initialApplicationStatuses?: ApplicationStatus[]
 }
 
-export function CandidateForm({ candidate, vacancies, organizationId, defaultVacancyId }: CandidateFormProps) {
+export function CandidateForm({
+  candidate,
+  vacancies,
+  defaultVacancyId,
+  candidateStatuses,
+}: CandidateFormProps) {
   const router = useRouter()
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [selectedVacancyId, setSelectedVacancyId] = useState<string>(
+    defaultVacancyId || ''
+  )
+
   const [formData, setFormData] = useState<CandidateFormData>({
-    full_name: candidate?.full_name || '',
+    first_name: candidate?.first_name || '',
+    last_name: candidate?.last_name || '',
+    date_of_birth: candidate?.date_of_birth ?? null,
     email: candidate?.email || '',
     phone: candidate?.phone || '',
-    vacancy_id: candidate?.vacancy_id || defaultVacancyId || '',
-    linkedin_url: candidate?.linkedin_url || '',
+    current_company: candidate?.current_company || '',
+    current_position: candidate?.current_position || '',
+    years_of_experience: candidate?.years_of_experience ?? null,
+    linkedin_profile_url: candidate?.linkedin_profile_url || '',
     source: candidate?.source || '',
-    notes: candidate?.notes || '',
+    general_status_id: candidate?.general_status_id || null,
+    linked_vacancy_ids: [],
   })
+
+  const canLinkVacancyOnEdit = useMemo(() => !candidate, [candidate])
+
+  const handleChange = <K extends keyof CandidateFormData>(key: K, value: CandidateFormData[K]) => {
+    setFormData((prev) => ({
+      ...prev,
+      [key]: value,
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
 
-    const supabase = createClient()
-
     const payload = {
-      ...formData,
-      organization_id: organizationId,
-      vacancy_id: formData.vacancy_id || null,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      date_of_birth: formData.date_of_birth || null,
+      email: formData.email || null,
       phone: formData.phone || null,
-      linkedin_url: formData.linkedin_url || null,
+      current_company: formData.current_company || null,
+      current_position: formData.current_position || null,
+      years_of_experience: formData.years_of_experience ?? null,
+      linkedin_profile_url: formData.linkedin_profile_url || null,
       source: formData.source || null,
-      notes: formData.notes || null,
+      general_status_id: formData.general_status_id || null,
     }
 
-    let result
-    if (candidate) {
-      result = await supabase
-        .from('candidates')
-        .update(payload)
-        .eq('id', candidate.id)
-    } else {
-      result = await supabase
-        .from('candidates')
-        .insert(payload)
-    }
+    const result = candidate
+      ? await updateCandidate(candidate.id, payload)
+      : await createCandidate(payload, selectedVacancyId || null)
 
-    if (result.error) {
-      setError(result.error.message)
+    if (!result.success) {
+      setError(result.error)
       setIsLoading(false)
       return
     }
 
     router.push('/candidates')
     router.refresh()
+
+    setIsLoading(false)
   }
 
   return (
@@ -91,101 +119,178 @@ export function CandidateForm({ candidate, vacancies, organizationId, defaultVac
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
-          <CardDescription>Basic details about the candidate.</CardDescription>
+          <CardDescription>Basic candidate profile information.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Full Name *</Label>
-            <Input
-              id="full_name"
-              placeholder="e.g. John Smith"
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              required
-              disabled={isLoading}
-            />
-          </div>
 
+        <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="first_name">First Name *</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                id="first_name"
+                placeholder="e.g. John"
+                value={formData.first_name}
+                onChange={(e) => handleChange('first_name', e.target.value)}
                 required
                 disabled={isLoading}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="last_name">Last Name *</Label>
+              <Input
+                id="last_name"
+                placeholder="e.g. Smith"
+                value={formData.last_name}
+                onChange={(e) => handleChange('last_name', e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="date_of_birth">Date of Birth</Label>
+              <Input
+                id="date_of_birth"
+                type="date"
+                value={formData.date_of_birth ?? ''}
+                onChange={(e) =>
+                  handleChange('date_of_birth', e.target.value || null)
+                }
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="general_status_id">General Status</Label>
+              <Select
+                value={formData.general_status_id || 'none'}
+                onValueChange={(value) =>
+                  handleChange('general_status_id', value === 'none' ? null : value)
+                }
+                disabled={isLoading}
+              >
+                <SelectTrigger id="general_status_id">
+                  <SelectValue placeholder="Select candidate status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Not specified</SelectItem>
+                  {candidateStatuses.map((status) => (
+                    <SelectItem key={status.id} value={status.id}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="john@example.com"
+                value={formData.email ?? ''}
+                onChange={(e) => handleChange('email', e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
               <Input
                 id="phone"
                 type="tel"
                 placeholder="+1 (555) 123-4567"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                value={formData.phone ?? ''}
+                onChange={(e) => handleChange('phone', e.target.value)}
                 disabled={isLoading}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="linkedin_url">LinkedIn Profile</Label>
-            <Input
-              id="linkedin_url"
-              type="url"
-              placeholder="https://linkedin.com/in/johnsmith"
-              value={formData.linkedin_url}
-              onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })}
-              disabled={isLoading}
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="current_company">Current Company</Label>
+              <Input
+                id="current_company"
+                placeholder="e.g. ABC Tech"
+                value={formData.current_company ?? ''}
+                onChange={(e) => handleChange('current_company', e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="current_position">Current Position</Label>
+              <Input
+                id="current_position"
+                placeholder="e.g. Senior Backend Engineer"
+                value={formData.current_position ?? ''}
+                onChange={(e) => handleChange('current_position', e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="years_of_experience">Years of Experience</Label>
+              <Input
+                id="years_of_experience"
+                type="number"
+                min={0}
+                step="0.5"
+                placeholder="e.g. 5"
+                value={formData.years_of_experience ?? ''}
+                onChange={(e) =>
+                  handleChange(
+                    'years_of_experience',
+                    e.target.value ? Number(e.target.value) : null
+                  )
+                }
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="linkedin_profile_url">LinkedIn Profile</Label>
+              <Input
+                id="linkedin_profile_url"
+                type="url"
+                placeholder="https://linkedin.com/in/johnsmith"
+                value={formData.linkedin_profile_url ?? ''}
+                onChange={(e) => handleChange('linkedin_profile_url', e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Application Details</CardTitle>
-          <CardDescription>Position and source information.</CardDescription>
+          <CardTitle>Recruitment Details</CardTitle>
+          <CardDescription>
+            Optional source and initial vacancy link. In v2, vacancy linking creates an application.
+          </CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="vacancy_id">Position</Label>
-              <Select
-                value={formData.vacancy_id || 'none'}
-                onValueChange={(value) => 
-                  setFormData({ ...formData, vacancy_id: value === 'none' ? '' : value })
-                }
-                disabled={isLoading}
-              >
-                <SelectTrigger id="vacancy_id">
-                  <SelectValue placeholder="Select a position" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No position assigned</SelectItem>
-                  {vacancies.map((vacancy) => (
-                    <SelectItem key={vacancy.id} value={vacancy.id}>
-                      {vacancy.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <div className="space-y-2">
               <Label htmlFor="source">Source</Label>
               <Select
                 value={formData.source || 'none'}
-                onValueChange={(value) => 
-                  setFormData({ ...formData, source: value === 'none' ? '' : value })
-                }
+                onValueChange={(value) => handleChange('source', value === 'none' ? '' : value)}
                 disabled={isLoading}
               >
                 <SelectTrigger id="source">
-                  <SelectValue placeholder="How did they apply?" />
+                  <SelectValue placeholder="How did they enter the pipeline?" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Not specified</SelectItem>
@@ -198,18 +303,60 @@ export function CandidateForm({ candidate, vacancies, organizationId, defaultVac
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="initial_vacancy_id">
+                {candidate ? 'Vacancy Linking' : 'Initial Vacancy'}
+              </Label>
+              <Select
+                value={selectedVacancyId || 'none'}
+                onValueChange={(value) => setSelectedVacancyId(value === 'none' ? '' : value)}
+                disabled={isLoading || !canLinkVacancyOnEdit}
+              >
+                <SelectTrigger id="initial_vacancy_id">
+                  <SelectValue
+                    placeholder={
+                      candidate
+                        ? 'Link applications from candidate details page'
+                        : 'Select a vacancy'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    {candidate ? 'No vacancy changes here' : 'No vacancy assigned'}
+                  </SelectItem>
+                  {vacancies.map((vacancy) => (
+                    <SelectItem key={vacancy.id} value={vacancy.id}>
+                      {vacancy.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {candidate ? (
+                <p className="text-sm text-muted-foreground">
+                  Existing candidate-vacancy links should be managed through applications on the candidate details page.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  If selected, the system will create the candidate first and then create an application linked to this vacancy.
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="initial_note">Initial Note (optional)</Label>
             <Textarea
-              id="notes"
-              placeholder="Any additional notes about this candidate..."
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              disabled={isLoading}
+              id="initial_note"
+              placeholder="For v2 architecture, recruiter notes should be saved separately on the candidate details page."
+              disabled
               rows={4}
             />
+            <p className="text-sm text-muted-foreground">
+              This field is intentionally disabled here because notes belong in the separate candidate notes flow in schema v2.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -223,6 +370,7 @@ export function CandidateForm({ candidate, vacancies, organizationId, defaultVac
         >
           Cancel
         </Button>
+
         <Button type="submit" disabled={isLoading}>
           {isLoading ? (
             <>

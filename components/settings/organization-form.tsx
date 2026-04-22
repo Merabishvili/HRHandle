@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { updateOrganization } from '@/lib/actions/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,28 +21,22 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState(organization.name)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
     setSuccess(false)
     setIsLoading(true)
 
-    const supabase = createClient()
+    const result = await updateOrganization(organization.id, { name })
 
-    const { error: updateError } = await supabase
-      .from('organizations')
-      .update({ name })
-      .eq('id', organization.id)
-
-    if (updateError) {
-      setError(updateError.message)
-      setIsLoading(false)
-      return
+    if (!result.success) {
+      setError(result.error)
+    } else {
+      setSuccess(true)
+      router.refresh()
     }
 
-    setSuccess(true)
     setIsLoading(false)
-    router.refresh()
   }
 
   return (
@@ -72,24 +66,12 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="slug">URL Slug</Label>
-        <Input
-          id="slug"
-          value={organization.slug}
-          disabled
-          className="bg-muted"
-        />
+        <Input id="slug" value={organization.slug} disabled className="bg-muted" />
         <p className="text-xs text-muted-foreground">Organization slug cannot be changed.</p>
       </div>
 
       <Button type="submit" disabled={isLoading}>
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Saving...
-          </>
-        ) : (
-          'Save Changes'
-        )}
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}
       </Button>
     </form>
   )

@@ -12,15 +12,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Briefcase, Loader2 } from 'lucide-react'
 
 export default function SignUpPage() {
-  const [fullName, setFullName] = useState('')
-  const [companyName, setCompanyName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState<string>('')
+  const [companyName, setCompanyName] = useState<string>('')
+  const [email, setEmail] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
@@ -31,33 +32,39 @@ export default function SignUpPage() {
       return
     }
 
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
 
-    const { error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo:
-          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
-          `${window.location.origin}/auth/callback`,
-        data: {
-          full_name: fullName,
-          company_name: companyName,
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
+            `${window.location.origin}/auth/callback`,
+          data: {
+            full_name: fullName.trim(),
+            company_name: companyName.trim(),
+          },
         },
-      },
-    })
+      })
 
-    if (signUpError) {
-      setError(signUpError.message)
+      if (signUpError) {
+        throw new Error(signUpError.message)
+      }
+
+      router.push('/auth/sign-up-success')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create account.')
       setIsLoading(false)
       return
     }
 
-    router.push('/auth/sign-up-success')
+    setIsLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background">
+    <div className="min-h-screen bg-background px-4 py-12 flex items-center justify-center">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <Link href="/" className="flex items-center gap-2">
@@ -71,10 +78,9 @@ export default function SignUpPage() {
         <Card className="border-border">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Create your account</CardTitle>
-            <CardDescription>
-              Start your free trial today
-            </CardDescription>
+            <CardDescription>Start your free trial today</CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
@@ -90,7 +96,9 @@ export default function SignUpPage() {
                   type="text"
                   placeholder="John Doe"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFullName(e.target.value)
+                  }
                   required
                   disabled={isLoading}
                 />
@@ -103,7 +111,9 @@ export default function SignUpPage() {
                   type="text"
                   placeholder="Acme Inc."
                   value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setCompanyName(e.target.value)
+                  }
                   required
                   disabled={isLoading}
                 />
@@ -116,7 +126,9 @@ export default function SignUpPage() {
                   type="email"
                   placeholder="you@company.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setEmail(e.target.value)
+                  }
                   required
                   disabled={isLoading}
                 />
@@ -129,7 +141,9 @@ export default function SignUpPage() {
                   type="password"
                   placeholder="At least 6 characters"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
                   required
                   disabled={isLoading}
                   minLength={6}
@@ -149,12 +163,17 @@ export default function SignUpPage() {
             </form>
 
             <p className="mt-4 text-xs text-center text-muted-foreground">
-              By signing up, you agree to our Terms of Service and Privacy Policy.
+              By signing up, you agree to our{' '}
+              <Link href="/terms" className="underline hover:text-foreground">Terms and Conditions</Link>
+              {' '}and{' '}
+              <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>.
             </p>
 
             <div className="mt-6 text-center text-sm">
-              <span className="text-muted-foreground">Already have an account? </span>
-              <Link href="/auth/login" className="text-primary hover:underline font-medium">
+              <span className="text-muted-foreground">
+                Already have an account?{' '}
+              </span>
+              <Link href="/auth/login" className="font-medium text-primary hover:underline">
                 Sign in
               </Link>
             </div>

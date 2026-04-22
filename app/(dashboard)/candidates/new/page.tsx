@@ -12,7 +12,10 @@ export default async function NewCandidatePage({
 }) {
   const { vacancy: defaultVacancyId } = await searchParams
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     redirect('/auth/login')
@@ -28,32 +31,56 @@ export default async function NewCandidatePage({
     redirect('/dashboard')
   }
 
-  // Get active vacancies for the dropdown
-  const { data: vacancies } = await supabase
-    .from('vacancies')
-    .select('id, title')
-    .eq('organization_id', profile.organization_id)
-    .in('status', ['active', 'draft'])
-    .order('title')
+  const organizationId = profile.organization_id
+
+  // ✅ fetch everything in parallel (cleaner + faster)
+  const [
+    { data: vacancies },
+    { data: candidateStatuses },
+    { data: applicationStatuses },
+  ] = await Promise.all([
+    supabase
+      .from('vacancies')
+      .select('id, title')
+      .eq('organization_id', organizationId)
+      .order('title'),
+
+    supabase
+      .from('candidate_statuses')
+      .select('id, name, code, is_active, sort_order')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
+
+    supabase
+      .from('application_statuses')
+      .select('id, code')
+      .eq('is_active', true),
+  ])
+
+  // ✅ find default "new" status
+  const defaultApplicationStatus =
+    applicationStatuses?.find((s) => s.code === 'new') || null
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/candidates">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
+
         <div>
           <h1 className="text-2xl font-bold text-foreground">Add Candidate</h1>
           <p className="text-muted-foreground">Add a new candidate to your pipeline.</p>
         </div>
       </div>
 
-      <CandidateForm 
-        vacancies={vacancies || []}
-        organizationId={profile.organization_id}
+      <CandidateForm
+        vacancies={(vacancies || []) as any}
         defaultVacancyId={defaultVacancyId}
+        candidateStatuses={(candidateStatuses || []) as any}
+        defaultApplicationStatusId={defaultApplicationStatus?.id || null}
       />
     </div>
   )

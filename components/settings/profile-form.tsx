@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { updateProfile } from '@/lib/actions/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,29 +21,24 @@ export function ProfileForm({ profile, email }: ProfileFormProps) {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fullName, setFullName] = useState(profile.full_name || '')
+  const [phone, setPhone] = useState(profile.phone || '')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
     setSuccess(false)
     setIsLoading(true)
 
-    const supabase = createClient()
+    const result = await updateProfile({ full_name: fullName, phone: phone || null })
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ full_name: fullName })
-      .eq('id', profile.id)
-
-    if (updateError) {
-      setError(updateError.message)
-      setIsLoading(false)
-      return
+    if (!result.success) {
+      setError(result.error)
+    } else {
+      setSuccess(true)
+      router.refresh()
     }
 
-    setSuccess(true)
     setIsLoading(false)
-    router.refresh()
   }
 
   return (
@@ -62,14 +57,8 @@ export function ProfileForm({ profile, email }: ProfileFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          disabled
-          className="bg-muted"
-        />
-        <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
+        <Input id="email" type="email" value={email} disabled className="bg-muted" />
+        <p className="text-xs text-muted-foreground">Email cannot be changed here.</p>
       </div>
 
       <div className="space-y-2">
@@ -83,15 +72,20 @@ export function ProfileForm({ profile, email }: ProfileFormProps) {
         />
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone</Label>
+        <Input
+          id="phone"
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="+995 5XX XX XX XX"
+          disabled={isLoading}
+        />
+      </div>
+
       <Button type="submit" disabled={isLoading}>
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Saving...
-          </>
-        ) : (
-          'Save Changes'
-        )}
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}
       </Button>
     </form>
   )

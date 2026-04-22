@@ -3,35 +3,109 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfileForm } from '@/components/settings/profile-form'
 import { OrganizationForm } from '@/components/settings/organization-form'
+import { TeamInvitations } from '@/components/settings/team-invitations'
+
+interface ProfileRow {
+  id: string
+  organization_id: string | null
+  full_name: string
+  email: string | null
+  avatar_url: string | null
+  phone: string | null
+  role: 'owner' | 'admin' | 'member'
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  organizations:
+    | {
+        id: string
+        name: string
+        slug: string
+        logo_url: string | null
+        is_active: boolean
+        created_at: string
+        updated_at: string
+      }[]
+    | null
+}
 
 export default async function SettingsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     redirect('/auth/login')
   }
 
-  const { data: profile } = await supabase
+  const { data: profileRaw } = await supabase
     .from('profiles')
-    .select('*, organizations(*)')
+    .select(`
+      id,
+      organization_id,
+      full_name,
+      email,
+      avatar_url,
+      phone,
+      role,
+      is_active,
+      created_at,
+      updated_at,
+      organizations (
+        id,
+        name,
+        slug,
+        logo_url,
+        is_active,
+        created_at,
+        updated_at
+      )
+    `)
     .eq('id', user.id)
     .single()
+
+  const profile = profileRaw as ProfileRow | null
 
   if (!profile) {
     redirect('/dashboard')
   }
 
+  const organization = profile.organizations?.[0] || null
   const isOwner = profile.role === 'owner'
+  const canManageTeam = profile.role === 'owner' || profile.role === 'admin'
+
+  let teamMembers: { id: string; full_name: string; email: string | null; role: string }[] = []
+  let pendingInvitations: { id: string; email: string; role: string; status: string; created_at: string; expires_at: string }[] = []
+
+  if (canManageTeam && profile.organization_id) {
+    const [{ data: membersRaw }, { data: invitesRaw }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, full_name, email, role')
+        .eq('organization_id', profile.organization_id)
+        .eq('is_active', true)
+        .order('full_name'),
+
+      supabase
+        .from('team_invitations')
+        .select('id, email, role, status, created_at, expires_at')
+        .eq('organization_id', profile.organization_id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false }),
+    ])
+    teamMembers = (membersRaw || []) as typeof teamMembers
+    pendingInvitations = (invitesRaw || []) as typeof pendingInvitations
+  }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Settings</h1>
         <p className="text-muted-foreground">Manage your account and organization settings.</p>
       </div>
 
-      {/* Profile Settings */}
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Profile</CardTitle>
@@ -42,20 +116,34 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Organization Settings (Owner only) */}
-      {isOwner && profile.organizations && (
+      {isOwner && organization && (
         <Card className="border-border">
           <CardHeader>
             <CardTitle>Organization</CardTitle>
             <CardDescription>Manage your organization settings.</CardDescription>
           </CardHeader>
           <CardContent>
-            <OrganizationForm organization={profile.organizations} />
+            <OrganizationForm organization={organization} />
           </CardContent>
         </Card>
       )}
 
-      {/* Account Info */}
+      {canManageTeam && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Team</CardTitle>
+            <CardDescription>Manage team members and send invitations.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TeamInvitations
+              pendingInvitations={pendingInvitations}
+              teamMembers={teamMembers}
+              currentUserId={user.id}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Account</CardTitle>
@@ -66,10 +154,12 @@ export default async function SettingsPage() {
             <span className="text-sm text-muted-foreground">Email</span>
             <span className="text-sm font-medium">{user.email}</span>
           </div>
+
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Role</span>
             <span className="text-sm font-medium capitalize">{profile.role}</span>
           </div>
+
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Member since</span>
             <span className="text-sm font-medium">
