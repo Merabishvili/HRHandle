@@ -19,12 +19,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { CandidateStatusActions } from '@/components/candidates/candidate-status-actions'
+import { CandidatesToolbar } from '@/components/candidates/candidates-toolbar'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
+import {
+  DEFAULT_CANDIDATE_COLUMNS,
+  OPTIONAL_CANDIDATE_COLUMNS,
+} from '@/lib/types/columns'
 import { formatDistanceToNow } from 'date-fns'
 
 const PAGE_SIZE = 20
 
-type SearchParams = Promise<{ vacancy?: string; page?: string }>
+type SearchParams = Promise<{
+  vacancy?: string
+  page?: string
+  search?: string
+  sort?: string
+}>
 
 interface CandidateRow {
   id: string
@@ -52,12 +62,7 @@ interface ApplicationRow {
   candidate_id: string
   vacancy_id: string
   applied_at: string
-  vacancies:
-    | {
-        id: string
-        title: string
-      }[]
-    | null
+  vacancies: { id: string; title: string }[] | { id: string; title: string } | null
 }
 
 interface VacancyOption {
@@ -73,15 +78,23 @@ function getCandidateInitials(candidate: Pick<CandidateRow, 'first_name' | 'last
   return `${candidate.first_name?.[0] || ''}${candidate.last_name?.[0] || ''}`.toUpperCase()
 }
 
+function getVacancyTitle(app: ApplicationRow): string | null {
+  if (!app.vacancies) return null
+  if (Array.isArray(app.vacancies)) return app.vacancies[0]?.title || null
+  return (app.vacancies as { title: string }).title || null
+}
+
+
 export default async function CandidatesPage({
   searchParams,
 }: {
   searchParams: SearchParams
 }) {
-  const { vacancy: vacancyFilter, page: pageParam } = await searchParams
+  const { vacancy: vacancyFilter, page: pageParam, search = '', sort = 'created_desc' } = await searchParams
   const page = Math.max(1, parseInt(pageParam || '1', 10) || 1)
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
+
   const supabase = await createClient()
 
   const {
@@ -92,15 +105,17 @@ export default async function CandidatesPage({
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('organization_id')
+    .select('organization_id, column_preferences')
     .eq('id', user.id)
     .single()
 
-  if (profileError || !profile?.organization_id) {
-    return null
-  }
+  if (profileError || !profile?.organization_id) return null
 
   const organizationId = profile.organization_id
+  const colPrefs = (profile.column_preferences as Record<string, string[]>) || {}
+  const activeColumns: string[] = colPrefs.candidates?.length
+    ? colPrefs.candidates
+    : DEFAULT_CANDIDATE_COLUMNS
 
   const { data: candidateStatusesRaw } = await supabase
     .from('candidate_statuses')
@@ -108,8 +123,9 @@ export default async function CandidatesPage({
     .order('sort_order', { ascending: true })
 
   const candidateStatuses = (candidateStatusesRaw || []) as CandidateStatusOption[]
-  const statusMap = new Map(candidateStatuses.map((status) => [status.id, status]))
+  const statusMap = new Map(candidateStatuses.map((s) => [s.id, s]))
 
+  // Resolve vacancy filter
   let candidateIdsForFilter: string[] | null = null
   let filterVacancyTitle: string | null = null
 
@@ -133,48 +149,59 @@ export default async function CandidatesPage({
   }
 
   const FIELDS = `
-    id,
-    first_name,
-    last_name,
-    email,
-    phone,
-    current_company,
-    current_position,
-    years_of_experience,
-    source,
-    general_status_id,
-    created_at,
-    updated_at
+    id, first_name, last_name, email, phone, current_company,
+    current_position, years_of_experience, source, general_status_id,
+    created_at, updated_at
   `
 
-  let candidatesQuery = supabase
+  let baseQuery = supabase
     .from('candidates')
     .select(FIELDS, { count: 'exact' })
     .eq('organization_id', organizationId)
     .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .range(from, to)
 
+  // Search filter
+  if (search.trim()) {
+    baseQuery = baseQuery.or(
+      `first_name.ilike.%${search.trim()}%,last_name.ilike.%${search.trim()}%`
+    )
+  }
+
+  // Vacancy filter
   if (vacancyFilter) {
     if (!candidateIdsForFilter || candidateIdsForFilter.length === 0) {
-      candidatesQuery = supabase
-        .from('candidates')
-        .select(FIELDS, { count: 'exact' })
-        .eq('organization_id', organizationId)
-        .is('deleted_at', null)
-        .in('id', ['00000000-0000-0000-0000-000000000000'])
-        .range(from, to)
+      baseQuery = baseQuery.in('id', ['00000000-0000-0000-0000-000000000000'])
     } else {
-      candidatesQuery = candidatesQuery.in('id', candidateIdsForFilter)
+      baseQuery = baseQuery.in('id', candidateIdsForFilter)
     }
   }
 
-  const { data: candidatesRaw, count: totalCount } = await candidatesQuery
+  // Sort — applied before range
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let sortedQuery: any = baseQuery
+  switch (sort) {
+    case 'created_asc':
+      sortedQuery = baseQuery.order('created_at', { ascending: true })
+      break
+    case 'experience_desc':
+      sortedQuery = baseQuery.order('years_of_experience', { ascending: false, nullsFirst: false })
+      break
+    case 'experience_asc':
+      sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
+      break
+    case 'name_asc':
+      sortedQuery = baseQuery.order('first_name', { ascending: true })
+      break
+    default:
+      sortedQuery = baseQuery.order('created_at', { ascending: false })
+  }
+
+  const { data: candidatesRaw, count: totalCount } = await sortedQuery.range(from, to)
   const candidates = (candidatesRaw || []) as CandidateRow[]
   const totalPages = Math.ceil((totalCount ?? 0) / PAGE_SIZE)
 
-  const candidateIds = candidates.map((candidate) => candidate.id)
-
+  // Fetch applications for this page of candidates
+  const candidateIds = candidates.map((c) => c.id)
   const { data: vacancyOptionsRaw } = await supabase
     .from('vacancies')
     .select('id, title')
@@ -182,22 +209,13 @@ export default async function CandidatesPage({
     .is('archived_at', null)
 
   const vacancyOptions = (vacancyOptionsRaw || []) as VacancyOption[]
-  const vacancyMap = new Map(vacancyOptions.map((vacancy) => [vacancy.id, vacancy]))
+  const vacancyMap = new Map(vacancyOptions.map((v) => [v.id, v]))
 
   let applications: ApplicationRow[] = []
   if (candidateIds.length > 0) {
     const { data: applicationsRaw } = await supabase
       .from('applications')
-      .select(`
-        id,
-        candidate_id,
-        vacancy_id,
-        applied_at,
-        vacancies (
-          id,
-          title
-        )
-      `)
+      .select('id, candidate_id, vacancy_id, applied_at, vacancies(id, title)')
       .eq('organization_id', organizationId)
       .is('deleted_at', null)
       .in('candidate_id', candidateIds)
@@ -206,10 +224,22 @@ export default async function CandidatesPage({
   }
 
   const applicationsByCandidate = new Map<string, ApplicationRow[]>()
-  for (const application of applications) {
-    const existing = applicationsByCandidate.get(application.candidate_id) || []
-    existing.push(application)
-    applicationsByCandidate.set(application.candidate_id, existing)
+  for (const app of applications) {
+    const existing = applicationsByCandidate.get(app.candidate_id) || []
+    existing.push(app)
+    applicationsByCandidate.set(app.candidate_id, existing)
+  }
+
+  // Build column label map for header
+  const optColMap = new Map(OPTIONAL_CANDIDATE_COLUMNS.map((c) => [c.key, c.label]))
+
+  const buildPaginationHref = (targetPage: number) => {
+    const params = new URLSearchParams()
+    if (vacancyFilter) params.set('vacancy', vacancyFilter)
+    if (search) params.set('search', search)
+    if (sort !== 'created_desc') params.set('sort', sort)
+    params.set('page', String(targetPage))
+    return `/candidates?${params.toString()}`
   }
 
   return (
@@ -219,7 +249,7 @@ export default async function CandidatesPage({
           <h1 className="text-2xl font-bold text-foreground">Candidates</h1>
           <p className="text-muted-foreground">
             {filterVacancyTitle
-              ? `Showing candidates linked to vacancy: ${filterVacancyTitle}`
+              ? `Showing candidates for: ${filterVacancyTitle}`
               : 'Track and manage your candidate database.'}
           </p>
         </div>
@@ -230,7 +260,6 @@ export default async function CandidatesPage({
               <Link href="/candidates">Clear filter</Link>
             </Button>
           )}
-
           <Button asChild>
             <Link href={vacancyFilter ? `/candidates/new?vacancy=${vacancyFilter}` : '/candidates/new'}>
               <Plus className="mr-2 h-4 w-4" />
@@ -240,11 +269,18 @@ export default async function CandidatesPage({
         </div>
       </div>
 
+      <CandidatesToolbar
+        initialSearch={search}
+        initialSort={sort}
+        selectedColumns={activeColumns}
+      />
+
       <Card className="border-border">
         <CardHeader>
           <CardTitle>All Candidates</CardTitle>
           <CardDescription>
             {totalCount ?? 0} total candidates
+            {search && ` · filtered by "${search}"`}
             {totalPages > 1 && ` · page ${page} of ${totalPages}`}
           </CardDescription>
         </CardHeader>
@@ -256,11 +292,11 @@ export default async function CandidatesPage({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Candidate</TableHead>
-                    <TableHead>Current Position</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Linked Vacancies</TableHead>
-                    <TableHead>General Status</TableHead>
-                    <TableHead>Updated</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Linked Vacancy</TableHead>
+                    {activeColumns.map((col) => (
+                      <TableHead key={col}>{optColMap.get(col) ?? col}</TableHead>
+                    ))}
                     <TableHead className="w-[70px]" />
                   </TableRow>
                 </TableHeader>
@@ -271,15 +307,11 @@ export default async function CandidatesPage({
                     const initials = getCandidateInitials(candidate)
                     const candidateApplications = applicationsByCandidate.get(candidate.id) || []
 
-                    const firstApplication = candidateApplications[0]
-                    const relatedVacancy = firstApplication?.vacancies?.[0] || null
-                    const fallbackVacancy = firstApplication?.vacancy_id
-                      ? vacancyMap.get(firstApplication.vacancy_id)
+                    const firstApp = candidateApplications[0]
+                    const firstVacancyTitle = firstApp
+                      ? (getVacancyTitle(firstApp) ?? vacancyMap.get(firstApp.vacancy_id)?.title ?? null)
                       : null
-                    const firstVacancyTitle = relatedVacancy?.title || fallbackVacancy?.title || null
-
-                    const extraVacanciesCount =
-                      candidateApplications.length > 1 ? candidateApplications.length - 1 : 0
+                    const extraCount = candidateApplications.length > 1 ? candidateApplications.length - 1 : 0
 
                     const status = candidate.general_status_id
                       ? statusMap.get(candidate.general_status_id)
@@ -287,6 +319,7 @@ export default async function CandidatesPage({
 
                     return (
                       <TableRow key={candidate.id}>
+                        {/* Fixed: Candidate name */}
                         <TableCell>
                           <Link
                             href={`/candidates/${candidate.id}`}
@@ -295,7 +328,6 @@ export default async function CandidatesPage({
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
                               <span className="text-sm font-medium text-primary">{initials}</span>
                             </div>
-
                             <div>
                               <p className="font-medium text-foreground">{fullName}</p>
                               {candidate.source && (
@@ -305,54 +337,7 @@ export default async function CandidatesPage({
                           </Link>
                         </TableCell>
 
-                        <TableCell>
-                          <div className="space-y-1">
-                            <p className="text-sm text-foreground">
-                              {candidate.current_position || 'Not specified'}
-                            </p>
-                            {candidate.current_company && (
-                              <p className="text-xs text-muted-foreground">
-                                {candidate.current_company}
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="space-y-1">
-                            {candidate.email ? (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Mail className="h-3 w-3" />
-                                {candidate.email}
-                              </div>
-                            ) : (
-                              <div className="text-xs text-muted-foreground">No email</div>
-                            )}
-
-                            {candidate.phone && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Phone className="h-3 w-3" />
-                                {candidate.phone}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-
-                        <TableCell>
-                          {candidateApplications.length > 0 ? (
-                            <div className="space-y-1">
-                              <p className="text-sm text-foreground">{firstVacancyTitle || 'Unknown vacancy'}</p>
-                              {extraVacanciesCount > 0 && (
-                                <p className="text-xs text-muted-foreground">
-                                  +{extraVacanciesCount} more
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">Not linked</span>
-                          )}
-                        </TableCell>
-
+                        {/* Fixed: Status */}
                         <TableCell>
                           {status ? (
                             <Badge
@@ -366,9 +351,90 @@ export default async function CandidatesPage({
                           )}
                         </TableCell>
 
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(candidate.updated_at), { addSuffix: true })}
+                        {/* Fixed: Linked Vacancy */}
+                        <TableCell>
+                          {candidateApplications.length > 0 ? (
+                            <div className="space-y-0.5">
+                              <p className="text-sm text-foreground">{firstVacancyTitle || 'Unknown vacancy'}</p>
+                              {extraCount > 0 && (
+                                <p className="text-xs text-muted-foreground">+{extraCount} more</p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Not linked</span>
+                          )}
                         </TableCell>
+
+                        {/* Optional columns */}
+                        {activeColumns.map((col) => {
+                          switch (col) {
+                            case 'current_position':
+                              return (
+                                <TableCell key={col}>
+                                  <div>
+                                    <p className="text-sm">{candidate.current_position || '—'}</p>
+                                    {candidate.current_company && (
+                                      <p className="text-xs text-muted-foreground">{candidate.current_company}</p>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              )
+                            case 'current_company':
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground">
+                                  {candidate.current_company || '—'}
+                                </TableCell>
+                              )
+                            case 'created_at':
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground whitespace-nowrap">
+                                  {formatDistanceToNow(new Date(candidate.created_at), { addSuffix: true })}
+                                </TableCell>
+                              )
+                            case 'email':
+                              return (
+                                <TableCell key={col}>
+                                  {candidate.email ? (
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                      <Mail className="h-3 w-3" />
+                                      {candidate.email}
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-muted-foreground">—</span>
+                                  )}
+                                </TableCell>
+                              )
+                            case 'phone':
+                              return (
+                                <TableCell key={col}>
+                                  {candidate.phone ? (
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                      <Phone className="h-3 w-3" />
+                                      {candidate.phone}
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-muted-foreground">—</span>
+                                  )}
+                                </TableCell>
+                              )
+                            case 'years_of_experience':
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground">
+                                  {candidate.years_of_experience != null
+                                    ? `${candidate.years_of_experience} yr${candidate.years_of_experience === 1 ? '' : 's'}`
+                                    : '—'}
+                                </TableCell>
+                              )
+                            case 'source':
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground">
+                                  {candidate.source || '—'}
+                                </TableCell>
+                              )
+                            default:
+                              return <TableCell key={col}>—</TableCell>
+                          }
+                        })}
 
                         <TableCell>
                           <DropdownMenu>
@@ -377,16 +443,13 @@ export default async function CandidatesPage({
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
                                 <Link href={`/candidates/${candidate.id}`}>View details</Link>
                               </DropdownMenuItem>
-
                               <DropdownMenuItem asChild>
                                 <Link href={`/candidates/${candidate.id}/edit`}>Edit candidate</Link>
                               </DropdownMenuItem>
-
                               <CandidateStatusActions
                                 candidateId={candidate.id}
                                 currentStatusId={candidate.general_status_id}
@@ -409,26 +472,12 @@ export default async function CandidatesPage({
                   <div className="flex items-center gap-2">
                     {page > 1 && (
                       <Button variant="outline" size="sm" asChild>
-                        <Link
-                          href={`/candidates?${new URLSearchParams({
-                            ...(vacancyFilter ? { vacancy: vacancyFilter } : {}),
-                            page: String(page - 1),
-                          })}`}
-                        >
-                          Previous
-                        </Link>
+                        <Link href={buildPaginationHref(page - 1)}>Previous</Link>
                       </Button>
                     )}
                     {page < totalPages && (
                       <Button variant="outline" size="sm" asChild>
-                        <Link
-                          href={`/candidates?${new URLSearchParams({
-                            ...(vacancyFilter ? { vacancy: vacancyFilter } : {}),
-                            page: String(page + 1),
-                          })}`}
-                        >
-                          Next
-                        </Link>
+                        <Link href={buildPaginationHref(page + 1)}>Next</Link>
                       </Button>
                     )}
                   </div>
@@ -438,16 +487,22 @@ export default async function CandidatesPage({
           ) : (
             <div className="py-12 text-center">
               <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-medium text-foreground">No candidates yet</h3>
+              <h3 className="mt-4 text-lg font-medium text-foreground">
+                {search ? `No candidates matching "${search}"` : 'No candidates yet'}
+              </h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Start adding candidates to track your hiring pipeline.
+                {search
+                  ? 'Try a different search term.'
+                  : 'Start adding candidates to track your hiring pipeline.'}
               </p>
-              <Button className="mt-4" asChild>
-                <Link href="/candidates/new">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Candidate
-                </Link>
-              </Button>
+              {!search && (
+                <Button className="mt-4" asChild>
+                  <Link href="/candidates/new">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Candidate
+                  </Link>
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
