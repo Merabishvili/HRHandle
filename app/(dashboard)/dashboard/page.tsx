@@ -328,7 +328,11 @@ export default async function DashboardPage() {
                   const linkedVacancy = candidate.applications?.[0]?.vacancies?.[0] ?? null
 
                   return (
-                    <div key={candidate.id} className="flex items-center justify-between">
+                    <Link
+                      key={candidate.id}
+                      href={`/candidates/${candidate.id}`}
+                      className="flex items-center justify-between rounded-lg p-2 -mx-2 transition-colors hover:bg-muted/50"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                           <span className="text-sm font-medium text-primary">
@@ -352,7 +356,7 @@ export default async function DashboardPage() {
                         <Clock className="h-3 w-3" />
                         {formatDistanceToNow(new Date(candidate.created_at), { addSuffix: true })}
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
@@ -394,7 +398,11 @@ export default async function DashboardPage() {
                   const status = relatedStatus || fallbackStatus || null
 
                   return (
-                    <div key={vacancy.id} className="flex items-center justify-between">
+                    <Link
+                      key={vacancy.id}
+                      href={`/vacancies/${vacancy.id}`}
+                      className="flex items-center justify-between rounded-lg p-2 -mx-2 transition-colors hover:bg-muted/50"
+                    >
                       <div>
                         <p className="text-sm font-medium text-foreground">{vacancy.title}</p>
                         <p className="text-xs text-muted-foreground">
@@ -412,7 +420,7 @@ export default async function DashboardPage() {
                       ) : (
                         <Badge variant="secondary">Unknown</Badge>
                       )}
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
@@ -451,10 +459,12 @@ export default async function DashboardPage() {
                   const vacancy = interview.vacancies?.[0] ?? vacancyMap.get(interview.vacancy_id) ?? null
 
                   return (
-                    <div
+                    <Link
                       key={interview.id}
-                      className="flex items-center justify-between rounded-lg bg-muted/50 p-4"
+                      href={`/candidates/${interview.candidate_id}`}
+                      className="flex items-center justify-between rounded-lg bg-muted/50 p-4 transition-colors hover:bg-muted"
                     >
+
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                           <Calendar className="h-6 w-6 text-primary" />
@@ -483,7 +493,7 @@ export default async function DashboardPage() {
                           })}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
