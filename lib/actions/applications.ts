@@ -23,5 +23,5 @@ export async function updateApplicationStatus(
   if (error) return { success: false, error: 'Failed to update application status' }
 
   revalidatePath('/vacancies/[id]/pipeline', 'page')
-  return { success: true }
+  return { success: true, data: undefined }
 }
