@@ -10,7 +10,7 @@ export interface Campaign {
 
 export const CAMPAIGN: Campaign = {
   active: true,
-  name: 'Spring Campaign',
+  name: 'Spring Offer',
   endDate: '2026-06-01',
   discounts: {
     monthly: 0.60,

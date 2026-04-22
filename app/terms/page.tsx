@@ -72,24 +72,38 @@ export default function TermsPage() {
             <p>
               The Service is offered under the following plans:
             </p>
-            <ul className="mt-3 list-disc space-y-1 pl-5">
-              <li><strong>Free Trial:</strong> 7 days of full access at no charge. No payment method required during trial.</li>
-              <li><strong>Monthly Plan:</strong> Billed once per calendar month.</li>
-              <li><strong>Annual Plan:</strong> Billed once per year. May be offered at a discounted rate compared to monthly billing.</li>
+            <ul className="mt-3 list-disc space-y-2 pl-5">
+              <li>
+                <strong>Free Trial:</strong> 7 days of full access at no charge. No payment
+                method required. Includes up to 5 active vacancies, 100 candidates, and
+                2 team members.
+              </li>
+              <li>
+                <strong>Individual Plan:</strong> $20/month (or $16/month billed annually).
+                Includes up to 500 active vacancies, 10,000 candidates, and 3 team members.
+              </li>
+              <li>
+                <strong>Organization Plan:</strong> $40/month (or $32/month billed annually).
+                Includes up to 1,000 active vacancies, 20,000 candidates, and 50 team members.
+              </li>
             </ul>
             <p className="mt-3">
-              Plans are available for individual users and for organizations (teams). Pricing for
-              each plan is displayed on the subscription page within the Service and on our
-              website.
+              Promotional pricing may be available for limited periods. Any active campaign
+              discount and its end date are displayed on our website and subscription page.
+              Standard pricing applies after the campaign period ends.
             </p>
             <p className="mt-3">
-              Subscriptions renew automatically at the end of each billing period unless cancelled
-              before the renewal date. You may cancel your subscription at any time from your
-              account settings.
+              Both monthly and annual billing cycles are available for paid plans. Annual
+              billing is charged as a single payment at the start of the billing period.
             </p>
             <p className="mt-3">
-              All payments are processed by our payment provider. We do not store payment card
-              details.
+              Subscriptions renew automatically at the end of each billing period unless
+              cancelled before the renewal date. You may cancel your subscription at any time
+              from your account settings.
+            </p>
+            <p className="mt-3">
+              All payments are processed by our payment provider. We do not store payment
+              card details.
             </p>
           </section>
 

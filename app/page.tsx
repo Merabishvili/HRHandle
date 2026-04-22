@@ -202,15 +202,18 @@ export default function LandingPage() {
                     plan.popular ? 'border-2 border-primary shadow-lg' : ''
                   }`}
                 >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                      Most Popular
-                    </div>
-                  )}
-
-                  {campaignActive && !isTrial && (
-                    <div className="absolute -top-3 right-4 rounded-full bg-orange-500 px-3 py-1 text-xs font-medium text-white">
-                      🌸 {CAMPAIGN.name}
+                  {(plan.popular || (campaignActive && !isTrial)) && (
+                    <div className="absolute -top-3 left-0 right-0 flex justify-between px-4">
+                      {plan.popular ? (
+                        <div className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+                          Most Popular
+                        </div>
+                      ) : <span />}
+                      {campaignActive && !isTrial ? (
+                        <div className="rounded-full bg-orange-500 px-3 py-1 text-xs font-medium text-white">
+                          🌸 {CAMPAIGN.name}
+                        </div>
+                      ) : <span />}
                     </div>
                   )}
 
@@ -225,35 +228,29 @@ export default function LandingPage() {
                         </>
                       ) : (
                         <>
-                          {campaignActive && campaignMonthly !== null ? (
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-4xl font-bold text-foreground">
-                                ${campaignMonthly}
-                              </span>
-                              <span className="text-lg text-muted-foreground line-through">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-4xl font-bold text-foreground">
+                              ${campaignActive && campaignMonthly !== null ? campaignMonthly : plan.price_monthly}
+                            </span>
+                            <span className="text-muted-foreground">/mo</span>
+                            {campaignActive && campaignMonthly !== null && (
+                              <span className="text-sm text-muted-foreground line-through">
                                 ${plan.price_monthly}
                               </span>
-                              <span className="text-muted-foreground">/mo</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-4xl font-bold text-foreground">
-                                ${plan.price_monthly}
-                              </span>
-                              <span className="text-muted-foreground">/mo</span>
-                            </div>
-                          )}
+                            )}
+                          </div>
                           {plan.price_annual != null && (
                             <p className="mt-1 text-sm text-muted-foreground">
                               {campaignActive && campaignAnnual !== null ? (
                                 <>
+                                  {'or '}
                                   <span className="font-medium text-foreground">${campaignAnnual}/mo</span>
                                   {' '}
                                   <span className="line-through">${plan.price_annual}/mo</span>
                                   {' billed annually'}
                                 </>
                               ) : (
-                                `$${plan.price_annual}/mo billed annually`
+                                `or $${plan.price_annual}/mo billed annually`
                               )}
                             </p>
                           )}
@@ -294,7 +291,7 @@ export default function LandingPage() {
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-foreground/80">
             Start with a 7-day free trial, link your payment method, and continue
-            with Professional when your trial ends.
+            with a paid plan when your trial ends.
           </p>
           <Button size="lg" variant="secondary" className="mt-8" asChild>
             <Link href="/auth/sign-up">
