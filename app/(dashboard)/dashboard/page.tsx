@@ -57,15 +57,7 @@ interface VacancyRow {
 }
 
 interface RecentCandidateRow extends CandidateRow {
-  applications:
-    | {
-        id: string
-        vacancy_id: string
-        applied_at: string
-        deleted_at: string | null
-        vacancies: { id: string; title: string }[] | null
-      }[]
-    | null
+  linkedVacancyTitle?: string | null
 }
 
 interface InterviewRow {
@@ -168,7 +160,7 @@ export default async function DashboardPage() {
       .eq('organization_id', orgId)
       .is('deleted_at', null),
 
-    // recent 5 candidates with their applications joined — no sequential query needed
+    // recent 5 candidates
     supabase
       .from('candidates')
       .select(`
@@ -178,14 +170,7 @@ export default async function DashboardPage() {
         current_position,
         current_company,
         general_status_id,
-        created_at,
-        applications (
-          id,
-          vacancy_id,
-          applied_at,
-          deleted_at,
-          vacancies ( id, title )
-        )
+        created_at
       `)
       .eq('organization_id', orgId)
       .is('deleted_at', null)
@@ -222,9 +207,36 @@ export default async function DashboardPage() {
   const candidateStatuses = (candidateStatusesRaw || []) as CandidateStatusRow[]
   const allVacancies = (allVacanciesRaw || []) as VacancyRow[]
   const allCandidates = (allCandidatesRaw || []) as Pick<CandidateRow, 'id' | 'general_status_id'>[]
-  const recentCandidates = (recentCandidatesRaw || []) as RecentCandidateRow[]
+  const recentCandidatesBase = (recentCandidatesRaw || []) as CandidateRow[]
   const recentVacancies = (recentVacanciesRaw || []) as VacancyRow[]
   const upcomingInterviews = (upcomingInterviewsRaw || []) as InterviewRow[]
+
+  // Fetch applications for recent candidates separately for reliability
+  const recentCandidateIds = recentCandidatesBase.map((c) => c.id)
+  const candidateVacancyMap = new Map<string, string>()
+  if (recentCandidateIds.length > 0) {
+    const { data: recentAppsRaw } = await supabase
+      .from('applications')
+      .select('candidate_id, vacancies(id, title)')
+      .in('candidate_id', recentCandidateIds)
+      .eq('organization_id', orgId)
+      .is('deleted_at', null)
+      .order('applied_at', { ascending: false })
+
+    type AppWithVacancy = { candidate_id: string; vacancies: { id: string; title: string } | { id: string; title: string }[] | null }
+    const recentApps = (recentAppsRaw || []) as AppWithVacancy[]
+    for (const app of recentApps) {
+      if (!candidateVacancyMap.has(app.candidate_id) && app.vacancies) {
+        const vacancy = Array.isArray(app.vacancies) ? app.vacancies[0] : app.vacancies
+        if (vacancy?.title) candidateVacancyMap.set(app.candidate_id, vacancy.title)
+      }
+    }
+  }
+
+  const recentCandidates: RecentCandidateRow[] = recentCandidatesBase.map((c) => ({
+    ...c,
+    linkedVacancyTitle: candidateVacancyMap.get(c.id) ?? null,
+  }))
 
   const vacancyStatusMap = new Map(vacancyStatuses.map((s) => [s.id, s]))
   const vacancyMap = new Map(allVacancies.map((v) => [v.id, v]))
@@ -327,9 +339,6 @@ export default async function DashboardPage() {
             {recentCandidates.length > 0 ? (
               <div className="space-y-4">
                 {recentCandidates.map((candidate) => {
-                  const activeApplication = candidate.applications?.find((a) => !a.deleted_at) ?? null
-                  const linkedVacancy = activeApplication?.vacancies?.[0] ?? null
-
                   return (
                     <Link
                       key={candidate.id}
@@ -348,7 +357,7 @@ export default async function DashboardPage() {
                             {getCandidateFullName(candidate)}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {linkedVacancy?.title ||
+                            {candidate.linkedVacancyTitle ||
                               candidate.current_position ||
                               'No vacancy linked'}
                           </p>
