@@ -24,6 +24,7 @@ export interface Subscription {
 
   vacancy_limit: number
   candidate_limit: number
+  member_limit: number
 
   created_at: ISODateTimeString
   updated_at: ISODateTimeString
@@ -48,6 +49,7 @@ export interface PricingPlan {
   features: string[]
   vacancy_limit: number
   candidate_limit: number
+  member_limit: number
   popular?: boolean
 }
 
@@ -59,10 +61,12 @@ export const PRICING_PLANS: PricingPlan[] = [
     price_annual: null,
     vacancy_limit: 5,
     candidate_limit: 100,
+    member_limit: 2,
     features: [
       '7-day free trial',
       'Up to 5 vacancies',
       'Up to 100 candidates',
+      'Up to 2 team members',
       'Basic ATS features',
     ],
   },
@@ -73,10 +77,12 @@ export const PRICING_PLANS: PricingPlan[] = [
     price_annual: 490,
     vacancy_limit: 500,
     candidate_limit: 10000,
+    member_limit: 30,
     popular: true,
     features: [
       'Up to 500 vacancies',
       'Up to 10,000 candidates',
+      'Up to 30 team members',
       'Full candidate tracking',
       'Interview scheduling',
       'Advanced filtering',

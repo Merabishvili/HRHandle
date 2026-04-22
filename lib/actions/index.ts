@@ -31,7 +31,7 @@ export async function getAuthContext() {
   }
 }
 
-type LimitResource = 'candidate' | 'vacancy'
+type LimitResource = 'candidate' | 'vacancy' | 'member'
 
 /** Returns an error string if the org is at or above their plan limit, null otherwise. */
 export async function checkPlanLimit(
@@ -40,11 +40,11 @@ export async function checkPlanLimit(
 ): Promise<string | null> {
   const { data: sub } = await ctx.supabase
     .from('subscriptions')
-    .select('candidate_limit, vacancy_limit, status')
+    .select('candidate_limit, vacancy_limit, member_limit, status')
     .eq('organization_id', ctx.orgId)
     .single()
 
-  if (!sub) return null // no subscription row → allow (shouldn't happen)
+  if (!sub) return null
 
   if (resource === 'candidate') {
     if (!sub.candidate_limit) return null
@@ -67,6 +67,17 @@ export async function checkPlanLimit(
       .is('archived_at', null)
     if ((count ?? 0) >= sub.vacancy_limit) {
       return `You've reached your plan limit of ${sub.vacancy_limit} active vacancies. Upgrade to add more.`
+    }
+  }
+
+  if (resource === 'member') {
+    if (!sub.member_limit) return null
+    const { count } = await ctx.supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', ctx.orgId)
+    if ((count ?? 0) >= sub.member_limit) {
+      return `You've reached your plan limit of ${sub.member_limit} team members. Upgrade to add more.`
     }
   }
 

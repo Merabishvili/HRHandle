@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext, type ActionResult } from './index'
+import { getAuthContext, checkPlanLimit, type ActionResult } from './index'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendTeamInviteEmail } from '@/lib/email'
 
@@ -24,6 +24,9 @@ export async function inviteTeamMember(
 
   const parsed = InviteSchema.safeParse({ email, role })
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+
+  const limitError = await checkPlanLimit(ctx, 'member')
+  if (limitError) return { success: false, error: limitError }
 
   // Prevent inviting someone already in the org
   const { data: existing } = await ctx.supabase
