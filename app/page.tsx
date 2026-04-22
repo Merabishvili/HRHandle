@@ -8,6 +8,7 @@ import {
   Calendar,
   BarChart3,
   ArrowRight,
+  Zap,
   Shield,
   Globe,
 } from 'lucide-react'
