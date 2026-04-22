@@ -14,10 +14,63 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'HRHandle - Modern Applicant Tracking System',
+  metadataBase: new URL('https://hrhandle.com'),
+  title: {
+    default: 'HRHandle — Applicant Tracking System for Growing Teams',
+    template: '%s — HRHandle',
+  },
   description:
-    'Streamline your hiring process with HRHandle. Manage vacancies, track candidates, and build your team.',
-  generator: 'v0.app',
+    'HRHandle is a modern ATS that helps you manage job vacancies, track candidates through your hiring pipeline, and schedule interviews — all in one place.',
+  keywords: [
+    'applicant tracking system',
+    'ATS',
+    'recruitment software',
+    'hiring software',
+    'HR software',
+    'candidate tracking',
+    'job vacancy management',
+    'interview scheduling',
+  ],
+  authors: [{ name: 'HRHandle' }],
+  creator: 'HRHandle',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://hrhandle.com',
+    siteName: 'HRHandle',
+    title: 'HRHandle — Applicant Tracking System for Growing Teams',
+    description:
+      'Manage vacancies, track candidates, and schedule interviews with HRHandle. Simple, modern ATS for teams of any size.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'HRHandle — Applicant Tracking System',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'HRHandle — Applicant Tracking System for Growing Teams',
+    description:
+      'Manage vacancies, track candidates, and schedule interviews with HRHandle.',
+    images: ['/og-image.png'],
+  },
+  alternates: {
+    canonical: 'https://hrhandle.com',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: [
       {

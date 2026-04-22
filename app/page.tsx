@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -15,9 +16,58 @@ import {
 import { PRICING_PLANS } from '@/lib/types/subscription'
 import { isCampaignActive, getCampaignPrice, CAMPAIGN } from '@/lib/campaign'
 
+export const metadata: Metadata = {
+  alternates: {
+    canonical: 'https://hrhandle.com',
+  },
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'HRHandle',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://hrhandle.com',
+  description:
+    'HRHandle is a modern applicant tracking system that helps teams manage vacancies, track candidates, and schedule interviews.',
+  offers: [
+    {
+      '@type': 'Offer',
+      name: 'Free Trial',
+      price: '0',
+      priceCurrency: 'USD',
+      description: '7-day free trial',
+    },
+    {
+      '@type': 'Offer',
+      name: 'Individual Plan',
+      price: '20',
+      priceCurrency: 'USD',
+      description: 'Individual plan billed monthly',
+    },
+    {
+      '@type': 'Offer',
+      name: 'Organization Plan',
+      price: '40',
+      priceCurrency: 'USD',
+      description: 'Organization plan billed monthly',
+    },
+  ],
+  provider: {
+    '@type': 'Organization',
+    name: 'HRHandle',
+    url: 'https://hrhandle.com',
+  },
+}
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
