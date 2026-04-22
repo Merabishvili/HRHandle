@@ -9,6 +9,7 @@ import {
   DollarSign,
   Users,
   Clock,
+  LayoutGrid,
 } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -353,6 +354,12 @@ export default async function VacancyDetailPage({
             employmentType={vacancy.employment_type}
             department={vacancy.department}
           />
+          <Button variant="outline" asChild>
+            <Link href={`/vacancies/${id}/pipeline`}>
+              <LayoutGrid className="mr-2 h-4 w-4" />
+              Pipeline
+            </Link>
+          </Button>
           <Button asChild>
             <Link href={`/vacancies/${id}/edit`}>
               <Edit className="mr-2 h-4 w-4" />
