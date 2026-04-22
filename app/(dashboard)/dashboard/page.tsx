@@ -62,6 +62,7 @@ interface RecentCandidateRow extends CandidateRow {
         id: string
         vacancy_id: string
         applied_at: string
+        deleted_at: string | null
         vacancies: { id: string; title: string }[] | null
       }[]
     | null
@@ -182,6 +183,7 @@ export default async function DashboardPage() {
           id,
           vacancy_id,
           applied_at,
+          deleted_at,
           vacancies ( id, title )
         )
       `)
@@ -325,7 +327,8 @@ export default async function DashboardPage() {
             {recentCandidates.length > 0 ? (
               <div className="space-y-4">
                 {recentCandidates.map((candidate) => {
-                  const linkedVacancy = candidate.applications?.[0]?.vacancies?.[0] ?? null
+                  const activeApplication = candidate.applications?.find((a) => !a.deleted_at) ?? null
+                  const linkedVacancy = activeApplication?.vacancies?.[0] ?? null
 
                   return (
                     <Link
