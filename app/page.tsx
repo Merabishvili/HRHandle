@@ -13,6 +13,7 @@ import {
   Globe,
 } from 'lucide-react'
 import { PRICING_PLANS } from '@/lib/types/subscription'
+import { isCampaignActive, getCampaignPrice, CAMPAIGN } from '@/lib/campaign'
 
 export default function LandingPage() {
   return (
@@ -178,11 +179,21 @@ export default function LandingPage() {
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
               Choose the plan that fits your hiring needs
             </p>
+            {isCampaignActive() && (
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-medium text-orange-700">
+                <Zap className="h-4 w-4" />
+                {CAMPAIGN.name} — special pricing until{' '}
+                {new Date(CAMPAIGN.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </div>
+            )}
           </div>
 
-          <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
+          <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
             {PRICING_PLANS.map((plan) => {
               const isTrial = plan.code === 'trial'
+              const campaignActive = isCampaignActive()
+              const campaignMonthly = plan.price_monthly ? getCampaignPrice(plan.price_monthly, 'monthly') : null
+              const campaignAnnual = plan.price_annual ? getCampaignPrice(plan.price_annual, 'annual') : null
 
               return (
                 <Card
@@ -197,6 +208,12 @@ export default function LandingPage() {
                     </div>
                   )}
 
+                  {campaignActive && !isTrial && (
+                    <div className="absolute -top-3 right-4 rounded-full bg-orange-500 px-3 py-1 text-xs font-medium text-white">
+                      🌸 {CAMPAIGN.name}
+                    </div>
+                  )}
+
                   <CardContent className="p-6">
                     <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
 
@@ -208,32 +225,40 @@ export default function LandingPage() {
                         </>
                       ) : (
                         <>
-                          <span className="text-4xl font-bold text-foreground">
-                            ${plan.price_monthly}
-                          </span>
-                          <span className="text-muted-foreground">/month</span>
+                          {campaignActive && campaignMonthly !== null ? (
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-4xl font-bold text-foreground">
+                                ${campaignMonthly}
+                              </span>
+                              <span className="text-lg text-muted-foreground line-through">
+                                ${plan.price_monthly}
+                              </span>
+                              <span className="text-muted-foreground">/mo</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-4xl font-bold text-foreground">
+                                ${plan.price_monthly}
+                              </span>
+                              <span className="text-muted-foreground">/mo</span>
+                            </div>
+                          )}
                           {plan.price_annual != null && (
                             <p className="mt-1 text-sm text-muted-foreground">
-                              or ${plan.price_annual}/year
+                              {campaignActive && campaignAnnual !== null ? (
+                                <>
+                                  <span className="font-medium text-foreground">${campaignAnnual}/mo</span>
+                                  {' '}
+                                  <span className="line-through">${plan.price_annual}/mo</span>
+                                  {' billed annually'}
+                                </>
+                              ) : (
+                                `$${plan.price_annual}/mo billed annually`
+                              )}
                             </p>
                           )}
                         </>
                       )}
-                    </div>
-
-                    <div className="mt-4 space-y-1 text-sm text-muted-foreground">
-                      <p>
-                        Vacancy limit:{' '}
-                        <span className="font-medium text-foreground">
-                          {plan.vacancy_limit.toLocaleString()}
-                        </span>
-                      </p>
-                      <p>
-                        Candidate limit:{' '}
-                        <span className="font-medium text-foreground">
-                          {plan.candidate_limit.toLocaleString()}
-                        </span>
-                      </p>
                     </div>
 
                     <ul className="mt-6 space-y-3">

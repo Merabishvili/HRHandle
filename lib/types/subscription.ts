@@ -1,6 +1,6 @@
 import type { UUID, ISODateTimeString } from './common'
 
-export type PlanCode = 'trial' | 'professional'
+export type PlanCode = 'trial' | 'individual' | 'organization'
 export type BillingCycle = 'monthly' | 'annual'
 export type SubscriptionStatus = 'trial' | 'active' | 'past_due' | 'expired' | 'canceled'
 
@@ -71,18 +71,35 @@ export const PRICING_PLANS: PricingPlan[] = [
     ],
   },
   {
-    name: 'Professional',
-    code: 'professional',
-    price_monthly: 49,
-    price_annual: 490,
+    name: 'Individual',
+    code: 'individual',
+    price_monthly: 20,
+    price_annual: 16,
     vacancy_limit: 500,
     candidate_limit: 10000,
-    member_limit: 30,
-    popular: true,
+    member_limit: 3,
     features: [
       'Up to 500 vacancies',
       'Up to 10,000 candidates',
-      'Up to 30 team members',
+      'Up to 3 team members',
+      'Full candidate tracking',
+      'Interview scheduling',
+      'Advanced filtering',
+    ],
+  },
+  {
+    name: 'Organization',
+    code: 'organization',
+    price_monthly: 40,
+    price_annual: 32,
+    vacancy_limit: 1000,
+    candidate_limit: 20000,
+    member_limit: 50,
+    popular: true,
+    features: [
+      'Up to 1,000 vacancies',
+      'Up to 20,000 candidates',
+      'Up to 50 team members',
       'Full candidate tracking',
       'Interview scheduling',
       'Advanced filtering',
