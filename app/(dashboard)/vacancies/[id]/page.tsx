@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
+import { LinkedInShareButton } from '@/components/vacancies/linkedin-share-button'
 
 interface VacancyRow {
   id: string
@@ -345,12 +346,20 @@ export default async function VacancyDetailPage({
           </div>
         </div>
 
-        <Button asChild>
-          <Link href={`/vacancies/${id}/edit`}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Vacancy
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <LinkedInShareButton
+            title={vacancy.title}
+            location={vacancy.location}
+            employmentType={vacancy.employment_type}
+            department={vacancy.department}
+          />
+          <Button asChild>
+            <Link href={`/vacancies/${id}/edit`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Vacancy
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

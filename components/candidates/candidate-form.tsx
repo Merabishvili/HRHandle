@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Linkedin } from 'lucide-react'
 import type {
   Candidate,
   CandidateFormData,
@@ -259,14 +259,27 @@ export function CandidateForm({
 
             <div className="space-y-2">
               <Label htmlFor="linkedin_profile_url">LinkedIn Profile</Label>
-              <Input
-                id="linkedin_profile_url"
-                type="url"
-                placeholder="https://linkedin.com/in/johnsmith"
-                value={formData.linkedin_profile_url ?? ''}
-                onChange={(e) => handleChange('linkedin_profile_url', e.target.value)}
-                disabled={isLoading}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="linkedin_profile_url"
+                  type="url"
+                  placeholder="https://linkedin.com/in/johnsmith"
+                  value={formData.linkedin_profile_url ?? ''}
+                  onChange={(e) => handleChange('linkedin_profile_url', e.target.value)}
+                  disabled={isLoading}
+                />
+                {formData.linkedin_profile_url && (
+                  <a
+                    href={formData.linkedin_profile_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button type="button" variant="outline" size="icon" title="Open LinkedIn profile">
+                      <Linkedin className="h-4 w-4 text-[#0A66C2]" />
+                    </Button>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
