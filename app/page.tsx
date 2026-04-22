@@ -282,12 +282,24 @@ export default function LandingPage() {
 
       <footer className="border-t border-border bg-card px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <Briefcase className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold text-foreground">HRHandle</span>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+              <Link href="/terms" className="transition-colors hover:text-foreground">
+                Terms and Conditions
+              </Link>
+              <Link href="/privacy" className="transition-colors hover:text-foreground">
+                Privacy Policy
+              </Link>
+              <Link href="/refund" className="transition-colors hover:text-foreground">
+                Refund Policy
+              </Link>
             </div>
 
             <p className="text-sm text-muted-foreground">
