@@ -45,11 +45,16 @@ function getPlanLabel(subscription?: Subscription | null): string {
 }
 
 export function DashboardSidebar({
+  profile,
   organization,
   subscription,
 }: DashboardSidebarProps) {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const isAdmin = profile.role === 'owner' || profile.role === 'admin'
+  const visibleNavigation = navigation.filter(
+    (item) => item.href !== '/subscription' || isAdmin
+  )
 
   return (
     <>
@@ -95,7 +100,7 @@ export function DashboardSidebar({
           )}
 
           <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-            {navigation.map((item) => {
+            {visibleNavigation.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(`${item.href}/`)
 

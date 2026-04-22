@@ -90,6 +90,10 @@ export default async function SubscriptionPage() {
     redirect('/dashboard')
   }
 
+  if (typedProfile.role === 'member') {
+    redirect('/dashboard')
+  }
+
   const organizationId = typedProfile.organization_id
 
   const { data: organization } = await supabase
