@@ -64,7 +64,7 @@ export function DashboardHeader({
               <p className="truncate text-sm font-medium">{organization.name}</p>
               {subscription && (
                 <p className="text-xs text-muted-foreground">
-                  {subscription.plan_code === 'professional' ? 'Professional' : 'Trial'} ·{' '}
+                  {subscription.plan_code === 'individual' ? 'Individual' : subscription.plan_code === 'organization' ? 'Organization' : 'Trial'} ·{' '}
                   {subscription.status.replace('_', ' ')}
                 </p>
               )}

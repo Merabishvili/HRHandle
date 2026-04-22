@@ -32,7 +32,7 @@ interface ProfileRow {
 interface SubscriptionRow {
   id: string
   organization_id: string
-  plan_code: 'trial' | 'professional'
+  plan_code: 'trial' | 'individual' | 'organization'
   billing_cycle: 'monthly' | 'annual' | null
   status: 'trial' | 'active' | 'past_due' | 'expired' | 'canceled'
   trial_start_at: string | null
@@ -46,6 +46,7 @@ interface SubscriptionRow {
   last_payment_status: string | null
   vacancy_limit: number
   candidate_limit: number
+  member_limit: number
   created_at: string
   updated_at: string
 }

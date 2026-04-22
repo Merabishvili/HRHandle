@@ -21,7 +21,7 @@ interface OrganizationRow {
 interface SubscriptionRow {
   id: string
   organization_id: string
-  plan_code: 'trial' | 'professional'
+  plan_code: 'trial' | 'individual' | 'organization'
   billing_cycle: 'monthly' | 'annual' | null
   status: 'trial' | 'active' | 'past_due' | 'expired' | 'canceled'
   trial_start_at: string | null
@@ -32,6 +32,7 @@ interface SubscriptionRow {
   payment_method_linked: boolean
   vacancy_limit: number
   candidate_limit: number
+  member_limit: number
   created_at: string
   updated_at: string
 }
@@ -52,8 +53,12 @@ function getSubscriptionBadgeClass(status: SubscriptionRow['status']) {
   }
 }
 
-function getPlanDisplayName(planCode: 'trial' | 'professional') {
-  return planCode === 'professional' ? 'Professional' : 'Free Trial'
+function getPlanDisplayName(planCode: 'trial' | 'individual' | 'organization') {
+  switch (planCode) {
+    case 'individual': return 'Individual'
+    case 'organization': return 'Organization'
+    default: return 'Free Trial'
+  }
 }
 
 function getRemainingTrialDays(trialEndAt: string | null): number | null {
@@ -184,10 +189,10 @@ export default async function SubscriptionPage() {
               {getPlanDisplayName(typedSubscription.plan_code)}
             </span>
 
-            {typedSubscription.plan_code === 'professional' && (
+            {typedSubscription.plan_code !== 'trial' && (
               <span className="text-muted-foreground">
                 {typedSubscription.billing_cycle === 'annual'
-                  ? `$${currentPlan.price_annual}/year`
+                  ? `$${currentPlan.price_annual}/mo billed annually`
                   : `$${currentPlan.price_monthly}/month`}
               </span>
             )}

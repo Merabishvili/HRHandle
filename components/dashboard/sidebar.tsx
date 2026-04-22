@@ -37,10 +37,8 @@ const navigation = [
 function getPlanLabel(subscription?: Subscription | null): string {
   if (!subscription) return 'Trial'
 
-  if (subscription.plan_code === 'professional') {
-    return 'Professional'
-  }
-
+  if (subscription.plan_code === 'individual') return 'Individual'
+  if (subscription.plan_code === 'organization') return 'Organization'
   return 'Trial'
 }
 
