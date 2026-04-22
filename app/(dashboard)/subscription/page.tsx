@@ -3,8 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, Zap } from 'lucide-react'
+import { Zap } from 'lucide-react'
 import { PRICING_PLANS } from '@/lib/types/subscription'
+import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
+import { PlanCards } from '@/components/subscription/plan-cards'
 
 interface ProfileRow {
   id: string
@@ -241,77 +243,12 @@ export default async function SubscriptionPage() {
         </CardContent>
       </Card>
 
-      <div>
-        <h2 className="mb-4 text-xl font-semibold text-foreground">Available Plans</h2>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {PRICING_PLANS.map((plan) => {
-            const isCurrent = plan.code === typedSubscription.plan_code
-
-            return (
-              <Card
-                key={plan.code}
-                className={`relative border-border ${
-                  plan.popular ? 'border-2 border-primary shadow-lg' : ''
-                } ${isCurrent ? 'bg-muted/30' : ''}`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                    Most Popular
-                  </div>
-                )}
-
-                <CardContent className="p-6">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
-                    {isCurrent && <Badge variant="secondary">Current</Badge>}
-                  </div>
-
-                  <div className="mb-6">
-                    {plan.code === 'trial' ? (
-                      <>
-                        <span className="text-3xl font-bold text-foreground">Free</span>
-                        <span className="text-muted-foreground"> / 7 days</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-3xl font-bold text-foreground">
-                          ${plan.price_monthly}
-                        </span>
-                        <span className="text-muted-foreground">/month</span>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          or ${plan.price_annual}/year
-                        </p>
-                      </>
-                    )}
-                  </div>
-
-                  <ul className="mb-6 space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
-                        <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                        <span className="text-sm text-muted-foreground">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button
-                    className="w-full"
-                    variant={isCurrent ? 'outline' : plan.popular ? 'default' : 'outline'}
-                    disabled={isCurrent}
-                  >
-                    {isCurrent
-                      ? 'Current Plan'
-                      : plan.code === 'trial'
-                        ? 'Trial Plan'
-                        : 'Upgrade'}
-                  </Button>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      </div>
+      <PlanCards
+        plans={PRICING_PLANS}
+        currentPlanCode={typedSubscription.plan_code}
+        campaign={CAMPAIGN}
+        campaignActive={isCampaignActive()}
+      />
 
       {typedSubscription.plan_code === 'trial' && (
         <Card className="border-primary bg-primary/5">
@@ -326,7 +263,7 @@ export default async function SubscriptionPage() {
                   Unlock more capacity
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Move to Professional to manage more vacancies and candidates with full ATS functionality.
+                  Upgrade to Individual or Organization to manage more vacancies and candidates.
                 </p>
               </div>
 
