@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { saveEvaluation } from '@/lib/actions/evaluations'
 import { formatDistanceToNow } from 'date-fns'
@@ -47,17 +46,24 @@ interface ApplicationEvaluationProps {
   existingEvaluation: ExistingEvaluation | null
 }
 
+function calcScore(
+  questions: Question[],
+  answers: Record<string, { text: string; score: number | null }>
+): number | null {
+  const scoreQs = questions.filter((q) => q.type === 'score')
+  if (scoreQs.length === 0) return null
+  if (scoreQs.some((q) => !answers[q.id]?.score)) return null
+  const sum = scoreQs.reduce((acc, q) => acc + (answers[q.id]?.score ?? 0), 0)
+  return Math.round((sum / (scoreQs.length * 10)) * 100)
+}
+
 function isComplete(
   questions: Question[],
-  answers: Record<string, { text: string; score: number | null }>,
-  overallScore: string
+  answers: Record<string, { text: string; score: number | null }>
 ): boolean {
-  if (!overallScore) return false
-  for (const q of questions) {
-    if (q.type === 'text' && !answers[q.id]?.text?.trim()) return false
-    if (q.type === 'score' && !answers[q.id]?.score) return false
-  }
-  return true
+  const scoreQs = questions.filter((q) => q.type === 'score')
+  if (scoreQs.length === 0) return false
+  return scoreQs.every((q) => !!answers[q.id]?.score)
 }
 
 export function ApplicationEvaluation({
@@ -76,10 +82,6 @@ export function ApplicationEvaluation({
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [overallScore, setOverallScore] = useState(
-    existingEvaluation?.score != null ? String(existingEvaluation.score) : ''
-  )
-
   const [answers, setAnswers] = useState<Record<string, { text: string; score: number | null }>>(() => {
     const initial: Record<string, { text: string; score: number | null }> = {}
     for (const q of questions) {
@@ -92,18 +94,13 @@ export function ApplicationEvaluation({
     return initial
   })
 
-  const complete = isComplete(questions, answers, overallScore)
+  const calculatedScore = calcScore(questions, answers)
+  const complete = isComplete(questions, answers)
 
   const handleSave = () => {
     setError(null)
     setSaved(false)
     startTransition(async () => {
-      const scoreNum = overallScore ? parseInt(overallScore, 10) : null
-      if (scoreNum != null && (scoreNum < 0 || scoreNum > 100)) {
-        setError('Overall score must be between 0 and 100')
-        return
-      }
-
       const answerPayload = questions.map((q) => ({
         questionId: q.id,
         textValue: q.type === 'text' ? (answers[q.id]?.text || null) : null,
@@ -114,7 +111,7 @@ export function ApplicationEvaluation({
         applicationId,
         vacancyId,
         candidateId,
-        score: scoreNum,
+        score: calculatedScore,
         answers: answerPayload,
       })
 
@@ -228,17 +225,17 @@ export function ApplicationEvaluation({
             </div>
           ))}
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Overall Score (0 – 100)</Label>
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              placeholder="e.g. 75"
-              value={overallScore}
-              onChange={(e) => setOverallScore(e.target.value)}
-              className="w-32"
-            />
+          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
+            <span className="text-sm font-medium">Overall Score</span>
+            {calculatedScore !== null ? (
+              <Badge variant="secondary" className="text-sm font-semibold">
+                {calculatedScore}%
+              </Badge>
+            ) : (
+              <span className="text-sm text-muted-foreground">
+                {questions.some((q) => q.type === 'score') ? 'Fill all score criteria' : 'No score criteria'}
+              </span>
+            )}
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
