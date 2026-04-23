@@ -13,8 +13,6 @@ import {
   Briefcase,
   Calendar,
   Clock,
-  Building2,
-  UserCircle,
 } from 'lucide-react'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
@@ -321,6 +319,28 @@ export default async function CandidateDetailPage({
   const fullName = getCandidateFullName(candidate)
   const initials = getCandidateInitials(candidate)
 
+  const activeStatusCodes = new Set(['applied', 'screening', 'interview', 'offer'])
+  let overviewScore: number | null = null
+  let overviewScoreIsActive = false
+  for (const app of applications) {
+    const appStatus = app.status_id ? appStatusMap.get(app.status_id) ?? null : null
+    const evaluation = evaluationsByApp.get(app.id) ?? null
+    if (evaluation?.score != null && appStatus && activeStatusCodes.has(appStatus.code)) {
+      overviewScore = evaluation.score
+      overviewScoreIsActive = true
+      break
+    }
+  }
+  if (overviewScore === null) {
+    for (const app of applications) {
+      const evaluation = evaluationsByApp.get(app.id) ?? null
+      if (evaluation?.score != null) {
+        overviewScore = evaluation.score
+        break
+      }
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -477,11 +497,6 @@ export default async function CandidateDetailPage({
             initialNotes={notes}
             currentUserId={user.id}
           />
-
-          <CandidateDocuments
-            candidateId={candidate.id}
-            initialDocuments={documents}
-          />
         </div>
 
         {/* RIGHT COLUMN */}
@@ -561,8 +576,22 @@ export default async function CandidateDetailPage({
                 <span className="text-sm text-muted-foreground">Added</span>
                 <span className="text-sm font-medium">{format(new Date(candidate.created_at), 'MMM d, yyyy')}</span>
               </div>
+              {overviewScore !== null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    {overviewScoreIsActive ? 'Active application score' : 'Recent application score'}
+                  </span>
+                  <span className="text-sm font-medium">{overviewScore} / 100</span>
+                </div>
+              )}
             </CardContent>
           </Card>
+
+          {/* 3. Documents */}
+          <CandidateDocuments
+            candidateId={candidate.id}
+            initialDocuments={documents}
+          />
 
           {/* 3. Interviews (max 3) */}
           <Card className="border-border">
@@ -599,32 +628,6 @@ export default async function CandidateDetailPage({
             </CardContent>
           </Card>
 
-          {/* 4. Quick Profile */}
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="text-base">Quick Profile</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Company</p>
-                  <p className="text-sm font-medium text-foreground">{candidate.current_company || 'Not specified'}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                  <UserCircle className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Position</p>
-                  <p className="text-sm font-medium text-foreground">{candidate.current_position || 'Not specified'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
