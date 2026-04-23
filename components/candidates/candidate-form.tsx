@@ -1,12 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCandidate, updateCandidate } from '@/lib/actions/candidates'
+import { uploadDocument } from '@/lib/actions/documents'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Loader2, Linkedin } from 'lucide-react'
+import { Loader2, Linkedin, Paperclip, X, Upload } from 'lucide-react'
 import type {
   Candidate,
   CandidateFormData,
@@ -25,6 +25,18 @@ import type {
   CandidateGeneralStatus,
   ApplicationStatus,
 } from '@/lib/types'
+
+const DOCUMENT_TYPE_OPTIONS = [
+  { value: 'cv', label: 'CV / Resume' },
+  { value: 'cover_letter', label: 'Cover Letter' },
+  { value: 'other', label: 'Other' },
+]
+
+interface PendingFile {
+  id: string
+  file: File
+  documentType: string
+}
 
 interface CandidateFormProps {
   candidate?: Candidate
@@ -42,9 +54,11 @@ export function CandidateForm({
   candidateStatuses,
 }: CandidateFormProps) {
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
 
   const [selectedVacancyId, setSelectedVacancyId] = useState<string>(
     defaultVacancyId || ''
@@ -65,13 +79,21 @@ export function CandidateForm({
     linked_vacancy_ids: [],
   })
 
-  const canLinkVacancyOnEdit = useMemo(() => !candidate, [candidate])
+  const isEditing = !!candidate
 
   const handleChange = <K extends keyof CandidateFormData>(key: K, value: CandidateFormData[K]) => {
-    setFormData((prev) => ({
-      ...prev,
-      [key]: value,
+    setFormData((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const newEntries: PendingFile[] = files.map((file) => ({
+      id: `${Date.now()}-${Math.random()}`,
+      file,
+      documentType: 'cv',
     }))
+    setPendingFiles((prev) => [...prev, ...newEntries])
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +115,7 @@ export function CandidateForm({
       general_status_id: formData.general_status_id || null,
     }
 
-    const result = candidate
+    const result = isEditing
       ? await updateCandidate(candidate.id, payload)
       : await createCandidate(payload, selectedVacancyId || null)
 
@@ -103,9 +125,18 @@ export function CandidateForm({
       return
     }
 
-    router.push('/candidates')
-    router.refresh()
+    // Upload queued documents after candidate is created
+    if (!isEditing && result.data?.id && pendingFiles.length > 0) {
+      for (const entry of pendingFiles) {
+        const fd = new FormData()
+        fd.append('file', entry.file)
+        fd.append('document_type', entry.documentType)
+        await uploadDocument(result.data.id, fd)
+      }
+    }
 
+    router.push(isEditing ? `/candidates/${candidate.id}` : '/candidates')
+    router.refresh()
     setIsLoading(false)
   }
 
@@ -117,6 +148,7 @@ export function CandidateForm({
         </Alert>
       )}
 
+      {/* Personal Information */}
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
@@ -269,11 +301,7 @@ export function CandidateForm({
                   disabled={isLoading}
                 />
                 {formData.linkedin_profile_url && (
-                  <a
-                    href={formData.linkedin_profile_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a href={formData.linkedin_profile_url} target="_blank" rel="noopener noreferrer">
                     <Button type="button" variant="outline" size="icon" title="Open LinkedIn profile">
                       <Linkedin className="h-4 w-4 text-[#0A66C2]" />
                     </Button>
@@ -285,16 +313,15 @@ export function CandidateForm({
         </CardContent>
       </Card>
 
+      {/* Recruitment Details */}
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Recruitment Details</CardTitle>
-          <CardDescription>
-            Optional source and initial vacancy link. In v2, vacancy linking creates an application.
-          </CardDescription>
+          <CardDescription>Source and initial vacancy assignment.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className={`grid gap-4 ${isEditing ? '' : 'sm:grid-cols-2'}`}>
             <div className="space-y-2">
               <Label htmlFor="source">Source</Label>
               <Select
@@ -317,80 +344,114 @@ export function CandidateForm({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="initial_vacancy_id">
-                {candidate ? 'Vacancy Linking' : 'Initial Vacancy'}
-              </Label>
-              <Select
-                value={selectedVacancyId || 'none'}
-                onValueChange={(value) => setSelectedVacancyId(value === 'none' ? '' : value)}
-                disabled={isLoading || !canLinkVacancyOnEdit}
-              >
-                <SelectTrigger id="initial_vacancy_id">
-                  <SelectValue
-                    placeholder={
-                      candidate
-                        ? 'Link applications from candidate details page'
-                        : 'Select a vacancy'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">
-                    {candidate ? 'No vacancy changes here' : 'No vacancy assigned'}
-                  </SelectItem>
-                  {vacancies.map((vacancy) => (
-                    <SelectItem key={vacancy.id} value={vacancy.id}>
-                      {vacancy.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {candidate ? (
-                <p className="text-sm text-muted-foreground">
-                  Existing candidate-vacancy links should be managed through applications on the candidate details page.
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  If selected, the system will create the candidate first and then create an application linked to this vacancy.
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="initial_note">Initial Note (optional)</Label>
-            <Textarea
-              id="initial_note"
-              placeholder="For v2 architecture, recruiter notes should be saved separately on the candidate details page."
-              disabled
-              rows={4}
-            />
-            <p className="text-sm text-muted-foreground">
-              This field is intentionally disabled here because notes belong in the separate candidate notes flow in schema v2.
-            </p>
+            {!isEditing && (
+              <div className="space-y-2">
+                <Label htmlFor="initial_vacancy_id">Initial Vacancy</Label>
+                <Select
+                  value={selectedVacancyId || 'none'}
+                  onValueChange={(value) => setSelectedVacancyId(value === 'none' ? '' : value)}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="initial_vacancy_id">
+                    <SelectValue placeholder="Select a vacancy (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No vacancy assigned</SelectItem>
+                    {vacancies.map((vacancy) => (
+                      <SelectItem key={vacancy.id} value={vacancy.id}>
+                        {vacancy.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
+      {/* Documents — only on create */}
+      {!isEditing && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Documents</CardTitle>
+            <CardDescription>Upload CV, cover letter or other files. PDF and Word only, max 10 MB each.</CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-3">
+            {pendingFiles.length > 0 && (
+              <div className="space-y-2">
+                {pendingFiles.map((entry) => (
+                  <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2">
+                    <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate text-sm text-foreground">{entry.file.name}</span>
+                    <Select
+                      value={entry.documentType}
+                      onValueChange={(v) =>
+                        setPendingFiles((prev) =>
+                          prev.map((f) => f.id === entry.id ? { ...f, documentType: v } : f)
+                        )
+                      }
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className="h-7 w-[130px] shrink-0 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DOCUMENT_TYPE_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => setPendingFiles((prev) => prev.filter((f) => f.id !== entry.id))}
+                      disabled={isLoading}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              multiple
+              className="hidden"
+              onChange={handleFileSelect}
+              disabled={isLoading}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Add File
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center justify-end gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isLoading}
-        >
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
           Cancel
         </Button>
-
         <Button type="submit" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {candidate ? 'Updating...' : 'Adding...'}
+              {isEditing ? 'Updating...' : 'Adding...'}
             </>
-          ) : candidate ? (
+          ) : isEditing ? (
             'Update Candidate'
           ) : (
             'Add Candidate'
