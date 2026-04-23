@@ -12,12 +12,14 @@ interface PipelineApplicationRow {
   status_id: string | null
   applied_at: string
   last_status_changed_at: string | null
-  candidates: {
-    first_name: string
-    last_name: string
-    current_position: string | null
-    current_company: string | null
-  }[] | null
+}
+
+interface PipelineCandidateRow {
+  id: string
+  first_name: string
+  last_name: string
+  current_position: string | null
+  current_company: string | null
 }
 
 export default async function VacancyPipelinePage({
@@ -61,19 +63,7 @@ export default async function VacancyPipelinePage({
 
     supabase
       .from('applications')
-      .select(`
-        id,
-        candidate_id,
-        status_id,
-        applied_at,
-        last_status_changed_at,
-        candidates (
-          first_name,
-          last_name,
-          current_position,
-          current_company
-        )
-      `)
+      .select('id, candidate_id, status_id, applied_at, last_status_changed_at')
       .eq('vacancy_id', id)
       .eq('organization_id', organizationId)
       .is('deleted_at', null)
@@ -85,15 +75,28 @@ export default async function VacancyPipelinePage({
   const statuses = (statusesRaw || []) as ApplicationStatus[]
   const applicationsData = (applicationsRaw || []) as PipelineApplicationRow[]
 
+  // Fetch candidates separately to avoid unreliable nested joins
+  const candidateIds = [...new Set(applicationsData.map((a) => a.candidate_id))]
+  let candidateMap = new Map<string, PipelineCandidateRow>()
+  if (candidateIds.length > 0) {
+    const { data: candidatesRaw } = await supabase
+      .from('candidates')
+      .select('id, first_name, last_name, current_position, current_company')
+      .in('id', candidateIds)
+    for (const c of (candidatesRaw || []) as PipelineCandidateRow[]) {
+      candidateMap.set(c.id, c)
+    }
+  }
+
   const firstStatusId = statuses[0]?.id ?? null
 
   const applications = applicationsData.map((app) => {
-    const candidate = app.candidates?.[0]
+    const candidate = candidateMap.get(app.candidate_id)
     return {
       id: app.id,
       candidate_id: app.candidate_id,
       status_id: app.status_id ?? firstStatusId,
-      first_name: candidate?.first_name ?? 'Unknown',
+      first_name: candidate?.first_name ?? '?',
       last_name: candidate?.last_name ?? '',
       current_position: candidate?.current_position ?? null,
       current_company: candidate?.current_company ?? null,

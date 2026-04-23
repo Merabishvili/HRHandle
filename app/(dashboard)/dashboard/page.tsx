@@ -29,7 +29,7 @@ interface CandidateRow {
 interface CandidateStatusRow {
   id: string
   name: string
-  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+  code: 'active' | 'hired' | 'archived'
   is_active: boolean
   sort_order: number
 }
@@ -242,14 +242,14 @@ export default async function DashboardPage() {
   const vacancyMap = new Map(allVacancies.map((v) => [v.id, v]))
 
   const openVacancyStatusId = vacancyStatuses.find((s) => s.code === 'open')?.id ?? null
-  const newCandidateStatusId = candidateStatuses.find((s) => s.code === 'new')?.id ?? null
+  const activeCandidateStatusId = candidateStatuses.find((s) => s.code === 'active')?.id ?? null
 
   const activeVacancies = openVacancyStatusId
     ? allVacancies.filter((v) => v.status_id === openVacancyStatusId).length
     : 0
 
-  const newCandidates = newCandidateStatusId
-    ? allCandidates.filter((c) => c.general_status_id === newCandidateStatusId).length
+  const activeCandidates = activeCandidateStatusId
+    ? allCandidates.filter((c) => c.general_status_id === activeCandidateStatusId).length
     : 0
 
   const stats = [
@@ -264,7 +264,7 @@ export default async function DashboardPage() {
       title: 'Total Candidates',
       value: totalCandidates || 0,
       icon: Users,
-      change: `${newCandidates} new`,
+      change: `${activeCandidates} active`,
       href: '/candidates',
     },
     {

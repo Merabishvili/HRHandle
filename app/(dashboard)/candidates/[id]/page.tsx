@@ -44,7 +44,7 @@ interface CandidateRow {
 interface CandidateStatusOption {
   id: string
   name: string
-  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+  code: 'active' | 'hired' | 'archived'
 }
 
 interface ApplicationRow {

@@ -62,7 +62,7 @@ interface VacancyRow {
 interface CandidateStatusRow {
   id: string
   name: string
-  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+  code: 'active' | 'hired' | 'archived'
   is_active: boolean
   sort_order: number
 }

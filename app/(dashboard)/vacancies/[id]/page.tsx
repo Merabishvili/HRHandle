@@ -7,17 +7,19 @@ import {
   MapPin,
   Briefcase,
   DollarSign,
-  Users,
   Clock,
   LayoutGrid,
+  UserCircle,
 } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
+import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { LinkedInShareButton } from '@/components/vacancies/linkedin-share-button'
 
 interface VacancyRow {
@@ -73,23 +75,22 @@ interface SectorRow {
 interface CandidateGeneralStatusRow {
   id: string
   name: string
-  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+  code: 'active' | 'hired' | 'archived'
 }
 
-interface ApplicationCandidateRow {
+interface ApplicationRow {
   id: string
   candidate_id: string
   vacancy_id: string
   status_id: string | null
   applied_at: string
-  candidates:
-    | {
-        id: string
-        first_name: string
-        last_name: string
-        general_status_id: string | null
-      }[]
-    | null
+}
+
+interface AppStatusRow {
+  id: string
+  name: string
+  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
+  sort_order: number
 }
 
 interface CandidateRow {
@@ -238,47 +239,42 @@ export default async function VacancyDetailPage({
   const sectors = (sectorsRaw || []) as SectorRow[]
   const candidateStatuses = (candidateStatusesRaw || []) as CandidateGeneralStatusRow[]
 
-  const candidateStatusMap = new Map(candidateStatuses.map((status) => [status.id, status]))
+  const candidateStatusMap = new Map(candidateStatuses.map((s) => [s.id, s]))
 
-  const { data: applicationsRaw, count: applicantsCount } = await supabase
-    .from('applications')
-    .select(
-      `
-      id,
-      candidate_id,
-      vacancy_id,
-      status_id,
-      applied_at,
-      candidates (
-        id,
-        first_name,
-        last_name,
-        general_status_id
-      )
-    `,
-      { count: 'exact' }
-    )
-    .eq('organization_id', organizationId)
-    .eq('vacancy_id', id)
-    .is('deleted_at', null)
-    .order('applied_at', { ascending: false })
-    .limit(5)
+  const [
+    { data: applicationsRaw, count: applicantsCount },
+    { data: appStatusesRaw },
+  ] = await Promise.all([
+    supabase
+      .from('applications')
+      .select('id, candidate_id, vacancy_id, status_id, applied_at', { count: 'exact' })
+      .eq('organization_id', organizationId)
+      .eq('vacancy_id', id)
+      .is('deleted_at', null)
+      .order('applied_at', { ascending: false }),
 
-  const recentApplications = (applicationsRaw || []) as ApplicationCandidateRow[]
+    supabase
+      .from('application_statuses')
+      .select('id, name, code, sort_order')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
+  ])
 
-  const candidateIdsNeedingFallback = recentApplications
-    .filter((application) => !application.candidates?.[0] && application.candidate_id)
-    .map((application) => application.candidate_id)
+  const allApplications = (applicationsRaw || []) as ApplicationRow[]
+  const appStatuses = (appStatusesRaw || []) as AppStatusRow[]
+  const appStatusMap = new Map(appStatuses.map((s) => [s.id, s]))
 
-  let fallbackCandidatesMap = new Map<string, CandidateRow>()
-  if (candidateIdsNeedingFallback.length > 0) {
-    const { data: fallbackCandidatesRaw } = await supabase
+  // Fetch candidate data separately for reliability
+  const appCandidateIds = [...new Set(allApplications.map((a) => a.candidate_id))]
+  let appCandidateMap = new Map<string, CandidateRow>()
+  if (appCandidateIds.length > 0) {
+    const { data: appCandidatesRaw } = await supabase
       .from('candidates')
       .select('id, first_name, last_name, general_status_id')
-      .in('id', candidateIdsNeedingFallback)
-
-    const fallbackCandidates = (fallbackCandidatesRaw || []) as CandidateRow[]
-    fallbackCandidatesMap = new Map(fallbackCandidates.map((candidate) => [candidate.id, candidate]))
+      .in('id', appCandidateIds)
+    for (const c of (appCandidatesRaw || []) as CandidateRow[]) {
+      appCandidateMap.set(c.id, c)
+    }
   }
 
   const vacancyStatus =
@@ -295,50 +291,31 @@ export default async function VacancyDetailPage({
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/vacancies">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
+            <Link href="/vacancies"><ArrowLeft className="h-4 w-4" /></Link>
           </Button>
-
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-foreground">{vacancy.title}</h1>
-
               {vacancyStatus ? (
-                <Badge
-                  variant="secondary"
-                  className={VACANCY_STATUS_COLORS[vacancyStatus.code]}
-                >
+                <Badge variant="secondary" className={VACANCY_STATUS_COLORS[vacancyStatus.code]}>
                   {vacancyStatus.name}
                 </Badge>
               ) : (
                 <Badge variant="secondary">Unknown</Badge>
               )}
             </div>
-
             <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               {vacancy.department && (
-                <span className="flex items-center gap-1">
-                  <Briefcase className="h-4 w-4" />
-                  {vacancy.department}
-                </span>
+                <span className="flex items-center gap-1"><Briefcase className="h-4 w-4" />{vacancy.department}</span>
               )}
-
-              <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                {vacancy.location || 'Remote'}
-              </span>
-
+              <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{vacancy.location || 'Remote'}</span>
               {salaryText && (
-                <span className="flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
-                  {salaryText}
-                </span>
+                <span className="flex items-center gap-1"><DollarSign className="h-4 w-4" />{salaryText}</span>
               )}
-
               <span className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 Posted {formatDistanceToNow(new Date(vacancy.created_at), { addSuffix: true })}
@@ -346,7 +323,6 @@ export default async function VacancyDetailPage({
             </div>
           </div>
         </div>
-
         <div className="flex items-center gap-2">
           <LinkedInShareButton
             title={vacancy.title}
@@ -356,186 +332,168 @@ export default async function VacancyDetailPage({
           />
           <Button variant="outline" asChild>
             <Link href={`/vacancies/${id}/pipeline`}>
-              <LayoutGrid className="mr-2 h-4 w-4" />
-              Pipeline
+              <LayoutGrid className="mr-2 h-4 w-4" />Pipeline
             </Link>
           </Button>
           <Button asChild>
             <Link href={`/vacancies/${id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Vacancy
+              <Edit className="mr-2 h-4 w-4" />Edit Vacancy
             </Link>
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          {vacancy.description && (
+      {/* Tabs */}
+      <Tabs defaultValue="applications">
+        <TabsList>
+          <TabsTrigger value="applications">
+            Applications
+            {(applicantsCount ?? 0) > 0 && (
+              <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                {applicantsCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="details">Details</TabsTrigger>
+        </TabsList>
+
+        {/* Applications tab */}
+        <TabsContent value="applications" className="mt-4">
+          {allApplications.length > 0 ? (
             <Card className="border-border">
-              <CardHeader>
-                <CardTitle>Job Description</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="whitespace-pre-wrap text-muted-foreground">
-                  {vacancy.description}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {vacancy.requirements && (
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle>Requirements</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="whitespace-pre-wrap text-muted-foreground">
-                  {vacancy.requirements}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        <div className="space-y-6">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Overview</CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Employment</span>
-                <span className="text-sm font-medium">
-                  {formatEmploymentType(vacancy.employment_type)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Applicants</span>
-                <span className="text-sm font-medium">{applicantsCount || 0}</span>
-              </div>
-
-              {sector && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Sector</span>
-                  <span className="text-sm font-medium">{sector.name}</span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Status</span>
-                {vacancyStatus ? (
-                  <Badge
-                    variant="secondary"
-                    className={VACANCY_STATUS_COLORS[vacancyStatus.code]}
-                  >
-                    {vacancyStatus.name}
-                  </Badge>
-                ) : (
-                  <span className="text-sm font-medium">Unknown</span>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Openings</span>
-                <span className="text-sm font-medium">{vacancy.openings_count}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Start Date</span>
-                <span className="text-sm font-medium">
-                  {new Date(vacancy.start_date).toLocaleDateString()}
-                </span>
-              </div>
-
-              {vacancy.end_date && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">End Date</span>
-                  <span className="text-sm font-medium">
-                    {new Date(vacancy.end_date).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Recent Applicants</CardTitle>
-                <CardDescription>{applicantsCount || 0} total</CardDescription>
-              </div>
-            </CardHeader>
-
-            <CardContent>
-              {recentApplications.length > 0 ? (
-                <div className="space-y-3">
-                  {recentApplications.map((application) => {
-                    const relatedCandidate = application.candidates?.[0] || null
-                    const fallbackCandidate = fallbackCandidatesMap.get(application.candidate_id) || null
-                    const candidate = relatedCandidate || fallbackCandidate
-
+              <CardContent className="p-0">
+                <div className="divide-y divide-border">
+                  {allApplications.map((application) => {
+                    const candidate = appCandidateMap.get(application.candidate_id)
                     const generalStatus = candidate?.general_status_id
                       ? candidateStatusMap.get(candidate.general_status_id)
                       : null
+                    const appStatus = application.status_id
+                      ? appStatusMap.get(application.status_id)
+                      : null
+                    const initials = candidate
+                      ? `${candidate.first_name?.[0] || ''}${candidate.last_name?.[0] || ''}`.toUpperCase()
+                      : '?'
+                    const fullName = candidate
+                      ? `${candidate.first_name} ${candidate.last_name}`.trim()
+                      : 'Unknown candidate'
 
                     return (
                       <Link
                         key={application.id}
                         href={`/candidates/${application.candidate_id}`}
-                        className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+                        className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
                       >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                          <span className="text-xs font-medium text-primary">
-                            {getCandidateInitials(candidate)}
-                          </span>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                            <span className="text-xs font-medium text-primary">{initials}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-foreground">{fullName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
+                            </p>
+                          </div>
                         </div>
-
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">
-  {getCandidateFullName(candidate)}
-</p>
-
-{generalStatus ? (
-  <Badge
-    variant="secondary"
-    className={CANDIDATE_GENERAL_STATUS_COLORS[generalStatus.code]}
-  >
-    {generalStatus.name}
-  </Badge>
-) : (
-  <p className="text-xs text-muted-foreground">No status</p>
-)}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {appStatus && (
+                            <Badge variant="secondary" className={APPLICATION_STATUS_COLORS[appStatus.code]}>
+                              {appStatus.name}
+                            </Badge>
+                          )}
+                          {generalStatus && (
+                            <Badge variant="secondary" className={CANDIDATE_GENERAL_STATUS_COLORS[generalStatus.code]}>
+                              {generalStatus.name}
+                            </Badge>
+                          )}
                         </div>
                       </Link>
                     )
                   })}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
+              <UserCircle className="h-10 w-10 text-muted-foreground/40" />
+              <h3 className="mt-4 text-lg font-medium text-foreground">No applicants yet</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Add candidates to start tracking applications.</p>
+              <Button className="mt-6" asChild>
+                <Link href={`/candidates/new?vacancy=${id}`}>Add Candidate</Link>
+              </Button>
+            </div>
+          )}
+        </TabsContent>
 
-                  {applicantsCount && applicantsCount > 5 && (
-                    <Button variant="ghost" size="sm" className="w-full" asChild>
-                      <Link href={`/candidates?vacancy=${id}`}>
-                        View all {applicantsCount} applicants
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="py-6 text-center">
-                  <Users className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                  <p className="mt-2 text-sm text-muted-foreground">No applicants yet</p>
-                  <Button variant="outline" size="sm" className="mt-4" asChild>
-                    <Link href={`/candidates/new?vacancy=${id}`}>
-                      Add candidate
-                    </Link>
-                  </Button>
-                </div>
+        {/* Details tab */}
+        <TabsContent value="details" className="mt-4">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              {vacancy.description && (
+                <Card className="border-border">
+                  <CardHeader><CardTitle>Job Description</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="whitespace-pre-wrap text-muted-foreground">{vacancy.description}</div>
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              {vacancy.requirements && (
+                <Card className="border-border">
+                  <CardHeader><CardTitle>Requirements</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="whitespace-pre-wrap text-muted-foreground">{vacancy.requirements}</div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+            <div>
+              <Card className="border-border">
+                <CardHeader><CardTitle>Overview</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Employment</span>
+                    <span className="text-sm font-medium">{formatEmploymentType(vacancy.employment_type)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Applicants</span>
+                    <span className="text-sm font-medium">{applicantsCount || 0}</span>
+                  </div>
+                  {sector && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Sector</span>
+                      <span className="text-sm font-medium">{sector.name}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Status</span>
+                    {vacancyStatus ? (
+                      <Badge variant="secondary" className={VACANCY_STATUS_COLORS[vacancyStatus.code]}>
+                        {vacancyStatus.name}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm font-medium">Unknown</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Openings</span>
+                    <span className="text-sm font-medium">{vacancy.openings_count}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Start Date</span>
+                    <span className="text-sm font-medium">{new Date(vacancy.start_date).toLocaleDateString()}</span>
+                  </div>
+                  {vacancy.end_date && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">End Date</span>
+                      <span className="text-sm font-medium">{new Date(vacancy.end_date).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
