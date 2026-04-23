@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCandidate, updateCandidate } from '@/lib/actions/candidates'
 import { uploadDocument } from '@/lib/actions/documents'
+import { createNote } from '@/lib/actions/notes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +18,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
+import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Linkedin, Paperclip, X, Upload } from 'lucide-react'
 import type {
   Candidate,
@@ -75,11 +77,13 @@ export function CandidateForm({
     years_of_experience: candidate?.years_of_experience ?? null,
     linkedin_profile_url: candidate?.linkedin_profile_url || '',
     source: candidate?.source || '',
-    general_status_id: candidate?.general_status_id || null,
+    general_status_id: candidate?.general_status_id ||
+      candidateStatuses.find((s) => s.code === 'active')?.id || null,
     linked_vacancy_ids: [],
   })
 
   const isEditing = !!candidate
+  const [pendingNote, setPendingNote] = useState('')
 
   const handleChange = <K extends keyof CandidateFormData>(key: K, value: CandidateFormData[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }))
@@ -125,13 +129,17 @@ export function CandidateForm({
       return
     }
 
-    // Upload queued documents after candidate is created
-    if (!isEditing && result.data?.id && pendingFiles.length > 0) {
+    if (!isEditing && result.data?.id) {
+      // Upload queued documents
       for (const entry of pendingFiles) {
         const fd = new FormData()
         fd.append('file', entry.file)
         fd.append('document_type', entry.documentType)
         await uploadDocument(result.data.id, fd)
+      }
+      // Save initial note
+      if (pendingNote.trim()) {
+        await createNote(result.data.id, pendingNote.trim())
       }
     }
 
@@ -198,17 +206,14 @@ export function CandidateForm({
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="general_status_id">General Status</Label>
               <Select
-                value={formData.general_status_id || 'none'}
-                onValueChange={(value) =>
-                  handleChange('general_status_id', value === 'none' ? null : value)
-                }
+                value={formData.general_status_id || ''}
+                onValueChange={(value) => handleChange('general_status_id', value || null)}
                 disabled={isLoading}
               >
                 <SelectTrigger id="general_status_id">
-                  <SelectValue placeholder="Select candidate status" />
+                  <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Not specified</SelectItem>
                   {candidateStatuses.map((status) => (
                     <SelectItem key={status.id} value={status.id}>
                       {status.name}
@@ -437,6 +442,25 @@ export function CandidateForm({
               <Upload className="mr-2 h-4 w-4" />
               Add File
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Notes — only on create */}
+      {!isEditing && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Notes</CardTitle>
+            <CardDescription>Add an initial note about this candidate (optional).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              placeholder="e.g. Strong referral from Nino. Background in fintech. Prefer afternoon interviews."
+              value={pendingNote}
+              onChange={(e) => setPendingNote(e.target.value)}
+              rows={4}
+              disabled={isLoading}
+            />
           </CardContent>
         </Card>
       )}

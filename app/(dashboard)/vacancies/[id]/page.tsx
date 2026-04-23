@@ -22,6 +22,7 @@ import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { LinkedInShareButton } from '@/components/vacancies/linkedin-share-button'
 import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
+import { VacancyApplicationsToolbar } from '@/components/vacancies/vacancy-applications-toolbar'
 
 interface VacancyRow {
   id: string
@@ -143,10 +144,13 @@ function getCandidateInitials(candidate?: { first_name: string; last_name: strin
 
 export default async function VacancyDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ appSearch?: string; appStatus?: string }>
 }) {
   const { id } = await params
+  const { appSearch = '', appStatus } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -247,13 +251,17 @@ export default async function VacancyDetailPage({
     { data: appStatusesRaw },
     { data: questionsRaw },
   ] = await Promise.all([
-    supabase
-      .from('applications')
-      .select('id, candidate_id, vacancy_id, status_id, applied_at', { count: 'exact' })
-      .eq('organization_id', organizationId)
-      .eq('vacancy_id', id)
-      .is('deleted_at', null)
-      .order('applied_at', { ascending: false }),
+    (() => {
+      let q = supabase
+        .from('applications')
+        .select('id, candidate_id, vacancy_id, status_id, applied_at', { count: 'exact' })
+        .eq('organization_id', organizationId)
+        .eq('vacancy_id', id)
+        .is('deleted_at', null)
+        .order('applied_at', { ascending: false })
+      if (appStatus) q = q.eq('status_id', appStatus)
+      return q
+    })(),
 
     supabase
       .from('application_statuses')
@@ -286,6 +294,15 @@ export default async function VacancyDetailPage({
       appCandidateMap.set(c.id, c)
     }
   }
+
+  // Filter by candidate name search after candidate map is populated
+  const filteredApplications = appSearch.trim()
+    ? allApplications.filter((app) => {
+        const c = appCandidateMap.get(app.candidate_id)
+        if (!c) return false
+        return `${c.first_name} ${c.last_name}`.toLowerCase().includes(appSearch.trim().toLowerCase())
+      })
+    : allApplications
 
   const vacancyStatus =
     vacancy.vacancy_statuses?.[0] ||
@@ -339,6 +356,9 @@ export default async function VacancyDetailPage({
             location={vacancy.location}
             employmentType={vacancy.employment_type}
             department={vacancy.department}
+            description={vacancy.description}
+            responsibilities={(vacancy as any).responsibilities ?? null}
+            requirements={vacancy.requirements}
           />
           <Button variant="outline" asChild>
             <Link href={`/vacancies/${id}/pipeline`}>
@@ -372,11 +392,16 @@ export default async function VacancyDetailPage({
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Applications list */}
             <div className="lg:col-span-2">
-              {allApplications.length > 0 ? (
+              <VacancyApplicationsToolbar
+                initialSearch={appSearch}
+                initialStatus={appStatus || ''}
+                appStatuses={appStatuses}
+              />
+              {filteredApplications.length > 0 ? (
                 <Card className="border-border">
                   <CardContent className="p-0">
                     <div className="divide-y divide-border">
-                      {allApplications.map((application) => {
+                      {filteredApplications.map((application) => {
                         const candidate = appCandidateMap.get(application.candidate_id)
                         const generalStatus = candidate?.general_status_id
                           ? candidateStatusMap.get(candidate.general_status_id)
@@ -429,11 +454,17 @@ export default async function VacancyDetailPage({
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
                   <UserCircle className="h-10 w-10 text-muted-foreground/40" />
-                  <h3 className="mt-4 text-lg font-medium text-foreground">No applicants yet</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">Add candidates to start tracking applications.</p>
-                  <Button className="mt-6" asChild>
-                    <Link href={`/candidates/new?vacancy=${id}`}>Add Candidate</Link>
-                  </Button>
+                  <h3 className="mt-4 text-lg font-medium text-foreground">
+                    {appSearch || appStatus ? 'No matching applicants' : 'No applicants yet'}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {appSearch || appStatus ? 'Try adjusting your filters.' : 'Add candidates to start tracking applications.'}
+                  </p>
+                  {!appSearch && !appStatus && (
+                    <Button className="mt-6" asChild>
+                      <Link href={`/candidates/new?vacancy=${id}`}>Add Candidate</Link>
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

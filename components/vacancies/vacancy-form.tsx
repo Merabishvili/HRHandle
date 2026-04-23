@@ -59,13 +59,14 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
     start_date: vacancy?.start_date || '',
     end_date: vacancy?.end_date || null,
     description: vacancy?.description || '',
+    responsibilities: (vacancy as any)?.responsibilities || '',
     requirements: vacancy?.requirements || '',
   })
 
   const validateForm = (): string | null => {
     if (!formData.title.trim()) return 'Job title is required.'
     if (!formData.start_date) return 'Start date is required.'
-    if (!formData.description.trim()) return 'Description is required.'
+    if (!formData.description.trim()) return 'About the job is required.'
     if (!formData.sector_id) return 'Sector is required.'
     if (!formData.status_id) return 'Status is required.'
 
@@ -119,6 +120,7 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
       start_date: formData.start_date,
       end_date: formData.end_date || null,
       description: formData.description.trim(),
+      responsibilities: (formData as any).responsibilities?.trim() || null,
       requirements: formData.requirements?.trim() || null,
     }
 
@@ -391,36 +393,53 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Vacancy Details</CardTitle>
-          <CardDescription>Describe the role and requirements.</CardDescription>
+          <CardDescription>These fields are used when sharing the vacancy on LinkedIn.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">About the Job *</Label>
             <Textarea
               id="description"
-              placeholder="Describe the role, responsibilities, and expectations..."
+              placeholder="Give an overview of the role — what the team does, what success looks like, and why someone would want to join..."
               value={formData.description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setFormData({ ...formData, description: e.target.value })
               }
               disabled={isLoading}
-              rows={6}
+              rows={5}
             />
+            <p className="text-xs text-muted-foreground">Shown in the LinkedIn post as the main job description.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="responsibilities">Responsibilities</Label>
+            <Textarea
+              id="responsibilities"
+              placeholder="• Lead backend architecture decisions&#10;• Collaborate with product and design&#10;• Mentor junior engineers..."
+              value={(formData as any).responsibilities || ''}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setFormData({ ...formData, responsibilities: e.target.value } as any)
+              }
+              disabled={isLoading}
+              rows={5}
+            />
+            <p className="text-xs text-muted-foreground">Included in the LinkedIn post under "Responsibilities".</p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="requirements">Requirements</Label>
             <Textarea
               id="requirements"
-              placeholder="List skills, qualifications, and experience requirements..."
+              placeholder="• 5+ years of experience with TypeScript&#10;• Strong understanding of distributed systems&#10;• Experience with cloud infrastructure..."
               value={formData.requirements || ''}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setFormData({ ...formData, requirements: e.target.value })
               }
               disabled={isLoading}
-              rows={6}
+              rows={5}
             />
+            <p className="text-xs text-muted-foreground">Included in the LinkedIn post under "Requirements".</p>
           </div>
         </CardContent>
       </Card>

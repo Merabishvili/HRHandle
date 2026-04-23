@@ -20,10 +20,17 @@ import {
   VACANCY_SORT_OPTIONS,
 } from '@/lib/types/columns'
 
+interface StatusOption {
+  id: string
+  name: string
+}
+
 interface VacanciesToolbarProps {
   initialSearch: string
   initialSort: string
+  initialStatus: string
   selectedColumns: string[]
+  statusOptions: StatusOption[]
 }
 
 const FIXED_COLUMNS = [
@@ -35,7 +42,9 @@ const FIXED_COLUMNS = [
 export function VacanciesToolbar({
   initialSearch,
   initialSort,
+  initialStatus,
   selectedColumns: initialColumns,
+  statusOptions,
 }: VacanciesToolbarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -70,6 +79,17 @@ export function VacanciesToolbar({
     router.push(`${pathname}?${params.toString()}`)
   }
 
+  function handleStatusChange(value: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === 'all') {
+      params.delete('status')
+    } else {
+      params.set('status', value)
+    }
+    params.delete('page')
+    router.push(`${pathname}?${params.toString()}`)
+  }
+
   async function handleSaveColumns(columns: string[]) {
     await updateColumnPreferences('vacancies', columns)
     router.refresh()
@@ -88,8 +108,20 @@ export function VacanciesToolbar({
           />
         </div>
 
+        <Select value={initialStatus || 'all'} onValueChange={handleStatusChange}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {statusOptions.map((s) => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Select value={initialSort || 'created_desc'} onValueChange={handleSortChange}>
-          <SelectTrigger className="w-[240px]">
+          <SelectTrigger className="w-[200px]">
             <SlidersHorizontal className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>

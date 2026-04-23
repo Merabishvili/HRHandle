@@ -30,6 +30,7 @@ type SearchParams = Promise<{
   page?: string
   search?: string
   sort?: string
+  status?: string
 }>
 
 interface VacancyStatusOption {
@@ -84,7 +85,7 @@ export default async function VacanciesPage({
 }: {
   searchParams: SearchParams
 }) {
-  const { page: pageParam, search = '', sort = 'created_desc' } = await searchParams
+  const { page: pageParam, search = '', sort = 'created_desc', status: statusFilter } = await searchParams
   const page = Math.max(1, parseInt(pageParam || '1', 10) || 1)
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
@@ -135,6 +136,10 @@ export default async function VacanciesPage({
 
   if (search.trim()) {
     baseQuery = baseQuery.ilike('title', `%${search.trim()}%`)
+  }
+
+  if (statusFilter) {
+    baseQuery = baseQuery.eq('status_id', statusFilter)
   }
 
   let vacancies: VacancyRow[]
@@ -196,6 +201,7 @@ export default async function VacanciesPage({
     const params = new URLSearchParams()
     if (search) params.set('search', search)
     if (sort !== 'created_desc') params.set('sort', sort)
+    if (statusFilter) params.set('status', statusFilter)
     params.set('page', String(targetPage))
     return `/vacancies?${params.toString()}`
   }
@@ -219,7 +225,9 @@ export default async function VacanciesPage({
       <VacanciesToolbar
         initialSearch={search}
         initialSort={sort}
+        initialStatus={statusFilter || ''}
         selectedColumns={activeColumns}
+        statusOptions={statusOptions}
       />
 
       <Card className="border-border">

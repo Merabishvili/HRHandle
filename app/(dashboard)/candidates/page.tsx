@@ -34,6 +34,7 @@ type SearchParams = Promise<{
   page?: string
   search?: string
   sort?: string
+  status?: string
 }>
 
 interface CandidateRow {
@@ -91,7 +92,7 @@ export default async function CandidatesPage({
 }: {
   searchParams: SearchParams
 }) {
-  const { vacancy: vacancyFilter, page: pageParam, search = '', sort = 'created_desc' } = await searchParams
+  const { vacancy: vacancyFilter, page: pageParam, search = '', sort = 'created_desc', status: statusFilter } = await searchParams
   const page = Math.max(1, parseInt(pageParam || '1', 10) || 1)
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
@@ -166,6 +167,11 @@ export default async function CandidatesPage({
     baseQuery = baseQuery.or(
       `first_name.ilike.%${search.trim()}%,last_name.ilike.%${search.trim()}%`
     )
+  }
+
+  // Status filter
+  if (statusFilter) {
+    baseQuery = baseQuery.eq('general_status_id', statusFilter)
   }
 
   // Vacancy filter
@@ -253,6 +259,7 @@ export default async function CandidatesPage({
     if (vacancyFilter) params.set('vacancy', vacancyFilter)
     if (search) params.set('search', search)
     if (sort !== 'created_desc') params.set('sort', sort)
+    if (statusFilter) params.set('status', statusFilter)
     params.set('page', String(targetPage))
     return `/candidates?${params.toString()}`
   }
@@ -287,7 +294,9 @@ export default async function CandidatesPage({
       <CandidatesToolbar
         initialSearch={search}
         initialSort={sort}
+        initialStatus={statusFilter || ''}
         selectedColumns={activeColumns}
+        statusOptions={candidateStatuses}
       />
 
       <Card className="border-border">

@@ -77,6 +77,7 @@ export interface VacancyFormData {
   end_date?: ISODateString | null
 
   description: string
+  responsibilities?: string | null
   requirements?: string | null
 }
 

@@ -8,6 +8,9 @@ interface LinkedInShareButtonProps {
   location: string | null
   employmentType: string | null
   department: string | null
+  description?: string | null
+  responsibilities?: string | null
+  requirements?: string | null
 }
 
 function formatEmploymentType(value: string | null): string {
@@ -26,14 +29,37 @@ export function LinkedInShareButton({
   location,
   employmentType,
   department,
+  description,
+  responsibilities,
+  requirements,
 }: LinkedInShareButtonProps) {
   const handleShare = () => {
     const lines: string[] = []
+
     lines.push(`🚀 We're hiring: ${title}`)
     if (department) lines.push(`📂 ${department}`)
     if (location) lines.push(`📍 ${location}`)
     const formattedType = formatEmploymentType(employmentType)
     if (formattedType) lines.push(`💼 ${formattedType}`)
+
+    if (description?.trim()) {
+      lines.push('')
+      lines.push('📌 About the Job')
+      lines.push(description.trim())
+    }
+
+    if (responsibilities?.trim()) {
+      lines.push('')
+      lines.push('🎯 Responsibilities')
+      lines.push(responsibilities.trim())
+    }
+
+    if (requirements?.trim()) {
+      lines.push('')
+      lines.push('✅ Requirements')
+      lines.push(requirements.trim())
+    }
+
     lines.push('')
     lines.push('Interested? Get in touch or apply via the link in our profile.')
     lines.push('')
