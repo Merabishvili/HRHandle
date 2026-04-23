@@ -17,6 +17,7 @@ import {
   UserCircle,
 } from 'lucide-react'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
+import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { formatDistanceToNow, format } from 'date-fns'
 import { CandidateStatusSelect } from '@/components/candidates/candidate-status-select'
 import { CandidateNotes } from '@/components/candidates/candidate-notes'
@@ -54,14 +55,13 @@ interface ApplicationRow {
   status_id: string | null
   applied_at: string
   updated_at: string
-  vacancies:
-    | {
-        id: string
-        title: string
-        department: string | null
-        location: string | null
-      }[]
-    | null
+}
+
+interface AppStatusRow {
+  id: string
+  name: string
+  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
+  sort_order: number
 }
 
 interface VacancyOption {
@@ -146,7 +146,7 @@ export default async function CandidateDetailPage({
   const [
     { data: candidateRaw },
     { data: candidateStatusesRaw },
-    { data: vacancyOptionsRaw },
+    { data: appStatusesRaw },
   ] = await Promise.all([
     supabase
       .from('candidates')
@@ -179,10 +179,10 @@ export default async function CandidateDetailPage({
       .order('sort_order', { ascending: true }),
 
     supabase
-      .from('vacancies')
-      .select('id, title, department, location')
-      .eq('organization_id', organizationId)
-      .is('archived_at', null),
+      .from('application_statuses')
+      .select('id, name, code, sort_order')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
   ])
 
   const candidate = candidateRaw as CandidateRow | null
@@ -196,25 +196,13 @@ export default async function CandidateDetailPage({
     ? candidateStatuses.find((status) => status.id === candidate.general_status_id) || null
     : null
 
-  const vacancyOptions = (vacancyOptionsRaw || []) as VacancyOption[]
-  const vacancyMap = new Map(vacancyOptions.map((vacancy) => [vacancy.id, vacancy]))
+  const appStatusMap = new Map(
+    ((appStatusesRaw || []) as AppStatusRow[]).map((s) => [s.id, s])
+  )
 
   const { data: applicationsRaw } = await supabase
     .from('applications')
-    .select(`
-      id,
-      candidate_id,
-      vacancy_id,
-      status_id,
-      applied_at,
-      updated_at,
-      vacancies (
-        id,
-        title,
-        department,
-        location
-      )
-    `)
+    .select('id, candidate_id, vacancy_id, status_id, applied_at, updated_at')
     .eq('organization_id', organizationId)
     .eq('candidate_id', id)
     .is('deleted_at', null)
@@ -222,12 +210,21 @@ export default async function CandidateDetailPage({
 
   const applications = (applicationsRaw || []) as ApplicationRow[]
 
+  // Fetch vacancies separately to avoid unreliable nested joins
+  const vacancyIds = [...new Set(applications.map((a) => a.vacancy_id))]
+  const vacancyMap = new Map<string, VacancyOption>()
+  if (vacancyIds.length > 0) {
+    const { data: vacanciesRaw } = await supabase
+      .from('vacancies')
+      .select('id, title, department, location')
+      .in('id', vacancyIds)
+    for (const v of (vacanciesRaw || []) as VacancyOption[]) {
+      vacancyMap.set(v.id, v)
+    }
+  }
+
   const primaryApplication = applications[0] || null
-  const primaryRelatedVacancy = primaryApplication?.vacancies?.[0] || null
-  const primaryFallbackVacancy = primaryApplication?.vacancy_id
-    ? vacancyMap.get(primaryApplication.vacancy_id) || null
-    : null
-  const primaryVacancy = primaryRelatedVacancy || primaryFallbackVacancy || null
+  const primaryVacancy = primaryApplication ? vacancyMap.get(primaryApplication.vacancy_id) ?? null : null
 
   const { data: interviewsRaw } = await supabase
     .from('interviews')
@@ -460,23 +457,22 @@ export default async function CandidateDetailPage({
             <CardHeader>
               <div className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Linked Vacancies</CardTitle>
-                  <CardDescription>Applications connected to this candidate</CardDescription>
+                  <CardTitle>Applications</CardTitle>
+                  <CardDescription>Pipeline history for this candidate</CardDescription>
                 </div>
 
                 <Button size="sm" asChild>
-                  <Link href={`/candidates/${id}/edit`}>Manage Links</Link>
+                  <Link href={`/candidates/${id}/edit`}>Manage</Link>
                 </Button>
               </div>
             </CardHeader>
 
             <CardContent>
               {applications.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {applications.map((application) => {
-                    const relatedVacancy = application.vacancies?.[0] || null
-                    const fallbackVacancy = vacancyMap.get(application.vacancy_id) || null
-                    const vacancy = relatedVacancy || fallbackVacancy
+                    const vacancy = vacancyMap.get(application.vacancy_id) ?? null
+                    const appStatus = application.status_id ? appStatusMap.get(application.status_id) ?? null : null
 
                     return (
                       <div
@@ -499,14 +495,20 @@ export default async function CandidateDetailPage({
                             {vacancy?.department && (
                               <p className="text-sm text-muted-foreground">{vacancy.department}</p>
                             )}
-
-                            {vacancy?.location && (
-                              <p className="text-sm text-muted-foreground">{vacancy.location}</p>
-                            )}
                           </div>
 
-                          <div className="text-right text-sm text-muted-foreground">
-                            Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
+                          <div className="flex flex-col items-end gap-1">
+                            {appStatus && (
+                              <Badge
+                                variant="secondary"
+                                className={APPLICATION_STATUS_COLORS[appStatus.code]}
+                              >
+                                {appStatus.name}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -516,7 +518,7 @@ export default async function CandidateDetailPage({
               ) : (
                 <div className="py-8 text-center">
                   <Briefcase className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                  <p className="mt-2 text-sm text-muted-foreground">No linked vacancies</p>
+                  <p className="mt-2 text-sm text-muted-foreground">No applications yet</p>
                 </div>
               )}
             </CardContent>
