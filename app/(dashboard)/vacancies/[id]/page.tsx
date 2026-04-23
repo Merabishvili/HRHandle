@@ -389,7 +389,7 @@ export default async function VacancyDetailPage({
           <TabsList className="h-auto w-fit rounded-none bg-transparent p-0 gap-0">
             <TabsTrigger
               value="applications"
-              className="-mb-px rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-normal text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none"
+              className="-mb-px rounded-none !border-x-0 !border-t-0 border-b-2 border-transparent !bg-transparent px-4 py-2.5 text-sm font-normal text-muted-foreground !shadow-none data-[state=active]:border-b-primary data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:!shadow-none"
             >
               Applications
               {(applicantsCount ?? 0) > 0 && (
@@ -400,15 +400,15 @@ export default async function VacancyDetailPage({
             </TabsTrigger>
             <TabsTrigger
               value="qe"
-              className="-mb-px rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-normal text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none"
+              className="-mb-px rounded-none !border-x-0 !border-t-0 border-b-2 border-transparent !bg-transparent px-4 py-2.5 text-sm font-normal text-muted-foreground !shadow-none data-[state=active]:border-b-primary data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:!shadow-none"
             >
-              Questionary &amp; Evaluation
+              Assessment
             </TabsTrigger>
             <TabsTrigger
               value="application-form"
-              className="-mb-px rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-normal text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:shadow-none"
+              className="-mb-px rounded-none !border-x-0 !border-t-0 border-b-2 border-transparent !bg-transparent px-4 py-2.5 text-sm font-normal text-muted-foreground !shadow-none data-[state=active]:border-b-primary data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:!shadow-none"
             >
-              Application Form
+              Apply Link
             </TabsTrigger>
           </TabsList>
         </div>
