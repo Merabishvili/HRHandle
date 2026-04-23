@@ -103,3 +103,66 @@ export async function updateApplicationStatus(
   revalidatePath('/candidates', 'page')
   return { success: true, data: undefined }
 }
+
+export async function createApplication(input: {
+  candidateId: string
+  vacancyId: string
+}): Promise<ActionResult<{ id: string }>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  // Resolve active application status IDs
+  const { data: activeStatusesRaw } = await ctx.supabase
+    .from('application_statuses')
+    .select('id, code')
+    .in('code', ['applied', 'screening', 'interview', 'offer'])
+
+  const activeStatusIds = (activeStatusesRaw || []).map((s) => s.id)
+
+  // Count existing active applications for this candidate
+  const { count } = await ctx.supabase
+    .from('applications')
+    .select('id', { count: 'exact', head: true })
+    .eq('candidate_id', input.candidateId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .in('status_id', activeStatusIds)
+
+  if ((count ?? 0) >= 5) {
+    return { success: false, error: 'Candidate already has 5 active applications. Move or close one before adding a new one.' }
+  }
+
+  // Prevent duplicate application to the same vacancy
+  const { data: existing } = await ctx.supabase
+    .from('applications')
+    .select('id')
+    .eq('candidate_id', input.candidateId)
+    .eq('vacancy_id', input.vacancyId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (existing) return { success: false, error: 'Candidate already has an application for this vacancy.' }
+
+  // Get the "applied" status id
+  const appliedStatus = (activeStatusesRaw || []).find((s) => s.code === 'applied')
+  if (!appliedStatus) return { success: false, error: 'Application status configuration missing.' }
+
+  const { data, error } = await ctx.supabase
+    .from('applications')
+    .insert({
+      candidate_id: input.candidateId,
+      vacancy_id: input.vacancyId,
+      organization_id: ctx.orgId,
+      status_id: appliedStatus.id,
+      applied_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single()
+
+  if (error || !data) return { success: false, error: 'Failed to create application.' }
+
+  revalidatePath(`/candidates/${input.candidateId}`)
+  revalidatePath(`/vacancies/${input.vacancyId}`)
+  return { success: true, data: { id: data.id } }
+}

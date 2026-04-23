@@ -21,6 +21,7 @@ import { CandidateStatusSelect } from '@/components/candidates/candidate-status-
 import { CandidateNotes } from '@/components/candidates/candidate-notes'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
 import { ApplicationEvaluation } from '@/components/candidates/application-evaluation'
+import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
 
 interface CandidateRow {
   id: string
@@ -272,6 +273,38 @@ export default async function CandidateDetailPage({
     }
   }
 
+  // Active application count (applied/screening/interview/offer)
+  const activeAppStatusIds = ((appStatusesRaw || []) as AppStatusRow[])
+    .filter((s) => ['applied', 'screening', 'interview', 'offer'].includes(s.code))
+    .map((s) => s.id)
+  const activeApplicationCount = applications.filter(
+    (a) => a.status_id && activeAppStatusIds.includes(a.status_id)
+  ).length
+
+  // Open vacancies not already applied to
+  const appliedVacancyIds = new Set(applications.map((a) => a.vacancy_id))
+  interface OpenVacancy { id: string; title: string; department: string | null }
+  let openVacancies: OpenVacancy[] = []
+  {
+    const { data: vacancyStatusesRaw } = await supabase
+      .from('vacancy_statuses')
+      .select('id, code')
+      .in('code', ['open', 'on_hold'])
+    const openStatusIds = (vacancyStatusesRaw || []).map((s: { id: string; code: string }) => s.id)
+    if (openStatusIds.length > 0) {
+      const { data: openVacanciesRaw } = await supabase
+        .from('vacancies')
+        .select('id, title, department')
+        .eq('organization_id', organizationId)
+        .in('status_id', openStatusIds)
+        .is('deleted_at', null)
+        .order('title', { ascending: true })
+      openVacancies = ((openVacanciesRaw || []) as OpenVacancy[]).filter(
+        (v) => !appliedVacancyIds.has(v.id)
+      )
+    }
+  }
+
   const { data: interviewsRaw } = await supabase
     .from('interviews')
     .select(`
@@ -451,11 +484,20 @@ export default async function CandidateDetailPage({
               <div className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Applications</CardTitle>
-                  <CardDescription>Pipeline history and evaluations</CardDescription>
+                  <CardDescription>
+                    Pipeline history and evaluations
+                    {activeApplicationCount > 0 && (
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        ({activeApplicationCount}/5 active)
+                      </span>
+                    )}
+                  </CardDescription>
                 </div>
-                <Button size="sm" asChild>
-                  <Link href={`/candidates/${id}/edit`}>Manage</Link>
-                </Button>
+                <AddApplicationDialog
+                  candidateId={id}
+                  availableVacancies={openVacancies}
+                  activeApplicationCount={activeApplicationCount}
+                />
               </div>
             </CardHeader>
             <CardContent>
