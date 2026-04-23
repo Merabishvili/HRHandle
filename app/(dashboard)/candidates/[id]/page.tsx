@@ -22,6 +22,7 @@ import { formatDistanceToNow, format } from 'date-fns'
 import { CandidateStatusSelect } from '@/components/candidates/candidate-status-select'
 import { CandidateNotes } from '@/components/candidates/candidate-notes'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
+import { ApplicationEvaluation } from '@/components/candidates/application-evaluation'
 
 interface CandidateRow {
   id: string
@@ -225,6 +226,53 @@ export default async function CandidateDetailPage({
 
   const primaryApplication = applications[0] || null
   const primaryVacancy = primaryApplication ? vacancyMap.get(primaryApplication.vacancy_id) ?? null : null
+
+  // Fetch evaluation questions per vacancy and evaluations per application
+  const questionsByVacancy = new Map<string, { id: string; label: string; type: 'text' | 'score' }[]>()
+  if (vacancyIds.length > 0) {
+    const { data: questionsRaw } = await supabase
+      .from('vacancy_questions')
+      .select('id, label, type, sort_order, vacancy_id')
+      .in('vacancy_id', vacancyIds)
+      .order('sort_order', { ascending: true })
+    for (const q of (questionsRaw || []) as { id: string; label: string; type: 'text' | 'score'; sort_order: number; vacancy_id: string }[]) {
+      const existing = questionsByVacancy.get(q.vacancy_id) ?? []
+      existing.push({ id: q.id, label: q.label, type: q.type })
+      questionsByVacancy.set(q.vacancy_id, existing)
+    }
+  }
+
+  const evaluationsByApp = new Map<string, { id: string; score: number | null; answers: { question_id: string; text_value: string | null; score_value: number | null }[] }>()
+  const appIds = applications.map((a) => a.id)
+  if (appIds.length > 0) {
+    const { data: evalsRaw } = await supabase
+      .from('candidate_evaluations')
+      .select('id, application_id, score')
+      .in('application_id', appIds)
+    const evals = (evalsRaw || []) as { id: string; application_id: string; score: number | null }[]
+    const evalIds = evals.map((e) => e.id)
+    let answersByEval = new Map<string, { question_id: string; text_value: string | null; score_value: number | null }[]>()
+    if (evalIds.length > 0) {
+      const { data: answersRaw } = await supabase
+        .from('candidate_evaluation_answers')
+        .select('evaluation_id, question_id, text_value, score_value')
+        .in('evaluation_id', evalIds)
+      for (const a of (answersRaw || []) as { evaluation_id: string; question_id: string; text_value: string | null; score_value: number | null }[]) {
+        const existing = answersByEval.get(a.evaluation_id) ?? []
+        existing.push({ question_id: a.question_id, text_value: a.text_value, score_value: a.score_value })
+        answersByEval.set(a.evaluation_id, existing)
+      }
+    }
+    for (const e of evals) {
+      if (e.application_id) {
+        evaluationsByApp.set(e.application_id, {
+          id: e.id,
+          score: e.score,
+          answers: answersByEval.get(e.id) ?? [],
+        })
+      }
+    }
+  }
 
   const { data: interviewsRaw } = await supabase
     .from('interviews')
@@ -458,9 +506,8 @@ export default async function CandidateDetailPage({
               <div className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Applications</CardTitle>
-                  <CardDescription>Pipeline history for this candidate</CardDescription>
+                  <CardDescription>Pipeline history and evaluations</CardDescription>
                 </div>
-
                 <Button size="sm" asChild>
                   <Link href={`/candidates/${id}/edit`}>Manage</Link>
                 </Button>
@@ -473,45 +520,22 @@ export default async function CandidateDetailPage({
                   {applications.map((application) => {
                     const vacancy = vacancyMap.get(application.vacancy_id) ?? null
                     const appStatus = application.status_id ? appStatusMap.get(application.status_id) ?? null : null
+                    const questions = questionsByVacancy.get(application.vacancy_id) ?? []
+                    const evaluation = evaluationsByApp.get(application.id) ?? null
 
                     return (
-                      <div
+                      <ApplicationEvaluation
                         key={application.id}
-                        className="rounded-lg bg-muted/50 p-4"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="space-y-1">
-                            {vacancy ? (
-                              <Link
-                                href={`/vacancies/${vacancy.id}`}
-                                className="font-medium text-foreground hover:underline"
-                              >
-                                {vacancy.title}
-                              </Link>
-                            ) : (
-                              <p className="font-medium text-foreground">Unknown Vacancy</p>
-                            )}
-
-                            {vacancy?.department && (
-                              <p className="text-sm text-muted-foreground">{vacancy.department}</p>
-                            )}
-                          </div>
-
-                          <div className="flex flex-col items-end gap-1">
-                            {appStatus && (
-                              <Badge
-                                variant="secondary"
-                                className={APPLICATION_STATUS_COLORS[appStatus.code]}
-                              >
-                                {appStatus.name}
-                              </Badge>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                        applicationId={application.id}
+                        vacancyId={application.vacancy_id}
+                        vacancyTitle={vacancy?.title ?? 'Unknown Vacancy'}
+                        vacancyDepartment={vacancy?.department ?? null}
+                        candidateId={id}
+                        appliedAt={application.applied_at}
+                        appStatus={appStatus}
+                        questions={questions}
+                        existingEvaluation={evaluation}
+                      />
                     )
                   })}
                 </div>

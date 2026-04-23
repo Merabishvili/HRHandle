@@ -21,6 +21,7 @@ import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { LinkedInShareButton } from '@/components/vacancies/linkedin-share-button'
+import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
 
 interface VacancyRow {
   id: string
@@ -158,7 +159,7 @@ export default async function VacancyDetailPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('organization_id')
+    .select('organization_id, role')
     .eq('id', user.id)
     .single()
 
@@ -244,6 +245,7 @@ export default async function VacancyDetailPage({
   const [
     { data: applicationsRaw, count: applicantsCount },
     { data: appStatusesRaw },
+    { data: questionsRaw },
   ] = await Promise.all([
     supabase
       .from('applications')
@@ -258,11 +260,19 @@ export default async function VacancyDetailPage({
       .select('id, name, code, sort_order')
       .eq('is_active', true)
       .order('sort_order', { ascending: true }),
+
+    supabase
+      .from('vacancy_questions')
+      .select('id, label, type, sort_order')
+      .eq('vacancy_id', id)
+      .order('sort_order', { ascending: true }),
   ])
 
   const allApplications = (applicationsRaw || []) as ApplicationRow[]
   const appStatuses = (appStatusesRaw || []) as AppStatusRow[]
   const appStatusMap = new Map(appStatuses.map((s) => [s.id, s]))
+  const questions = (questionsRaw || []) as { id: string; label: string; type: 'text' | 'score'; sort_order: number }[]
+  const canEditQuestions = profile?.role === 'owner' || profile?.role === 'admin'
 
   // Fetch candidate data separately for reliability
   const appCandidateIds = [...new Set(allApplications.map((a) => a.candidate_id))]
@@ -429,6 +439,16 @@ export default async function VacancyDetailPage({
         <TabsContent value="details" className="mt-4">
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
+              <Card className="border-border">
+                <CardHeader><CardTitle>Evaluation Questions</CardTitle></CardHeader>
+                <CardContent>
+                  <VacancyQuestions
+                    vacancyId={id}
+                    initialQuestions={questions}
+                    canEdit={canEditQuestions}
+                  />
+                </CardContent>
+              </Card>
               {vacancy.description && (
                 <Card className="border-border">
                   <CardHeader><CardTitle>Job Description</CardTitle></CardHeader>
