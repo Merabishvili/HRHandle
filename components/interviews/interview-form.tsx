@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Video } from 'lucide-react'
 import type { InterviewType } from '@/lib/types'
 
 interface InterviewCandidateOption {
@@ -48,6 +48,7 @@ interface InterviewFormProps {
   defaultCandidateId?: string
   defaultVacancyId?: string
   defaultApplicationId?: string
+  hasGoogleCalendar?: boolean
 }
 
 const interviewTypes: { value: InterviewType; label: string }[] = [
@@ -76,11 +77,13 @@ export function InterviewForm({
   defaultCandidateId,
   defaultVacancyId,
   defaultApplicationId,
+  hasGoogleCalendar = false,
 }: InterviewFormProps) {
   const router = useRouter()
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [createMeet, setCreateMeet] = useState(false)
 
   const [candidateId, setCandidateId] = useState(defaultCandidateId || '')
   const [vacancyId, setVacancyId] = useState(defaultVacancyId || '')
@@ -186,15 +189,18 @@ export function InterviewForm({
     )
     const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`)
 
-    const result = await createInterview({
-      candidate_id: candidateId,
-      vacancy_id: vacancyId,
-      application_id: applicationId || matchedApplication?.id || null,
-      interviewer_id: interviewerId || null,
-      scheduled_at: scheduledAt.toISOString(),
-      duration_minutes: duration,
-      type,
-    })
+    const result = await createInterview(
+      {
+        candidate_id: candidateId,
+        vacancy_id: vacancyId,
+        application_id: applicationId || matchedApplication?.id || null,
+        interviewer_id: interviewerId || null,
+        scheduled_at: scheduledAt.toISOString(),
+        duration_minutes: duration,
+        type,
+      },
+      createMeet && type === 'video'
+    )
 
     if (!result.success) {
       setError(result.error)
@@ -365,6 +371,23 @@ export function InterviewForm({
           </div>
         </CardContent>
       </Card>
+
+      {hasGoogleCalendar && type === 'video' && (
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
+          <input
+            id="create-meet"
+            type="checkbox"
+            checked={createMeet}
+            onChange={(e) => setCreateMeet(e.target.checked)}
+            disabled={isLoading}
+            className="h-4 w-4 rounded border-border"
+          />
+          <label htmlFor="create-meet" className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+            <Video className="h-4 w-4 text-primary" />
+            Create Google Meet link
+          </label>
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-4">
         <Button

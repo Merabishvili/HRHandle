@@ -4,6 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ProfileForm } from '@/components/settings/profile-form'
 import { OrganizationForm } from '@/components/settings/organization-form'
 import { TeamInvitations } from '@/components/settings/team-invitations'
+import { GoogleCalendarConnect } from '@/components/settings/google-calendar-connect'
+
+import { Suspense } from 'react'
 
 interface ProfileRow {
   id: string
@@ -16,6 +19,7 @@ interface ProfileRow {
   is_active: boolean
   created_at: string
   updated_at: string
+  google_refresh_token: string | null
   organizations:
     | {
         id: string
@@ -53,6 +57,7 @@ export default async function SettingsPage() {
       is_active,
       created_at,
       updated_at,
+      google_refresh_token,
       organizations (
         id,
         name,
@@ -143,6 +148,18 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
       )}
+
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle>Integrations</CardTitle>
+          <CardDescription>Connect external services to enhance your workflow.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Suspense fallback={null}>
+            <GoogleCalendarConnect isConnected={!!profile.google_refresh_token} />
+          </Suspense>
+        </CardContent>
+      </Card>
 
       <Card className="border-border">
         <CardHeader>

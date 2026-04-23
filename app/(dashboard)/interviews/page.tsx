@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Calendar, Video, Phone, Building } from 'lucide-react'
+import { Plus, Calendar, Video, Phone, Building, ExternalLink } from 'lucide-react'
 import { format, isToday, isTomorrow, isPast } from 'date-fns'
 
 interface InterviewRow {
@@ -16,6 +16,7 @@ interface InterviewRow {
   duration_minutes: number
   type: 'video' | 'phone' | 'onsite'
   status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+  google_meet_link: string | null
   candidates:
     | {
         id: string
@@ -93,6 +94,7 @@ export default async function InterviewsPage() {
         duration_minutes,
         type,
         status,
+        google_meet_link,
         candidates (
           id,
           first_name,
@@ -256,7 +258,7 @@ export default async function InterviewsPage() {
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="flex flex-col items-end gap-1">
                       <p className="font-medium text-foreground">
                         {getTimeLabel(scheduledDate)}
                       </p>
@@ -269,6 +271,18 @@ export default async function InterviewsPage() {
                       >
                         {interview.status}
                       </Badge>
+                      {interview.google_meet_link && (
+                        <a
+                          href={interview.google_meet_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-800 hover:bg-green-200"
+                        >
+                          <Video className="h-3 w-3" />
+                          Join Meet
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
                     </div>
                   </div>
                 )
