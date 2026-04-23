@@ -385,8 +385,11 @@ export default async function VacancyDetailPage({
 
       {/* Main layout */}
       <Tabs defaultValue="applications">
-        <TabsList>
-          <TabsTrigger value="applications">
+        <TabsList className="h-auto w-full justify-start gap-0 rounded-none border-b border-border bg-transparent p-0">
+          <TabsTrigger
+            value="applications"
+            className="rounded-none border-b-2 border-transparent px-5 py-2.5 text-sm font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
             Applications
             {(applicantsCount ?? 0) > 0 && (
               <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
@@ -394,8 +397,18 @@ export default async function VacancyDetailPage({
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="qe">Questionary &amp; Evaluation</TabsTrigger>
-          <TabsTrigger value="application-form">Application Form</TabsTrigger>
+          <TabsTrigger
+            value="qe"
+            className="rounded-none border-b-2 border-transparent px-5 py-2.5 text-sm font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
+            Questionary &amp; Evaluation
+          </TabsTrigger>
+          <TabsTrigger
+            value="application-form"
+            className="rounded-none border-b-2 border-transparent px-5 py-2.5 text-sm font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          >
+            Application Form
+          </TabsTrigger>
         </TabsList>
 
         {/* Applications tab — split: list left, overview right */}
