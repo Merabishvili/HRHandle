@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Loader2, Linkedin } from 'lucide-react'
 import type {
   Candidate,
@@ -151,15 +152,14 @@ export function CandidateForm({
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="date_of_birth">Date of Birth</Label>
-              <Input
-                id="date_of_birth"
-                type="date"
-                value={formData.date_of_birth ?? ''}
-                onChange={(e) =>
-                  handleChange('date_of_birth', e.target.value || null)
-                }
+              <Label>Date of Birth</Label>
+              <DatePicker
+                value={formData.date_of_birth ?? null}
+                onChange={(v) => handleChange('date_of_birth', v)}
+                placeholder="Select date of birth"
                 disabled={isLoading}
+                fromYear={1940}
+                toYear={new Date().getFullYear()}
               />
             </div>
 

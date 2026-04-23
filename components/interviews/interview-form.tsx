@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Loader2, Video } from 'lucide-react'
 import type { InterviewType } from '@/lib/types'
 
@@ -303,15 +304,14 @@ export function InterviewForm({
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="date">Date *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={scheduledDate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScheduledDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                required
+              <Label>Date *</Label>
+              <DatePicker
+                value={scheduledDate || null}
+                onChange={(v) => setScheduledDate(v ?? '')}
+                placeholder="Select interview date"
                 disabled={isLoading}
+                fromYear={new Date().getFullYear()}
+                toYear={new Date().getFullYear() + 3}
               />
             </div>
 

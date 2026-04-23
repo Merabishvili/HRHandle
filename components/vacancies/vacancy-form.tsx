@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Loader2 } from 'lucide-react'
 import type {
   Vacancy,
@@ -304,29 +305,26 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date *</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={formData.start_date}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, start_date: e.target.value })
-                }
-                required
+              <Label>Start Date *</Label>
+              <DatePicker
+                value={formData.start_date || null}
+                onChange={(v) => setFormData({ ...formData, start_date: v ?? '' })}
+                placeholder="Select start date"
                 disabled={isLoading}
+                fromYear={2020}
+                toYear={2035}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="end_date">End Date</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={formData.end_date || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, end_date: e.target.value || null })
-                }
+              <Label>End Date</Label>
+              <DatePicker
+                value={formData.end_date ?? null}
+                onChange={(v) => setFormData({ ...formData, end_date: v })}
+                placeholder="Select end date"
                 disabled={isLoading}
+                fromYear={2020}
+                toYear={2035}
               />
             </div>
           </div>
