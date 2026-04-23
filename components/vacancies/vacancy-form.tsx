@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createVacancy, updateVacancy } from '@/lib/actions/vacancies'
+import { saveCustomFieldValues } from '@/lib/actions/custom-fields'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Loader2 } from 'lucide-react'
+import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
 import type {
   Vacancy,
   VacancyFormData,
@@ -25,11 +27,14 @@ import type {
   Sector,
   VacancyStatus,
 } from '@/lib/types'
+import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 
 interface VacancyFormProps {
   vacancy?: Vacancy
   sectors: Sector[]
   statusOptions: VacancyStatus[]
+  customFieldGroups?: CustomFieldGroupWithFields[]
+  customFieldValues?: CustomFieldValue[]
 }
 
 const employmentTypes: { value: EmploymentType; label: string }[] = [
@@ -39,10 +44,19 @@ const employmentTypes: { value: EmploymentType; label: string }[] = [
   { value: 'internship', label: 'Internship' },
 ]
 
-export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProps) {
+export function VacancyForm({
+  vacancy,
+  sectors,
+  statusOptions,
+  customFieldGroups = [],
+  customFieldValues = [],
+}: VacancyFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [cfValues, setCfValues] = useState<Record<string, string>>(
+    () => valuesToMap(customFieldValues)
+  )
 
   const [formData, setFormData] = useState<VacancyFormData>({
     title: vacancy?.title || '',
@@ -132,6 +146,14 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
       setError(result.error)
       setIsLoading(false)
       return
+    }
+
+    const entityId = vacancy?.id ?? (result as any).data?.id
+    if (entityId && customFieldGroups.length > 0) {
+      const upserts = mapToValueUpserts(cfValues, customFieldGroups)
+      if (upserts.length > 0) {
+        await saveCustomFieldValues(entityId, upserts)
+      }
     }
 
     router.push('/vacancies')
@@ -443,6 +465,25 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
           </div>
         </CardContent>
       </Card>
+
+      {/* Custom Fields */}
+      {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Additional Information</CardTitle>
+            <CardDescription>Custom fields defined for vacancies.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <CustomFieldsForm
+              groups={customFieldGroups}
+              values={cfValues}
+              onChange={(fieldId, value) =>
+                setCfValues((prev) => ({ ...prev, [fieldId]: value }))
+              }
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex items-center justify-end gap-4">
         <Button

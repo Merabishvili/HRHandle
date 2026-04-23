@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { VacancyForm } from '@/components/vacancies/vacancy-form'
 import { Button } from '@/components/ui/button'
+import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
 
 interface SectorRow {
   id: string
@@ -46,7 +47,7 @@ export default async function NewVacancyPage() {
 
   const organizationId = profile.organization_id
 
-  const [{ data: sectorsRaw }, { data: statusOptionsRaw }] = await Promise.all([
+  const [{ data: sectorsRaw }, { data: statusOptionsRaw }, customFieldGroups] = await Promise.all([
     supabase
       .from('sectors')
       .select('id, name, code, is_active, sort_order, created_at')
@@ -58,6 +59,8 @@ export default async function NewVacancyPage() {
       .select('id, name, code, is_active, sort_order')
       .eq('is_active', true)
       .order('sort_order', { ascending: true }),
+
+    getCustomFieldSchema('vacancy'),
   ])
 
   const sectors = (sectorsRaw || []) as SectorRow[]
@@ -85,6 +88,7 @@ export default async function NewVacancyPage() {
       <VacancyForm
         sectors={sectors}
         statusOptions={statusOptions}
+        customFieldGroups={customFieldGroups}
       />
     </div>
   )

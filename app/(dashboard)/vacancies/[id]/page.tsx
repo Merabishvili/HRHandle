@@ -23,6 +23,8 @@ import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { LinkedInShareButton } from '@/components/vacancies/linkedin-share-button'
 import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
 import { VacancyApplicationsToolbar } from '@/components/vacancies/vacancy-applications-toolbar'
+import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
+import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 
 interface VacancyRow {
   id: string
@@ -316,6 +318,11 @@ export default async function VacancyDetailPage({
 
   const salaryText = formatSalary(vacancy)
 
+  const [vacancyCustomFieldGroups, vacancyCustomFieldValues] = await Promise.all([
+    getCustomFieldSchema('vacancy'),
+    getCustomFieldValues(id),
+  ])
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -534,6 +541,17 @@ export default async function VacancyDetailPage({
                   <CardHeader><CardTitle className="text-base">Requirements</CardTitle></CardHeader>
                   <CardContent>
                     <div className="whitespace-pre-wrap text-sm text-muted-foreground">{vacancy.requirements}</div>
+                  </CardContent>
+                </Card>
+              )}
+              {vacancyCustomFieldGroups.length > 0 && (
+                <Card className="border-border">
+                  <CardHeader><CardTitle className="text-base">Additional Information</CardTitle></CardHeader>
+                  <CardContent className="space-y-4">
+                    <CustomFieldsDisplay
+                      groups={vacancyCustomFieldGroups}
+                      values={vacancyCustomFieldValues}
+                    />
                   </CardContent>
                 </Card>
               )}

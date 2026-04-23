@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { VacancyForm } from '@/components/vacancies/vacancy-form'
 import { Button } from '@/components/ui/button'
+import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 
 interface VacancyRow {
   id: string
@@ -128,6 +129,11 @@ export default async function EditVacancyPage({
     notFound()
   }
 
+  const [customFieldGroups, customFieldValues] = await Promise.all([
+    getCustomFieldSchema('vacancy'),
+    getCustomFieldValues(id),
+  ])
+
   return (
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
@@ -147,6 +153,8 @@ export default async function EditVacancyPage({
         vacancy={vacancy}
         sectors={sectors}
         statusOptions={statusOptions}
+        customFieldGroups={customFieldGroups}
+        customFieldValues={customFieldValues}
       />
     </div>
   )

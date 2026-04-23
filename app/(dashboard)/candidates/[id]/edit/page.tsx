@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { CandidateForm } from '@/components/candidates/candidate-form'
 import { Button } from '@/components/ui/button'
+import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 
 interface PageParams {
   id: string
@@ -176,6 +177,11 @@ const { data: vacanciesRaw } = await supabase
     return statusCode === 'open' || statusCode === 'draft'
   })
 
+  const [customFieldGroups, customFieldValues] = await Promise.all([
+    getCustomFieldSchema('candidate'),
+    getCustomFieldValues(id),
+  ])
+
   return (
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
@@ -195,6 +201,8 @@ const { data: vacanciesRaw } = await supabase
         candidate={candidate}
         vacancies={vacancies}
         candidateStatuses={candidateStatuses}
+        customFieldGroups={customFieldGroups}
+        customFieldValues={customFieldValues}
       />
     </div>
   )

@@ -24,6 +24,8 @@ import { CandidateNotes } from '@/components/candidates/candidate-notes'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
 import { ApplicationEvaluation } from '@/components/candidates/application-evaluation'
 import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
+import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
+import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 
 interface CandidateRow {
   id: string
@@ -335,22 +337,26 @@ export default async function CandidateDetailPage({
 
   const interviews = (interviewsRaw || []) as InterviewRow[]
 
-  const [{ data: notesRaw }, { data: documentsRaw }] = await Promise.all([
-    supabase
-      .from('candidate_notes')
-      .select('id, text, author_id, created_at, profiles(full_name)')
-      .eq('candidate_id', id)
-      .eq('organization_id', organizationId)
-      .order('created_at', { ascending: false }),
+  const [{ data: notesRaw }, { data: documentsRaw }, customFieldGroups, customFieldValues] =
+    await Promise.all([
+      supabase
+        .from('candidate_notes')
+        .select('id, text, author_id, created_at, profiles(full_name)')
+        .eq('candidate_id', id)
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false }),
 
-    supabase
-      .from('candidate_documents')
-      .select('id, file_name, file_size, mime_type, document_type, created_at')
-      .eq('candidate_id', id)
-      .eq('organization_id', organizationId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
-  ])
+      supabase
+        .from('candidate_documents')
+        .select('id, file_name, file_size, mime_type, document_type, created_at')
+        .eq('candidate_id', id)
+        .eq('organization_id', organizationId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false }),
+
+      getCustomFieldSchema('candidate'),
+      getCustomFieldValues(id),
+    ])
 
   const notes = (notesRaw || []) as NoteRow[]
   const documents = (documentsRaw || []) as DocumentRow[]
@@ -689,6 +695,21 @@ export default async function CandidateDetailPage({
               )}
             </CardContent>
           </Card>
+
+          {/* 4. Custom Fields */}
+          {customFieldGroups.length > 0 && (
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle>Additional Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <CustomFieldsDisplay
+                  groups={customFieldGroups}
+                  values={customFieldValues}
+                />
+              </CardContent>
+            </Card>
+          )}
 
         </div>
       </div>

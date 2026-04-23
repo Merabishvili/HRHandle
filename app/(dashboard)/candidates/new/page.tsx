@@ -4,6 +4,7 @@ import { CandidateForm } from '@/components/candidates/candidate-form'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
 
 export default async function NewCandidatePage({
   searchParams,
@@ -33,11 +34,11 @@ export default async function NewCandidatePage({
 
   const organizationId = profile.organization_id
 
-  // ✅ fetch everything in parallel (cleaner + faster)
   const [
     { data: vacancies },
     { data: candidateStatuses },
     { data: applicationStatuses },
+    customFieldGroups,
   ] = await Promise.all([
     supabase
       .from('vacancies')
@@ -55,6 +56,8 @@ export default async function NewCandidatePage({
       .from('application_statuses')
       .select('id, code')
       .eq('is_active', true),
+
+    getCustomFieldSchema('candidate'),
   ])
 
   // ✅ find default "new" status
@@ -81,6 +84,7 @@ export default async function NewCandidatePage({
         defaultVacancyId={defaultVacancyId}
         candidateStatuses={(candidateStatuses || []) as any}
         defaultApplicationStatusId={defaultApplicationStatus?.id || null}
+        customFieldGroups={customFieldGroups}
       />
     </div>
   )

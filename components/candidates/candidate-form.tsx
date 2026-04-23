@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createCandidate, updateCandidate } from '@/lib/actions/candidates'
 import { uploadDocument } from '@/lib/actions/documents'
 import { createNote } from '@/lib/actions/notes'
+import { saveCustomFieldValues } from '@/lib/actions/custom-fields'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,6 +21,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Linkedin, Paperclip, X, Upload } from 'lucide-react'
+import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
 import type {
   Candidate,
   CandidateFormData,
@@ -27,6 +29,7 @@ import type {
   CandidateGeneralStatus,
   ApplicationStatus,
 } from '@/lib/types'
+import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 
 const DOCUMENT_TYPE_OPTIONS = [
   { value: 'cv', label: 'CV / Resume' },
@@ -47,6 +50,8 @@ interface CandidateFormProps {
   candidateStatuses: CandidateGeneralStatus[]
   defaultApplicationStatusId?: string | null
   initialApplicationStatuses?: ApplicationStatus[]
+  customFieldGroups?: CustomFieldGroupWithFields[]
+  customFieldValues?: CustomFieldValue[]
 }
 
 export function CandidateForm({
@@ -54,6 +59,8 @@ export function CandidateForm({
   vacancies,
   defaultVacancyId,
   candidateStatuses,
+  customFieldGroups = [],
+  customFieldValues = [],
 }: CandidateFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -61,6 +68,9 @@ export function CandidateForm({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
+  const [cfValues, setCfValues] = useState<Record<string, string>>(
+    () => valuesToMap(customFieldValues)
+  )
 
   const [selectedVacancyId, setSelectedVacancyId] = useState<string>(
     defaultVacancyId || ''
@@ -127,6 +137,14 @@ export function CandidateForm({
       setError(result.error)
       setIsLoading(false)
       return
+    }
+
+    const entityId = isEditing ? candidate.id : result.data?.id
+    if (entityId && customFieldGroups.length > 0) {
+      const upserts = mapToValueUpserts(cfValues, customFieldGroups)
+      if (upserts.length > 0) {
+        await saveCustomFieldValues(entityId, upserts)
+      }
     }
 
     if (!isEditing && result.data?.id) {
@@ -460,6 +478,25 @@ export function CandidateForm({
               onChange={(e) => setPendingNote(e.target.value)}
               rows={4}
               disabled={isLoading}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Custom Fields */}
+      {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Additional Information</CardTitle>
+            <CardDescription>Custom fields defined for candidates.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <CustomFieldsForm
+              groups={customFieldGroups}
+              values={cfValues}
+              onChange={(fieldId, value) =>
+                setCfValues((prev) => ({ ...prev, [fieldId]: value }))
+              }
             />
           </CardContent>
         </Card>

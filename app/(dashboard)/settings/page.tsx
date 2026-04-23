@@ -6,6 +6,8 @@ import { OrganizationForm } from '@/components/settings/organization-form'
 import { TeamInvitations } from '@/components/settings/team-invitations'
 import { GoogleCalendarConnect } from '@/components/settings/google-calendar-connect'
 import { ZoomConnect } from '@/components/settings/zoom-connect'
+import { CustomFieldsManager } from '@/components/settings/custom-fields-manager'
+import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
 
 import { Suspense } from 'react'
 
@@ -83,9 +85,17 @@ export default async function SettingsPage() {
   const organization = profile.organizations?.[0] || null
   const isOwner = profile.role === 'owner'
   const canManageTeam = profile.role === 'owner' || profile.role === 'admin'
+  const isAdmin = profile.role === 'owner' || profile.role === 'admin'
 
   let teamMembers: { id: string; full_name: string; email: string | null; role: string }[] = []
   let pendingInvitations: { id: string; email: string; role: string; status: string; created_at: string; expires_at: string }[] = []
+
+  const [candidateGroups, vacancyGroups] = isAdmin
+    ? await Promise.all([
+        getCustomFieldSchema('candidate'),
+        getCustomFieldSchema('vacancy'),
+      ])
+    : [[], []]
 
   if (canManageTeam && profile.organization_id) {
     const [{ data: membersRaw }, { data: invitesRaw }] = await Promise.all([
@@ -170,6 +180,23 @@ export default async function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {isAdmin && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Custom Fields</CardTitle>
+            <CardDescription>
+              Define custom fields for candidates and vacancies. Up to 20 fields per entity type.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CustomFieldsManager
+              candidateGroups={candidateGroups}
+              vacancyGroups={vacancyGroups}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-border">
         <CardHeader>
