@@ -45,15 +45,23 @@ export default function PrivacyPage() {
               <li>Organization name and configuration settings</li>
               <li>Subscription and billing information (processed by our payment provider — we do not store card details)</li>
               <li>Usage activity within the Service (e.g. actions taken, features used)</li>
+              <li>If you sign in with Google: your Google account name, email address, and profile picture, provided via Google OAuth. We do not store your Google password.</li>
             </ul>
 
-            <h3 className="mb-2 mt-4 font-medium">2.2 Vacancy Data</h3>
+            <h3 className="mb-2 mt-4 font-medium">2.2 Integration Data</h3>
             <ul className="list-disc space-y-1 pl-5">
-              <li>Job titles, descriptions, departments, locations, and requirements</li>
-              <li>Salary information and hiring timelines</li>
+              <li>If you connect LinkedIn: your LinkedIn OAuth access token, used solely to post vacancies on your behalf. We do not access your LinkedIn connections or personal feed.</li>
+              <li>If you connect Google Calendar: your Google OAuth access token and refresh token, used solely to create and manage interview calendar events on your behalf.</li>
             </ul>
 
-            <h3 className="mb-2 mt-4 font-medium">2.3 Candidate Data</h3>
+            <h3 className="mb-2 mt-4 font-medium">2.3 Vacancy Data</h3>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>Job titles, descriptions, responsibilities, departments, locations, and requirements</li>
+              <li>Salary information and hiring timelines</li>
+              <li>Evaluation criteria and scores entered by your team</li>
+            </ul>
+
+            <h3 className="mb-2 mt-4 font-medium">2.4 Candidate Data</h3>
             <p className="mb-2">
               You enter candidate data into HRHandle as part of your recruitment process. This
               may include:
@@ -131,6 +139,16 @@ export default function PrivacyPage() {
                     <td className="py-2 pr-4">Vercel</td>
                     <td className="py-2 pr-4">Hosting and deployment</td>
                     <td className="py-2">USA / Global CDN</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-4">Google (optional)</td>
+                    <td className="py-2 pr-4">Authentication (OAuth) and Google Calendar integration</td>
+                    <td className="py-2">USA / Global</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-4">LinkedIn (optional)</td>
+                    <td className="py-2 pr-4">Vacancy posting via LinkedIn API</td>
+                    <td className="py-2">USA / Global</td>
                   </tr>
                 </tbody>
               </table>

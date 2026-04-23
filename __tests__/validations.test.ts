@@ -91,6 +91,87 @@ describe('VacancySchema', () => {
     const result = VacancySchema.safeParse({ ...base, openings_count: 0 })
     expect(result.success).toBe(false)
   })
+
+  it('accepts responsibilities as a string', () => {
+    const result = VacancySchema.safeParse({ ...base, responsibilities: 'Lead the team.' })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts responsibilities as null', () => {
+    const result = VacancySchema.safeParse({ ...base, responsibilities: null })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts missing responsibilities (optional)', () => {
+    const result = VacancySchema.safeParse(base)
+    expect(result.success).toBe(true)
+  })
+})
+
+// ─── Evaluation score calculation ─────────────────────────────────────────────
+
+describe('Evaluation score calculation', () => {
+  type Question = { id: string; type: 'text' | 'score' }
+  type Answers = Record<string, { text: string; score: number | null }>
+
+  function calcScore(questions: Question[], answers: Answers): number | null {
+    const scoreQs = questions.filter((q) => q.type === 'score')
+    if (scoreQs.length === 0) return null
+    if (scoreQs.some((q) => !answers[q.id]?.score)) return null
+    const sum = scoreQs.reduce((acc, q) => acc + (answers[q.id]?.score ?? 0), 0)
+    return Math.round((sum / (scoreQs.length * 10)) * 100)
+  }
+
+  const scoreQs: Question[] = [
+    { id: 'q1', type: 'score' },
+    { id: 'q2', type: 'score' },
+    { id: 'q3', type: 'score' },
+  ]
+
+  it('returns correct percentage for full scores (5+8+9 / 30 = 73%)', () => {
+    const answers: Answers = {
+      q1: { text: '', score: 5 },
+      q2: { text: '', score: 8 },
+      q3: { text: '', score: 9 },
+    }
+    expect(calcScore(scoreQs, answers)).toBe(73)
+  })
+
+  it('returns 100 for all max scores', () => {
+    const answers: Answers = {
+      q1: { text: '', score: 10 },
+      q2: { text: '', score: 10 },
+      q3: { text: '', score: 10 },
+    }
+    expect(calcScore(scoreQs, answers)).toBe(100)
+  })
+
+  it('returns null when any score criteria is missing', () => {
+    const answers: Answers = {
+      q1: { text: '', score: 8 },
+      q2: { text: '', score: null },
+      q3: { text: '', score: 9 },
+    }
+    expect(calcScore(scoreQs, answers)).toBeNull()
+  })
+
+  it('returns null when there are no score questions', () => {
+    const textOnly: Question[] = [{ id: 'q1', type: 'text' }]
+    const answers: Answers = { q1: { text: 'Some text', score: null } }
+    expect(calcScore(textOnly, answers)).toBeNull()
+  })
+
+  it('ignores text questions in score calculation', () => {
+    const mixed: Question[] = [
+      { id: 'q1', type: 'text' },
+      { id: 'q2', type: 'score' },
+    ]
+    const answers: Answers = {
+      q1: { text: 'Some answer', score: null },
+      q2: { text: '', score: 7 },
+    }
+    expect(calcScore(mixed, answers)).toBe(70)
+  })
 })
 
 // ─── Interview ────────────────────────────────────────────────────────────────

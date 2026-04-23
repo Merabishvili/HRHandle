@@ -10,7 +10,9 @@ import {
   ArrowRight,
   Zap,
   Shield,
-  Globe,
+  FileText,
+  Star,
+  Share2,
 } from 'lucide-react'
 import { PRICING_PLANS } from '@/lib/types/subscription'
 import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
@@ -30,7 +32,7 @@ const jsonLd = {
   operatingSystem: 'Web',
   url: 'https://hrhandle.com',
   description:
-    'HRHandle is a modern applicant tracking system that helps teams manage vacancies, track candidates, and schedule interviews.',
+    'HRHandle is a modern applicant tracking system that helps teams manage vacancies, evaluate candidates with structured scoring, schedule interviews, and share roles on LinkedIn.',
   offers: [
     {
       '@type': 'Offer',
@@ -119,7 +121,7 @@ export default function LandingPage() {
 
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground sm:text-xl">
               The modern applicant tracking system that helps you manage vacancies,
-              track candidates, and build your dream team efficiently.
+              evaluate candidates with structured scoring, schedule interviews, and share roles on LinkedIn — all in one place.
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -138,10 +140,10 @@ export default function LandingPage() {
 
           <div className="mt-20 grid grid-cols-2 gap-8 md:grid-cols-4">
             {[
-              { label: 'Companies Trust Us', value: '2,000+' },
-              { label: 'Candidates Processed', value: '500K+' },
-              { label: 'Time Saved', value: '60%' },
-              { label: 'Hiring Success Rate', value: '95%' },
+              { label: 'Hiring Steps Automated', value: '10+' },
+              { label: 'Avg. Time-to-Hire Reduced', value: '40%' },
+              { label: 'Candidate Data in One Place', value: '100%' },
+              { label: 'Free Trial, No Card Required', value: '7 days' },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-3xl font-bold text-foreground sm:text-4xl">
@@ -171,37 +173,55 @@ export default function LandingPage() {
                 icon: Briefcase,
                 title: 'Vacancy Management',
                 description:
-                  'Create and manage job postings with customizable fields, status tracking, and team collaboration.',
+                  'Create job postings with rich descriptions, responsibilities, and requirements. Track status from draft to closed with full visibility.',
               },
               {
                 icon: Users,
                 title: 'Candidate Tracking',
                 description:
-                  'Track candidates through your hiring pipeline with structured statuses and linked applications.',
+                  'Manage candidate profiles with contact details, documents, notes, and a full application history across all your open roles.',
               },
               {
                 icon: Calendar,
                 title: 'Interview Scheduling',
                 description:
-                  'Schedule interviews, assign interviewers, and keep all interview activity in one place.',
+                  'Schedule and track interviews with candidates, assign interviewers, and sync with Google Calendar automatically.',
+              },
+              {
+                icon: Star,
+                title: 'Structured Evaluation',
+                description:
+                  'Define custom scoring criteria per vacancy and evaluate candidates consistently. Auto-calculated scores give you instant, objective insights.',
+              },
+              {
+                icon: Share2,
+                title: 'LinkedIn Integration',
+                description:
+                  'Share vacancies directly to LinkedIn with one click, including job description, responsibilities, and requirements pre-filled.',
+              },
+              {
+                icon: FileText,
+                title: 'Documents & Notes',
+                description:
+                  'Attach CVs and files directly to candidate profiles. Add internal notes to keep your team aligned throughout the hiring process.',
               },
               {
                 icon: BarChart3,
                 title: 'Analytics & Reports',
                 description:
-                  'Get insights into hiring activity with dashboard metrics and reporting-ready summaries.',
+                  'Get insights into hiring activity with dashboard metrics, application counts per vacancy, and reporting-ready summaries.',
               },
               {
                 icon: Shield,
                 title: 'Team Collaboration',
                 description:
-                  'Invite team members, assign roles, and collaborate on hiring decisions securely.',
+                  'Invite team members, assign roles, and collaborate on hiring decisions in a secure, shared workspace.',
               },
               {
-                icon: Globe,
-                title: 'Structured Hiring Workflow',
+                icon: Zap,
+                title: 'Customizable Columns',
                 description:
-                  'Manage vacancies, applications, candidate progress, and interviews with one consistent process.',
+                  'Tailor your vacancy and candidate list views by choosing which columns to display, saved per user for a personal workflow.',
               },
             ].map((feature) => (
               <Card key={feature.title} className="border-border bg-background">
