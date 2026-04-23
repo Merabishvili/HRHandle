@@ -5,6 +5,10 @@ import { getGoogleOAuthUrl } from '@/lib/google/calendar'
 import { env } from '@/lib/env'
 
 export async function GET() {
+  console.log('GOOGLE_CLIENT_ID present:', !!env.GOOGLE_CLIENT_ID)
+  console.log('GOOGLE_CLIENT_SECRET present:', !!env.GOOGLE_CLIENT_SECRET)
+  console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL)
+
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
     return NextResponse.redirect(new URL('/settings?google=not_configured', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
   }
