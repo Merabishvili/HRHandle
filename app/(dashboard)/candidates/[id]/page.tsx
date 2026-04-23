@@ -353,16 +353,13 @@ export default async function CandidateDetailPage({
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                {primaryVacancy && (
-                  <Link
-                    href={`/vacancies/${primaryVacancy.id}`}
-                    className="flex items-center gap-1 transition-colors hover:text-foreground"
-                  >
+                {candidate.current_position && (
+                  <span className="flex items-center gap-1">
                     <Briefcase className="h-4 w-4" />
-                    {primaryVacancy.title}
-                  </Link>
+                    {candidate.current_position}
+                    {candidate.current_company ? ` at ${candidate.current_company}` : ''}
+                  </span>
                 )}
-
                 <span className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
                   Added {formatDistanceToNow(new Date(candidate.created_at), { addSuffix: true })}
@@ -389,118 +386,46 @@ export default async function CandidateDetailPage({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* LEFT COLUMN */}
         <div className="space-y-6 lg:col-span-2">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              {candidate.email && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                    <Mail className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <a href={`mailto:${candidate.email}`} className="text-foreground hover:underline">
-                      {candidate.email}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {candidate.phone && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                    <Phone className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Phone</p>
-                    <a href={`tel:${candidate.phone}`} className="text-foreground hover:underline">
-                      {candidate.phone}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {candidate.linkedin_profile_url && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                    <Linkedin className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">LinkedIn</p>
-                    <a
-                      href={candidate.linkedin_profile_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-foreground hover:underline"
-                    >
-                      View Profile
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {!candidate.email && !candidate.phone && !candidate.linkedin_profile_url && (
-                <p className="text-sm text-muted-foreground">No contact information available.</p>
-              )}
-            </CardContent>
-          </Card>
-
+          {/* 1. Candidate Profile */}
           <Card className="border-border">
             <CardHeader>
               <CardTitle>Candidate Profile</CardTitle>
             </CardHeader>
-
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-sm text-muted-foreground">Current Position</p>
-                <p className="font-medium text-foreground">
-                  {candidate.current_position || 'Not specified'}
-                </p>
+                <p className="font-medium text-foreground">{candidate.current_position || 'Not specified'}</p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Current Company</p>
-                <p className="font-medium text-foreground">
-                  {candidate.current_company || 'Not specified'}
-                </p>
+                <p className="font-medium text-foreground">{candidate.current_company || 'Not specified'}</p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Years of Experience</p>
                 <p className="font-medium text-foreground">
-                  {candidate.years_of_experience != null
-                    ? `${candidate.years_of_experience} years`
-                    : 'Not specified'}
+                  {candidate.years_of_experience != null ? `${candidate.years_of_experience} years` : 'Not specified'}
                 </p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Date of Birth</p>
                 <p className="font-medium text-foreground">
-                  {candidate.date_of_birth
-                    ? format(new Date(candidate.date_of_birth), 'dd MMM yyyy')
-                    : 'Not specified'}
+                  {candidate.date_of_birth ? format(new Date(candidate.date_of_birth), 'dd MMM yyyy') : 'Not specified'}
                 </p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Source</p>
                 <p className="font-medium text-foreground">{candidate.source || 'Not specified'}</p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Last Updated</p>
-                <p className="font-medium text-foreground">
-                  {format(new Date(candidate.updated_at), 'MMM d, yyyy')}
-                </p>
+                <p className="font-medium text-foreground">{format(new Date(candidate.updated_at), 'MMM d, yyyy')}</p>
               </div>
             </CardContent>
           </Card>
 
+          {/* 2. Applications */}
           <Card className="border-border">
             <CardHeader>
               <div className="flex flex-row items-center justify-between">
@@ -513,16 +438,14 @@ export default async function CandidateDetailPage({
                 </Button>
               </div>
             </CardHeader>
-
             <CardContent>
               {applications.length > 0 ? (
                 <div className="space-y-3">
                   {applications.map((application) => {
                     const vacancy = vacancyMap.get(application.vacancy_id) ?? null
                     const appStatus = application.status_id ? appStatusMap.get(application.status_id) ?? null : null
-                    const questions = questionsByVacancy.get(application.vacancy_id) ?? []
+                    const qs = questionsByVacancy.get(application.vacancy_id) ?? []
                     const evaluation = evaluationsByApp.get(application.id) ?? null
-
                     return (
                       <ApplicationEvaluation
                         key={application.id}
@@ -533,7 +456,7 @@ export default async function CandidateDetailPage({
                         candidateId={id}
                         appliedAt={application.applied_at}
                         appStatus={appStatus}
-                        questions={questions}
+                        questions={qs}
                         existingEvaluation={evaluation}
                       />
                     )
@@ -548,170 +471,156 @@ export default async function CandidateDetailPage({
             </CardContent>
           </Card>
 
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Interviews</CardTitle>
-                <CardDescription>Scheduled and past interviews</CardDescription>
-              </div>
-
-              <Button size="sm" asChild>
-                <Link href={`/interviews/new?candidate=${id}`}>
-                  Schedule Interview
-                </Link>
-              </Button>
-            </CardHeader>
-
-            <CardContent>
-              {interviews.length > 0 ? (
-                <div className="space-y-4">
-                  {interviews.map((interview) => {
-                    const interviewerName = interview.profiles?.[0]?.full_name || 'No interviewer assigned'
-
-                    return (
-                      <div
-                        key={interview.id}
-                        className="flex items-center justify-between rounded-lg bg-muted/50 p-4"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                            <Calendar className="h-6 w-6 text-primary" />
-                          </div>
-
-                          <div>
-                            <p className="font-medium capitalize text-foreground">
-                              {interview.type} Interview
-                            </p>
-                            <p className="text-sm text-muted-foreground">{interviewerName}</p>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="font-medium text-foreground">
-                            {format(new Date(interview.scheduled_at), 'MMM d, yyyy')}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(interview.scheduled_at), 'h:mm a')}
-                          </p>
-                          <Badge variant="secondary" className="mt-1 capitalize">
-                            {interview.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="py-8 text-center">
-                  <Calendar className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                  <p className="mt-2 text-sm text-muted-foreground">No interviews scheduled</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <CandidateDocuments
-            candidateId={candidate.id}
-            initialDocuments={documents}
-          />
-
+          {/* 3. Notes */}
           <CandidateNotes
             candidateId={candidate.id}
             initialNotes={notes}
             currentUserId={user.id}
           />
+
+          <CandidateDocuments
+            candidateId={candidate.id}
+            initialDocuments={documents}
+          />
         </div>
 
+        {/* RIGHT COLUMN */}
         <div className="space-y-6">
+          {/* 1. Contact Information */}
+          <Card className="border-border">
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {candidate.email && (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <a href={`mailto:${candidate.email}`} className="truncate text-sm text-foreground hover:underline">{candidate.email}</a>
+                  </div>
+                </div>
+              )}
+              {candidate.phone && (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <a href={`tel:${candidate.phone}`} className="text-sm text-foreground hover:underline">{candidate.phone}</a>
+                  </div>
+                </div>
+              )}
+              {candidate.linkedin_profile_url && (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <Linkedin className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">LinkedIn</p>
+                    <a href={candidate.linkedin_profile_url} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:underline">
+                      View Profile
+                    </a>
+                  </div>
+                </div>
+              )}
+              {!candidate.email && !candidate.phone && !candidate.linkedin_profile_url && (
+                <p className="text-sm text-muted-foreground">No contact information available.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 2. Overview */}
           <Card className="border-border">
             <CardHeader>
               <CardTitle>Overview</CardTitle>
             </CardHeader>
-
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">General Status</span>
+                <span className="text-sm text-muted-foreground">Status</span>
                 {currentStatus ? (
-                  <Badge
-                    variant="secondary"
-                    className={CANDIDATE_GENERAL_STATUS_COLORS[currentStatus.code]}
-                  >
+                  <Badge variant="secondary" className={CANDIDATE_GENERAL_STATUS_COLORS[currentStatus.code]}>
                     {currentStatus.name}
                   </Badge>
                 ) : (
                   <span className="text-sm font-medium">Not set</span>
                 )}
               </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Source</span>
-                <span className="text-sm font-medium">{candidate.source || 'Not specified'}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Created</span>
-                <span className="text-sm font-medium">
-                  {format(new Date(candidate.created_at), 'MMM d, yyyy')}
-                </span>
-              </div>
-
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Applications</span>
                 <span className="text-sm font-medium">{applications.length}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Source</span>
+                <span className="text-sm font-medium">{candidate.source || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Added</span>
+                <span className="text-sm font-medium">{format(new Date(candidate.created_at), 'MMM d, yyyy')}</span>
+              </div>
             </CardContent>
           </Card>
 
-          {primaryVacancy && (
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle>Primary Vacancy</CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <Link
-                  href={`/vacancies/${primaryVacancy.id}`}
-                  className="block rounded-lg bg-muted/50 p-4 transition-colors hover:bg-muted"
-                >
-                  <p className="font-medium text-foreground">{primaryVacancy.title}</p>
-                  {primaryVacancy.department && (
-                    <p className="text-sm text-muted-foreground">{primaryVacancy.department}</p>
+          {/* 3. Interviews (max 3) */}
+          <Card className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-base">Interviews</CardTitle>
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/interviews/new?candidate=${id}`}>Schedule</Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {interviews.length > 0 ? (
+                <div className="space-y-3">
+                  {interviews.slice(0, 3).map((interview) => (
+                    <div key={interview.id} className="rounded-lg bg-muted/50 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium capitalize text-foreground">{interview.type} Interview</p>
+                        <Badge variant="secondary" className="text-xs capitalize">{interview.status}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {format(new Date(interview.scheduled_at), 'MMM d, yyyy')} · {format(new Date(interview.scheduled_at), 'h:mm a')}
+                      </p>
+                    </div>
+                  ))}
+                  {interviews.length > 3 && (
+                    <p className="text-center text-xs text-muted-foreground">+{interviews.length - 3} more</p>
                   )}
-                  {primaryVacancy.location && (
-                    <p className="mt-1 text-sm text-muted-foreground">{primaryVacancy.location}</p>
-                  )}
-                </Link>
-              </CardContent>
-            </Card>
-          )}
+                </div>
+              ) : (
+                <div className="py-6 text-center">
+                  <Calendar className="mx-auto h-7 w-7 text-muted-foreground/40" />
+                  <p className="mt-2 text-xs text-muted-foreground">No interviews yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
+          {/* 4. Quick Profile */}
           <Card className="border-border">
             <CardHeader>
-              <CardTitle>Quick Profile</CardTitle>
+              <CardTitle className="text-base">Quick Profile</CardTitle>
             </CardHeader>
-
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Company</p>
-                  <p className="font-medium text-foreground">
-                    {candidate.current_company || 'Not specified'}
-                  </p>
+                  <p className="text-xs text-muted-foreground">Company</p>
+                  <p className="text-sm font-medium text-foreground">{candidate.current_company || 'Not specified'}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <UserCircle className="h-5 w-5 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                  <UserCircle className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Position</p>
-                  <p className="font-medium text-foreground">
-                    {candidate.current_position || 'Not specified'}
-                  </p>
+                  <p className="text-xs text-muted-foreground">Position</p>
+                  <p className="text-sm font-medium text-foreground">{candidate.current_position || 'Not specified'}</p>
                 </div>
               </div>
             </CardContent>
