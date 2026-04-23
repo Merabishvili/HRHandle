@@ -15,6 +15,7 @@ interface CandidateRow {
   id: string
   first_name: string
   last_name: string
+  email?: string | null
 }
 
 interface VacancyStatusRow {
@@ -65,7 +66,7 @@ export default async function NewInterviewPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('organization_id, google_refresh_token')
+    .select('organization_id, google_refresh_token, zoom_refresh_token')
     .eq('id', user.id)
     .single()
 
@@ -79,7 +80,7 @@ export default async function NewInterviewPage({
     await Promise.all([
       supabase
         .from('candidates')
-        .select('id, first_name, last_name')
+        .select('id, first_name, last_name, email')
         .eq('organization_id', organizationId)
         .is('deleted_at', null)
         .order('first_name', { ascending: true }),
@@ -158,6 +159,7 @@ export default async function NewInterviewPage({
         defaultCandidateId={candidateId}
         defaultVacancyId={vacancyId}
         hasGoogleCalendar={!!profile.google_refresh_token}
+        hasZoom={!!profile.zoom_refresh_token}
       />
     </div>
   )

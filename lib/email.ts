@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { format } from 'date-fns'
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY
@@ -52,6 +53,98 @@ export async function sendTeamInviteEmail({
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">
       Or copy this link: <span style="color: #6b7280;">${joinUrl}</span>
     </p>
+  </div>
+</body>
+</html>`,
+  })
+}
+
+export async function sendInterviewInvitationEmail({
+  to,
+  candidateName,
+  senderName,
+  senderEmail,
+  vacancyTitle,
+  scheduledAt,
+  durationMinutes,
+  interviewType,
+  meetingLink,
+}: {
+  to: string
+  candidateName: string
+  senderName: string
+  senderEmail: string
+  vacancyTitle: string
+  scheduledAt: string
+  durationMinutes: number
+  interviewType: 'video' | 'phone' | 'onsite'
+  meetingLink: string | null
+}) {
+  const date = format(new Date(scheduledAt), 'EEEE, MMMM d, yyyy')
+  const time = format(new Date(scheduledAt), 'h:mm a')
+  const typeLabel = interviewType === 'video' ? 'Video Call' : interviewType === 'phone' ? 'Phone Call' : 'On-site'
+
+  const meetingRow = meetingLink
+    ? `<tr>
+        <td style="padding: 6px 0; color: #6b7280; width: 130px;">Meeting link</td>
+        <td style="padding: 6px 0;">
+          <a href="${meetingLink}" style="color: #111827; font-weight: 600;">${meetingLink}</a>
+        </td>
+      </tr>`
+    : ''
+
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    replyTo: senderEmail,
+    subject: `Interview Invitation: ${vacancyTitle}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Interview Invitation</h1>
+    <p style="color: #6b7280; margin: 0 0 24px;">
+      Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
+      You have been invited to an interview for the position of
+      <strong style="color: #111827;">${vacancyTitle}</strong>.
+    </p>
+
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+      <tr>
+        <td style="padding: 6px 0; color: #6b7280; width: 130px;">Date</td>
+        <td style="padding: 6px 0; font-weight: 600; color: #111827;">${date}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #6b7280;">Time</td>
+        <td style="padding: 6px 0; font-weight: 600; color: #111827;">${time}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #6b7280;">Duration</td>
+        <td style="padding: 6px 0; color: #111827;">${durationMinutes} minutes</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #6b7280;">Format</td>
+        <td style="padding: 6px 0; color: #111827;">${typeLabel}</td>
+      </tr>
+      ${meetingRow}
+    </table>
+
+    ${meetingLink ? `
+    <a href="${meetingLink}"
+       style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none;
+              padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-bottom: 24px;">
+      Join Meeting
+    </a>` : ''}
+
+    <p style="color: #6b7280; font-size: 13px; margin: 24px 0 0;">
+      If you have any questions, please reply to this email or contact
+      <strong style="color: #111827;">${senderName}</strong> at
+      <a href="mailto:${senderEmail}" style="color: #111827;">${senderEmail}</a>.
+    </p>
+    <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle</p>
   </div>
 </body>
 </html>`,

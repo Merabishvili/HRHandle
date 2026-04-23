@@ -17,6 +17,7 @@ interface InterviewRow {
   type: 'video' | 'phone' | 'onsite'
   status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
   google_meet_link: string | null
+  meeting_link: string | null
   candidates:
     | {
         id: string
@@ -95,6 +96,7 @@ export default async function InterviewsPage() {
         type,
         status,
         google_meet_link,
+        meeting_link,
         candidates (
           id,
           first_name,
@@ -271,15 +273,15 @@ export default async function InterviewsPage() {
                       >
                         {interview.status}
                       </Badge>
-                      {interview.google_meet_link && (
+                      {(interview.google_meet_link || interview.meeting_link) && (
                         <a
-                          href={interview.google_meet_link}
+                          href={(interview.google_meet_link || interview.meeting_link)!}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-1 inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-800 hover:bg-green-200"
+                          className="mt-1 inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/20"
                         >
                           <Video className="h-3 w-3" />
-                          Join Meet
+                          Join
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       )}

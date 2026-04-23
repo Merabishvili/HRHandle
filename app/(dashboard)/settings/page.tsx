@@ -5,6 +5,7 @@ import { ProfileForm } from '@/components/settings/profile-form'
 import { OrganizationForm } from '@/components/settings/organization-form'
 import { TeamInvitations } from '@/components/settings/team-invitations'
 import { GoogleCalendarConnect } from '@/components/settings/google-calendar-connect'
+import { ZoomConnect } from '@/components/settings/zoom-connect'
 
 import { Suspense } from 'react'
 
@@ -20,6 +21,7 @@ interface ProfileRow {
   created_at: string
   updated_at: string
   google_refresh_token: string | null
+  zoom_refresh_token: string | null
   organizations:
     | {
         id: string
@@ -58,6 +60,7 @@ export default async function SettingsPage() {
       created_at,
       updated_at,
       google_refresh_token,
+      zoom_refresh_token,
       organizations (
         id,
         name,
@@ -155,9 +158,16 @@ export default async function SettingsPage() {
           <CardDescription>Connect external services to enhance your workflow.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Suspense fallback={null}>
-            <GoogleCalendarConnect isConnected={!!profile.google_refresh_token} />
-          </Suspense>
+          <div className="space-y-6">
+            <Suspense fallback={null}>
+              <GoogleCalendarConnect isConnected={!!profile.google_refresh_token} />
+            </Suspense>
+            <div className="border-t border-border pt-6">
+              <Suspense fallback={null}>
+                <ZoomConnect isConnected={!!profile.zoom_refresh_token} />
+              </Suspense>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
