@@ -57,14 +57,6 @@ function calcScore(
   return Math.round((sum / (scoreQs.length * 10)) * 100)
 }
 
-function isComplete(
-  questions: Question[],
-  answers: Record<string, { text: string; score: number | null }>
-): boolean {
-  const scoreQs = questions.filter((q) => q.type === 'score')
-  if (scoreQs.length === 0) return false
-  return scoreQs.every((q) => !!answers[q.id]?.score)
-}
 
 export function ApplicationEvaluation({
   applicationId,
@@ -95,7 +87,6 @@ export function ApplicationEvaluation({
   })
 
   const calculatedScore = calcScore(questions, answers)
-  const complete = isComplete(questions, answers)
 
   const handleSave = () => {
     setError(null)
@@ -150,10 +141,10 @@ export function ApplicationEvaluation({
               {appStatus.name}
             </Badge>
           )}
-          {complete ? (
+          {calculatedScore !== null ? (
             <Badge variant="secondary" className="bg-green-100 text-green-800">
               <CheckCircle2 className="mr-1 h-3 w-3" />
-              Complete
+              {calculatedScore}%
             </Badge>
           ) : (
             <Badge variant="secondary" className="bg-amber-100 text-amber-800">
