@@ -137,27 +137,41 @@ export default async function VacanciesPage({
     baseQuery = baseQuery.ilike('title', `%${search.trim()}%`)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let sortedQuery: any = baseQuery
-  switch (sort) {
-    case 'created_asc':
-      sortedQuery = baseQuery.order('created_at', { ascending: true })
-      break
-    case 'end_asc':
-      sortedQuery = baseQuery.order('end_date', { ascending: true, nullsFirst: false })
-      break
-    case 'end_desc':
-      sortedQuery = baseQuery.order('end_date', { ascending: false, nullsFirst: false })
-      break
-    case 'title_asc':
-      sortedQuery = baseQuery.order('title', { ascending: true })
-      break
-    default:
-      sortedQuery = baseQuery.order('created_at', { ascending: false })
+  let vacancies: VacancyRow[]
+  let totalCount: number | null
+
+  if (sort === 'status') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: allRaw, count } = await (baseQuery as any).order('created_at', { ascending: false })
+    totalCount = count
+    const statusSortOrder = new Map(statusOptions.map((s) => [s.id, s.sort_order]))
+    const sorted = ((allRaw || []) as VacancyRow[]).sort((a, b) => {
+      const aOrder = a.status_id ? (statusSortOrder.get(a.status_id) ?? 999) : 999
+      const bOrder = b.status_id ? (statusSortOrder.get(b.status_id) ?? 999) : 999
+      return aOrder - bOrder
+    })
+    vacancies = sorted.slice(from, to + 1)
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let sortedQuery: any = baseQuery
+    switch (sort) {
+      case 'created_asc':
+        sortedQuery = baseQuery.order('created_at', { ascending: true })
+        break
+      case 'end_asc':
+        sortedQuery = baseQuery.order('end_date', { ascending: true, nullsFirst: false })
+        break
+      case 'end_desc':
+        sortedQuery = baseQuery.order('end_date', { ascending: false, nullsFirst: false })
+        break
+      default:
+        sortedQuery = baseQuery.order('created_at', { ascending: false })
+    }
+    const result = await sortedQuery.range(from, to)
+    vacancies = (result.data || []) as VacancyRow[]
+    totalCount = result.count
   }
 
-  const { data: vacanciesRaw, count: totalCount } = await sortedQuery.range(from, to)
-  const vacancies = (vacanciesRaw || []) as VacancyRow[]
   const totalPages = Math.ceil((totalCount ?? 0) / PAGE_SIZE)
 
   const vacancyIds = vacancies.map((v) => v.id)

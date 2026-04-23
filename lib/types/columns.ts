@@ -34,7 +34,7 @@ export const CANDIDATE_SORT_OPTIONS = [
   { value: 'created_asc', label: 'Added: Oldest first' },
   { value: 'experience_desc', label: 'Experience: High to low' },
   { value: 'experience_asc', label: 'Experience: Low to high' },
-  { value: 'name_asc', label: 'Name: A to Z' },
+  { value: 'status', label: 'Status' },
 ]
 
 export const VACANCY_SORT_OPTIONS = [
@@ -42,5 +42,5 @@ export const VACANCY_SORT_OPTIONS = [
   { value: 'created_asc', label: 'Added: Oldest first' },
   { value: 'end_asc', label: 'End date: Soonest first' },
   { value: 'end_desc', label: 'End date: Latest first' },
-  { value: 'title_asc', label: 'Title: A to Z' },
+  { value: 'status', label: 'Status' },
 ]

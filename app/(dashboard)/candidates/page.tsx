@@ -55,6 +55,7 @@ interface CandidateStatusOption {
   id: string
   name: string
   code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+  sort_order: number
 }
 
 interface ApplicationRow {
@@ -176,28 +177,42 @@ export default async function CandidatesPage({
     }
   }
 
-  // Sort — applied before range
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let sortedQuery: any = baseQuery
-  switch (sort) {
-    case 'created_asc':
-      sortedQuery = baseQuery.order('created_at', { ascending: true })
-      break
-    case 'experience_desc':
-      sortedQuery = baseQuery.order('years_of_experience', { ascending: false, nullsFirst: false })
-      break
-    case 'experience_asc':
-      sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
-      break
-    case 'name_asc':
-      sortedQuery = baseQuery.order('first_name', { ascending: true })
-      break
-    default:
-      sortedQuery = baseQuery.order('created_at', { ascending: false })
+  // Status sort: fetch all then sort in-memory (status is in a related table)
+  let candidates: CandidateRow[]
+  let totalCount: number | null
+
+  if (sort === 'status') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: allRaw, count } = await (baseQuery as any).order('created_at', { ascending: false })
+    totalCount = count
+    const statusSortOrder = new Map(candidateStatuses.map((s) => [s.id, s.sort_order]))
+    const sorted = ((allRaw || []) as CandidateRow[]).sort((a, b) => {
+      const aOrder = a.general_status_id ? (statusSortOrder.get(a.general_status_id) ?? 999) : 999
+      const bOrder = b.general_status_id ? (statusSortOrder.get(b.general_status_id) ?? 999) : 999
+      return aOrder - bOrder
+    })
+    candidates = sorted.slice(from, to + 1)
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let sortedQuery: any = baseQuery
+    switch (sort) {
+      case 'created_asc':
+        sortedQuery = baseQuery.order('created_at', { ascending: true })
+        break
+      case 'experience_desc':
+        sortedQuery = baseQuery.order('years_of_experience', { ascending: false, nullsFirst: false })
+        break
+      case 'experience_asc':
+        sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
+        break
+      default:
+        sortedQuery = baseQuery.order('created_at', { ascending: false })
+    }
+    const result = await sortedQuery.range(from, to)
+    candidates = (result.data || []) as CandidateRow[]
+    totalCount = result.count
   }
 
-  const { data: candidatesRaw, count: totalCount } = await sortedQuery.range(from, to)
-  const candidates = (candidatesRaw || []) as CandidateRow[]
   const totalPages = Math.ceil((totalCount ?? 0) / PAGE_SIZE)
 
   // Fetch applications for this page of candidates
