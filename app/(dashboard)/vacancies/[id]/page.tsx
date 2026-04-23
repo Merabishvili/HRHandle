@@ -353,7 +353,7 @@ export default async function VacancyDetailPage({
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Main layout */}
       <Tabs defaultValue="applications">
         <TabsList>
           <TabsTrigger value="applications">
@@ -364,126 +364,85 @@ export default async function VacancyDetailPage({
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="qe">Questionary &amp; Evaluation</TabsTrigger>
         </TabsList>
 
-        {/* Applications tab */}
+        {/* Applications tab — split: list left, overview right */}
         <TabsContent value="applications" className="mt-4">
-          {allApplications.length > 0 ? (
-            <Card className="border-border">
-              <CardContent className="p-0">
-                <div className="divide-y divide-border">
-                  {allApplications.map((application) => {
-                    const candidate = appCandidateMap.get(application.candidate_id)
-                    const generalStatus = candidate?.general_status_id
-                      ? candidateStatusMap.get(candidate.general_status_id)
-                      : null
-                    const appStatus = application.status_id
-                      ? appStatusMap.get(application.status_id)
-                      : null
-                    const initials = candidate
-                      ? `${candidate.first_name?.[0] || ''}${candidate.last_name?.[0] || ''}`.toUpperCase()
-                      : '?'
-                    const fullName = candidate
-                      ? `${candidate.first_name} ${candidate.last_name}`.trim()
-                      : 'Unknown candidate'
-
-                    return (
-                      <Link
-                        key={application.id}
-                        href={`/candidates/${application.candidate_id}`}
-                        className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                            <span className="text-xs font-medium text-primary">{initials}</span>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-foreground">{fullName}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {appStatus && (
-                            <Badge variant="secondary" className={APPLICATION_STATUS_COLORS[appStatus.code]}>
-                              {appStatus.name}
-                            </Badge>
-                          )}
-                          {generalStatus && (
-                            <Badge variant="secondary" className={CANDIDATE_GENERAL_STATUS_COLORS[generalStatus.code]}>
-                              {generalStatus.name}
-                            </Badge>
-                          )}
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
-              <UserCircle className="h-10 w-10 text-muted-foreground/40" />
-              <h3 className="mt-4 text-lg font-medium text-foreground">No applicants yet</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Add candidates to start tracking applications.</p>
-              <Button className="mt-6" asChild>
-                <Link href={`/candidates/new?vacancy=${id}`}>Add Candidate</Link>
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Details tab */}
-        <TabsContent value="details" className="mt-4">
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="space-y-6 lg:col-span-2">
-              <Card className="border-border">
-                <CardHeader><CardTitle>Evaluation Questions</CardTitle></CardHeader>
-                <CardContent>
-                  <VacancyQuestions
-                    vacancyId={id}
-                    initialQuestions={questions}
-                    canEdit={canEditQuestions}
-                  />
-                </CardContent>
-              </Card>
-              {vacancy.description && (
+            {/* Applications list */}
+            <div className="lg:col-span-2">
+              {allApplications.length > 0 ? (
                 <Card className="border-border">
-                  <CardHeader><CardTitle>Job Description</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="whitespace-pre-wrap text-muted-foreground">{vacancy.description}</div>
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-border">
+                      {allApplications.map((application) => {
+                        const candidate = appCandidateMap.get(application.candidate_id)
+                        const generalStatus = candidate?.general_status_id
+                          ? candidateStatusMap.get(candidate.general_status_id)
+                          : null
+                        const appStatus = application.status_id
+                          ? appStatusMap.get(application.status_id)
+                          : null
+                        const initials = candidate
+                          ? `${candidate.first_name?.[0] || ''}${candidate.last_name?.[0] || ''}`.toUpperCase()
+                          : '?'
+                        const fullName = candidate
+                          ? `${candidate.first_name} ${candidate.last_name}`.trim()
+                          : 'Unknown candidate'
+
+                        return (
+                          <Link
+                            key={application.id}
+                            href={`/candidates/${application.candidate_id}`}
+                            className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                <span className="text-xs font-medium text-primary">{initials}</span>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-foreground">{fullName}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {appStatus && (
+                                <Badge variant="secondary" className={APPLICATION_STATUS_COLORS[appStatus.code]}>
+                                  {appStatus.name}
+                                </Badge>
+                              )}
+                              {generalStatus && (
+                                <Badge variant="secondary" className={CANDIDATE_GENERAL_STATUS_COLORS[generalStatus.code]}>
+                                  {generalStatus.name}
+                                </Badge>
+                              )}
+                            </div>
+                          </Link>
+                        )
+                      })}
+                    </div>
                   </CardContent>
                 </Card>
-              )}
-              {vacancy.requirements && (
-                <Card className="border-border">
-                  <CardHeader><CardTitle>Requirements</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="whitespace-pre-wrap text-muted-foreground">{vacancy.requirements}</div>
-                  </CardContent>
-                </Card>
+              ) : (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
+                  <UserCircle className="h-10 w-10 text-muted-foreground/40" />
+                  <h3 className="mt-4 text-lg font-medium text-foreground">No applicants yet</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Add candidates to start tracking applications.</p>
+                  <Button className="mt-6" asChild>
+                    <Link href={`/candidates/new?vacancy=${id}`}>Add Candidate</Link>
+                  </Button>
+                </div>
               )}
             </div>
-            <div>
+
+            {/* Right sidebar: overview + description */}
+            <div className="space-y-6">
               <Card className="border-border">
                 <CardHeader><CardTitle>Overview</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Employment</span>
-                    <span className="text-sm font-medium">{formatEmploymentType(vacancy.employment_type)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Applicants</span>
-                    <span className="text-sm font-medium">{applicantsCount || 0}</span>
-                  </div>
-                  {sector && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Sector</span>
-                      <span className="text-sm font-medium">{sector.name}</span>
-                    </div>
-                  )}
+                <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Status</span>
                     {vacancyStatus ? (
@@ -495,9 +454,23 @@ export default async function VacancyDetailPage({
                     )}
                   </div>
                   <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Applicants</span>
+                    <span className="text-sm font-medium">{applicantsCount || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Employment</span>
+                    <span className="text-sm font-medium">{formatEmploymentType(vacancy.employment_type)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Openings</span>
                     <span className="text-sm font-medium">{vacancy.openings_count}</span>
                   </div>
+                  {sector && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Sector</span>
+                      <span className="text-sm font-medium">{sector.name}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Start Date</span>
                     <span className="text-sm font-medium">{new Date(vacancy.start_date).toLocaleDateString()}</span>
@@ -508,9 +481,69 @@ export default async function VacancyDetailPage({
                       <span className="text-sm font-medium">{new Date(vacancy.end_date).toLocaleDateString()}</span>
                     </div>
                   )}
+                  {salaryText && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Salary</span>
+                      <span className="text-sm font-medium">{salaryText}</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
+
+              {vacancy.description && (
+                <Card className="border-border">
+                  <CardHeader><CardTitle className="text-base">Job Description</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="whitespace-pre-wrap text-sm text-muted-foreground">{vacancy.description}</div>
+                  </CardContent>
+                </Card>
+              )}
+              {vacancy.requirements && (
+                <Card className="border-border">
+                  <CardHeader><CardTitle className="text-base">Requirements</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="whitespace-pre-wrap text-sm text-muted-foreground">{vacancy.requirements}</div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
+          </div>
+        </TabsContent>
+
+        {/* Questionary & Evaluation tab — two columns */}
+        <TabsContent value="qe" className="mt-4">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Left: Text questions (Questionary) */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle>Questionary</CardTitle>
+                <p className="text-sm text-muted-foreground">Open-ended questions for candidates</p>
+              </CardHeader>
+              <CardContent>
+                <VacancyQuestions
+                  vacancyId={id}
+                  initialQuestions={questions.filter((q) => q.type === 'text')}
+                  questionType="text"
+                  canEdit={canEditQuestions}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Right: Score criteria (Evaluation) */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle>Evaluation Criteria</CardTitle>
+                <p className="text-sm text-muted-foreground">Score-based criteria (1–10) for candidate assessment</p>
+              </CardHeader>
+              <CardContent>
+                <VacancyQuestions
+                  vacancyId={id}
+                  initialQuestions={questions.filter((q) => q.type === 'score')}
+                  questionType="score"
+                  canEdit={canEditQuestions}
+                />
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
