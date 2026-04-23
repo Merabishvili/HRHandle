@@ -13,6 +13,8 @@ import {
   Briefcase,
   Calendar,
   Clock,
+  Video,
+  ExternalLink,
 } from 'lucide-react'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
@@ -81,6 +83,8 @@ interface InterviewRow {
   duration_minutes: number
   type: 'phone' | 'video' | 'onsite'
   status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+  google_meet_link: string | null
+  meeting_link: string | null
   created_at: string
   updated_at: string
   profiles:
@@ -317,6 +321,8 @@ export default async function CandidateDetailPage({
       duration_minutes,
       type,
       status,
+      google_meet_link,
+      meeting_link,
       created_at,
       updated_at,
       profiles (
@@ -650,7 +656,21 @@ export default async function CandidateDetailPage({
                     <div key={interview.id} className="rounded-lg bg-muted/50 p-3">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-sm font-medium capitalize text-foreground">{interview.type} Interview</p>
-                        <Badge variant="secondary" className="text-xs capitalize">{interview.status}</Badge>
+                        <div className="flex items-center gap-2">
+                          {(interview.google_meet_link || interview.meeting_link) && (
+                            <a
+                              href={(interview.google_meet_link || interview.meeting_link)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
+                            >
+                              <Video className="h-3 w-3" />
+                              Join
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          <Badge variant="secondary" className="text-xs capitalize">{interview.status}</Badge>
+                        </div>
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {format(new Date(interview.scheduled_at), 'MMM d, yyyy')} · {format(new Date(interview.scheduled_at), 'h:mm a')}
