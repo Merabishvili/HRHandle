@@ -150,3 +150,91 @@ export async function sendInterviewInvitationEmail({
 </html>`,
   })
 }
+
+export async function sendApplicationConfirmationEmail({
+  to,
+  candidateName,
+  vacancyTitle,
+  organizationName,
+}: {
+  to: string
+  candidateName: string
+  vacancyTitle: string
+  organizationName: string
+}) {
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: `We received your application — ${vacancyTitle}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Application Received</h1>
+    <p style="color: #6b7280; margin: 0 0 24px;">
+      Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
+      Thank you for applying for <strong style="color: #111827;">${vacancyTitle}</strong> at
+      <strong style="color: #111827;">${organizationName}</strong>.
+      We have received your application and will review it shortly.
+    </p>
+    <p style="color: #6b7280; margin: 0 0 24px;">
+      We will be in touch if your profile matches our requirements. We appreciate your interest and the time you took to apply.
+    </p>
+    <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
+  </div>
+</body>
+</html>`,
+  })
+}
+
+export async function sendApplicationRejectionEmail({
+  to,
+  candidateName,
+  vacancyTitle,
+  organizationName,
+  senderName,
+  senderEmail,
+}: {
+  to: string
+  candidateName: string
+  vacancyTitle: string
+  organizationName: string
+  senderName: string
+  senderEmail: string
+}) {
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    replyTo: senderEmail,
+    subject: `Update on your application — ${vacancyTitle}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Application Update</h1>
+    <p style="color: #6b7280; margin: 0 0 24px;">
+      Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
+      Thank you for your interest in the <strong style="color: #111827;">${vacancyTitle}</strong> position at
+      <strong style="color: #111827;">${organizationName}</strong> and for taking the time to apply.
+    </p>
+    <p style="color: #6b7280; margin: 0 0 24px;">
+      After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs.
+      We encourage you to apply for future opportunities that match your background.
+    </p>
+    <p style="color: #6b7280; font-size: 13px; margin: 0;">
+      If you have any questions, you are welcome to contact
+      <strong style="color: #111827;">${senderName}</strong> at
+      <a href="mailto:${senderEmail}" style="color: #111827;">${senderEmail}</a>.
+    </p>
+    <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle</p>
+  </div>
+</body>
+</html>`,
+  })
+}

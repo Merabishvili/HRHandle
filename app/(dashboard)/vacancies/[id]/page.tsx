@@ -25,6 +25,7 @@ import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
 import { VacancyApplicationsToolbar } from '@/components/vacancies/vacancy-applications-toolbar'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 
 interface VacancyRow {
   id: string
@@ -48,6 +49,7 @@ interface VacancyRow {
   created_at: string
   updated_at: string
   archived_at: string | null
+  application_form_token: string | null
   vacancy_statuses:
     | {
         id: string
@@ -204,6 +206,7 @@ export default async function VacancyDetailPage({
         created_at,
         updated_at,
         archived_at,
+        application_form_token,
         vacancy_statuses (
           id,
           name,
@@ -392,6 +395,7 @@ export default async function VacancyDetailPage({
             )}
           </TabsTrigger>
           <TabsTrigger value="qe">Questionary &amp; Evaluation</TabsTrigger>
+          <TabsTrigger value="application-form">Application Form</TabsTrigger>
         </TabsList>
 
         {/* Applications tab — split: list left, overview right */}
@@ -593,6 +597,16 @@ export default async function VacancyDetailPage({
                 />
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        {/* Application Form tab */}
+        <TabsContent value="application-form" className="mt-4">
+          <div className="max-w-2xl">
+            <ApplicationFormTab
+              vacancyId={id}
+              initialToken={vacancy.application_form_token ?? null}
+            />
           </div>
         </TabsContent>
       </Tabs>
