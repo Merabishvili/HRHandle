@@ -9,9 +9,6 @@ import {
   type EmailTemplate,
 } from '@/lib/email-template-utils'
 
-export type { TemplateType, EmailTemplate }
-export { DEFAULT_TEMPLATES }
-
 export async function getEmailTemplates(): Promise<
   ActionResult<Record<TemplateType, EmailTemplate>>
 > {
