@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { format } from 'date-fns'
+import { applyVariables, DEFAULT_TEMPLATES } from '@/lib/actions/email-templates'
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY
@@ -9,6 +10,11 @@ function getResend(): Resend {
 
 const FROM = 'HRHandle <noreply@hrhandle.com>'
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+function senderFrom(senderName: string) {
+  const safe = senderName.replace(/"/g, '')
+  return `${safe} via HRHandle <noreply@hrhandle.com>`
+}
 
 export async function sendTeamInviteEmail({
   to,
@@ -65,24 +71,43 @@ export async function sendInterviewInvitationEmail({
   senderName,
   senderEmail,
   vacancyTitle,
+  organizationName,
   scheduledAt,
   durationMinutes,
   interviewType,
   meetingLink,
+  customSubject,
+  customBody,
 }: {
   to: string
   candidateName: string
   senderName: string
   senderEmail: string
   vacancyTitle: string
+  organizationName?: string
   scheduledAt: string
   durationMinutes: number
   interviewType: 'video' | 'phone' | 'onsite'
   meetingLink: string | null
+  customSubject?: string
+  customBody?: string
 }) {
   const date = format(new Date(scheduledAt), 'EEEE, MMMM d, yyyy')
   const time = format(new Date(scheduledAt), 'h:mm a')
   const typeLabel = interviewType === 'video' ? 'Video Call' : interviewType === 'phone' ? 'Phone Call' : 'On-site'
+
+  const vars = {
+    candidate_name: candidateName,
+    role: vacancyTitle,
+    company: organizationName ?? senderName,
+    interview_date: date,
+    interview_time: time,
+    meeting_link: meetingLink ?? '',
+    interviewer_name: senderName,
+  }
+  const defaults = DEFAULT_TEMPLATES.interview_invitation
+  const subject = applyVariables(customSubject ?? defaults.subject, vars)
+  const body = applyVariables(customBody ?? defaults.body, vars)
 
   const meetingRow = meetingLink
     ? `<tr>
@@ -94,10 +119,10 @@ export async function sendInterviewInvitationEmail({
     : ''
 
   return getResend().emails.send({
-    from: FROM,
+    from: senderFrom(senderName),
     to,
     replyTo: senderEmail,
-    subject: `Interview Invitation: ${vacancyTitle}`,
+    subject,
     html: `
 <!DOCTYPE html>
 <html>
@@ -107,8 +132,7 @@ export async function sendInterviewInvitationEmail({
     <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Interview Invitation</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
       Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
-      You have been invited to an interview for the position of
-      <strong style="color: #111827;">${vacancyTitle}</strong>.
+      ${body}
     </p>
 
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
@@ -156,16 +180,25 @@ export async function sendApplicationConfirmationEmail({
   candidateName,
   vacancyTitle,
   organizationName,
+  customSubject,
+  customBody,
 }: {
   to: string
   candidateName: string
   vacancyTitle: string
   organizationName: string
+  customSubject?: string
+  customBody?: string
 }) {
+  const vars = { candidate_name: candidateName, role: vacancyTitle, company: organizationName }
+  const defaults = DEFAULT_TEMPLATES.application_received
+  const subject = applyVariables(customSubject ?? defaults.subject, vars)
+  const body = applyVariables(customBody ?? defaults.body, vars)
+
   return getResend().emails.send({
     from: FROM,
     to,
-    subject: `You applied for ${vacancyTitle} — ${organizationName}`,
+    subject,
     html: `
 <!DOCTYPE html>
 <html>
@@ -175,12 +208,7 @@ export async function sendApplicationConfirmationEmail({
     <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Thanks for Applying!</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
       Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
-      Thank you for applying for <strong style="color: #111827;">${vacancyTitle}</strong> at
-      <strong style="color: #111827;">${organizationName}</strong>.
-      We have received your details and will review them shortly.
-    </p>
-    <p style="color: #6b7280; margin: 0 0 24px;">
-      We will be in touch if your profile matches our requirements. We appreciate your interest and the time you took to apply.
+      ${body}
     </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
@@ -197,6 +225,8 @@ export async function sendApplicationRejectionEmail({
   organizationName,
   senderName,
   senderEmail,
+  customSubject,
+  customBody,
 }: {
   to: string
   candidateName: string
@@ -204,12 +234,19 @@ export async function sendApplicationRejectionEmail({
   organizationName: string
   senderName: string
   senderEmail: string
+  customSubject?: string
+  customBody?: string
 }) {
+  const vars = { candidate_name: candidateName, role: vacancyTitle, company: organizationName }
+  const defaults = DEFAULT_TEMPLATES.rejection
+  const subject = applyVariables(customSubject ?? defaults.subject, vars)
+  const body = applyVariables(customBody ?? defaults.body, vars)
+
   return getResend().emails.send({
-    from: FROM,
+    from: senderFrom(senderName),
     to,
     replyTo: senderEmail,
-    subject: `An update from ${organizationName} — ${vacancyTitle}`,
+    subject,
     html: `
 <!DOCTYPE html>
 <html>
@@ -219,12 +256,7 @@ export async function sendApplicationRejectionEmail({
     <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Hiring Update</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
       Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
-      Thank you for your interest in the <strong style="color: #111827;">${vacancyTitle}</strong> position at
-      <strong style="color: #111827;">${organizationName}</strong> and for taking the time to apply.
-    </p>
-    <p style="color: #6b7280; margin: 0 0 24px;">
-      After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs.
-      We encourage you to apply for future opportunities that match your background.
+      ${body}
     </p>
     <p style="color: #6b7280; font-size: 13px; margin: 0;">
       If you have any questions, you are welcome to contact

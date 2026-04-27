@@ -216,17 +216,23 @@ export async function submitPublicApplication(
 
   // ── 13. Send confirmation email ────────────────────────────────────────────
   try {
-    const { data: org } = await supabase
-      .from('organizations')
-      .select('name')
-      .eq('id', orgId)
-      .single()
+    const [{ data: org }, { data: templateRow }] = await Promise.all([
+      supabase.from('organizations').select('name').eq('id', orgId).single(),
+      supabase
+        .from('email_templates')
+        .select('subject, body')
+        .eq('organization_id', orgId)
+        .eq('template_type', 'application_received')
+        .maybeSingle(),
+    ])
 
     await sendApplicationConfirmationEmail({
       to: email,
       candidateName: `${firstName} ${lastName}`,
       vacancyTitle: vacancy.title,
       organizationName: org?.name || 'the company',
+      customSubject: templateRow?.subject,
+      customBody: templateRow?.body,
     })
   } catch {
     // Email failure is non-fatal
