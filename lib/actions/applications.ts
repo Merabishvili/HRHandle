@@ -168,12 +168,32 @@ export async function createApplication(input: {
   return { success: true, data: { id: data.id } }
 }
 
+export async function removeApplication(applicationId: string): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { error } = await ctx.supabase
+    .from('applications')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', applicationId)
+    .eq('organization_id', ctx.orgId)
+
+  if (error) return { success: false, error: 'Failed to remove application' }
+
+  revalidatePath('/vacancies/[id]', 'page')
+  revalidatePath('/candidates/[id]', 'page')
+  revalidatePath('/candidates', 'page')
+  return { success: true, data: undefined }
+}
+
 export async function rejectApplication(input: {
   applicationId: string
   statusId: string
-  rejectionReasonId: string
+  rejectionReasonId: string | null
   templateId: string | null
   sendEmail: boolean
+  customSubject?: string | null
+  customBody?: string | null
 }): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -192,7 +212,7 @@ export async function rejectApplication(input: {
     .from('applications')
     .update({
       status_id: input.statusId,
-      rejection_reason_id: input.rejectionReasonId,
+      rejection_reason_id: input.rejectionReasonId ?? null,
       rejection_template_id: input.templateId ?? null,
       last_status_changed_at: new Date().toISOString(),
     })
@@ -245,16 +265,10 @@ export async function rejectApplication(input: {
     }
   }
 
-  if (input.sendEmail && input.templateId) {
+  if (input.sendEmail) {
     try {
-      const [{ data: templateData }, { data: candidateData }, { data: vacancyData }, { data: orgData }, { data: profileData }] =
+      const [{ data: candidateData }, { data: vacancyData }, { data: orgData }, { data: profileData }] =
         await Promise.all([
-          ctx.supabase
-            .from('rejection_templates')
-            .select('subject, body')
-            .eq('id', input.templateId)
-            .eq('organization_id', ctx.orgId)
-            .single(),
           ctx.supabase
             .from('candidates')
             .select('first_name, last_name, email')
@@ -277,7 +291,24 @@ export async function rejectApplication(input: {
             .single(),
         ])
 
-      if (templateData && candidateData?.email && vacancyData && orgData) {
+      // Resolve subject/body: custom override > stored template > built-in default
+      let finalSubject: string | undefined = input.customSubject ?? undefined
+      let finalBody: string | undefined = input.customBody ?? undefined
+
+      if ((!finalSubject || !finalBody) && input.templateId) {
+        const { data: templateData } = await ctx.supabase
+          .from('rejection_templates')
+          .select('subject, body')
+          .eq('id', input.templateId)
+          .eq('organization_id', ctx.orgId)
+          .single()
+        if (templateData) {
+          finalSubject = finalSubject ?? templateData.subject
+          finalBody = finalBody ?? templateData.body
+        }
+      }
+
+      if (candidateData?.email && vacancyData && orgData) {
         await sendApplicationRejectionEmail({
           to: candidateData.email,
           candidateName: `${candidateData.first_name} ${candidateData.last_name}`.trim(),
@@ -285,8 +316,8 @@ export async function rejectApplication(input: {
           organizationName: orgData.name,
           senderName: profileData?.full_name ?? orgData.name,
           senderEmail: profileData?.email ?? '',
-          customSubject: templateData.subject,
-          customBody: templateData.body,
+          customSubject: finalSubject,
+          customBody: finalBody,
         })
       }
     } catch {

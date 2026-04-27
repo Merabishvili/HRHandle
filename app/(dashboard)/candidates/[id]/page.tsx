@@ -22,8 +22,8 @@ import { formatDistanceToNow, format } from 'date-fns'
 import { CandidateStatusSelect } from '@/components/candidates/candidate-status-select'
 import { CandidateNotes } from '@/components/candidates/candidate-notes'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
-import { ApplicationEvaluation } from '@/components/candidates/application-evaluation'
 import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
+import { CandidateApplicationsList } from '@/components/candidates/candidate-applications-list'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 
@@ -513,35 +513,24 @@ export default async function CandidateDetailPage({
               </div>
             </CardHeader>
             <CardContent>
-              {applications.length > 0 ? (
-                <div className="space-y-3">
-                  {applications.map((application) => {
-                    const vacancy = vacancyMap.get(application.vacancy_id) ?? null
-                    const appStatus = application.status_id ? appStatusMap.get(application.status_id) ?? null : null
-                    const qs = questionsByVacancy.get(application.vacancy_id) ?? []
-                    const evaluation = evaluationsByApp.get(application.id) ?? null
-                    return (
-                      <ApplicationEvaluation
-                        key={application.id}
-                        applicationId={application.id}
-                        vacancyId={application.vacancy_id}
-                        vacancyTitle={vacancy?.title ?? 'Unknown Vacancy'}
-                        vacancyDepartment={vacancy?.department ?? null}
-                        candidateId={id}
-                        appliedAt={application.applied_at}
-                        appStatus={appStatus}
-                        questions={qs}
-                        existingEvaluation={evaluation}
-                      />
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="py-8 text-center">
-                  <Briefcase className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                  <p className="mt-2 text-sm text-muted-foreground">Not added to any vacancies yet</p>
-                </div>
-              )}
+              <CandidateApplicationsList
+                candidateId={id}
+                allStatuses={(appStatusesRaw || []) as AppStatusRow[]}
+                initialApplications={applications.map((application) => {
+                  const vacancy = vacancyMap.get(application.vacancy_id) ?? null
+                  const appStatus = application.status_id ? appStatusMap.get(application.status_id) ?? null : null
+                  return {
+                    id: application.id,
+                    vacancyId: application.vacancy_id,
+                    vacancyTitle: vacancy?.title ?? 'Unknown Vacancy',
+                    vacancyDepartment: vacancy?.department ?? null,
+                    appliedAt: application.applied_at,
+                    appStatus: appStatus ?? null,
+                    questions: questionsByVacancy.get(application.vacancy_id) ?? [],
+                    existingEvaluation: evaluationsByApp.get(application.id) ?? null,
+                  }
+                })}
+              />
             </CardContent>
           </Card>
 

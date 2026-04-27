@@ -18,14 +18,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
-import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
-import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { LinkedInShareButton } from '@/components/vacancies/linkedin-share-button'
 import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
 import { VacancyApplicationsToolbar } from '@/components/vacancies/vacancy-applications-toolbar'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
+import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applications-list'
 
 interface VacancyRow {
   id: string
@@ -424,59 +423,32 @@ export default async function VacancyDetailPage({
                 appStatuses={appStatuses}
               />
               {filteredApplications.length > 0 ? (
-                <Card className="border-border">
-                  <CardContent className="p-0">
-                    <div className="divide-y divide-border">
-                      {filteredApplications.map((application) => {
-                        const candidate = appCandidateMap.get(application.candidate_id)
-                        const generalStatus = candidate?.general_status_id
-                          ? candidateStatusMap.get(candidate.general_status_id)
-                          : null
-                        const appStatus = application.status_id
-                          ? appStatusMap.get(application.status_id)
-                          : null
-                        const initials = candidate
-                          ? `${candidate.first_name?.[0] || ''}${candidate.last_name?.[0] || ''}`.toUpperCase()
-                          : '?'
-                        const fullName = candidate
+                <>
+                  <VacancyApplicationsList
+                    allStatuses={appStatuses}
+                    applications={filteredApplications.map((application) => {
+                      const candidate = appCandidateMap.get(application.candidate_id)
+                      const generalStatus = candidate?.general_status_id
+                        ? (candidateStatusMap.get(candidate.general_status_id) ?? null)
+                        : null
+                      return {
+                        id: application.id,
+                        candidateId: application.candidate_id,
+                        candidateName: candidate
                           ? `${candidate.first_name} ${candidate.last_name}`.trim()
-                          : 'Unknown candidate'
-
-                        return (
-                          <Link
-                            key={application.id}
-                            href={`/candidates/${application.candidate_id}`}
-                            className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                                <span className="text-xs font-medium text-primary">{initials}</span>
-                              </div>
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-medium text-foreground">{fullName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              {appStatus && (
-                                <Badge variant="secondary" className={APPLICATION_STATUS_COLORS[appStatus.code]}>
-                                  {appStatus.name}
-                                </Badge>
-                              )}
-                              {generalStatus && (
-                                <Badge variant="secondary" className={CANDIDATE_GENERAL_STATUS_COLORS[generalStatus.code]}>
-                                  {generalStatus.name}
-                                </Badge>
-                              )}
-                            </div>
-                          </Link>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                          : 'Unknown candidate',
+                        initials: candidate
+                          ? `${candidate.first_name?.[0] || ''}${candidate.last_name?.[0] || ''}`.toUpperCase()
+                          : '?',
+                        appliedAt: application.applied_at,
+                        statusId: application.status_id,
+                        generalStatus: generalStatus
+                          ? { id: generalStatus.id, name: generalStatus.name, code: generalStatus.code }
+                          : null,
+                      }
+                    })}
+                  />
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
                   <UserCircle className="h-10 w-10 text-muted-foreground/40" />

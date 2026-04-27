@@ -2,6 +2,8 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import {
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
 import { rejectApplication } from '@/lib/actions/applications'
+import { DEFAULT_REJECTION_SUBJECT, DEFAULT_REJECTION_BODY } from '@/lib/email-template-utils'
 
 export interface RejectionReason {
   id: string
@@ -58,46 +61,62 @@ export function RejectionDialog({
   const [reasonId, setReasonId] = useState<string>(reasons[0]?.id ?? '')
   const [templateId, setTemplateId] = useState<string>('')
   const [sendEmail, setSendEmail] = useState(false)
+  const [customSubject, setCustomSubject] = useState(DEFAULT_REJECTION_SUBJECT)
+  const [customBody, setCustomBody] = useState(DEFAULT_REJECTION_BODY)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const templatesForReason = templates.filter((t) => t.reason_id === reasonId)
+  const templatesForReason = reasonId
+    ? templates.filter((t) => t.reason_id === reasonId)
+    : []
 
-  // Auto-select first template when reason changes
+  // When reason changes, auto-select template and fill subject/body
   useEffect(() => {
-    if (templatesForReason.length === 1) {
-      setTemplateId(templatesForReason[0].id)
-    } else if (templatesForReason.length === 0) {
+    if (templatesForReason.length >= 1) {
+      const first = templatesForReason[0]
+      setTemplateId(first.id)
+      setCustomSubject(first.subject)
+      setCustomBody(first.body)
+    } else {
       setTemplateId('')
-    }
-    // if multiple, keep current selection if still valid, else reset
-    else if (!templatesForReason.find((t) => t.id === templateId)) {
-      setTemplateId(templatesForReason[0].id)
+      setCustomSubject(DEFAULT_REJECTION_SUBJECT)
+      setCustomBody(DEFAULT_REJECTION_BODY)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reasonId])
 
-  const selectedTemplate = templates.find((t) => t.id === templateId) ?? null
+  // When template selection changes (multiple templates), update subject/body
+  const handleTemplateChange = (id: string) => {
+    setTemplateId(id)
+    const t = templates.find((x) => x.id === id)
+    if (t) {
+      setCustomSubject(t.subject)
+      setCustomBody(t.body)
+    }
+  }
 
   const handleConfirm = () => {
-    if (!reasonId) { setError('Please select a rejection reason.'); return }
     setError(null)
     startTransition(async () => {
       const result = await rejectApplication({
         applicationId,
         statusId,
-        rejectionReasonId: reasonId,
+        rejectionReasonId: reasonId || null,
         templateId: templateId || null,
-        sendEmail: sendEmail && !!templateId,
+        sendEmail,
+        customSubject: sendEmail ? customSubject : null,
+        customBody: sendEmail ? customBody : null,
       })
       if (!result.success) { setError(result.error); return }
       onSuccess()
     })
   }
 
+  const hasNoReasons = reasons.length === 0
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v && !isPending) onCancel() }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Reject Candidate</DialogTitle>
         </DialogHeader>
@@ -112,9 +131,9 @@ export function RejectionDialog({
           {/* Reason selector */}
           <div className="space-y-1.5">
             <Label>Rejection reason</Label>
-            {reasons.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No rejection reasons configured. Add them in Settings → Rejection Reasons.
+            {hasNoReasons ? (
+              <p className="text-xs text-muted-foreground">
+                No rejection reasons configured. You can still reject — add reasons in Settings → Rejection Reasons.
               </p>
             ) : (
               <Select value={reasonId} onValueChange={setReasonId} disabled={isPending}>
@@ -130,49 +149,64 @@ export function RejectionDialog({
             )}
           </div>
 
-          {/* Template selector — only shown if templates exist for this reason */}
-          {templatesForReason.length > 0 && (
+          {/* Template selector — only shown if multiple templates for this reason */}
+          {templatesForReason.length > 1 && (
             <div className="space-y-1.5">
               <Label>Email template</Label>
-              {templatesForReason.length === 1 ? (
-                <p className="text-sm text-foreground font-medium">{templatesForReason[0].name}</p>
-              ) : (
-                <Select value={templateId} onValueChange={setTemplateId} disabled={isPending}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a template…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templatesForReason.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              {selectedTemplate && (
-                <div className="rounded-md border border-border bg-muted/40 p-3 space-y-1 text-xs text-muted-foreground">
-                  <p><span className="font-medium text-foreground">Subject:</span> {selectedTemplate.subject}</p>
-                  <p><span className="font-medium text-foreground">Body:</span> {selectedTemplate.body}</p>
-                </div>
-              )}
-
-              {/* Send email toggle */}
-              <div className="flex items-center justify-between pt-1">
-                <Label htmlFor="send-email-toggle" className="cursor-pointer">Send rejection email</Label>
-                <Switch
-                  id="send-email-toggle"
-                  checked={sendEmail}
-                  onCheckedChange={setSendEmail}
-                  disabled={isPending || !templateId}
-                />
-              </div>
+              <Select value={templateId} onValueChange={handleTemplateChange} disabled={isPending}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a template…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templatesForReason.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
-          {templatesForReason.length === 0 && reasonId && (
-            <p className="text-xs text-muted-foreground">
-              No email templates linked to this reason. Configure them in Settings → Email Templates.
-            </p>
+          {/* Send email toggle */}
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <div>
+              <Label htmlFor="send-email-toggle" className="cursor-pointer font-medium">Send rejection email</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {templateId
+                  ? 'Template pre-filled — you can edit it below'
+                  : 'Default email template will be used'}
+              </p>
+            </div>
+            <Switch
+              id="send-email-toggle"
+              checked={sendEmail}
+              onCheckedChange={setSendEmail}
+              disabled={isPending}
+            />
+          </div>
+
+          {/* Editable email content */}
+          {sendEmail && (
+            <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Subject</Label>
+                <Input
+                  value={customSubject}
+                  onChange={(e) => setCustomSubject(e.target.value)}
+                  disabled={isPending}
+                  className="text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Message body</Label>
+                <Textarea
+                  value={customBody}
+                  onChange={(e) => setCustomBody(e.target.value)}
+                  disabled={isPending}
+                  rows={4}
+                  className="resize-none text-sm"
+                />
+              </div>
+            </div>
           )}
         </div>
 
@@ -181,7 +215,7 @@ export function RejectionDialog({
           <Button
             variant="destructive"
             onClick={handleConfirm}
-            disabled={isPending || !reasonId}
+            disabled={isPending}
           >
             {isPending && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
             Confirm Rejection
