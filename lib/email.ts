@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 import { format } from 'date-fns'
-import { applyVariables, DEFAULT_TEMPLATES } from '@/lib/actions/email-templates'
+import { applyVariables, DEFAULT_TEMPLATES } from '@/lib/email-template-utils'
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY

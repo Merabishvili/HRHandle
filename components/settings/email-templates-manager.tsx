@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { saveEmailTemplate, resetEmailTemplate, DEFAULT_TEMPLATES, type TemplateType, type EmailTemplate } from '@/lib/actions/email-templates'
+import { saveEmailTemplate, resetEmailTemplate } from '@/lib/actions/email-templates'
+import { DEFAULT_TEMPLATES, type TemplateType, type EmailTemplate } from '@/lib/email-template-utils'
 import { Loader2, RotateCcw, Save } from 'lucide-react'
 
 const TEMPLATE_META: Record<TemplateType, { label: string; description: string; variables: string[] }> = {
