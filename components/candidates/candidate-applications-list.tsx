@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Briefcase } from 'lucide-react'
 import { ApplicationEvaluation } from './application-evaluation'
+import type { RejectionReason, RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 
 interface AppStatus {
   id: string
@@ -42,11 +43,21 @@ interface ApplicationItem {
 
 interface Props {
   candidateId: string
+  candidateName: string
   initialApplications: ApplicationItem[]
   allStatuses: AppStatus[]
+  rejectionReasons: RejectionReason[]
+  rejectionTemplates: RejectionTemplate[]
 }
 
-export function CandidateApplicationsList({ candidateId, initialApplications, allStatuses }: Props) {
+export function CandidateApplicationsList({
+  candidateId,
+  candidateName,
+  initialApplications,
+  allStatuses,
+  rejectionReasons,
+  rejectionTemplates,
+}: Props) {
   const [applications, setApplications] = useState(initialApplications)
 
   if (applications.length === 0) {
@@ -68,9 +79,12 @@ export function CandidateApplicationsList({ candidateId, initialApplications, al
           vacancyTitle={app.vacancyTitle}
           vacancyDepartment={app.vacancyDepartment}
           candidateId={candidateId}
+          candidateName={candidateName}
           appliedAt={app.appliedAt}
           appStatus={app.appStatus}
           allStatuses={allStatuses}
+          rejectionReasons={rejectionReasons}
+          rejectionTemplates={rejectionTemplates}
           questions={app.questions}
           existingEvaluation={app.existingEvaluation}
           onRemoved={(id) => setApplications((prev) => prev.filter((a) => a.id !== id))}

@@ -26,6 +26,7 @@ import {
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { saveEvaluation } from '@/lib/actions/evaluations'
 import { updateApplicationStatus, removeApplication } from '@/lib/actions/applications'
+import { RejectionDialog, type RejectionReason, type RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
@@ -59,9 +60,12 @@ interface ApplicationEvaluationProps {
   vacancyTitle: string
   vacancyDepartment: string | null
   candidateId: string
+  candidateName: string
   appliedAt: string
   appStatus: AppStatus | null
   allStatuses: AppStatus[]
+  rejectionReasons: RejectionReason[]
+  rejectionTemplates: RejectionTemplate[]
   questions: Question[]
   existingEvaluation: ExistingEvaluation | null
   onRemoved?: (applicationId: string) => void
@@ -85,9 +89,12 @@ export function ApplicationEvaluation({
   vacancyTitle,
   vacancyDepartment,
   candidateId,
+  candidateName,
   appliedAt,
   appStatus: initialAppStatus,
   allStatuses,
+  rejectionReasons,
+  rejectionTemplates,
   questions,
   existingEvaluation,
   onRemoved,
@@ -98,6 +105,7 @@ export function ApplicationEvaluation({
   const [error, setError] = useState<string | null>(null)
   const [appStatus, setAppStatus] = useState<AppStatus | null>(initialAppStatus)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [pendingRejectionStatusId, setPendingRejectionStatusId] = useState<string | null>(null)
 
   const [answers, setAnswers] = useState<Record<string, { text: string; score: number | null }>>(() => {
     const initial: Record<string, { text: string; score: number | null }> = {}
@@ -141,11 +149,22 @@ export function ApplicationEvaluation({
 
   const handleStatusChange = (newStatusId: string) => {
     const newStatus = allStatuses.find((s) => s.id === newStatusId) ?? null
+    if (newStatus?.code === 'rejected') {
+      setPendingRejectionStatusId(newStatusId)
+      return
+    }
     setAppStatus(newStatus)
     startTransition(async () => {
       const result = await updateApplicationStatus(applicationId, newStatusId)
       if (!result.success) setAppStatus(initialAppStatus)
     })
+  }
+
+  const handleRejectionSuccess = () => {
+    if (pendingRejectionStatusId) {
+      setAppStatus(allStatuses.find((s) => s.id === pendingRejectionStatusId) ?? null)
+    }
+    setPendingRejectionStatusId(null)
   }
 
   const handleRemove = () => {
@@ -342,6 +361,19 @@ export function ApplicationEvaluation({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {pendingRejectionStatusId && (
+        <RejectionDialog
+          open={!!pendingRejectionStatusId}
+          applicationId={applicationId}
+          statusId={pendingRejectionStatusId}
+          candidateName={candidateName}
+          reasons={rejectionReasons}
+          templates={rejectionTemplates}
+          onSuccess={handleRejectionSuccess}
+          onCancel={() => setPendingRejectionStatusId(null)}
+        />
+      )}
     </>
   )
 }

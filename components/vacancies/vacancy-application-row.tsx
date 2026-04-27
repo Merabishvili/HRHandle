@@ -26,6 +26,7 @@ import {
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import { updateApplicationStatus, removeApplication } from '@/lib/actions/applications'
+import { RejectionDialog, type RejectionReason, type RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 
 interface AppStatus {
   id: string
@@ -48,6 +49,8 @@ interface Props {
   currentStatusId: string | null
   generalStatus: GeneralStatus | null
   allStatuses: AppStatus[]
+  rejectionReasons: RejectionReason[]
+  rejectionTemplates: RejectionTemplate[]
   onRemoved: (applicationId: string) => void
 }
 
@@ -60,21 +63,34 @@ export function VacancyApplicationRow({
   currentStatusId,
   generalStatus,
   allStatuses,
+  rejectionReasons,
+  rejectionTemplates,
   onRemoved,
 }: Props) {
   const [statusId, setStatusId] = useState<string>(currentStatusId ?? '')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [pendingRejectionStatusId, setPendingRejectionStatusId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const currentStatus = allStatuses.find((s) => s.id === statusId)
 
   const handleStatusChange = (newStatusId: string) => {
     if (newStatusId === statusId) return
+    const newStatus = allStatuses.find((s) => s.id === newStatusId)
+    if (newStatus?.code === 'rejected') {
+      setPendingRejectionStatusId(newStatusId)
+      return
+    }
     setStatusId(newStatusId)
     startTransition(async () => {
       const result = await updateApplicationStatus(applicationId, newStatusId)
       if (!result.success) setStatusId(currentStatusId ?? '')
     })
+  }
+
+  const handleRejectionSuccess = () => {
+    if (pendingRejectionStatusId) setStatusId(pendingRejectionStatusId)
+    setPendingRejectionStatusId(null)
   }
 
   const handleRemove = () => {
@@ -149,6 +165,21 @@ export function VacancyApplicationRow({
         </div>
       </div>
 
+      {/* Rejection dialog */}
+      {pendingRejectionStatusId && (
+        <RejectionDialog
+          open={!!pendingRejectionStatusId}
+          applicationId={applicationId}
+          statusId={pendingRejectionStatusId}
+          candidateName={candidateName}
+          reasons={rejectionReasons}
+          templates={rejectionTemplates}
+          onSuccess={handleRejectionSuccess}
+          onCancel={() => setPendingRejectionStatusId(null)}
+        />
+      )}
+
+      {/* Remove confirmation */}
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>

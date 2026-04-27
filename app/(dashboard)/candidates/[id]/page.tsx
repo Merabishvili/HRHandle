@@ -153,6 +153,8 @@ export default async function CandidateDetailPage({
     { data: candidateRaw },
     { data: candidateStatusesRaw },
     { data: appStatusesRaw },
+    { data: rejectionReasonsRaw },
+    { data: rejectionTemplatesRaw },
   ] = await Promise.all([
     supabase
       .from('candidates')
@@ -188,6 +190,18 @@ export default async function CandidateDetailPage({
       .from('application_statuses')
       .select('id, name, code, sort_order')
       .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
+
+    supabase
+      .from('rejection_reasons')
+      .select('id, name')
+      .eq('organization_id', organizationId)
+      .order('sort_order', { ascending: true }),
+
+    supabase
+      .from('rejection_templates')
+      .select('id, name, subject, body, reason_id')
+      .eq('organization_id', organizationId)
       .order('sort_order', { ascending: true }),
   ])
 
@@ -515,7 +529,10 @@ export default async function CandidateDetailPage({
             <CardContent>
               <CandidateApplicationsList
                 candidateId={id}
+                candidateName={`${candidate.first_name} ${candidate.last_name}`.trim()}
                 allStatuses={(appStatusesRaw || []) as AppStatusRow[]}
+                rejectionReasons={rejectionReasonsRaw ?? []}
+                rejectionTemplates={rejectionTemplatesRaw ?? []}
                 initialApplications={applications.map((application) => {
                   const vacancy = vacancyMap.get(application.vacancy_id) ?? null
                   const appStatus = application.status_id ? appStatusMap.get(application.status_id) ?? null : null

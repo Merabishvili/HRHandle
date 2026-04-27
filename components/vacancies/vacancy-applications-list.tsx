@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { VacancyApplicationRow } from './vacancy-application-row'
+import type { RejectionReason, RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 
 interface AppStatus {
   id: string
@@ -29,9 +30,16 @@ interface ApplicationItem {
 interface Props {
   applications: ApplicationItem[]
   allStatuses: AppStatus[]
+  rejectionReasons: RejectionReason[]
+  rejectionTemplates: RejectionTemplate[]
 }
 
-export function VacancyApplicationsList({ applications: initial, allStatuses }: Props) {
+export function VacancyApplicationsList({
+  applications: initial,
+  allStatuses,
+  rejectionReasons,
+  rejectionTemplates,
+}: Props) {
   const [applications, setApplications] = useState(initial)
 
   if (applications.length === 0) return null
@@ -51,6 +59,8 @@ export function VacancyApplicationsList({ applications: initial, allStatuses }: 
               currentStatusId={app.statusId}
               generalStatus={app.generalStatus}
               allStatuses={allStatuses}
+              rejectionReasons={rejectionReasons}
+              rejectionTemplates={rejectionTemplates}
               onRemoved={(id) => setApplications((prev) => prev.filter((a) => a.id !== id))}
             />
           ))}

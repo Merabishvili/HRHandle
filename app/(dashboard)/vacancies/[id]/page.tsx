@@ -254,6 +254,8 @@ export default async function VacancyDetailPage({
     { data: applicationsRaw, count: applicantsCount },
     { data: appStatusesRaw },
     { data: questionsRaw },
+    { data: rejectionReasonsRaw },
+    { data: rejectionTemplatesRaw },
   ] = await Promise.all([
     (() => {
       let q = supabase
@@ -277,6 +279,18 @@ export default async function VacancyDetailPage({
       .from('vacancy_questions')
       .select('id, label, type, sort_order')
       .eq('vacancy_id', id)
+      .order('sort_order', { ascending: true }),
+
+    supabase
+      .from('rejection_reasons')
+      .select('id, name')
+      .eq('organization_id', organizationId)
+      .order('sort_order', { ascending: true }),
+
+    supabase
+      .from('rejection_templates')
+      .select('id, name, subject, body, reason_id')
+      .eq('organization_id', organizationId)
       .order('sort_order', { ascending: true }),
   ])
 
@@ -426,6 +440,8 @@ export default async function VacancyDetailPage({
                 <>
                   <VacancyApplicationsList
                     allStatuses={appStatuses}
+                    rejectionReasons={rejectionReasonsRaw ?? []}
+                    rejectionTemplates={rejectionTemplatesRaw ?? []}
                     applications={filteredApplications.map((application) => {
                       const candidate = appCandidateMap.get(application.candidate_id)
                       const generalStatus = candidate?.general_status_id
