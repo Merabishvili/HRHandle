@@ -106,21 +106,33 @@ export async function submitPublicApplication(
     }
   }
 
-  // ── 8. Duplicate email check ───────────────────────────────────────────────
-  const { data: existingCandidate } = await supabase
-    .from('candidates')
+  // ── 8. Resolve active candidate general status id ─────────────────────────
+  const { data: activeStatus } = await supabase
+    .from('candidate_statuses')
     .select('id')
-    .eq('organization_id', orgId)
-    .eq('email', email)
-    .is('deleted_at', null)
+    .eq('code', 'active')
     .single()
 
+  // ── 9. Duplicate detection (email AND phone must both match, active only) ──
+  // Only attempt match when both fields are present in the submission
   let candidateId: string
 
-  if (existingCandidate) {
-    candidateId = existingCandidate.id
+  const { data: matchedCandidate } = (email && phone)
+    ? await supabase
+        .from('candidates')
+        .select('id')
+        .eq('organization_id', orgId)
+        .eq('email', email)
+        .eq('phone', phone)
+        .eq('general_status_id', activeStatus?.id ?? '')
+        .is('deleted_at', null)
+        .maybeSingle()
+    : { data: null }
 
-    // Check if already applied to this vacancy
+  if (matchedCandidate) {
+    candidateId = matchedCandidate.id
+
+    // Already applied to this vacancy — silently succeed (same UX for the applicant)
     const { data: existingApp } = await supabase
       .from('applications')
       .select('id')
@@ -128,19 +140,13 @@ export async function submitPublicApplication(
       .eq('candidate_id', candidateId)
       .eq('vacancy_id', vacancy.id)
       .is('deleted_at', null)
-      .single()
+      .maybeSingle()
 
     if (existingApp) {
-      return { success: false, error: 'You have already applied for this position.' }
+      return { success: true }
     }
   } else {
-    // ── 9. Create new candidate ──────────────────────────────────────────────
-    const { data: activeStatus } = await supabase
-      .from('candidate_statuses')
-      .select('id')
-      .eq('code', 'active')
-      .single()
-
+    // ── 10. Create new candidate ─────────────────────────────────────────────
     const { data: newCandidate, error: candidateError } = await supabase
       .from('candidates')
       .insert({
@@ -163,14 +169,14 @@ export async function submitPublicApplication(
     candidateId = newCandidate.id
   }
 
-  // ── 10. Find "applied" application status ──────────────────────────────────
+  // ── 11. Find "applied" application status ──────────────────────────────────
   const { data: appliedStatus } = await supabase
     .from('application_statuses')
     .select('id')
     .eq('code', 'applied')
     .single()
 
-  // ── 11. Create application ─────────────────────────────────────────────────
+  // ── 12. Create application ─────────────────────────────────────────────────
   const { error: appError } = await supabase
     .from('applications')
     .insert({
@@ -186,7 +192,7 @@ export async function submitPublicApplication(
     return { success: false, error: 'Failed to submit application. Please try again.' }
   }
 
-  // ── 12. Upload CV ──────────────────────────────────────────────────────────
+  // ── 13. Upload CV ──────────────────────────────────────────────────────────
   try {
     const fileBytes = await cvFile.arrayBuffer()
     const ext = cvFile.name.split('.').pop() || 'pdf'
@@ -214,7 +220,7 @@ export async function submitPublicApplication(
     // CV upload failure is non-fatal — candidate + application already created
   }
 
-  // ── 13. Send confirmation email ────────────────────────────────────────────
+  // ── 14. Send confirmation email ────────────────────────────────────────────
   try {
     const [{ data: org }, { data: templateRow }] = await Promise.all([
       supabase.from('organizations').select('name').eq('id', orgId).single(),
