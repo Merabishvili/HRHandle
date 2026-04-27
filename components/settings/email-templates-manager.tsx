@@ -190,7 +190,7 @@ export function EmailTemplatesManager({ initialTemplates }: Props) {
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               ].join(' ')}
             >
-              {TEMPLATE_META[type].label}
+              {TEMPLATE_META[type]!.label}
             </button>
           ))}
         </div>
