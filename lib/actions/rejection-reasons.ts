@@ -6,7 +6,6 @@ import { getAuthContext, type ActionResult } from './index'
 export interface RejectionReason {
   id: string
   name: string
-  send_email: boolean
   sort_order: number
 }
 
@@ -18,7 +17,7 @@ export async function getRejectionReasons(): Promise<ActionResult<RejectionReaso
 
   const { data, error } = await ctx.supabase
     .from('rejection_reasons')
-    .select('id, name, send_email, sort_order')
+    .select('id, name, sort_order')
     .eq('organization_id', ctx.orgId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
@@ -28,8 +27,7 @@ export async function getRejectionReasons(): Promise<ActionResult<RejectionReaso
 }
 
 export async function createRejectionReason(
-  name: string,
-  sendEmail: boolean
+  name: string
 ): Promise<ActionResult<RejectionReason>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -55,10 +53,9 @@ export async function createRejectionReason(
     .insert({
       organization_id: ctx.orgId,
       name: trimmed,
-      send_email: sendEmail,
       sort_order: count ?? 0,
     })
-    .select('id, name, send_email, sort_order')
+    .select('id, name, sort_order')
     .single()
 
   if (error) return { success: false, error: error.message }
@@ -69,8 +66,7 @@ export async function createRejectionReason(
 
 export async function updateRejectionReason(
   id: string,
-  name: string,
-  sendEmail: boolean
+  name: string
 ): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -84,7 +80,7 @@ export async function updateRejectionReason(
 
   const { error } = await ctx.supabase
     .from('rejection_reasons')
-    .update({ name: trimmed, send_email: sendEmail })
+    .update({ name: trimmed })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
 

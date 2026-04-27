@@ -147,6 +147,13 @@ export async function POST() {
       )
     }
 
+    // Seed default rejection reason
+    await admin.from('rejection_reasons').insert({
+      organization_id: organization.id,
+      name: 'General',
+      sort_order: 0,
+    })
+
     return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json(

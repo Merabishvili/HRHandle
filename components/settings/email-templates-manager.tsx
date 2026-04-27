@@ -11,7 +11,7 @@ import { saveEmailTemplate, resetEmailTemplate } from '@/lib/actions/email-templ
 import { DEFAULT_TEMPLATES, type TemplateType, type EmailTemplate } from '@/lib/email-template-utils'
 import { Loader2, RotateCcw, Save } from 'lucide-react'
 
-const TEMPLATE_META: Record<TemplateType, { label: string; description: string; variables: string[] }> = {
+const TEMPLATE_META: Partial<Record<TemplateType, { label: string; description: string; variables: string[] }>> = {
   application_received: {
     label: 'Application Received',
     description: 'Sent to a candidate after they apply via the public apply link.',
@@ -22,14 +22,9 @@ const TEMPLATE_META: Record<TemplateType, { label: string; description: string; 
     description: 'Sent to a candidate when an interview is scheduled with "Send email" checked.',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{interview_date}}', '{{interview_time}}', '{{meeting_link}}'],
   },
-  rejection: {
-    label: 'Rejection',
-    description: 'Sent to a candidate when a rejection reason with "send email" is selected.',
-    variables: ['{{candidate_name}}', '{{role}}', '{{company}}'],
-  },
 }
 
-const TYPES: TemplateType[] = ['application_received', 'interview_invitation', 'rejection']
+const TYPES: TemplateType[] = ['application_received', 'interview_invitation']
 
 interface Props {
   initialTemplates: Record<TemplateType, EmailTemplate>
@@ -44,7 +39,7 @@ function TemplateEditor({
   initial: EmailTemplate
   defaults: EmailTemplate
 }) {
-  const meta = TEMPLATE_META[type]
+  const meta = TEMPLATE_META[type]!
   const [subject, setSubject] = useState(initial.subject)
   const [body, setBody] = useState(initial.body)
   const [error, setError] = useState<string | null>(null)

@@ -10,13 +10,19 @@ export default async function OrganizationSettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, organization_id, organizations(id, name, slug, logo_url, is_active, created_at, updated_at)')
+    .select('role, organization_id')
     .eq('id', user.id)
     .single()
 
   if (!profile || profile.role !== 'owner') redirect('/settings/profile')
+  if (!profile.organization_id) redirect('/settings/profile')
 
-  const organization = (profile.organizations as any)?.[0] || null
+  const { data: organization } = await supabase
+    .from('organizations')
+    .select('id, name, slug, logo_url, is_active, created_at, updated_at')
+    .eq('id', profile.organization_id)
+    .single()
+
   if (!organization) redirect('/settings/profile')
 
   return (
