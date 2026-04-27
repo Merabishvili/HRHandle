@@ -37,3 +37,6 @@ export function applyVariables(
 ): string {
   return text.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`)
 }
+
+export const DEFAULT_REJECTION_SUBJECT = DEFAULT_TEMPLATES.rejection.subject
+export const DEFAULT_REJECTION_BODY = DEFAULT_TEMPLATES.rejection.body

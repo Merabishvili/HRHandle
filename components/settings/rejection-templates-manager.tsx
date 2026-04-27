@@ -10,10 +10,9 @@ import {
   createRejectionTemplate,
   updateRejectionTemplate,
   deleteRejectionTemplate,
-  DEFAULT_REJECTION_SUBJECT,
-  DEFAULT_REJECTION_BODY,
   type RejectionTemplate,
 } from '@/lib/actions/rejection-templates'
+import { DEFAULT_REJECTION_SUBJECT, DEFAULT_REJECTION_BODY } from '@/lib/email-template-utils'
 import { Plus, Trash2, Loader2, Pencil, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
 const VARIABLES = ['{{candidate_name}}', '{{role}}', '{{company}}']

@@ -2,8 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
-import { DEFAULT_TEMPLATES } from '@/lib/email-template-utils'
-
 export interface RejectionTemplate {
   id: string
   name: string
@@ -13,9 +11,6 @@ export interface RejectionTemplate {
 }
 
 const MAX_TEMPLATES = 20
-
-export const DEFAULT_REJECTION_SUBJECT = DEFAULT_TEMPLATES.rejection.subject
-export const DEFAULT_REJECTION_BODY = DEFAULT_TEMPLATES.rejection.body
 
 export async function getRejectionTemplates(): Promise<ActionResult<RejectionTemplate[]>> {
   const ctx = await getAuthContext()
