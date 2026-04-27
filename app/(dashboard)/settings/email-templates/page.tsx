@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { EmailTemplatesManager } from '@/components/settings/email-templates-manager'
 import { getEmailTemplates } from '@/lib/actions/email-templates'
+import { getRejectionTemplates } from '@/lib/actions/rejection-templates'
+import { getRejectionReasons } from '@/lib/actions/rejection-reasons'
 
 export default async function EmailTemplatesSettingsPage() {
   const supabase = await createClient()
@@ -18,8 +20,13 @@ export default async function EmailTemplatesSettingsPage() {
   const isAdmin = profile.role === 'owner' || profile.role === 'admin'
   if (!isAdmin) redirect('/settings/profile')
 
-  const result = await getEmailTemplates()
-  if (!result.success) redirect('/settings/profile')
+  const [emailResult, rejectionTemplatesResult, rejectionReasonsResult] = await Promise.all([
+    getEmailTemplates(),
+    getRejectionTemplates(),
+    getRejectionReasons(),
+  ])
+
+  if (!emailResult.success) redirect('/settings/profile')
 
   return (
     <div>
@@ -29,7 +36,11 @@ export default async function EmailTemplatesSettingsPage() {
           Customise the emails sent to candidates. Use variables to personalise the content.
         </p>
       </div>
-      <EmailTemplatesManager initialTemplates={result.data} />
+      <EmailTemplatesManager
+        initialTemplates={emailResult.data}
+        initialRejectionTemplates={rejectionTemplatesResult.success ? rejectionTemplatesResult.data : []}
+        rejectionReasons={rejectionReasonsResult.success ? rejectionReasonsResult.data : []}
+      />
     </div>
   )
 }

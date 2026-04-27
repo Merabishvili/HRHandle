@@ -495,7 +495,7 @@ export default async function CandidateDetailPage({
             <CardHeader>
               <div className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Applications</CardTitle>
+                  <CardTitle>Applied Vacancies</CardTitle>
                   <CardDescription>
                     Pipeline history and evaluations
                     {activeApplicationCount > 0 && (
@@ -619,7 +619,7 @@ export default async function CandidateDetailPage({
                 )}
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Applications</span>
+                <span className="text-sm text-muted-foreground">Applied to</span>
                 <span className="text-sm font-medium">{applications.length}</span>
               </div>
               <div className="flex items-center justify-between">

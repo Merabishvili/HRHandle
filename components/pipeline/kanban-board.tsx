@@ -11,9 +11,9 @@ import {
   type DragEndEvent,
   type DragOverEvent,
 } from '@dnd-kit/core'
-import { arrayMove } from '@dnd-kit/sortable'
 import { KanbanColumn } from './kanban-column'
 import { CandidateCard } from './candidate-card'
+import { RejectionDialog, type RejectionReason, type RejectionTemplate } from './rejection-dialog'
 import { updateApplicationStatus } from '@/lib/actions/applications'
 import type { ApplicationStatus } from '@/lib/types/application'
 
@@ -32,12 +32,26 @@ interface PipelineApplication {
 interface KanbanBoardProps {
   statuses: ApplicationStatus[]
   initialApplications: PipelineApplication[]
+  rejectionReasons: RejectionReason[]
+  rejectionTemplates: RejectionTemplate[]
 }
 
-export function KanbanBoard({ statuses, initialApplications }: KanbanBoardProps) {
+interface PendingRejection {
+  applicationId: string
+  statusId: string
+  candidateName: string
+}
+
+export function KanbanBoard({
+  statuses,
+  initialApplications,
+  rejectionReasons,
+  rejectionTemplates,
+}: KanbanBoardProps) {
   const [applications, setApplications] = useState(initialApplications)
   const [activeApp, setActiveApp] = useState<PipelineApplication | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
+  const [pendingRejection, setPendingRejection] = useState<PendingRejection | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -78,11 +92,23 @@ export function KanbanBoard({ statuses, initialApplications }: KanbanBoardProps)
 
     if (!targetColumnId) return
 
-    const activeApp = applications.find((a) => a.id === activeId)
-    if (!activeApp) return
-    if (activeApp.status_id === targetColumnId) return
+    const app = applications.find((a) => a.id === activeId)
+    if (!app) return
+    if (app.status_id === targetColumnId) return
 
-    // Optimistic update
+    const targetStatus = statuses.find((s) => s.id === targetColumnId)
+
+    // Intercept drops onto the 'rejected' column
+    if (targetStatus?.code === 'rejected') {
+      setPendingRejection({
+        applicationId: activeId,
+        statusId: targetColumnId,
+        candidateName: `${app.first_name} ${app.last_name}`.trim(),
+      })
+      return
+    }
+
+    // Optimistic update for non-rejection moves
     setApplications((prev) =>
       prev.map((a) =>
         a.id === activeId
@@ -93,48 +119,79 @@ export function KanbanBoard({ statuses, initialApplications }: KanbanBoardProps)
 
     const result = await updateApplicationStatus(activeId, targetColumnId)
     if (!result.success) {
-      // Revert on failure
       setApplications(initialApplications)
     }
+  }
+
+  const handleRejectionSuccess = () => {
+    if (!pendingRejection) return
+    // Move card to rejected column
+    setApplications((prev) =>
+      prev.map((a) =>
+        a.id === pendingRejection.applicationId
+          ? { ...a, status_id: pendingRejection.statusId, last_status_changed_at: new Date().toISOString() }
+          : a
+      )
+    )
+    setPendingRejection(null)
+  }
+
+  const handleRejectionCancel = () => {
+    setPendingRejection(null)
   }
 
   const getAppsForColumn = (statusId: string) =>
     applications.filter((a) => a.status_id === statusId)
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex gap-4 overflow-x-auto pb-4 min-h-[500px]">
-        {statuses.map((status) => (
-          <KanbanColumn
-            key={status.id}
-            status={status}
-            applications={getAppsForColumn(status.id)}
-            isOver={overId === status.id}
-          />
-        ))}
-      </div>
-
-      <DragOverlay>
-        {activeApp && (
-          <div className="rotate-2 opacity-90">
-            <CandidateCard
-              applicationId={activeApp.id}
-              candidateId={activeApp.candidate_id}
-              firstName={activeApp.first_name}
-              lastName={activeApp.last_name}
-              currentPosition={activeApp.current_position}
-              currentCompany={activeApp.current_company}
-              lastStatusChangedAt={activeApp.last_status_changed_at}
-              appliedAt={activeApp.applied_at}
+    <>
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex gap-4 overflow-x-auto pb-4 min-h-[500px]">
+          {statuses.map((status) => (
+            <KanbanColumn
+              key={status.id}
+              status={status}
+              applications={getAppsForColumn(status.id)}
+              isOver={overId === status.id}
             />
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+          ))}
+        </div>
+
+        <DragOverlay>
+          {activeApp && (
+            <div className="rotate-2 opacity-90">
+              <CandidateCard
+                applicationId={activeApp.id}
+                candidateId={activeApp.candidate_id}
+                firstName={activeApp.first_name}
+                lastName={activeApp.last_name}
+                currentPosition={activeApp.current_position}
+                currentCompany={activeApp.current_company}
+                lastStatusChangedAt={activeApp.last_status_changed_at}
+                appliedAt={activeApp.applied_at}
+              />
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+
+      {pendingRejection && (
+        <RejectionDialog
+          open={!!pendingRejection}
+          applicationId={pendingRejection.applicationId}
+          statusId={pendingRejection.statusId}
+          candidateName={pendingRejection.candidateName}
+          reasons={rejectionReasons}
+          templates={rejectionTemplates}
+          onSuccess={handleRejectionSuccess}
+          onCancel={handleRejectionCancel}
+        />
+      )}
+    </>
   )
 }

@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { saveEmailTemplate, resetEmailTemplate } from '@/lib/actions/email-templates'
 import { DEFAULT_TEMPLATES, type TemplateType, type EmailTemplate } from '@/lib/email-template-utils'
 import { Loader2, RotateCcw, Save } from 'lucide-react'
+import { RejectionTemplatesManager } from '@/components/settings/rejection-templates-manager'
+import type { RejectionTemplate } from '@/lib/actions/rejection-templates'
+import type { RejectionReason } from '@/lib/actions/rejection-reasons'
 
 const TEMPLATE_META: Partial<Record<TemplateType, { label: string; description: string; variables: string[] }>> = {
   application_received: {
@@ -25,9 +27,12 @@ const TEMPLATE_META: Partial<Record<TemplateType, { label: string; description: 
 }
 
 const TYPES: TemplateType[] = ['application_received', 'interview_invitation']
+type ActiveTab = TemplateType | 'rejection'
 
 interface Props {
   initialTemplates: Record<TemplateType, EmailTemplate>
+  initialRejectionTemplates: RejectionTemplate[]
+  rejectionReasons: RejectionReason[]
 }
 
 function TemplateEditor({
@@ -150,7 +155,7 @@ function TemplateEditor({
             </div>
             <div className="border-t border-border pt-3 space-y-2 text-gray-700">
               <p className="font-semibold text-gray-900">
-                {type === 'application_received' ? 'Thanks for Applying!' : type === 'interview_invitation' ? 'Interview Invitation' : 'Hiring Update'}
+                {type === 'application_received' ? 'Thanks for Applying!' : 'Interview Invitation'}
               </p>
               <p>Dear <strong>Jane Smith</strong>,</p>
               <p>{previewBody}</p>
@@ -171,38 +176,51 @@ function TemplateEditor({
   )
 }
 
-export function EmailTemplatesManager({ initialTemplates }: Props) {
-  const [activeType, setActiveType] = useState<TemplateType>('application_received')
+export function EmailTemplatesManager({ initialTemplates, initialRejectionTemplates, rejectionReasons }: Props) {
+  const [activeTab, setActiveTab] = useState<ActiveTab>('application_received')
+
+  const tabs: { id: ActiveTab; label: string }[] = [
+    { id: 'application_received', label: 'Application Received' },
+    { id: 'interview_invitation', label: 'Interview Invitation' },
+    { id: 'rejection', label: 'Rejection' },
+  ]
 
   return (
     <div className="space-y-6">
       {/* Tab bar */}
       <div className="border-b border-border">
         <div className="flex gap-0">
-          {TYPES.map((type) => (
+          {tabs.map((tab) => (
             <button
-              key={type}
-              onClick={() => setActiveType(type)}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
               className={[
                 '-mb-px px-4 py-2.5 text-sm border-b-2 transition-colors',
-                activeType === type
+                activeTab === tab.id
                   ? 'border-primary text-foreground font-medium'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               ].join(' ')}
             >
-              {TEMPLATE_META[type]!.label}
+              {tab.label}
             </button>
           ))}
         </div>
       </div>
 
       {/* Active template editor */}
-      <TemplateEditor
-        key={activeType}
-        type={activeType}
-        initial={initialTemplates[activeType]}
-        defaults={DEFAULT_TEMPLATES[activeType]}
-      />
+      {activeTab === 'rejection' ? (
+        <RejectionTemplatesManager
+          initialTemplates={initialRejectionTemplates}
+          reasons={rejectionReasons}
+        />
+      ) : (
+        <TemplateEditor
+          key={activeTab}
+          type={activeTab}
+          initial={initialTemplates[activeTab]}
+          defaults={DEFAULT_TEMPLATES[activeTab]}
+        />
+      )}
     </div>
   )
 }

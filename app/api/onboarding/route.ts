@@ -148,11 +148,27 @@ export async function POST() {
     }
 
     // Seed default rejection reason
-    await admin.from('rejection_reasons').insert({
-      organization_id: organization.id,
-      name: 'General',
-      sort_order: 0,
-    })
+    const { data: generalReason } = await admin
+      .from('rejection_reasons')
+      .insert({
+        organization_id: organization.id,
+        name: 'General',
+        sort_order: 0,
+      })
+      .select('id')
+      .single()
+
+    // Seed default rejection template linked to General reason
+    if (generalReason) {
+      await admin.from('rejection_templates').insert({
+        organization_id: organization.id,
+        name: 'General',
+        subject: 'An update from {{company}} — {{role}}',
+        body: 'After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background.',
+        sort_order: 0,
+        reason_id: generalReason.id,
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

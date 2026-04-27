@@ -8,6 +8,7 @@ export interface RejectionTemplate {
   subject: string
   body: string
   sort_order: number
+  reason_id: string | null
 }
 
 const MAX_TEMPLATES = 20
@@ -18,7 +19,7 @@ export async function getRejectionTemplates(): Promise<ActionResult<RejectionTem
 
   const { data, error } = await ctx.supabase
     .from('rejection_templates')
-    .select('id, name, subject, body, sort_order')
+    .select('id, name, subject, body, sort_order, reason_id')
     .eq('organization_id', ctx.orgId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
@@ -30,7 +31,8 @@ export async function getRejectionTemplates(): Promise<ActionResult<RejectionTem
 export async function createRejectionTemplate(
   name: string,
   subject: string,
-  body: string
+  body: string,
+  reasonId: string | null
 ): Promise<ActionResult<RejectionTemplate>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -64,13 +66,15 @@ export async function createRejectionTemplate(
       subject: trimSubject,
       body: trimBody,
       sort_order: count ?? 0,
+      reason_id: reasonId ?? null,
     })
-    .select('id, name, subject, body, sort_order')
+    .select('id, name, subject, body, sort_order, reason_id')
     .single()
 
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/settings/rejection-reasons')
+  revalidatePath('/settings/email-templates')
   return { success: true, data: data as RejectionTemplate }
 }
 
@@ -78,7 +82,8 @@ export async function updateRejectionTemplate(
   id: string,
   name: string,
   subject: string,
-  body: string
+  body: string,
+  reasonId: string | null
 ): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -97,13 +102,20 @@ export async function updateRejectionTemplate(
 
   const { error } = await ctx.supabase
     .from('rejection_templates')
-    .update({ name: trimName, subject: trimSubject, body: trimBody, updated_at: new Date().toISOString() })
+    .update({
+      name: trimName,
+      subject: trimSubject,
+      body: trimBody,
+      reason_id: reasonId ?? null,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
 
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/settings/rejection-reasons')
+  revalidatePath('/settings/email-templates')
   return { success: true, data: undefined }
 }
 
@@ -124,5 +136,6 @@ export async function deleteRejectionTemplate(id: string): Promise<ActionResult<
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/settings/rejection-reasons')
+  revalidatePath('/settings/email-templates')
   return { success: true, data: undefined }
 }

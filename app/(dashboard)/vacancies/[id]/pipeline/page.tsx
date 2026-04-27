@@ -46,6 +46,8 @@ export default async function VacancyPipelinePage({
     { data: vacancy },
     { data: statusesRaw },
     { data: applicationsRaw },
+    { data: rejectionReasonsRaw },
+    { data: rejectionTemplatesRaw },
   ] = await Promise.all([
     supabase
       .from('vacancies')
@@ -68,6 +70,19 @@ export default async function VacancyPipelinePage({
       .eq('organization_id', organizationId)
       .is('deleted_at', null)
       .order('applied_at', { ascending: true }),
+
+    supabase
+      .from('rejection_reasons')
+      .select('id, name')
+      .eq('organization_id', organizationId)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+
+    supabase
+      .from('rejection_templates')
+      .select('id, name, subject, body, reason_id')
+      .eq('organization_id', organizationId)
+      .order('sort_order', { ascending: true }),
   ])
 
   if (!vacancy) notFound()
@@ -142,7 +157,12 @@ export default async function VacancyPipelinePage({
           </Button>
         </div>
       ) : (
-        <KanbanBoard statuses={statuses} initialApplications={applications} />
+        <KanbanBoard
+          statuses={statuses}
+          initialApplications={applications}
+          rejectionReasons={rejectionReasonsRaw ?? []}
+          rejectionTemplates={rejectionTemplatesRaw ?? []}
+        />
       )}
     </div>
   )

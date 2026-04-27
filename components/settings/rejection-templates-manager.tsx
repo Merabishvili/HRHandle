@@ -7,11 +7,19 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   createRejectionTemplate,
   updateRejectionTemplate,
   deleteRejectionTemplate,
   type RejectionTemplate,
 } from '@/lib/actions/rejection-templates'
+import type { RejectionReason } from '@/lib/actions/rejection-reasons'
 import { DEFAULT_REJECTION_SUBJECT, DEFAULT_REJECTION_BODY } from '@/lib/email-template-utils'
 import { Plus, Trash2, Loader2, Pencil, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -19,14 +27,17 @@ const VARIABLES = ['{{candidate_name}}', '{{role}}', '{{company}}']
 
 interface Props {
   initialTemplates: RejectionTemplate[]
+  reasons: RejectionReason[]
 }
 
 function TemplateRow({
   template,
+  reasons,
   onUpdated,
   onDeleted,
 }: {
   template: RejectionTemplate
+  reasons: RejectionReason[]
   onUpdated: (t: RejectionTemplate) => void
   onDeleted: (id: string) => void
 }) {
@@ -35,16 +46,25 @@ function TemplateRow({
   const [name, setName] = useState(template.name)
   const [subject, setSubject] = useState(template.subject)
   const [body, setBody] = useState(template.body)
+  const [reasonId, setReasonId] = useState<string>(template.reason_id ?? '')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  const linkedReason = reasons.find((r) => r.id === template.reason_id)
+
   const handleSave = () => {
     setError(null)
     startTransition(async () => {
-      const result = await updateRejectionTemplate(template.id, name, subject, body)
+      const result = await updateRejectionTemplate(
+        template.id,
+        name,
+        subject,
+        body,
+        reasonId || null
+      )
       if (!result.success) { setError(result.error); return }
-      onUpdated({ ...template, name, subject, body })
+      onUpdated({ ...template, name, subject, body, reason_id: reasonId || null })
       setEditing(false)
     })
   }
@@ -53,6 +73,7 @@ function TemplateRow({
     setName(template.name)
     setSubject(template.subject)
     setBody(template.body)
+    setReasonId(template.reason_id ?? '')
     setEditing(false)
     setError(null)
   }
@@ -74,6 +95,22 @@ function TemplateRow({
           <Label className="text-xs">Template name</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isPending} className="h-8 text-sm" />
         </div>
+        {reasons.length > 0 && (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Linked rejection reason</Label>
+            <Select value={reasonId} onValueChange={setReasonId} disabled={isPending}>
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="None (unlinked)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None (unlinked)</SelectItem>
+                {reasons.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="space-y-1.5">
           <Label className="text-xs">Subject</Label>
           <Input value={subject} onChange={(e) => setSubject(e.target.value)} disabled={isPending} className="h-8 text-sm" />
@@ -103,6 +140,9 @@ function TemplateRow({
           onClick={() => setExpanded((v) => !v)}
         >
           <span className="text-sm font-medium text-foreground">{template.name}</span>
+          {linkedReason && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{linkedReason.name}</span>
+          )}
           {expanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
         </button>
         {error && <span className="text-xs text-destructive">{error}</span>}
@@ -135,10 +175,11 @@ function TemplateRow({
   )
 }
 
-export function RejectionTemplatesManager({ initialTemplates }: Props) {
+export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) {
   const [templates, setTemplates] = useState<RejectionTemplate[]>(initialTemplates)
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
+  const [newReasonId, setNewReasonId] = useState<string>(reasons[0]?.id ?? '')
   const [newSubject, setNewSubject] = useState(DEFAULT_REJECTION_SUBJECT)
   const [newBody, setNewBody] = useState(DEFAULT_REJECTION_BODY)
   const [error, setError] = useState<string | null>(null)
@@ -147,10 +188,11 @@ export function RejectionTemplatesManager({ initialTemplates }: Props) {
   const handleAdd = () => {
     setError(null)
     startTransition(async () => {
-      const result = await createRejectionTemplate(newName, newSubject, newBody)
+      const result = await createRejectionTemplate(newName, newSubject, newBody, newReasonId || null)
       if (!result.success) { setError(result.error); return }
       setTemplates((prev) => [...prev, result.data])
       setNewName('')
+      setNewReasonId(reasons[0]?.id ?? '')
       setNewSubject(DEFAULT_REJECTION_SUBJECT)
       setNewBody(DEFAULT_REJECTION_BODY)
       setAdding(false)
@@ -162,7 +204,7 @@ export function RejectionTemplatesManager({ initialTemplates }: Props) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            If no templates are configured, a built-in default is used. With multiple templates, you can choose which one to send during rejection.
+            Link each template to a rejection reason. When rejecting a candidate, the template for the selected reason is pre-filled automatically.
           </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {VARIABLES.map((v) => (
@@ -185,7 +227,7 @@ export function RejectionTemplatesManager({ initialTemplates }: Props) {
 
       {templates.length === 0 && !adding && (
         <div className="rounded-lg border border-dashed border-border px-4 py-6 text-center">
-          <p className="text-sm text-muted-foreground">No custom templates. The built-in default will be used.</p>
+          <p className="text-sm text-muted-foreground">No rejection email templates. A built-in default will be used.</p>
         </div>
       )}
 
@@ -195,6 +237,7 @@ export function RejectionTemplatesManager({ initialTemplates }: Props) {
             <TemplateRow
               key={t.id}
               template={t}
+              reasons={reasons}
               onUpdated={(updated) => setTemplates((prev) => prev.map((x) => x.id === updated.id ? updated : x))}
               onDeleted={(id) => setTemplates((prev) => prev.filter((x) => x.id !== id))}
             />
@@ -210,6 +253,22 @@ export function RejectionTemplatesManager({ initialTemplates }: Props) {
             <Label className="text-xs">Template name</Label>
             <Input value={newName} onChange={(e) => setNewName(e.target.value)} disabled={isPending} placeholder="e.g. Standard, Technical Role, Senior Position" className="text-sm" />
           </div>
+          {reasons.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Linked rejection reason</Label>
+              <Select value={newReasonId} onValueChange={setNewReasonId} disabled={isPending}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="None (unlinked)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None (unlinked)</SelectItem>
+                  {reasons.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="text-xs">Subject</Label>
             <Input value={newSubject} onChange={(e) => setNewSubject(e.target.value)} disabled={isPending} className="text-sm" />
