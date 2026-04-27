@@ -17,6 +17,18 @@ interface GeneralStatus {
   code: 'active' | 'hired' | 'archived'
 }
 
+interface Question {
+  id: string
+  label: string
+  type: 'text' | 'score'
+}
+
+interface ExistingEvaluation {
+  id: string
+  score: number | null
+  answers: { question_id: string; text_value: string | null; score_value: number | null }[]
+}
+
 interface ApplicationItem {
   id: string
   candidateId: string
@@ -25,6 +37,7 @@ interface ApplicationItem {
   appliedAt: string
   statusId: string | null
   generalStatus: GeneralStatus | null
+  existingEvaluation: ExistingEvaluation | null
 }
 
 interface Props {
@@ -32,6 +45,8 @@ interface Props {
   allStatuses: AppStatus[]
   rejectionReasons: RejectionReason[]
   rejectionTemplates: RejectionTemplate[]
+  vacancyId: string
+  questions: Question[]
 }
 
 export function VacancyApplicationsList({
@@ -39,6 +54,8 @@ export function VacancyApplicationsList({
   allStatuses,
   rejectionReasons,
   rejectionTemplates,
+  vacancyId,
+  questions,
 }: Props) {
   const [applications, setApplications] = useState(initial)
 
@@ -61,6 +78,9 @@ export function VacancyApplicationsList({
               allStatuses={allStatuses}
               rejectionReasons={rejectionReasons}
               rejectionTemplates={rejectionTemplates}
+              vacancyId={vacancyId}
+              questions={questions}
+              existingEvaluation={app.existingEvaluation}
               onRemoved={(id) => setApplications((prev) => prev.filter((a) => a.id !== id))}
             />
           ))}

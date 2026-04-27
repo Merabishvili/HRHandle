@@ -313,6 +313,39 @@ export default async function VacancyDetailPage({
     }
   }
 
+  // Fetch evaluations for all applications
+  type EvalRow = { id: string; application_id: string; score: number | null }
+  type AnswerRow = { evaluation_id: string; question_id: string; text_value: string | null; score_value: number | null }
+  const evaluationsByApp = new Map<string, { id: string; score: number | null; answers: { question_id: string; text_value: string | null; score_value: number | null }[] }>()
+  const appIds = allApplications.map((a) => a.id)
+  if (appIds.length > 0) {
+    const { data: evalsRaw } = await supabase
+      .from('candidate_evaluations')
+      .select('id, application_id, score')
+      .in('application_id', appIds)
+    const evals = (evalsRaw || []) as EvalRow[]
+    const evalIds = evals.map((e) => e.id)
+    const answersByEval = new Map<string, AnswerRow[]>()
+    if (evalIds.length > 0) {
+      const { data: answersRaw } = await supabase
+        .from('candidate_evaluation_answers')
+        .select('evaluation_id, question_id, text_value, score_value')
+        .in('evaluation_id', evalIds)
+      for (const a of (answersRaw || []) as AnswerRow[]) {
+        const existing = answersByEval.get(a.evaluation_id) ?? []
+        existing.push(a)
+        answersByEval.set(a.evaluation_id, existing)
+      }
+    }
+    for (const e of evals) {
+      evaluationsByApp.set(e.application_id, {
+        id: e.id,
+        score: e.score,
+        answers: answersByEval.get(e.id) ?? [],
+      })
+    }
+  }
+
   // Filter by candidate name search after candidate map is populated
   const filteredApplications = appSearch.trim()
     ? allApplications.filter((app) => {
@@ -442,6 +475,8 @@ export default async function VacancyDetailPage({
                     allStatuses={appStatuses}
                     rejectionReasons={rejectionReasonsRaw ?? []}
                     rejectionTemplates={rejectionTemplatesRaw ?? []}
+                    vacancyId={id}
+                    questions={questions}
                     applications={filteredApplications.map((application) => {
                       const candidate = appCandidateMap.get(application.candidate_id)
                       const generalStatus = candidate?.general_status_id
@@ -461,6 +496,7 @@ export default async function VacancyDetailPage({
                         generalStatus: generalStatus
                           ? { id: generalStatus.id, name: generalStatus.name, code: generalStatus.code }
                           : null,
+                        existingEvaluation: evaluationsByApp.get(application.id) ?? null,
                       }
                     })}
                   />
