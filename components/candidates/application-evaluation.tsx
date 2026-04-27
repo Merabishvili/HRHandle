@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { ChevronDown, ChevronUp, Loader2, CheckCircle2, Clock, Trash2 } from 'lucide-react'
+import { ChevronRight, Loader2, CheckCircle2, Clock, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -162,10 +162,13 @@ export function ApplicationEvaluation({
         <div className="flex w-full items-start justify-between gap-4 p-4">
           <button
             type="button"
-            className="flex-1 flex items-start justify-between gap-4 text-left"
+            className="flex-1 flex items-center gap-3 text-left min-w-0"
             onClick={() => setExpanded((v) => !v)}
           >
-            <div className="space-y-1">
+            <ChevronRight
+              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+            />
+            <div className="min-w-0 space-y-0.5">
               <Link
                 href={`/vacancies/${vacancyId}`}
                 className="font-medium text-foreground hover:underline"
@@ -177,29 +180,24 @@ export function ApplicationEvaluation({
                 <p className="text-sm text-muted-foreground">{vacancyDepartment}</p>
               )}
             </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              {calculatedScore !== null ? (
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  <CheckCircle2 className="mr-1 h-3 w-3" />
-                  {calculatedScore}%
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="bg-amber-100 text-amber-800">
-                  <Clock className="mr-1 h-3 w-3" />
-                  Incomplete
-                </Badge>
-              )}
-              <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(appliedAt), { addSuffix: true })}
-              </span>
-              {expanded ? (
-                <ChevronUp className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              )}
-            </div>
           </button>
+
+          <div className="flex shrink-0 items-center gap-2">
+            {calculatedScore !== null ? (
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <CheckCircle2 className="mr-1 h-3 w-3" />
+                {calculatedScore}%
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                <Clock className="mr-1 h-3 w-3" />
+                Incomplete
+              </Badge>
+            )}
+            <span className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(appliedAt), { addSuffix: true })}
+            </span>
+          </div>
 
           {/* Actions: status selector + remove */}
           <div className="flex items-center gap-1 shrink-0 -mt-0.5">
@@ -318,7 +316,7 @@ export function ApplicationEvaluation({
                   Saving...
                 </>
               ) : (
-                'Save Evaluation'
+                'Save Changes'
               )}
             </Button>
           </div>
