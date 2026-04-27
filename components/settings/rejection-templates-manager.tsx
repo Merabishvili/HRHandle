@@ -24,6 +24,7 @@ import { DEFAULT_REJECTION_SUBJECT, DEFAULT_REJECTION_BODY } from '@/lib/email-t
 import { Plus, Trash2, Loader2, Pencil, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
 const VARIABLES = ['{{candidate_name}}', '{{role}}', '{{company}}']
+const NO_REASON = '__none__'
 
 interface Props {
   initialTemplates: RejectionTemplate[]
@@ -46,7 +47,7 @@ function TemplateRow({
   const [name, setName] = useState(template.name)
   const [subject, setSubject] = useState(template.subject)
   const [body, setBody] = useState(template.body)
-  const [reasonId, setReasonId] = useState<string>(template.reason_id ?? '')
+  const [reasonId, setReasonId] = useState<string>(template.reason_id ?? NO_REASON)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -56,15 +57,16 @@ function TemplateRow({
   const handleSave = () => {
     setError(null)
     startTransition(async () => {
+      const resolvedReasonId = reasonId === NO_REASON ? null : reasonId
       const result = await updateRejectionTemplate(
         template.id,
         name,
         subject,
         body,
-        reasonId || null
+        resolvedReasonId
       )
       if (!result.success) { setError(result.error); return }
-      onUpdated({ ...template, name, subject, body, reason_id: reasonId || null })
+      onUpdated({ ...template, name, subject, body, reason_id: resolvedReasonId })
       setEditing(false)
     })
   }
@@ -73,7 +75,7 @@ function TemplateRow({
     setName(template.name)
     setSubject(template.subject)
     setBody(template.body)
-    setReasonId(template.reason_id ?? '')
+    setReasonId(template.reason_id ?? NO_REASON)
     setEditing(false)
     setError(null)
   }
@@ -103,7 +105,7 @@ function TemplateRow({
                 <SelectValue placeholder="None (unlinked)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None (unlinked)</SelectItem>
+                <SelectItem value={NO_REASON}>None (unlinked)</SelectItem>
                 {reasons.map((r) => (
                   <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                 ))}
@@ -179,7 +181,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
   const [templates, setTemplates] = useState<RejectionTemplate[]>(initialTemplates)
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newReasonId, setNewReasonId] = useState<string>(reasons[0]?.id ?? '')
+  const [newReasonId, setNewReasonId] = useState<string>(reasons[0]?.id ?? NO_REASON)
   const [newSubject, setNewSubject] = useState(DEFAULT_REJECTION_SUBJECT)
   const [newBody, setNewBody] = useState(DEFAULT_REJECTION_BODY)
   const [error, setError] = useState<string | null>(null)
@@ -188,11 +190,12 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
   const handleAdd = () => {
     setError(null)
     startTransition(async () => {
-      const result = await createRejectionTemplate(newName, newSubject, newBody, newReasonId || null)
+      const resolvedNewReasonId = newReasonId === NO_REASON ? null : newReasonId
+      const result = await createRejectionTemplate(newName, newSubject, newBody, resolvedNewReasonId)
       if (!result.success) { setError(result.error); return }
       setTemplates((prev) => [...prev, result.data])
       setNewName('')
-      setNewReasonId(reasons[0]?.id ?? '')
+      setNewReasonId(reasons[0]?.id ?? NO_REASON)
       setNewSubject(DEFAULT_REJECTION_SUBJECT)
       setNewBody(DEFAULT_REJECTION_BODY)
       setAdding(false)
@@ -261,7 +264,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
                   <SelectValue placeholder="None (unlinked)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None (unlinked)</SelectItem>
+                  <SelectItem value={NO_REASON}>None (unlinked)</SelectItem>
                   {reasons.map((r) => (
                     <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                   ))}
