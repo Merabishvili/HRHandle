@@ -45,6 +45,7 @@ export interface Vacancy {
 
   description: string
   requirements: string | null
+  show_on_public_page: boolean
 
   created_by: UUID | null
   created_at: ISODateTimeString
@@ -79,6 +80,7 @@ export interface VacancyFormData {
   description: string
   responsibilities?: string | null
   requirements?: string | null
+  show_on_public_page?: boolean
 }
 
 export interface VacancyFilters {

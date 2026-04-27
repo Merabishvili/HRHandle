@@ -42,7 +42,7 @@ export default async function ApplyPage({ params }: PageProps) {
       archived_at,
       application_form_token,
       vacancy_statuses ( code ),
-      organizations ( name, logo_url )
+      organizations ( name, logo_url, public_page_token )
     `)
     .eq('application_form_token', token)
     .single()
@@ -56,6 +56,7 @@ export default async function ApplyPage({ params }: PageProps) {
     statusCode === 'archived'
 
   const org = (vacancy.organizations as any)?.[0] || null
+  const publicJobsToken = org?.public_page_token as string | null
 
   const employmentLabel: Record<string, string> = {
     full_time: 'Full-time',
@@ -127,6 +128,13 @@ export default async function ApplyPage({ params }: PageProps) {
           <ApplyForm token={token} />
         )}
 
+        {publicJobsToken && (
+          <p className="text-center text-xs text-gray-400">
+            <a href={`/jobs/${publicJobsToken}`} className="underline hover:no-underline">
+              View all open positions at {org?.name || 'this company'}
+            </a>
+          </p>
+        )}
         <p className="text-center text-xs text-gray-400">Powered by HRHandle</p>
       </div>
     </div>

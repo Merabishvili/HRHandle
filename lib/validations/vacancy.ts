@@ -21,6 +21,7 @@ export const VacancySchema = z
     description: z.string().min(1, 'About the job is required'),
     responsibilities: z.string().nullable().optional(),
     requirements: z.string().nullable().optional(),
+    show_on_public_page: z.boolean().optional().default(false),
   })
   .refine(
     (data) =>

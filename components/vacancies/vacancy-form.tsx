@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Switch } from '@/components/ui/switch'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Loader2 } from 'lucide-react'
 import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
@@ -75,6 +76,7 @@ export function VacancyForm({
     description: vacancy?.description || '',
     responsibilities: (vacancy as any)?.responsibilities || '',
     requirements: vacancy?.requirements || '',
+    show_on_public_page: vacancy?.show_on_public_page ?? false,
   })
 
   const validateForm = (): string | null => {
@@ -136,6 +138,7 @@ export function VacancyForm({
       description: formData.description.trim(),
       responsibilities: (formData as any).responsibilities?.trim() || null,
       requirements: formData.requirements?.trim() || null,
+      show_on_public_page: (formData as any).show_on_public_page ?? false,
     }
 
     const result = vacancy
@@ -462,6 +465,20 @@ export function VacancyForm({
               rows={5}
             />
             <p className="text-xs text-muted-foreground">Included in the LinkedIn post under "Requirements".</p>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border p-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="show_on_public_page" className="text-sm font-medium">Show on public jobs page</Label>
+              <p className="text-xs text-muted-foreground">Candidates can discover and apply to this vacancy from your public jobs page.</p>
+            </div>
+            <Switch
+              id="show_on_public_page"
+              checked={(formData as any).show_on_public_page ?? false}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, show_on_public_page: checked } as any)
+              }
+              disabled={isLoading}
+            />
           </div>
         </CardContent>
       </Card>
