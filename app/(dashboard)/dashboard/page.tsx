@@ -268,7 +268,7 @@ export default async function DashboardPage() {
       href: '/candidates',
     },
     {
-      title: 'Active Applications',
+      title: 'Active Candidates',
       value: activeApplications || 0,
       icon: Calendar,
       change: 'Across all vacancies',

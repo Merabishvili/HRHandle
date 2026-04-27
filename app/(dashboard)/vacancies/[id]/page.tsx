@@ -391,7 +391,7 @@ export default async function VacancyDetailPage({
               value="applications"
               className="-mb-px rounded-none !border-x-0 !border-t-0 border-b-2 border-transparent !bg-transparent px-4 py-2.5 text-sm font-normal text-muted-foreground !shadow-none data-[state=active]:border-b-primary data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:!shadow-none"
             >
-              Applications
+              Candidates
               {(applicantsCount ?? 0) > 0 && (
                 <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                   {applicantsCount}
@@ -484,7 +484,7 @@ export default async function VacancyDetailPage({
                     {appSearch || appStatus ? 'No matching applicants' : 'No applicants yet'}
                   </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {appSearch || appStatus ? 'Try adjusting your filters.' : 'Add candidates to start tracking applications.'}
+                    {appSearch || appStatus ? 'Try adjusting your filters.' : 'Add candidates to start tracking their progress.'}
                   </p>
                   {!appSearch && !appStatus && (
                     <Button className="mt-6" asChild>

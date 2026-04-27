@@ -79,10 +79,10 @@ export function ApplyForm({ token }: { token: string }) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-sm text-center">
         <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-        <h2 className="mt-4 text-xl font-bold text-gray-900">Application Submitted!</h2>
+        <h2 className="mt-4 text-xl font-bold text-gray-900">You&apos;ve Applied!</h2>
         <p className="mt-2 text-sm text-gray-600">
           Thank you for applying. We&apos;ve sent a confirmation to <strong>{email}</strong>.
-          We will review your application and be in touch.
+          We will review your details and be in touch.
         </p>
       </div>
     )
@@ -230,7 +230,7 @@ export function ApplyForm({ token }: { token: string }) {
               Submitting...
             </>
           ) : (
-            'Submit Application'
+            'Apply Now'
           )}
         </button>
 

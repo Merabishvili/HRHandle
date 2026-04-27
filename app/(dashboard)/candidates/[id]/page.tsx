@@ -539,7 +539,7 @@ export default async function CandidateDetailPage({
               ) : (
                 <div className="py-8 text-center">
                   <Briefcase className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                  <p className="mt-2 text-sm text-muted-foreground">No applications yet</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Not added to any vacancies yet</p>
                 </div>
               )}
             </CardContent>
@@ -633,7 +633,7 @@ export default async function CandidateDetailPage({
               {overviewScore !== null && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {overviewScoreIsActive ? 'Active application score' : 'Recent application score'}
+                    {overviewScoreIsActive ? 'Current score' : 'Recent score'}
                   </span>
                   <span className="text-sm font-medium">{overviewScore} / 100</span>
                 </div>

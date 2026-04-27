@@ -61,9 +61,9 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
       {!token ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
           <LinkIcon className="h-10 w-10 text-muted-foreground/40" />
-          <h3 className="mt-4 text-lg font-medium text-foreground">No application form active</h3>
+          <h3 className="mt-4 text-lg font-medium text-foreground">No apply link active</h3>
           <p className="mt-1 mb-6 text-sm text-muted-foreground max-w-sm">
-            Activate a public form to collect applications directly from candidates. The link can be shared on LinkedIn or any job board.
+            Activate a public link so candidates can apply directly. Share it on LinkedIn or any job board.
           </p>
           <Button onClick={handleActivate} disabled={isPending}>
             {isPending ? 'Activating...' : 'Activate Application Form'}
@@ -72,7 +72,7 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-foreground">Application Form</h3>
+            <h3 className="font-semibold text-foreground">Apply Link</h3>
             <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
           </div>
 
@@ -117,7 +117,7 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
               <div className="flex items-center gap-3">
                 <span className="text-sm text-destructive flex items-center gap-1.5">
                   <AlertTriangle className="h-4 w-4" />
-                  The link will stop working immediately. Existing applications are kept.
+                  The link will stop working immediately. Existing candidates are kept.
                 </span>
                 <Button
                   size="sm"

@@ -61,19 +61,19 @@ export function AddApplicationDialog({
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setVacancyId(''); setError(null) } }}>
       <DialogTrigger asChild>
-        <Button size="sm" disabled={atLimit} title={atLimit ? 'Maximum 5 active applications reached' : undefined}>
+        <Button size="sm" disabled={atLimit} title={atLimit ? 'Already being considered for 5 vacancies' : undefined}>
           <Plus className="mr-1 h-4 w-4" />
-          Add Application
+          Add to Vacancy
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Application</DialogTitle>
+          <DialogTitle>Add to Vacancy</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           {atLimit && (
             <p className="text-sm text-destructive">
-              This candidate already has 5 active applications. Move or close one before adding a new one.
+              This candidate is already being considered for 5 vacancies. Move or close one before adding a new one.
             </p>
           )}
           <div className="space-y-2">

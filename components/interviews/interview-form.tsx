@@ -157,7 +157,7 @@ export function InterviewForm({
     const matched = applications.find(
       (a) => a.candidate_id === candidateId && a.vacancy_id === vacancyId
     )
-    if (!matched) return 'The selected candidate has no application for this vacancy.'
+    if (!matched) return 'This candidate has not been added to this vacancy.'
 
     const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`)
     if (Number.isNaN(scheduledAt.getTime())) return 'Scheduled date/time is invalid.'
@@ -263,7 +263,7 @@ export function InterviewForm({
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
-              Only vacancies linked to the selected candidate through applications are shown.
+              Only vacancies this candidate is being considered for are shown.
             </p>
           </div>
 

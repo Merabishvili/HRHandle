@@ -65,12 +65,12 @@ export async function submitPublicApplication(
     .eq('application_form_token', token)
     .single()
 
-  if (!vacancy) return { success: false, error: 'This application form is no longer active.' }
+  if (!vacancy) return { success: false, error: 'This apply link is no longer active.' }
 
   // Vacancy must be active
   const statusCode = (vacancy.vacancy_statuses as any)?.[0]?.code
   if (vacancy.archived_at || statusCode === 'closed' || statusCode === 'archived') {
-    return { success: false, error: 'This position is no longer accepting applications.' }
+    return { success: false, error: 'This position is no longer open.' }
   }
 
   const orgId: string = vacancy.organization_id
@@ -83,7 +83,7 @@ export async function submitPublicApplication(
     .eq('organization_id', orgId)
 
   if ((appCount ?? 0) >= MAX_APPLICATIONS_PER_VACANCY) {
-    return { success: false, error: 'This position is no longer accepting applications.' }
+    return { success: false, error: 'This position is no longer open.' }
   }
 
   // ── 7. IP rate limiting ────────────────────────────────────────────────────

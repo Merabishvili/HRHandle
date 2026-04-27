@@ -129,7 +129,7 @@ export async function createApplication(input: {
     .in('status_id', activeStatusIds)
 
   if ((count ?? 0) >= 5) {
-    return { success: false, error: 'Candidate already has 5 active applications. Move or close one before adding a new one.' }
+    return { success: false, error: 'This candidate is already being considered for 5 vacancies. Move or close one before adding a new one.' }
   }
 
   // Prevent duplicate application to the same vacancy
@@ -142,7 +142,7 @@ export async function createApplication(input: {
     .is('deleted_at', null)
     .maybeSingle()
 
-  if (existing) return { success: false, error: 'Candidate already has an application for this vacancy.' }
+  if (existing) return { success: false, error: 'This candidate is already being considered for this vacancy.' }
 
   // Get the "applied" status id
   const appliedStatus = (activeStatusesRaw || []).find((s) => s.code === 'applied')

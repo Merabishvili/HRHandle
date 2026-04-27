@@ -165,19 +165,19 @@ export async function sendApplicationConfirmationEmail({
   return getResend().emails.send({
     from: FROM,
     to,
-    subject: `We received your application — ${vacancyTitle}`,
+    subject: `You applied for ${vacancyTitle} — ${organizationName}`,
     html: `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
-    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Application Received</h1>
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Thanks for Applying!</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
       Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
       Thank you for applying for <strong style="color: #111827;">${vacancyTitle}</strong> at
       <strong style="color: #111827;">${organizationName}</strong>.
-      We have received your application and will review it shortly.
+      We have received your details and will review them shortly.
     </p>
     <p style="color: #6b7280; margin: 0 0 24px;">
       We will be in touch if your profile matches our requirements. We appreciate your interest and the time you took to apply.
@@ -209,14 +209,14 @@ export async function sendApplicationRejectionEmail({
     from: FROM,
     to,
     replyTo: senderEmail,
-    subject: `Update on your application — ${vacancyTitle}`,
+    subject: `An update from ${organizationName} — ${vacancyTitle}`,
     html: `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
-    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Application Update</h1>
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Hiring Update</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
       Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
       Thank you for your interest in the <strong style="color: #111827;">${vacancyTitle}</strong> position at

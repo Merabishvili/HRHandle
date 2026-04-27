@@ -179,7 +179,7 @@ export default function LandingPage() {
                 icon: Users,
                 title: 'Candidate Tracking',
                 description:
-                  'Manage candidate profiles with contact details, documents, notes, and a full application history across all your open roles.',
+                  'Manage candidate profiles with contact details, documents, notes, and a full history of every role they have been considered for.',
               },
               {
                 icon: Calendar,
@@ -209,7 +209,7 @@ export default function LandingPage() {
                 icon: BarChart3,
                 title: 'Analytics & Reports',
                 description:
-                  'Get insights into hiring activity with dashboard metrics, application counts per vacancy, and reporting-ready summaries.',
+                  'Get insights into hiring activity with dashboard metrics, candidate counts per vacancy, and reporting-ready summaries.',
               },
               {
                 icon: Shield,

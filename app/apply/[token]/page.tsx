@@ -120,7 +120,7 @@ export default async function ApplyPage({ params }: PageProps) {
         {/* Application Form */}
         {isClosed ? (
           <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-lg font-semibold text-gray-700">This position is no longer accepting applications.</p>
+            <p className="text-lg font-semibold text-gray-700">This position is no longer open.</p>
             <p className="mt-1 text-sm text-gray-500">The role may have been filled or closed. Thank you for your interest.</p>
           </div>
         ) : (
