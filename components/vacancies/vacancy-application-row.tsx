@@ -26,7 +26,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
-import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import { updateApplicationStatus, removeApplication } from '@/lib/actions/applications'
 import { saveEvaluation } from '@/lib/actions/evaluations'
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from '@/components/pipeline/rejection-dialog'
@@ -213,15 +212,6 @@ export function VacancyApplicationRow({
                 Incomplete
               </Badge>
             ) : null}
-
-            {generalStatus && (
-              <Badge
-                variant="secondary"
-                className={(CANDIDATE_GENERAL_STATUS_COLORS as Record<string, string>)[generalStatus.code]}
-              >
-                {generalStatus.name}
-              </Badge>
-            )}
 
             {/* Status selector */}
             <Select value={statusId} onValueChange={handleStatusChange} disabled={isPending}>

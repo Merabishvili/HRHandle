@@ -112,6 +112,19 @@ export async function createApplication(input: {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
+  // Only active candidates can be linked to a vacancy
+  const { data: candidateCheck } = await ctx.supabase
+    .from('candidates')
+    .select('general_status_id, candidate_general_statuses(code)')
+    .eq('id', input.candidateId)
+    .eq('organization_id', ctx.orgId)
+    .single()
+
+  const generalCode = (candidateCheck?.candidate_general_statuses as { code: string } | null)?.code
+  if (generalCode && generalCode !== 'active') {
+    return { success: false, error: 'Only active candidates can be added to a vacancy.' }
+  }
+
   // Resolve active application status IDs
   const { data: activeStatusesRaw } = await ctx.supabase
     .from('application_statuses')
