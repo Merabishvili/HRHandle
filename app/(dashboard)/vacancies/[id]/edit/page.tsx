@@ -124,7 +124,7 @@ export default async function EditVacancyPage({
 
   const vacancy = vacancyRaw as VacancyRow | null
   const sectors = (sectorsRaw || []) as SectorRow[]
-  const statusOptions = (statusOptionsRaw || []) as VacancyStatusRow[]
+  const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
 
   if (!vacancy) {
     notFound()

@@ -60,7 +60,7 @@ export default async function NewVacancyPage() {
   ])
 
   const sectors = (sectorsRaw || []) as SectorRow[]
-  const statusOptions = (statusOptionsRaw || []) as VacancyStatusRow[]
+  const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
 
   const defaultDraftStatus = statusOptions.find((status) => status.code === 'draft') || null
 

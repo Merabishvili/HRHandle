@@ -37,8 +37,8 @@ export default async function NewCandidatePage({
 
   const [
     { data: vacancies },
-    candidateStatuses,
-    applicationStatuses,
+    candidateStatusesAll,
+    applicationStatusesAll,
     customFieldGroups,
   ] = await Promise.all([
     supabase
@@ -52,9 +52,10 @@ export default async function NewCandidatePage({
     getCustomFieldSchema('candidate'),
   ])
 
-  // ✅ find default "new" status
-  const defaultApplicationStatus =
-    applicationStatuses?.find((s) => s.code === 'new') || null
+  const candidateStatuses = (candidateStatusesAll || []).filter((s) => s.is_active)
+  const applicationStatuses = (applicationStatusesAll || []).filter((s) => s.is_active)
+
+  const defaultApplicationStatus = applicationStatuses.find((s) => s.code === 'new') || null
 
   return (
     <div className="max-w-3xl space-y-6">

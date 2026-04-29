@@ -84,7 +84,7 @@ export default async function VacancyPipelinePage({
 
   if (!vacancy) notFound()
 
-  const statuses = (statusesRaw || []) as ApplicationStatus[]
+  const statuses = (statusesRaw || []).filter((s) => s.is_active) as ApplicationStatus[]
   const applicationsData = (applicationsRaw || []) as PipelineApplicationRow[]
 
   // Fetch candidates separately to avoid unreliable nested joins

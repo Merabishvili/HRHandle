@@ -240,7 +240,7 @@ export default async function VacancyDetailPage({
     notFound()
   }
 
-  const vacancyStatuses = (vacancyStatusesRaw || []) as VacancyStatusRow[]
+  const vacancyStatuses = (vacancyStatusesRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
   const sectors = (sectorsRaw || []) as SectorRow[]
   const candidateStatuses = (candidateStatusesRaw || []) as CandidateGeneralStatusRow[]
 
