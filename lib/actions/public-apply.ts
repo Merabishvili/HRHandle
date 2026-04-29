@@ -67,9 +67,9 @@ export async function submitPublicApplication(
 
   if (!vacancy) return { success: false, error: 'This apply link is no longer active.' }
 
-  // Vacancy must be active
+  // Vacancy must be open (draft/on_hold/closed/archived are all blocked)
   const statusCode = (vacancy.vacancy_statuses as any)?.[0]?.code
-  if (vacancy.archived_at || statusCode === 'closed' || statusCode === 'archived') {
+  if (vacancy.archived_at || statusCode !== 'open') {
     return { success: false, error: 'This position is no longer open.' }
   }
 

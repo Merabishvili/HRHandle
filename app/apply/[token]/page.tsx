@@ -42,7 +42,7 @@ export default async function ApplyPage({ params }: PageProps) {
       archived_at,
       application_form_token,
       vacancy_statuses ( code ),
-      organizations ( name, logo_url, public_page_token )
+      organizations ( name, logo_url, public_page_token, slug )
     `)
     .eq('application_form_token', token)
     .single()
@@ -50,13 +50,11 @@ export default async function ApplyPage({ params }: PageProps) {
   if (!vacancy) notFound()
 
   const statusCode = (vacancy.vacancy_statuses as any)?.[0]?.code
-  const isClosed =
-    vacancy.archived_at ||
-    statusCode === 'closed' ||
-    statusCode === 'archived'
+  const isClosed = vacancy.archived_at || statusCode !== 'open'
 
   const org = (vacancy.organizations as any)?.[0] || null
-  const publicJobsToken = org?.public_page_token as string | null
+  // Use human-readable slug if available, fallback to UUID token
+  const publicJobsSlug = (org?.slug || org?.public_page_token) as string | null
 
   const employmentLabel: Record<string, string> = {
     full_time: 'Full-time',
@@ -68,6 +66,17 @@ export default async function ApplyPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="mx-auto max-w-2xl space-y-6">
+
+        {/* Back to all vacancies */}
+        {publicJobsSlug && (
+          <a
+            href={`/jobs/${publicJobsSlug}`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            All open positions at {org?.name || 'this company'}
+          </a>
+        )}
 
         {/* Header */}
         <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
@@ -128,9 +137,9 @@ export default async function ApplyPage({ params }: PageProps) {
           <ApplyForm token={token} />
         )}
 
-        {publicJobsToken && (
+        {publicJobsSlug && (
           <p className="text-center text-xs text-gray-400">
-            <a href={`/jobs/${publicJobsToken}`} className="underline hover:no-underline">
+            <a href={`/jobs/${publicJobsSlug}`} className="underline hover:no-underline">
               View all open positions at {org?.name || 'this company'}
             </a>
           </p>

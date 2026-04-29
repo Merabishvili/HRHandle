@@ -14,12 +14,16 @@ export async function createVacancy(input: VacancyInput): Promise<ActionResult<{
   const parsed = VacancySchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
 
+  const tokenForInsert =
+    parsed.data.show_on_public_page ? (crypto.randomUUID() as string) : undefined
+
   const { data, error } = await ctx.supabase
     .from('vacancies')
     .insert({
       ...parsed.data,
       organization_id: ctx.orgId,
       created_by: ctx.userId,
+      ...(tokenForInsert ? { application_form_token: tokenForInsert } : {}),
     })
     .select('id')
     .single()
@@ -40,9 +44,25 @@ export async function updateVacancy(
   const parsed = VacancySchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
 
+  const updatePayload: Record<string, unknown> = { ...parsed.data }
+
+  // Auto-generate application_form_token when show_on_public_page is being enabled
+  if (parsed.data.show_on_public_page) {
+    const { data: existing } = await ctx.supabase
+      .from('vacancies')
+      .select('application_form_token')
+      .eq('id', id)
+      .eq('organization_id', ctx.orgId)
+      .single()
+
+    if (!existing?.application_form_token) {
+      updatePayload.application_form_token = crypto.randomUUID()
+    }
+  }
+
   const { error } = await ctx.supabase
     .from('vacancies')
-    .update(parsed.data)
+    .update(updatePayload)
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
 

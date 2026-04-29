@@ -109,11 +109,12 @@ export default async function VacanciesPage({
 
   const { data: orgData } = await supabase
     .from('organizations')
-    .select('public_page_token')
+    .select('public_page_token, slug')
     .eq('id', organizationId)
     .single()
 
-  const publicPageToken = orgData?.public_page_token as string | null
+  // Use human-readable slug if available, fallback to UUID token
+  const publicPageSlug = (orgData?.slug || orgData?.public_page_token) as string | null
 
   const colPrefs = (profile?.column_preferences as Record<string, string[]>) || {}
   const activeColumns: string[] = colPrefs.vacancies?.length
@@ -230,16 +231,16 @@ export default async function VacanciesPage({
         </Button>
       </div>
 
-      {publicPageToken && (
+      {publicPageSlug && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
           <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="text-muted-foreground">Your public jobs page:</span>
           <Link
-            href={`/jobs/${publicPageToken}`}
+            href={`/jobs/${publicPageSlug}`}
             target="_blank"
             className="font-medium text-primary hover:underline truncate"
           >
-            {process.env.NEXT_PUBLIC_APP_URL ?? ''}/jobs/{publicPageToken}
+            {process.env.NEXT_PUBLIC_APP_URL ?? ''}/jobs/{publicPageSlug}
           </Link>
         </div>
       )}

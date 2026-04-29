@@ -3,18 +3,33 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 interface PageProps {
-  params: Promise<{ token: string }>
+  params: Promise<{ slug: string }>
+}
+
+async function resolveOrg(slug: string) {
+  const supabase = createAdminClient()
+  // Try human-readable slug first, fallback to public_page_token UUID for backward compat
+  let { data: org } = await supabase
+    .from('organizations')
+    .select('id, name, logo_url, slug')
+    .eq('slug', slug)
+    .single()
+
+  if (!org) {
+    const { data } = await supabase
+      .from('organizations')
+      .select('id, name, logo_url, slug')
+      .eq('public_page_token', slug)
+      .single()
+    org = data
+  }
+
+  return org
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { token } = await params
-  const supabase = createAdminClient()
-
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('name')
-    .eq('public_page_token', token)
-    .single()
+  const { slug } = await params
+  const org = await resolveOrg(slug)
 
   if (!org) return { title: 'Jobs' }
   return {
@@ -31,15 +46,10 @@ const employmentLabel: Record<string, string> = {
 }
 
 export default async function PublicJobsPage({ params }: PageProps) {
-  const { token } = await params
+  const { slug } = await params
   const supabase = createAdminClient()
 
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, logo_url')
-    .eq('public_page_token', token)
-    .single()
-
+  const org = await resolveOrg(slug)
   if (!org) notFound()
 
   const { data: vacanciesRaw } = await supabase
@@ -52,17 +62,18 @@ export default async function PublicJobsPage({ params }: PageProps) {
       employment_type,
       description,
       application_form_token,
-      archived_at,
       vacancy_statuses ( code )
     `)
     .eq('organization_id', org.id)
     .eq('show_on_public_page', true)
     .is('deleted_at', null)
+    .is('archived_at', null)
     .order('created_at', { ascending: false })
 
+  // Only show open vacancies with a form token
   const vacancies = (vacanciesRaw || []).filter((v) => {
     const code = (v.vacancy_statuses as any)?.[0]?.code
-    return !v.archived_at && code !== 'closed' && code !== 'archived' && v.application_form_token
+    return code === 'open' && v.application_form_token
   })
 
   return (
