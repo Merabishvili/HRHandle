@@ -88,6 +88,7 @@ export async function createInterview(
             google_calendar_event_id: result.eventId,
           })
           .eq('id', data.id)
+          .eq('organization_id', ctx.orgId)
         meetLink = result.meetLink
       }
     }
@@ -116,6 +117,7 @@ export async function createInterview(
           .from('interviews')
           .update({ meeting_link: result.joinUrl })
           .eq('id', data.id)
+          .eq('organization_id', ctx.orgId)
         meetLink = result.joinUrl
       }
     }
@@ -159,6 +161,7 @@ export async function createInterview(
             microsoft_calendar_event_id: result.eventId,
           })
           .eq('id', data.id)
+          .eq('organization_id', ctx.orgId)
         meetLink = result.teamsLink
       }
     }
@@ -179,6 +182,7 @@ export async function createInterview(
           .from('vacancies')
           .select('title')
           .eq('id', parsed.data.vacancy_id)
+          .eq('organization_id', ctx.orgId)
           .single()
 
         await sendInterviewInvitationEmail({
