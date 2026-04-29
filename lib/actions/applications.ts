@@ -232,6 +232,7 @@ export async function rejectApplication(input: {
     })
     .eq('id', input.applicationId)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (updateError) return { success: false, error: 'Failed to update application status' }
 

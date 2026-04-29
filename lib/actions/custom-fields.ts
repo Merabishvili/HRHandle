@@ -273,6 +273,7 @@ export async function addDropdownOption(
     .from('custom_fields')
     .update({ options: [...current, trimmed] })
     .eq('id', fieldId)
+    .eq('organization_id', ctx.orgId)
 
   if (error) return { success: false, error: 'Failed to add option' }
 

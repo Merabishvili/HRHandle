@@ -25,6 +25,7 @@ export async function addVacancyQuestion(
     .from('vacancy_questions')
     .select('sort_order')
     .eq('vacancy_id', vacancyId)
+    .eq('organization_id', ctx.orgId)
     .order('sort_order', { ascending: false })
     .limit(1)
 

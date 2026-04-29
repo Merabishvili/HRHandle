@@ -9,7 +9,7 @@ export const CandidateSchema = z.object({
     .email('Invalid email address')
     .nullable()
     .optional()
-    .or(z.literal('')),
+    .or(z.literal('').transform(() => null)),
   phone: z.string().max(30).nullable().optional(),
   current_company: z.string().max(200).nullable().optional(),
   current_position: z.string().max(200).nullable().optional(),
@@ -19,7 +19,7 @@ export const CandidateSchema = z.object({
     .url('Invalid LinkedIn URL')
     .nullable()
     .optional()
-    .or(z.literal('')),
+    .or(z.literal('').transform(() => null)),
   source: z.string().max(100).nullable().optional(),
   general_status_id: z.string().uuid().nullable().optional(),
   linked_vacancy_ids: z.array(z.string().uuid()).optional(),

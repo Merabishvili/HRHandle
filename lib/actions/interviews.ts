@@ -55,7 +55,7 @@ export async function createInterview(
 
     if (accessToken) {
       const [{ data: vacancy }, { data: interviewer }] = await Promise.all([
-        ctx.supabase.from('vacancies').select('title').eq('id', parsed.data.vacancy_id).single(),
+        ctx.supabase.from('vacancies').select('title').eq('id', parsed.data.vacancy_id).eq('organization_id', ctx.orgId).single(),
         parsed.data.interviewer_id
           ? ctx.supabase.from('profiles').select('email').eq('id', parsed.data.interviewer_id).single()
           : Promise.resolve({ data: null }),
@@ -102,6 +102,7 @@ export async function createInterview(
         .from('vacancies')
         .select('title')
         .eq('id', parsed.data.vacancy_id)
+        .eq('organization_id', ctx.orgId)
         .single()
 
       const result = await createZoomMeeting(accessToken, {
@@ -126,7 +127,7 @@ export async function createInterview(
 
     if (accessToken) {
       const [{ data: vacancy }, { data: interviewer }] = await Promise.all([
-        ctx.supabase.from('vacancies').select('title').eq('id', parsed.data.vacancy_id).single(),
+        ctx.supabase.from('vacancies').select('title').eq('id', parsed.data.vacancy_id).eq('organization_id', ctx.orgId).single(),
         parsed.data.interviewer_id
           ? ctx.supabase.from('profiles').select('email').eq('id', parsed.data.interviewer_id).single()
           : Promise.resolve({ data: null }),
