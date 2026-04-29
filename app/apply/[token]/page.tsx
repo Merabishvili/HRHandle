@@ -76,8 +76,8 @@ export default async function ApplyPage({ params }: PageProps) {
             href={`/jobs/${publicJobsSlug}`}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            All open positions at {org?.name || 'this company'}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            All open positions
           </a>
         )}
 
@@ -141,11 +141,15 @@ export default async function ApplyPage({ params }: PageProps) {
         )}
 
         {publicJobsSlug && (
-          <p className="text-center text-xs text-gray-400">
-            <a href={`/jobs/${publicJobsSlug}`} className="underline hover:no-underline">
+          <div className="text-center">
+            <a
+              href={`/jobs/${publicJobsSlug}`}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm hover:border-gray-300 hover:bg-gray-50 transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
               View all open positions at {org?.name || 'this company'}
             </a>
-          </p>
+          </div>
         )}
         <p className="text-center text-xs text-gray-400">Powered by HRHandle</p>
       </div>
