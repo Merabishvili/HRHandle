@@ -82,6 +82,7 @@ export async function updateApplicationStatus(
             .from('candidates')
             .select('general_status_id')
             .eq('id', application.candidate_id)
+            .eq('organization_id', ctx.orgId)
             .single()
 
           const currentCode = (candidateStatuses || []).find(
@@ -288,11 +289,13 @@ export async function rejectApplication(input: {
             .from('candidates')
             .select('first_name, last_name, email')
             .eq('id', application.candidate_id)
+            .eq('organization_id', ctx.orgId)
             .single(),
           ctx.supabase
             .from('vacancies')
             .select('title')
             .eq('id', application.vacancy_id)
+            .eq('organization_id', ctx.orgId)
             .single(),
           ctx.supabase
             .from('organizations')

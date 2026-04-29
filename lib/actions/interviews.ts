@@ -29,6 +29,7 @@ export async function createInterview(
     .select('id, first_name, last_name, email')
     .eq('id', parsed.data.candidate_id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
     .single()
 
   if (!candidate) return { success: false, error: 'Candidate not found' }

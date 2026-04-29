@@ -232,7 +232,7 @@ export async function submitPublicApplication(
         file_name: cvFile.name,
         file_size: cvFile.size,
         mime_type: cvFile.type,
-        storage_path: storagePath,
+        file_path: storagePath,
         document_type: 'cv',
       })
     }
