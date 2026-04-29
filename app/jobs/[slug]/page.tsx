@@ -8,17 +8,29 @@ interface PageProps {
 
 async function resolveOrg(slug: string) {
   const supabase = createAdminClient()
-  // Try human-readable slug first, fallback to public_page_token UUID for backward compat
+
+  // 1. Try public_page_slug (clean human-readable slug)
   let { data: org } = await supabase
     .from('organizations')
-    .select('id, name, logo_url, slug')
-    .eq('slug', slug)
+    .select('id, name, logo_url, public_page_slug')
+    .eq('public_page_slug', slug)
     .single()
 
+  // 2. Fallback: internal app slug
   if (!org) {
     const { data } = await supabase
       .from('organizations')
-      .select('id, name, logo_url, slug')
+      .select('id, name, logo_url, public_page_slug')
+      .eq('slug', slug)
+      .single()
+    org = data
+  }
+
+  // 3. Fallback: UUID public_page_token (backward compat with old links)
+  if (!org) {
+    const { data } = await supabase
+      .from('organizations')
+      .select('id, name, logo_url, public_page_slug')
       .eq('public_page_token', slug)
       .single()
     org = data
@@ -30,7 +42,6 @@ async function resolveOrg(slug: string) {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params
   const org = await resolveOrg(slug)
-
   if (!org) return { title: 'Jobs' }
   return {
     title: `Open Positions — ${org.name}`,
@@ -70,10 +81,13 @@ export default async function PublicJobsPage({ params }: PageProps) {
     .is('archived_at', null)
     .order('created_at', { ascending: false })
 
-  // Only show open vacancies with a form token
+  // Only show open vacancies with a form token.
+  // Supabase may return the joined row as an object or a single-element array
+  // depending on relationship configuration — handle both.
   const vacancies = (vacanciesRaw || []).filter((v) => {
-    const code = (v.vacancy_statuses as any)?.[0]?.code
-    return code === 'open' && v.application_form_token
+    const statusJoin = v.vacancy_statuses as any
+    const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
+    return statusCode === 'open' && v.application_form_token
   })
 
   return (

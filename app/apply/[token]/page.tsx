@@ -42,19 +42,21 @@ export default async function ApplyPage({ params }: PageProps) {
       archived_at,
       application_form_token,
       vacancy_statuses ( code ),
-      organizations ( name, logo_url, public_page_token, slug )
+      organizations ( name, logo_url, public_page_slug )
     `)
     .eq('application_form_token', token)
     .single()
 
   if (!vacancy) notFound()
 
-  const statusCode = (vacancy.vacancy_statuses as any)?.[0]?.code
+  // Supabase may return the joined row as object or single-element array — handle both
+  const statusJoin = vacancy.vacancy_statuses as any
+  const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
   const isClosed = vacancy.archived_at || statusCode !== 'open'
 
-  const org = (vacancy.organizations as any)?.[0] || null
-  // Use human-readable slug if available, fallback to UUID token
-  const publicJobsSlug = (org?.slug || org?.public_page_token) as string | null
+  const orgJoin = vacancy.organizations as any
+  const org = (Array.isArray(orgJoin) ? orgJoin[0] : orgJoin) || null
+  const publicJobsSlug = (org?.public_page_slug ?? null) as string | null
 
   const employmentLabel: Record<string, string> = {
     full_time: 'Full-time',

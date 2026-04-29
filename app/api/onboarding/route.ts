@@ -81,11 +81,27 @@ export async function POST() {
     const baseSlug = slugify(companyName) || `org-${user.id.slice(0, 8)}`
     const uniqueSlug = `${baseSlug}-${user.id.slice(0, 6)}`
 
+    // Generate a clean public_page_slug from the company name (no user-id suffix).
+    // Append 1, 2, 3… if the base slug is already taken.
+    let publicPageSlug = baseSlug
+    let slugCounter = 1
+    while (true) {
+      const { data: existing } = await admin
+        .from('organizations')
+        .select('id')
+        .eq('public_page_slug', publicPageSlug)
+        .maybeSingle()
+      if (!existing) break
+      publicPageSlug = `${baseSlug}${slugCounter}`
+      slugCounter++
+    }
+
     const { data: organization, error: organizationError } = await admin
       .from('organizations')
       .insert({
         name: companyName,
         slug: uniqueSlug,
+        public_page_slug: publicPageSlug,
         is_active: true,
       })
       .select('id')
