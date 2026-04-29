@@ -35,7 +35,7 @@ export function applyVariables(
   text: string,
   vars: Record<string, string>
 ): string {
-  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`)
+  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '')
 }
 
 export const DEFAULT_REJECTION_SUBJECT = DEFAULT_TEMPLATES.rejection.subject

@@ -23,7 +23,6 @@ import {
 interface VacanciesToolbarProps {
   initialSearch: string
   initialSort: string
-  initialStatus: string
   selectedColumns: string[]
 }
 
@@ -36,7 +35,6 @@ const FIXED_COLUMNS = [
 export function VacanciesToolbar({
   initialSearch,
   initialSort,
-  initialStatus: _initialStatus,
   selectedColumns: initialColumns,
 }: VacanciesToolbarProps) {
   const router = useRouter()

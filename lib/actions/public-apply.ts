@@ -13,6 +13,18 @@ const ALLOWED_MIME_TYPES = [
 ]
 const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB
 
+// Magic byte signatures to verify files aren't just renamed with a trusted extension
+const MAGIC_NUMBERS = [
+  { bytes: [0x25, 0x50, 0x44, 0x46] },                                    // %PDF
+  { bytes: [0x50, 0x4b, 0x03, 0x04] },                                    // PK (ZIP / DOCX)
+  { bytes: [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1] },          // OLE2 (DOC)
+]
+
+function hasValidMagicNumber(buf: ArrayBuffer): boolean {
+  const view = new Uint8Array(buf, 0, 8)
+  return MAGIC_NUMBERS.some(({ bytes }) => bytes.every((b, i) => view[i] === b))
+}
+
 export type PublicApplyResult =
   | { success: true }
   | { success: false; error: string }
@@ -44,12 +56,18 @@ export async function submitPublicApplication(
   }
   if (!cvFile || cvFile.size === 0) return { success: false, error: 'CV upload is required.' }
 
-  // ── 4. File validation (server-side MIME check) ────────────────────────────
+  // ── 4. File validation ─────────────────────────────────────────────────────
   if (!ALLOWED_MIME_TYPES.includes(cvFile.type)) {
     return { success: false, error: 'CV must be a PDF or Word document.' }
   }
   if (cvFile.size > MAX_FILE_BYTES) {
     return { success: false, error: 'CV file must be 10 MB or smaller.' }
+  }
+
+  // Read file bytes early so we can validate magic numbers and reuse buffer for upload
+  const fileBytes = await cvFile.arrayBuffer()
+  if (!hasValidMagicNumber(fileBytes)) {
+    return { success: false, error: 'CV must be a valid PDF or Word document.' }
   }
 
   // ── 5. Resolve vacancy from token ─────────────────────────────────────────
@@ -68,7 +86,8 @@ export async function submitPublicApplication(
   if (!vacancy) return { success: false, error: 'This apply link is no longer active.' }
 
   // Vacancy must be open (draft/on_hold/closed/archived are all blocked)
-  const statusCode = (vacancy.vacancy_statuses as any)?.[0]?.code
+  const statusJoin = vacancy.vacancy_statuses as any
+  const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
   if (vacancy.archived_at || statusCode !== 'open') {
     return { success: false, error: 'This position is no longer open.' }
   }
@@ -113,21 +132,18 @@ export async function submitPublicApplication(
     .eq('code', 'active')
     .single()
 
-  // ── 9. Duplicate detection (email AND phone must both match, active only) ──
-  // Only attempt match when both fields are present in the submission
+  // ── 9. Duplicate detection (email match is sufficient — phone is optional) ─
   let candidateId: string
+  let isNewCandidate = false
 
-  const { data: matchedCandidate } = (email && phone)
-    ? await supabase
-        .from('candidates')
-        .select('id')
-        .eq('organization_id', orgId)
-        .eq('email', email)
-        .eq('phone', phone)
-        .eq('general_status_id', activeStatus?.id ?? '')
-        .is('deleted_at', null)
-        .maybeSingle()
-    : { data: null }
+  const { data: matchedCandidate } = await supabase
+    .from('candidates')
+    .select('id')
+    .eq('organization_id', orgId)
+    .eq('email', email)
+    .eq('general_status_id', activeStatus?.id ?? '')
+    .is('deleted_at', null)
+    .maybeSingle()
 
   if (matchedCandidate) {
     candidateId = matchedCandidate.id
@@ -167,6 +183,7 @@ export async function submitPublicApplication(
     }
 
     candidateId = newCandidate.id
+    isNewCandidate = true
   }
 
   // ── 11. Find "applied" application status ──────────────────────────────────
@@ -189,14 +206,17 @@ export async function submitPublicApplication(
     })
 
   if (appError) {
+    // Roll back newly-created candidate to avoid orphaned records
+    if (isNewCandidate) {
+      await supabase.from('candidates').delete().eq('id', candidateId)
+    }
     return { success: false, error: 'Failed to submit application. Please try again.' }
   }
 
   // ── 13. Upload CV ──────────────────────────────────────────────────────────
   try {
-    const fileBytes = await cvFile.arrayBuffer()
     const ext = cvFile.name.split('.').pop() || 'pdf'
-    const storagePath = `${orgId}/${candidateId}/${Date.now()}.${ext}`
+    const storagePath = `${orgId}/${candidateId}/${crypto.randomUUID()}.${ext}`
 
     const { error: storageError } = await supabase.storage
       .from('candidate-documents')

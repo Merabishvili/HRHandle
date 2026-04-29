@@ -14,8 +14,9 @@ export async function createVacancy(input: VacancyInput): Promise<ActionResult<{
   const parsed = VacancySchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
 
-  const tokenForInsert =
-    parsed.data.show_on_public_page ? (crypto.randomUUID() as string) : undefined
+  const tokenForInsert = parsed.data.show_on_public_page
+    ? Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url')
+    : undefined
 
   const { data, error } = await ctx.supabase
     .from('vacancies')
@@ -56,7 +57,9 @@ export async function updateVacancy(
       .single()
 
     if (!existing?.application_form_token) {
-      updatePayload.application_form_token = crypto.randomUUID()
+      updatePayload.application_form_token = Buffer.from(
+        crypto.getRandomValues(new Uint8Array(32))
+      ).toString('base64url')
     }
   }
 
@@ -102,7 +105,7 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
 
   const { data: orig } = await ctx.supabase
     .from('vacancies')
-    .select('*')
+    .select('title, sector_id, status_id, department, location, employment_type, hiring_manager_name, salary_min, salary_max, salary_currency, openings_count, start_date, end_date, description, responsibilities, requirements')
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
     .single()

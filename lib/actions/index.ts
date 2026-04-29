@@ -2,9 +2,20 @@
 
 import { createClient } from '@/lib/supabase/server'
 
+export type ActionErrorCode =
+  | 'NOT_AUTHENTICATED'
+  | 'PLAN_LIMIT'
+  | 'VALIDATION'
+  | 'NOT_FOUND'
+  | 'FORBIDDEN'
+  | 'CONFLICT'
+  | 'STORAGE'
+  | 'DB_ERROR'
+  | 'EXTERNAL_SERVICE'
+
 export type ActionResult<T = void> =
   | { success: true; data: T }
-  | { success: false; error: string }
+  | { success: false; error: string; code?: ActionErrorCode }
 
 /** Resolves the authenticated user + their org. Returns null if not authed. */
 export async function getAuthContext() {

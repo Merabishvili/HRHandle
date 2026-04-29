@@ -248,7 +248,6 @@ export default async function VacanciesPage({
       <VacanciesToolbar
         initialSearch={search}
         initialSort={sort}
-        initialStatus={statusFilter || ''}
         selectedColumns={activeColumns}
       />
 

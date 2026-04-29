@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ApplyForm } from '@/components/apply/apply-form'
 
+export const revalidate = 300 // 5 minutes
+
 interface PageProps {
   params: Promise<{ token: string }>
 }
@@ -66,8 +68,30 @@ export default async function ApplyPage({ params }: PageProps) {
     internship: 'Internship',
   }
 
+  const jobPostingJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'JobPosting',
+    title: vacancy.title,
+    description: [vacancy.description, vacancy.requirements].filter(Boolean).join('\n\n') || undefined,
+    hiringOrganization: {
+      '@type': 'Organization',
+      name: org?.name,
+      ...(org?.logo_url ? { logo: org.logo_url } : {}),
+    },
+    jobLocation: vacancy.location
+      ? { '@type': 'Place', address: vacancy.location }
+      : undefined,
+    employmentType: vacancy.employment_type?.toUpperCase().replace('_', '-') || undefined,
+    department: vacancy.department || undefined,
+    directApply: true,
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd) }}
+      />
       <div className="mx-auto max-w-2xl space-y-6">
 
         {/* Back to all vacancies */}

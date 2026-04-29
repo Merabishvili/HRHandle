@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export const revalidate = 300 // 5 minutes
+
 interface PageProps {
   params: Promise<{ slug: string }>
 }
