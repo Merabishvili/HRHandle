@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getVacancyStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -120,12 +121,7 @@ export default async function VacanciesPage({
     ? colPrefs.vacancies
     : DEFAULT_VACANCY_COLUMNS
 
-  const { data: statusOptionsRaw } = await supabase
-    .from('vacancy_statuses')
-    .select('id, name, code, is_active, sort_order')
-    .order('sort_order', { ascending: true })
-
-  const statusOptions = (statusOptionsRaw || []) as VacancyStatusOption[]
+  const statusOptions = (await getVacancyStatuses()) as VacancyStatusOption[]
   const statusMap = new Map(statusOptions.map((s) => [s.id, s]))
 
   const FIELDS = `

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { VacancyForm } from '@/components/vacancies/vacancy-form'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { getVacancyStatuses } from '@/lib/cache/lookups'
 
 interface VacancyRow {
   id: string
@@ -80,7 +81,7 @@ export default async function EditVacancyPage({
 
   const organizationId = profile.organization_id
 
-  const [{ data: vacancyRaw }, { data: sectorsRaw }, { data: statusOptionsRaw }] =
+  const [{ data: vacancyRaw }, { data: sectorsRaw }, statusOptionsRaw] =
     await Promise.all([
       supabase
         .from('vacancies')
@@ -118,11 +119,7 @@ export default async function EditVacancyPage({
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
 
-      supabase
-        .from('vacancy_statuses')
-        .select('id, name, code, is_active, sort_order')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true }),
+      getVacancyStatuses(),
     ])
 
   const vacancy = vacancyRaw as VacancyRow | null

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CandidateForm } from '@/components/candidates/candidate-form'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { getCandidateStatuses } from '@/lib/cache/lookups'
 
 interface PageParams {
   id: string
@@ -129,12 +130,7 @@ export default async function EditCandidatePage({
     notFound()
   }
 
-  const { data: candidateStatusesRaw } = await supabase
-    .from('candidate_statuses')
-    .select('id, name, code, is_active, sort_order')
-    .order('sort_order', { ascending: true })
-
-  const candidateStatuses = (candidateStatusesRaw || []) as CandidateStatusRow[]
+  const candidateStatuses = (await getCandidateStatuses()) as CandidateStatusRow[]
 
 const { data: vacanciesRaw } = await supabase
   .from('vacancies')

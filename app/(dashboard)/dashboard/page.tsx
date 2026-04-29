@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getVacancyStatuses, getCandidateStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -106,9 +107,12 @@ export default async function DashboardPage() {
   const orgId = profile?.organization_id
   if (!orgId) return null
 
+  const [vacancyStatusesRaw, candidateStatusesRaw] = await Promise.all([
+    getVacancyStatuses(),
+    getCandidateStatuses(),
+  ])
+
   const [
-    { data: vacancyStatusesRaw },
-    { data: candidateStatusesRaw },
     { count: totalVacancies },
     { count: totalCandidates },
     { count: activeApplications },
@@ -118,16 +122,6 @@ export default async function DashboardPage() {
     { data: recentVacanciesRaw },
     { data: upcomingInterviewsRaw },
   ] = await Promise.all([
-    supabase
-      .from('vacancy_statuses')
-      .select('id, name, code')
-      .order('sort_order', { ascending: true }),
-
-    supabase
-      .from('candidate_statuses')
-      .select('id, name, code')
-      .order('sort_order', { ascending: true }),
-
     supabase
       .from('vacancies')
       .select('*', { count: 'exact', head: true })

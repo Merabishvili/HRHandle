@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
+import { getVacancyStatuses, getCandidateStatuses, getApplicationStatuses } from '@/lib/cache/lookups'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -177,11 +178,14 @@ export default async function VacancyDetailPage({
     redirect('/dashboard')
   }
 
+  const [vacancyStatusesRaw, candidateStatusesRaw] = await Promise.all([
+    getVacancyStatuses(),
+    getCandidateStatuses(),
+  ])
+
   const [
     { data: vacancyRaw },
-    { data: vacancyStatusesRaw },
     { data: sectorsRaw },
-    { data: candidateStatusesRaw },
   ] = await Promise.all([
     supabase
       .from('vacancies')
@@ -225,19 +229,9 @@ export default async function VacancyDetailPage({
       .single(),
 
     supabase
-      .from('vacancy_statuses')
-      .select('id, name, code')
-      .order('sort_order', { ascending: true }),
-
-    supabase
       .from('sectors')
       .select('id, name, code')
       .order('name', { ascending: true }),
-
-    supabase
-      .from('candidate_statuses')
-      .select('id, name, code')
-      .order('sort_order', { ascending: true }),
   ])
 
   const vacancy = vacancyRaw as VacancyRow | null
@@ -252,9 +246,10 @@ export default async function VacancyDetailPage({
 
   const candidateStatusMap = new Map(candidateStatuses.map((s) => [s.id, s]))
 
+  const appStatusesRaw = await getApplicationStatuses()
+
   const [
     { data: applicationsRaw, count: applicantsCount },
-    { data: appStatusesRaw },
     { data: questionsRaw },
     { data: rejectionReasonsRaw },
     { data: rejectionTemplatesRaw },
@@ -270,12 +265,6 @@ export default async function VacancyDetailPage({
       if (appStatus) q = q.eq('status_id', appStatus)
       return q
     })(),
-
-    supabase
-      .from('application_statuses')
-      .select('id, name, code, sort_order')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
 
     supabase
       .from('vacancy_questions')

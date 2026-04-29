@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { InterviewForm } from '@/components/interviews/interview-form'
 import { Button } from '@/components/ui/button'
+import { getVacancyStatuses } from '@/lib/cache/lookups'
 
 interface SearchParams {
   candidate?: string
@@ -76,7 +77,9 @@ export default async function NewInterviewPage({
 
   const organizationId = profile.organization_id
 
-  const [{ data: candidatesRaw }, { data: vacancyStatusesRaw }, { data: vacanciesRaw }] =
+  const vacancyStatusesRaw = await getVacancyStatuses()
+
+  const [{ data: candidatesRaw }, { data: vacanciesRaw }] =
     await Promise.all([
       supabase
         .from('candidates')
@@ -84,11 +87,6 @@ export default async function NewInterviewPage({
         .eq('organization_id', organizationId)
         .is('deleted_at', null)
         .order('first_name', { ascending: true }),
-
-      supabase
-        .from('vacancy_statuses')
-        .select('id, code, name')
-        .order('sort_order', { ascending: true }),
 
       supabase
         .from('vacancies')

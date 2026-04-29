@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
+import { getCandidateStatuses, getApplicationStatuses } from '@/lib/cache/lookups'
 
 export default async function NewCandidatePage({
   searchParams,
@@ -36,8 +37,8 @@ export default async function NewCandidatePage({
 
   const [
     { data: vacancies },
-    { data: candidateStatuses },
-    { data: applicationStatuses },
+    candidateStatuses,
+    applicationStatuses,
     customFieldGroups,
   ] = await Promise.all([
     supabase
@@ -46,17 +47,8 @@ export default async function NewCandidatePage({
       .eq('organization_id', organizationId)
       .order('title'),
 
-    supabase
-      .from('candidate_statuses')
-      .select('id, name, code, is_active, sort_order')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
-
-    supabase
-      .from('application_statuses')
-      .select('id, code')
-      .eq('is_active', true),
-
+    getCandidateStatuses(),
+    getApplicationStatuses(),
     getCustomFieldSchema('candidate'),
   ])
 

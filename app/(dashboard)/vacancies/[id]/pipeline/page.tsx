@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { KanbanBoard } from '@/components/pipeline/kanban-board'
 import type { ApplicationStatus } from '@/lib/types/application'
+import { getApplicationStatuses } from '@/lib/cache/lookups'
 
 interface PipelineApplicationRow {
   id: string
@@ -44,7 +45,7 @@ export default async function VacancyPipelinePage({
 
   const [
     { data: vacancy },
-    { data: statusesRaw },
+    statusesRaw,
     { data: applicationsRaw },
     { data: rejectionReasonsRaw },
     { data: rejectionTemplatesRaw },
@@ -57,11 +58,7 @@ export default async function VacancyPipelinePage({
       .is('archived_at', null)
       .single(),
 
-    supabase
-      .from('application_statuses')
-      .select('id, name, code, sort_order, is_active')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
+    getApplicationStatuses(),
 
     supabase
       .from('applications')

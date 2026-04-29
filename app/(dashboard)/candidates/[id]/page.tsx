@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getCandidateStatuses, getApplicationStatuses, getVacancyStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -151,8 +152,8 @@ export default async function CandidateDetailPage({
 
   const [
     { data: candidateRaw },
-    { data: candidateStatusesRaw },
-    { data: appStatusesRaw },
+    candidateStatusesRaw,
+    appStatusesRaw,
     { data: rejectionReasonsRaw },
     { data: rejectionTemplatesRaw },
   ] = await Promise.all([
@@ -181,16 +182,9 @@ export default async function CandidateDetailPage({
       .is('deleted_at', null)
       .single(),
 
-    supabase
-      .from('candidate_statuses')
-      .select('id, name, code, sort_order')
-      .order('sort_order', { ascending: true }),
+    getCandidateStatuses(),
 
-    supabase
-      .from('application_statuses')
-      .select('id, name, code, sort_order')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
+    getApplicationStatuses(),
 
     supabase
       .from('rejection_reasons')
@@ -306,11 +300,10 @@ export default async function CandidateDetailPage({
   interface OpenVacancy { id: string; title: string; department: string | null }
   let openVacancies: OpenVacancy[] = []
   {
-    const { data: vacancyStatusesRaw } = await supabase
-      .from('vacancy_statuses')
-      .select('id, code')
-      .in('code', ['open', 'on_hold'])
-    const openStatusIds = (vacancyStatusesRaw || []).map((s: { id: string; code: string }) => s.id)
+    const vacancyStatusesRaw = await getVacancyStatuses()
+    const openStatusIds = vacancyStatusesRaw
+      .filter((s) => s.code === 'open' || s.code === 'on_hold')
+      .map((s) => s.id)
     if (openStatusIds.length > 0) {
       const { data: openVacanciesRaw } = await supabase
         .from('vacancies')
