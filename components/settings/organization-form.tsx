@@ -189,13 +189,6 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
         />
       </div>
 
-      {/* Slug (read-only) */}
-      <div className="space-y-2">
-        <Label htmlFor="slug">URL Slug</Label>
-        <Input id="slug" value={organization.slug} disabled className="bg-muted" />
-        <p className="text-xs text-muted-foreground">Organization slug cannot be changed.</p>
-      </div>
-
       <Button type="submit" disabled={isLoading}>
         {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}
       </Button>

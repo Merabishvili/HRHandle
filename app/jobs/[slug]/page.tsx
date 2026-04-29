@@ -9,28 +9,18 @@ interface PageProps {
 async function resolveOrg(slug: string) {
   const supabase = createAdminClient()
 
-  // 1. Try public_page_slug (clean human-readable slug)
+  // 1. Try internal app slug (will be replaced with public_page_slug after migration 021)
   let { data: org } = await supabase
     .from('organizations')
-    .select('id, name, logo_url, public_page_slug')
-    .eq('public_page_slug', slug)
+    .select('id, name, logo_url, slug')
+    .eq('slug', slug)
     .single()
 
-  // 2. Fallback: internal app slug
+  // 2. Fallback: UUID public_page_token (backward compat with old links)
   if (!org) {
     const { data } = await supabase
       .from('organizations')
-      .select('id, name, logo_url, public_page_slug')
-      .eq('slug', slug)
-      .single()
-    org = data
-  }
-
-  // 3. Fallback: UUID public_page_token (backward compat with old links)
-  if (!org) {
-    const { data } = await supabase
-      .from('organizations')
-      .select('id, name, logo_url, public_page_slug')
+      .select('id, name, logo_url, slug')
       .eq('public_page_token', slug)
       .single()
     org = data
