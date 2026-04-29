@@ -109,12 +109,11 @@ export default async function VacanciesPage({
 
   const { data: orgData } = await supabase
     .from('organizations')
-    .select('public_page_token, slug')
+    .select('public_page_slug')
     .eq('id', organizationId)
     .single()
 
-  // After migration 021 runs, switch to public_page_slug; for now use the app slug
-  const publicPageSlug = (orgData?.slug || orgData?.public_page_token) as string | null
+  const publicPageSlug = orgData?.public_page_slug as string | null
 
   const colPrefs = (profile?.column_preferences as Record<string, string[]>) || {}
   const activeColumns: string[] = colPrefs.vacancies?.length

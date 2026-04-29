@@ -44,7 +44,7 @@ export default async function ApplyPage({ params }: PageProps) {
       archived_at,
       application_form_token,
       vacancy_statuses ( code ),
-      organizations ( name, logo_url, slug, public_page_token )
+      organizations ( name, logo_url, public_page_slug )
     `)
     .eq('application_form_token', token)
     .single()
@@ -58,8 +58,7 @@ export default async function ApplyPage({ params }: PageProps) {
 
   const orgJoin = vacancy.organizations as any
   const org = (Array.isArray(orgJoin) ? orgJoin[0] : orgJoin) || null
-  // public_page_slug will be used once migration 021 has run; fall back to UUID token for now
-  const publicJobsSlug = (org?.public_page_slug || org?.slug || org?.public_page_token) as string | null
+  const publicJobsSlug = org?.public_page_slug as string | null
 
   const employmentLabel: Record<string, string> = {
     full_time: 'Full-time',
