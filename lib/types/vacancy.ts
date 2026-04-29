@@ -45,7 +45,7 @@ export interface Vacancy {
 
   description: string
   requirements: string | null
-  show_on_public_page: boolean
+  show_on_public_page?: boolean
 
   created_by: UUID | null
   created_at: ISODateTimeString
