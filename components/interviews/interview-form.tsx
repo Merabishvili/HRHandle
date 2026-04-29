@@ -52,6 +52,7 @@ interface InterviewFormProps {
   defaultApplicationId?: string
   hasGoogleCalendar?: boolean
   hasZoom?: boolean
+  hasMicrosoft?: boolean
 }
 
 const interviewTypes: { value: InterviewType; label: string }[] = [
@@ -82,6 +83,7 @@ export function InterviewForm({
   defaultApplicationId,
   hasGoogleCalendar = false,
   hasZoom = false,
+  hasMicrosoft = false,
 }: InterviewFormProps) {
   const router = useRouter()
 
@@ -97,8 +99,8 @@ export function InterviewForm({
   const [duration, setDuration] = useState(60)
   const [type, setType] = useState<InterviewType>('video')
 
-  // Meeting options: 'manual' | 'google_meet' | 'zoom'
-  const [meetingOption, setMeetingOption] = useState<'manual' | 'google_meet' | 'zoom'>('manual')
+  // Meeting options: 'manual' | 'google_meet' | 'zoom' | 'teams'
+  const [meetingOption, setMeetingOption] = useState<'manual' | 'google_meet' | 'zoom' | 'teams'>('manual')
   const [manualMeetingLink, setManualMeetingLink] = useState('')
   const [sendInvitation, setSendInvitation] = useState(false)
 
@@ -193,6 +195,7 @@ export function InterviewForm({
       {
         createMeet: meetingOption === 'google_meet',
         createZoom: meetingOption === 'zoom',
+        createTeams: meetingOption === 'teams',
         meetingLink: meetingOption === 'manual' ? manualMeetingLink || null : null,
         sendInvitation,
       }
@@ -405,6 +408,21 @@ export function InterviewForm({
                     Auto Zoom
                   </button>
                 )}
+                {hasMicrosoft && (
+                  <button
+                    type="button"
+                    onClick={() => setMeetingOption('teams')}
+                    disabled={isLoading}
+                    className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      meetingOption === 'teams'
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-background text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <Video className="h-3.5 w-3.5" />
+                    Auto Teams
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -426,7 +444,9 @@ export function InterviewForm({
             <p className="text-sm text-muted-foreground">
               {meetingOption === 'google_meet'
                 ? 'A Google Meet link will be created automatically and added to your Google Calendar.'
-                : 'A Zoom meeting will be created automatically.'}
+                : meetingOption === 'zoom'
+                ? 'A Zoom meeting will be created automatically.'
+                : 'A Teams meeting will be created automatically and added to your Outlook Calendar.'}
             </p>
           )}
         </CardContent>

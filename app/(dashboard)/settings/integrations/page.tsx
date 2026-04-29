@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { GoogleCalendarConnect } from '@/components/settings/google-calendar-connect'
 import { ZoomConnect } from '@/components/settings/zoom-connect'
+import { MicrosoftConnect } from '@/components/settings/microsoft-connect'
 
 export default async function IntegrationsSettingsPage() {
   const supabase = await createClient()
@@ -12,7 +13,7 @@ export default async function IntegrationsSettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('google_refresh_token, zoom_refresh_token')
+    .select('google_refresh_token, zoom_refresh_token, microsoft_refresh_token')
     .eq('id', user.id)
     .single()
 
@@ -33,6 +34,11 @@ export default async function IntegrationsSettingsPage() {
             <div className="border-t border-border pt-6">
               <Suspense fallback={null}>
                 <ZoomConnect isConnected={!!profile.zoom_refresh_token} />
+              </Suspense>
+            </div>
+            <div className="border-t border-border pt-6">
+              <Suspense fallback={null}>
+                <MicrosoftConnect isConnected={!!profile.microsoft_refresh_token} />
               </Suspense>
             </div>
           </div>

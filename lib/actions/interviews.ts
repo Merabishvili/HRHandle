@@ -5,6 +5,7 @@ import { getAuthContext, type ActionResult } from './index'
 import { InterviewSchema, type InterviewInput } from '@/lib/validations/interview'
 import { getValidAccessToken, createCalendarEventWithMeet } from '@/lib/google/calendar'
 import { getValidZoomAccessToken, createZoomMeeting } from '@/lib/zoom/meetings'
+import { getValidMicrosoftAccessToken, createTeamsMeeting } from '@/lib/microsoft/graph'
 import { sendInterviewInvitationEmail } from '@/lib/email'
 
 export async function createInterview(
@@ -12,6 +13,7 @@ export async function createInterview(
   options: {
     createMeet?: boolean
     createZoom?: boolean
+    createTeams?: boolean
     meetingLink?: string | null
     sendInvitation?: boolean
   } = {}
@@ -114,6 +116,49 @@ export async function createInterview(
           .update({ meeting_link: result.joinUrl })
           .eq('id', data.id)
         meetLink = result.joinUrl
+      }
+    }
+  }
+
+  // Microsoft Teams
+  if (options.createTeams && parsed.data.type === 'video') {
+    const accessToken = await getValidMicrosoftAccessToken(ctx.userId)
+
+    if (accessToken) {
+      const [{ data: vacancy }, { data: interviewer }] = await Promise.all([
+        ctx.supabase.from('vacancies').select('title').eq('id', parsed.data.vacancy_id).single(),
+        parsed.data.interviewer_id
+          ? ctx.supabase.from('profiles').select('email').eq('id', parsed.data.interviewer_id).single()
+          : Promise.resolve({ data: null }),
+      ])
+
+      const startIso = parsed.data.scheduled_at
+      const endIso = new Date(
+        new Date(startIso).getTime() + (parsed.data.duration_minutes ?? 60) * 60_000
+      ).toISOString()
+
+      const attendeeEmails: string[] = []
+      if (interviewer?.email) attendeeEmails.push(interviewer.email)
+      if ((candidate as { email?: string | null }).email)
+        attendeeEmails.push((candidate as { email: string }).email)
+
+      const result = await createTeamsMeeting(accessToken, {
+        summary: `Interview: ${candidate.first_name} ${candidate.last_name} — ${vacancy?.title ?? 'Position'}`,
+        description: 'Interview scheduled via HRHandle.',
+        startIso,
+        endIso,
+        attendeeEmails,
+      })
+
+      if (result.teamsLink || result.eventId) {
+        await ctx.supabase
+          .from('interviews')
+          .update({
+            meeting_link: result.teamsLink,
+            microsoft_calendar_event_id: result.eventId,
+          })
+          .eq('id', data.id)
+        meetLink = result.teamsLink
       }
     }
   }
