@@ -73,6 +73,114 @@ export async function updateVacancyStatus(
   return { success: true, data: undefined }
 }
 
+export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: string }>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const limitError = await checkPlanLimit(ctx, 'vacancy')
+  if (limitError) return { success: false, error: limitError }
+
+  const { data: orig } = await ctx.supabase
+    .from('vacancies')
+    .select('*')
+    .eq('id', id)
+    .eq('organization_id', ctx.orgId)
+    .single()
+
+  if (!orig) return { success: false, error: 'Vacancy not found' }
+
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+  let newEndDate: string | null = null
+  if (orig.end_date && orig.start_date) {
+    const diffDays = Math.round(
+      (new Date(orig.end_date).getTime() - new Date(orig.start_date).getTime()) / 86_400_000
+    )
+    const endDate = new Date(today)
+    endDate.setDate(endDate.getDate() + diffDays)
+    newEndDate = endDate.toISOString().split('T')[0]
+  }
+
+  const { data: draftStatus } = await ctx.supabase
+    .from('vacancy_statuses')
+    .select('id')
+    .eq('code', 'draft')
+    .single()
+
+  const { data: newVacancy, error: vacancyError } = await ctx.supabase
+    .from('vacancies')
+    .insert({
+      organization_id: ctx.orgId,
+      created_by: ctx.userId,
+      title: orig.title,
+      sector_id: orig.sector_id,
+      status_id: draftStatus?.id ?? orig.status_id,
+      department: orig.department,
+      location: orig.location,
+      employment_type: orig.employment_type,
+      hiring_manager_name: orig.hiring_manager_name,
+      salary_min: orig.salary_min,
+      salary_max: orig.salary_max,
+      salary_currency: orig.salary_currency,
+      openings_count: orig.openings_count,
+      start_date: todayStr,
+      end_date: newEndDate,
+      description: orig.description,
+      responsibilities: orig.responsibilities,
+      requirements: orig.requirements,
+      show_on_public_page: false,
+      application_form_token: null,
+    })
+    .select('id')
+    .single()
+
+  if (vacancyError || !newVacancy) return { success: false, error: 'Failed to duplicate vacancy' }
+
+  // Copy assessment questions
+  const { data: questions } = await ctx.supabase
+    .from('vacancy_questions')
+    .select('label, type, sort_order')
+    .eq('vacancy_id', id)
+    .eq('organization_id', ctx.orgId)
+    .order('sort_order', { ascending: true })
+
+  if (questions && questions.length > 0) {
+    await ctx.supabase.from('vacancy_questions').insert(
+      questions.map((q) => ({
+        vacancy_id: newVacancy.id,
+        organization_id: ctx.orgId,
+        label: q.label,
+        type: q.type,
+        sort_order: q.sort_order,
+      }))
+    )
+  }
+
+  // Copy custom field values
+  const { data: cfValues } = await ctx.supabase
+    .from('custom_field_values')
+    .select('field_id, value_text, value_number, value_boolean, value_option')
+    .eq('entity_id', id)
+    .eq('organization_id', ctx.orgId)
+
+  if (cfValues && cfValues.length > 0) {
+    await ctx.supabase.from('custom_field_values').insert(
+      cfValues.map((v) => ({
+        organization_id: ctx.orgId,
+        entity_id: newVacancy.id,
+        field_id: v.field_id,
+        value_text: v.value_text,
+        value_number: v.value_number,
+        value_boolean: v.value_boolean,
+        value_option: v.value_option,
+      }))
+    )
+  }
+
+  revalidatePath('/vacancies')
+  return { success: true, data: { id: newVacancy.id } }
+}
+
 export async function deleteVacancy(id: string): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }

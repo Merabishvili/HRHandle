@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createVacancy, updateVacancy } from '@/lib/actions/vacancies'
+import { createVacancy, updateVacancy, deleteVacancy } from '@/lib/actions/vacancies'
 import { saveCustomFieldValues } from '@/lib/actions/custom-fields'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +36,7 @@ interface VacancyFormProps {
   statusOptions: VacancyStatus[]
   customFieldGroups?: CustomFieldGroupWithFields[]
   customFieldValues?: CustomFieldValue[]
+  isDuplicated?: boolean
 }
 
 const employmentTypes: { value: EmploymentType; label: string }[] = [
@@ -51,6 +52,7 @@ export function VacancyForm({
   statusOptions,
   customFieldGroups = [],
   customFieldValues = [],
+  isDuplicated = false,
 }: VacancyFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -159,7 +161,7 @@ export function VacancyForm({
       }
     }
 
-    router.push('/vacancies')
+    router.push(vacancy ? `/vacancies/${vacancy.id}` : '/vacancies')
     router.refresh()
     setIsLoading(false)
   }
@@ -503,21 +505,39 @@ export function VacancyForm({
       )}
 
       <div className="flex items-center justify-end gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isLoading}
-        >
-          Cancel
-        </Button>
+        {isDuplicated ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isLoading}
+            onClick={async () => {
+              if (!vacancy) return
+              setIsLoading(true)
+              await deleteVacancy(vacancy.id)
+              router.push('/vacancies')
+            }}
+          >
+            Discard
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+        )}
 
         <Button type="submit" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {vacancy ? 'Updating...' : 'Creating...'}
+              {isDuplicated ? 'Saving...' : vacancy ? 'Updating...' : 'Creating...'}
             </>
+          ) : isDuplicated ? (
+            'Save'
           ) : vacancy ? (
             'Update Vacancy'
           ) : (

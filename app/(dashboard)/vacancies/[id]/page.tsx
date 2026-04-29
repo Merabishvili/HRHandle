@@ -25,6 +25,7 @@ import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-di
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applications-list'
+import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
 
 interface VacancyRow {
   id: string
@@ -421,6 +422,7 @@ export default async function VacancyDetailPage({
               <LayoutGrid className="mr-2 h-4 w-4" />Pipeline
             </Link>
           </Button>
+          <DuplicateVacancyButton vacancyId={id} />
           <Button asChild>
             <Link href={`/vacancies/${id}/edit`}>
               <Edit className="mr-2 h-4 w-4" />Edit Vacancy

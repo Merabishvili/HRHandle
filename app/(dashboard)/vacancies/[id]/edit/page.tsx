@@ -50,10 +50,14 @@ interface VacancyStatusRow {
 
 export default async function EditVacancyPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ duplicated?: string }>
 }) {
   const { id } = await params
+  const { duplicated } = await searchParams
+  const isDuplicated = duplicated === 'true'
   const supabase = await createClient()
 
   const {
@@ -144,8 +148,12 @@ export default async function EditVacancyPage({
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit Vacancy</h1>
-          <p className="text-muted-foreground">Update the job posting details.</p>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isDuplicated ? 'New Vacancy (Duplicated)' : 'Edit Vacancy'}
+          </h1>
+          <p className="text-muted-foreground">
+            {isDuplicated ? 'Review and save your duplicated vacancy.' : 'Update the job posting details.'}
+          </p>
         </div>
       </div>
 
@@ -155,6 +163,7 @@ export default async function EditVacancyPage({
         statusOptions={statusOptions}
         customFieldGroups={customFieldGroups}
         customFieldValues={customFieldValues}
+        isDuplicated={isDuplicated}
       />
     </div>
   )
