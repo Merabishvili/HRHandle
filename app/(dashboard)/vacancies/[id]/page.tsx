@@ -26,6 +26,7 @@ import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applications-list'
 import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
+import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
 
 interface VacancyRow {
   id: string
@@ -385,9 +386,11 @@ export default async function VacancyDetailPage({
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-foreground">{vacancy.title}</h1>
               {vacancyStatus ? (
-                <Badge variant="secondary" className={VACANCY_STATUS_COLORS[vacancyStatus.code]}>
-                  {vacancyStatus.name}
-                </Badge>
+                <VacancyStatusSelect
+                  vacancyId={vacancy.id}
+                  current={vacancyStatus}
+                  options={vacancyStatuses}
+                />
               ) : (
                 <Badge variant="secondary">Unknown</Badge>
               )}

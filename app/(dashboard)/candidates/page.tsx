@@ -296,7 +296,6 @@ export default async function CandidatesPage({
         initialSort={sort}
         initialStatus={statusFilter || ''}
         selectedColumns={activeColumns}
-        statusOptions={candidateStatuses}
       />
 
       <div className="flex items-center justify-between gap-4">
