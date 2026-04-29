@@ -120,7 +120,8 @@ export async function createApplication(input: {
     .eq('organization_id', ctx.orgId)
     .single()
 
-  const generalCode = (candidateCheck?.candidate_statuses as { code: string } | null)?.code
+  const statusesRaw = candidateCheck?.candidate_statuses as { code: string }[] | { code: string } | null
+  const generalCode = Array.isArray(statusesRaw) ? statusesRaw[0]?.code : (statusesRaw as { code: string } | null)?.code
   if (generalCode && generalCode !== 'active') {
     return { success: false, error: 'Only active candidates can be added to a vacancy.' }
   }
