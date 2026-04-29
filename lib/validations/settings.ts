@@ -7,6 +7,7 @@ export const ProfileSchema = z.object({
 
 export const OrganizationSchema = z.object({
   name: z.string().min(1, 'Organization name is required').max(200),
+  logo_url: z.string().url().nullable().optional(),
 })
 
 export type ProfileInput = z.infer<typeof ProfileSchema>
