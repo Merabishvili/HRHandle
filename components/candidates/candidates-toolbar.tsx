@@ -5,6 +5,13 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, SlidersHorizontal, Columns3 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ColumnManagerDialog } from '@/components/shared/column-manager-dialog'
 import { updateColumnPreferences } from '@/lib/actions/preferences'
 import {
