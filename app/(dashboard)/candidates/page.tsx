@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -20,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { CandidateStatusActions } from '@/components/candidates/candidate-status-actions'
 import { CandidatesToolbar } from '@/components/candidates/candidates-toolbar'
+import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import {
   DEFAULT_CANDIDATE_COLUMNS,
@@ -299,19 +299,25 @@ export default async function CandidatesPage({
         statusOptions={candidateStatuses}
       />
 
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>All Candidates</CardTitle>
-          <CardDescription>
-            {totalCount ?? 0} total candidates
-            {search && ` · filtered by "${search}"`}
-            {totalPages > 1 && ` · page ${page} of ${totalPages}`}
-          </CardDescription>
-        </CardHeader>
+      <div className="flex items-center justify-between gap-4">
+        <FilterPillTabs
+          tabs={[
+            { value: 'all', label: 'All' },
+            ...candidateStatuses.map((s) => ({ value: s.id, label: s.name })),
+          ]}
+          paramKey="status"
+          activeValue={statusFilter || ''}
+        />
+        <p className="text-sm text-muted-foreground shrink-0">
+          {totalCount ?? 0} {(totalCount ?? 0) === 1 ? 'candidate' : 'candidates'}
+          {search && ` · "${search}"`}
+          {totalPages > 1 && ` · page ${page} of ${totalPages}`}
+        </p>
+      </div>
 
-        <CardContent>
-          {candidates.length > 0 ? (
-            <div className="overflow-x-auto">
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        {candidates.length > 0 ? (
+          <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -529,8 +535,7 @@ export default async function CandidatesPage({
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   )
 }

@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -20,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { VacancyActions } from '@/components/vacancies/vacancy-actions'
 import { VacanciesToolbar } from '@/components/vacancies/vacancies-toolbar'
+import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 import {
   DEFAULT_VACANCY_COLUMNS,
@@ -249,22 +249,27 @@ export default async function VacanciesPage({
         initialSort={sort}
         initialStatus={statusFilter || ''}
         selectedColumns={activeColumns}
-        statusOptions={statusOptions}
       />
 
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>All Vacancies</CardTitle>
-          <CardDescription>
-            {totalCount ?? 0} total vacancies
-            {search && ` · filtered by "${search}"`}
-            {totalPages > 1 && ` · page ${page} of ${totalPages}`}
-          </CardDescription>
-        </CardHeader>
+      <div className="flex items-center justify-between gap-4">
+        <FilterPillTabs
+          tabs={[
+            { value: 'all', label: 'All' },
+            ...statusOptions.map((s) => ({ value: s.id, label: s.name })),
+          ]}
+          paramKey="status"
+          activeValue={statusFilter || ''}
+        />
+        <p className="text-sm text-muted-foreground shrink-0">
+          {totalCount ?? 0} {(totalCount ?? 0) === 1 ? 'vacancy' : 'vacancies'}
+          {search && ` · "${search}"`}
+          {totalPages > 1 && ` · page ${page} of ${totalPages}`}
+        </p>
+      </div>
 
-        <CardContent>
-          {vacancies.length > 0 ? (
-            <div className="overflow-x-auto">
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        {vacancies.length > 0 ? (
+          <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -447,8 +452,7 @@ export default async function VacanciesPage({
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   )
 }
