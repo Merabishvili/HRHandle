@@ -52,6 +52,8 @@ export default function PrivacyPage() {
             <ul className="list-disc space-y-1 pl-5">
               <li>If you connect LinkedIn: your LinkedIn OAuth access token, used solely to post vacancies on your behalf. We do not access your LinkedIn connections or personal feed.</li>
               <li>If you connect Google Calendar: your Google OAuth access token and refresh token, used solely to create and manage interview calendar events on your behalf.</li>
+              <li>If you connect Zoom: your Zoom OAuth access token and refresh token, used solely to create Zoom meetings when scheduling video interviews on your behalf.</li>
+              <li>If you connect Microsoft: your Microsoft OAuth access token and refresh token, used solely to create Teams meetings and Outlook Calendar events when scheduling video interviews on your behalf. We do not access your emails, contacts, or any other Microsoft data.</li>
             </ul>
 
             <h3 className="mb-2 mt-4 font-medium">2.3 Vacancy Data</h3>
@@ -148,6 +150,16 @@ export default function PrivacyPage() {
                   <tr>
                     <td className="py-2 pr-4">LinkedIn (optional)</td>
                     <td className="py-2 pr-4">Vacancy posting via LinkedIn API</td>
+                    <td className="py-2">USA / Global</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-4">Zoom (optional)</td>
+                    <td className="py-2 pr-4">Video meeting creation via Zoom API</td>
+                    <td className="py-2">USA / Global</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-4">Microsoft (optional)</td>
+                    <td className="py-2 pr-4">Teams meeting and Outlook Calendar integration via Microsoft Graph API</td>
                     <td className="py-2">USA / Global</td>
                   </tr>
                 </tbody>

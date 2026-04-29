@@ -44,9 +44,10 @@ export default function TermsPage() {
             </p>
             <p className="mt-3">
               The Service includes optional integrations with third-party platforms such as
-              Google (for authentication and calendar synchronization) and LinkedIn (for posting
-              vacancies). Use of these integrations is subject to the terms of the respective
-              third-party platforms.
+              Google (for authentication and calendar synchronization), LinkedIn (for posting
+              vacancies), Zoom (for video meeting creation), and Microsoft (for Outlook Calendar
+              synchronization and Teams meeting creation). Use of these integrations is subject
+              to the terms of the respective third-party platforms.
             </p>
           </section>
 
@@ -148,8 +149,11 @@ export default function TermsPage() {
               When you use the LinkedIn vacancy posting feature, vacancy content (job title,
               description, responsibilities, requirements) is shared with LinkedIn via their API
               on your behalf. When you use Google sign-in or Google Calendar integration, your
-              account is linked to your Google identity or calendar via OAuth. We only access the
-              scopes you explicitly authorize.
+              account is linked to your Google identity or calendar via OAuth. When you connect
+              Zoom, a meeting is created on your behalf via the Zoom API. When you connect
+              Microsoft, interview events and Teams meetings are created in your Outlook Calendar
+              via the Microsoft Graph API. We only access the scopes you explicitly authorize for
+              each integration.
             </p>
             <p className="mt-3">
               We do not share candidate data with third parties. Candidate data is used solely to

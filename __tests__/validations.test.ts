@@ -106,6 +106,55 @@ describe('VacancySchema', () => {
     const result = VacancySchema.safeParse(base)
     expect(result.success).toBe(true)
   })
+
+  it('accepts show_on_public_page true', () => {
+    const result = VacancySchema.safeParse({ ...base, show_on_public_page: true })
+    expect(result.success).toBe(true)
+  })
+
+  it('defaults show_on_public_page to false when omitted', () => {
+    const result = VacancySchema.safeParse(base)
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.show_on_public_page).toBe(false)
+  })
+})
+
+// ─── Public apply duplicate detection ─────────────────────────────────────────
+
+describe('Public apply duplicate detection logic', () => {
+  function shouldMatchDuplicate(
+    email: string | null,
+    phone: string | null,
+    existingEmail: string,
+    existingPhone: string | null
+  ): boolean {
+    if (!email || !phone) return false
+    return email === existingEmail && phone === existingPhone
+  }
+
+  it('matches when both email and phone are identical', () => {
+    expect(shouldMatchDuplicate('a@b.com', '555-1234', 'a@b.com', '555-1234')).toBe(true)
+  })
+
+  it('does not match when only email matches', () => {
+    expect(shouldMatchDuplicate('a@b.com', '555-9999', 'a@b.com', '555-1234')).toBe(false)
+  })
+
+  it('does not match when only phone matches', () => {
+    expect(shouldMatchDuplicate('x@b.com', '555-1234', 'a@b.com', '555-1234')).toBe(false)
+  })
+
+  it('does not attempt match when phone is missing from submission', () => {
+    expect(shouldMatchDuplicate('a@b.com', null, 'a@b.com', '555-1234')).toBe(false)
+  })
+
+  it('does not attempt match when email is missing from submission', () => {
+    expect(shouldMatchDuplicate(null, '555-1234', 'a@b.com', '555-1234')).toBe(false)
+  })
+
+  it('does not match when existing candidate has no phone', () => {
+    expect(shouldMatchDuplicate('a@b.com', '555-1234', 'a@b.com', null)).toBe(false)
+  })
 })
 
 // ─── Evaluation score calculation ─────────────────────────────────────────────
