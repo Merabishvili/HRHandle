@@ -132,6 +132,7 @@ export function ApplyForm({ token }: { token: string }) {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="John"
+              maxLength={100}
               disabled={isLoading}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
             />
@@ -145,6 +146,7 @@ export function ApplyForm({ token }: { token: string }) {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Smith"
+              maxLength={100}
               disabled={isLoading}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
             />
@@ -173,6 +175,7 @@ export function ApplyForm({ token }: { token: string }) {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+1 555 123 4567"
+              maxLength={30}
               disabled={isLoading}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
             />
@@ -184,6 +187,7 @@ export function ApplyForm({ token }: { token: string }) {
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
               placeholder="https://linkedin.com/in/..."
+              maxLength={500}
               disabled={isLoading}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
             />

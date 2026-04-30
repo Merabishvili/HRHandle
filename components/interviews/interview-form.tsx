@@ -437,6 +437,7 @@ export function InterviewForm({
                 value={manualMeetingLink}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setManualMeetingLink(e.target.value)}
                 disabled={isLoading}
+                maxLength={2000}
               />
               <p className="text-xs text-muted-foreground">Optional. Paste any Zoom, Teams, or other meeting link.</p>
             </div>
