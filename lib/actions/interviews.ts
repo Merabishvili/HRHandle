@@ -7,6 +7,7 @@ import { getValidAccessToken, createCalendarEventWithMeet } from '@/lib/google/c
 import { getValidZoomAccessToken, createZoomMeeting } from '@/lib/zoom/meetings'
 import { getValidMicrosoftAccessToken, createTeamsMeeting } from '@/lib/microsoft/graph'
 import { sendInterviewInvitationEmail } from '@/lib/email'
+import { createOrgNotifications } from '@/lib/actions/notifications'
 
 export async function createInterview(
   input: InterviewInput,
@@ -201,6 +202,31 @@ export async function createInterview(
         // Email failure is non-fatal — interview was already created
       }
     }
+  }
+
+  // Notify the interviewer (if assigned) and the creator
+  try {
+    const { data: vacancy } = await ctx.supabase
+      .from('vacancies')
+      .select('title')
+      .eq('id', parsed.data.vacancy_id)
+      .eq('organization_id', ctx.orgId)
+      .single()
+
+    const recipientIds = new Set<string>()
+    recipientIds.add(ctx.userId)
+    if (parsed.data.interviewer_id && parsed.data.interviewer_id !== ctx.userId) {
+      recipientIds.add(parsed.data.interviewer_id)
+    }
+
+    await createOrgNotifications(ctx.orgId, [...recipientIds], {
+      type: 'interview_scheduled',
+      title: `Interview scheduled: ${candidate.first_name} ${candidate.last_name}`,
+      body: vacancy?.title ? `For ${vacancy.title}` : undefined,
+      link: `/interviews`,
+    })
+  } catch {
+    // Non-fatal
   }
 
   revalidatePath('/interviews')

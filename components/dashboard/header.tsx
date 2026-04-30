@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { LogOut, User as UserIcon, Settings, CreditCard, ChevronRight } from 'lucide-react'
+import { NotificationsBell } from '@/components/dashboard/notifications-bell'
 
 interface DashboardHeaderProps {
   user: User
@@ -95,7 +96,9 @@ export function DashboardHeader({
         </div>
 
         {/* User area */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5">
+          <NotificationsBell />
+
           <div className="hidden text-right md:block">
             <p className="text-sm font-medium leading-tight text-foreground">
               {profile.full_name || user.email?.split('@')[0] || 'User'}

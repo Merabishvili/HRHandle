@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendApplicationConfirmationEmail } from '@/lib/email'
+import { createOrgNotifications } from '@/lib/actions/notifications'
 import { headers } from 'next/headers'
 
 const MAX_SUBMISSIONS_PER_IP_PER_HOUR = 5
@@ -243,7 +244,26 @@ export async function submitPublicApplication(
     // CV upload failure is non-fatal — candidate + application already created
   }
 
-  // ── 14. Send confirmation email ────────────────────────────────────────────
+  // ── 14. Notify org owners/admins of new application ───────────────────────
+  try {
+    const { data: orgMembers } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('organization_id', orgId)
+      .in('role', ['owner', 'admin'])
+
+    const recipientIds = (orgMembers || []).map((m) => m.id)
+    await createOrgNotifications(orgId, recipientIds, {
+      type: 'new_application',
+      title: `New application: ${firstName} ${lastName}`,
+      body: `Applied for ${vacancy.title}`,
+      link: `/vacancies/${vacancy.id}?tab=applications`,
+    })
+  } catch {
+    // Non-fatal
+  }
+
+  // ── 15. Send confirmation email ────────────────────────────────────────────
   try {
     const [{ data: org }, { data: templateRow }] = await Promise.all([
       supabase.from('organizations').select('name').eq('id', orgId).single(),

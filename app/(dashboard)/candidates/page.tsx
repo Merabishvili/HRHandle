@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Users, Mail, Phone, MoreHorizontal } from 'lucide-react'
+import { Plus, Users, Mail, Phone, MoreHorizontal, Download } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -279,6 +279,12 @@ export default async function CandidatesPage({
               <Link href="/candidates">Clear filter</Link>
             </Button>
           )}
+          <Button variant="outline" asChild>
+            <a href="/api/export/candidates" download>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </a>
+          </Button>
           <Button asChild>
             <Link href={vacancyFilter ? `/candidates/new?vacancy=${vacancyFilter}` : '/candidates/new'}>
               <Plus className="mr-2 h-4 w-4" />

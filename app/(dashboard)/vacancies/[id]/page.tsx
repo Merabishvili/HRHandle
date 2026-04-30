@@ -10,6 +10,7 @@ import {
   Clock,
   LayoutGrid,
   UserCircle,
+  Download,
 } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -462,11 +463,19 @@ export default async function VacancyDetailPage({
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Applications list */}
             <div className="lg:col-span-2">
-              <VacancyApplicationsToolbar
-                initialSearch={appSearch}
-                initialStatus={appStatus || ''}
-                appStatuses={appStatuses}
-              />
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <VacancyApplicationsToolbar
+                  initialSearch={appSearch}
+                  initialStatus={appStatus || ''}
+                  appStatuses={appStatuses}
+                />
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`/api/export/applications?vacancy_id=${id}`} download>
+                    <Download className="mr-2 h-3.5 w-3.5" />
+                    Export CSV
+                  </a>
+                </Button>
+              </div>
               {filteredApplications.length > 0 ? (
                 <>
                   <VacancyApplicationsList
