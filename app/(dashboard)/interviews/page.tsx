@@ -103,20 +103,39 @@ export default async function InterviewsPage({
   const organizationId = profile?.organization_id
   if (!organizationId) return null
 
-  const { data: interviewsRaw } = await supabase
-    .from('interviews')
-    .select(`
-      id, candidate_id, vacancy_id, application_id, interviewer_id,
-      scheduled_at, duration_minutes, type, status,
-      google_meet_link, meeting_link,
-      candidates ( id, first_name, last_name, email ),
-      vacancies!inner ( id, title, organization_id ),
-      profiles ( full_name )
-    `)
-    .eq('organization_id', organizationId)
-    .order('scheduled_at', { ascending: false })
+  const [
+    { data: interviewsRaw },
+    { data: candidatesRaw },
+    { data: vacanciesRaw },
+    { data: teamMembersRaw },
+  ] = await Promise.all([
+    supabase
+      .from('interviews')
+      .select(`
+        id, candidate_id, vacancy_id, application_id, interviewer_id,
+        scheduled_at, duration_minutes, type, status,
+        google_meet_link, meeting_link,
+        candidates ( id, first_name, last_name, email ),
+        vacancies ( id, title, organization_id ),
+        profiles ( full_name )
+      `)
+      .eq('organization_id', organizationId)
+      .order('scheduled_at', { ascending: false }),
+
+    supabase.from('candidates').select('id, first_name, last_name, email')
+      .eq('organization_id', organizationId).is('deleted_at', null),
+
+    supabase.from('vacancies').select('id, title')
+      .eq('organization_id', organizationId).is('deleted_at', null),
+
+    supabase.from('profiles').select('id, full_name')
+      .eq('organization_id', organizationId).eq('is_active', true),
+  ])
 
   const interviews = (interviewsRaw || []) as InterviewRow[]
+  const candidateMap = new Map((candidatesRaw || []).map((c) => [c.id, c]))
+  const vacancyMap = new Map((vacanciesRaw || []).map((v) => [v.id, v]))
+  const teamMemberMap = new Map((teamMembersRaw || []).map((m) => [m.id, m]))
 
   const now = new Date()
   const upcomingCount = interviews.filter(
@@ -189,9 +208,12 @@ export default async function InterviewsPage({
             const displayStatusKey = getDisplayStatusKey(interview)
             const displayStatusLabel = getDisplayStatus(interview)
 
-            const candidate = interview.candidates?.[0] ?? null
-            const vacancy = interview.vacancies?.[0] ?? null
-            const interviewerName = interview.profiles?.[0]?.full_name ?? 'Not assigned'
+            const candidate = interview.candidates?.[0] ?? candidateMap.get(interview.candidate_id) ?? null
+            const vacancy = interview.vacancies?.[0] ?? vacancyMap.get(interview.vacancy_id) ?? null
+            const interviewerName =
+              interview.profiles?.[0]?.full_name ??
+              (interview.interviewer_id ? teamMemberMap.get(interview.interviewer_id)?.full_name : null) ??
+              'Not assigned'
             const candidateHasEmail = !!candidate?.email
             const meetLink = interview.google_meet_link || interview.meeting_link
 

@@ -208,6 +208,20 @@ export default async function DashboardPage() {
   const recentVacancies = (recentVacanciesRaw || []) as VacancyRow[]
   const upcomingInterviews = (upcomingInterviewsRaw || []) as InterviewRow[]
 
+  // Fetch candidate names for upcoming interviews separately (embedded joins are unreliable with RLS)
+  const interviewCandidateIds = [...new Set(upcomingInterviews.map((i) => i.candidate_id))]
+  const interviewCandidateMap = new Map<string, { first_name: string; last_name: string }>()
+  if (interviewCandidateIds.length > 0) {
+    const { data: interviewCandidatesRaw } = await supabase
+      .from('candidates')
+      .select('id, first_name, last_name')
+      .in('id', interviewCandidateIds)
+      .eq('organization_id', orgId)
+    for (const c of (interviewCandidatesRaw || [])) {
+      interviewCandidateMap.set(c.id, { first_name: c.first_name, last_name: c.last_name })
+    }
+  }
+
   // Fetch applications for recent candidates separately for reliability
   const recentCandidateIds = recentCandidatesBase.map((c) => c.id)
   const candidateVacancyMap = new Map<string, string>()
@@ -464,7 +478,7 @@ export default async function DashboardPage() {
             {upcomingInterviews.length > 0 ? (
               <div className="space-y-4">
                 {upcomingInterviews.map((interview) => {
-                  const candidate = interview.candidates?.[0] ?? null
+                  const candidate = interview.candidates?.[0] ?? interviewCandidateMap.get(interview.candidate_id) ?? null
                   const vacancy = interview.vacancies?.[0] ?? vacancyMap.get(interview.vacancy_id) ?? null
 
                   return (
