@@ -34,12 +34,24 @@ function GoogleIcon() {
   )
 }
 
+function MicrosoftIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 21 21" aria-hidden="true">
+      <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+      <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+      <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
+      <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
+    </svg>
+  )
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false)
+  const [isMicrosoftLoading, setIsMicrosoftLoading] = useState<boolean>(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -88,6 +100,25 @@ export default function LoginPage() {
     }
   }
 
+  const handleMicrosoftSignIn = async () => {
+    setError(null)
+    setIsMicrosoftLoading(true)
+    try {
+      const supabase = createClient()
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'email',
+        },
+      })
+      if (oauthError) throw new Error(oauthError.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in with Microsoft.')
+      setIsMicrosoftLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background px-4 py-12 flex items-center justify-center">
       <div className="w-full max-w-md">
@@ -113,19 +144,35 @@ export default function LoginPage() {
               </Alert>
             )}
 
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleGoogleSignIn}
-              disabled={isGoogleLoading || isLoading}
-            >
-              {isGoogleLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <GoogleIcon />
-              )}
-              <span className="ml-2">Continue with Google</span>
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleSignIn}
+                disabled={isGoogleLoading || isMicrosoftLoading || isLoading}
+              >
+                {isGoogleLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <GoogleIcon />
+                )}
+                <span className="ml-2">Continue with Google</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleMicrosoftSignIn}
+                disabled={isGoogleLoading || isMicrosoftLoading || isLoading}
+              >
+                {isMicrosoftLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <MicrosoftIcon />
+                )}
+                <span className="ml-2">Continue with Microsoft</span>
+              </Button>
+            </div>
 
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">

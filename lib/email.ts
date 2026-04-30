@@ -13,7 +13,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 function senderFrom(senderName: string) {
   const safe = senderName.replace(/["\r\n]/g, '').trim()
-  return `"${safe} via HRHandle" <noreply@hrhandle.com>`
+  return `${safe} <noreply@hrhandle.com>`
 }
 
 export async function sendTeamInviteEmail({
