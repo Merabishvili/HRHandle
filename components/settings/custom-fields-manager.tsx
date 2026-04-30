@@ -540,6 +540,7 @@ function EntitySection({
           value={newGroupName}
           onChange={(e) => setNewGroupName(e.target.value)}
           placeholder={`New ${label.toLowerCase()} group name`}
+          maxLength={100}
           className="h-9 text-sm"
           onKeyDown={(e) => {
             if (e.key === 'Enter') {

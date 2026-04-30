@@ -46,6 +46,7 @@ interface VacancyRow {
   start_date: string
   end_date: string | null
   description: string
+  responsibilities: string | null
   requirements: string | null
   created_by: string | null
   created_at: string
@@ -206,6 +207,7 @@ export default async function VacancyDetailPage({
         start_date,
         end_date,
         description,
+        responsibilities,
         requirements,
         created_by,
         created_at,
@@ -408,7 +410,7 @@ export default async function VacancyDetailPage({
             employmentType={vacancy.employment_type}
             department={vacancy.department}
             description={vacancy.description}
-            responsibilities={(vacancy as any).responsibilities ?? null}
+            responsibilities={vacancy.responsibilities ?? null}
             requirements={vacancy.requirements}
           />
           <Button variant="outline" asChild>

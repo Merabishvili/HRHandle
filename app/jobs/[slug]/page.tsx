@@ -76,8 +76,9 @@ export default async function PublicJobsPage({ params }: PageProps) {
   // Only show open vacancies with a form token.
   // Supabase may return the joined row as an object or a single-element array
   // depending on relationship configuration — handle both.
+  type StatusJoin = { code: string } | { code: string }[] | null
   const vacancies = (vacanciesRaw || []).filter((v) => {
-    const statusJoin = v.vacancy_statuses as any
+    const statusJoin = v.vacancy_statuses as StatusJoin
     const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
     return statusCode === 'open' && v.application_form_token
   })

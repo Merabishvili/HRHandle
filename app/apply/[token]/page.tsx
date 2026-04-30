@@ -16,11 +16,14 @@ export async function generateMetadata({ params }: PageProps) {
     .from('vacancies')
     .select('title, organizations(name)')
     .eq('application_form_token', token)
+    .is('deleted_at', null)
     .single()
 
   if (!vacancy) return { title: 'Position Not Found' }
 
-  const orgName = (vacancy.organizations as any)?.[0]?.name || 'Company'
+  type MetaOrgJoin = { name: string } | { name: string }[] | null
+  const metaOrg = vacancy.organizations as MetaOrgJoin
+  const orgName = (Array.isArray(metaOrg) ? metaOrg[0]?.name : metaOrg?.name) || 'Company'
   return {
     title: `${vacancy.title} — ${orgName}`,
     description: `Apply for ${vacancy.title} at ${orgName}`,
@@ -40,6 +43,7 @@ export default async function ApplyPage({ params }: PageProps) {
       location,
       employment_type,
       description,
+      responsibilities,
       requirements,
       archived_at,
       application_form_token,
@@ -47,16 +51,19 @@ export default async function ApplyPage({ params }: PageProps) {
       organizations ( name, logo_url, public_page_slug )
     `)
     .eq('application_form_token', token)
+    .is('deleted_at', null)
     .single()
 
   if (!vacancy) notFound()
 
   // Supabase may return the joined row as object or single-element array — handle both
-  const statusJoin = vacancy.vacancy_statuses as any
+  type StatusJoin = { code: string } | { code: string }[] | null
+  type OrgJoin = { name: string; logo_url: string | null; public_page_slug: string | null } | { name: string; logo_url: string | null; public_page_slug: string | null }[] | null
+  const statusJoin = vacancy.vacancy_statuses as StatusJoin
   const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
   const isClosed = vacancy.archived_at || statusCode !== 'open'
 
-  const orgJoin = vacancy.organizations as any
+  const orgJoin = vacancy.organizations as OrgJoin
   const org = (Array.isArray(orgJoin) ? orgJoin[0] : orgJoin) || null
   const publicJobsSlug = org?.public_page_slug as string | null
 
@@ -89,7 +96,7 @@ export default async function ApplyPage({ params }: PageProps) {
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd).replace(/</g, '\\u003c') }}
       />
       <div className="mx-auto max-w-2xl space-y-6">
 
@@ -138,10 +145,10 @@ export default async function ApplyPage({ params }: PageProps) {
             </div>
           )}
 
-          {(vacancy as any).responsibilities && (
+          {vacancy.responsibilities && (
             <div className="mb-4">
               <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">Responsibilities</h2>
-              <div className="whitespace-pre-wrap text-sm text-gray-700">{(vacancy as any).responsibilities}</div>
+              <div className="whitespace-pre-wrap text-sm text-gray-700">{vacancy.responsibilities}</div>
             </div>
           )}
 
