@@ -146,6 +146,7 @@ export async function POST() {
         last_payment_status: null,
         vacancy_limit: 5,
         candidate_limit: 100,
+        member_limit: 3,
       })
 
     if (subscriptionError) {

@@ -29,6 +29,7 @@ export async function GET() {
     .eq('organization_id', profile.organization_id)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
+    .limit(10000)
 
   const rows = candidates || []
 

@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
     .eq('vacancy_id', vacancyId)
     .is('deleted_at', null)
     .order('applied_at', { ascending: false })
+    .limit(10000)
 
   const candidateIds = [...new Set((applications || []).map((a) => a.candidate_id))]
   const candidateMap = new Map<string, { first_name: string; last_name: string; email: string | null; phone: string | null; linkedin_profile_url: string | null }>()

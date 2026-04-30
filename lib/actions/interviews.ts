@@ -61,7 +61,7 @@ export async function rescheduleInterview(
   if (sendEmail) {
     try {
       const [{ data: candidate }, { data: vacancy }, { data: senderProfile }] = await Promise.all([
-        ctx.supabase.from('candidates').select('first_name, last_name, email').eq('id', interview.candidate_id).single(),
+        ctx.supabase.from('candidates').select('first_name, last_name, email').eq('id', interview.candidate_id).eq('organization_id', ctx.orgId).single(),
         ctx.supabase.from('vacancies').select('title').eq('id', interview.vacancy_id).eq('organization_id', ctx.orgId).single(),
         ctx.supabase.from('profiles').select('full_name, email').eq('id', ctx.userId).single(),
       ])
@@ -140,7 +140,7 @@ export async function createInterview(
       const [{ data: vacancy }, { data: interviewer }] = await Promise.all([
         ctx.supabase.from('vacancies').select('title').eq('id', parsed.data.vacancy_id).eq('organization_id', ctx.orgId).single(),
         parsed.data.interviewer_id
-          ? ctx.supabase.from('profiles').select('email').eq('id', parsed.data.interviewer_id).single()
+          ? ctx.supabase.from('profiles').select('email').eq('id', parsed.data.interviewer_id).eq('organization_id', ctx.orgId).single()
           : Promise.resolve({ data: null }),
       ])
 
@@ -214,7 +214,7 @@ export async function createInterview(
       const [{ data: vacancy }, { data: interviewer }] = await Promise.all([
         ctx.supabase.from('vacancies').select('title').eq('id', parsed.data.vacancy_id).eq('organization_id', ctx.orgId).single(),
         parsed.data.interviewer_id
-          ? ctx.supabase.from('profiles').select('email').eq('id', parsed.data.interviewer_id).single()
+          ? ctx.supabase.from('profiles').select('email').eq('id', parsed.data.interviewer_id).eq('organization_id', ctx.orgId).single()
           : Promise.resolve({ data: null }),
       ])
 
