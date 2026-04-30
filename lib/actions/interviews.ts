@@ -9,6 +9,87 @@ import { getValidMicrosoftAccessToken, createTeamsMeeting } from '@/lib/microsof
 import { sendInterviewInvitationEmail } from '@/lib/email'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 
+export async function updateInterviewStatus(
+  interviewId: string,
+  status: 'cancelled' | 'no_show' | 'completed'
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { error } = await ctx.supabase
+    .from('interviews')
+    .update({ status })
+    .eq('id', interviewId)
+    .eq('organization_id', ctx.orgId)
+
+  if (error) return { success: false, error: 'Failed to update interview status' }
+
+  revalidatePath('/interviews')
+  return { success: true, data: undefined }
+}
+
+export async function rescheduleInterview(
+  interviewId: string,
+  scheduledAt: string,
+  durationMinutes: number,
+  sendEmail: boolean
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const scheduledDate = new Date(scheduledAt)
+  if (Number.isNaN(scheduledDate.getTime())) return { success: false, error: 'Invalid date/time' }
+  if (scheduledDate < new Date()) return { success: false, error: 'Interview must be in the future' }
+
+  const { data: interview, error: fetchErr } = await ctx.supabase
+    .from('interviews')
+    .select('id, candidate_id, vacancy_id, type, meeting_link, google_meet_link')
+    .eq('id', interviewId)
+    .eq('organization_id', ctx.orgId)
+    .single()
+
+  if (fetchErr || !interview) return { success: false, error: 'Interview not found' }
+
+  const { error } = await ctx.supabase
+    .from('interviews')
+    .update({ scheduled_at: scheduledAt, duration_minutes: durationMinutes, status: 'scheduled' })
+    .eq('id', interviewId)
+    .eq('organization_id', ctx.orgId)
+
+  if (error) return { success: false, error: 'Failed to reschedule interview' }
+
+  if (sendEmail) {
+    try {
+      const [{ data: candidate }, { data: vacancy }, { data: senderProfile }] = await Promise.all([
+        ctx.supabase.from('candidates').select('first_name, last_name, email').eq('id', interview.candidate_id).single(),
+        ctx.supabase.from('vacancies').select('title').eq('id', interview.vacancy_id).eq('organization_id', ctx.orgId).single(),
+        ctx.supabase.from('profiles').select('full_name, email').eq('id', ctx.userId).single(),
+      ])
+
+      if (candidate?.email) {
+        const meetLink = interview.google_meet_link || interview.meeting_link || null
+        await sendInterviewInvitationEmail({
+          to: candidate.email,
+          candidateName: `${candidate.first_name} ${candidate.last_name}`,
+          senderName: senderProfile?.full_name ?? 'The hiring team',
+          senderEmail: senderProfile?.email ?? 'noreply@hrhandle.com',
+          vacancyTitle: vacancy?.title ?? 'Position',
+          scheduledAt,
+          durationMinutes,
+          interviewType: interview.type,
+          meetingLink: meetLink,
+          rescheduled: true,
+        })
+      }
+    } catch {
+      // Email failure is non-fatal
+    }
+  }
+
+  revalidatePath('/interviews')
+  return { success: true, data: undefined }
+}
+
 export async function createInterview(
   input: InterviewInput,
   options: {

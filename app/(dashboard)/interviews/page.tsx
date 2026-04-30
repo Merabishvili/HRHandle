@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Calendar, Video, Phone, Building, ExternalLink } from 'lucide-react'
-import { format, isToday, isTomorrow } from 'date-fns'
+import { format, isToday, isTomorrow, isPast } from 'date-fns'
 import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
+import { InterviewActions } from '@/components/interviews/interview-actions'
 
 interface InterviewRow {
   id: string
@@ -23,6 +24,7 @@ interface InterviewRow {
         id: string
         first_name: string
         last_name: string
+        email: string | null
       }[]
     | null
   vacancies:
@@ -39,27 +41,27 @@ interface InterviewRow {
     | null
 }
 
-interface CandidateOption {
-  id: string
-  first_name: string
-  last_name: string
-}
-
-interface VacancyOption {
-  id: string
-  title: string
-}
-
-interface TeamMemberOption {
-  id: string
-  full_name: string | null
-}
-
 const STATUS_COLORS: Record<string, string> = {
-  scheduled: 'bg-blue-100 text-blue-800',
+  upcoming: 'bg-blue-100 text-blue-800',
+  past: 'bg-yellow-100 text-yellow-800',
   completed: 'bg-green-100 text-green-800',
   cancelled: 'bg-gray-100 text-gray-800',
   no_show: 'bg-red-100 text-red-800',
+}
+
+function getDisplayStatus(interview: InterviewRow): string {
+  if (interview.status === 'cancelled') return 'cancelled'
+  if (interview.status === 'no_show') return 'no show'
+  if (interview.status === 'completed') return 'completed'
+  // status === 'scheduled' — derive upcoming vs past
+  return isPast(new Date(interview.scheduled_at)) ? 'past' : 'upcoming'
+}
+
+function getDisplayStatusKey(interview: InterviewRow): string {
+  if (interview.status === 'cancelled') return 'cancelled'
+  if (interview.status === 'no_show') return 'no_show'
+  if (interview.status === 'completed') return 'completed'
+  return isPast(new Date(interview.scheduled_at)) ? 'past' : 'upcoming'
 }
 
 function getCandidateFullName(candidate?: { first_name: string; last_name: string } | null) {
@@ -101,59 +103,48 @@ export default async function InterviewsPage({
   const organizationId = profile?.organization_id
   if (!organizationId) return null
 
-  const [
-    { data: interviewsRaw },
-    { data: candidatesRaw },
-    { data: vacanciesRaw },
-    { data: teamMembersRaw },
-  ] = await Promise.all([
-    supabase
-      .from('interviews')
-      .select(`
-        id, candidate_id, vacancy_id, application_id, interviewer_id,
-        scheduled_at, duration_minutes, type, status,
-        google_meet_link, meeting_link,
-        candidates ( id, first_name, last_name ),
-        vacancies!inner ( id, title, organization_id ),
-        profiles ( full_name )
-      `)
-      .eq('organization_id', organizationId)
-      .order('scheduled_at', { ascending: false }),
-
-    supabase.from('candidates').select('id, first_name, last_name')
-      .eq('organization_id', organizationId).is('deleted_at', null),
-
-    supabase.from('vacancies').select('id, title')
-      .eq('organization_id', organizationId).is('archived_at', null).is('deleted_at', null),
-
-    supabase.from('profiles').select('id, full_name')
-      .eq('organization_id', organizationId).eq('is_active', true),
-  ])
+  const { data: interviewsRaw } = await supabase
+    .from('interviews')
+    .select(`
+      id, candidate_id, vacancy_id, application_id, interviewer_id,
+      scheduled_at, duration_minutes, type, status,
+      google_meet_link, meeting_link,
+      candidates ( id, first_name, last_name, email ),
+      vacancies!inner ( id, title, organization_id ),
+      profiles ( full_name )
+    `)
+    .eq('organization_id', organizationId)
+    .order('scheduled_at', { ascending: false })
 
   const interviews = (interviewsRaw || []) as InterviewRow[]
-  const candidates = (candidatesRaw || []) as CandidateOption[]
-  const vacancies = (vacanciesRaw || []) as VacancyOption[]
-  const teamMembers = (teamMembersRaw || []) as TeamMemberOption[]
 
-  const candidateMap = new Map(candidates.map((c) => [c.id, c]))
-  const vacancyMap = new Map(vacancies.map((v) => [v.id, v]))
-  const teamMemberMap = new Map(teamMembers.map((m) => [m.id, m]))
-
-  const scheduledCount = interviews.filter((i) => i.status === 'scheduled').length
-  const completedCount = interviews.filter((i) => i.status === 'completed').length
+  const now = new Date()
+  const upcomingCount = interviews.filter(
+    (i) => i.status === 'scheduled' && !isPast(new Date(i.scheduled_at))
+  ).length
+  const pastCount = interviews.filter(
+    (i) => i.status === 'scheduled' && isPast(new Date(i.scheduled_at))
+  ).length
   const cancelledCount = interviews.filter((i) => i.status === 'cancelled').length
+  const noShowCount = interviews.filter((i) => i.status === 'no_show').length
 
-  const filtered = statusFilter
-    ? interviews.filter((i) => i.status === statusFilter)
-    : interviews
+  // Filter
+  const filtered = (() => {
+    if (!statusFilter) return interviews
+    if (statusFilter === 'upcoming') return interviews.filter((i) => i.status === 'scheduled' && !isPast(new Date(i.scheduled_at)))
+    if (statusFilter === 'past') return interviews.filter((i) => i.status === 'scheduled' && isPast(new Date(i.scheduled_at)))
+    return interviews.filter((i) => i.status === statusFilter)
+  })()
 
   const filterTabs = [
     { value: 'all', label: 'All' },
-    { value: 'scheduled', label: 'Scheduled' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' },
-    { value: 'no_show', label: 'No Show' },
+    { value: 'upcoming', label: `Scheduled (${upcomingCount})` },
+    { value: 'past', label: `Past (${pastCount})` },
+    { value: 'cancelled', label: `Cancelled (${cancelledCount})` },
+    { value: 'no_show', label: `No Show (${noShowCount})` },
   ]
+
+  void now // suppress unused warning
 
   return (
     <div className="space-y-6">
@@ -172,16 +163,14 @@ export default async function InterviewsPage({
       </div>
 
       {/* Stats strip */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Scheduled', value: scheduledCount, color: 'text-primary' },
-          { label: 'Completed', value: completedCount, color: 'text-success' },
-          { label: 'Cancelled', value: cancelledCount, color: 'text-destructive' },
+          { label: 'Scheduled', value: upcomingCount, color: 'text-primary' },
+          { label: 'Past', value: pastCount, color: 'text-yellow-600' },
+          { label: 'Cancelled', value: cancelledCount, color: 'text-muted-foreground' },
+          { label: 'No Show', value: noShowCount, color: 'text-destructive' },
         ].map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-lg border border-border bg-card px-4 py-3.5"
-          >
+          <div key={stat.label} className="rounded-lg border border-border bg-card px-4 py-3.5">
             <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
             <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
           </div>
@@ -189,11 +178,7 @@ export default async function InterviewsPage({
       </div>
 
       {/* Filter tabs */}
-      <FilterPillTabs
-        tabs={filterTabs}
-        paramKey="status"
-        activeValue={statusFilter || ''}
-      />
+      <FilterPillTabs tabs={filterTabs} paramKey="status" activeValue={statusFilter || ''} />
 
       {/* Interview list */}
       {filtered.length > 0 ? (
@@ -201,15 +186,16 @@ export default async function InterviewsPage({
           {filtered.map((interview) => {
             const Icon = getInterviewIcon(interview.type)
             const scheduledDate = new Date(interview.scheduled_at)
+            const displayStatusKey = getDisplayStatusKey(interview)
+            const displayStatusLabel = getDisplayStatus(interview)
 
-            const candidate =
-              interview.candidates?.[0] ?? candidateMap.get(interview.candidate_id) ?? null
-            const vacancy =
-              interview.vacancies?.[0] ?? vacancyMap.get(interview.vacancy_id) ?? null
-            const interviewerName =
-              interview.profiles?.[0]?.full_name ??
-              (interview.interviewer_id ? teamMemberMap.get(interview.interviewer_id)?.full_name : null) ??
-              'Not assigned'
+            const candidate = interview.candidates?.[0] ?? null
+            const vacancy = interview.vacancies?.[0] ?? null
+            const interviewerName = interview.profiles?.[0]?.full_name ?? 'Not assigned'
+            const candidateHasEmail = !!candidate?.email
+            const meetLink = interview.google_meet_link || interview.meeting_link
+
+            const isActionable = interview.status !== 'cancelled' && interview.status !== 'no_show' && interview.status !== 'completed'
 
             return (
               <div
@@ -245,16 +231,17 @@ export default async function InterviewsPage({
                       {format(scheduledDate, 'h:mm a')} ({interview.duration_minutes} min)
                     </p>
                   </div>
+
                   <div className="flex flex-col items-end gap-1.5">
                     <Badge
                       variant="secondary"
-                      className={`capitalize text-xs ${STATUS_COLORS[interview.status] ?? ''}`}
+                      className={`capitalize text-xs ${STATUS_COLORS[displayStatusKey] ?? ''}`}
                     >
-                      {interview.status.replace('_', ' ')}
+                      {displayStatusLabel}
                     </Badge>
-                    {(interview.google_meet_link || interview.meeting_link) && (
+                    {meetLink && (
                       <a
-                        href={(interview.google_meet_link || interview.meeting_link)!}
+                        href={meetLink}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
@@ -265,6 +252,16 @@ export default async function InterviewsPage({
                       </a>
                     )}
                   </div>
+
+                  {isActionable && (
+                    <InterviewActions
+                      interviewId={interview.id}
+                      currentStatus={interview.status}
+                      scheduledAt={interview.scheduled_at}
+                      durationMinutes={interview.duration_minutes}
+                      candidateHasEmail={candidateHasEmail}
+                    />
+                  )}
                 </div>
               </div>
             )

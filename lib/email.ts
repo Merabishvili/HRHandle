@@ -80,6 +80,7 @@ export async function sendInterviewInvitationEmail({
   meetingLink,
   customSubject,
   customBody,
+  rescheduled = false,
 }: {
   to: string
   candidateName: string
@@ -93,6 +94,7 @@ export async function sendInterviewInvitationEmail({
   meetingLink: string | null
   customSubject?: string
   customBody?: string
+  rescheduled?: boolean
 }) {
   const date = format(new Date(scheduledAt), 'EEEE, MMMM d, yyyy')
   const time = format(new Date(scheduledAt), 'h:mm a')
@@ -112,8 +114,11 @@ export async function sendInterviewInvitationEmail({
     interviewer_name: senderName,
   }
   const defaults = DEFAULT_TEMPLATES.interview_invitation
-  const subject = applyVariables(customSubject ?? defaults.subject, vars)
+  const subject = rescheduled
+    ? `Interview Rescheduled: ${vacancyTitle}`
+    : applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
+  const headingText = rescheduled ? 'Interview Rescheduled' : 'Interview Invitation'
 
   const meetingRow = safeMeetingLink
     ? `<tr>
@@ -135,7 +140,7 @@ export async function sendInterviewInvitationEmail({
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
-    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Interview Invitation</h1>
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${headingText}</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
       Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
       ${body}
