@@ -115,6 +115,7 @@ function TemplateEditor({
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               disabled={isPending}
+              maxLength={500}
               placeholder="Email subject..."
             />
           </div>
@@ -124,6 +125,7 @@ function TemplateEditor({
               value={body}
               onChange={(e) => setBody(e.target.value)}
               disabled={isPending}
+              maxLength={10000}
               rows={6}
               placeholder="Main message content..."
               className="resize-none"

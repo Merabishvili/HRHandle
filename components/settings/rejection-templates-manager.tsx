@@ -95,7 +95,7 @@ function TemplateRow({
         {error && <p className="text-xs text-destructive">{error}</p>}
         <div className="space-y-1.5">
           <Label className="text-xs">Template name</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isPending} className="h-8 text-sm" />
+          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isPending} maxLength={200} className="h-8 text-sm" />
         </div>
         {reasons.length > 0 && (
           <div className="space-y-1.5">
@@ -115,11 +115,11 @@ function TemplateRow({
         )}
         <div className="space-y-1.5">
           <Label className="text-xs">Subject</Label>
-          <Input value={subject} onChange={(e) => setSubject(e.target.value)} disabled={isPending} className="h-8 text-sm" />
+          <Input value={subject} onChange={(e) => setSubject(e.target.value)} disabled={isPending} maxLength={500} className="h-8 text-sm" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Message body</Label>
-          <Textarea value={body} onChange={(e) => setBody(e.target.value)} disabled={isPending} rows={4} className="resize-none text-sm" />
+          <Textarea value={body} onChange={(e) => setBody(e.target.value)} disabled={isPending} maxLength={10000} rows={4} className="resize-none text-sm" />
         </div>
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={handleCancel} disabled={isPending}>
@@ -254,7 +254,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="space-y-1.5">
             <Label className="text-xs">Template name</Label>
-            <Input value={newName} onChange={(e) => setNewName(e.target.value)} disabled={isPending} placeholder="e.g. Standard, Technical Role, Senior Position" className="text-sm" />
+            <Input value={newName} onChange={(e) => setNewName(e.target.value)} disabled={isPending} placeholder="e.g. Standard, Technical Role, Senior Position" maxLength={200} className="text-sm" />
           </div>
           {reasons.length > 0 && (
             <div className="space-y-1.5">
@@ -274,11 +274,11 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
           )}
           <div className="space-y-1.5">
             <Label className="text-xs">Subject</Label>
-            <Input value={newSubject} onChange={(e) => setNewSubject(e.target.value)} disabled={isPending} className="text-sm" />
+            <Input value={newSubject} onChange={(e) => setNewSubject(e.target.value)} disabled={isPending} maxLength={500} className="text-sm" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Message body</Label>
-            <Textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} disabled={isPending} rows={4} className="resize-none text-sm" />
+            <Textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} disabled={isPending} maxLength={10000} rows={4} className="resize-none text-sm" />
           </div>
           <div className="flex justify-end gap-2">
             <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setError(null) }} disabled={isPending}>Cancel</Button>

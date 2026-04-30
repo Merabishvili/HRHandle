@@ -68,6 +68,7 @@ function ReasonRow({
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
             disabled={isPending}
+            maxLength={200}
             autoFocus
             className="h-8 text-sm flex-1"
           />
@@ -169,6 +170,7 @@ export function RejectionReasonsManager({ initialReasons }: Props) {
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
             placeholder="e.g. Overqualified, Salary mismatch, No response…"
             disabled={isPending}
+            maxLength={200}
             className="text-sm"
           />
           <Button size="sm" onClick={handleAdd} disabled={isPending || !newName.trim()}>
