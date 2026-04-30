@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -12,8 +11,7 @@ export async function POST() {
     return NextResponse.redirect(new URL('/auth/login', BASE))
   }
 
-  const admin = createAdminClient()
-  await admin
+  await supabase
     .from('profiles')
     .update({ zoom_access_token: null, zoom_refresh_token: null, zoom_token_expiry: null })
     .eq('id', user.id)

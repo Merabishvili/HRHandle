@@ -105,6 +105,7 @@ export async function createCustomFieldGroup(
 
   const trimmed = name.trim()
   if (!trimmed) return { success: false, error: 'Group name is required' }
+  if (trimmed.length > 100) return { success: false, error: 'Group name must be 100 characters or fewer' }
 
   const { count: existingGroupCount } = await ctx.supabase
     .from('custom_field_groups')
@@ -154,6 +155,7 @@ export async function deleteCustomFieldGroup(
     .from('custom_field_groups')
     .delete()
     .eq('id', groupId)
+    .eq('organization_id', ctx.orgId)
 
   if (error) return { success: false, error: 'Failed to delete group' }
 
@@ -175,6 +177,7 @@ export async function createCustomField(input: {
 
   const trimmed = input.name.trim()
   if (!trimmed) return { success: false, error: 'Field name is required' }
+  if (trimmed.length > 100) return { success: false, error: 'Field name must be 100 characters or fewer' }
 
   if (input.fieldType === 'dropdown' && (!input.options || input.options.length === 0)) {
     return { success: false, error: 'Dropdown fields require at least one option' }
@@ -255,6 +258,7 @@ export async function addDropdownOption(
 
   const trimmed = newOption.trim()
   if (!trimmed) return { success: false, error: 'Option value is required' }
+  if (trimmed.length > 100) return { success: false, error: 'Option must be 100 characters or fewer' }
 
   const { data: field } = await ctx.supabase
     .from('custom_fields')
@@ -302,6 +306,7 @@ export async function deleteCustomField(
     .from('custom_fields')
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', fieldId)
+    .eq('organization_id', ctx.orgId)
 
   if (error) return { success: false, error: 'Failed to delete field' }
 
@@ -324,6 +329,21 @@ export async function saveCustomFieldValues(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
+  if (values.length === 0) return { success: true, data: undefined }
+
+  // Verify all submitted field IDs belong to this org
+  const fieldIds = values.map((v) => v.fieldId)
+  const { data: validFields } = await ctx.supabase
+    .from('custom_fields')
+    .select('id')
+    .eq('organization_id', ctx.orgId)
+    .in('id', fieldIds)
+    .is('deleted_at', null)
+
+  if ((validFields?.length ?? 0) !== fieldIds.length) {
+    return { success: false, error: 'Invalid field IDs' }
+  }
+
   const upserts = values.map((v) => ({
     organization_id: ctx.orgId,
     field_id: v.fieldId,
@@ -334,8 +354,6 @@ export async function saveCustomFieldValues(
     value_option: v.valueOption ?? null,
     updated_at: new Date().toISOString(),
   }))
-
-  if (upserts.length === 0) return { success: true, data: undefined }
 
   const { error } = await ctx.supabase
     .from('custom_field_values')

@@ -164,6 +164,7 @@ const { data: vacanciesRaw } = await supabase
   `)
   .eq('organization_id', organizationId)
   .is('archived_at', null)
+  .is('deleted_at', null)
   .order('title', { ascending: true })
 
   const vacanciesAll = (vacanciesRaw || []) as VacancyRow[]

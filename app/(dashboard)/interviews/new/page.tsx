@@ -102,6 +102,7 @@ export default async function NewInterviewPage({
         `)
         .eq('organization_id', organizationId)
         .is('archived_at', null)
+        .is('deleted_at', null)
         .order('title', { ascending: true }),
     ])
 

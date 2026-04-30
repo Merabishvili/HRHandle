@@ -76,6 +76,7 @@ export async function checkPlanLimit(
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', ctx.orgId)
       .is('archived_at', null)
+      .is('deleted_at', null)
     if ((count ?? 0) >= sub.vacancy_limit) {
       return `You've reached your plan limit of ${sub.vacancy_limit} active vacancies. Upgrade to add more.`
     }

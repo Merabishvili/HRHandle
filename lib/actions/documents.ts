@@ -13,6 +13,17 @@ const ALLOWED_MIME_TYPES = new Set([
 ])
 const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB
 
+const MAGIC_NUMBERS = [
+  { bytes: [0x25, 0x50, 0x44, 0x46] },                           // %PDF
+  { bytes: [0x50, 0x4b, 0x03, 0x04] },                           // PK (ZIP / DOCX)
+  { bytes: [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1] }, // OLE2 (DOC)
+]
+
+function hasValidMagicNumber(buf: ArrayBuffer): boolean {
+  const view = new Uint8Array(buf, 0, 8)
+  return MAGIC_NUMBERS.some(({ bytes }) => bytes.every((b, i) => view[i] === b))
+}
+
 export async function uploadDocument(
   candidateId: string,
   formData: FormData
@@ -41,14 +52,20 @@ export async function uploadDocument(
 
   if (!candidate) return { success: false, error: 'Candidate not found' }
 
-  const ext = file.name.split('.').pop() ?? 'bin'
-  const storagePath = `${ctx.orgId}/${candidateId}/${Date.now()}.${ext}`
+  const fileBytes = await file.arrayBuffer()
+  if (!hasValidMagicNumber(fileBytes)) {
+    return { success: false, error: 'Only PDF and Word documents are accepted' }
+  }
+
+  const rawExt = file.name.split('.').pop()?.toLowerCase() ?? ''
+  const ext = ['pdf', 'doc', 'docx'].includes(rawExt) ? rawExt : 'pdf'
+  const storagePath = `${ctx.orgId}/${candidateId}/${crypto.randomUUID()}.${ext}`
 
   const { error: uploadError } = await ctx.supabase.storage
     .from(BUCKET)
-    .upload(storagePath, file, { contentType: file.type, upsert: false })
+    .upload(storagePath, fileBytes, { contentType: file.type, upsert: false })
 
-  if (uploadError) return { success: false, error: 'Upload failed: ' + uploadError.message }
+  if (uploadError) return { success: false, error: 'Failed to upload document' }
 
   const { data, error: dbError } = await ctx.supabase
     .from('candidate_documents')
@@ -115,9 +132,10 @@ export async function deleteDocument(documentId: string): Promise<ActionResult<v
 
   const { data: doc } = await ctx.supabase
     .from('candidate_documents')
-    .select('file_path')
+    .select('file_path, candidate_id')
     .eq('id', documentId)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
     .single()
 
   if (!doc) return { success: false, error: 'Document not found' }
@@ -129,8 +147,10 @@ export async function deleteDocument(documentId: string): Promise<ActionResult<v
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', documentId)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to delete document' }
 
+  revalidatePath(`/candidates/${doc.candidate_id}`)
   return { success: true, data: undefined }
 }

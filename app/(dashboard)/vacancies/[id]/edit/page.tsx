@@ -111,6 +111,7 @@ export default async function EditVacancyPage({
         .eq('id', id)
         .eq('organization_id', organizationId)
         .is('archived_at', null)
+        .is('deleted_at', null)
         .single(),
 
       supabase

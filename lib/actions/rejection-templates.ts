@@ -24,7 +24,7 @@ export async function getRejectionTemplates(): Promise<ActionResult<RejectionTem
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: 'Operation failed. Please try again.' }
   return { success: true, data: data as RejectionTemplate[] }
 }
 
@@ -46,8 +46,11 @@ export async function createRejectionTemplate(
   const trimBody = body.trim()
 
   if (!trimName) return { success: false, error: 'Template name is required.' }
+  if (trimName.length > 200) return { success: false, error: 'Template name must be 200 characters or fewer.' }
   if (!trimSubject) return { success: false, error: 'Subject is required.' }
+  if (trimSubject.length > 500) return { success: false, error: 'Subject must be 500 characters or fewer.' }
   if (!trimBody) return { success: false, error: 'Message body is required.' }
+  if (trimBody.length > 10000) return { success: false, error: 'Message body must be 10,000 characters or fewer.' }
 
   const { count } = await ctx.supabase
     .from('rejection_templates')
@@ -71,7 +74,7 @@ export async function createRejectionTemplate(
     .select('id, name, subject, body, sort_order, reason_id')
     .single()
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: 'Operation failed. Please try again.' }
 
   revalidatePath('/settings/rejection-reasons')
   revalidatePath('/settings/email-templates')
@@ -97,8 +100,11 @@ export async function updateRejectionTemplate(
   const trimBody = body.trim()
 
   if (!trimName) return { success: false, error: 'Template name is required.' }
+  if (trimName.length > 200) return { success: false, error: 'Template name must be 200 characters or fewer.' }
   if (!trimSubject) return { success: false, error: 'Subject is required.' }
+  if (trimSubject.length > 500) return { success: false, error: 'Subject must be 500 characters or fewer.' }
   if (!trimBody) return { success: false, error: 'Message body is required.' }
+  if (trimBody.length > 10000) return { success: false, error: 'Message body must be 10,000 characters or fewer.' }
 
   const { error } = await ctx.supabase
     .from('rejection_templates')
@@ -112,7 +118,7 @@ export async function updateRejectionTemplate(
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: 'Operation failed. Please try again.' }
 
   revalidatePath('/settings/rejection-reasons')
   revalidatePath('/settings/email-templates')
@@ -133,7 +139,7 @@ export async function deleteRejectionTemplate(id: string): Promise<ActionResult<
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: 'Operation failed. Please try again.' }
 
   revalidatePath('/settings/rejection-reasons')
   revalidatePath('/settings/email-templates')

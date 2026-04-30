@@ -137,6 +137,7 @@ export default async function VacanciesPage({
     .select(FIELDS, { count: 'exact' })
     .eq('organization_id', organizationId)
     .is('archived_at', null)
+    .is('deleted_at', null)
 
   if (search.trim()) {
     baseQuery = baseQuery.ilike('title', `%${search.trim()}%`)

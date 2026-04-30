@@ -16,9 +16,9 @@ export async function GET() {
     return NextResponse.redirect(new URL('/auth/login', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
   }
 
-  const state = Buffer.from(user.id).toString('base64url')
+  const state = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url')
   const cookieStore = await cookies()
-  cookieStore.set('google_oauth_state', state, { httpOnly: true, secure: true, maxAge: 600, path: '/' })
+  cookieStore.set('google_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 600, path: '/' })
 
   return NextResponse.redirect(getGoogleOAuthUrl(state))
 }

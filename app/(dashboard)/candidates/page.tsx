@@ -224,6 +224,7 @@ export default async function CandidatesPage({
     .select('id, title')
     .eq('organization_id', organizationId)
     .is('archived_at', null)
+    .is('deleted_at', null)
 
   const vacancyOptions = (vacancyOptionsRaw || []) as VacancyOption[]
   const vacancyMap = new Map(vacancyOptions.map((v) => [v.id, v]))

@@ -1,11 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { timingSafeEqual } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
+function isAuthorized(authHeader: string | null): boolean {
+  const secret = process.env.CRON_SECRET
+  if (!secret || !authHeader) return false
+  const expected = `Bearer ${secret}`
+  try {
+    return (
+      authHeader.length === expected.length &&
+      timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+    )
+  } catch {
+    return false
+  }
+}
+
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorized(req.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -14,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error('[cron] expire_past_vacancies failed:', error.message)
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: false }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true, ran_at: new Date().toISOString() })

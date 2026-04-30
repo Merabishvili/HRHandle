@@ -56,6 +56,7 @@ export default async function VacancyPipelinePage({
       .eq('id', id)
       .eq('organization_id', organizationId)
       .is('archived_at', null)
+      .is('deleted_at', null)
       .single(),
 
     getApplicationStatuses(),
@@ -95,6 +96,7 @@ export default async function VacancyPipelinePage({
       .from('candidates')
       .select('id, first_name, last_name, current_position, current_company')
       .in('id', candidateIds)
+      .is('deleted_at', null)
     for (const c of (candidatesRaw || []) as PipelineCandidateRow[]) {
       candidateMap.set(c.id, c)
     }

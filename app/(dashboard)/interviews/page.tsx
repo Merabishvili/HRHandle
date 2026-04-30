@@ -124,7 +124,7 @@ export default async function InterviewsPage({
       .eq('organization_id', organizationId).is('deleted_at', null),
 
     supabase.from('vacancies').select('id, title')
-      .eq('organization_id', organizationId).is('archived_at', null),
+      .eq('organization_id', organizationId).is('archived_at', null).is('deleted_at', null),
 
     supabase.from('profiles').select('id, full_name')
       .eq('organization_id', organizationId).eq('is_active', true),

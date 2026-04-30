@@ -40,6 +40,7 @@ export function ApplyForm({ token }: { token: string }) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (isLoading) return
     setError(null)
 
     if (!firstName.trim()) { setError('First name is required.'); return }
@@ -49,6 +50,18 @@ export function ApplyForm({ token }: { token: string }) {
       return
     }
     if (!cvFile) { setError('Please upload your CV.'); return }
+
+    const phoneTrimmed = phone.trim()
+    if (phoneTrimmed && (phoneTrimmed.length < 5 || phoneTrimmed.length > 30 || !/^[\d\s\-\+\(\)]+$/.test(phoneTrimmed))) {
+      setError('Please enter a valid phone number.')
+      return
+    }
+
+    const linkedinTrimmed = linkedinUrl.trim()
+    if (linkedinTrimmed && !/^https?:\/\/(www\.)?linkedin\.com\//.test(linkedinTrimmed)) {
+      setError('Please enter a valid LinkedIn profile URL (e.g. https://linkedin.com/in/yourname).')
+      return
+    }
 
     setIsLoading(true)
 

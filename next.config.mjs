@@ -2,7 +2,7 @@ import { withSentryConfig } from '@sentry/nextjs'
 
 const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
-  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+  { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
@@ -20,6 +20,8 @@ const securityHeaders = [
       "font-src 'self'",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io",
       "frame-ancestors 'none'",
+      "form-action 'self'",
+      "base-uri 'self'",
     ].join('; '),
   },
 ]

@@ -81,12 +81,14 @@ export async function submitPublicApplication(
       vacancy_statuses ( code )
     `)
     .eq('application_form_token', token)
+    .is('deleted_at', null)
     .single()
 
   if (!vacancy) return { success: false, error: 'This apply link is no longer active.' }
 
   // Vacancy must be open (draft/on_hold/closed/archived are all blocked)
-  const statusJoin = vacancy.vacancy_statuses as any
+  type StatusJoin = { code: string } | { code: string }[] | null
+  const statusJoin = vacancy.vacancy_statuses as StatusJoin
   const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
   if (vacancy.archived_at || statusCode !== 'open') {
     return { success: false, error: 'This position is no longer open.' }
@@ -215,7 +217,8 @@ export async function submitPublicApplication(
 
   // ── 13. Upload CV ──────────────────────────────────────────────────────────
   try {
-    const ext = cvFile.name.split('.').pop() || 'pdf'
+    const rawExt = cvFile.name.split('.').pop()?.toLowerCase() ?? ''
+    const ext = ['pdf', 'doc', 'docx'].includes(rawExt) ? rawExt : 'pdf'
     const storagePath = `${orgId}/${candidateId}/${crypto.randomUUID()}.${ext}`
 
     const { error: storageError } = await supabase.storage

@@ -31,11 +31,20 @@ export function resolveTemplate(
   return saved ?? DEFAULT_TEMPLATES[type]
 }
 
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
+
 export function applyVariables(
   text: string,
   vars: Record<string, string>
 ): string {
-  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '')
+  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => escapeHtml(vars[key] ?? ''))
 }
 
 export const DEFAULT_REJECTION_SUBJECT = DEFAULT_TEMPLATES.rejection.subject

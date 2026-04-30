@@ -69,8 +69,8 @@ export async function createInterview(
 
       const attendeeEmails: string[] = []
       if (interviewer?.email) attendeeEmails.push(interviewer.email)
-      if ((candidate as { email?: string | null }).email)
-        attendeeEmails.push((candidate as { email: string }).email)
+      if (candidate.email)
+        attendeeEmails.push(candidate.email)
 
       const result = await createCalendarEventWithMeet(accessToken, {
         requestId: data.id,
@@ -143,8 +143,8 @@ export async function createInterview(
 
       const attendeeEmails: string[] = []
       if (interviewer?.email) attendeeEmails.push(interviewer.email)
-      if ((candidate as { email?: string | null }).email)
-        attendeeEmails.push((candidate as { email: string }).email)
+      if (candidate.email)
+        attendeeEmails.push(candidate.email)
 
       const result = await createTeamsMeeting(accessToken, {
         summary: `Interview: ${candidate.first_name} ${candidate.last_name} — ${vacancy?.title ?? 'Position'}`,
@@ -170,7 +170,7 @@ export async function createInterview(
 
   // Email invitation
   if (options.sendInvitation) {
-    const candidateEmail = (candidate as { email?: string | null }).email
+    const candidateEmail = candidate.email
     if (candidateEmail) {
       try {
         const { data: senderProfile } = await ctx.supabase
@@ -204,5 +204,6 @@ export async function createInterview(
   }
 
   revalidatePath('/interviews')
+  revalidatePath(`/candidates/${parsed.data.candidate_id}`)
   return { success: true, data: { id: data.id, meetLink } }
 }

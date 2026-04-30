@@ -151,6 +151,7 @@ export default async function SubscriptionPage() {
     .select('*', { count: 'exact', head: true })
     .eq('organization_id', organizationId)
     .is('archived_at', null)
+    .is('deleted_at', null)
 
   const { count: candidateCount } = await supabase
     .from('candidates')

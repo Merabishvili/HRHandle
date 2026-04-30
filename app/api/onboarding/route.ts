@@ -62,10 +62,7 @@ export async function POST() {
       .maybeSingle()
 
     if (existingProfileError) {
-      return NextResponse.json(
-        { error: existingProfileError.message },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to load account data' }, { status: 500 })
     }
 
     if (existingProfile?.organization_id) {
@@ -108,10 +105,7 @@ export async function POST() {
       .single()
 
     if (organizationError || !organization) {
-      return NextResponse.json(
-        { error: organizationError?.message || 'Failed to create organization' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 })
     }
 
     const { error: profileUpsertError } = await admin
@@ -126,10 +120,8 @@ export async function POST() {
       })
 
     if (profileUpsertError) {
-      return NextResponse.json(
-        { error: profileUpsertError.message },
-        { status: 500 }
-      )
+      await admin.from('organizations').delete().eq('id', organization.id)
+      return NextResponse.json({ error: 'Failed to initialize account' }, { status: 500 })
     }
 
     const now = new Date()
@@ -157,10 +149,8 @@ export async function POST() {
       })
 
     if (subscriptionError) {
-      return NextResponse.json(
-        { error: subscriptionError.message },
-        { status: 500 }
-      )
+      await admin.from('organizations').delete().eq('id', organization.id)
+      return NextResponse.json({ error: 'Failed to initialize account' }, { status: 500 })
     }
 
     // Seed default rejection reason
@@ -187,12 +177,7 @@ export async function POST() {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Unexpected onboarding error',
-      },
-      { status: 500 }
-    )
+  } catch {
+    return NextResponse.json({ error: 'Unexpected error during onboarding' }, { status: 500 })
   }
 }

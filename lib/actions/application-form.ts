@@ -15,6 +15,8 @@ export async function activateApplicationForm(
     .select('id, application_form_token')
     .eq('id', vacancyId)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .is('archived_at', null)
     .single()
 
   if (!vacancy) return { success: false, error: 'Vacancy not found' }
@@ -49,6 +51,7 @@ export async function deactivateApplicationForm(
     .select('id')
     .eq('id', vacancyId)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
     .single()
 
   if (!vacancy) return { success: false, error: 'Vacancy not found' }

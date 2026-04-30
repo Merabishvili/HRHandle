@@ -22,7 +22,7 @@ export async function getRejectionReasons(): Promise<ActionResult<RejectionReaso
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: 'Operation failed. Please try again.' }
   return { success: true, data: data as RejectionReason[] }
 }
 
@@ -38,6 +38,7 @@ export async function createRejectionReason(
 
   const trimmed = name.trim()
   if (!trimmed) return { success: false, error: 'Name is required.' }
+  if (trimmed.length > 200) return { success: false, error: 'Name must be 200 characters or fewer.' }
 
   const { count } = await ctx.supabase
     .from('rejection_reasons')
@@ -58,7 +59,7 @@ export async function createRejectionReason(
     .select('id, name, sort_order')
     .single()
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: 'Operation failed. Please try again.' }
 
   revalidatePath('/settings/rejection-reasons')
   return { success: true, data: data as RejectionReason }
@@ -77,6 +78,7 @@ export async function updateRejectionReason(
 
   const trimmed = name.trim()
   if (!trimmed) return { success: false, error: 'Name is required.' }
+  if (trimmed.length > 200) return { success: false, error: 'Name must be 200 characters or fewer.' }
 
   const { error } = await ctx.supabase
     .from('rejection_reasons')
@@ -84,7 +86,7 @@ export async function updateRejectionReason(
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: 'Operation failed. Please try again.' }
 
   revalidatePath('/settings/rejection-reasons')
   return { success: true, data: undefined }
@@ -104,7 +106,7 @@ export async function deleteRejectionReason(id: string): Promise<ActionResult<vo
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: 'Operation failed. Please try again.' }
 
   revalidatePath('/settings/rejection-reasons')
   return { success: true, data: undefined }

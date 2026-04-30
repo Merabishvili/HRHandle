@@ -126,7 +126,8 @@ export default async function DashboardPage() {
       .from('vacancies')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', orgId)
-      .is('archived_at', null),
+      .is('archived_at', null)
+      .is('deleted_at', null),
 
     supabase
       .from('candidates')
@@ -145,7 +146,8 @@ export default async function DashboardPage() {
       .from('vacancies')
       .select(`id, title, department, location, status_id, created_at, vacancy_statuses(id, name, code)`)
       .eq('organization_id', orgId)
-      .is('archived_at', null),
+      .is('archived_at', null)
+      .is('deleted_at', null),
 
     // all candidates (lightweight) — used for new-candidate count
     supabase
@@ -176,6 +178,7 @@ export default async function DashboardPage() {
       .select(`id, title, department, location, status_id, created_at, vacancy_statuses(id, name, code)`)
       .eq('organization_id', orgId)
       .is('archived_at', null)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(5),
 

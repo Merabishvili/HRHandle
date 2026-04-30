@@ -226,6 +226,7 @@ export default async function VacancyDetailPage({
       .eq('id', id)
       .eq('organization_id', organizationId)
       .is('archived_at', null)
+      .is('deleted_at', null)
       .single(),
 
     supabase
@@ -299,6 +300,7 @@ export default async function VacancyDetailPage({
       .from('candidates')
       .select('id, first_name, last_name, general_status_id')
       .in('id', appCandidateIds)
+      .is('deleted_at', null)
     for (const c of (appCandidatesRaw || []) as CandidateRow[]) {
       appCandidateMap.set(c.id, c)
     }

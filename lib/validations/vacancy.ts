@@ -18,9 +18,9 @@ export const VacancySchema = z
     openings_count: z.number().int().min(1).default(1),
     start_date: z.string().min(1, 'Start date is required'),
     end_date: z.string().nullable().optional(),
-    description: z.string().min(1, 'About the job is required'),
-    responsibilities: z.string().nullable().optional(),
-    requirements: z.string().nullable().optional(),
+    description: z.string().min(1, 'About the job is required').max(10000),
+    responsibilities: z.string().max(5000).nullable().optional(),
+    requirements: z.string().max(5000).nullable().optional(),
     show_on_public_page: z.boolean().optional().default(false),
   })
   .refine(

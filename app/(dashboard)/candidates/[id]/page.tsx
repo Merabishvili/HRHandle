@@ -351,6 +351,7 @@ export default async function CandidateDetailPage({
         .select('id, text, author_id, created_at, profiles(full_name)')
         .eq('candidate_id', id)
         .eq('organization_id', organizationId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false }),
 
       supabase

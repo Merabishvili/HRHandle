@@ -54,6 +54,7 @@ export async function updateVacancy(
       .select('application_form_token')
       .eq('id', id)
       .eq('organization_id', ctx.orgId)
+      .is('deleted_at', null)
       .single()
 
     if (!existing?.application_form_token) {
@@ -68,6 +69,7 @@ export async function updateVacancy(
     .update(updatePayload)
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update vacancy' }
 
@@ -88,6 +90,7 @@ export async function updateVacancyStatus(
     .update({ status_id: statusId })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update vacancy status' }
 
@@ -108,6 +111,7 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
     .select('title, sector_id, status_id, department, location, employment_type, hiring_manager_name, salary_min, salary_max, salary_currency, openings_count, start_date, end_date, description, responsibilities, requirements')
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
     .single()
 
   if (!orig) return { success: false, error: 'Vacancy not found' }
@@ -210,9 +214,10 @@ export async function deleteVacancy(id: string): Promise<ActionResult<void>> {
 
   const { error } = await ctx.supabase
     .from('vacancies')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to delete vacancy' }
 

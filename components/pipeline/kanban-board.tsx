@@ -11,6 +11,7 @@ import {
   type DragEndEvent,
   type DragOverEvent,
 } from '@dnd-kit/core'
+import { toast } from 'sonner'
 import { KanbanColumn } from './kanban-column'
 import { CandidateCard } from './candidate-card'
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from './rejection-dialog'
@@ -120,6 +121,7 @@ export function KanbanBoard({
     const result = await updateApplicationStatus(activeId, targetColumnId)
     if (!result.success) {
       setApplications(initialApplications)
+      toast.error('Failed to update status. Please try again.')
     }
   }
 

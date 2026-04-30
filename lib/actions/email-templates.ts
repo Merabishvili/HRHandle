@@ -50,7 +50,9 @@ export async function saveEmailTemplate(
   const trimmedBody = body.trim()
 
   if (!trimmedSubject) return { success: false, error: 'Subject is required.' }
+  if (trimmedSubject.length > 500) return { success: false, error: 'Subject must be 500 characters or fewer.' }
   if (!trimmedBody) return { success: false, error: 'Message body is required.' }
+  if (trimmedBody.length > 10000) return { success: false, error: 'Message body must be 10,000 characters or fewer.' }
 
   const { error } = await ctx.supabase
     .from('email_templates')
@@ -65,7 +67,7 @@ export async function saveEmailTemplate(
       { onConflict: 'organization_id,template_type' }
     )
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: 'Failed to save email template. Please try again.' }
 
   revalidatePath('/settings/email-templates')
   return { success: true, data: undefined }
