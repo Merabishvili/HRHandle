@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getCandidateStatuses, getApplicationStatuses, getVacancyStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,14 +14,19 @@ import {
   Briefcase,
   Calendar,
   Clock,
-  Building2,
-  UserCircle,
+  Video,
+  ExternalLink,
 } from 'lucide-react'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
+import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { formatDistanceToNow, format } from 'date-fns'
 import { CandidateStatusSelect } from '@/components/candidates/candidate-status-select'
 import { CandidateNotes } from '@/components/candidates/candidate-notes'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
+import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
+import { CandidateApplicationsList } from '@/components/candidates/candidate-applications-list'
+import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
+import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 
 interface CandidateRow {
   id: string
@@ -44,7 +50,7 @@ interface CandidateRow {
 interface CandidateStatusOption {
   id: string
   name: string
-  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+  code: 'active' | 'hired' | 'archived'
 }
 
 interface ApplicationRow {
@@ -54,14 +60,13 @@ interface ApplicationRow {
   status_id: string | null
   applied_at: string
   updated_at: string
-  vacancies:
-    | {
-        id: string
-        title: string
-        department: string | null
-        location: string | null
-      }[]
-    | null
+}
+
+interface AppStatusRow {
+  id: string
+  name: string
+  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
+  sort_order: number
 }
 
 interface VacancyOption {
@@ -81,6 +86,8 @@ interface InterviewRow {
   duration_minutes: number
   type: 'phone' | 'video' | 'onsite'
   status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+  google_meet_link: string | null
+  meeting_link: string | null
   created_at: string
   updated_at: string
   profiles:
@@ -145,8 +152,10 @@ export default async function CandidateDetailPage({
 
   const [
     { data: candidateRaw },
-    { data: candidateStatusesRaw },
-    { data: vacancyOptionsRaw },
+    candidateStatusesRaw,
+    appStatusesRaw,
+    { data: rejectionReasonsRaw },
+    { data: rejectionTemplatesRaw },
   ] = await Promise.all([
     supabase
       .from('candidates')
@@ -173,16 +182,21 @@ export default async function CandidateDetailPage({
       .is('deleted_at', null)
       .single(),
 
+    getCandidateStatuses(),
+
+    getApplicationStatuses(),
+
     supabase
-      .from('candidate_statuses')
-      .select('id, name, code, sort_order')
+      .from('rejection_reasons')
+      .select('id, name')
+      .eq('organization_id', organizationId)
       .order('sort_order', { ascending: true }),
 
     supabase
-      .from('vacancies')
-      .select('id, title, department, location')
+      .from('rejection_templates')
+      .select('id, name, subject, body, reason_id')
       .eq('organization_id', organizationId)
-      .is('archived_at', null),
+      .order('sort_order', { ascending: true }),
   ])
 
   const candidate = candidateRaw as CandidateRow | null
@@ -196,25 +210,13 @@ export default async function CandidateDetailPage({
     ? candidateStatuses.find((status) => status.id === candidate.general_status_id) || null
     : null
 
-  const vacancyOptions = (vacancyOptionsRaw || []) as VacancyOption[]
-  const vacancyMap = new Map(vacancyOptions.map((vacancy) => [vacancy.id, vacancy]))
+  const appStatusMap = new Map(
+    ((appStatusesRaw || []) as AppStatusRow[]).map((s) => [s.id, s])
+  )
 
   const { data: applicationsRaw } = await supabase
     .from('applications')
-    .select(`
-      id,
-      candidate_id,
-      vacancy_id,
-      status_id,
-      applied_at,
-      updated_at,
-      vacancies (
-        id,
-        title,
-        department,
-        location
-      )
-    `)
+    .select('id, candidate_id, vacancy_id, status_id, applied_at, updated_at')
     .eq('organization_id', organizationId)
     .eq('candidate_id', id)
     .is('deleted_at', null)
@@ -222,12 +224,99 @@ export default async function CandidateDetailPage({
 
   const applications = (applicationsRaw || []) as ApplicationRow[]
 
+  // Fetch vacancies separately to avoid unreliable nested joins
+  const vacancyIds = [...new Set(applications.map((a) => a.vacancy_id))]
+  const vacancyMap = new Map<string, VacancyOption>()
+  if (vacancyIds.length > 0) {
+    const { data: vacanciesRaw } = await supabase
+      .from('vacancies')
+      .select('id, title, department, location')
+      .in('id', vacancyIds)
+    for (const v of (vacanciesRaw || []) as VacancyOption[]) {
+      vacancyMap.set(v.id, v)
+    }
+  }
+
   const primaryApplication = applications[0] || null
-  const primaryRelatedVacancy = primaryApplication?.vacancies?.[0] || null
-  const primaryFallbackVacancy = primaryApplication?.vacancy_id
-    ? vacancyMap.get(primaryApplication.vacancy_id) || null
-    : null
-  const primaryVacancy = primaryRelatedVacancy || primaryFallbackVacancy || null
+  const primaryVacancy = primaryApplication ? vacancyMap.get(primaryApplication.vacancy_id) ?? null : null
+
+  // Fetch evaluation questions per vacancy and evaluations per application
+  const questionsByVacancy = new Map<string, { id: string; label: string; type: 'text' | 'score' }[]>()
+  if (vacancyIds.length > 0) {
+    const { data: questionsRaw } = await supabase
+      .from('vacancy_questions')
+      .select('id, label, type, sort_order, vacancy_id')
+      .in('vacancy_id', vacancyIds)
+      .order('sort_order', { ascending: true })
+    for (const q of (questionsRaw || []) as { id: string; label: string; type: 'text' | 'score'; sort_order: number; vacancy_id: string }[]) {
+      const existing = questionsByVacancy.get(q.vacancy_id) ?? []
+      existing.push({ id: q.id, label: q.label, type: q.type })
+      questionsByVacancy.set(q.vacancy_id, existing)
+    }
+  }
+
+  const evaluationsByApp = new Map<string, { id: string; score: number | null; answers: { question_id: string; text_value: string | null; score_value: number | null }[] }>()
+  const appIds = applications.map((a) => a.id)
+  if (appIds.length > 0) {
+    const { data: evalsRaw } = await supabase
+      .from('candidate_evaluations')
+      .select('id, application_id, score')
+      .in('application_id', appIds)
+    const evals = (evalsRaw || []) as { id: string; application_id: string; score: number | null }[]
+    const evalIds = evals.map((e) => e.id)
+    let answersByEval = new Map<string, { question_id: string; text_value: string | null; score_value: number | null }[]>()
+    if (evalIds.length > 0) {
+      const { data: answersRaw } = await supabase
+        .from('candidate_evaluation_answers')
+        .select('evaluation_id, question_id, text_value, score_value')
+        .in('evaluation_id', evalIds)
+      for (const a of (answersRaw || []) as { evaluation_id: string; question_id: string; text_value: string | null; score_value: number | null }[]) {
+        const existing = answersByEval.get(a.evaluation_id) ?? []
+        existing.push({ question_id: a.question_id, text_value: a.text_value, score_value: a.score_value })
+        answersByEval.set(a.evaluation_id, existing)
+      }
+    }
+    for (const e of evals) {
+      if (e.application_id) {
+        evaluationsByApp.set(e.application_id, {
+          id: e.id,
+          score: e.score,
+          answers: answersByEval.get(e.id) ?? [],
+        })
+      }
+    }
+  }
+
+  // Active application count (applied/screening/interview/offer)
+  const activeAppStatusIds = ((appStatusesRaw || []) as AppStatusRow[])
+    .filter((s) => ['applied', 'screening', 'interview', 'offer'].includes(s.code))
+    .map((s) => s.id)
+  const activeApplicationCount = applications.filter(
+    (a) => a.status_id && activeAppStatusIds.includes(a.status_id)
+  ).length
+
+  // Open vacancies not already applied to
+  const appliedVacancyIds = new Set(applications.map((a) => a.vacancy_id))
+  interface OpenVacancy { id: string; title: string; department: string | null }
+  let openVacancies: OpenVacancy[] = []
+  {
+    const vacancyStatusesRaw = await getVacancyStatuses()
+    const openStatusIds = vacancyStatusesRaw
+      .filter((s) => s.code === 'open' || s.code === 'on_hold')
+      .map((s) => s.id)
+    if (openStatusIds.length > 0) {
+      const { data: openVacanciesRaw } = await supabase
+        .from('vacancies')
+        .select('id, title, department')
+        .eq('organization_id', organizationId)
+        .in('status_id', openStatusIds)
+        .is('deleted_at', null)
+        .order('title', { ascending: true })
+      openVacancies = ((openVacanciesRaw || []) as OpenVacancy[]).filter(
+        (v) => !appliedVacancyIds.has(v.id)
+      )
+    }
+  }
 
   const { data: interviewsRaw } = await supabase
     .from('interviews')
@@ -241,6 +330,8 @@ export default async function CandidateDetailPage({
       duration_minutes,
       type,
       status,
+      google_meet_link,
+      meeting_link,
       created_at,
       updated_at,
       profiles (
@@ -253,28 +344,55 @@ export default async function CandidateDetailPage({
 
   const interviews = (interviewsRaw || []) as InterviewRow[]
 
-  const [{ data: notesRaw }, { data: documentsRaw }] = await Promise.all([
-    supabase
-      .from('candidate_notes')
-      .select('id, text, author_id, created_at, profiles(full_name)')
-      .eq('candidate_id', id)
-      .eq('organization_id', organizationId)
-      .order('created_at', { ascending: false }),
+  const [{ data: notesRaw }, { data: documentsRaw }, customFieldGroups, customFieldValues] =
+    await Promise.all([
+      supabase
+        .from('candidate_notes')
+        .select('id, text, author_id, created_at, profiles(full_name)')
+        .eq('candidate_id', id)
+        .eq('organization_id', organizationId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false }),
 
-    supabase
-      .from('candidate_documents')
-      .select('id, file_name, file_size, mime_type, document_type, created_at')
-      .eq('candidate_id', id)
-      .eq('organization_id', organizationId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
-  ])
+      supabase
+        .from('candidate_documents')
+        .select('id, file_name, file_size, mime_type, document_type, created_at')
+        .eq('candidate_id', id)
+        .eq('organization_id', organizationId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false }),
+
+      getCustomFieldSchema('candidate'),
+      getCustomFieldValues(id),
+    ])
 
   const notes = (notesRaw || []) as NoteRow[]
   const documents = (documentsRaw || []) as DocumentRow[]
 
   const fullName = getCandidateFullName(candidate)
   const initials = getCandidateInitials(candidate)
+
+  const activeStatusCodes = new Set(['applied', 'screening', 'interview', 'offer'])
+  let overviewScore: number | null = null
+  let overviewScoreIsActive = false
+  for (const app of applications) {
+    const appStatus = app.status_id ? appStatusMap.get(app.status_id) ?? null : null
+    const evaluation = evaluationsByApp.get(app.id) ?? null
+    if (evaluation?.score != null && appStatus && activeStatusCodes.has(appStatus.code)) {
+      overviewScore = evaluation.score
+      overviewScoreIsActive = true
+      break
+    }
+  }
+  if (overviewScore === null) {
+    for (const app of applications) {
+      const evaluation = evaluationsByApp.get(app.id) ?? null
+      if (evaluation?.score != null) {
+        overviewScore = evaluation.score
+        break
+      }
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -308,16 +426,13 @@ export default async function CandidateDetailPage({
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                {primaryVacancy && (
-                  <Link
-                    href={`/vacancies/${primaryVacancy.id}`}
-                    className="flex items-center gap-1 transition-colors hover:text-foreground"
-                  >
+                {candidate.current_position && (
+                  <span className="flex items-center gap-1">
                     <Briefcase className="h-4 w-4" />
-                    {primaryVacancy.title}
-                  </Link>
+                    {candidate.current_position}
+                    {candidate.current_company ? ` at ${candidate.current_company}` : ''}
+                  </span>
                 )}
-
                 <span className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
                   Added {formatDistanceToNow(new Date(candidate.created_at), { addSuffix: true })}
@@ -344,251 +459,93 @@ export default async function CandidateDetailPage({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* LEFT COLUMN */}
         <div className="space-y-6 lg:col-span-2">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              {candidate.email && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                    <Mail className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <a href={`mailto:${candidate.email}`} className="text-foreground hover:underline">
-                      {candidate.email}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {candidate.phone && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                    <Phone className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Phone</p>
-                    <a href={`tel:${candidate.phone}`} className="text-foreground hover:underline">
-                      {candidate.phone}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {candidate.linkedin_profile_url && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                    <Linkedin className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">LinkedIn</p>
-                    <a
-                      href={candidate.linkedin_profile_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-foreground hover:underline"
-                    >
-                      View Profile
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {!candidate.email && !candidate.phone && !candidate.linkedin_profile_url && (
-                <p className="text-sm text-muted-foreground">No contact information available.</p>
-              )}
-            </CardContent>
-          </Card>
-
+          {/* 1. Candidate Profile */}
           <Card className="border-border">
             <CardHeader>
               <CardTitle>Candidate Profile</CardTitle>
             </CardHeader>
-
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-sm text-muted-foreground">Current Position</p>
-                <p className="font-medium text-foreground">
-                  {candidate.current_position || 'Not specified'}
-                </p>
+                <p className="font-medium text-foreground">{candidate.current_position || 'Not specified'}</p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Current Company</p>
-                <p className="font-medium text-foreground">
-                  {candidate.current_company || 'Not specified'}
-                </p>
+                <p className="font-medium text-foreground">{candidate.current_company || 'Not specified'}</p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Years of Experience</p>
                 <p className="font-medium text-foreground">
-                  {candidate.years_of_experience != null
-                    ? `${candidate.years_of_experience} years`
-                    : 'Not specified'}
+                  {candidate.years_of_experience != null ? `${candidate.years_of_experience} years` : 'Not specified'}
                 </p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Date of Birth</p>
                 <p className="font-medium text-foreground">
-                  {candidate.date_of_birth
-                    ? format(new Date(candidate.date_of_birth), 'dd MMM yyyy')
-                    : 'Not specified'}
+                  {candidate.date_of_birth ? format(new Date(candidate.date_of_birth), 'dd MMM yyyy') : 'Not specified'}
                 </p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Source</p>
                 <p className="font-medium text-foreground">{candidate.source || 'Not specified'}</p>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground">Last Updated</p>
-                <p className="font-medium text-foreground">
-                  {format(new Date(candidate.updated_at), 'MMM d, yyyy')}
-                </p>
+                <p className="font-medium text-foreground">{format(new Date(candidate.updated_at), 'MMM d, yyyy')}</p>
               </div>
             </CardContent>
           </Card>
 
+          {/* 2. Applications */}
           <Card className="border-border">
             <CardHeader>
               <div className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Linked Vacancies</CardTitle>
-                  <CardDescription>Applications connected to this candidate</CardDescription>
+                  <CardTitle>Applied Vacancies</CardTitle>
+                  <CardDescription>
+                    Pipeline history and evaluations
+                    {activeApplicationCount > 0 && (
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        ({activeApplicationCount}/5 active)
+                      </span>
+                    )}
+                  </CardDescription>
                 </div>
-
-                <Button size="sm" asChild>
-                  <Link href={`/candidates/${id}/edit`}>Manage Links</Link>
-                </Button>
+                <AddApplicationDialog
+                  candidateId={id}
+                  availableVacancies={openVacancies}
+                  activeApplicationCount={activeApplicationCount}
+                />
               </div>
             </CardHeader>
-
             <CardContent>
-              {applications.length > 0 ? (
-                <div className="space-y-4">
-                  {applications.map((application) => {
-                    const relatedVacancy = application.vacancies?.[0] || null
-                    const fallbackVacancy = vacancyMap.get(application.vacancy_id) || null
-                    const vacancy = relatedVacancy || fallbackVacancy
-
-                    return (
-                      <div
-                        key={application.id}
-                        className="rounded-lg bg-muted/50 p-4"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="space-y-1">
-                            {vacancy ? (
-                              <Link
-                                href={`/vacancies/${vacancy.id}`}
-                                className="font-medium text-foreground hover:underline"
-                              >
-                                {vacancy.title}
-                              </Link>
-                            ) : (
-                              <p className="font-medium text-foreground">Unknown Vacancy</p>
-                            )}
-
-                            {vacancy?.department && (
-                              <p className="text-sm text-muted-foreground">{vacancy.department}</p>
-                            )}
-
-                            {vacancy?.location && (
-                              <p className="text-sm text-muted-foreground">{vacancy.location}</p>
-                            )}
-                          </div>
-
-                          <div className="text-right text-sm text-muted-foreground">
-                            Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="py-8 text-center">
-                  <Briefcase className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                  <p className="mt-2 text-sm text-muted-foreground">No linked vacancies</p>
-                </div>
-              )}
+              <CandidateApplicationsList
+                candidateId={id}
+                candidateName={`${candidate.first_name} ${candidate.last_name}`.trim()}
+                allStatuses={(appStatusesRaw || []) as AppStatusRow[]}
+                rejectionReasons={rejectionReasonsRaw ?? []}
+                rejectionTemplates={rejectionTemplatesRaw ?? []}
+                initialApplications={applications.map((application) => {
+                  const vacancy = vacancyMap.get(application.vacancy_id) ?? null
+                  const appStatus = application.status_id ? appStatusMap.get(application.status_id) ?? null : null
+                  return {
+                    id: application.id,
+                    vacancyId: application.vacancy_id,
+                    vacancyTitle: vacancy?.title ?? 'Unknown Vacancy',
+                    vacancyDepartment: vacancy?.department ?? null,
+                    appliedAt: application.applied_at,
+                    appStatus: appStatus ?? null,
+                    questions: questionsByVacancy.get(application.vacancy_id) ?? [],
+                    existingEvaluation: evaluationsByApp.get(application.id) ?? null,
+                  }
+                })}
+              />
             </CardContent>
           </Card>
 
-          <Card className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Interviews</CardTitle>
-                <CardDescription>Scheduled and past interviews</CardDescription>
-              </div>
-
-              <Button size="sm" asChild>
-                <Link href={`/interviews/new?candidate=${id}`}>
-                  Schedule Interview
-                </Link>
-              </Button>
-            </CardHeader>
-
-            <CardContent>
-              {interviews.length > 0 ? (
-                <div className="space-y-4">
-                  {interviews.map((interview) => {
-                    const interviewerName = interview.profiles?.[0]?.full_name || 'No interviewer assigned'
-
-                    return (
-                      <div
-                        key={interview.id}
-                        className="flex items-center justify-between rounded-lg bg-muted/50 p-4"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                            <Calendar className="h-6 w-6 text-primary" />
-                          </div>
-
-                          <div>
-                            <p className="font-medium capitalize text-foreground">
-                              {interview.type} Interview
-                            </p>
-                            <p className="text-sm text-muted-foreground">{interviewerName}</p>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="font-medium text-foreground">
-                            {format(new Date(interview.scheduled_at), 'MMM d, yyyy')}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(interview.scheduled_at), 'h:mm a')}
-                          </p>
-                          <Badge variant="secondary" className="mt-1 capitalize">
-                            {interview.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="py-8 text-center">
-                  <Calendar className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                  <p className="mt-2 text-sm text-muted-foreground">No interviews scheduled</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <CandidateDocuments
-            candidateId={candidate.id}
-            initialDocuments={documents}
-          />
-
+          {/* 3. Notes */}
           <CandidateNotes
             candidateId={candidate.id}
             initialNotes={notes}
@@ -596,100 +553,164 @@ export default async function CandidateDetailPage({
           />
         </div>
 
+        {/* RIGHT COLUMN */}
         <div className="space-y-6">
+          {/* 1. Contact Information */}
+          <Card className="border-border">
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {candidate.email && (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <a href={`mailto:${candidate.email}`} className="truncate text-sm text-foreground hover:underline">{candidate.email}</a>
+                  </div>
+                </div>
+              )}
+              {candidate.phone && (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <a href={`tel:${candidate.phone}`} className="text-sm text-foreground hover:underline">{candidate.phone}</a>
+                  </div>
+                </div>
+              )}
+              {candidate.linkedin_profile_url && (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <Linkedin className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">LinkedIn</p>
+                    <a href={candidate.linkedin_profile_url} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:underline">
+                      View Profile
+                    </a>
+                  </div>
+                </div>
+              )}
+              {!candidate.email && !candidate.phone && !candidate.linkedin_profile_url && (
+                <p className="text-sm text-muted-foreground">No contact information available.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 2. Overview */}
           <Card className="border-border">
             <CardHeader>
               <CardTitle>Overview</CardTitle>
             </CardHeader>
-
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">General Status</span>
+                <span className="text-sm text-muted-foreground">Status</span>
                 {currentStatus ? (
-                  <Badge
-                    variant="secondary"
-                    className={CANDIDATE_GENERAL_STATUS_COLORS[currentStatus.code]}
-                  >
+                  <Badge variant="secondary" className={CANDIDATE_GENERAL_STATUS_COLORS[currentStatus.code]}>
                     {currentStatus.name}
                   </Badge>
                 ) : (
                   <span className="text-sm font-medium">Not set</span>
                 )}
               </div>
-
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Source</span>
-                <span className="text-sm font-medium">{candidate.source || 'Not specified'}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Created</span>
-                <span className="text-sm font-medium">
-                  {format(new Date(candidate.created_at), 'MMM d, yyyy')}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Applications</span>
+                <span className="text-sm text-muted-foreground">Applied to</span>
                 <span className="text-sm font-medium">{applications.length}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Source</span>
+                <span className="text-sm font-medium">{candidate.source || '—'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Added</span>
+                <span className="text-sm font-medium">{format(new Date(candidate.created_at), 'MMM d, yyyy')}</span>
+              </div>
+              {overviewScore !== null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    {overviewScoreIsActive ? 'Current score' : 'Recent score'}
+                  </span>
+                  <span className="text-sm font-medium">{overviewScore} / 100</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {primaryVacancy && (
+          {/* 3. Documents */}
+          <CandidateDocuments
+            candidateId={candidate.id}
+            initialDocuments={documents}
+          />
+
+          {/* 3. Interviews (max 3) */}
+          <Card className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-base">Interviews</CardTitle>
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/interviews/new?candidate=${id}`}>Schedule</Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {interviews.length > 0 ? (
+                <div className="space-y-3">
+                  {interviews.slice(0, 3).map((interview) => (
+                    <div key={interview.id} className="rounded-lg bg-muted/50 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium capitalize text-foreground">{interview.type} Interview</p>
+                        <div className="flex items-center gap-2">
+                          {(interview.google_meet_link || interview.meeting_link) && (
+                            <a
+                              href={(interview.google_meet_link || interview.meeting_link)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
+                            >
+                              <Video className="h-3 w-3" />
+                              Join
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          <Badge variant="secondary" className="text-xs capitalize">{interview.status}</Badge>
+                        </div>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {format(new Date(interview.scheduled_at), 'MMM d, yyyy')} · {format(new Date(interview.scheduled_at), 'h:mm a')}
+                      </p>
+                    </div>
+                  ))}
+                  {interviews.length > 3 && (
+                    <p className="text-center text-xs text-muted-foreground">+{interviews.length - 3} more</p>
+                  )}
+                </div>
+              ) : (
+                <div className="py-6 text-center">
+                  <Calendar className="mx-auto h-7 w-7 text-muted-foreground/40" />
+                  <p className="mt-2 text-xs text-muted-foreground">No interviews yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 4. Custom Fields */}
+          {customFieldGroups.length > 0 && (
             <Card className="border-border">
               <CardHeader>
-                <CardTitle>Primary Vacancy</CardTitle>
+                <CardTitle>Additional Information</CardTitle>
               </CardHeader>
-
-              <CardContent>
-                <Link
-                  href={`/vacancies/${primaryVacancy.id}`}
-                  className="block rounded-lg bg-muted/50 p-4 transition-colors hover:bg-muted"
-                >
-                  <p className="font-medium text-foreground">{primaryVacancy.title}</p>
-                  {primaryVacancy.department && (
-                    <p className="text-sm text-muted-foreground">{primaryVacancy.department}</p>
-                  )}
-                  {primaryVacancy.location && (
-                    <p className="mt-1 text-sm text-muted-foreground">{primaryVacancy.location}</p>
-                  )}
-                </Link>
+              <CardContent className="space-y-4">
+                <CustomFieldsDisplay
+                  groups={customFieldGroups}
+                  values={customFieldValues}
+                />
               </CardContent>
             </Card>
           )}
 
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle>Quick Profile</CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Company</p>
-                  <p className="font-medium text-foreground">
-                    {candidate.current_company || 'Not specified'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <UserCircle className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Position</p>
-                  <p className="font-medium text-foreground">
-                    {candidate.current_position || 'Not specified'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

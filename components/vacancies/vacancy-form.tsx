@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createVacancy, updateVacancy } from '@/lib/actions/vacancies'
+import { createVacancy, updateVacancy, deleteVacancy } from '@/lib/actions/vacancies'
+import { saveCustomFieldValues } from '@/lib/actions/custom-fields'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,7 +17,10 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Switch } from '@/components/ui/switch'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Loader2 } from 'lucide-react'
+import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
 import type {
   Vacancy,
   VacancyFormData,
@@ -24,11 +28,15 @@ import type {
   Sector,
   VacancyStatus,
 } from '@/lib/types'
+import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 
 interface VacancyFormProps {
   vacancy?: Vacancy
   sectors: Sector[]
   statusOptions: VacancyStatus[]
+  customFieldGroups?: CustomFieldGroupWithFields[]
+  customFieldValues?: CustomFieldValue[]
+  isDuplicated?: boolean
 }
 
 const employmentTypes: { value: EmploymentType; label: string }[] = [
@@ -38,10 +46,20 @@ const employmentTypes: { value: EmploymentType; label: string }[] = [
   { value: 'internship', label: 'Internship' },
 ]
 
-export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProps) {
+export function VacancyForm({
+  vacancy,
+  sectors,
+  statusOptions,
+  customFieldGroups = [],
+  customFieldValues = [],
+  isDuplicated = false,
+}: VacancyFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [cfValues, setCfValues] = useState<Record<string, string>>(
+    () => valuesToMap(customFieldValues)
+  )
 
   const [formData, setFormData] = useState<VacancyFormData>({
     title: vacancy?.title || '',
@@ -58,13 +76,15 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
     start_date: vacancy?.start_date || '',
     end_date: vacancy?.end_date || null,
     description: vacancy?.description || '',
+    responsibilities: (vacancy as any)?.responsibilities || '',
     requirements: vacancy?.requirements || '',
+    show_on_public_page: vacancy?.show_on_public_page ?? false,
   })
 
   const validateForm = (): string | null => {
     if (!formData.title.trim()) return 'Job title is required.'
     if (!formData.start_date) return 'Start date is required.'
-    if (!formData.description.trim()) return 'Description is required.'
+    if (!formData.description.trim()) return 'About the job is required.'
     if (!formData.sector_id) return 'Sector is required.'
     if (!formData.status_id) return 'Status is required.'
 
@@ -118,7 +138,9 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
       start_date: formData.start_date,
       end_date: formData.end_date || null,
       description: formData.description.trim(),
+      responsibilities: (formData as any).responsibilities?.trim() || null,
       requirements: formData.requirements?.trim() || null,
+      show_on_public_page: (formData as any).show_on_public_page ?? false,
     }
 
     const result = vacancy
@@ -131,7 +153,15 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
       return
     }
 
-    router.push('/vacancies')
+    const entityId = vacancy?.id ?? (result as any).data?.id
+    if (entityId && customFieldGroups.length > 0) {
+      const upserts = mapToValueUpserts(cfValues, customFieldGroups)
+      if (upserts.length > 0) {
+        await saveCustomFieldValues(entityId, upserts)
+      }
+    }
+
+    router.push(vacancy ? `/vacancies/${vacancy.id}` : '/vacancies')
     router.refresh()
     setIsLoading(false)
   }
@@ -304,29 +334,26 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date *</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={formData.start_date}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, start_date: e.target.value })
-                }
-                required
+              <Label>Start Date *</Label>
+              <DatePicker
+                value={formData.start_date || null}
+                onChange={(v) => setFormData({ ...formData, start_date: v ?? '' })}
+                placeholder="Select start date"
                 disabled={isLoading}
+                fromYear={2020}
+                toYear={2035}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="end_date">End Date</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={formData.end_date || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, end_date: e.target.value || null })
-                }
+              <Label>End Date</Label>
+              <DatePicker
+                value={formData.end_date ?? null}
+                onChange={(v) => setFormData({ ...formData, end_date: v })}
+                placeholder="Select end date"
                 disabled={isLoading}
+                fromYear={2020}
+                toYear={2035}
               />
             </div>
           </div>
@@ -393,56 +420,124 @@ export function VacancyForm({ vacancy, sectors, statusOptions }: VacancyFormProp
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Vacancy Details</CardTitle>
-          <CardDescription>Describe the role and requirements.</CardDescription>
+          <CardDescription>These fields are used when sharing the vacancy on LinkedIn.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">About the Job *</Label>
             <Textarea
               id="description"
-              placeholder="Describe the role, responsibilities, and expectations..."
+              placeholder="Give an overview of the role — what the team does, what success looks like, and why someone would want to join..."
               value={formData.description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setFormData({ ...formData, description: e.target.value })
               }
               disabled={isLoading}
-              rows={6}
+              rows={5}
             />
+            <p className="text-xs text-muted-foreground">Shown in the LinkedIn post as the main job description.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="responsibilities">Responsibilities</Label>
+            <Textarea
+              id="responsibilities"
+              placeholder="• Lead backend architecture decisions&#10;• Collaborate with product and design&#10;• Mentor junior engineers..."
+              value={(formData as any).responsibilities || ''}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setFormData({ ...formData, responsibilities: e.target.value } as any)
+              }
+              disabled={isLoading}
+              rows={5}
+            />
+            <p className="text-xs text-muted-foreground">Included in the LinkedIn post under "Responsibilities".</p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="requirements">Requirements</Label>
             <Textarea
               id="requirements"
-              placeholder="List skills, qualifications, and experience requirements..."
+              placeholder="• 5+ years of experience with TypeScript&#10;• Strong understanding of distributed systems&#10;• Experience with cloud infrastructure..."
               value={formData.requirements || ''}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setFormData({ ...formData, requirements: e.target.value })
               }
               disabled={isLoading}
-              rows={6}
+              rows={5}
+            />
+            <p className="text-xs text-muted-foreground">Included in the LinkedIn post under "Requirements".</p>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border p-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="show_on_public_page" className="text-sm font-medium">Show on public jobs page</Label>
+              <p className="text-xs text-muted-foreground">Candidates can discover and apply to this vacancy from your public jobs page.</p>
+            </div>
+            <Switch
+              id="show_on_public_page"
+              checked={(formData as any).show_on_public_page ?? false}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, show_on_public_page: checked } as any)
+              }
+              disabled={isLoading}
             />
           </div>
         </CardContent>
       </Card>
 
+      {/* Custom Fields */}
+      {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Additional Information</CardTitle>
+            <CardDescription>Custom fields defined for vacancies.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <CustomFieldsForm
+              groups={customFieldGroups}
+              values={cfValues}
+              onChange={(fieldId, value) =>
+                setCfValues((prev) => ({ ...prev, [fieldId]: value }))
+              }
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center justify-end gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isLoading}
-        >
-          Cancel
-        </Button>
+        {isDuplicated ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isLoading}
+            onClick={async () => {
+              if (!vacancy) return
+              setIsLoading(true)
+              await deleteVacancy(vacancy.id)
+              router.push('/vacancies')
+            }}
+          >
+            Discard
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+        )}
 
         <Button type="submit" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {vacancy ? 'Updating...' : 'Creating...'}
+              {isDuplicated ? 'Saving...' : vacancy ? 'Updating...' : 'Creating...'}
             </>
+          ) : isDuplicated ? (
+            'Save'
           ) : vacancy ? (
             'Update Vacancy'
           ) : (

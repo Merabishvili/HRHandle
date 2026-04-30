@@ -89,6 +89,7 @@ export function CandidateNotes({ candidateId, initialNotes, currentUserId }: Can
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={3}
+            maxLength={5000}
             disabled={isPending}
           />
           <div className="flex justify-end">

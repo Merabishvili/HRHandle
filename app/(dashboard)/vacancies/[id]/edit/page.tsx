@@ -5,6 +5,8 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { VacancyForm } from '@/components/vacancies/vacancy-form'
 import { Button } from '@/components/ui/button'
+import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { getVacancyStatuses } from '@/lib/cache/lookups'
 
 interface VacancyRow {
   id: string
@@ -49,10 +51,14 @@ interface VacancyStatusRow {
 
 export default async function EditVacancyPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ duplicated?: string }>
 }) {
   const { id } = await params
+  const { duplicated } = await searchParams
+  const isDuplicated = duplicated === 'true'
   const supabase = await createClient()
 
   const {
@@ -75,7 +81,7 @@ export default async function EditVacancyPage({
 
   const organizationId = profile.organization_id
 
-  const [{ data: vacancyRaw }, { data: sectorsRaw }, { data: statusOptionsRaw }] =
+  const [{ data: vacancyRaw }, { data: sectorsRaw }, statusOptionsRaw] =
     await Promise.all([
       supabase
         .from('vacancies')
@@ -105,6 +111,7 @@ export default async function EditVacancyPage({
         .eq('id', id)
         .eq('organization_id', organizationId)
         .is('archived_at', null)
+        .is('deleted_at', null)
         .single(),
 
       supabase
@@ -113,20 +120,21 @@ export default async function EditVacancyPage({
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
 
-      supabase
-        .from('vacancy_statuses')
-        .select('id, name, code, is_active, sort_order')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true }),
+      getVacancyStatuses(),
     ])
 
   const vacancy = vacancyRaw as VacancyRow | null
   const sectors = (sectorsRaw || []) as SectorRow[]
-  const statusOptions = (statusOptionsRaw || []) as VacancyStatusRow[]
+  const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
 
   if (!vacancy) {
     notFound()
   }
+
+  const [customFieldGroups, customFieldValues] = await Promise.all([
+    getCustomFieldSchema('vacancy'),
+    getCustomFieldValues(id),
+  ])
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -138,8 +146,12 @@ export default async function EditVacancyPage({
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit Vacancy</h1>
-          <p className="text-muted-foreground">Update the job posting details.</p>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isDuplicated ? 'New Vacancy (Duplicated)' : 'Edit Vacancy'}
+          </h1>
+          <p className="text-muted-foreground">
+            {isDuplicated ? 'Review and save your duplicated vacancy.' : 'Update the job posting details.'}
+          </p>
         </div>
       </div>
 
@@ -147,6 +159,9 @@ export default async function EditVacancyPage({
         vacancy={vacancy}
         sectors={sectors}
         statusOptions={statusOptions}
+        customFieldGroups={customFieldGroups}
+        customFieldValues={customFieldValues}
+        isDuplicated={isDuplicated}
       />
     </div>
   )

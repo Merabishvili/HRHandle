@@ -46,9 +46,14 @@ export async function updateOrganization(
   const parsed = OrganizationSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
 
+  const updatePayload: Record<string, unknown> = { name: parsed.data.name.trim() }
+  if ('logo_url' in parsed.data) {
+    updatePayload.logo_url = parsed.data.logo_url ?? null
+  }
+
   const { error } = await ctx.supabase
     .from('organizations')
-    .update({ name: parsed.data.name.trim() })
+    .update(updatePayload)
     .eq('id', ctx.orgId)
 
   if (error) return { success: false, error: 'Failed to update organization' }

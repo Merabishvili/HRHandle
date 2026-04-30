@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { InterviewForm } from '@/components/interviews/interview-form'
 import { Button } from '@/components/ui/button'
+import { getVacancyStatuses } from '@/lib/cache/lookups'
 
 interface SearchParams {
   candidate?: string
@@ -15,6 +16,7 @@ interface CandidateRow {
   id: string
   first_name: string
   last_name: string
+  email?: string | null
 }
 
 interface VacancyStatusRow {
@@ -65,7 +67,7 @@ export default async function NewInterviewPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('organization_id')
+    .select('organization_id, google_refresh_token, zoom_refresh_token, microsoft_refresh_token')
     .eq('id', user.id)
     .single()
 
@@ -75,19 +77,16 @@ export default async function NewInterviewPage({
 
   const organizationId = profile.organization_id
 
-  const [{ data: candidatesRaw }, { data: vacancyStatusesRaw }, { data: vacanciesRaw }] =
+  const vacancyStatusesRaw = await getVacancyStatuses()
+
+  const [{ data: candidatesRaw }, { data: vacanciesRaw }] =
     await Promise.all([
       supabase
         .from('candidates')
-        .select('id, first_name, last_name')
+        .select('id, first_name, last_name, email')
         .eq('organization_id', organizationId)
         .is('deleted_at', null)
         .order('first_name', { ascending: true }),
-
-      supabase
-        .from('vacancy_statuses')
-        .select('id, code, name')
-        .order('sort_order', { ascending: true }),
 
       supabase
         .from('vacancies')
@@ -103,6 +102,7 @@ export default async function NewInterviewPage({
         `)
         .eq('organization_id', organizationId)
         .is('archived_at', null)
+        .is('deleted_at', null)
         .order('title', { ascending: true }),
     ])
 
@@ -157,6 +157,9 @@ export default async function NewInterviewPage({
         teamMembers={teamMembers}
         defaultCandidateId={candidateId}
         defaultVacancyId={vacancyId}
+        hasGoogleCalendar={!!profile.google_refresh_token}
+        hasZoom={!!profile.zoom_refresh_token}
+        hasMicrosoft={!!profile.microsoft_refresh_token}
       />
     </div>
   )

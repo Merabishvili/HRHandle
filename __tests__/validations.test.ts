@@ -91,6 +91,136 @@ describe('VacancySchema', () => {
     const result = VacancySchema.safeParse({ ...base, openings_count: 0 })
     expect(result.success).toBe(false)
   })
+
+  it('accepts responsibilities as a string', () => {
+    const result = VacancySchema.safeParse({ ...base, responsibilities: 'Lead the team.' })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts responsibilities as null', () => {
+    const result = VacancySchema.safeParse({ ...base, responsibilities: null })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts missing responsibilities (optional)', () => {
+    const result = VacancySchema.safeParse(base)
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts show_on_public_page true', () => {
+    const result = VacancySchema.safeParse({ ...base, show_on_public_page: true })
+    expect(result.success).toBe(true)
+  })
+
+  it('defaults show_on_public_page to false when omitted', () => {
+    const result = VacancySchema.safeParse(base)
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.show_on_public_page).toBe(false)
+  })
+})
+
+// ─── Public apply duplicate detection ─────────────────────────────────────────
+
+describe('Public apply duplicate detection logic', () => {
+  function shouldMatchDuplicate(
+    email: string | null,
+    phone: string | null,
+    existingEmail: string,
+    existingPhone: string | null
+  ): boolean {
+    if (!email || !phone) return false
+    return email === existingEmail && phone === existingPhone
+  }
+
+  it('matches when both email and phone are identical', () => {
+    expect(shouldMatchDuplicate('a@b.com', '555-1234', 'a@b.com', '555-1234')).toBe(true)
+  })
+
+  it('does not match when only email matches', () => {
+    expect(shouldMatchDuplicate('a@b.com', '555-9999', 'a@b.com', '555-1234')).toBe(false)
+  })
+
+  it('does not match when only phone matches', () => {
+    expect(shouldMatchDuplicate('x@b.com', '555-1234', 'a@b.com', '555-1234')).toBe(false)
+  })
+
+  it('does not attempt match when phone is missing from submission', () => {
+    expect(shouldMatchDuplicate('a@b.com', null, 'a@b.com', '555-1234')).toBe(false)
+  })
+
+  it('does not attempt match when email is missing from submission', () => {
+    expect(shouldMatchDuplicate(null, '555-1234', 'a@b.com', '555-1234')).toBe(false)
+  })
+
+  it('does not match when existing candidate has no phone', () => {
+    expect(shouldMatchDuplicate('a@b.com', '555-1234', 'a@b.com', null)).toBe(false)
+  })
+})
+
+// ─── Evaluation score calculation ─────────────────────────────────────────────
+
+describe('Evaluation score calculation', () => {
+  type Question = { id: string; type: 'text' | 'score' }
+  type Answers = Record<string, { text: string; score: number | null }>
+
+  function calcScore(questions: Question[], answers: Answers): number | null {
+    const scoreQs = questions.filter((q) => q.type === 'score')
+    if (scoreQs.length === 0) return null
+    if (scoreQs.some((q) => !answers[q.id]?.score)) return null
+    const sum = scoreQs.reduce((acc, q) => acc + (answers[q.id]?.score ?? 0), 0)
+    return Math.round((sum / (scoreQs.length * 10)) * 100)
+  }
+
+  const scoreQs: Question[] = [
+    { id: 'q1', type: 'score' },
+    { id: 'q2', type: 'score' },
+    { id: 'q3', type: 'score' },
+  ]
+
+  it('returns correct percentage for full scores (5+8+9 / 30 = 73%)', () => {
+    const answers: Answers = {
+      q1: { text: '', score: 5 },
+      q2: { text: '', score: 8 },
+      q3: { text: '', score: 9 },
+    }
+    expect(calcScore(scoreQs, answers)).toBe(73)
+  })
+
+  it('returns 100 for all max scores', () => {
+    const answers: Answers = {
+      q1: { text: '', score: 10 },
+      q2: { text: '', score: 10 },
+      q3: { text: '', score: 10 },
+    }
+    expect(calcScore(scoreQs, answers)).toBe(100)
+  })
+
+  it('returns null when any score criteria is missing', () => {
+    const answers: Answers = {
+      q1: { text: '', score: 8 },
+      q2: { text: '', score: null },
+      q3: { text: '', score: 9 },
+    }
+    expect(calcScore(scoreQs, answers)).toBeNull()
+  })
+
+  it('returns null when there are no score questions', () => {
+    const textOnly: Question[] = [{ id: 'q1', type: 'text' }]
+    const answers: Answers = { q1: { text: 'Some text', score: null } }
+    expect(calcScore(textOnly, answers)).toBeNull()
+  })
+
+  it('ignores text questions in score calculation', () => {
+    const mixed: Question[] = [
+      { id: 'q1', type: 'text' },
+      { id: 'q2', type: 'score' },
+    ]
+    const answers: Answers = {
+      q1: { text: 'Some answer', score: null },
+      q2: { text: '', score: 7 },
+    }
+    expect(calcScore(mixed, answers)).toBe(70)
+  })
 })
 
 // ─── Interview ────────────────────────────────────────────────────────────────

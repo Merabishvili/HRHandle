@@ -38,8 +38,16 @@ export default function TermsPage() {
             <h2 className="mb-3 text-lg font-semibold">2. Description of Service</h2>
             <p>
               HRHandle is a cloud-based applicant tracking system that allows organizations to
-              manage job vacancies, track candidates through hiring pipelines, schedule interviews,
+              manage job vacancies, track candidates through hiring pipelines, evaluate candidates
+              with structured scoring criteria, schedule interviews, share vacancies to LinkedIn,
               and store candidate-related documents and notes.
+            </p>
+            <p className="mt-3">
+              The Service includes optional integrations with third-party platforms such as
+              Google (for authentication and calendar synchronization), LinkedIn (for posting
+              vacancies), Zoom (for video meeting creation), and Microsoft (for Outlook Calendar
+              synchronization and Teams meeting creation). Use of these integrations is subject
+              to the terms of the respective third-party platforms.
             </p>
           </section>
 
@@ -130,12 +138,22 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="mb-3 text-lg font-semibold">8. Candidate Data and LinkedIn Import</h2>
+            <h2 className="mb-3 text-lg font-semibold">8. Candidate Data and Third-Party Integrations</h2>
             <p>
               The Service allows you to store and manage candidate data, including information
               imported from LinkedIn. You are responsible for ensuring that you have a lawful basis
               for collecting and processing candidate personal data, and that your use of candidate
               data complies with applicable data protection laws, including GDPR where applicable.
+            </p>
+            <p className="mt-3">
+              When you use the LinkedIn vacancy posting feature, vacancy content (job title,
+              description, responsibilities, requirements) is shared with LinkedIn via their API
+              on your behalf. When you use Google sign-in or Google Calendar integration, your
+              account is linked to your Google identity or calendar via OAuth. When you connect
+              Zoom, a meeting is created on your behalf via the Zoom API. When you connect
+              Microsoft, interview events and Teams meetings are created in your Outlook Calendar
+              via the Microsoft Graph API. We only access the scopes you explicitly authorize for
+              each integration.
             </p>
             <p className="mt-3">
               We do not share candidate data with third parties. Candidate data is used solely to

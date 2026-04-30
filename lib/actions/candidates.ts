@@ -35,16 +35,26 @@ export async function createCandidate(
   if (error) return { success: false, error: 'Failed to create candidate' }
 
   if (linkedVacancyId) {
-    const appParsed = ApplicationSchema.safeParse({
-      candidate_id: data.id,
-      vacancy_id: linkedVacancyId,
-    })
-    if (appParsed.success) {
-      await ctx.supabase.from('applications').insert({
-        ...appParsed.data,
-        organization_id: ctx.orgId,
-        created_by: ctx.userId,
+    const { data: vacancyCheck } = await ctx.supabase
+      .from('vacancies')
+      .select('id')
+      .eq('id', linkedVacancyId)
+      .eq('organization_id', ctx.orgId)
+      .is('deleted_at', null)
+      .single()
+
+    if (vacancyCheck) {
+      const appParsed = ApplicationSchema.safeParse({
+        candidate_id: data.id,
+        vacancy_id: linkedVacancyId,
       })
+      if (appParsed.success) {
+        await ctx.supabase.from('applications').insert({
+          ...appParsed.data,
+          organization_id: ctx.orgId,
+          created_by: ctx.userId,
+        })
+      }
     }
   }
 
@@ -73,6 +83,7 @@ export async function updateCandidate(
     })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update candidate' }
 
@@ -93,6 +104,7 @@ export async function updateCandidateStatus(
     .update({ general_status_id: generalStatusId })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update status' }
 
@@ -107,9 +119,10 @@ export async function deleteCandidate(id: string): Promise<ActionResult<void>> {
 
   const { error } = await ctx.supabase
     .from('candidates')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to delete candidate' }
 

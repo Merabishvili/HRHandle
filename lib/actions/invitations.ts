@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, checkPlanLimit, type ActionResult } from './index'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendTeamInviteEmail } from '@/lib/email'
 
@@ -116,8 +117,10 @@ export async function revokeInvitation(invitationId: string): Promise<ActionResu
 }
 
 export async function acceptInvitation(token: string): Promise<ActionResult<{ orgId: string }>> {
-  const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  // Use createClient directly — the user may not have an org_id yet (pre-invite state)
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
 
   const admin = createAdminClient()
 
@@ -131,11 +134,16 @@ export async function acceptInvitation(token: string): Promise<ActionResult<{ or
   if (invite.status !== 'pending') return { success: false, error: 'This invitation has already been used or revoked.' }
   if (new Date(invite.expires_at) < new Date()) return { success: false, error: 'This invitation has expired.' }
 
+  // Verify the logged-in user's email matches the invited email
+  if (!user.email || invite.email.toLowerCase() !== user.email.toLowerCase()) {
+    return { success: false, error: 'This invitation was sent to a different email address.' }
+  }
+
   // Link this user to the invited org
   const { error: profileError } = await admin
     .from('profiles')
     .update({ organization_id: invite.organization_id, role: invite.role })
-    .eq('id', ctx.userId)
+    .eq('id', user.id)
 
   if (profileError) return { success: false, error: 'Failed to join organization.' }
 

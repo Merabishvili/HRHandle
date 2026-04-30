@@ -5,6 +5,8 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { CandidateForm } from '@/components/candidates/candidate-form'
 import { Button } from '@/components/ui/button'
+import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { getCandidateStatuses } from '@/lib/cache/lookups'
 
 interface PageParams {
   id: string
@@ -62,7 +64,7 @@ interface VacancyRow {
 interface CandidateStatusRow {
   id: string
   name: string
-  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+  code: 'active' | 'hired' | 'archived'
   is_active: boolean
   sort_order: number
 }
@@ -128,12 +130,7 @@ export default async function EditCandidatePage({
     notFound()
   }
 
-  const { data: candidateStatusesRaw } = await supabase
-    .from('candidate_statuses')
-    .select('id, name, code, is_active, sort_order')
-    .order('sort_order', { ascending: true })
-
-  const candidateStatuses = (candidateStatusesRaw || []) as CandidateStatusRow[]
+  const candidateStatuses = (await getCandidateStatuses()) as CandidateStatusRow[]
 
 const { data: vacanciesRaw } = await supabase
   .from('vacancies')
@@ -167,6 +164,7 @@ const { data: vacanciesRaw } = await supabase
   `)
   .eq('organization_id', organizationId)
   .is('archived_at', null)
+  .is('deleted_at', null)
   .order('title', { ascending: true })
 
   const vacanciesAll = (vacanciesRaw || []) as VacancyRow[]
@@ -175,6 +173,11 @@ const { data: vacanciesRaw } = await supabase
     const statusCode = vacancy.vacancy_statuses?.[0]?.code
     return statusCode === 'open' || statusCode === 'draft'
   })
+
+  const [customFieldGroups, customFieldValues] = await Promise.all([
+    getCustomFieldSchema('candidate'),
+    getCustomFieldValues(id),
+  ])
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -195,6 +198,8 @@ const { data: vacanciesRaw } = await supabase
         candidate={candidate}
         vacancies={vacancies}
         candidateStatuses={candidateStatuses}
+        customFieldGroups={customFieldGroups}
+        customFieldValues={customFieldValues}
       />
     </div>
   )

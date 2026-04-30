@@ -62,10 +62,7 @@ export async function POST() {
       .maybeSingle()
 
     if (existingProfileError) {
-      return NextResponse.json(
-        { error: existingProfileError.message },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to load account data' }, { status: 500 })
     }
 
     if (existingProfile?.organization_id) {
@@ -81,21 +78,34 @@ export async function POST() {
     const baseSlug = slugify(companyName) || `org-${user.id.slice(0, 8)}`
     const uniqueSlug = `${baseSlug}-${user.id.slice(0, 6)}`
 
+    // Generate a clean public_page_slug from the company name (no user-id suffix).
+    // Append 1, 2, 3… if the base slug is already taken.
+    let publicPageSlug = baseSlug
+    let slugCounter = 1
+    while (true) {
+      const { data: existing } = await admin
+        .from('organizations')
+        .select('id')
+        .eq('public_page_slug', publicPageSlug)
+        .maybeSingle()
+      if (!existing) break
+      publicPageSlug = `${baseSlug}${slugCounter}`
+      slugCounter++
+    }
+
     const { data: organization, error: organizationError } = await admin
       .from('organizations')
       .insert({
         name: companyName,
         slug: uniqueSlug,
+        public_page_slug: publicPageSlug,
         is_active: true,
       })
       .select('id')
       .single()
 
     if (organizationError || !organization) {
-      return NextResponse.json(
-        { error: organizationError?.message || 'Failed to create organization' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 })
     }
 
     const { error: profileUpsertError } = await admin
@@ -110,10 +120,8 @@ export async function POST() {
       })
 
     if (profileUpsertError) {
-      return NextResponse.json(
-        { error: profileUpsertError.message },
-        { status: 500 }
-      )
+      await admin.from('organizations').delete().eq('id', organization.id)
+      return NextResponse.json({ error: 'Failed to initialize account' }, { status: 500 })
     }
 
     const now = new Date()
@@ -138,22 +146,39 @@ export async function POST() {
         last_payment_status: null,
         vacancy_limit: 5,
         candidate_limit: 100,
+        member_limit: 3,
       })
 
     if (subscriptionError) {
-      return NextResponse.json(
-        { error: subscriptionError.message },
-        { status: 500 }
-      )
+      await admin.from('organizations').delete().eq('id', organization.id)
+      return NextResponse.json({ error: 'Failed to initialize account' }, { status: 500 })
+    }
+
+    // Seed default rejection reason
+    const { data: generalReason } = await admin
+      .from('rejection_reasons')
+      .insert({
+        organization_id: organization.id,
+        name: 'General',
+        sort_order: 0,
+      })
+      .select('id')
+      .single()
+
+    // Seed default rejection template linked to General reason
+    if (generalReason) {
+      await admin.from('rejection_templates').insert({
+        organization_id: organization.id,
+        name: 'General',
+        subject: 'An update from {{company}} — {{role}}',
+        body: 'After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background.',
+        sort_order: 0,
+        reason_id: generalReason.id,
+      })
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Unexpected onboarding error',
-      },
-      { status: 500 }
-    )
+  } catch {
+    return NextResponse.json({ error: 'Unexpected error during onboarding' }, { status: 500 })
   }
 }

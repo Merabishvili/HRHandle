@@ -1,8 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { updateVacancyStatus, deleteVacancy } from '@/lib/actions/vacancies'
+import { useState } from 'react'
+import { updateVacancyStatus, deleteVacancy, duplicateVacancy } from '@/lib/actions/vacancies'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { Loader2 } from 'lucide-react'
 
 interface VacancyStatusOption {
   id: string
@@ -22,10 +24,21 @@ export function VacancyActions({
   statusOptions,
 }: VacancyActionsProps) {
   const router = useRouter()
+  const [isDuplicating, setIsDuplicating] = useState(false)
 
   const handleStatusChange = async (statusId: string) => {
     await updateVacancyStatus(vacancyId, statusId)
     router.refresh()
+  }
+
+  const handleDuplicate = async () => {
+    setIsDuplicating(true)
+    const result = await duplicateVacancy(vacancyId)
+    if (result.success) {
+      router.push(`/vacancies/${result.data.id}/edit?duplicated=true`)
+    } else {
+      setIsDuplicating(false)
+    }
   }
 
   const handleDelete = async () => {
@@ -65,6 +78,13 @@ export function VacancyActions({
           Archive Vacancy
         </DropdownMenuItem>
       )}
+      <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
+        {isDuplicating ? (
+          <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Duplicating…</>
+        ) : (
+          'Duplicate Vacancy'
+        )}
+      </DropdownMenuItem>
       <DropdownMenuItem onClick={handleDelete} className="text-destructive">
         Delete Vacancy
       </DropdownMenuItem>

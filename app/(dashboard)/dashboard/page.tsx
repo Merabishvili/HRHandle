@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getVacancyStatuses, getCandidateStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -29,7 +30,7 @@ interface CandidateRow {
 interface CandidateStatusRow {
   id: string
   name: string
-  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
+  code: 'active' | 'hired' | 'archived'
   is_active: boolean
   sort_order: number
 }
@@ -57,14 +58,7 @@ interface VacancyRow {
 }
 
 interface RecentCandidateRow extends CandidateRow {
-  applications:
-    | {
-        id: string
-        vacancy_id: string
-        applied_at: string
-        vacancies: { id: string; title: string }[] | null
-      }[]
-    | null
+  linkedVacancyTitle?: string | null
 }
 
 interface InterviewRow {
@@ -113,9 +107,12 @@ export default async function DashboardPage() {
   const orgId = profile?.organization_id
   if (!orgId) return null
 
+  const [vacancyStatusesRaw, candidateStatusesRaw] = await Promise.all([
+    getVacancyStatuses(),
+    getCandidateStatuses(),
+  ])
+
   const [
-    { data: vacancyStatusesRaw },
-    { data: candidateStatusesRaw },
     { count: totalVacancies },
     { count: totalCandidates },
     { count: activeApplications },
@@ -126,20 +123,11 @@ export default async function DashboardPage() {
     { data: upcomingInterviewsRaw },
   ] = await Promise.all([
     supabase
-      .from('vacancy_statuses')
-      .select('id, name, code')
-      .order('sort_order', { ascending: true }),
-
-    supabase
-      .from('candidate_statuses')
-      .select('id, name, code')
-      .order('sort_order', { ascending: true }),
-
-    supabase
       .from('vacancies')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', orgId)
-      .is('archived_at', null),
+      .is('archived_at', null)
+      .is('deleted_at', null),
 
     supabase
       .from('candidates')
@@ -158,7 +146,8 @@ export default async function DashboardPage() {
       .from('vacancies')
       .select(`id, title, department, location, status_id, created_at, vacancy_statuses(id, name, code)`)
       .eq('organization_id', orgId)
-      .is('archived_at', null),
+      .is('archived_at', null)
+      .is('deleted_at', null),
 
     // all candidates (lightweight) — used for new-candidate count
     supabase
@@ -167,7 +156,7 @@ export default async function DashboardPage() {
       .eq('organization_id', orgId)
       .is('deleted_at', null),
 
-    // recent 5 candidates with their applications joined — no sequential query needed
+    // recent 5 candidates
     supabase
       .from('candidates')
       .select(`
@@ -177,13 +166,7 @@ export default async function DashboardPage() {
         current_position,
         current_company,
         general_status_id,
-        created_at,
-        applications (
-          id,
-          vacancy_id,
-          applied_at,
-          vacancies ( id, title )
-        )
+        created_at
       `)
       .eq('organization_id', orgId)
       .is('deleted_at', null)
@@ -195,6 +178,7 @@ export default async function DashboardPage() {
       .select(`id, title, department, location, status_id, created_at, vacancy_statuses(id, name, code)`)
       .eq('organization_id', orgId)
       .is('archived_at', null)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(5),
 
@@ -220,22 +204,63 @@ export default async function DashboardPage() {
   const candidateStatuses = (candidateStatusesRaw || []) as CandidateStatusRow[]
   const allVacancies = (allVacanciesRaw || []) as VacancyRow[]
   const allCandidates = (allCandidatesRaw || []) as Pick<CandidateRow, 'id' | 'general_status_id'>[]
-  const recentCandidates = (recentCandidatesRaw || []) as RecentCandidateRow[]
+  const recentCandidatesBase = (recentCandidatesRaw || []) as CandidateRow[]
   const recentVacancies = (recentVacanciesRaw || []) as VacancyRow[]
   const upcomingInterviews = (upcomingInterviewsRaw || []) as InterviewRow[]
+
+  // Fetch candidate names for upcoming interviews separately (embedded joins are unreliable with RLS)
+  const interviewCandidateIds = [...new Set(upcomingInterviews.map((i) => i.candidate_id))]
+  const interviewCandidateMap = new Map<string, { first_name: string; last_name: string }>()
+  if (interviewCandidateIds.length > 0) {
+    const { data: interviewCandidatesRaw } = await supabase
+      .from('candidates')
+      .select('id, first_name, last_name')
+      .in('id', interviewCandidateIds)
+      .eq('organization_id', orgId)
+    for (const c of (interviewCandidatesRaw || [])) {
+      interviewCandidateMap.set(c.id, { first_name: c.first_name, last_name: c.last_name })
+    }
+  }
+
+  // Fetch applications for recent candidates separately for reliability
+  const recentCandidateIds = recentCandidatesBase.map((c) => c.id)
+  const candidateVacancyMap = new Map<string, string>()
+  if (recentCandidateIds.length > 0) {
+    const { data: recentAppsRaw } = await supabase
+      .from('applications')
+      .select('candidate_id, vacancies(id, title)')
+      .in('candidate_id', recentCandidateIds)
+      .eq('organization_id', orgId)
+      .is('deleted_at', null)
+      .order('applied_at', { ascending: false })
+
+    type AppWithVacancy = { candidate_id: string; vacancies: { id: string; title: string } | { id: string; title: string }[] | null }
+    const recentApps = (recentAppsRaw || []) as AppWithVacancy[]
+    for (const app of recentApps) {
+      if (!candidateVacancyMap.has(app.candidate_id) && app.vacancies) {
+        const vacancy = Array.isArray(app.vacancies) ? app.vacancies[0] : app.vacancies
+        if (vacancy?.title) candidateVacancyMap.set(app.candidate_id, vacancy.title)
+      }
+    }
+  }
+
+  const recentCandidates: RecentCandidateRow[] = recentCandidatesBase.map((c) => ({
+    ...c,
+    linkedVacancyTitle: candidateVacancyMap.get(c.id) ?? null,
+  }))
 
   const vacancyStatusMap = new Map(vacancyStatuses.map((s) => [s.id, s]))
   const vacancyMap = new Map(allVacancies.map((v) => [v.id, v]))
 
   const openVacancyStatusId = vacancyStatuses.find((s) => s.code === 'open')?.id ?? null
-  const newCandidateStatusId = candidateStatuses.find((s) => s.code === 'new')?.id ?? null
+  const activeCandidateStatusId = candidateStatuses.find((s) => s.code === 'active')?.id ?? null
 
   const activeVacancies = openVacancyStatusId
     ? allVacancies.filter((v) => v.status_id === openVacancyStatusId).length
     : 0
 
-  const newCandidates = newCandidateStatusId
-    ? allCandidates.filter((c) => c.general_status_id === newCandidateStatusId).length
+  const activeCandidates = activeCandidateStatusId
+    ? allCandidates.filter((c) => c.general_status_id === activeCandidateStatusId).length
     : 0
 
   const stats = [
@@ -250,11 +275,11 @@ export default async function DashboardPage() {
       title: 'Total Candidates',
       value: totalCandidates || 0,
       icon: Users,
-      change: `${newCandidates} new`,
+      change: `${activeCandidates} active`,
       href: '/candidates',
     },
     {
-      title: 'Active Applications',
+      title: 'Active Candidates',
       value: activeApplications || 0,
       icon: Calendar,
       change: 'Across all vacancies',
@@ -270,7 +295,7 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
@@ -325,10 +350,12 @@ export default async function DashboardPage() {
             {recentCandidates.length > 0 ? (
               <div className="space-y-4">
                 {recentCandidates.map((candidate) => {
-                  const linkedVacancy = candidate.applications?.[0]?.vacancies?.[0] ?? null
-
                   return (
-                    <div key={candidate.id} className="flex items-center justify-between">
+                    <Link
+                      key={candidate.id}
+                      href={`/candidates/${candidate.id}`}
+                      className="flex items-center justify-between rounded-lg p-2 -mx-2 transition-colors hover:bg-muted/50"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                           <span className="text-sm font-medium text-primary">
@@ -341,7 +368,7 @@ export default async function DashboardPage() {
                             {getCandidateFullName(candidate)}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {linkedVacancy?.title ||
+                            {candidate.linkedVacancyTitle ||
                               candidate.current_position ||
                               'No vacancy linked'}
                           </p>
@@ -352,7 +379,7 @@ export default async function DashboardPage() {
                         <Clock className="h-3 w-3" />
                         {formatDistanceToNow(new Date(candidate.created_at), { addSuffix: true })}
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
@@ -394,7 +421,11 @@ export default async function DashboardPage() {
                   const status = relatedStatus || fallbackStatus || null
 
                   return (
-                    <div key={vacancy.id} className="flex items-center justify-between">
+                    <Link
+                      key={vacancy.id}
+                      href={`/vacancies/${vacancy.id}`}
+                      className="flex items-center justify-between rounded-lg p-2 -mx-2 transition-colors hover:bg-muted/50"
+                    >
                       <div>
                         <p className="text-sm font-medium text-foreground">{vacancy.title}</p>
                         <p className="text-xs text-muted-foreground">
@@ -412,7 +443,7 @@ export default async function DashboardPage() {
                       ) : (
                         <Badge variant="secondary">Unknown</Badge>
                       )}
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
@@ -447,14 +478,16 @@ export default async function DashboardPage() {
             {upcomingInterviews.length > 0 ? (
               <div className="space-y-4">
                 {upcomingInterviews.map((interview) => {
-                  const candidate = interview.candidates?.[0] ?? null
+                  const candidate = interview.candidates?.[0] ?? interviewCandidateMap.get(interview.candidate_id) ?? null
                   const vacancy = interview.vacancies?.[0] ?? vacancyMap.get(interview.vacancy_id) ?? null
 
                   return (
-                    <div
+                    <Link
                       key={interview.id}
-                      className="flex items-center justify-between rounded-lg bg-muted/50 p-4"
+                      href={`/candidates/${interview.candidate_id}`}
+                      className="flex items-center justify-between rounded-lg bg-muted/50 p-4 transition-colors hover:bg-muted"
                     >
+
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                           <Calendar className="h-6 w-6 text-primary" />
@@ -483,7 +516,7 @@ export default async function DashboardPage() {
                           })}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>

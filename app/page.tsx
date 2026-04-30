@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -6,18 +7,69 @@ import {
   Briefcase,
   Calendar,
   BarChart3,
-  CheckCircle,
   ArrowRight,
   Zap,
   Shield,
-  Globe,
+  FileText,
+  Star,
+  Share2,
 } from 'lucide-react'
 import { PRICING_PLANS } from '@/lib/types/subscription'
-import { isCampaignActive, getCampaignPrice, CAMPAIGN } from '@/lib/campaign'
+import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
+import { PricingSection } from '@/components/landing/pricing-section'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: 'https://hrhandle.com',
+  },
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'HRHandle',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://hrhandle.com',
+  description:
+    'HRHandle is a modern applicant tracking system that helps teams manage vacancies, evaluate candidates with structured scoring, schedule interviews, and share roles on LinkedIn.',
+  offers: [
+    {
+      '@type': 'Offer',
+      name: 'Free Trial',
+      price: '0',
+      priceCurrency: 'USD',
+      description: '7-day free trial',
+    },
+    {
+      '@type': 'Offer',
+      name: 'Individual Plan',
+      price: '20',
+      priceCurrency: 'USD',
+      description: 'Individual plan billed monthly',
+    },
+    {
+      '@type': 'Offer',
+      name: 'Organization Plan',
+      price: '40',
+      priceCurrency: 'USD',
+      description: 'Organization plan billed monthly',
+    },
+  ],
+  provider: {
+    '@type': 'Organization',
+    name: 'HRHandle',
+    url: 'https://hrhandle.com',
+  },
+}
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+      />
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -69,7 +121,7 @@ export default function LandingPage() {
 
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground sm:text-xl">
               The modern applicant tracking system that helps you manage vacancies,
-              track candidates, and build your dream team efficiently.
+              evaluate candidates with structured scoring, schedule interviews, and share roles on LinkedIn — all in one place.
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -88,10 +140,10 @@ export default function LandingPage() {
 
           <div className="mt-20 grid grid-cols-2 gap-8 md:grid-cols-4">
             {[
-              { label: 'Companies Trust Us', value: '2,000+' },
-              { label: 'Candidates Processed', value: '500K+' },
-              { label: 'Time Saved', value: '60%' },
-              { label: 'Hiring Success Rate', value: '95%' },
+              { label: 'Hiring Steps Automated', value: '10+' },
+              { label: 'Avg. Time-to-Hire Reduced', value: '40%' },
+              { label: 'Candidate Data in One Place', value: '100%' },
+              { label: 'Free Trial, No Card Required', value: '7 days' },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-3xl font-bold text-foreground sm:text-4xl">
@@ -121,37 +173,55 @@ export default function LandingPage() {
                 icon: Briefcase,
                 title: 'Vacancy Management',
                 description:
-                  'Create and manage job postings with customizable fields, status tracking, and team collaboration.',
+                  'Create job postings with rich descriptions, responsibilities, and requirements. Track status from draft to closed with full visibility.',
               },
               {
                 icon: Users,
                 title: 'Candidate Tracking',
                 description:
-                  'Track candidates through your hiring pipeline with structured statuses and linked applications.',
+                  'Manage candidate profiles with contact details, documents, notes, and a full history of every role they have been considered for.',
               },
               {
                 icon: Calendar,
                 title: 'Interview Scheduling',
                 description:
-                  'Schedule interviews, assign interviewers, and keep all interview activity in one place.',
+                  'Schedule and track interviews with candidates, assign interviewers, and sync with Google Calendar automatically.',
+              },
+              {
+                icon: Star,
+                title: 'Structured Evaluation',
+                description:
+                  'Define custom scoring criteria per vacancy and evaluate candidates consistently. Auto-calculated scores give you instant, objective insights.',
+              },
+              {
+                icon: Share2,
+                title: 'LinkedIn Integration',
+                description:
+                  'Share vacancies directly to LinkedIn with one click, including job description, responsibilities, and requirements pre-filled.',
+              },
+              {
+                icon: FileText,
+                title: 'Documents & Notes',
+                description:
+                  'Attach CVs and files directly to candidate profiles. Add internal notes to keep your team aligned throughout the hiring process.',
               },
               {
                 icon: BarChart3,
                 title: 'Analytics & Reports',
                 description:
-                  'Get insights into hiring activity with dashboard metrics and reporting-ready summaries.',
+                  'Get insights into hiring activity with dashboard metrics, candidate counts per vacancy, and reporting-ready summaries.',
               },
               {
                 icon: Shield,
                 title: 'Team Collaboration',
                 description:
-                  'Invite team members, assign roles, and collaborate on hiring decisions securely.',
+                  'Invite team members, assign roles, and collaborate on hiring decisions in a secure, shared workspace.',
               },
               {
-                icon: Globe,
-                title: 'Structured Hiring Workflow',
+                icon: Zap,
+                title: 'Customizable Columns',
                 description:
-                  'Manage vacancies, applications, candidate progress, and interviews with one consistent process.',
+                  'Tailor your vacancy and candidate list views by choosing which columns to display, saved per user for a personal workflow.',
               },
             ].map((feature) => (
               <Card key={feature.title} className="border-border bg-background">
@@ -172,115 +242,19 @@ export default function LandingPage() {
 
       <section id="pricing" className="px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-16 text-center">
+          <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
               Simple, transparent pricing
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
               Choose the plan that fits your hiring needs
             </p>
-            {isCampaignActive() && (
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-medium text-orange-700">
-                <Zap className="h-4 w-4" />
-                {CAMPAIGN.name} — special pricing until{' '}
-                {new Date(CAMPAIGN.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </div>
-            )}
           </div>
-
-          <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
-            {PRICING_PLANS.map((plan) => {
-              const isTrial = plan.code === 'trial'
-              const campaignActive = isCampaignActive()
-              const campaignMonthly = plan.price_monthly ? getCampaignPrice(plan.price_monthly, 'monthly') : null
-              const campaignAnnual = plan.price_annual ? getCampaignPrice(plan.price_annual, 'annual') : null
-
-              return (
-                <Card
-                  key={plan.code}
-                  className={`relative border-border ${
-                    plan.popular ? 'border-2 border-primary shadow-lg' : ''
-                  }`}
-                >
-                  {(plan.popular || (campaignActive && !isTrial)) && (
-                    <div className="absolute -top-3 left-0 right-0 flex justify-between px-4">
-                      {plan.popular ? (
-                        <div className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                          Most Popular
-                        </div>
-                      ) : <span />}
-                      {campaignActive && !isTrial ? (
-                        <div className="rounded-full bg-orange-500 px-3 py-1 text-xs font-medium text-white">
-                          🌸 {CAMPAIGN.name}
-                        </div>
-                      ) : <span />}
-                    </div>
-                  )}
-
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
-
-                    <div className="mt-4">
-                      {isTrial ? (
-                        <>
-                          <span className="text-4xl font-bold text-foreground">Free</span>
-                          <span className="text-muted-foreground"> / 7 days</span>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-bold text-foreground">
-                              ${campaignActive && campaignMonthly !== null ? campaignMonthly : plan.price_monthly}
-                            </span>
-                            <span className="text-muted-foreground">/mo</span>
-                            {campaignActive && campaignMonthly !== null && (
-                              <span className="text-sm text-muted-foreground line-through">
-                                ${plan.price_monthly}
-                              </span>
-                            )}
-                          </div>
-                          {plan.price_annual != null && (
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {campaignActive && campaignAnnual !== null ? (
-                                <>
-                                  {'or '}
-                                  <span className="font-medium text-foreground">${campaignAnnual}/mo</span>
-                                  {' '}
-                                  <span className="line-through">${plan.price_annual}/mo</span>
-                                  {' billed annually'}
-                                </>
-                              ) : (
-                                `or $${plan.price_annual}/mo billed annually`
-                              )}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    <ul className="mt-6 space-y-3">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3">
-                          <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                          <span className="text-muted-foreground">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <Button
-                      className="mt-8 w-full"
-                      variant={plan.popular ? 'default' : 'outline'}
-                      asChild
-                    >
-                      <Link href="/auth/sign-up">
-                        {isTrial ? 'Start Free Trial' : 'Get Started'}
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+          <PricingSection
+            plans={PRICING_PLANS}
+            campaign={CAMPAIGN}
+            campaignActive={isCampaignActive()}
+          />
         </div>
       </section>
 
