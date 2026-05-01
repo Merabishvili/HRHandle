@@ -83,11 +83,5 @@ lib/
 ```
 
 ## What's left to build
-- Microsoft Calendar integration (similar to Google Calendar)
-- Microsoft Teams meeting link generation (similar to Zoom)
 
 ## Things that went wrong before — don't repeat
-- **Never add `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` to Vercel** — it overrides the email redirect URL globally and breaks production sign-up confirmation
-- **Never use server-to-server `fetch()` with manually forwarded cookies for Supabase auth** — the SSR client reads cookies from the Next.js request context, not raw headers
-- **Never set `NEXT_PUBLIC_SITE_URL` to an empty string in Vercel** — the URL validator throws at build time and breaks the entire build
-- **`resetPasswordForEmail` must use implicit flow** — see password reset section above
