@@ -31,7 +31,7 @@ export async function createNote(
 
   if (!candidate) return { success: false, error: 'Candidate not found' }
 
-  const { data, error } = await ctx.supabase
+  const { error } = await ctx.supabase
     .from('candidate_notes')
     .insert({
       candidate_id: candidateId,
@@ -39,13 +39,11 @@ export async function createNote(
       author_id: ctx.userId,
       text: parsed.data.text,
     })
-    .select('id')
-    .single()
 
-  if (error || !data) return { success: false, error: 'Failed to save note' }
+  if (error) return { success: false, error: 'Failed to save note' }
 
   revalidatePath(`/candidates/${candidateId}`)
-  return { success: true, data: { id: data.id } }
+  return { success: true, data: { id: '' } }
 }
 
 export async function deleteNote(

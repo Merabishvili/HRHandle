@@ -256,7 +256,7 @@ export function VacancyApplicationRow({
             {questions.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No assessment questions configured for this vacancy.{' '}
-                <Link href={`/vacancies/${vacancyId}`} className="underline hover:no-underline">
+                <Link href={`/vacancies/${vacancyId}?tab=qe`} className="underline hover:no-underline">
                   Add questions
                 </Link>
               </p>
