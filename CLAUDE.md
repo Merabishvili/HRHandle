@@ -85,84 +85,9 @@ lib/
 ## Supabase configuration
 
 ### Email templates
-
-**Confirm signup** — must use `token_hash`, NOT `{{ .ConfirmationURL }}`
-```html
-<h2>Confirm your email address</h2>
-<p>Welcome! Please confirm your email address to complete your registration.</p>
-<p>This step helps us secure your account and activate your access.</p>
-<p>
-  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup"
-     style="display:inline-block;padding:10px 16px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:6px;">
-    Confirm Email
-  </a>
-</p>
-<p>If you did not create an account, you can safely ignore this email.</p>
-```
-
-**Reset password** — must use `token_hash`, forgot-password page must use `flowType: 'implicit'`
-```html
-<h2>Reset your password</h2>
-<p>We received a request to reset your account password.</p>
-<p>Click the button below to set a new password:</p>
-<p>
-  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/auth/reset-password"
-     style="display:inline-block;padding:10px 16px;background:#dc2626;color:#ffffff;text-decoration:none;border-radius:6px;">
-    Reset Password
-  </a>
-</p>
-<p>This link will expire shortly for security reasons.</p>
-<p>If you did not request a password reset, you can safely ignore this email.</p>
-```
-
-**Member invitation**
-```html
-<h2>You're invited to join {{ .SiteURL }}</h2>
-<p>You have been invited to create an account and join our platform.</p>
-<p>
-  <a href="{{ .ConfirmationURL }}"
-     style="display:inline-block;padding:10px 16px;background:#16a34a;color:#ffffff;text-decoration:none;border-radius:6px;">
-    Accept Invitation
-  </a>
-</p>
-<p>If you were not expecting this invitation, you can ignore this email.</p>
-```
-
-**Magic link**
-```html
-<h2>Sign in to your account</h2>
-<p>Use the link below to securely sign in to your account.</p>
-<p>
-  <a href="{{ .ConfirmationURL }}"
-     style="display:inline-block;padding:10px 16px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:6px;">
-    Sign In
-  </a>
-</p>
-<p>This link will expire shortly for your security.</p>
-<p>If you did not request this login, you can safely ignore this email.</p>
-```
-
-**Change email address**
-```html
-<h2>Confirm your new email address</h2>
-<p>We received a request to change your email address.</p>
-<p><strong>Current email:</strong> {{ .Email }}<br><strong>New email:</strong> {{ .NewEmail }}</p>
-<p>
-  <a href="{{ .ConfirmationURL }}"
-     style="display:inline-block;padding:10px 16px;background:#f59e0b;color:#ffffff;text-decoration:none;border-radius:6px;">
-    Confirm Email Change
-  </a>
-</p>
-<p>If you did not request this change, please ignore this email or contact support immediately.</p>
-```
-
-**Confirm reauthentication**
-```html
-<h2>Security verification required</h2>
-<p>To continue, please confirm your identity using the code below:</p>
-<p style="font-size:24px;font-weight:bold;letter-spacing:4px;">{{ .Token }}</p>
-<p>This code will expire shortly for your security.</p>
-```
+- **Confirm signup**: link must use `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`
+- **Reset password**: link must use `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/auth/reset-password`
+- **All others** (invitation, magic link, change email, reauthentication): use `{{ .ConfirmationURL }}` — standard Supabase flow
 
 ### URL configuration
 - Site URL — staging: `https://staging.hrhandle.com`, production: `https://hrhandle.com`
