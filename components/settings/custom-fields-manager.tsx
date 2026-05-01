@@ -37,7 +37,9 @@ interface Props {
 }
 
 const FIELD_TYPE_LABELS: Record<FieldType, string> = {
-  text: 'Free Text',
+  text: 'Short Text (100 chars)',
+  long_text: 'Long Text (5000 chars)',
+  date: 'Date',
   number: 'Number',
   dropdown: 'Dropdown',
   checkbox: 'Yes / No',

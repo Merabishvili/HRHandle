@@ -230,18 +230,20 @@ export async function submitPublicApplication(
       })
 
     if (!storageError) {
-      await supabase.from('candidate_documents').insert({
+      const { error: docError } = await supabase.from('candidate_documents').insert({
         organization_id: orgId,
         candidate_id: candidateId,
+        uploaded_by: null,
         file_name: cvFile.name,
         file_size: cvFile.size,
         mime_type: cvFile.type,
         file_path: storagePath,
         document_type: 'cv',
       })
+      if (docError) console.error('[public-apply] candidate_documents insert failed:', docError)
     }
-  } catch {
-    // CV upload failure is non-fatal — candidate + application already created
+  } catch (err) {
+    console.error('[public-apply] CV upload block error:', err)
   }
 
   // ── 14. Notify org owners/admins of new application ───────────────────────
