@@ -162,7 +162,6 @@ export function VacancyForm({
     }
 
     router.push(vacancy ? `/vacancies/${vacancy.id}` : '/vacancies')
-    router.refresh()
     setIsLoading(false)
   }
 
@@ -420,7 +419,7 @@ export function VacancyForm({
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Vacancy Details</CardTitle>
-          <CardDescription>These fields are used when sharing the vacancy on LinkedIn.</CardDescription>
+          <CardDescription>Shown on the public jobs page and included when sharing on LinkedIn.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -435,8 +434,9 @@ export function VacancyForm({
               }
               disabled={isLoading}
               rows={5}
+              maxLength={5000}
             />
-            <p className="text-xs text-muted-foreground">Shown in the LinkedIn post as the main job description.</p>
+            <p className="text-xs text-muted-foreground text-right">{(formData.description || '').length} / 5000</p>
           </div>
 
           <div className="space-y-2">
@@ -450,8 +450,9 @@ export function VacancyForm({
               }
               disabled={isLoading}
               rows={5}
+              maxLength={5000}
             />
-            <p className="text-xs text-muted-foreground">Included in the LinkedIn post under "Responsibilities".</p>
+            <p className="text-xs text-muted-foreground text-right">{((formData as any).responsibilities || '').length} / 5000</p>
           </div>
 
           <div className="space-y-2">
@@ -465,8 +466,9 @@ export function VacancyForm({
               }
               disabled={isLoading}
               rows={5}
+              maxLength={5000}
             />
-            <p className="text-xs text-muted-foreground">Included in the LinkedIn post under "Requirements".</p>
+            <p className="text-xs text-muted-foreground text-right">{(formData.requirements || '').length} / 5000</p>
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
             <div className="space-y-0.5">

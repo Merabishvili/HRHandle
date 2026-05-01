@@ -13,4 +13,6 @@ next.user-config.*
 # Common ignores
 node_modules
 .next/
-.DS_Storepnpm-lock.yaml
+.DS_Store
+pnpm-lock.yaml
+tsconfig.tsbuildinfo

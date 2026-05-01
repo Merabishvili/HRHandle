@@ -2,6 +2,7 @@
 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -31,9 +32,13 @@ export function CustomFieldsForm({ groups, values, onChange }: Props) {
           <div className="grid gap-4 sm:grid-cols-2">
             {group.fields.map((field) => {
               const val = values[field.id] ?? ''
+              const isWide = field.field_type === 'long_text'
 
               return (
-                <div key={field.id} className="space-y-1.5">
+                <div
+                  key={field.id}
+                  className={`space-y-1.5${isWide ? ' sm:col-span-2' : ''}`}
+                >
                   <Label htmlFor={`cf-${field.id}`} className="text-sm">
                     {field.name}
                     {field.is_required && (
@@ -47,6 +52,27 @@ export function CustomFieldsForm({ groups, values, onChange }: Props) {
                       value={val}
                       onChange={(e) => onChange(field.id, e.target.value)}
                       placeholder={field.name}
+                      maxLength={100}
+                    />
+                  )}
+
+                  {field.field_type === 'long_text' && (
+                    <Textarea
+                      id={`cf-${field.id}`}
+                      value={val}
+                      onChange={(e) => onChange(field.id, e.target.value)}
+                      placeholder={field.name}
+                      maxLength={5000}
+                      rows={4}
+                    />
+                  )}
+
+                  {field.field_type === 'date' && (
+                    <Input
+                      id={`cf-${field.id}`}
+                      type="date"
+                      value={val}
+                      onChange={(e) => onChange(field.id, e.target.value)}
                     />
                   )}
 
@@ -137,7 +163,7 @@ export function mapToValueUpserts(
       const raw = fieldMap[field.id] ?? ''
       if (!raw) continue
 
-      if (field.field_type === 'text') {
+      if (field.field_type === 'text' || field.field_type === 'long_text' || field.field_type === 'date') {
         result.push({ fieldId: field.id, valueText: raw })
       } else if (field.field_type === 'number') {
         const n = parseFloat(raw)

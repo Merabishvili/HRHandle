@@ -155,10 +155,11 @@ export default async function VacancyDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ appSearch?: string; appStatus?: string }>
+  searchParams: Promise<{ appSearch?: string; appStatus?: string; tab?: string }>
 }) {
   const { id } = await params
-  const { appSearch = '', appStatus } = await searchParams
+  const { appSearch = '', appStatus, tab } = await searchParams
+  const defaultTab = tab === 'qe' ? 'qe' : tab === 'application-form' ? 'application-form' : 'applications'
   const supabase = await createClient()
 
   const {
@@ -429,7 +430,7 @@ export default async function VacancyDetailPage({
       </div>
 
       {/* Main layout */}
-      <Tabs defaultValue="applications">
+      <Tabs defaultValue={defaultTab}>
         <div className="border-b border-border">
           <TabsList className="h-auto w-fit rounded-none bg-transparent p-0 gap-0">
             <TabsTrigger
@@ -469,12 +470,19 @@ export default async function VacancyDetailPage({
                   initialStatus={appStatus || ''}
                   appStatuses={appStatuses}
                 />
-                <Button variant="outline" size="sm" asChild>
-                  <a href={`/api/export/applications?vacancy_id=${id}`} download>
-                    <Download className="mr-2 h-3.5 w-3.5" />
-                    Export CSV
-                  </a>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" asChild>
+                    <Link href={`/candidates/new?vacancy=${id}`}>
+                      Add Candidate
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`/api/export/applications?vacancy_id=${id}`} download>
+                      <Download className="mr-2 h-3.5 w-3.5" />
+                      Export CSV
+                    </a>
+                  </Button>
+                </div>
               </div>
               {filteredApplications.length > 0 ? (
                 <>

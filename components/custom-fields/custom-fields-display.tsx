@@ -5,10 +5,7 @@ interface Props {
   values: CustomFieldValue[]
 }
 
-function formatValue(
-  value: CustomFieldValue,
-  fieldType: string
-): string | null {
+function formatValue(value: CustomFieldValue, fieldType: string): string | null {
   if (fieldType === 'checkbox') {
     if (value.value_boolean === true) return 'Yes'
     if (value.value_boolean === false) return 'No'
@@ -21,6 +18,12 @@ function formatValue(
   }
   if (fieldType === 'dropdown') {
     return value.value_option || null
+  }
+  if (fieldType === 'date') {
+    if (!value.value_text) return null
+    const d = new Date(value.value_text)
+    if (isNaN(d.getTime())) return value.value_text
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
   }
   return value.value_text || null
 }
@@ -58,6 +61,17 @@ export function CustomFieldsDisplay({ groups, values }: Props) {
               {filledFields.map((field) => {
                 const v = valueMap.get(field.id)!
                 const display = formatValue(v, field.field_type)
+                const isLongText = field.field_type === 'long_text'
+
+                if (isLongText) {
+                  return (
+                    <div key={field.id} className="space-y-0.5">
+                      <span className="text-sm text-muted-foreground">{field.name}</span>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{display}</p>
+                    </div>
+                  )
+                }
+
                 return (
                   <div key={field.id} className="flex items-start justify-between gap-2">
                     <span className="text-sm text-muted-foreground">{field.name}</span>

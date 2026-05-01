@@ -25,7 +25,9 @@ interface VacancyRow {
   start_date: string
   end_date: string | null
   description: string
+  responsibilities: string | null
   requirements: string | null
+  show_on_public_page: boolean
   created_by: string | null
   created_at: string
   updated_at: string
@@ -102,7 +104,9 @@ export default async function EditVacancyPage({
           start_date,
           end_date,
           description,
+          responsibilities,
           requirements,
+          show_on_public_page,
           created_by,
           created_at,
           updated_at,

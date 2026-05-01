@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 
 export type EntityType = 'candidate' | 'vacancy'
-export type FieldType = 'text' | 'number' | 'dropdown' | 'checkbox'
+export type FieldType = 'text' | 'long_text' | 'date' | 'number' | 'dropdown' | 'checkbox'
 
 export interface CustomFieldGroup {
   id: string
