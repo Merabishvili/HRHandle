@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { createBrowserClient } from '@supabase/ssr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,10 +23,16 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
 
     try {
-      const supabase = createClient()
+      // Implicit flow so the recovery token is a plain OTP (token_hash-verifiable
+      // server-side without a PKCE code verifier — works cross-browser).
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { auth: { flowType: 'implicit' } },
+      )
 
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${window.location.origin}/auth/confirm?type=recovery&next=/auth/reset-password`,
       })
 
       if (error) {
