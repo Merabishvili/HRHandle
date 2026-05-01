@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { runOnboarding } from '@/lib/onboarding'
 
 const WINDOW_MS = 60_000
 const MAX_ATTEMPTS = 5
@@ -22,18 +22,8 @@ function isRateLimited(userId: string): boolean {
   return false
 }
 
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-}
-
 export async function POST() {
   try {
-    // Normal client: only for identifying logged-in user
     const supabase = await createClient()
 
     const {
@@ -52,132 +42,13 @@ export async function POST() {
       )
     }
 
-    // Admin client: for inserts/upserts during onboarding
-    const admin = createAdminClient()
+    const result = await runOnboarding(user)
 
-    const { data: existingProfile, error: existingProfileError } = await admin
-      .from('profiles')
-      .select('id, organization_id')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (existingProfileError) {
-      return NextResponse.json({ error: 'Failed to load account data' }, { status: 500 })
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 })
     }
 
-    if (existingProfile?.organization_id) {
-      return NextResponse.json({ success: true, alreadyInitialized: true })
-    }
-
-    const fullName =
-      (user.user_metadata?.full_name as string | undefined)?.trim() || 'New User'
-
-    const companyName =
-      (user.user_metadata?.company_name as string | undefined)?.trim() || 'New Organization'
-
-    const baseSlug = slugify(companyName) || `org-${user.id.slice(0, 8)}`
-    const uniqueSlug = `${baseSlug}-${user.id.slice(0, 6)}`
-
-    // Generate a clean public_page_slug from the company name (no user-id suffix).
-    // Append 1, 2, 3… if the base slug is already taken.
-    let publicPageSlug = baseSlug
-    let slugCounter = 1
-    while (true) {
-      const { data: existing } = await admin
-        .from('organizations')
-        .select('id')
-        .eq('public_page_slug', publicPageSlug)
-        .maybeSingle()
-      if (!existing) break
-      publicPageSlug = `${baseSlug}${slugCounter}`
-      slugCounter++
-    }
-
-    const { data: organization, error: organizationError } = await admin
-      .from('organizations')
-      .insert({
-        name: companyName,
-        slug: uniqueSlug,
-        public_page_slug: publicPageSlug,
-        is_active: true,
-      })
-      .select('id')
-      .single()
-
-    if (organizationError || !organization) {
-      return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 })
-    }
-
-    const { error: profileUpsertError } = await admin
-      .from('profiles')
-      .upsert({
-        id: user.id,
-        organization_id: organization.id,
-        full_name: fullName,
-        email: user.email || null,
-        role: 'owner',
-        is_active: true,
-      })
-
-    if (profileUpsertError) {
-      await admin.from('organizations').delete().eq('id', organization.id)
-      return NextResponse.json({ error: 'Failed to initialize account' }, { status: 500 })
-    }
-
-    const now = new Date()
-    const trialEnd = new Date(now)
-    trialEnd.setDate(trialEnd.getDate() + 7)
-
-    const { error: subscriptionError } = await admin
-      .from('subscriptions')
-      .insert({
-        organization_id: organization.id,
-        plan_code: 'trial',
-        billing_cycle: null,
-        status: 'trial',
-        trial_start_at: now.toISOString(),
-        trial_end_at: trialEnd.toISOString(),
-        current_period_start_at: null,
-        current_period_end_at: null,
-        next_billing_at: null,
-        payment_method_linked: false,
-        payment_provider_customer_ref: null,
-        payment_provider_subscription_ref: null,
-        last_payment_status: null,
-        vacancy_limit: 5,
-        candidate_limit: 100,
-        member_limit: 3,
-      })
-
-    if (subscriptionError) {
-      await admin.from('organizations').delete().eq('id', organization.id)
-      return NextResponse.json({ error: 'Failed to initialize account' }, { status: 500 })
-    }
-
-    // Seed default rejection reason
-    const { data: generalReason } = await admin
-      .from('rejection_reasons')
-      .insert({
-        organization_id: organization.id,
-        name: 'General',
-        sort_order: 0,
-      })
-      .select('id')
-      .single()
-
-    // Seed default rejection template linked to General reason
-    if (generalReason) {
-      await admin.from('rejection_templates').insert({
-        organization_id: organization.id,
-        name: 'General',
-        subject: 'An update from {{company}} — {{role}}',
-        body: 'After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background.',
-        sort_order: 0,
-        reason_id: generalReason.id,
-      })
-    }
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, alreadyInitialized: result.alreadyInitialized })
   } catch {
     return NextResponse.json({ error: 'Unexpected error during onboarding' }, { status: 500 })
   }

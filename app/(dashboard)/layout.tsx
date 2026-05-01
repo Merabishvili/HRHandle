@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { runOnboarding } from '@/lib/onboarding'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/header'
 import { TrialBanner } from '@/components/dashboard/trial-banner'
@@ -94,68 +95,47 @@ export default async function DashboardLayout({
 
   let profile = profileRaw as ProfileRow | null
 
-  // 🔥 Onboarding trigger
   if (!profile?.organization_id) {
-    const origin =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      'http://localhost:3000'
-
-    const { cookies } = await import('next/headers')
-    const cookieStore = await cookies()
-
-    const cookieHeader = cookieStore
-      .getAll()
-      .map((c) => `${c.name}=${c.value}`)
-      .join('; ')
-
-    const response = await fetch(`${origin}/api/onboarding`, {
-      method: 'POST',
-      headers: {
-        cookie: cookieHeader,
-      },
-      cache: 'no-store',
-    })
-
-if (!response.ok) {
-  const errorText = await response.text()
-  throw new Error(`Onboarding failed: ${errorText}`)
-}
+    const result = await runOnboarding(user)
+    if (!result.success) {
+      throw new Error(`Onboarding failed: ${result.error}`)
+    }
 
     const { data: refreshedProfileRaw, error: refreshedProfileError } = await supabase
-  .from('profiles')
-  .select(`
-    id,
-    organization_id,
-    full_name,
-    email,
-    avatar_url,
-    phone,
-    role,
-    is_active,
-    created_at,
-    updated_at,
-    organizations (
-      id,
-      name,
-      slug,
-      logo_url,
-      is_active,
-      created_at,
-      updated_at
-    )
-  `)
-  .eq('id', user.id)
-  .single()
+      .from('profiles')
+      .select(`
+        id,
+        organization_id,
+        full_name,
+        email,
+        avatar_url,
+        phone,
+        role,
+        is_active,
+        created_at,
+        updated_at,
+        organizations (
+          id,
+          name,
+          slug,
+          logo_url,
+          is_active,
+          created_at,
+          updated_at
+        )
+      `)
+      .eq('id', user.id)
+      .single()
 
-if (refreshedProfileError) {
-  throw new Error(`Refreshed profile fetch failed: ${refreshedProfileError.message}`)
-}
+    if (refreshedProfileError) {
+      throw new Error(`Refreshed profile fetch failed: ${refreshedProfileError.message}`)
+    }
 
-profile = refreshedProfileRaw as ProfileRow | null
+    profile = refreshedProfileRaw as ProfileRow | null
 
-if (!profile?.organization_id) {
-  throw new Error('Onboarding completed but profile.organization_id is still missing')
-}
+    if (!profile?.organization_id) {
+      throw new Error('Onboarding completed but profile.organization_id is still missing')
+    }
   }
 
   const organization = profile.organizations?.[0] || null
