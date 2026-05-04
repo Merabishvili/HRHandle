@@ -115,7 +115,7 @@ export async function getDocumentSignedUrl(
 
   if (!doc) return { success: false, error: 'Document not found' }
 
-  const { data, error } = await ctx.supabase.storage
+  const { data, error } = await createAdminClient().storage
     .from(BUCKET)
     .createSignedUrl(doc.file_path, SIGNED_URL_TTL_SECONDS)
 
