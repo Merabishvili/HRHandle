@@ -583,9 +583,9 @@ export function CustomFieldsManager({ candidateGroups, vacancyGroups }: Props) {
       </div>
 
       {activeTab === 'candidate' ? (
-        <EntitySection entityType="candidate" groups={candidateGroups} />
+        <EntitySection key="candidate" entityType="candidate" groups={candidateGroups} />
       ) : (
-        <EntitySection entityType="vacancy" groups={vacancyGroups} />
+        <EntitySection key="vacancy" entityType="vacancy" groups={vacancyGroups} />
       )}
     </div>
   )

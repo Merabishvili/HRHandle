@@ -99,8 +99,8 @@ interface InterviewRow {
 
 interface NoteRow {
   id: string
-  text: string
-  author_id: string
+  note_text: string
+  created_by: string
   created_at: string
   profiles: { full_name: string | null }[] | null
 }
@@ -348,7 +348,7 @@ export default async function CandidateDetailPage({
     await Promise.all([
       supabase
         .from('candidate_notes')
-        .select('id, text, author_id, created_at, profiles(full_name)')
+        .select('id, note_text, created_by, created_at, profiles(full_name)')
         .eq('candidate_id', id)
         .eq('organization_id', organizationId)
         .is('deleted_at', null)
@@ -366,7 +366,13 @@ export default async function CandidateDetailPage({
       getCustomFieldValues(id),
     ])
 
-  const notes = (notesRaw || []) as NoteRow[]
+  const notes = (notesRaw || []).map((n) => ({
+    id: (n as NoteRow).id,
+    text: (n as NoteRow).note_text,
+    author_id: (n as NoteRow).created_by,
+    created_at: (n as NoteRow).created_at,
+    profiles: (n as NoteRow).profiles,
+  }))
   const documents = (documentsRaw || []) as DocumentRow[]
 
   const fullName = getCandidateFullName(candidate)
@@ -522,6 +528,7 @@ export default async function CandidateDetailPage({
             </CardHeader>
             <CardContent>
               <CandidateApplicationsList
+                key={applications.map((a) => a.id).join(',')}
                 candidateId={id}
                 candidateName={`${candidate.first_name} ${candidate.last_name}`.trim()}
                 allStatuses={(appStatusesRaw || []) as AppStatusRow[]}

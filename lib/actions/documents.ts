@@ -69,7 +69,7 @@ export async function uploadDocument(
 
   if (uploadError) return { success: false, error: 'Failed to upload document' }
 
-  const { data, error: dbError } = await ctx.supabase
+  const { data, error: dbError } = await admin
     .from('candidate_documents')
     .insert({
       candidate_id: candidateId,
