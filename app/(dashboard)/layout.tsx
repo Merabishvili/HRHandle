@@ -96,6 +96,24 @@ export default async function DashboardLayout({
   let profile = profileRaw as ProfileRow | null
 
   if (!profile?.organization_id) {
+    // If there's a pending invitation for this user's email, redirect them
+    // to accept it instead of creating a new org via onboarding.
+    if (user.email) {
+      const { createAdminClient } = await import('@/lib/supabase/admin')
+      const admin = createAdminClient()
+      const { data: pendingInvite } = await admin
+        .from('team_invitations')
+        .select('token')
+        .eq('email', user.email.toLowerCase())
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .limit(1)
+        .maybeSingle()
+      if (pendingInvite) {
+        redirect(`/join?token=${pendingInvite.token}`)
+      }
+    }
+
     const result = await runOnboarding(user)
     if (!result.success) {
       throw new Error(`Onboarding failed: ${result.error}`)

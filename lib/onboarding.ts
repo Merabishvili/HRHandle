@@ -65,6 +65,7 @@ export async function runOnboarding(user: User): Promise<OnboardingResult> {
     .single()
 
   if (organizationError || !organization) {
+    console.error('[onboarding] org insert failed:', organizationError)
     return { success: false, error: 'Failed to create organization' }
   }
 
@@ -80,6 +81,7 @@ export async function runOnboarding(user: User): Promise<OnboardingResult> {
     })
 
   if (profileUpsertError) {
+    console.error('[onboarding] profile upsert failed:', profileUpsertError)
     await admin.from('organizations').delete().eq('id', organization.id)
     return { success: false, error: 'Failed to initialize account' }
   }
@@ -110,6 +112,7 @@ export async function runOnboarding(user: User): Promise<OnboardingResult> {
     })
 
   if (subscriptionError) {
+    console.error('[onboarding] subscription insert failed:', subscriptionError)
     await admin.from('organizations').delete().eq('id', organization.id)
     return { success: false, error: 'Failed to initialize account' }
   }
