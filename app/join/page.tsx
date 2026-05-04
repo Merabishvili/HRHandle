@@ -20,7 +20,7 @@ export default async function JoinPage({
 
   // Not logged in — send to login, come back here after
   if (!user) {
-    redirect(`/auth/login?next=${encodeURIComponent(`/join?token=${token}`)}`)
+    redirect(`/auth/sign-up?next=${encodeURIComponent(`/join?token=${token}`)}`)
   }
 
   const result = await acceptInvitation(token)

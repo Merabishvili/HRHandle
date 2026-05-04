@@ -484,6 +484,7 @@ export default async function VacancyDetailPage({
               {filteredApplications.length > 0 ? (
                 <>
                   <VacancyApplicationsList
+                    key={filteredApplications.map((a) => a.id).join(',')}
                     allStatuses={appStatuses}
                     rejectionReasons={rejectionReasonsRaw ?? []}
                     rejectionTemplates={rejectionTemplatesRaw ?? []}
