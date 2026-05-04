@@ -12,8 +12,16 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.verifyOtp({ token_hash, type })
     if (!error) {
-      const safeNext = next.startsWith('/') ? next : '/dashboard'
-      return NextResponse.redirect(`${origin}${safeNext}`)
+      let redirectTarget: string
+      if (next.startsWith('/')) {
+        redirectTarget = `${origin}${next}`
+      } else if (next.startsWith(origin)) {
+        // Same-origin absolute URL coming from emailRedirectTo (invite flow)
+        redirectTarget = next
+      } else {
+        redirectTarget = `${origin}/dashboard`
+      }
+      return NextResponse.redirect(redirectTarget)
     }
   }
 

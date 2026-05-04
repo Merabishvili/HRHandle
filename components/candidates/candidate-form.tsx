@@ -157,7 +157,13 @@ export function CandidateForm({
         const fd = new FormData()
         fd.append('file', entry.file)
         fd.append('document_type', entry.documentType)
-        await uploadDocument(result.data.id, fd)
+        const uploadResult = await uploadDocument(result.data.id, fd)
+        if (!uploadResult.success) {
+          setError(`Document upload failed: ${uploadResult.error}`)
+          setIsLoading(false)
+          submittingRef.current = false
+          return
+        }
       }
       // Save initial note
       if (pendingNote.trim()) {
