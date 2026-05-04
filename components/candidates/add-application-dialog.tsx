@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -37,6 +38,7 @@ export function AddApplicationDialog({
   availableVacancies,
   activeApplicationCount,
 }: AddApplicationDialogProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [vacancyId, setVacancyId] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -52,6 +54,7 @@ export function AddApplicationDialog({
       if (result.success) {
         setOpen(false)
         setVacancyId('')
+        router.refresh()
       } else {
         setError(result.error)
       }

@@ -29,6 +29,7 @@ import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applications-list'
 import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
 import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
+import { AddCandidateToVacancyDialog } from '@/components/vacancies/add-candidate-to-vacancy-dialog'
 
 interface VacancyRow {
   id: string
@@ -471,11 +472,7 @@ export default async function VacancyDetailPage({
                   appStatuses={appStatuses}
                 />
                 <div className="flex items-center gap-2">
-                  <Button size="sm" asChild>
-                    <Link href={`/candidates/new?vacancy=${id}`}>
-                      Add Candidate
-                    </Link>
-                  </Button>
+                  <AddCandidateToVacancyDialog vacancyId={id} />
                   <Button variant="outline" size="sm" asChild>
                     <a href={`/api/export/applications?vacancy_id=${id}`} download>
                       <Download className="mr-2 h-3.5 w-3.5" />
@@ -526,9 +523,9 @@ export default async function VacancyDetailPage({
                     {appSearch || appStatus ? 'Try adjusting your filters.' : 'Add candidates to start tracking their progress.'}
                   </p>
                   {!appSearch && !appStatus && (
-                    <Button className="mt-6" asChild>
-                      <Link href={`/candidates/new?vacancy=${id}`}>Add Candidate</Link>
-                    </Button>
+                    <div className="mt-6">
+                      <AddCandidateToVacancyDialog vacancyId={id} />
+                    </div>
                   )}
                 </div>
               )}

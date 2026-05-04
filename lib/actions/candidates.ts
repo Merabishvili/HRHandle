@@ -129,3 +129,47 @@ export async function deleteCandidate(id: string): Promise<ActionResult<void>> {
   revalidatePath('/candidates')
   return { success: true, data: undefined }
 }
+
+export async function searchCandidatesForVacancy(
+  vacancyId: string,
+  query: string
+): Promise<ActionResult<{ id: string; first_name: string; last_name: string; email: string | null; current_position: string | null }[]>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const trimmed = query.trim()
+
+  // Get candidate IDs already applied to this vacancy
+  const { data: existing } = await ctx.supabase
+    .from('applications')
+    .select('candidate_id')
+    .eq('vacancy_id', vacancyId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+
+  const excludeIds = (existing || []).map((a) => a.candidate_id)
+
+  let q = ctx.supabase
+    .from('candidates')
+    .select('id, first_name, last_name, email, current_position')
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .order('first_name', { ascending: true })
+    .limit(20)
+
+  if (excludeIds.length > 0) {
+    q = q.not('id', 'in', `(${excludeIds.join(',')})`)
+  }
+
+  if (trimmed) {
+    q = q.or(
+      `first_name.ilike.%${trimmed}%,last_name.ilike.%${trimmed}%,email.ilike.%${trimmed}%`
+    )
+  }
+
+  const { data, error } = await q
+
+  if (error) return { success: false, error: 'Search failed' }
+
+  return { success: true, data: data || [] }
+}

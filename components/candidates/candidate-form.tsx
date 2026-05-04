@@ -94,6 +94,7 @@ export function CandidateForm({
 
   const isEditing = !!candidate
   const [pendingNote, setPendingNote] = useState('')
+  const submittingRef = useRef(false)
 
   const handleChange = <K extends keyof CandidateFormData>(key: K, value: CandidateFormData[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }))
@@ -112,6 +113,8 @@ export function CandidateForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submittingRef.current) return
+    submittingRef.current = true
     setError(null)
     setIsLoading(true)
 
@@ -136,6 +139,7 @@ export function CandidateForm({
     if (!result.success) {
       setError(result.error)
       setIsLoading(false)
+      submittingRef.current = false
       return
     }
 
@@ -161,7 +165,7 @@ export function CandidateForm({
       }
     }
 
-    router.push(isEditing ? `/candidates/${candidate.id}` : '/candidates')
+    router.push(isEditing ? `/candidates/${candidate.id}` : `/candidates/${result.data?.id}`)
     router.refresh()
     setIsLoading(false)
   }
