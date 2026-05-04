@@ -73,6 +73,10 @@ function SignUpForm() {
 
     try {
       const supabase = createClient()
+      const inviteToken = isInviteFlow
+        ? new URLSearchParams(safeNext.split('?')[1] ?? '').get('token') ?? undefined
+        : undefined
+
       const { error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -80,7 +84,9 @@ function SignUpForm() {
           emailRedirectTo: buildEmailRedirectTo(),
           data: {
             full_name: fullName.trim(),
-            ...(isInviteFlow ? {} : { company_name: companyName.trim() }),
+            ...(isInviteFlow
+              ? { invite_token: inviteToken }
+              : { company_name: companyName.trim() }),
           },
         },
       })

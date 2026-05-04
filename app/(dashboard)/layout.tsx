@@ -67,6 +67,24 @@ export default async function DashboardLayout({
     redirect('/auth/login')
   }
 
+  // Invited users have invite_token stored in user metadata at sign-up.
+  // Redirect them to accept the invite before loading the dashboard,
+  // regardless of whether onboarding has already run.
+  const inviteToken = user.user_metadata?.invite_token as string | undefined
+  if (inviteToken) {
+    const { createAdminClient: adminForInvite } = await import('@/lib/supabase/admin')
+    const { data: pendingInvite } = await adminForInvite()
+      .from('team_invitations')
+      .select('token')
+      .eq('token', inviteToken)
+      .eq('status', 'pending')
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle()
+    if (pendingInvite) {
+      redirect(`/join?token=${inviteToken}`)
+    }
+  }
+
   let { data: profileRaw } = await supabase
     .from('profiles')
     .select(`
