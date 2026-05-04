@@ -100,7 +100,7 @@ export async function uploadDocument(
  */
 export async function getDocumentSignedUrl(
   documentId: string
-): Promise<ActionResult<{ url: string; filename: string }>> {
+): Promise<ActionResult<{ url: string; filename: string; mimeType: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
