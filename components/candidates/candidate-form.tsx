@@ -172,7 +172,6 @@ export function CandidateForm({
     }
 
     router.push(isEditing ? `/candidates/${candidate.id}` : `/candidates/${result.data?.id}`)
-    router.refresh()
     setIsLoading(false)
   }
 
