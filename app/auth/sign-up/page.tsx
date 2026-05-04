@@ -50,11 +50,14 @@ function SignUpForm() {
   const safeNext = rawNext.startsWith('/') ? rawNext : ''
   const isInviteFlow = safeNext.startsWith('/join')
 
-  // Build the callback URL, carrying next through email confirmation if present
-  function buildCallbackUrl() {
-    const base = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL
-      ?? `${window.location.origin}/auth/callback`
-    return safeNext ? `${base}?next=${encodeURIComponent(safeNext)}` : base
+  // For email/password signup, redirect directly to the destination after confirmation.
+  // /auth/callback only works for OAuth (PKCE code exchange) — routing through it
+  // for email confirmation causes an error because there is no code param.
+  function buildEmailRedirectTo() {
+    const origin = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL
+      ? process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL.replace('/auth/callback', '')
+      : window.location.origin
+    return safeNext ? `${origin}${safeNext}` : `${origin}/dashboard`
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -74,10 +77,10 @@ function SignUpForm() {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: buildCallbackUrl(),
+          emailRedirectTo: buildEmailRedirectTo(),
           data: {
             full_name: fullName.trim(),
-            company_name: companyName.trim(),
+            ...(isInviteFlow ? {} : { company_name: companyName.trim() }),
           },
         },
       })
