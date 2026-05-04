@@ -48,6 +48,7 @@ function SignUpForm() {
 
   const rawNext = searchParams.get('next') ?? ''
   const safeNext = rawNext.startsWith('/') ? rawNext : ''
+  const isInviteFlow = safeNext.startsWith('/join')
 
   // Build the callback URL, carrying next through email confirmation if present
   function buildCallbackUrl() {
@@ -130,7 +131,9 @@ function SignUpForm() {
     <Card className="border-border">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Create your account</CardTitle>
-        <CardDescription>Start your free trial today</CardDescription>
+        <CardDescription>
+          {isInviteFlow ? 'Create an account to accept your invitation' : 'Start your free trial today'}
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -175,18 +178,20 @@ function SignUpForm() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="companyName">Company name</Label>
-            <Input
-              id="companyName"
-              type="text"
-              placeholder="Acme Inc."
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
+          {!isInviteFlow && (
+            <div className="space-y-2">
+              <Label htmlFor="companyName">Company name</Label>
+              <Input
+                id="companyName"
+                type="text"
+                placeholder="Acme Inc."
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="email">Work email</Label>

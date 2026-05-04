@@ -85,6 +85,7 @@ export async function uploadDocument(
     .single()
 
   if (dbError || !data) {
+    console.error('[documents] candidate_documents insert failed:', dbError)
     await admin.storage.from(BUCKET).remove([storagePath])
     return { success: false, error: 'Failed to record document' }
   }
