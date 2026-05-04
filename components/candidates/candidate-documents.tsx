@@ -84,14 +84,20 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
     })
   }
 
-  const handleOpen = (docId: string) => {
+  const handleOpen = (docId: string, mimeType: string) => {
     startTransition(async () => {
       const result = await getDocumentSignedUrl(docId)
       if (!result.success) {
         setError(result.error)
         return
       }
-      window.open(result.data.url, '_blank', 'noopener,noreferrer')
+      const isWord =
+        mimeType === 'application/msword' ||
+        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      const target = isWord
+        ? `https://docs.google.com/viewer?url=${encodeURIComponent(result.data.url)}`
+        : result.data.url
+      window.open(target, '_blank', 'noopener,noreferrer')
     })
   }
 
@@ -175,7 +181,7 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground"
                     title="Open in new tab"
-                    onClick={() => handleOpen(doc.id)}
+                    onClick={() => handleOpen(doc.id, doc.mime_type)}
                     disabled={isPending}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />

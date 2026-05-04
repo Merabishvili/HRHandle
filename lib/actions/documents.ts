@@ -100,14 +100,14 @@ export async function uploadDocument(
  */
 export async function getDocumentSignedUrl(
   documentId: string
-): Promise<ActionResult<{ url: string; filename: string }>> {
+): Promise<ActionResult<{ url: string; filename: string; mimeType: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   // Verify the document belongs to this org before generating a URL
   const { data: doc } = await ctx.supabase
     .from('candidate_documents')
-    .select('file_path, file_name')
+    .select('file_path, file_name, mime_type')
     .eq('id', documentId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
@@ -117,13 +117,13 @@ export async function getDocumentSignedUrl(
 
   const { data, error } = await createAdminClient().storage
     .from(BUCKET)
-    .createSignedUrl(doc.file_path, SIGNED_URL_TTL_SECONDS)
+    .createSignedUrl(doc.file_path, SIGNED_URL_TTL_SECONDS, { download: false })
 
   if (error || !data?.signedUrl) {
     return { success: false, error: 'Failed to generate download link' }
   }
 
-  return { success: true, data: { url: data.signedUrl, filename: doc.file_name } }
+  return { success: true, data: { url: data.signedUrl, filename: doc.file_name, mimeType: doc.mime_type as string } }
 }
 
 /**
