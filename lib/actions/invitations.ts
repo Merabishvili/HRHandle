@@ -136,7 +136,18 @@ export async function acceptInvitation(token: string): Promise<ActionResult<{ or
 
   // Verify the logged-in user's email matches the invited email
   if (!user.email || invite.email.toLowerCase() !== user.email.toLowerCase()) {
-    return { success: false, error: 'This invitation was sent to a different email address.' }
+    return { success: false, error: 'This invitation was sent to a different email address. Please sign out and sign in with the correct account.' }
+  }
+
+  // Block if the user already belongs to a different organization
+  const { data: existingProfile } = await admin
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (existingProfile?.organization_id && existingProfile.organization_id !== invite.organization_id) {
+    return { success: false, error: 'Your account already belongs to another organization. You cannot join a second one.' }
   }
 
   // Link this user to the invited org (upsert in case no profile row exists yet for a new signup)
