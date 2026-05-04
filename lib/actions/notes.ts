@@ -36,8 +36,8 @@ export async function createNote(
     .insert({
       candidate_id: candidateId,
       organization_id: ctx.orgId,
-      author_id: ctx.userId,
-      text: parsed.data.text,
+      created_by: ctx.userId,
+      note_text: parsed.data.text,
     })
 
   if (error) return { success: false, error: 'Failed to save note' }

@@ -3,6 +3,7 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select,
   SelectContent,
@@ -68,11 +69,12 @@ export function CustomFieldsForm({ groups, values, onChange }: Props) {
                   )}
 
                   {field.field_type === 'date' && (
-                    <Input
-                      id={`cf-${field.id}`}
-                      type="date"
-                      value={val}
-                      onChange={(e) => onChange(field.id, e.target.value)}
+                    <DatePicker
+                      value={val || null}
+                      onChange={(v) => onChange(field.id, v ?? '')}
+                      placeholder="Pick a date"
+                      fromYear={1900}
+                      toYear={new Date().getFullYear() + 10}
                     />
                   )}
 

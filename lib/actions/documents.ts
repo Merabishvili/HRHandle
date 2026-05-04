@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const BUCKET = 'candidate-documents'
 const SIGNED_URL_TTL_SECONDS = 3600
@@ -61,7 +62,8 @@ export async function uploadDocument(
   const ext = ['pdf', 'doc', 'docx'].includes(rawExt) ? rawExt : 'pdf'
   const storagePath = `${ctx.orgId}/${candidateId}/${crypto.randomUUID()}.${ext}`
 
-  const { error: uploadError } = await ctx.supabase.storage
+  const admin = createAdminClient()
+  const { error: uploadError } = await admin.storage
     .from(BUCKET)
     .upload(storagePath, fileBytes, { contentType: file.type, upsert: false })
 
@@ -83,7 +85,7 @@ export async function uploadDocument(
     .single()
 
   if (dbError || !data) {
-    await ctx.supabase.storage.from(BUCKET).remove([storagePath])
+    await admin.storage.from(BUCKET).remove([storagePath])
     return { success: false, error: 'Failed to record document' }
   }
 
@@ -140,7 +142,7 @@ export async function deleteDocument(documentId: string): Promise<ActionResult<v
 
   if (!doc) return { success: false, error: 'Document not found' }
 
-  await ctx.supabase.storage.from(BUCKET).remove([doc.file_path])
+  await createAdminClient().storage.from(BUCKET).remove([doc.file_path])
 
   const { error } = await ctx.supabase
     .from('candidate_documents')
