@@ -139,11 +139,17 @@ export async function acceptInvitation(token: string): Promise<ActionResult<{ or
     return { success: false, error: 'This invitation was sent to a different email address.' }
   }
 
-  // Link this user to the invited org
+  // Link this user to the invited org (upsert in case no profile row exists yet for a new signup)
   const { error: profileError } = await admin
     .from('profiles')
-    .update({ organization_id: invite.organization_id, role: invite.role })
-    .eq('id', user.id)
+    .upsert({
+      id: user.id,
+      organization_id: invite.organization_id,
+      role: invite.role,
+      full_name: (user.user_metadata?.full_name as string | undefined)?.trim() || user.email || 'New Member',
+      email: user.email ?? null,
+      is_active: true,
+    })
 
   if (profileError) return { success: false, error: 'Failed to join organization.' }
 
