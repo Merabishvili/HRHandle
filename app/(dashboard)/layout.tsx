@@ -119,7 +119,9 @@ export default async function DashboardLayout({
       throw new Error(`Onboarding failed: ${result.error}`)
     }
 
-    const { data: refreshedProfileRaw, error: refreshedProfileError } = await supabase
+    const { createAdminClient: createAdminClientForRefresh } = await import('@/lib/supabase/admin')
+    const adminForRefresh = createAdminClientForRefresh()
+    const { data: refreshedProfileRaw, error: refreshedProfileError } = await adminForRefresh
       .from('profiles')
       .select(`
         id,
