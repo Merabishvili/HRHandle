@@ -80,6 +80,7 @@ export async function sendInterviewInvitationEmail({
   customSubject,
   customBody,
   rescheduled = false,
+  timezone,
 }: {
   to: string
   candidateName: string
