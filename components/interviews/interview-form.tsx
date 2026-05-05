@@ -198,6 +198,7 @@ export function InterviewForm({
         createTeams: meetingOption === 'teams',
         meetingLink: meetingOption === 'manual' ? manualMeetingLink || null : null,
         sendInvitation,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }
     )
 
