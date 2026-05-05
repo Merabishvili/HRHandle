@@ -5,6 +5,7 @@ import { runOnboarding } from '@/lib/onboarding'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/header'
 import { TrialBanner } from '@/components/dashboard/trial-banner'
+import { SessionGuard } from '@/components/auth/session-guard'
 
 interface ProfileRow {
   id: string
@@ -243,6 +244,7 @@ export default async function DashboardLayout({
           isExpired={isExpired}
         />
         <main className="flex-1 p-4 lg:p-8">{children}</main>
+        <SessionGuard />
       </div>
     </div>
   )
