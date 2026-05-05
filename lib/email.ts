@@ -1,5 +1,4 @@
 import { Resend } from 'resend'
-import { format } from 'date-fns'
 import { applyVariables, escapeHtml, DEFAULT_TEMPLATES } from '@/lib/email-template-utils'
 
 function getResend(): Resend {
@@ -81,6 +80,7 @@ export async function sendInterviewInvitationEmail({
   customSubject,
   customBody,
   rescheduled = false,
+  timezone,
 }: {
   to: string
   candidateName: string
@@ -95,9 +95,12 @@ export async function sendInterviewInvitationEmail({
   customSubject?: string
   customBody?: string
   rescheduled?: boolean
+  timezone?: string
 }) {
-  const date = format(new Date(scheduledAt), 'EEEE, MMMM d, yyyy')
-  const time = format(new Date(scheduledAt), 'h:mm a')
+  const tz = timezone || 'UTC'
+  const d = new Date(scheduledAt)
+  const date = d.toLocaleDateString('en-US', { timeZone: tz, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  const time = d.toLocaleTimeString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })
   const typeLabel = interviewType === 'video' ? 'Video Call' : interviewType === 'phone' ? 'Phone Call' : 'On-site'
   const safeCandidate = escapeHtml(candidateName)
   const safeSenderName = escapeHtml(senderName)

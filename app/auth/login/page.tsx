@@ -1,9 +1,12 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { createClient } from '@/lib/supabase/client'
+import { setSessionPreference } from '@/lib/session'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,6 +43,9 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false)
   const [isMicrosoftLoading, setIsMicrosoftLoading] = useState<boolean>(false)
+  const [rememberMe, setRememberMe] = useState<boolean>(true)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -51,17 +57,27 @@ function LoginForm() {
     setError(null)
     setIsLoading(true)
 
+    if (!captchaToken) {
+      setError('Security check not complete. Please wait a moment and try again.')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const supabase = createClient()
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
+        options: { captchaToken },
       })
       if (signInError) throw new Error(signInError.message)
+      setSessionPreference(rememberMe)
       router.push(safeNext)
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in.')
+      turnstileRef.current?.reset()
+      setCaptchaToken(null)
       setIsLoading(false)
     }
   }
@@ -69,6 +85,7 @@ function LoginForm() {
   const handleGoogleSignIn = async () => {
     setError(null)
     setIsGoogleLoading(true)
+    setSessionPreference(rememberMe)
     try {
       const supabase = createClient()
       const callbackUrl = safeNext !== '/dashboard'
@@ -88,6 +105,7 @@ function LoginForm() {
   const handleMicrosoftSignIn = async () => {
     setError(null)
     setIsMicrosoftLoading(true)
+    setSessionPreference(rememberMe)
     try {
       const supabase = createClient()
       const callbackUrl = safeNext !== '/dashboard'
@@ -171,7 +189,21 @@ function LoginForm() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <div className="flex items-center gap-2">
+            <input
+              id="remember-me"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              disabled={isLoading}
+              className="h-4 w-4 rounded border-border accent-primary"
+            />
+            <label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer select-none">
+              Keep me signed in
+            </label>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isLoading || !captchaToken}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -181,6 +213,15 @@ function LoginForm() {
               'Sign in'
             )}
           </Button>
+
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+            onSuccess={(token) => setCaptchaToken(token)}
+            onError={() => setCaptchaToken(null)}
+            onExpire={() => setCaptchaToken(null)}
+            options={{ size: 'invisible' }}
+          />
         </form>
 
         <div className="mt-6 text-center text-sm">

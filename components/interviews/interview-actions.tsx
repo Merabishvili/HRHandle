@@ -51,9 +51,14 @@ export function InterviewActions({
   const [confirmAction, setConfirmAction] = useState<'cancel' | 'no_show' | null>(null)
   const [showReschedule, setShowReschedule] = useState(false)
 
+  // Convert UTC ISO to local date/time for form fields
+  const localScheduled = new Date(scheduledAt)
+  const localDateStr = `${localScheduled.getFullYear()}-${String(localScheduled.getMonth() + 1).padStart(2, '0')}-${String(localScheduled.getDate()).padStart(2, '0')}`
+  const localTimeStr = `${String(localScheduled.getHours()).padStart(2, '0')}:${String(localScheduled.getMinutes()).padStart(2, '0')}`
+
   // Reschedule form state
-  const [newDate, setNewDate] = useState(scheduledAt.slice(0, 10))
-  const [newTime, setNewTime] = useState(scheduledAt.slice(11, 16))
+  const [newDate, setNewDate] = useState(localDateStr)
+  const [newTime, setNewTime] = useState(localTimeStr)
   const [newDuration, setNewDuration] = useState(durationMinutes)
   const [sendEmail, setSendEmail] = useState(false)
   const [rescheduleError, setRescheduleError] = useState<string | null>(null)
@@ -72,8 +77,9 @@ export function InterviewActions({
     setRescheduleError(null)
     if (!newDate || !newTime) { setRescheduleError('Date and time are required.'); return }
     const iso = new Date(`${newDate}T${newTime}`).toISOString()
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
     startTransition(async () => {
-      const result = await rescheduleInterview(interviewId, iso, newDuration, sendEmail)
+      const result = await rescheduleInterview(interviewId, iso, newDuration, sendEmail, tz)
       if (!result.success) { setRescheduleError(result.error); return }
       setShowReschedule(false)
       router.refresh()

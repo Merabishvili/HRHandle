@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,6 +50,8 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false)
   const [isMicrosoftLoading, setIsMicrosoftLoading] = useState<boolean>(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -68,8 +72,14 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
     setError(null)
     setIsLoading(true)
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters')
+      setIsLoading(false)
+      return
+    }
+
+    if (!captchaToken) {
+      setError('Security check not complete. Please wait a moment and try again.')
       setIsLoading(false)
       return
     }
@@ -85,6 +95,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
         email: email.trim(),
         password,
         options: {
+          captchaToken,
           emailRedirectTo: buildEmailRedirectTo(),
           data: {
             full_name: fullName.trim(),
@@ -98,6 +109,8 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
       router.push('/auth/sign-up-success')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create account.')
+      turnstileRef.current?.reset()
+      setCaptchaToken(null)
       setIsLoading(false)
     }
   }
@@ -253,7 +266,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
             <Input
               id="password"
               type="password"
-              placeholder="At least 6 characters"
+              placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -262,7 +275,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || !captchaToken}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -272,6 +285,15 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
               'Create account'
             )}
           </Button>
+
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+            onSuccess={(token) => setCaptchaToken(token)}
+            onError={() => setCaptchaToken(null)}
+            onExpire={() => setCaptchaToken(null)}
+            options={{ size: 'invisible' }}
+          />
         </form>
 
         <p className="mt-4 text-xs text-center text-muted-foreground">

@@ -44,6 +44,12 @@ export async function createCandidate(
       .single()
 
     if (vacancyCheck) {
+      const { data: appliedStatus } = await ctx.supabase
+        .from('application_statuses')
+        .select('id')
+        .eq('code', 'applied')
+        .single()
+
       const appParsed = ApplicationSchema.safeParse({
         candidate_id: data.id,
         vacancy_id: linkedVacancyId,
@@ -53,6 +59,8 @@ export async function createCandidate(
           ...appParsed.data,
           organization_id: ctx.orgId,
           created_by: ctx.userId,
+          status_id: appliedStatus?.id ?? null,
+          applied_at: new Date().toISOString(),
         })
       }
     }

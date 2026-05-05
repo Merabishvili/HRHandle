@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { clearSessionTracking } from '@/lib/session'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 
@@ -12,6 +13,7 @@ export function SignOutButton() {
 
   const handleSignOut = async () => {
     setLoading(true)
+    clearSessionTracking()
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/auth/login')

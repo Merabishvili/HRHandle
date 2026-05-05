@@ -32,7 +32,8 @@ export async function rescheduleInterview(
   interviewId: string,
   scheduledAt: string,
   durationMinutes: number,
-  sendEmail: boolean
+  sendEmail: boolean,
+  timezone?: string
 ): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -79,6 +80,7 @@ export async function rescheduleInterview(
           interviewType: interview.type,
           meetingLink: meetLink,
           rescheduled: true,
+          timezone,
         })
       }
     } catch {
@@ -98,6 +100,7 @@ export async function createInterview(
     createTeams?: boolean
     meetingLink?: string | null
     sendInvitation?: boolean
+    timezone?: string
   } = {}
 ): Promise<ActionResult<{ id: string; meetLink: string | null }>> {
   const ctx = await getAuthContext()
@@ -278,6 +281,7 @@ export async function createInterview(
           durationMinutes: parsed.data.duration_minutes ?? 60,
           interviewType: parsed.data.type,
           meetingLink: meetLink,
+          timezone: options.timezone,
         })
       } catch {
         // Email failure is non-fatal — interview was already created

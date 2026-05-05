@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import type { Profile, Organization, Subscription } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
+import { clearSessionTracking } from '@/lib/session'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -67,6 +68,7 @@ export function DashboardHeader({
   )?.[1] ?? ''
 
   const handleSignOut = async () => {
+    clearSessionTracking()
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/')

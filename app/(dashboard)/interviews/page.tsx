@@ -3,9 +3,10 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Calendar, Video, Phone, Building, ExternalLink } from 'lucide-react'
-import { format, isToday, isTomorrow, isPast } from 'date-fns'
+import { isPast } from 'date-fns'
 import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
 import { InterviewActions } from '@/components/interviews/interview-actions'
+import { InterviewTimeDisplay } from '@/components/interviews/interview-time-display'
 
 interface InterviewRow {
   id: string
@@ -67,12 +68,6 @@ function getDisplayStatusKey(interview: InterviewRow): string {
 function getCandidateFullName(candidate?: { first_name: string; last_name: string } | null) {
   if (!candidate) return 'Unknown candidate'
   return `${candidate.first_name} ${candidate.last_name}`.trim()
-}
-
-function getTimeLabel(date: Date) {
-  if (isToday(date)) return 'Today'
-  if (isTomorrow(date)) return 'Tomorrow'
-  return format(date, 'MMM d, yyyy')
 }
 
 function getInterviewIcon(type: string) {
@@ -137,7 +132,6 @@ export default async function InterviewsPage({
   const vacancyMap = new Map((vacanciesRaw || []).map((v) => [v.id, v]))
   const teamMemberMap = new Map((teamMembersRaw || []).map((m) => [m.id, m]))
 
-  const now = new Date()
   const upcomingCount = interviews.filter(
     (i) => i.status === 'scheduled' && !isPast(new Date(i.scheduled_at))
   ).length
@@ -162,8 +156,6 @@ export default async function InterviewsPage({
     { value: 'cancelled', label: `Cancelled (${cancelledCount})` },
     { value: 'no_show', label: `No Show (${noShowCount})` },
   ]
-
-  void now // suppress unused warning
 
   return (
     <div className="space-y-6">
@@ -204,7 +196,6 @@ export default async function InterviewsPage({
         <div className="flex flex-col gap-2.5">
           {filtered.map((interview) => {
             const Icon = getInterviewIcon(interview.type)
-            const scheduledDate = new Date(interview.scheduled_at)
             const displayStatusKey = getDisplayStatusKey(interview)
             const displayStatusLabel = getDisplayStatus(interview)
 
@@ -245,14 +236,10 @@ export default async function InterviewsPage({
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-foreground">
-                      {getTimeLabel(scheduledDate)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(scheduledDate, 'h:mm a')} ({interview.duration_minutes} min)
-                    </p>
-                  </div>
+                  <InterviewTimeDisplay
+                    scheduledAt={interview.scheduled_at}
+                    durationMinutes={interview.duration_minutes}
+                  />
 
                   <div className="flex flex-col items-end gap-1.5">
                     <Badge
