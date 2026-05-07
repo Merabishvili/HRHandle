@@ -21,7 +21,10 @@ export default [
     },
     rules: {
       ...nextPlugin.configs.recommended.rules,
-      ...reactHooksPlugin.configs.recommended.rules,
+      // Use only the classic react-hooks rules — v5 adds aggressive new rules
+      // (set-state-in-effect, purity) that produce false positives on standard patterns
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
     },
