@@ -83,8 +83,8 @@ export async function rescheduleInterview(
           timezone,
         })
       }
-    } catch {
-      // Email failure is non-fatal
+    } catch (err) {
+      console.error('[interviews] reschedule email send failed:', err)
     }
   }
 
@@ -283,8 +283,8 @@ export async function createInterview(
           meetingLink: meetLink,
           timezone: options.timezone,
         })
-      } catch {
-        // Email failure is non-fatal — interview was already created
+      } catch (err) {
+        console.error('[interviews] email send failed:', err)
       }
     }
   }

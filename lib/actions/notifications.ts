@@ -69,8 +69,9 @@ export async function createOrgNotifications(
   }))
 
   try {
-    await supabase.from('notifications').insert(rows)
-  } catch {
-    // Non-fatal: notifications table may not exist yet
+    const { error } = await supabase.from('notifications').insert(rows)
+    if (error) console.error('[notifications] insert failed:', error)
+  } catch (err) {
+    console.error('[notifications] unexpected error:', err)
   }
 }

@@ -1,5 +1,6 @@
 'use server'
 
+import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendApplicationConfirmationEmail } from '@/lib/email'
 import { createOrgNotifications } from '@/lib/actions/notifications'
@@ -52,7 +53,7 @@ export async function submitPublicApplication(
   if (!token) return { success: false, error: 'Invalid form link.' }
   if (!firstName) return { success: false, error: 'First name is required.' }
   if (!lastName) return { success: false, error: 'Last name is required.' }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !z.string().email().safeParse(email).success) {
     return { success: false, error: 'A valid email address is required.' }
   }
   if (!cvFile || cvFile.size === 0) return { success: false, error: 'CV upload is required.' }
@@ -103,6 +104,7 @@ export async function submitPublicApplication(
     .select('id', { count: 'exact', head: true })
     .eq('vacancy_id', vacancy.id)
     .eq('organization_id', orgId)
+    .is('deleted_at', null)
 
   if ((appCount ?? 0) >= MAX_APPLICATIONS_PER_VACANCY) {
     return { success: false, error: 'This position is no longer open.' }
@@ -236,6 +238,7 @@ export async function submitPublicApplication(
         uploaded_by: null,
         file_name: cvFile.name,
         file_size: cvFile.size,
+        file_size_bytes: cvFile.size,
         mime_type: cvFile.type,
         file_path: storagePath,
         document_type: 'cv',

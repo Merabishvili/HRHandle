@@ -1,0 +1,222 @@
+# API Endpoints
+
+All routes are in `app/api/`. Auth routes (`app/auth/confirm`, `app/auth/callback`) are also route handlers but listed separately.
+
+---
+
+## Health
+
+### `GET /api/health`
+
+**Auth required:** No  
+**Purpose:** Simple health check — verifies database connectivity  
+**File:** `app/api/health/route.ts`
+
+**Response (200):**
+```json
+{
+  "status": "ok",
+  "checks": { "database": "ok" },
+  "timestamp": "2025-01-01T00:00:00.000Z"
+}
+```
+
+**Response (503):**
+```json
+{
+  "status": "degraded",
+  "checks": { "database": "error" },
+  "timestamp": "..."
+}
+```
+
+---
+
+## Onboarding
+
+### `POST /api/onboarding`
+
+**Auth required:** Yes (Supabase session cookie)  
+**Purpose:** Runs onboarding for the authenticated user — creates organization, profile, subscription, and seed data. Delegates to `lib/onboarding.ts`.  
+**File:** `app/api/onboarding/route.ts`  
+**Rate limited:** 5 attempts per user per 60 seconds (in-memory, resets on server restart)  
+**Called by:** External use only — the dashboard layout calls `runOnboarding()` directly
+
+**Request body:** None  
+
+**Response (200):**
+```json
+{ "success": true, "alreadyInitialized": false }
+```
+
+**Response (401):** `{ "error": "Unauthorized" }`  
+**Response (429):** `{ "error": "Too many requests. Please wait before retrying." }`  
+**Response (500):** `{ "error": "..." }`
+
+---
+
+## Cron
+
+### `GET /api/cron/expire-vacancies`
+
+**Auth required:** `Authorization: Bearer {CRON_SECRET}` header (timing-safe comparison)  
+**Purpose:** Calls Supabase RPC `expire_past_vacancies()` to auto-archive vacancies whose end date has passed  
+**File:** `app/api/cron/expire-vacancies/route.ts`  
+**Called by:** Vercel Cron (configured in Vercel dashboard)
+
+**Response (200):**
+```json
+{ "ok": true, "ran_at": "2025-01-01T00:00:00.000Z" }
+```
+
+**Response (401):** `{ "error": "Unauthorized" }`  
+**Response (500):** `{ "ok": false }`
+
+---
+
+## Export
+
+### `GET /api/export/candidates`
+
+**Auth required:** Yes (Supabase session cookie)  
+**Purpose:** Exports all non-deleted candidates for the authenticated user's organization as a CSV file  
+**File:** `app/api/export/candidates/route.ts`  
+**Called by:** "Export CSV" button on the candidates page  
+
+**Request params:** None  
+
+**Response (200):** `Content-Type: text/csv` — file download `candidates.csv`  
+Columns: First Name, Last Name, Email, Phone, Company, Position, Years Experience, Source, LinkedIn, Added  
+Max rows: 10,000
+
+**Response (401):** JSON `{ "error": "Unauthorized" }`
+
+---
+
+### `GET /api/export/applications?vacancy_id={id}`
+
+**Auth required:** Yes (Supabase session cookie)  
+**Purpose:** Exports all non-deleted applications for a specific vacancy as a CSV file  
+**File:** `app/api/export/applications/route.ts`  
+**Called by:** Export button on the vacancy applications tab  
+
+**Query params:**
+- `vacancy_id` (required) — UUID of the vacancy
+
+**Response (200):** `Content-Type: text/csv` — file download `applications_{vacancy_title}.csv`  
+Columns: First Name, Last Name, Email, Phone, LinkedIn, Application Status, Source, Applied At  
+Max rows: 10,000
+
+**Response (400):** `{ "error": "vacancy_id is required" }`  
+**Response (401):** `{ "error": "Unauthorized" }`  
+**Response (404):** `{ "error": "Vacancy not found" }`
+
+---
+
+## Google Calendar OAuth
+
+### `GET /api/auth/google`
+
+**Auth required:** Yes  
+**Purpose:** Initiates Google Calendar OAuth. Generates CSRF state, sets cookie, redirects to Google  
+**File:** `app/api/auth/google/route.ts`  
+**Redirects to:** Google OAuth authorization URL or `/settings?google=not_configured` if env vars missing
+
+---
+
+### `GET /api/auth/google/callback`
+
+**Auth required:** Yes  
+**Purpose:** Handles Google OAuth callback — verifies state, exchanges code for tokens, stores in `profiles`  
+**File:** `app/api/auth/google/callback/route.ts`  
+**Query params:** `code`, `state`, `error`  
+**Redirects to:** `/settings?google=connected` or `/settings?google=error` or `/settings?google=denied`
+
+---
+
+### `POST /api/auth/google/disconnect`
+
+**Auth required:** Yes  
+**Purpose:** Clears Google tokens from `profiles`  
+**File:** `app/api/auth/google/disconnect/route.ts`  
+**Redirects to:** `/settings?google=disconnected`
+
+---
+
+## Zoom OAuth
+
+### `GET /api/auth/zoom`
+
+**Auth required:** Yes  
+**Purpose:** Initiates Zoom OAuth. Sets CSRF state cookie, redirects to Zoom  
+**File:** `app/api/auth/zoom/route.ts`  
+**Redirects to:** Zoom OAuth URL or `/settings?zoom=not_configured`
+
+---
+
+### `GET /api/auth/zoom/callback`
+
+**Auth required:** Yes  
+**Purpose:** Handles Zoom OAuth callback — verifies state, exchanges code for tokens, stores in `profiles`  
+**File:** `app/api/auth/zoom/callback/route.ts`  
+**Redirects to:** `/settings?zoom=connected` or `/settings?zoom=error`
+
+---
+
+### `POST /api/auth/zoom/disconnect`
+
+**Auth required:** Yes  
+**Purpose:** Clears Zoom tokens from `profiles`  
+**File:** `app/api/auth/zoom/disconnect/route.ts`  
+**Redirects to:** `/settings?zoom=disconnected`
+
+---
+
+## Microsoft OAuth
+
+### `GET /api/auth/microsoft`
+
+**Auth required:** Yes  
+**Purpose:** Initiates Microsoft OAuth. Sets CSRF state cookie, redirects to Microsoft  
+**File:** `app/api/auth/microsoft/route.ts`  
+**Redirects to:** Microsoft OAuth URL or `/settings/integrations?microsoft=not_configured`
+
+---
+
+### `GET /api/auth/microsoft/callback`
+
+**Auth required:** Yes  
+**Purpose:** Handles Microsoft OAuth callback — verifies state, exchanges code for tokens, stores in `profiles`  
+**File:** `app/api/auth/microsoft/callback/route.ts`  
+**Redirects to:** `/settings/integrations?microsoft=connected` or `/settings/integrations?microsoft=error` or `/settings/integrations?microsoft=denied`
+
+---
+
+### `POST /api/auth/microsoft/disconnect`
+
+**Auth required:** Yes  
+**Purpose:** Clears Microsoft tokens from `profiles`  
+**File:** `app/api/auth/microsoft/disconnect/route.ts`  
+**Redirects to:** `/settings/integrations?microsoft=disconnected`
+
+---
+
+## Auth Routes (Non-API)
+
+### `GET /auth/confirm`
+
+**Auth required:** No  
+**Purpose:** Verifies a `token_hash` OTP and redirects to `next`  
+**File:** `app/auth/confirm/route.ts`  
+**Query params:** `token_hash`, `type` (e.g. `signup`, `recovery`), `next` (optional, defaults to `/dashboard`)  
+**Redirects to:** `next` on success, `/auth/error` on failure
+
+---
+
+### `GET /auth/callback`
+
+**Auth required:** No  
+**Purpose:** Exchanges OAuth PKCE `code` for session (used by Supabase OAuth sign-in providers)  
+**File:** `app/auth/callback/route.ts`  
+**Query params:** `code`, `next` (optional)  
+**Redirects to:** `next` (relative paths only) on success, `/auth/error` on failure

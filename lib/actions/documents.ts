@@ -78,6 +78,7 @@ export async function uploadDocument(
       file_name: file.name,
       file_path: storagePath,
       file_size: file.size,
+      file_size_bytes: file.size,
       mime_type: file.type,
       document_type: documentType || 'other',
     })

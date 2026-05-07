@@ -11,22 +11,11 @@ interface PageProps {
 async function resolveOrg(slug: string) {
   const supabase = createAdminClient()
 
-  // 1. Try clean public_page_slug (set by migration 021)
-  let { data: org } = await supabase
+  const { data: org } = await supabase
     .from('organizations')
     .select('id, name, logo_url, public_page_slug')
     .eq('public_page_slug', slug)
     .single()
-
-  // 2. Fallback: UUID public_page_token (backward compat with old shared links)
-  if (!org) {
-    const { data } = await supabase
-      .from('organizations')
-      .select('id, name, logo_url, public_page_slug')
-      .eq('public_page_token', slug)
-      .single()
-    org = data
-  }
 
   return org
 }
