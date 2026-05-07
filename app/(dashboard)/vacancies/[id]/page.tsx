@@ -141,15 +141,6 @@ function formatSalary(vacancy: VacancyRow): string | null {
   return null
 }
 
-function getCandidateFullName(candidate?: { first_name: string; last_name: string } | null): string {
-  if (!candidate) return 'Unknown candidate'
-  return `${candidate.first_name} ${candidate.last_name}`.trim()
-}
-
-function getCandidateInitials(candidate?: { first_name: string; last_name: string } | null): string {
-  if (!candidate) return '?'
-  return `${candidate.first_name?.[0] || ''}${candidate.last_name?.[0] || ''}`.toUpperCase()
-}
 
 export default async function VacancyDetailPage({
   params,
@@ -293,7 +284,6 @@ export default async function VacancyDetailPage({
 
   const allApplications = (applicationsRaw || []) as ApplicationRow[]
   const appStatuses = (appStatusesRaw || []) as AppStatusRow[]
-  const appStatusMap = new Map(appStatuses.map((s) => [s.id, s]))
   const questions = (questionsRaw || []) as { id: string; label: string; type: 'text' | 'score'; sort_order: number }[]
   const canEditQuestions = profile?.role === 'owner' || profile?.role === 'admin'
 

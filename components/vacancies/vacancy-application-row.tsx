@@ -89,7 +89,7 @@ export function VacancyApplicationRow({
   initials,
   appliedAt,
   currentStatusId,
-  generalStatus,
+  generalStatus: _generalStatus,
   allStatuses,
   rejectionReasons,
   rejectionTemplates,

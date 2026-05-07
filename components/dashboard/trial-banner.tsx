@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface TrialBannerProps {

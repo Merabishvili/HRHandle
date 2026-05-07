@@ -26,7 +26,7 @@ const TEMPLATE_META: Partial<Record<TemplateType, { label: string; description: 
   },
 }
 
-const TYPES: TemplateType[] = ['application_received', 'interview_invitation']
+
 type ActiveTab = TemplateType | 'rejection'
 
 interface Props {
