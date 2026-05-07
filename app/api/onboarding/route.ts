@@ -1,26 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { runOnboarding } from '@/lib/onboarding'
-
-const WINDOW_MS = 60_000
-const MAX_ATTEMPTS = 5
-
-const attempts = new Map<string, { count: number; resetAt: number }>()
-
-function isRateLimited(userId: string): boolean {
-  const now = Date.now()
-  const entry = attempts.get(userId)
-
-  if (!entry || now >= entry.resetAt) {
-    attempts.set(userId, { count: 1, resetAt: now + WINDOW_MS })
-    return false
-  }
-
-  if (entry.count >= MAX_ATTEMPTS) return true
-
-  entry.count++
-  return false
-}
 
 export async function POST() {
   try {
@@ -35,11 +16,18 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (isRateLimited(user.id)) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please wait before retrying.' },
-        { status: 429 }
-      )
+    // DB-backed guard: if the user already has an org, onboarding is complete.
+    // runOnboarding() performs the same check and is idempotent, so repeated
+    // calls after initialization are cheap DB reads rather than writes.
+    const admin = createAdminClient()
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profile?.organization_id) {
+      return NextResponse.json({ success: true, alreadyInitialized: true })
     }
 
     const result = await runOnboarding(user)

@@ -271,7 +271,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              minLength={6}
+              minLength={8}
             />
           </div>
 

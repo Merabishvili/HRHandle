@@ -108,7 +108,7 @@ export async function runOnboarding(user: User): Promise<OnboardingResult> {
       last_payment_status: null,
       vacancy_limit: 5,
       candidate_limit: 100,
-      member_limit: 3,
+      member_limit: 2,
     })
 
   if (subscriptionError) {
