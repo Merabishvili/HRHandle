@@ -46,8 +46,6 @@ export default async function NewVacancyPage() {
     redirect('/dashboard')
   }
 
-  const organizationId = profile.organization_id
-
   const [{ data: sectorsRaw }, customFieldGroups, statusOptionsRaw] = await Promise.all([
     supabase
       .from('sectors')
@@ -61,8 +59,6 @@ export default async function NewVacancyPage() {
 
   const sectors = (sectorsRaw || []) as SectorRow[]
   const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
-
-  const defaultDraftStatus = statusOptions.find((status) => status.code === 'draft') || null
 
   return (
     <div className="max-w-3xl space-y-6">

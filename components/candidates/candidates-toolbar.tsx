@@ -36,7 +36,6 @@ const FIXED_COLUMNS = [
 export function CandidatesToolbar({
   initialSearch,
   initialSort,
-  initialStatus,
   selectedColumns: initialColumns,
 }: CandidatesToolbarProps) {
   const router = useRouter()

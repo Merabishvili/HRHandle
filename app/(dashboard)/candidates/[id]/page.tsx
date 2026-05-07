@@ -18,7 +18,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
-import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
+
 import { formatDistanceToNow, format } from 'date-fns'
 import { CandidateStatusSelect } from '@/components/candidates/candidate-status-select'
 import { CandidateNotes } from '@/components/candidates/candidate-notes'
@@ -238,7 +238,6 @@ export default async function CandidateDetailPage({
   }
 
   const primaryApplication = applications[0] || null
-  const primaryVacancy = primaryApplication ? vacancyMap.get(primaryApplication.vacancy_id) ?? null : null
 
   // Fetch evaluation questions per vacancy and evaluations per application
   const questionsByVacancy = new Map<string, { id: string; label: string; type: 'text' | 'score' }[]>()
