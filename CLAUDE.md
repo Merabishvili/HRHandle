@@ -46,6 +46,21 @@
 - `NEXT_PUBLIC_SITE_URL` — optional but must be a valid URL if set; **never set to empty string** — t3-oss/env-nextjs will throw at build time
 - `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` — local `.env.local` only, overrides `emailRedirectTo` in sign-up; **must NOT be added to Vercel**
 
+## Workflow — follow this for every task
+
+Full detail in `docs/claude-code-workflow.md`. Summary:
+
+1. **Read docs first** — before touching code, read the relevant files under `docs/` (start with `docs/3-architecture/overview.md`, then the specific area)
+2. **Output an impact list** — identify every file, doc, type, test, and env variable the change touches
+3. **Write a plan, wait for approval** — present the implementation plan before writing any code; do not proceed until confirmed
+4. **Execute in order**: code → docs update → tests update (all in the same session, never deferred)
+5. **Run verification checklist** before declaring done:
+   - All affected `docs/*.md` files updated
+   - All existing tests pass; new tests added for new logic
+   - Ripple-checked callers of any changed function, type, or endpoint
+
+**Every change touches four things: code, docs, tests, and a ripple-check.**
+
 ## What's left to build
 
 ## Things that went wrong before — don't repeat
