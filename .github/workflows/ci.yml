@@ -26,8 +26,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
-        env:
-          ESLINT_USE_FLAT_CONFIG: 'false'
 
       - name: Run tests
         run: npm run test
