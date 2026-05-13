@@ -93,7 +93,11 @@ function LoginForm() {
         : `${window.location.origin}/auth/callback`
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: callbackUrl },
+        options: {
+          redirectTo: callbackUrl,
+          scopes: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email',
+          queryParams: { access_type: 'offline' },
+        },
       })
       if (oauthError) throw new Error(oauthError.message)
     } catch (err) {
@@ -113,7 +117,10 @@ function LoginForm() {
         : `${window.location.origin}/auth/callback`
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
-        options: { redirectTo: callbackUrl, scopes: 'email' },
+        options: {
+          redirectTo: callbackUrl,
+          scopes: 'email Calendars.ReadWrite OnlineMeetings.ReadWrite offline_access',
+        },
       })
       if (oauthError) throw new Error(oauthError.message)
     } catch (err) {
