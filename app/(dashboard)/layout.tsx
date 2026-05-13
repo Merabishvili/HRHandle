@@ -175,6 +175,12 @@ export default async function DashboardLayout({
     if (!profile?.organization_id) {
       throw new Error('Onboarding completed but profile.organization_id is still missing')
     }
+
+    // The layout and page run concurrently in Next.js App Router, so the page
+    // may query organization_id before the onboarding write is visible to the
+    // regular Supabase client. Redirecting forces a fresh request where both
+    // the layout and page read the fully committed state.
+    redirect('/dashboard')
   }
 
   const organization = profile.organizations?.[0] || null
