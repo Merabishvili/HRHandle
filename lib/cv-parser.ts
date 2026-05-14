@@ -3,8 +3,8 @@ import { ParsedCVSchema, type ParsedCVInput } from '@/lib/validations/candidate-
 
 const PARSE_TIMEOUT_MS = 25_000
 const MIN_TEXT_LENGTH = 100
-const MAX_RETRIES = 2
 const RETRY_DELAY_MS = 2_000
+const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash']
 
 const CV_PROMPT = `You are a CV/resume parser. Extract structured information from the CV text below.
 
@@ -106,11 +106,12 @@ export async function parseCV(text: string): Promise<CVParseResult> {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    if (attempt > 0) {
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt))
+  for (let modelIdx = 0; modelIdx < MODELS.length; modelIdx++) {
+    const model = genAI.getGenerativeModel({ model: MODELS[modelIdx] })
+
+    if (modelIdx > 0) {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
     }
 
     try {
@@ -145,11 +146,11 @@ export async function parseCV(text: string): Promise<CVParseResult> {
       return { success: true, data: validated.data }
     } catch (err) {
       if (err instanceof Error && err.message === 'timeout') {
-        if (attempt < MAX_RETRIES) continue
-        console.error('[cv-parser] Gemini call timed out after all retries')
+        if (modelIdx < MODELS.length - 1) continue
+        console.error('[cv-parser] Gemini timed out on all models')
         return { success: false, reason: 'timeout' }
       }
-      if (isRetryable(err) && attempt < MAX_RETRIES) {
+      if (isRetryable(err) && modelIdx < MODELS.length - 1) {
         continue
       }
       console.error('[cv-parser] Gemini call threw:', err)
