@@ -35,6 +35,7 @@ export const ParsedCVSchema = z.object({
   phone: z.string().nullable(),
   linkedin_profile_url: z.string().url().nullable().catch(null),
   location: z.string().nullable().catch(null),
+  timezone: z.string().nullable().catch(null),
   languages: z.array(z.string()).catch([]),
   salary_expectation: z.string().nullable().catch(null),
   notice_period: z.string().nullable().catch(null),

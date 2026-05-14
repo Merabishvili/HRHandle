@@ -4,9 +4,12 @@ import { ArrowLeft } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
 import { CandidateForm } from '@/components/candidates/candidate-form'
+import { ExperienceSection } from '@/components/candidates/experience-section'
+import { EducationSection } from '@/components/candidates/education-section'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { getCandidateStatuses } from '@/lib/cache/lookups'
+import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 
 interface PageParams {
   id: string
@@ -176,10 +179,15 @@ const { data: vacanciesRaw } = await supabase
     return statusCode === 'open' || statusCode === 'draft'
   })
 
-  const [customFieldGroups, customFieldValues] = await Promise.all([
+  const [customFieldGroups, customFieldValues, { data: experienceRaw }, { data: educationRaw }] = await Promise.all([
     getCustomFieldSchema('candidate'),
     getCustomFieldValues(id),
+    supabase.from('candidate_experience').select('*').eq('candidate_id', id).eq('organization_id', organizationId).order('start_date', { ascending: false, nullsFirst: false }),
+    supabase.from('candidate_education').select('*').eq('candidate_id', id).eq('organization_id', organizationId).order('start_year', { ascending: false, nullsFirst: false }),
   ])
+
+  const experienceEntries = (experienceRaw || []) as CandidateExperience[]
+  const educationEntries  = (educationRaw  || []) as CandidateEducation[]
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -203,6 +211,9 @@ const { data: vacanciesRaw } = await supabase
         customFieldGroups={customFieldGroups}
         customFieldValues={customFieldValues}
       />
+
+      <ExperienceSection candidateId={id} initialEntries={experienceEntries} />
+      <EducationSection  candidateId={id} initialEntries={educationEntries} />
     </div>
   )
 }

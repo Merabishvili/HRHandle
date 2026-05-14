@@ -19,6 +19,7 @@ Rules:
 - Keep all text in the original language — do not translate.
 - current_position and current_company: the most recent or current role. Use null if not determinable.
 - location: city and/or country where the candidate is based (e.g. "Tbilisi, Georgia"). Use null if not stated.
+- timezone: UTC offset or timezone name if mentioned (e.g. "GMT+4", "UTC+3", "Europe/London"). Use null if not stated.
 - languages: array of languages the candidate speaks (e.g. ["English", "Georgian"]). Use [] if none listed.
 - salary_expectation: stated salary expectation as written (e.g. "5000 GEL/month"). Use null if not stated.
 - notice_period: stated notice period as written (e.g. "2 weeks", "1 month"). Use null if not stated.
@@ -31,6 +32,7 @@ JSON structure to fill:
   "phone": null,
   "linkedin_profile_url": null,
   "location": null,
+  "timezone": null,
   "languages": [],
   "salary_expectation": null,
   "notice_period": null,
