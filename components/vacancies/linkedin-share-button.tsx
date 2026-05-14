@@ -66,15 +66,12 @@ export function LinkedInShareButton({
     lines.push('#hiring #jobs #recruitment')
 
     const raw = lines.join('\n')
-    // LinkedIn post limit is 3000 chars; keep the URL short enough for all browsers
+    // LinkedIn post limit is 3000 chars; keep URL within safe limits
     const text = encodeURIComponent(raw.length > 2800 ? raw.slice(0, 2800) + '…' : raw)
-    const a = document.createElement('a')
-    a.href = `https://www.linkedin.com/feed/?shareActive=true&text=${text}`
-    a.target = '_blank'
-    a.rel = 'noopener noreferrer'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    const url = `https://www.linkedin.com/feed/?shareActive=true&text=${text}`
+    // No third argument → browser opens as a tab (never blocked); third arg triggers popup classification
+    const tab = window.open(url, '_blank')
+    if (tab) tab.opener = null
   }
 
   return (
