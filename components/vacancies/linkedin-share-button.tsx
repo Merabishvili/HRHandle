@@ -69,7 +69,7 @@ export function LinkedInShareButton({
     window.open(
       `https://www.linkedin.com/feed/?shareActive=true&text=${text}`,
       '_blank',
-      'noopener,noreferrer,width=600,height=600'
+      'noopener,noreferrer'
     )
   }
 
