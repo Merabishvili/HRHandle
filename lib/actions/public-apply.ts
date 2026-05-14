@@ -48,6 +48,8 @@ export async function submitPublicApplication(
   const phone = (formData.get('phone') as string | null)?.trim() || null
   const linkedinUrl = (formData.get('linkedin_profile_url') as string | null)?.trim() || null
   const cvFile = formData.get('cv') as File | null
+  const experienceJson = (formData.get('experience_json') as string | null) || '[]'
+  const educationJson = (formData.get('education_json') as string | null) || '[]'
 
   // ── 3. Basic validation ────────────────────────────────────────────────────
   if (!token) return { success: false, error: 'Invalid form link.' }
@@ -218,7 +220,58 @@ export async function submitPublicApplication(
     return { success: false, error: 'Failed to submit application. Please try again.' }
   }
 
-  // ── 13. Upload CV ──────────────────────────────────────────────────────────
+  // ── 13. Save parsed experience + education (best-effort, non-fatal) ─────────
+  if (isNewCandidate) {
+    try {
+      const expRows: unknown[] = JSON.parse(experienceJson)
+      if (Array.isArray(expRows) && expRows.length > 0) {
+        const rows = expRows
+          .filter((e): e is Record<string, unknown> => typeof e === 'object' && e !== null && typeof (e as Record<string, unknown>).company === 'string' && typeof (e as Record<string, unknown>).title === 'string')
+          .map((e) => ({
+            organization_id: orgId,
+            candidate_id: candidateId,
+            company: e.company as string,
+            title: e.title as string,
+            start_date: (e.start_date as string | null) ?? null,
+            end_date: (e.end_date as string | null) ?? null,
+            is_current: Boolean(e.is_current),
+            description: (e.description as string | null) ?? null,
+          }))
+        if (rows.length > 0) {
+          const { error: expErr } = await supabase.from('candidate_experience').insert(rows)
+          if (expErr) console.error('[public-apply] experience insert failed:', expErr)
+        }
+      }
+    } catch {
+      // Non-fatal — bad JSON or schema mismatch
+    }
+
+    try {
+      const eduRows: unknown[] = JSON.parse(educationJson)
+      if (Array.isArray(eduRows) && eduRows.length > 0) {
+        const rows = eduRows
+          .filter((e): e is Record<string, unknown> => typeof e === 'object' && e !== null && typeof (e as Record<string, unknown>).institution === 'string')
+          .map((e) => ({
+            organization_id: orgId,
+            candidate_id: candidateId,
+            institution: e.institution as string,
+            degree: (e.degree as string | null) ?? null,
+            field_of_study: (e.field_of_study as string | null) ?? null,
+            start_year: typeof e.start_year === 'number' ? e.start_year : null,
+            end_year: typeof e.end_year === 'number' ? e.end_year : null,
+            is_ongoing: Boolean(e.is_ongoing),
+          }))
+        if (rows.length > 0) {
+          const { error: eduErr } = await supabase.from('candidate_education').insert(rows)
+          if (eduErr) console.error('[public-apply] education insert failed:', eduErr)
+        }
+      }
+    } catch {
+      // Non-fatal
+    }
+  }
+
+  // ── 15. Upload CV ──────────────────────────────────────────────────────────
   try {
     const rawExt = cvFile.name.split('.').pop()?.toLowerCase() ?? ''
     const ext = ['pdf', 'doc', 'docx'].includes(rawExt) ? rawExt : 'pdf'
@@ -249,7 +302,7 @@ export async function submitPublicApplication(
     console.error('[public-apply] CV upload block error:', err)
   }
 
-  // ── 14. Notify org owners/admins of new application ───────────────────────
+  // ── 16. Notify org owners/admins of new application ───────────────────────
   try {
     const { data: orgMembers } = await supabase
       .from('profiles')
@@ -268,7 +321,7 @@ export async function submitPublicApplication(
     // Non-fatal
   }
 
-  // ── 15. Send confirmation email ────────────────────────────────────────────
+  // ── 17. Send confirmation email ────────────────────────────────────────────
   try {
     const [{ data: org }, { data: templateRow }] = await Promise.all([
       supabase.from('organizations').select('name').eq('id', orgId).single(),

@@ -186,6 +186,48 @@ Core candidate record.
 
 ---
 
+### `candidate_education`
+Education history for a candidate. Created by CV parsing or manual entry.
+
+| Column | Type | Nullable | Default | Notes |
+|---|---|---|---|---|
+| id | uuid | NOT NULL | — | PK |
+| organization_id | uuid | NOT NULL | — | FK → organizations (cascade delete) |
+| candidate_id | uuid | NOT NULL | — | FK → candidates (cascade delete) |
+| institution | text | NOT NULL | — | |
+| degree | text | NULL | — | e.g. Bachelor's, Master's |
+| field_of_study | text | NULL | — | |
+| start_year | smallint | NULL | — | |
+| end_year | smallint | NULL | — | |
+| is_ongoing | boolean | NOT NULL | false | |
+| created_at | timestamptz | NOT NULL | now() | |
+| updated_at | timestamptz | NOT NULL | now() | |
+
+RLS: org members can manage their org's records.
+
+---
+
+### `candidate_experience`
+Work experience entries for a candidate. Created by CV parsing or manual entry.
+
+| Column | Type | Nullable | Default | Notes |
+|---|---|---|---|---|
+| id | uuid | NOT NULL | — | PK |
+| organization_id | uuid | NOT NULL | — | FK → organizations (cascade delete) |
+| candidate_id | uuid | NOT NULL | — | FK → candidates (cascade delete) |
+| company | text | NOT NULL | — | |
+| title | text | NOT NULL | — | |
+| start_date | date | NULL | — | |
+| end_date | date | NULL | — | |
+| is_current | boolean | NOT NULL | false | |
+| description | text | NULL | — | |
+| created_at | timestamptz | NOT NULL | now() | |
+| updated_at | timestamptz | NOT NULL | now() | |
+
+RLS: org members can manage their org's records.
+
+---
+
 ### `custom_field_groups`
 Groups of custom fields for an entity type.
 

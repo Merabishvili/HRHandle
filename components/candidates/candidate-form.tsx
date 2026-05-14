@@ -20,7 +20,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, Linkedin, Paperclip, X, Upload } from 'lucide-react'
+import { Loader2, Linkedin, Paperclip, X, Upload, FileText, Wand2, PenLine, CheckCircle2, AlertCircle } from 'lucide-react'
+import { bulkCreateExperienceEntries, bulkCreateEducationEntries } from '@/lib/actions/candidate-background'
+import type { ParsedCVInput } from '@/lib/validations/candidate-background'
 import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
 import type {
   Candidate,
@@ -54,6 +56,9 @@ interface CandidateFormProps {
   customFieldValues?: CustomFieldValue[]
 }
 
+type EntryMode = null | 'cv' | 'manual'
+type CvParseState = 'idle' | 'parsing' | 'done' | 'failed'
+
 export function CandidateForm({
   candidate,
   vacancies,
@@ -64,6 +69,7 @@ export function CandidateForm({
 }: CandidateFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cvUploadRef = useRef<HTMLInputElement>(null)
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -71,6 +77,12 @@ export function CandidateForm({
   const [cfValues, setCfValues] = useState<Record<string, string>>(
     () => valuesToMap(customFieldValues)
   )
+
+  // Two-path entry state (create-only)
+  const [entryMode, setEntryMode] = useState<EntryMode>(candidate ? 'manual' : null)
+  const [cvParseState, setCvParseState] = useState<CvParseState>('idle')
+  const [parsedCV, setParsedCV] = useState<ParsedCVInput | null>(null)
+  const [cvFileName, setCvFileName] = useState<string | null>(null)
 
   const [selectedVacancyId, setSelectedVacancyId] = useState<string>(
     defaultVacancyId || ''
@@ -98,6 +110,56 @@ export function CandidateForm({
 
   const handleChange = <K extends keyof CandidateFormData>(key: K, value: CandidateFormData[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleCVUploadForParsing = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (cvUploadRef.current) cvUploadRef.current.value = ''
+
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    if (!['pdf', 'doc', 'docx'].includes(ext ?? '')) {
+      setError('CV must be a PDF or Word document.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('CV file must be 10 MB or smaller.')
+      return
+    }
+
+    setError(null)
+    setCvFileName(file.name)
+    setCvParseState('parsing')
+    setParsedCV(null)
+    // Add to pending documents so CV is uploaded on save
+    setPendingFiles([{ id: `cv-${Date.now()}`, file, documentType: 'cv' }])
+
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/parse-cv', { method: 'POST', body: fd })
+      const json = await res.json()
+
+      if (json.success && json.data) {
+        const data: ParsedCVInput = json.data
+        setParsedCV(data)
+        setCvParseState('done')
+        setFormData((prev) => ({
+          ...prev,
+          first_name: data.first_name || prev.first_name,
+          last_name: data.last_name || prev.last_name,
+          email: data.email || prev.email,
+          phone: data.phone || prev.phone,
+          linkedin_profile_url: data.linkedin_profile_url || prev.linkedin_profile_url,
+          current_company: data.current_company || prev.current_company,
+          current_position: data.current_position || prev.current_position,
+        }))
+      } else {
+        setCvParseState('failed')
+      }
+    } catch {
+      setCvParseState('failed')
+    }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,6 +213,29 @@ export function CandidateForm({
       }
     }
 
+    if (!isEditing && result.data?.id && entryMode === 'cv' && parsedCV) {
+      if (parsedCV.experience.length > 0) {
+        await bulkCreateExperienceEntries(result.data.id, parsedCV.experience.map((e) => ({
+          company: e.company ?? '',
+          title: e.title ?? '',
+          start_date: e.start_date ?? null,
+          end_date: e.end_date ?? null,
+          is_current: e.is_current,
+          description: e.description ?? null,
+        })).filter((e) => e.company && e.title))
+      }
+      if (parsedCV.education.length > 0) {
+        await bulkCreateEducationEntries(result.data.id, parsedCV.education.map((e) => ({
+          institution: e.institution ?? '',
+          degree: e.degree ?? null,
+          field_of_study: e.field_of_study ?? null,
+          start_year: e.start_year ?? null,
+          end_year: e.end_year ?? null,
+          is_ongoing: e.is_ongoing,
+        })).filter((e) => e.institution))
+      }
+    }
+
     if (!isEditing && result.data?.id) {
       // Upload queued documents
       for (const entry of pendingFiles) {
@@ -175,12 +260,109 @@ export function CandidateForm({
     setIsLoading(false)
   }
 
+  // Path selection screen (create-only)
+  if (!candidate && entryMode === null) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">How would you like to add this candidate?</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setEntryMode('cv')}
+            className="group flex flex-col items-start gap-3 rounded-xl border-2 border-border bg-card px-6 py-5 text-left hover:border-primary/60 hover:bg-muted/30 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                <Wand2 className="h-5 w-5 text-primary" />
+              </div>
+              <p className="font-semibold text-foreground">Upload CV first</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Upload a PDF or Word CV and we&apos;ll fill in the candidate details automatically using AI.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setEntryMode('manual')}
+            className="group flex flex-col items-start gap-3 rounded-xl border-2 border-border bg-card px-6 py-5 text-left hover:border-primary/60 hover:bg-muted/30 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                <PenLine className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="font-semibold text-foreground">Fill manually</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Enter candidate details by hand. You can still attach a CV as a document.
+            </p>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+      )}
+
+      {/* CV Upload + Parse Banner (create, cv mode only) */}
+      {!candidate && entryMode === 'cv' && (
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wand2 className="h-4 w-4" />
+              Upload CV to auto-fill
+            </CardTitle>
+            <CardDescription>Fields will be filled automatically from the CV.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <input
+              ref={cvUploadRef}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="hidden"
+              onChange={handleCVUploadForParsing}
+            />
+            {cvParseState === 'idle' ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => cvUploadRef.current?.click()}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Select CV file
+              </Button>
+            ) : (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 px-3 py-2.5">
+                <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate text-sm">{cvFileName}</span>
+                {cvParseState === 'parsing' && (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Parsing…
+                  </span>
+                )}
+                {cvParseState === 'done' && (
+                  <span className="flex items-center gap-1.5 text-xs text-green-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Fields filled
+                  </span>
+                )}
+                {cvParseState === 'failed' && (
+                  <span className="flex items-center gap-1.5 text-xs text-amber-600">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Could not parse — fill manually
+                  </span>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Personal Information */}
@@ -402,8 +584,8 @@ export function CandidateForm({
         </CardContent>
       </Card>
 
-      {/* Documents — only on create */}
-      {!isEditing && (
+      {/* Documents — only on create, and only in manual mode (cv mode auto-queues the parsed file) */}
+      {!isEditing && entryMode !== 'cv' && (
         <Card className="border-border">
           <CardHeader>
             <CardTitle>Documents</CardTitle>

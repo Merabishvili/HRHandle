@@ -27,6 +27,9 @@ import { AddApplicationDialog } from '@/components/candidates/add-application-di
 import { CandidateApplicationsList } from '@/components/candidates/candidate-applications-list'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { ExperienceSection } from '@/components/candidates/experience-section'
+import { EducationSection } from '@/components/candidates/education-section'
+import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 
 interface CandidateRow {
   id: string
@@ -343,7 +346,7 @@ export default async function CandidateDetailPage({
 
   const interviews = (interviewsRaw || []) as InterviewRow[]
 
-  const [{ data: notesRaw }, { data: documentsRaw }, customFieldGroups, customFieldValues] =
+  const [{ data: notesRaw }, { data: documentsRaw }, customFieldGroups, customFieldValues, { data: experienceRaw }, { data: educationRaw }] =
     await Promise.all([
       supabase
         .from('candidate_notes')
@@ -363,6 +366,20 @@ export default async function CandidateDetailPage({
 
       getCustomFieldSchema('candidate'),
       getCustomFieldValues(id),
+
+      supabase
+        .from('candidate_experience')
+        .select('*')
+        .eq('candidate_id', id)
+        .eq('organization_id', organizationId)
+        .order('start_date', { ascending: false, nullsFirst: false }),
+
+      supabase
+        .from('candidate_education')
+        .select('*')
+        .eq('candidate_id', id)
+        .eq('organization_id', organizationId)
+        .order('start_year', { ascending: false, nullsFirst: false }),
     ])
 
   const notes = (notesRaw || []).map((n) => ({
@@ -373,6 +390,8 @@ export default async function CandidateDetailPage({
     profiles: (n as NoteRow).profiles,
   }))
   const documents = (documentsRaw || []) as DocumentRow[]
+  const experienceEntries = (experienceRaw || []) as CandidateExperience[]
+  const educationEntries = (educationRaw || []) as CandidateEducation[]
 
   const fullName = getCandidateFullName(candidate)
   const initials = getCandidateInitials(candidate)
@@ -503,7 +522,13 @@ export default async function CandidateDetailPage({
             </CardContent>
           </Card>
 
-          {/* 2. Applications */}
+          {/* 2. Experience */}
+          <ExperienceSection candidateId={candidate.id} initialEntries={experienceEntries} />
+
+          {/* 3. Education */}
+          <EducationSection candidateId={candidate.id} initialEntries={educationEntries} />
+
+          {/* 4. Applications */}
           <Card className="border-border">
             <CardHeader>
               <div className="flex flex-row items-center justify-between">
@@ -551,7 +576,7 @@ export default async function CandidateDetailPage({
             </CardContent>
           </Card>
 
-          {/* 3. Notes */}
+          {/* 5. Notes */}
           <CandidateNotes
             candidateId={candidate.id}
             initialNotes={notes}

@@ -2,9 +2,12 @@
 
 import { useRef, useState } from 'react'
 import { submitPublicApplication } from '@/lib/actions/public-apply'
-import { Loader2, Upload, X, CheckCircle2 } from 'lucide-react'
+import type { ParsedCVInput } from '@/lib/validations/candidate-background'
+import { Loader2, Upload, X, CheckCircle2, FileText, Briefcase, GraduationCap, AlertCircle } from 'lucide-react'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx']
+
+type ParseState = 'idle' | 'parsing' | 'done' | 'failed'
 
 export function ApplyForm({ token }: { token: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -13,16 +16,22 @@ export function ApplyForm({ token }: { token: string }) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // CV file + parse state
+  const [cvFile, setCvFile] = useState<File | null>(null)
+  const [parseState, setParseState] = useState<ParseState>('idle')
+  const [parsed, setParsed] = useState<ParsedCVInput | null>(null)
+
+  // Personal fields (pre-filled from CV parse)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [linkedinUrl, setLinkedinUrl] = useState('')
-  const [cvFile, setCvFile] = useState<File | null>(null)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
     if (!file) return
+
     const ext = '.' + file.name.split('.').pop()?.toLowerCase()
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       setError('Please upload a PDF or Word document (.pdf, .doc, .docx).')
@@ -34,8 +43,45 @@ export function ApplyForm({ token }: { token: string }) {
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
+
     setError(null)
     setCvFile(file)
+    setParsed(null)
+    setParseState('parsing')
+
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/parse-cv', { method: 'POST', body: fd })
+      const json = await res.json()
+
+      if (json.success && json.data) {
+        const data: ParsedCVInput = json.data
+        setParsed(data)
+        setParseState('done')
+        if (data.first_name) setFirstName(data.first_name)
+        if (data.last_name) setLastName(data.last_name)
+        if (data.email) setEmail(data.email)
+        if (data.phone) setPhone(data.phone)
+        if (data.linkedin_profile_url) setLinkedinUrl(data.linkedin_profile_url)
+      } else {
+        setParseState('failed')
+      }
+    } catch {
+      setParseState('failed')
+    }
+  }
+
+  const handleRemoveFile = () => {
+    setCvFile(null)
+    setParsed(null)
+    setParseState('idle')
+    setFirstName('')
+    setLastName('')
+    setEmail('')
+    setPhone('')
+    setLinkedinUrl('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -43,13 +89,13 @@ export function ApplyForm({ token }: { token: string }) {
     if (isLoading) return
     setError(null)
 
+    if (!cvFile) { setError('Please upload your CV first.'); return }
     if (!firstName.trim()) { setError('First name is required.'); return }
     if (!lastName.trim()) { setError('Last name is required.'); return }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError('A valid email address is required.')
       return
     }
-    if (!cvFile) { setError('Please upload your CV.'); return }
 
     const phoneTrimmed = phone.trim()
     if (phoneTrimmed && (phoneTrimmed.length < 5 || phoneTrimmed.length > 30 || !/^[\d\s\-\+\(\)]+$/.test(phoneTrimmed))) {
@@ -73,8 +119,9 @@ export function ApplyForm({ token }: { token: string }) {
     fd.append('phone', phone.trim())
     fd.append('linkedin_profile_url', linkedinUrl.trim())
     fd.append('cv', cvFile)
-    // Honeypot field (always empty for real users)
-    fd.append('website', '')
+    fd.append('website', '') // Honeypot
+    fd.append('experience_json', JSON.stringify(parsed?.experience ?? []))
+    fd.append('education_json', JSON.stringify(parsed?.education ?? []))
 
     const result = await submitPublicApplication(fd)
 
@@ -101,12 +148,14 @@ export function ApplyForm({ token }: { token: string }) {
     )
   }
 
+  const hasPersonalFields = parseState === 'done' || parseState === 'failed'
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
       <h2 className="mb-6 text-lg font-bold text-gray-900">Apply for this Position</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {/* Honeypot — hidden from humans, filled by bots */}
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        {/* Honeypot */}
         <input
           type="text"
           name="website"
@@ -122,105 +171,53 @@ export function ApplyForm({ token }: { token: string }) {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              First Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="John"
-              maxLength={100}
-              disabled={isLoading}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Last Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Smith"
-              maxLength={100}
-              disabled={isLoading}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-700">
-            Email <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="john@example.com"
-            maxLength={254}
-            disabled={isLoading}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Phone</label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 555 123 4567"
-              maxLength={30}
-              disabled={isLoading}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">LinkedIn URL</label>
-            <input
-              type="url"
-              value={linkedinUrl}
-              onChange={(e) => setLinkedinUrl(e.target.value)}
-              placeholder="https://linkedin.com/in/..."
-              maxLength={500}
-              disabled={isLoading}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-            />
-          </div>
-        </div>
-
+        {/* ── CV Upload (always first) ───────────────────────────────────── */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700">
             CV / Resume <span className="text-red-500">*</span>
           </label>
 
           {cvFile ? (
-            <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-              <span className="flex-1 truncate text-sm text-gray-700">{cvFile.name}</span>
-              <span className="text-xs text-gray-400">{(cvFile.size / 1024).toFixed(0)} KB</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setCvFile(null)
-                  if (fileInputRef.current) fileInputRef.current.value = ''
-                }}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <X className="h-4 w-4" />
-              </button>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 shrink-0 text-gray-400" />
+                <span className="flex-1 truncate text-sm text-gray-700">{cvFile.name}</span>
+                <span className="text-xs text-gray-400">{(cvFile.size / 1024).toFixed(0)} KB</span>
+                {parseState !== 'parsing' && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveFile}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              {parseState === 'parsing' && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Parsing your CV…
+                </div>
+              )}
+              {parseState === 'done' && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  CV parsed — your details have been filled in below
+                </div>
+              )}
+              {parseState === 'failed' && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-amber-600">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Could not auto-fill — please complete the form manually
+                </div>
+              )}
             </div>
           ) : (
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors disabled:opacity-50"
             >
               <Upload className="h-4 w-4" />
               Click to upload PDF or Word document (max 10 MB)
@@ -237,24 +234,153 @@ export function ApplyForm({ token }: { token: string }) {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Submitting...
-            </>
-          ) : (
-            'Apply Now'
-          )}
-        </button>
+        {/* ── Personal details (shown after upload attempt) ─────────────── */}
+        {hasPersonalFields && (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="John"
+                  maxLength={100}
+                  disabled={isLoading}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Smith"
+                  maxLength={100}
+                  disabled={isLoading}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+                />
+              </div>
+            </div>
 
-        <p className="text-center text-xs text-gray-400">
-          By submitting, you agree to your information being stored for recruitment purposes.
-        </p>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="john@example.com"
+                maxLength={254}
+                disabled={isLoading}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Phone</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+1 555 123 4567"
+                  maxLength={30}
+                  disabled={isLoading}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">LinkedIn URL</label>
+                <input
+                  type="url"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/in/..."
+                  maxLength={500}
+                  disabled={isLoading}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            {/* ── Experience preview (read-only) ─────────────────────────── */}
+            {parsed && parsed.experience.length > 0 && (
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Briefcase className="h-4 w-4" />
+                  Experience
+                </div>
+                <ul className="space-y-2">
+                  {parsed.experience.map((exp, i) => (
+                    <li key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
+                      <p className="font-medium text-gray-800">{exp.title ?? '—'}</p>
+                      <p className="text-gray-600">{exp.company ?? '—'}</p>
+                      {(exp.start_date || exp.end_date || exp.is_current) && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {exp.start_date ?? '?'} – {exp.is_current ? 'Present' : (exp.end_date ?? '?')}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* ── Education preview (read-only) ──────────────────────────── */}
+            {parsed && parsed.education.length > 0 && (
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <GraduationCap className="h-4 w-4" />
+                  Education
+                </div>
+                <ul className="space-y-2">
+                  {parsed.education.map((edu, i) => (
+                    <li key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
+                      <p className="font-medium text-gray-800">{edu.institution ?? '—'}</p>
+                      {(edu.degree || edu.field_of_study) && (
+                        <p className="text-gray-600">{[edu.degree, edu.field_of_study].filter(Boolean).join(', ')}</p>
+                      )}
+                      {(edu.start_year || edu.end_year || edu.is_ongoing) && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {edu.start_year ?? '?'} – {edu.is_ongoing ? 'Present' : (edu.end_year ?? '?')}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+
+        {hasPersonalFields && (
+          <>
+            <button
+              type="submit"
+              disabled={isLoading || parseState === 'parsing'}
+              className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Submitting…
+                </>
+              ) : (
+                'Apply Now'
+              )}
+            </button>
+            <p className="text-center text-xs text-gray-400">
+              By submitting, you agree to your information being stored for recruitment purposes.
+            </p>
+          </>
+        )}
       </form>
     </div>
   )

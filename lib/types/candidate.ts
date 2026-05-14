@@ -57,6 +57,60 @@ export interface CandidateDocument {
   deleted_at: ISODateTimeString | null
 }
 
+export interface CandidateExperience {
+  id: UUID
+  organization_id: UUID
+  candidate_id: UUID
+  company: string
+  title: string
+  start_date: ISODateString | null
+  end_date: ISODateString | null
+  is_current: boolean
+  description: string | null
+  created_at: ISODateTimeString
+  updated_at: ISODateTimeString
+}
+
+export interface CandidateEducation {
+  id: UUID
+  organization_id: UUID
+  candidate_id: UUID
+  institution: string
+  degree: string | null
+  field_of_study: string | null
+  start_year: number | null
+  end_year: number | null
+  is_ongoing: boolean
+  created_at: ISODateTimeString
+  updated_at: ISODateTimeString
+}
+
+export interface ParsedCVData {
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  phone: string | null
+  linkedin_profile_url: string | null
+  current_position: string | null
+  current_company: string | null
+  experience: Array<{
+    company: string | null
+    title: string | null
+    start_date: string | null
+    end_date: string | null
+    is_current: boolean
+    description: string | null
+  }>
+  education: Array<{
+    institution: string | null
+    degree: string | null
+    field_of_study: string | null
+    start_year: number | null
+    end_year: number | null
+    is_ongoing: boolean
+  }>
+}
+
 export interface CandidateNote {
   id: UUID
   organization_id: UUID
