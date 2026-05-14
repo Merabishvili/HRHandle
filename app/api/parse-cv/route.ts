@@ -83,16 +83,12 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 4. Parse CV ────────────────────────────────────────────────────────────
-  console.log(`[parse-cv] parsing file: name=${file.name} size=${file.size} type=${file.type} ip=${ip}`)
-
   const result = await parseCVFile(file)
 
   if (!result.success) {
-    console.error(`[parse-cv] parse failed: reason=${result.reason} file=${file.name}`)
     const statusCode = result.reason === 'timeout' ? 504 : 422
     return NextResponse.json(result, { status: statusCode })
   }
 
-  console.log(`[parse-cv] parse succeeded: file=${file.name}`)
   return NextResponse.json(result)
 }

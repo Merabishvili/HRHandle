@@ -14,7 +14,7 @@
 |---|---|---|---|---|
 | `RESEND_API_KEY` | Resend API key for sending emails | Resend | `lib/email.ts`, `lib/env.ts` | `re_xxxxxxxxxxxx` |
 | `NEXT_PUBLIC_SITE_URL` | Canonical site URL — used in email links and OAuth redirects | App | `lib/email.ts`, `lib/google/calendar.ts`, `lib/zoom/meetings.ts`, `lib/microsoft/graph.ts`, `app/api/auth/*/route.ts`, `lib/env.ts` | `https://staging.hrhandle.com` |
-| `GOOGLE_CLIENT_ID` | Google OAuth app client ID (for Calendar integration) | Google | `lib/google/calendar.ts`, `lib/env.ts` | `123456789-abc.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_ID` | Google OAuth app client ID (for Calendar integration and sign-in) | Google | `lib/google/calendar.ts`, `lib/env.ts`, Supabase auth | `123456789-abc.apps.googleusercontent.com` |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth app client secret | Google | `lib/google/calendar.ts`, `lib/env.ts` | `GOCSPX-xxxxxxxx` |
 | `ZOOM_CLIENT_ID` | Zoom OAuth app client ID | Zoom | `lib/zoom/meetings.ts`, `lib/env.ts` | `AbCdEfGhIj` |
 | `ZOOM_CLIENT_SECRET` | Zoom OAuth app client secret | Zoom | `lib/zoom/meetings.ts`, `lib/env.ts` | `xxxxxxxxxxxxxxxxxxxx` |

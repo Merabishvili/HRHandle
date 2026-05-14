@@ -46,6 +46,17 @@
 - `NEXT_PUBLIC_SITE_URL` — optional but must be a valid URL if set; **never set to empty string** — t3-oss/env-nextjs will throw at build time
 - `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` — local `.env.local` only, overrides `emailRedirectTo` in sign-up; **must NOT be added to Vercel**
 
+### Google OAuth Configuration
+
+Staging and production share a **single Google Cloud OAuth client**. All redirect URIs for both environments are registered on it. Key URIs:
+- `https://quotchdymcnjlnwtjmgu.supabase.co/auth/v1/callback` — Supabase sign-in (staging)
+- `https://fnpyfwhvgzoxgyjafbsg.supabase.co/auth/v1/callback` — Supabase sign-in (production)
+- `https://staging.hrhandle.com/api/auth/google/callback` — Calendar integration (staging)
+- `https://hrhandle.com/api/auth/google/callback` — Calendar integration (production)
+- `http://localhost:3000/api/auth/google/callback` — Local dev
+
+**If Google OAuth breaks with `redirect_uri_mismatch`:** Add the missing URI to the single shared OAuth client in Google Cloud Console. Changes can take 5–10 minutes to propagate. See `docs/4-integrations/google.md` for the full URI list.
+
 ## Workflow — follow this for every task
 
 Full detail in `docs/claude-code-workflow.md`. Summary:

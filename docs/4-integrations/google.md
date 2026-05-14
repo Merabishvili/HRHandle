@@ -16,6 +16,19 @@ supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callb
 
 The callback is `app/auth/callback/route.ts` which exchanges the PKCE code for a session. No tokens are stored in the `profiles` table for this flow.
 
+### Supabase Provider Settings (production — `fnpyfwhvgzoxgyjafbsg`)
+
+| Setting | Value |
+|---|---|
+| Enable Sign in with Google | ON |
+| Skip nonce checks | OFF |
+| Allow users without an email | OFF |
+| Callback URL (for OAuth) | `https://fnpyfwhvgzoxgyjafbsg.supabase.co/auth/v1/callback` |
+
+The Client ID and Client Secret are the same credentials used for the Google Calendar integration (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`). The Callback URL shown in the Supabase dashboard is the URI to register in Google Cloud Console — it is already registered there.
+
+> **Root cause of past sign-in bug (2026-05-08):** `https://hrhandle.com/auth/callback` was missing from Supabase's allowed redirect URLs (Authentication → URL Configuration). Supabase fell back to the Site URL, sending the `?code=` to `hrhandle.com/` instead of `/auth/callback`. Fixed by adding the URL to the allowlist.
+
 ## Google Calendar Integration
 
 A separate OAuth flow that allows the app to create Google Calendar events with Google Meet links on behalf of the authenticated user.
@@ -90,3 +103,36 @@ Stored in `profiles` table (see database schema):
 | `GOOGLE_CLIENT_SECRET` | Google OAuth app client secret (optional — feature disabled if missing) |
 
 If either is missing, `GET /api/auth/google` redirects to `/settings?google=not_configured` instead of initiating OAuth.
+
+## Google Cloud OAuth Configuration
+
+One shared Google OAuth client is used for **both environments (staging + production)** and for **both sign-in and calendar integration**. All redirect URIs for all environments are registered on this single client.
+
+### Authorized Redirect URIs (Google Cloud Console)
+
+```
+https://staging.hrhandle.com/
+https://staging.hrhandle.com/api/auth/google/callback
+https://quotchdymcnjlnwtjmgu.supabase.co/auth/v1/callback
+http://localhost:3000/api/auth/google/callback
+https://hrhandle.com/auth/callback
+https://hrhandle.com/api/auth/google/callback
+https://fnpyfwhvgzoxgyjafbsg.supabase.co/auth/v1/callback
+https://hrhandle.com/auth/login
+https://staging.hrhandle.com/auth/login
+```
+
+**What each URI is for:**
+| URI | Purpose |
+|---|---|
+| `https://quotchdymcnjlnwtjmgu.supabase.co/auth/v1/callback` | Supabase sign-in callback — staging |
+| `https://fnpyfwhvgzoxgyjafbsg.supabase.co/auth/v1/callback` | Supabase sign-in callback — production |
+| `https://staging.hrhandle.com/api/auth/google/callback` | Calendar integration — staging |
+| `https://hrhandle.com/api/auth/google/callback` | Calendar integration — production |
+| `http://localhost:3000/api/auth/google/callback` | Calendar integration — local dev |
+| `https://hrhandle.com/auth/callback` | Supabase sign-in fallback — production |
+| `https://hrhandle.com/auth/login` | Auth page |
+| `https://staging.hrhandle.com/auth/login` | Auth page — staging |
+| `https://staging.hrhandle.com/` | Staging home (likely legacy) |
+
+> **If Google OAuth breaks with `redirect_uri_mismatch`:** The missing URI needs to be added to this single shared OAuth client in Google Cloud Console. Changes can take 5–10 minutes to propagate.

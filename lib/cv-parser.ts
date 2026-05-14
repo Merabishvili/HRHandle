@@ -72,7 +72,6 @@ async function extractFromPDF(file: File): Promise<string | null> {
     const arrayBuffer = await file.arrayBuffer()
     const { extractText } = await import('unpdf')
     const { text } = await extractText(new Uint8Array(arrayBuffer), { mergePages: true })
-    console.log(`[cv-parser] extractFromPDF: extracted ${text.length} chars`)
     return text || null
   } catch (err) {
     console.error('[cv-parser] extractFromPDF failed:', err)
@@ -85,9 +84,7 @@ async function extractFromDOCX(file: File): Promise<string | null> {
     const arrayBuffer = await file.arrayBuffer()
     const mammoth = await import('mammoth')
     const result = await mammoth.extractRawText({ arrayBuffer })
-    const text = result.value || null
-    console.log(`[cv-parser] extractFromDOCX: extracted ${text?.length ?? 0} chars`)
-    return text
+    return result.value || null
   } catch (err) {
     console.error('[cv-parser] extractFromDOCX failed:', err)
     return null
@@ -96,12 +93,9 @@ async function extractFromDOCX(file: File): Promise<string | null> {
 
 export async function parseCV(text: string): Promise<CVParseResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
-  console.log('[cv-parser] GEMINI key present:', !!apiKey, '| keys containing GEMINI:', Object.keys(process.env).filter(k => k.includes('GEMINI')))
   if (!apiKey) {
-    console.error('[cv-parser] GOOGLE_GEMINI_API_KEY is not set')
     return { success: false, reason: 'parse_failed' }
   }
-  console.log(`[cv-parser] calling Gemini, text length: ${text.length}`)
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS)
