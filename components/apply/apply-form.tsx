@@ -364,7 +364,7 @@ export function ApplyForm({ token }: { token: string }) {
           <>
             <button
               type="submit"
-              disabled={isLoading || parseState === 'parsing'}
+              disabled={isLoading}
               className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {isLoading ? (
