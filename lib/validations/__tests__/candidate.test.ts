@@ -3,13 +3,6 @@ import { CandidateSchema } from '@/lib/validations/candidate'
 
 const base = { first_name: 'Jane', last_name: 'Smith' }
 
-// Helper: build a date string N years ago from today
-function yearsAgo(n: number): string {
-  const d = new Date()
-  d.setFullYear(d.getFullYear() - n)
-  return d.toISOString().split('T')[0]
-}
-
 // ─── Required fields ──────────────────────────────────────────────────────────
 
 describe('CandidateSchema — required fields', () => {
@@ -126,31 +119,113 @@ describe('CandidateSchema — phone', () => {
   })
 })
 
-// ─── Years of experience ──────────────────────────────────────────────────────
+// ─── Location & timezone ─────────────────────────────────────────────────────
 
-describe('CandidateSchema — years_of_experience', () => {
-  it('accepts 0 (boundary min)', () => {
-    const result = CandidateSchema.safeParse({ ...base, years_of_experience: 0 })
+describe('CandidateSchema — location', () => {
+  it('accepts a location string', () => {
+    const result = CandidateSchema.safeParse({ ...base, location: 'Tbilisi, Georgia' })
     expect(result.success).toBe(true)
   })
 
-  it('accepts 60 (boundary max)', () => {
-    const result = CandidateSchema.safeParse({ ...base, years_of_experience: 60 })
+  it('accepts location of exactly 200 characters (boundary max)', () => {
+    const result = CandidateSchema.safeParse({ ...base, location: 'A'.repeat(200) })
     expect(result.success).toBe(true)
   })
 
-  it('rejects -1 (below min)', () => {
-    const result = CandidateSchema.safeParse({ ...base, years_of_experience: -1 })
+  it('rejects location of 201 characters', () => {
+    const result = CandidateSchema.safeParse({ ...base, location: 'A'.repeat(201) })
     expect(result.success).toBe(false)
   })
 
-  it('rejects 61 (above max)', () => {
-    const result = CandidateSchema.safeParse({ ...base, years_of_experience: 61 })
+  it('accepts null location (optional)', () => {
+    const result = CandidateSchema.safeParse({ ...base, location: null })
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('CandidateSchema — timezone', () => {
+  it('accepts a timezone string', () => {
+    const result = CandidateSchema.safeParse({ ...base, timezone: 'Asia/Tbilisi' })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts timezone of exactly 100 characters (boundary max)', () => {
+    const result = CandidateSchema.safeParse({ ...base, timezone: 'A'.repeat(100) })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects timezone of 101 characters', () => {
+    const result = CandidateSchema.safeParse({ ...base, timezone: 'A'.repeat(101) })
     expect(result.success).toBe(false)
   })
 
-  it('accepts null years_of_experience (optional)', () => {
-    const result = CandidateSchema.safeParse({ ...base, years_of_experience: null })
+  it('accepts null timezone (optional)', () => {
+    const result = CandidateSchema.safeParse({ ...base, timezone: null })
+    expect(result.success).toBe(true)
+  })
+})
+
+// ─── Languages ────────────────────────────────────────────────────────────────
+
+describe('CandidateSchema — languages', () => {
+  it('accepts an array of language strings', () => {
+    const result = CandidateSchema.safeParse({ ...base, languages: ['English', 'Georgian'] })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts an empty array', () => {
+    const result = CandidateSchema.safeParse({ ...base, languages: [] })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts omitted languages (optional)', () => {
+    const result = CandidateSchema.safeParse(base)
+    expect(result.success).toBe(true)
+  })
+})
+
+// ─── Salary expectation & notice period ──────────────────────────────────────
+
+describe('CandidateSchema — salary_expectation', () => {
+  it('accepts a salary expectation string', () => {
+    const result = CandidateSchema.safeParse({ ...base, salary_expectation: '$80k–$100k' })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts salary_expectation of exactly 200 characters (boundary max)', () => {
+    const result = CandidateSchema.safeParse({ ...base, salary_expectation: 'A'.repeat(200) })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects salary_expectation of 201 characters', () => {
+    const result = CandidateSchema.safeParse({ ...base, salary_expectation: 'A'.repeat(201) })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts null salary_expectation (optional)', () => {
+    const result = CandidateSchema.safeParse({ ...base, salary_expectation: null })
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('CandidateSchema — notice_period', () => {
+  it('accepts a notice period string', () => {
+    const result = CandidateSchema.safeParse({ ...base, notice_period: '2 weeks' })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts notice_period of exactly 100 characters (boundary max)', () => {
+    const result = CandidateSchema.safeParse({ ...base, notice_period: 'A'.repeat(100) })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects notice_period of 101 characters', () => {
+    const result = CandidateSchema.safeParse({ ...base, notice_period: 'A'.repeat(101) })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts null notice_period (optional)', () => {
+    const result = CandidateSchema.safeParse({ ...base, notice_period: null })
     expect(result.success).toBe(true)
   })
 })
@@ -191,65 +266,3 @@ describe('CandidateSchema — linkedin_profile_url', () => {
   })
 })
 
-// ─── Date of birth (age gate: must be >= 16) ──────────────────────────────────
-
-describe('CandidateSchema — date_of_birth age validation', () => {
-  it('accepts a candidate exactly 16 years old today (boundary)', () => {
-    const result = CandidateSchema.safeParse({ ...base, date_of_birth: yearsAgo(16) })
-    expect(result.success).toBe(true)
-  })
-
-  it('accepts a candidate 25 years old', () => {
-    const result = CandidateSchema.safeParse({ ...base, date_of_birth: yearsAgo(25) })
-    expect(result.success).toBe(true)
-  })
-
-  it('accepts a candidate 50 years old', () => {
-    const result = CandidateSchema.safeParse({ ...base, date_of_birth: yearsAgo(50) })
-    expect(result.success).toBe(true)
-  })
-
-  it('rejects a candidate 10 years old (below 16)', () => {
-    const result = CandidateSchema.safeParse({ ...base, date_of_birth: yearsAgo(10) })
-    expect(result.success).toBe(false)
-  })
-
-  it('rejects a candidate born yesterday (0 years old)', () => {
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const result = CandidateSchema.safeParse({
-      ...base,
-      date_of_birth: yesterday.toISOString().split('T')[0],
-    })
-    expect(result.success).toBe(false)
-  })
-
-  it('rejects a future date of birth', () => {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const result = CandidateSchema.safeParse({
-      ...base,
-      date_of_birth: tomorrow.toISOString().split('T')[0],
-    })
-    expect(result.success).toBe(false)
-  })
-
-  it('accepts null date_of_birth (optional)', () => {
-    const result = CandidateSchema.safeParse({ ...base, date_of_birth: null })
-    expect(result.success).toBe(true)
-  })
-
-  it('accepts omitted date_of_birth (optional)', () => {
-    const result = CandidateSchema.safeParse(base)
-    expect(result.success).toBe(true)
-  })
-
-  it('age refine error is reported on the date_of_birth path', () => {
-    const result = CandidateSchema.safeParse({ ...base, date_of_birth: yearsAgo(5) })
-    expect(result.success).toBe(false)
-    if (!result.success) {
-      const paths = result.error.issues.map((i) => i.path.join('.'))
-      expect(paths).toContain('date_of_birth')
-    }
-  })
-})

@@ -111,3 +111,19 @@ HRHandle does not use a global client-side state manager (no Redux, Zustand, etc
 - **UI primitives**: `components/ui/` — shadcn/ui components (accordion, button, card, dialog, etc.).
 - **Feature components**: `components/[domain]/` — compose UI primitives, call server actions.
 - **cn() utility**: `lib/utils.ts` — combines `clsx` + `tailwind-merge` for conditional class names.
+
+## Candidate Components (`components/candidates/`)
+
+| File | Type | Purpose |
+|---|---|---|
+| `status-pill.tsx` | Server | Coloured pill badge for any entity status; `PILL_STYLES` map keys on status `code` |
+| `summary-strip.tsx` | Server | Horizontal card showing: location/timezone, years experience (computed from `candidate_experience`), salary expectation, notice period, languages. Returns null when all fields are empty. |
+| `pipeline-mini-bar.tsx` | Server | Read-only 5-stage progress bar (Applied → Screening → Interview → Offer → Hired). Accepts `currentStageCode`; done stages green, active highlighted, future muted. Used inside `application-evaluation.tsx`. |
+| `contact-card.tsx` | Client | Email, phone, LinkedIn rows with copy-to-clipboard buttons. Checkmark shown for 1.2 s after copy. |
+| `metadata-footer.tsx` | Server | 2-col grid: Source, Added (relative), Last Updated, Candidate ID (short, monospace). |
+| `activity-feed.tsx` | Client | Unified activity feed consuming `candidate_activity` view rows. Filter chips (All / Notes / Interviews / Stage changes / Documents). Inline note composer (Enter to post). Delete on note items. |
+| `experience-section.tsx` | Client | Timeline with absolute left rail + dots. First entry expanded by default; others collapsed. Each entry expandable/collapsible. Edit/Delete buttons in expanded body. |
+
+## `components/ui/status-pill.tsx`
+
+Shared status pill used across candidates and applications. `PILL_STYLES` maps status codes to `oklch()`-based Tailwind background + text colour pairs.
