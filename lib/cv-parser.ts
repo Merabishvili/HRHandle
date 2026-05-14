@@ -70,12 +70,8 @@ export async function extractTextFromFile(file: File): Promise<string | null> {
 async function extractFromPDF(file: File): Promise<string | null> {
   try {
     const arrayBuffer = await file.arrayBuffer()
-    // pdf-parse uses CJS exports; .default covers esModuleInterop wrapping
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mod = await import('pdf-parse') as any
-    const pdfParse: (buf: Buffer) => Promise<{ text: string }> = mod.default ?? mod
-    const data = await pdfParse(Buffer.from(arrayBuffer))
-    const text = data.text
+    const { extractText } = await import('unpdf')
+    const { text } = await extractText(new Uint8Array(arrayBuffer), { mergePages: true })
     console.log(`[cv-parser] extractFromPDF: extracted ${text.length} chars`)
     return text || null
   } catch (err) {
