@@ -3,6 +3,8 @@ import { ParsedCVSchema, type ParsedCVInput } from '@/lib/validations/candidate-
 
 const PARSE_TIMEOUT_MS = 15_000
 const MIN_TEXT_LENGTH = 100
+const MAX_RETRIES = 2
+const RETRY_DELAY_MS = 2_000
 
 const CV_PROMPT = `You are a CV/resume parser. Extract structured information from the CV text below.
 
@@ -91,59 +93,70 @@ async function extractFromDOCX(file: File): Promise<string | null> {
   }
 }
 
+function isRetryable(err: unknown): boolean {
+  if (!(err instanceof Error)) return false
+  const msg = err.message
+  return msg.includes('503') || msg.includes('Service Unavailable') || msg.includes('overloaded')
+}
+
 export async function parseCV(text: string): Promise<CVParseResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
     return { success: false, reason: 'parse_failed' }
   }
 
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS)
+  const genAI = new GoogleGenerativeAI(apiKey)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt))
+    }
 
-    const result = await Promise.race([
-      model.generateContent(CV_PROMPT + text),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), PARSE_TIMEOUT_MS)
-      ),
-    ])
-
-    clearTimeout(timer)
-
-    const raw = (result as Awaited<ReturnType<typeof model.generateContent>>)
-      .response.text()
-      .trim()
-      // Strip markdown code fences if the model adds them despite the prompt
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/i, '')
-
-    let parsed: unknown
     try {
-      parsed = JSON.parse(raw)
-    } catch {
-      console.error('[cv-parser] JSON.parse failed, raw (first 500):', raw.slice(0, 500))
+      const result = await Promise.race([
+        model.generateContent(CV_PROMPT + text),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), PARSE_TIMEOUT_MS)
+        ),
+      ])
+
+      const raw = (result as Awaited<ReturnType<typeof model.generateContent>>)
+        .response.text()
+        .trim()
+        // Strip markdown code fences if the model adds them despite the prompt
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/i, '')
+
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(raw)
+      } catch {
+        console.error('[cv-parser] JSON.parse failed, raw (first 500):', raw.slice(0, 500))
+        return { success: false, reason: 'parse_failed' }
+      }
+
+      const validated = ParsedCVSchema.safeParse(parsed)
+      if (!validated.success) {
+        console.error('[cv-parser] Zod validation failed:', JSON.stringify(validated.error.errors))
+        return { success: false, reason: 'parse_failed' }
+      }
+
+      return { success: true, data: validated.data }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'timeout') {
+        console.error('[cv-parser] Gemini call timed out')
+        return { success: false, reason: 'timeout' }
+      }
+      if (isRetryable(err) && attempt < MAX_RETRIES) {
+        continue
+      }
+      console.error('[cv-parser] Gemini call threw:', err)
       return { success: false, reason: 'parse_failed' }
     }
-
-    const validated = ParsedCVSchema.safeParse(parsed)
-    if (!validated.success) {
-      console.error('[cv-parser] Zod validation failed:', JSON.stringify(validated.error.errors))
-      return { success: false, reason: 'parse_failed' }
-    }
-
-    return { success: true, data: validated.data }
-  } catch (err) {
-    clearTimeout(timer)
-    if (err instanceof Error && err.message === 'timeout') {
-      console.error('[cv-parser] Gemini call timed out')
-      return { success: false, reason: 'timeout' }
-    }
-    console.error('[cv-parser] Gemini call threw:', err)
-    return { success: false, reason: 'parse_failed' }
   }
+
+  return { success: false, reason: 'parse_failed' }
 }
 
 export async function parseCVFile(file: File): Promise<CVParseResult> {
