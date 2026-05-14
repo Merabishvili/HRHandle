@@ -27,6 +27,12 @@ function hasValidMagicNumber(buf: ArrayBuffer): boolean {
   return MAGIC_NUMBERS.some(({ bytes }) => bytes.every((b, i) => view[i] === b))
 }
 
+// Gemini returns dates as "YYYY-MM" — PostgreSQL DATE requires "YYYY-MM-DD"
+function toDateString(date: string | null): string | null {
+  if (!date) return null
+  return /^\d{4}-\d{2}$/.test(date) ? `${date}-01` : date
+}
+
 export type PublicApplyResult =
   | { success: true }
   | { success: false; error: string }
@@ -231,8 +237,8 @@ export async function submitPublicApplication(
             candidate_id: candidateId,
             company: e.company as string,
             title: e.title as string,
-            start_date: (e.start_date as string | null) ?? null,
-            end_date: (e.end_date as string | null) ?? null,
+            start_date: toDateString(e.start_date as string | null),
+            end_date: toDateString(e.end_date as string | null),
             is_current: Boolean(e.is_current),
             description: (e.description as string | null) ?? null,
           }))
