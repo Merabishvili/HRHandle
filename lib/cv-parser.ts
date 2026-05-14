@@ -74,7 +74,7 @@ async function extractFromPDF(file: File): Promise<string | null> {
     const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
     pdfjsLib.GlobalWorkerOptions.workerSrc = ''
 
-    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), useWorkerFetch: false, isEvalSupported: false, useSystemFonts: true }).promise
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), useWorkerFetch: false, useSystemFonts: true }).promise
     const pages: string[] = []
 
     for (let i = 1; i <= pdf.numPages; i++) {
