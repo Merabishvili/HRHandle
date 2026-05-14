@@ -96,6 +96,7 @@ async function extractFromDOCX(file: File): Promise<string | null> {
 
 export async function parseCV(text: string): Promise<CVParseResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  console.log('[cv-parser] GEMINI key present:', !!apiKey, '| keys containing GEMINI:', Object.keys(process.env).filter(k => k.includes('GEMINI')))
   if (!apiKey) {
     console.error('[cv-parser] GOOGLE_GEMINI_API_KEY is not set')
     return { success: false, reason: 'parse_failed' }
