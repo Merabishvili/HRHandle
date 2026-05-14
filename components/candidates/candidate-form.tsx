@@ -532,7 +532,7 @@ export function CandidateForm({
                   disabled={isLoading}
                 />
                 {formData.linkedin_profile_url && (
-                  <a href={formData.linkedin_profile_url} target="_blank" rel="noopener noreferrer">
+                  <a href={/^https?:\/\//i.test(formData.linkedin_profile_url) ? formData.linkedin_profile_url : `https://${formData.linkedin_profile_url}`} target="_blank" rel="noopener noreferrer">
                     <Button type="button" variant="outline" size="icon" title="Open LinkedIn profile">
                       <Linkedin className="h-4 w-4 text-[#0A66C2]" />
                     </Button>

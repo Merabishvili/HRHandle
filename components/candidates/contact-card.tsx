@@ -71,11 +71,15 @@ function ContactRow({ icon, label, value, href, isLink, last }: ContactRowProps)
   )
 }
 
+function normalizeUrl(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
 export function ContactCard({ email, phone, linkedinUrl }: ContactCardProps) {
   const rows = [
     email       && { icon: <Mail className="h-4 w-4" />,     label: 'Email',    value: email,       href: `mailto:${email}` },
     phone       && { icon: <Phone className="h-4 w-4" />,    label: 'Phone',    value: phone,       href: `tel:${phone}` },
-    linkedinUrl && { icon: <Linkedin className="h-4 w-4" />, label: 'LinkedIn', value: linkedinUrl, href: linkedinUrl, isLink: true },
+    linkedinUrl && { icon: <Linkedin className="h-4 w-4" />, label: 'LinkedIn', value: linkedinUrl, href: normalizeUrl(linkedinUrl), isLink: true },
   ].filter(Boolean) as ContactRowProps[]
 
   return (
