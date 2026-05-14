@@ -4,7 +4,7 @@ import { parseCVFile } from '@/lib/cv-parser'
 
 // Use Frankfurt region — US East (iad1 default) is blocked by Google's API firewall
 export const preferredRegion = 'fra1'
-export const maxDuration = 60
+export const maxDuration = 90
 
 const MAX_PARSE_REQUESTS_PER_IP_PER_HOUR = 10
 const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB

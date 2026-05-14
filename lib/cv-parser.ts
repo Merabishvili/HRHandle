@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { ParsedCVSchema, type ParsedCVInput } from '@/lib/validations/candidate-background'
 
-const PARSE_TIMEOUT_MS = 15_000
+const PARSE_TIMEOUT_MS = 25_000
 const MIN_TEXT_LENGTH = 100
 const MAX_RETRIES = 2
 const RETRY_DELAY_MS = 2_000
@@ -145,7 +145,8 @@ export async function parseCV(text: string): Promise<CVParseResult> {
       return { success: true, data: validated.data }
     } catch (err) {
       if (err instanceof Error && err.message === 'timeout') {
-        console.error('[cv-parser] Gemini call timed out')
+        if (attempt < MAX_RETRIES) continue
+        console.error('[cv-parser] Gemini call timed out after all retries')
         return { success: false, reason: 'timeout' }
       }
       if (isRetryable(err) && attempt < MAX_RETRIES) {
