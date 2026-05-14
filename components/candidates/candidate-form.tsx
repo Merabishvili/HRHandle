@@ -20,9 +20,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, Linkedin, Paperclip, X, Upload, FileText, Wand2, PenLine, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Loader2, Linkedin, Paperclip, X, Upload, FileText, Wand2, PenLine, CheckCircle2, AlertCircle, Plus, Trash2, Check, Briefcase, GraduationCap } from 'lucide-react'
 import { bulkCreateExperienceEntries, bulkCreateEducationEntries } from '@/lib/actions/candidate-background'
 import type { ParsedCVInput } from '@/lib/validations/candidate-background'
+
+type ExpLocal = { localId: string; company: string; title: string; start_date: string | null; end_date: string | null; is_current: boolean; description: string | null }
+type EduLocal = { localId: string; institution: string; degree: string | null; field_of_study: string | null; start_year: number | null; end_year: number | null; is_ongoing: boolean }
+const BLANK_EXP: Omit<ExpLocal, 'localId'> = { company: '', title: '', start_date: null, end_date: null, is_current: false, description: null }
+const BLANK_EDU: Omit<EduLocal, 'localId'> = { institution: '', degree: null, field_of_study: null, start_year: null, end_year: null, is_ongoing: false }
 import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
 import type {
   Candidate,
@@ -83,6 +88,14 @@ export function CandidateForm({
   const [cvParseState, setCvParseState] = useState<CvParseState>('idle')
   const [parsedCV, setParsedCV] = useState<ParsedCVInput | null>(null)
   const [cvFileName, setCvFileName] = useState<string | null>(null)
+
+  // Pending experience/education for create form (local state, saved on submit)
+  const [pendingExp, setPendingExp] = useState<ExpLocal[]>([])
+  const [pendingEdu, setPendingEdu] = useState<EduLocal[]>([])
+  const [addingExp, setAddingExp] = useState(false)
+  const [addExpForm, setAddExpForm] = useState<Omit<ExpLocal, 'localId'>>(BLANK_EXP)
+  const [addingEdu, setAddingEdu] = useState(false)
+  const [addEduForm, setAddEduForm] = useState<Omit<EduLocal, 'localId'>>(BLANK_EDU)
 
   const [selectedVacancyId, setSelectedVacancyId] = useState<string>(
     defaultVacancyId || ''
@@ -154,6 +167,18 @@ export function CandidateForm({
           current_company: data.current_company || prev.current_company,
           current_position: data.current_position || prev.current_position,
         }))
+        if (data.experience.length > 0) {
+          setPendingExp(data.experience
+            .filter((e) => e.company && e.title)
+            .map((e, i) => ({ localId: `cv-exp-${i}`, company: e.company ?? '', title: e.title ?? '', start_date: e.start_date ?? null, end_date: e.end_date ?? null, is_current: e.is_current, description: e.description ?? null }))
+          )
+        }
+        if (data.education.length > 0) {
+          setPendingEdu(data.education
+            .filter((e) => e.institution)
+            .map((e, i) => ({ localId: `cv-edu-${i}`, institution: e.institution ?? '', degree: e.degree ?? null, field_of_study: e.field_of_study ?? null, start_year: e.start_year ?? null, end_year: e.end_year ?? null, is_ongoing: e.is_ongoing }))
+          )
+        }
       } else {
         setCvParseState('failed')
       }
@@ -213,27 +238,11 @@ export function CandidateForm({
       }
     }
 
-    if (!isEditing && result.data?.id && entryMode === 'cv' && parsedCV) {
-      if (parsedCV.experience.length > 0) {
-        await bulkCreateExperienceEntries(result.data.id, parsedCV.experience.map((e) => ({
-          company: e.company ?? '',
-          title: e.title ?? '',
-          start_date: e.start_date ?? null,
-          end_date: e.end_date ?? null,
-          is_current: e.is_current,
-          description: e.description ?? null,
-        })).filter((e) => e.company && e.title))
-      }
-      if (parsedCV.education.length > 0) {
-        await bulkCreateEducationEntries(result.data.id, parsedCV.education.map((e) => ({
-          institution: e.institution ?? '',
-          degree: e.degree ?? null,
-          field_of_study: e.field_of_study ?? null,
-          start_year: e.start_year ?? null,
-          end_year: e.end_year ?? null,
-          is_ongoing: e.is_ongoing,
-        })).filter((e) => e.institution))
-      }
+    if (!isEditing && result.data?.id) {
+      const expEntries = pendingExp.filter((e) => e.company.trim() && e.title.trim()).map(({ localId: _id, ...e }) => e)
+      if (expEntries.length > 0) await bulkCreateExperienceEntries(result.data.id, expEntries)
+      const eduEntries = pendingEdu.filter((e) => e.institution.trim()).map(({ localId: _id, ...e }) => e)
+      if (eduEntries.length > 0) await bulkCreateEducationEntries(result.data.id, eduEntries)
     }
 
     if (!isEditing && result.data?.id) {
@@ -526,6 +535,162 @@ export function CandidateForm({
           </div>
         </CardContent>
       </Card>
+
+      {/* Experience (create only) */}
+      {!isEditing && (
+        <Card className="border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                Experience
+              </CardTitle>
+              <CardDescription>Work history entries.</CardDescription>
+            </div>
+            {!addingExp && (
+              <Button type="button" variant="outline" size="sm" onClick={() => { setAddingExp(true); setAddExpForm(BLANK_EXP) }} disabled={isLoading}>
+                <Plus className="h-4 w-4 mr-1" />Add
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {addingExp && (
+              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Company *</Label>
+                    <Input value={addExpForm.company} onChange={(e) => setAddExpForm((p) => ({ ...p, company: e.target.value }))} placeholder="Company name" maxLength={200} disabled={isLoading} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Title *</Label>
+                    <Input value={addExpForm.title} onChange={(e) => setAddExpForm((p) => ({ ...p, title: e.target.value }))} placeholder="Job title" maxLength={200} disabled={isLoading} />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Start date</Label>
+                    <Input type="month" value={addExpForm.start_date ?? ''} onChange={(e) => setAddExpForm((p) => ({ ...p, start_date: e.target.value || null }))} disabled={isLoading} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">End date</Label>
+                    <Input type="month" value={addExpForm.end_date ?? ''} onChange={(e) => setAddExpForm((p) => ({ ...p, end_date: e.target.value || null }))} disabled={isLoading || addExpForm.is_current} />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="checkbox" checked={addExpForm.is_current} onChange={(e) => setAddExpForm((p) => ({ ...p, is_current: e.target.checked, end_date: e.target.checked ? null : p.end_date }))} className="rounded" />
+                  Currently working here
+                </label>
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setAddingExp(false); setAddExpForm(BLANK_EXP) }}>
+                    <X className="h-4 w-4 mr-1" />Cancel
+                  </Button>
+                  <Button type="button" size="sm" disabled={!addExpForm.company.trim() || !addExpForm.title.trim()} onClick={() => { setPendingExp((p) => [...p, { ...addExpForm, localId: `exp-${Date.now()}` }]); setAddExpForm(BLANK_EXP); setAddingExp(false) }}>
+                    <Check className="h-4 w-4 mr-1" />Add
+                  </Button>
+                </div>
+              </div>
+            )}
+            {pendingExp.length === 0 && !addingExp && (
+              <p className="py-4 text-center text-sm text-muted-foreground">No experience added yet.</p>
+            )}
+            {pendingExp.map((entry) => (
+              <div key={entry.localId} className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/10 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{entry.title}</p>
+                  <p className="text-sm text-muted-foreground truncate">{entry.company}</p>
+                  {(entry.start_date || entry.is_current || entry.end_date) && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{entry.start_date ?? '?'} – {entry.is_current ? 'Present' : (entry.end_date ?? '?')}</p>
+                  )}
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => setPendingExp((p) => p.filter((e) => e.localId !== entry.localId))}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Education (create only) */}
+      {!isEditing && (
+        <Card className="border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-4 w-4" />
+                Education
+              </CardTitle>
+              <CardDescription>Academic background.</CardDescription>
+            </div>
+            {!addingEdu && (
+              <Button type="button" variant="outline" size="sm" onClick={() => { setAddingEdu(true); setAddEduForm(BLANK_EDU) }} disabled={isLoading}>
+                <Plus className="h-4 w-4 mr-1" />Add
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {addingEdu && (
+              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Institution *</Label>
+                  <Input value={addEduForm.institution} onChange={(e) => setAddEduForm((p) => ({ ...p, institution: e.target.value }))} placeholder="University or school name" maxLength={200} disabled={isLoading} />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Degree</Label>
+                    <Input value={addEduForm.degree ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, degree: e.target.value || null }))} placeholder="e.g. Bachelor's" maxLength={100} disabled={isLoading} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Field of study</Label>
+                    <Input value={addEduForm.field_of_study ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, field_of_study: e.target.value || null }))} placeholder="e.g. Computer Science" maxLength={200} disabled={isLoading} />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Start year</Label>
+                    <Input type="number" min={1950} max={new Date().getFullYear()} value={addEduForm.start_year ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, start_year: e.target.value ? Number(e.target.value) : null }))} placeholder="e.g. 2018" disabled={isLoading} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">End year</Label>
+                    <Input type="number" min={1950} max={new Date().getFullYear() + 10} value={addEduForm.end_year ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, end_year: e.target.value ? Number(e.target.value) : null }))} placeholder="e.g. 2022" disabled={isLoading || addEduForm.is_ongoing} />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="checkbox" checked={addEduForm.is_ongoing} onChange={(e) => setAddEduForm((p) => ({ ...p, is_ongoing: e.target.checked, end_year: e.target.checked ? null : p.end_year }))} className="rounded" />
+                  Currently studying
+                </label>
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setAddingEdu(false); setAddEduForm(BLANK_EDU) }}>
+                    <X className="h-4 w-4 mr-1" />Cancel
+                  </Button>
+                  <Button type="button" size="sm" disabled={!addEduForm.institution.trim()} onClick={() => { setPendingEdu((p) => [...p, { ...addEduForm, localId: `edu-${Date.now()}` }]); setAddEduForm(BLANK_EDU); setAddingEdu(false) }}>
+                    <Check className="h-4 w-4 mr-1" />Add
+                  </Button>
+                </div>
+              </div>
+            )}
+            {pendingEdu.length === 0 && !addingEdu && (
+              <p className="py-4 text-center text-sm text-muted-foreground">No education added yet.</p>
+            )}
+            {pendingEdu.map((entry) => (
+              <div key={entry.localId} className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/10 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{entry.institution}</p>
+                  {(entry.degree || entry.field_of_study) && (
+                    <p className="text-sm text-muted-foreground truncate">{[entry.degree, entry.field_of_study].filter(Boolean).join(', ')}</p>
+                  )}
+                  {(entry.start_year || entry.end_year || entry.is_ongoing) && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{entry.start_year ?? '?'} – {entry.is_ongoing ? 'Present' : (entry.end_year ?? '?')}</p>
+                  )}
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => setPendingEdu((p) => p.filter((e) => e.localId !== entry.localId))}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recruitment Details */}
       <Card className="border-border">

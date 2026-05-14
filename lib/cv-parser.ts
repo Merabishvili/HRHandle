@@ -106,8 +106,10 @@ async function extractFromDOCX(file: File): Promise<string | null> {
 export async function parseCV(text: string): Promise<CVParseResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
+    console.error('[cv-parser] GOOGLE_GEMINI_API_KEY is not set')
     return { success: false, reason: 'parse_failed' }
   }
+  console.log(`[cv-parser] calling Gemini, text length: ${text.length}`)
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS)
@@ -136,11 +138,13 @@ export async function parseCV(text: string): Promise<CVParseResult> {
     try {
       parsed = JSON.parse(raw)
     } catch {
+      console.error('[cv-parser] JSON.parse failed, raw (first 500):', raw.slice(0, 500))
       return { success: false, reason: 'parse_failed' }
     }
 
     const validated = ParsedCVSchema.safeParse(parsed)
     if (!validated.success) {
+      console.error('[cv-parser] Zod validation failed:', JSON.stringify(validated.error.errors))
       return { success: false, reason: 'parse_failed' }
     }
 
@@ -148,8 +152,10 @@ export async function parseCV(text: string): Promise<CVParseResult> {
   } catch (err) {
     clearTimeout(timer)
     if (err instanceof Error && err.message === 'timeout') {
+      console.error('[cv-parser] Gemini call timed out')
       return { success: false, reason: 'timeout' }
     }
+    console.error('[cv-parser] Gemini call threw:', err)
     return { success: false, reason: 'parse_failed' }
   }
 }
