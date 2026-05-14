@@ -164,6 +164,10 @@ export function CandidateForm({
           email: data.email || prev.email,
           phone: data.phone || prev.phone,
           linkedin_profile_url: data.linkedin_profile_url || prev.linkedin_profile_url,
+          location: data.location || (prev as {location?: string | null}).location,
+          languages: (data.languages?.length ? data.languages : null) ?? (prev as {languages?: string[]}).languages ?? [],
+          salary_expectation: data.salary_expectation || (prev as {salary_expectation?: string | null}).salary_expectation,
+          notice_period: data.notice_period || (prev as {notice_period?: string | null}).notice_period,
         }))
         if (data.experience.length > 0) {
           setPendingExp(data.experience

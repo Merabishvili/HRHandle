@@ -5,6 +5,12 @@ import { getAuthContext, type ActionResult } from './index'
 import { ExperienceEntrySchema, EducationEntrySchema, type ExperienceEntryInput, type EducationEntryInput } from '@/lib/validations/candidate-background'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 
+// Pads "YYYY-MM" dates (from CV parsing / month inputs) to "YYYY-MM-DD" for PostgreSQL DATE columns.
+function padDate(date: string | null | undefined): string | null {
+  if (!date) return null
+  return /^\d{4}-\d{2}$/.test(date) ? `${date}-01` : date
+}
+
 // ── Experience ────────────────────────────────────────────────────────────────
 
 export async function getCandidateExperience(
@@ -41,8 +47,8 @@ export async function createExperienceEntry(
       candidate_id: candidateId,
       company: parsed.data.company,
       title: parsed.data.title,
-      start_date: parsed.data.start_date ?? null,
-      end_date: parsed.data.end_date ?? null,
+      start_date: padDate(parsed.data.start_date),
+      end_date: padDate(parsed.data.end_date),
       is_current: parsed.data.is_current,
       description: parsed.data.description ?? null,
     })
@@ -71,8 +77,8 @@ export async function updateExperienceEntry(
     .update({
       company: parsed.data.company,
       title: parsed.data.title,
-      start_date: parsed.data.start_date ?? null,
-      end_date: parsed.data.end_date ?? null,
+      start_date: padDate(parsed.data.start_date),
+      end_date: padDate(parsed.data.end_date),
       is_current: parsed.data.is_current,
       description: parsed.data.description ?? null,
     })
@@ -113,18 +119,20 @@ export async function bulkCreateExperienceEntries(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
+  // Skip the schema's refine (which requires end_date for non-current entries) because CV-parsed
+  // data often has no end_date for past positions. Just require company + title to be non-empty,
+  // and pad "YYYY-MM" dates to "YYYY-MM-DD" for PostgreSQL DATE columns.
   const rows = entries
-    .map((e) => ExperienceEntrySchema.safeParse(e))
-    .filter((r) => r.success)
-    .map((r) => ({
+    .filter((e) => e.company?.trim() && e.title?.trim())
+    .map((e) => ({
       organization_id: ctx.orgId,
       candidate_id: candidateId,
-      company: r.data!.company,
-      title: r.data!.title,
-      start_date: r.data!.start_date ?? null,
-      end_date: r.data!.end_date ?? null,
-      is_current: r.data!.is_current,
-      description: r.data!.description ?? null,
+      company: e.company.trim(),
+      title: e.title.trim(),
+      start_date: padDate(e.start_date),
+      end_date: padDate(e.end_date),
+      is_current: e.is_current ?? false,
+      description: e.description ?? null,
     }))
 
   if (rows.length === 0) return { success: true, data: undefined }
