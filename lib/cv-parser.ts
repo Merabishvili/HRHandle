@@ -70,11 +70,13 @@ export async function extractTextFromFile(file: File): Promise<string | null> {
 async function extractFromPDF(file: File): Promise<string | null> {
   try {
     const arrayBuffer = await file.arrayBuffer()
+    console.log(`[cv-parser] extractFromPDF: arrayBuffer size=${arrayBuffer.byteLength}`)
     // pdfjs-dist is loaded dynamically to avoid SSR issues with its worker
     const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
     pdfjsLib.GlobalWorkerOptions.workerSrc = ''
 
     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), useWorkerFetch: false, useSystemFonts: true }).promise
+    console.log(`[cv-parser] extractFromPDF: numPages=${pdf.numPages}`)
     const pages: string[] = []
 
     for (let i = 1; i <= pdf.numPages; i++) {
@@ -86,8 +88,11 @@ async function extractFromPDF(file: File): Promise<string | null> {
       pages.push(pageText)
     }
 
-    return pages.join('\n')
-  } catch {
+    const text = pages.join('\n')
+    console.log(`[cv-parser] extractFromPDF: extracted ${text.length} chars`)
+    return text
+  } catch (err) {
+    console.error('[cv-parser] extractFromPDF failed:', err)
     return null
   }
 }
@@ -97,8 +102,11 @@ async function extractFromDOCX(file: File): Promise<string | null> {
     const arrayBuffer = await file.arrayBuffer()
     const mammoth = await import('mammoth')
     const result = await mammoth.extractRawText({ arrayBuffer })
-    return result.value || null
-  } catch {
+    const text = result.value || null
+    console.log(`[cv-parser] extractFromDOCX: extracted ${text?.length ?? 0} chars`)
+    return text
+  } catch (err) {
+    console.error('[cv-parser] extractFromDOCX failed:', err)
     return null
   }
 }
@@ -163,7 +171,12 @@ export async function parseCV(text: string): Promise<CVParseResult> {
 export async function parseCVFile(file: File): Promise<CVParseResult> {
   const text = await extractTextFromFile(file)
 
-  if (!text || text.trim().length < MIN_TEXT_LENGTH) {
+  if (!text) {
+    console.error(`[cv-parser] text extraction returned null for file: ${file.name}`)
+    return { success: false, reason: 'unreadable' }
+  }
+  if (text.trim().length < MIN_TEXT_LENGTH) {
+    console.error(`[cv-parser] extracted text too short: ${text.trim().length} chars (min ${MIN_TEXT_LENGTH})`)
     return { success: false, reason: 'unreadable' }
   }
 
