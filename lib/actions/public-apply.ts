@@ -58,20 +58,19 @@ export async function submitPublicApplication(
   if (!email || !z.string().email().safeParse(email).success) {
     return { success: false, error: 'A valid email address is required.' }
   }
-  if (!cvFile || cvFile.size === 0) return { success: false, error: 'CV upload is required.' }
-
-  // ── 4. File validation ─────────────────────────────────────────────────────
-  if (!ALLOWED_MIME_TYPES.includes(cvFile.type)) {
-    return { success: false, error: 'CV must be a PDF or Word document.' }
-  }
-  if (cvFile.size > MAX_FILE_BYTES) {
-    return { success: false, error: 'CV file must be 10 MB or smaller.' }
-  }
-
-  // Read file bytes early so we can validate magic numbers and reuse buffer for upload
-  const fileBytes = await cvFile.arrayBuffer()
-  if (!hasValidMagicNumber(fileBytes)) {
-    return { success: false, error: 'CV must be a valid PDF or Word document.' }
+  // ── 4. File validation (only when a file was provided) ────────────────────
+  let fileBytes: ArrayBuffer | null = null
+  if (cvFile && cvFile.size > 0) {
+    if (!ALLOWED_MIME_TYPES.includes(cvFile.type)) {
+      return { success: false, error: 'CV must be a PDF or Word document.' }
+    }
+    if (cvFile.size > MAX_FILE_BYTES) {
+      return { success: false, error: 'CV file must be 10 MB or smaller.' }
+    }
+    fileBytes = await cvFile.arrayBuffer()
+    if (!hasValidMagicNumber(fileBytes)) {
+      return { success: false, error: 'CV must be a valid PDF or Word document.' }
+    }
   }
 
   // ── 5. Resolve vacancy from token ─────────────────────────────────────────
@@ -271,35 +270,37 @@ export async function submitPublicApplication(
     }
   }
 
-  // ── 15. Upload CV ──────────────────────────────────────────────────────────
-  try {
-    const rawExt = cvFile.name.split('.').pop()?.toLowerCase() ?? ''
-    const ext = ['pdf', 'doc', 'docx'].includes(rawExt) ? rawExt : 'pdf'
-    const storagePath = `${orgId}/${candidateId}/${crypto.randomUUID()}.${ext}`
+  // ── 15. Upload CV (optional) ───────────────────────────────────────────────
+  if (cvFile && cvFile.size > 0 && fileBytes) {
+    try {
+      const rawExt = cvFile.name.split('.').pop()?.toLowerCase() ?? ''
+      const ext = ['pdf', 'doc', 'docx'].includes(rawExt) ? rawExt : 'pdf'
+      const storagePath = `${orgId}/${candidateId}/${crypto.randomUUID()}.${ext}`
 
-    const { error: storageError } = await supabase.storage
-      .from('candidate-documents')
-      .upload(storagePath, fileBytes, {
-        contentType: cvFile.type,
-        upsert: false,
-      })
+      const { error: storageError } = await supabase.storage
+        .from('candidate-documents')
+        .upload(storagePath, fileBytes, {
+          contentType: cvFile.type,
+          upsert: false,
+        })
 
-    if (!storageError) {
-      const { error: docError } = await supabase.from('candidate_documents').insert({
-        organization_id: orgId,
-        candidate_id: candidateId,
-        uploaded_by: null,
-        file_name: cvFile.name,
-        file_size: cvFile.size,
-        file_size_bytes: cvFile.size,
-        mime_type: cvFile.type,
-        file_path: storagePath,
-        document_type: 'cv',
-      })
-      if (docError) console.error('[public-apply] candidate_documents insert failed:', docError)
+      if (!storageError) {
+        const { error: docError } = await supabase.from('candidate_documents').insert({
+          organization_id: orgId,
+          candidate_id: candidateId,
+          uploaded_by: null,
+          file_name: cvFile.name,
+          file_size: cvFile.size,
+          file_size_bytes: cvFile.size,
+          mime_type: cvFile.type,
+          file_path: storagePath,
+          document_type: 'cv',
+        })
+        if (docError) console.error('[public-apply] candidate_documents insert failed:', docError)
+      }
+    } catch (err) {
+      console.error('[public-apply] CV upload block error:', err)
     }
-  } catch (err) {
-    console.error('[public-apply] CV upload block error:', err)
   }
 
   // ── 16. Notify org owners/admins of new application ───────────────────────

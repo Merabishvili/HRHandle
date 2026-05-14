@@ -12,7 +12,7 @@ import { Loader2, CheckCircle, Upload, X } from 'lucide-react'
 import type { Organization } from '@/lib/types'
 
 interface OrganizationFormProps {
-  organization: Organization
+  organization: Organization & { public_page_slug?: string | null }
 }
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
@@ -26,6 +26,7 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState(organization.name)
+  const [publicSlug, setPublicSlug] = useState(organization.public_page_slug ?? '')
 
   // Logo state: null = remove, undefined = unchanged, string = new URL or existing
   const [logoUrl, setLogoUrl] = useState<string | null>(organization.logo_url ?? null)
@@ -93,6 +94,7 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
     const result = await updateOrganization(organization.id, {
       name,
       ...(finalLogoUrl !== undefined ? { logo_url: finalLogoUrl } : {}),
+      ...(publicSlug.trim() ? { public_page_slug: publicSlug.trim().toLowerCase() } : {}),
     })
 
     if (!result.success) {
@@ -187,6 +189,29 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
           placeholder="Your company name"
           disabled={isLoading}
         />
+      </div>
+
+      {/* Public jobs page URL */}
+      <div className="space-y-2">
+        <Label htmlFor="publicSlug">Public Jobs Page URL</Label>
+        <div className="flex items-center gap-0 rounded-lg border border-input overflow-hidden focus-within:ring-1 focus-within:ring-ring">
+          <span className="shrink-0 bg-muted px-3 py-2 text-sm text-muted-foreground border-r border-input">
+            /jobs/
+          </span>
+          <input
+            id="publicSlug"
+            type="text"
+            value={publicSlug}
+            onChange={(e) => setPublicSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+            placeholder="your-company"
+            maxLength={60}
+            disabled={isLoading}
+            className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Lowercase letters, numbers, and hyphens only. This is the link you share with job seekers.
+        </p>
       </div>
 
       <Button type="submit" disabled={isLoading}>

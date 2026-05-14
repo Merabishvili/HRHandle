@@ -21,7 +21,7 @@ export function ApplyForm({ token }: { token: string }) {
   const [parseState, setParseState] = useState<ParseState>('idle')
   const [parsed, setParsed] = useState<ParsedCVInput | null>(null)
 
-  // Personal fields (pre-filled from CV parse)
+  // Personal fields (pre-fillable from CV parse)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -76,11 +76,6 @@ export function ApplyForm({ token }: { token: string }) {
     setCvFile(null)
     setParsed(null)
     setParseState('idle')
-    setFirstName('')
-    setLastName('')
-    setEmail('')
-    setPhone('')
-    setLinkedinUrl('')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -89,7 +84,6 @@ export function ApplyForm({ token }: { token: string }) {
     if (isLoading) return
     setError(null)
 
-    if (!cvFile) { setError('Please upload your CV first.'); return }
     if (!firstName.trim()) { setError('First name is required.'); return }
     if (!lastName.trim()) { setError('Last name is required.'); return }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -118,7 +112,7 @@ export function ApplyForm({ token }: { token: string }) {
     fd.append('email', email.trim().toLowerCase())
     fd.append('phone', phone.trim())
     fd.append('linkedin_profile_url', linkedinUrl.trim())
-    fd.append('cv', cvFile)
+    if (cvFile) fd.append('cv', cvFile)
     fd.append('website', '') // Honeypot
     fd.append('experience_json', JSON.stringify(parsed?.experience ?? []))
     fd.append('education_json', JSON.stringify(parsed?.education ?? []))
@@ -148,13 +142,11 @@ export function ApplyForm({ token }: { token: string }) {
     )
   }
 
-  const hasPersonalFields = parseState === 'done' || parseState === 'failed'
-
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
       <h2 className="mb-6 text-lg font-bold text-gray-900">Apply for this Position</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         {/* Honeypot */}
         <input
           type="text"
@@ -171,10 +163,11 @@ export function ApplyForm({ token }: { token: string }) {
           </div>
         )}
 
-        {/* ── CV Upload (always first) ───────────────────────────────────── */}
+        {/* ── CV Upload (optional, triggers parse) ──────────────────────────── */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700">
-            CV / Resume <span className="text-red-500">*</span>
+            CV / Resume
+            <span className="ml-1.5 text-xs font-normal text-gray-400">(recommended — auto-fills your details)</span>
           </label>
 
           {cvFile ? (
@@ -184,11 +177,7 @@ export function ApplyForm({ token }: { token: string }) {
                 <span className="flex-1 truncate text-sm text-gray-700">{cvFile.name}</span>
                 <span className="text-xs text-gray-400">{(cvFile.size / 1024).toFixed(0)} KB</span>
                 {parseState !== 'parsing' && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveFile}
-                    className="text-gray-400 hover:text-red-500 transition-colors"
-                  >
+                  <button type="button" onClick={handleRemoveFile} className="text-gray-400 hover:text-red-500 transition-colors">
                     <X className="h-4 w-4" />
                   </button>
                 )}
@@ -196,13 +185,13 @@ export function ApplyForm({ token }: { token: string }) {
               {parseState === 'parsing' && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Parsing your CV…
+                  Filling in your details…
                 </div>
               )}
               {parseState === 'done' && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  CV parsed — your details have been filled in below
+                  Details filled in — please review below
                 </div>
               )}
               {parseState === 'failed' && (
@@ -217,10 +206,10 @@ export function ApplyForm({ token }: { token: string }) {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors disabled:opacity-50"
             >
               <Upload className="h-4 w-4" />
-              Click to upload PDF or Word document (max 10 MB)
+              Upload PDF or Word document (max 10 MB)
             </button>
           )}
 
@@ -234,153 +223,146 @@ export function ApplyForm({ token }: { token: string }) {
           />
         </div>
 
-        {/* ── Personal details (shown after upload attempt) ─────────────── */}
-        {hasPersonalFields && (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="John"
-                  maxLength={100}
-                  disabled={isLoading}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Smith"
-                  maxLength={100}
-                  disabled={isLoading}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="john@example.com"
-                maxLength={254}
-                disabled={isLoading}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Phone</label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 555 123 4567"
-                  maxLength={30}
-                  disabled={isLoading}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">LinkedIn URL</label>
-                <input
-                  type="url"
-                  value={linkedinUrl}
-                  onChange={(e) => setLinkedinUrl(e.target.value)}
-                  placeholder="https://linkedin.com/in/..."
-                  maxLength={500}
-                  disabled={isLoading}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
-                />
-              </div>
-            </div>
-
-            {/* ── Experience preview (read-only) ─────────────────────────── */}
-            {parsed && parsed.experience.length > 0 && (
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Briefcase className="h-4 w-4" />
-                  Experience
-                </div>
-                <ul className="space-y-2">
-                  {parsed.experience.map((exp, i) => (
-                    <li key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
-                      <p className="font-medium text-gray-800">{exp.title ?? '—'}</p>
-                      <p className="text-gray-600">{exp.company ?? '—'}</p>
-                      {(exp.start_date || exp.end_date || exp.is_current) && (
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {exp.start_date ?? '?'} – {exp.is_current ? 'Present' : (exp.end_date ?? '?')}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* ── Education preview (read-only) ──────────────────────────── */}
-            {parsed && parsed.education.length > 0 && (
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <GraduationCap className="h-4 w-4" />
-                  Education
-                </div>
-                <ul className="space-y-2">
-                  {parsed.education.map((edu, i) => (
-                    <li key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
-                      <p className="font-medium text-gray-800">{edu.institution ?? '—'}</p>
-                      {(edu.degree || edu.field_of_study) && (
-                        <p className="text-gray-600">{[edu.degree, edu.field_of_study].filter(Boolean).join(', ')}</p>
-                      )}
-                      {(edu.start_year || edu.end_year || edu.is_ongoing) && (
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {edu.start_year ?? '?'} – {edu.is_ongoing ? 'Present' : (edu.end_year ?? '?')}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
-        )}
-
-        {hasPersonalFields && (
-          <>
-            <button
-              type="submit"
+        {/* ── Personal details (always visible) ─────────────────────────────── */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              First Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="John"
+              maxLength={100}
               disabled={isLoading}
-              className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Submitting…
-                </>
-              ) : (
-                'Apply Now'
-              )}
-            </button>
-            <p className="text-center text-xs text-gray-400">
-              By submitting, you agree to your information being stored for recruitment purposes.
-            </p>
-          </>
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              Last Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Smith"
+              maxLength={100}
+              disabled={isLoading}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            Email <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="john@example.com"
+            maxLength={254}
+            disabled={isLoading}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">Phone</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+1 555 123 4567"
+              maxLength={30}
+              disabled={isLoading}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">LinkedIn URL</label>
+            <input
+              type="url"
+              value={linkedinUrl}
+              onChange={(e) => setLinkedinUrl(e.target.value)}
+              placeholder="https://linkedin.com/in/..."
+              maxLength={500}
+              disabled={isLoading}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+            />
+          </div>
+        </div>
+
+        {/* ── Experience preview (read-only, only when parsed) ───────────────── */}
+        {parsed && parsed.experience.length > 0 && (
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Briefcase className="h-4 w-4" />
+              Experience
+            </div>
+            <ul className="space-y-2">
+              {parsed.experience.map((exp, i) => (
+                <li key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
+                  <p className="font-medium text-gray-800">{exp.title ?? '—'}</p>
+                  <p className="text-gray-600">{exp.company ?? '—'}</p>
+                  {(exp.start_date || exp.end_date || exp.is_current) && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {exp.start_date ?? '?'} – {exp.is_current ? 'Present' : (exp.end_date ?? '?')}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
+
+        {/* ── Education preview (read-only, only when parsed) ───────────────── */}
+        {parsed && parsed.education.length > 0 && (
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+              <GraduationCap className="h-4 w-4" />
+              Education
+            </div>
+            <ul className="space-y-2">
+              {parsed.education.map((edu, i) => (
+                <li key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
+                  <p className="font-medium text-gray-800">{edu.institution ?? '—'}</p>
+                  {(edu.degree || edu.field_of_study) && (
+                    <p className="text-gray-600">{[edu.degree, edu.field_of_study].filter(Boolean).join(', ')}</p>
+                  )}
+                  {(edu.start_year || edu.end_year || edu.is_ongoing) && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {edu.start_year ?? '?'} – {edu.is_ongoing ? 'Present' : (edu.end_year ?? '?')}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isLoading || parseState === 'parsing'}
+          className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Submitting…
+            </>
+          ) : (
+            'Apply Now'
+          )}
+        </button>
+
+        <p className="text-center text-xs text-gray-400">
+          By submitting, you agree to your information being stored for recruitment purposes.
+        </p>
       </form>
     </div>
   )
