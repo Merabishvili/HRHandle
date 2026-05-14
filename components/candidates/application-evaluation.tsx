@@ -29,6 +29,7 @@ import { updateApplicationStatus, removeApplication } from '@/lib/actions/applic
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
+import { PipelineMiniBar } from '@/components/candidates/pipeline-mini-bar'
 
 interface Question {
   id: string
@@ -257,6 +258,11 @@ export function ApplicationEvaluation({
               {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
             </Button>
           </div>
+        </div>
+
+        {/* Pipeline mini bar */}
+        <div className="px-4 pb-3">
+          <PipelineMiniBar currentStageCode={appStatus?.code ?? null} />
         </div>
 
         {/* Expandable evaluation form */}

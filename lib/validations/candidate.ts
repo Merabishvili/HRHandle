@@ -2,8 +2,7 @@ import { z } from 'zod'
 
 export const CandidateSchema = z.object({
   first_name: z.string().min(1, 'First name is required').max(100),
-  last_name: z.string().min(1, 'Last name is required').max(100),
-  date_of_birth: z.string().nullable().optional(),
+  last_name:  z.string().min(1, 'Last name is required').max(100),
   email: z
     .string()
     .email('Invalid email address')
@@ -11,27 +10,20 @@ export const CandidateSchema = z.object({
     .optional()
     .or(z.literal('').transform(() => null)),
   phone: z.string().max(30).nullable().optional(),
-  current_company: z.string().max(200).nullable().optional(),
-  current_position: z.string().max(200).nullable().optional(),
-  years_of_experience: z.number().min(0).max(60).nullable().optional(),
   linkedin_profile_url: z
     .string()
     .url('Invalid LinkedIn URL')
     .nullable()
     .optional()
     .or(z.literal('').transform(() => null)),
-  source: z.string().max(100).nullable().optional(),
-  general_status_id: z.string().uuid().nullable().optional(),
+  location:           z.string().max(200).nullable().optional(),
+  timezone:           z.string().max(100).nullable().optional(),
+  languages:          z.array(z.string()).optional(),
+  salary_expectation: z.string().max(200).nullable().optional(),
+  notice_period:      z.string().max(100).nullable().optional(),
+  source:             z.string().max(100).nullable().optional(),
+  general_status_id:  z.string().uuid().nullable().optional(),
   linked_vacancy_ids: z.array(z.string().uuid()).optional(),
-}).refine(
-  (data) => {
-    if (!data.date_of_birth) return true
-    const dob = new Date(data.date_of_birth)
-    const cutoff = new Date()
-    cutoff.setFullYear(cutoff.getFullYear() - 16)
-    return dob <= cutoff
-  },
-  { message: 'Candidate must be at least 16 years old', path: ['date_of_birth'] }
-)
+})
 
 export type CandidateInput = z.infer<typeof CandidateSchema>

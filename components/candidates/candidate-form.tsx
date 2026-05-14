@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { DatePicker } from '@/components/ui/date-picker'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Linkedin, Paperclip, X, Upload, FileText, Wand2, PenLine, CheckCircle2, AlertCircle, Plus, Trash2, Check, Briefcase, GraduationCap } from 'lucide-react'
 import { bulkCreateExperienceEntries, bulkCreateEducationEntries } from '@/lib/actions/candidate-background'
@@ -104,13 +103,14 @@ export function CandidateForm({
   const [formData, setFormData] = useState<CandidateFormData>({
     first_name: candidate?.first_name || '',
     last_name: candidate?.last_name || '',
-    date_of_birth: candidate?.date_of_birth ?? null,
     email: candidate?.email || '',
     phone: candidate?.phone || '',
-    current_company: candidate?.current_company || '',
-    current_position: candidate?.current_position || '',
-    years_of_experience: candidate?.years_of_experience ?? null,
     linkedin_profile_url: candidate?.linkedin_profile_url || '',
+    location: (candidate as {location?: string | null})?.location ?? null,
+    timezone: (candidate as {timezone?: string | null})?.timezone ?? null,
+    languages: (candidate as {languages?: string[]})?.languages ?? [],
+    salary_expectation: (candidate as {salary_expectation?: string | null})?.salary_expectation ?? null,
+    notice_period: (candidate as {notice_period?: string | null})?.notice_period ?? null,
     source: candidate?.source || '',
     general_status_id: candidate?.general_status_id ||
       candidateStatuses.find((s) => s.code === 'active')?.id || null,
@@ -164,8 +164,6 @@ export function CandidateForm({
           email: data.email || prev.email,
           phone: data.phone || prev.phone,
           linkedin_profile_url: data.linkedin_profile_url || prev.linkedin_profile_url,
-          current_company: data.current_company || prev.current_company,
-          current_position: data.current_position || prev.current_position,
         }))
         if (data.experience.length > 0) {
           setPendingExp(data.experience
@@ -208,13 +206,14 @@ export function CandidateForm({
     const payload = {
       first_name: formData.first_name,
       last_name: formData.last_name,
-      date_of_birth: formData.date_of_birth || null,
       email: formData.email || null,
       phone: formData.phone || null,
-      current_company: formData.current_company || null,
-      current_position: formData.current_position || null,
-      years_of_experience: formData.years_of_experience ?? null,
       linkedin_profile_url: formData.linkedin_profile_url || null,
+      location: (formData as {location?: string | null}).location || null,
+      timezone: (formData as {timezone?: string | null}).timezone || null,
+      languages: (formData as {languages?: string[]}).languages ?? [],
+      salary_expectation: (formData as {salary_expectation?: string | null}).salary_expectation || null,
+      notice_period: (formData as {notice_period?: string | null}).notice_period || null,
       source: formData.source || null,
       general_status_id: formData.general_status_id || null,
     }
@@ -408,20 +407,8 @@ export function CandidateForm({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Date of Birth</Label>
-              <DatePicker
-                value={formData.date_of_birth ?? null}
-                onChange={(v) => handleChange('date_of_birth', v)}
-                placeholder="Select date of birth"
-                disabled={isLoading}
-                fromYear={1940}
-                toYear={new Date().getFullYear()}
-              />
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="general_status_id">General Status</Label>
               <Select
                 value={formData.general_status_id || ''}
@@ -470,23 +457,23 @@ export function CandidateForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="current_company">Current Company</Label>
+              <Label htmlFor="location">Location</Label>
               <Input
-                id="current_company"
-                placeholder="e.g. ABC Tech"
-                value={formData.current_company ?? ''}
-                onChange={(e) => handleChange('current_company', e.target.value)}
+                id="location"
+                placeholder="e.g. Tbilisi, Georgia"
+                value={(formData as {location?: string | null}).location ?? ''}
+                onChange={(e) => handleChange('location' as keyof typeof formData, e.target.value || null)}
                 disabled={isLoading}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="current_position">Current Position</Label>
+              <Label htmlFor="timezone">Timezone</Label>
               <Input
-                id="current_position"
-                placeholder="e.g. Senior Backend Engineer"
-                value={formData.current_position ?? ''}
-                onChange={(e) => handleChange('current_position', e.target.value)}
+                id="timezone"
+                placeholder="e.g. GMT+4"
+                value={(formData as {timezone?: string | null}).timezone ?? ''}
+                onChange={(e) => handleChange('timezone' as keyof typeof formData, e.target.value || null)}
                 disabled={isLoading}
               />
             </div>
@@ -494,24 +481,40 @@ export function CandidateForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="years_of_experience">Years of Experience</Label>
+              <Label htmlFor="salary_expectation">Salary Expectation</Label>
               <Input
-                id="years_of_experience"
-                type="number"
-                min={0}
-                step="0.5"
-                placeholder="e.g. 5"
-                value={formData.years_of_experience ?? ''}
-                onChange={(e) =>
-                  handleChange(
-                    'years_of_experience',
-                    e.target.value ? Number(e.target.value) : null
-                  )
-                }
+                id="salary_expectation"
+                placeholder="e.g. $80,000 – $100,000"
+                value={(formData as {salary_expectation?: string | null}).salary_expectation ?? ''}
+                onChange={(e) => handleChange('salary_expectation' as keyof typeof formData, e.target.value || null)}
                 disabled={isLoading}
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="notice_period">Notice Period</Label>
+              <Input
+                id="notice_period"
+                placeholder="e.g. 1 month"
+                value={(formData as {notice_period?: string | null}).notice_period ?? ''}
+                onChange={(e) => handleChange('notice_period' as keyof typeof formData, e.target.value || null)}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="languages">Languages</Label>
+            <Input
+              id="languages"
+              placeholder="e.g. English, Georgian, Russian"
+              value={((formData as {languages?: string[]}).languages ?? []).join(', ')}
+              onChange={(e) => handleChange('languages' as keyof typeof formData, e.target.value ? e.target.value.split(',').map((l) => l.trim()).filter(Boolean) : [])}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="linkedin_profile_url">LinkedIn Profile</Label>
               <div className="flex gap-2">

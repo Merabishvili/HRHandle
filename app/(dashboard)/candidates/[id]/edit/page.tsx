@@ -17,13 +17,14 @@ interface CandidateRow {
   organization_id: string
   first_name: string
   last_name: string
-  date_of_birth: string | null
   email: string | null
   phone: string | null
-  current_company: string | null
-  current_position: string | null
-  years_of_experience: number | null
   linkedin_profile_url: string | null
+  location: string | null
+  timezone: string | null
+  languages: string[]
+  salary_expectation: string | null
+  notice_period: string | null
   source: string | null
   general_status_id: string | null
   created_by: string | null
@@ -105,13 +106,14 @@ export default async function EditCandidatePage({
       organization_id,
       first_name,
       last_name,
-      date_of_birth,
       email,
       phone,
-      current_company,
-      current_position,
-      years_of_experience,
       linkedin_profile_url,
+      location,
+      timezone,
+      languages,
+      salary_expectation,
+      notice_period,
       source,
       general_status_id,
       created_by,

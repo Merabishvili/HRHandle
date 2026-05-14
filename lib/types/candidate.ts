@@ -17,17 +17,24 @@ export interface Candidate {
 
   first_name: string
   last_name: string
-  date_of_birth: ISODateString | null
   email: string | null
   phone: string | null
 
-  current_company: string | null
-  current_position: string | null
-  years_of_experience: number | null
+  location: string | null
+  timezone: string | null
+  languages: string[]
+  salary_expectation: string | null
+  notice_period: string | null
 
   linkedin_profile_url: string | null
   source: string | null
   general_status_id: UUID | null
+
+  // deprecated — kept for backwards compat, not surfaced in UI
+  date_of_birth?: ISODateString | null
+  current_company?: string | null
+  current_position?: string | null
+  years_of_experience?: number | null
 
   created_by: UUID | null
   created_at: ISODateTimeString
@@ -130,20 +137,19 @@ export interface CandidateNote {
 export interface CandidateFormData {
   first_name: string
   last_name: string
-  date_of_birth?: ISODateString | null
 
   email?: string | null
   phone?: string | null
-
-  current_company?: string | null
-  current_position?: string | null
-  years_of_experience?: number | null
-
   linkedin_profile_url?: string | null
+
+  location?: string | null
+  timezone?: string | null
+  languages?: string[]
+  salary_expectation?: string | null
+  notice_period?: string | null
+
   source?: string | null
-
   general_status_id?: UUID | null
-
   linked_vacancy_ids?: UUID[]
 }
 
