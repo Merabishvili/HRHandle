@@ -1,5 +1,3 @@
-'use client'
-
 import { Button } from '@/components/ui/button'
 import { Linkedin } from 'lucide-react'
 
@@ -24,60 +22,53 @@ function formatEmploymentType(value: string | null): string {
   return map[value] || value
 }
 
-export function LinkedInShareButton({
-  title,
-  location,
-  employmentType,
-  department,
-  description,
-  responsibilities,
-  requirements,
-}: LinkedInShareButtonProps) {
-  const handleShare = () => {
-    const lines: string[] = []
+function buildShareUrl(props: LinkedInShareButtonProps): string {
+  const { title, location, employmentType, department, description, responsibilities, requirements } = props
+  const lines: string[] = []
 
-    lines.push(`🚀 We're hiring: ${title}`)
-    if (department) lines.push(`📂 ${department}`)
-    if (location) lines.push(`📍 ${location}`)
-    const formattedType = formatEmploymentType(employmentType)
-    if (formattedType) lines.push(`💼 ${formattedType}`)
+  lines.push(`🚀 We're hiring: ${title}`)
+  if (department) lines.push(`📂 ${department}`)
+  if (location) lines.push(`📍 ${location}`)
+  const formattedType = formatEmploymentType(employmentType)
+  if (formattedType) lines.push(`💼 ${formattedType}`)
 
-    if (description?.trim()) {
-      lines.push('')
-      lines.push('📌 About the Job')
-      lines.push(description.trim())
-    }
-
-    if (responsibilities?.trim()) {
-      lines.push('')
-      lines.push('🎯 Responsibilities')
-      lines.push(responsibilities.trim())
-    }
-
-    if (requirements?.trim()) {
-      lines.push('')
-      lines.push('✅ Requirements')
-      lines.push(requirements.trim())
-    }
-
+  if (description?.trim()) {
     lines.push('')
-    lines.push('Interested? Get in touch or apply via the link in our profile.')
-    lines.push('')
-    lines.push('#hiring #jobs #recruitment')
-
-    const raw = lines.join('\n')
-    // LinkedIn post limit is 3000 chars; keep URL within safe limits
-    const text = encodeURIComponent(raw.length > 2800 ? raw.slice(0, 2800) + '…' : raw)
-    const url = `https://www.linkedin.com/feed/?shareActive=true&text=${text}`
-    // No third argument → browser opens as a tab (never blocked); third arg triggers popup classification
-    const tab = window.open(url, '_blank')
-    if (tab) tab.opener = null
+    lines.push('📌 About the Job')
+    lines.push(description.trim())
   }
 
+  if (responsibilities?.trim()) {
+    lines.push('')
+    lines.push('🎯 Responsibilities')
+    lines.push(responsibilities.trim())
+  }
+
+  if (requirements?.trim()) {
+    lines.push('')
+    lines.push('✅ Requirements')
+    lines.push(requirements.trim())
+  }
+
+  lines.push('')
+  lines.push('Interested? Get in touch or apply via the link in our profile.')
+  lines.push('')
+  lines.push('#hiring #jobs #recruitment')
+
+  const raw = lines.join('\n')
+  const text = encodeURIComponent(raw.length > 2800 ? raw.slice(0, 2800) + '…' : raw)
+  return `https://www.linkedin.com/feed/?shareActive=true&text=${text}`
+}
+
+export function LinkedInShareButton(props: LinkedInShareButtonProps) {
+  const href = buildShareUrl(props)
+
   return (
-    <Button variant="outline" onClick={handleShare}>
-      <Linkedin className="mr-2 h-4 w-4 text-[#0A66C2]" />
-      Share on LinkedIn
+    <Button variant="outline" asChild>
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        <Linkedin className="mr-2 h-4 w-4 text-[#0A66C2]" />
+        Share on LinkedIn
+      </a>
     </Button>
   )
 }
