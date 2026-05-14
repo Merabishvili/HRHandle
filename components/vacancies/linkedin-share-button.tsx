@@ -65,7 +65,9 @@ export function LinkedInShareButton({
     lines.push('')
     lines.push('#hiring #jobs #recruitment')
 
-    const text = encodeURIComponent(lines.join('\n'))
+    const raw = lines.join('\n')
+    // LinkedIn post limit is 3000 chars; keep the URL short enough for all browsers
+    const text = encodeURIComponent(raw.length > 2800 ? raw.slice(0, 2800) + '…' : raw)
     const a = document.createElement('a')
     a.href = `https://www.linkedin.com/feed/?shareActive=true&text=${text}`
     a.target = '_blank'

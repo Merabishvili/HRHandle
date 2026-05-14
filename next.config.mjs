@@ -14,11 +14,11 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.sentry-cdn.com https://*.sentry.io",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.sentry-cdn.com https://*.sentry.io https://vercel.live https://*.vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://vercel.live https://*.vercel.live wss://*.pusher.com https://*.pusher.com",
       "frame-ancestors 'none'",
       "form-action 'self'",
       "base-uri 'self'",
