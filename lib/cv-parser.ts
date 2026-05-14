@@ -70,27 +70,14 @@ export async function extractTextFromFile(file: File): Promise<string | null> {
 async function extractFromPDF(file: File): Promise<string | null> {
   try {
     const arrayBuffer = await file.arrayBuffer()
-    console.log(`[cv-parser] extractFromPDF: arrayBuffer size=${arrayBuffer.byteLength}`)
-    // pdfjs-dist is loaded dynamically to avoid SSR issues with its worker
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    pdfjsLib.GlobalWorkerOptions.workerSrc = ''
-
-    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), useWorkerFetch: false, useSystemFonts: true }).promise
-    console.log(`[cv-parser] extractFromPDF: numPages=${pdf.numPages}`)
-    const pages: string[] = []
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i)
-      const content = await page.getTextContent()
-      const pageText = content.items
-        .map((item) => ('str' in item ? item.str : ''))
-        .join(' ')
-      pages.push(pageText)
-    }
-
-    const text = pages.join('\n')
+    // pdf-parse uses CJS exports; .default covers esModuleInterop wrapping
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mod = await import('pdf-parse') as any
+    const pdfParse: (buf: Buffer) => Promise<{ text: string }> = mod.default ?? mod
+    const data = await pdfParse(Buffer.from(arrayBuffer))
+    const text = data.text
     console.log(`[cv-parser] extractFromPDF: extracted ${text.length} chars`)
-    return text
+    return text || null
   } catch (err) {
     console.error('[cv-parser] extractFromPDF failed:', err)
     return null
