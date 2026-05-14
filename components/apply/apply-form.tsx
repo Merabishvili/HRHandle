@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { submitPublicApplication } from '@/lib/actions/public-apply'
 import type { ParsedCVInput } from '@/lib/validations/candidate-background'
-import { Loader2, Upload, X, CheckCircle2, FileText, Briefcase, GraduationCap, AlertCircle } from 'lucide-react'
+import { Loader2, Upload, X, CheckCircle2, FileText, AlertCircle } from 'lucide-react'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx']
 
@@ -59,11 +59,11 @@ export function ApplyForm({ token }: { token: string }) {
         const data: ParsedCVInput = json.data
         setParsed(data)
         setParseState('done')
-        if (data.first_name) setFirstName(data.first_name)
-        if (data.last_name) setLastName(data.last_name)
-        if (data.email) setEmail(data.email)
-        if (data.phone) setPhone(data.phone)
-        if (data.linkedin_profile_url) setLinkedinUrl(data.linkedin_profile_url)
+        if (data.first_name && !firstName) setFirstName(data.first_name)
+        if (data.last_name && !lastName) setLastName(data.last_name)
+        if (data.email && !email) setEmail(data.email)
+        if (data.phone && !phone) setPhone(data.phone)
+        if (data.linkedin_profile_url && !linkedinUrl) setLinkedinUrl(data.linkedin_profile_url)
       } else {
         setParseState('failed')
       }
@@ -296,54 +296,6 @@ export function ApplyForm({ token }: { token: string }) {
             />
           </div>
         </div>
-
-        {/* ── Experience preview (read-only, only when parsed) ───────────────── */}
-        {parsed && parsed.experience.length > 0 && (
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-              <Briefcase className="h-4 w-4" />
-              Experience
-            </div>
-            <ul className="space-y-2">
-              {parsed.experience.map((exp, i) => (
-                <li key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
-                  <p className="font-medium text-gray-800">{exp.title ?? '—'}</p>
-                  <p className="text-gray-600">{exp.company ?? '—'}</p>
-                  {(exp.start_date || exp.end_date || exp.is_current) && (
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {exp.start_date ?? '?'} – {exp.is_current ? 'Present' : (exp.end_date ?? '?')}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* ── Education preview (read-only, only when parsed) ───────────────── */}
-        {parsed && parsed.education.length > 0 && (
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-              <GraduationCap className="h-4 w-4" />
-              Education
-            </div>
-            <ul className="space-y-2">
-              {parsed.education.map((edu, i) => (
-                <li key={i} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
-                  <p className="font-medium text-gray-800">{edu.institution ?? '—'}</p>
-                  {(edu.degree || edu.field_of_study) && (
-                    <p className="text-gray-600">{[edu.degree, edu.field_of_study].filter(Boolean).join(', ')}</p>
-                  )}
-                  {(edu.start_year || edu.end_year || edu.is_ongoing) && (
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {edu.start_year ?? '?'} – {edu.is_ongoing ? 'Present' : (edu.end_year ?? '?')}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         <button
           type="submit"
