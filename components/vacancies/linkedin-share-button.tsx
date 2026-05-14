@@ -66,11 +66,13 @@ export function LinkedInShareButton({
     lines.push('#hiring #jobs #recruitment')
 
     const text = encodeURIComponent(lines.join('\n'))
-    window.open(
-      `https://www.linkedin.com/feed/?shareActive=true&text=${text}`,
-      '_blank',
-      'noopener,noreferrer'
-    )
+    const a = document.createElement('a')
+    a.href = `https://www.linkedin.com/feed/?shareActive=true&text=${text}`
+    a.target = '_blank'
+    a.rel = 'noopener noreferrer'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   return (
