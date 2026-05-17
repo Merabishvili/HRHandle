@@ -30,6 +30,8 @@ import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applicat
 import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
 import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
 import { AddCandidateToVacancyDialog } from '@/components/vacancies/add-candidate-to-vacancy-dialog'
+import { LinkedInPostJobButton } from '@/components/vacancies/linkedin-post-job-button'
+import { getLinkedInIntegration } from '@/lib/actions/integrations'
 
 interface VacancyRow {
   id: string
@@ -173,9 +175,10 @@ export default async function VacancyDetailPage({
     redirect('/dashboard')
   }
 
-  const [vacancyStatusesRaw, candidateStatusesRaw] = await Promise.all([
+  const [vacancyStatusesRaw, candidateStatusesRaw, linkedInIntegration] = await Promise.all([
     getVacancyStatuses(),
     getCandidateStatuses(),
+    getLinkedInIntegration(),
   ])
 
   const [
@@ -406,6 +409,9 @@ export default async function VacancyDetailPage({
             responsibilities={vacancy.responsibilities ?? null}
             requirements={vacancy.requirements}
           />
+          {linkedInIntegration && (
+            <LinkedInPostJobButton pageId={linkedInIntegration.external_page_id} />
+          )}
           <Button variant="outline" asChild>
             <Link href={`/vacancies/${id}/pipeline`}>
               <LayoutGrid className="mr-2 h-4 w-4" />Pipeline
