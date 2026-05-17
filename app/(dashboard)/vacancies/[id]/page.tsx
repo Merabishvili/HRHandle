@@ -410,7 +410,18 @@ export default async function VacancyDetailPage({
             requirements={vacancy.requirements}
           />
           {linkedInIntegration && (
-            <LinkedInPostJobButton pageId={linkedInIntegration.external_page_id} />
+            <LinkedInPostJobButton
+              pageId={linkedInIntegration.external_page_id}
+              vacancy={{
+                title: vacancy.title,
+                description: vacancy.description,
+                responsibilities: vacancy.responsibilities ?? null,
+                requirements: vacancy.requirements ?? null,
+                location: vacancy.location,
+                employment_type: vacancy.employment_type,
+                application_form_token: vacancy.application_form_token,
+              }}
+            />
           )}
           <Button variant="outline" asChild>
             <Link href={`/vacancies/${id}/pipeline`}>
