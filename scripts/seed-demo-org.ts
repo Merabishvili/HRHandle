@@ -702,6 +702,106 @@ async function setSrEngineerCustomValues(
   console.log('  SR Engineer custom field values set')
 }
 
+interface RejectionReasonSeed {
+  name: string
+  sort_order: number
+  template_subject: string
+  template_body: string
+}
+
+const REJECTION_REASONS: RejectionReasonSeed[] = [
+  {
+    name: 'Not the right experience level',
+    sort_order: 10,
+    template_subject: 'An update from {{company}} — {{role}}',
+    template_body:
+      'After careful review, we feel the {{role}} role is not the best match for your current experience level. We were impressed by your background and encourage you to apply for more senior or junior positions that may open up.',
+  },
+  {
+    name: 'Position has been filled',
+    sort_order: 20,
+    template_subject: 'Update on your application — {{role}} at {{company}}',
+    template_body:
+      'Thank you for your interest in the {{role}} position at {{company}}. The role has now been filled. We will keep your details on file and reach out if a similar opportunity opens up.',
+  },
+  {
+    name: 'Salary expectations',
+    sort_order: 30,
+    template_subject: 'An update from {{company}} — {{role}}',
+    template_body:
+      'Thank you for sharing your salary expectations for the {{role}} role at {{company}}. Unfortunately, they exceed the budget we have allocated for this position. We wish you the best in your search.',
+  },
+]
+
+async function ensureRejectionReasons(orgId: string): Promise<void> {
+  for (const r of REJECTION_REASONS) {
+    const { data: existingReason } = await admin
+      .from('rejection_reasons')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('name', r.name)
+      .maybeSingle()
+
+    let reasonId: string
+    if (existingReason) {
+      await admin
+        .from('rejection_reasons')
+        .update({ sort_order: r.sort_order })
+        .eq('id', existingReason.id)
+      reasonId = existingReason.id
+      console.log(`  reason exists: ${r.name}`)
+    } else {
+      const { data, error } = await admin
+        .from('rejection_reasons')
+        .insert({
+          organization_id: orgId,
+          name: r.name,
+          sort_order: r.sort_order,
+        })
+        .select('id')
+        .single()
+      if (error || !data) {
+        console.log(`  reason insert failed: ${r.name} — ${error?.message}`)
+        continue
+      }
+      reasonId = data.id
+      console.log(`  reason created: ${r.name}`)
+    }
+
+    // Pair each reason with a rejection template (same name).
+    const { data: existingTemplate } = await admin
+      .from('rejection_templates')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('reason_id', reasonId)
+      .maybeSingle()
+
+    if (existingTemplate) {
+      await admin
+        .from('rejection_templates')
+        .update({
+          name: r.name,
+          subject: r.template_subject,
+          body: r.template_body,
+          sort_order: r.sort_order,
+        })
+        .eq('id', existingTemplate.id)
+      console.log(`    template updated: ${r.name}`)
+    } else {
+      const { error: tplErr } = await admin.from('rejection_templates').insert({
+        organization_id: orgId,
+        reason_id: reasonId,
+        name: r.name,
+        subject: r.template_subject,
+        body: r.template_body,
+        sort_order: r.sort_order,
+      })
+      if (tplErr) console.log(`    template insert failed: ${tplErr.message}`)
+      else console.log(`    template created: ${r.name}`)
+    }
+  }
+}
+
 async function main(): Promise<void> {
   console.log(`Seeding demo org on ${SUPABASE_URL}\n`)
 
@@ -737,6 +837,9 @@ async function main(): Promise<void> {
 
   console.log('\nCustom field values (Senior Software Engineer):')
   await setSrEngineerCustomValues(orgId, fieldIdByKey)
+
+  console.log('\nRejection reasons + templates:')
+  await ensureRejectionReasons(orgId)
 
   console.log('\n--- DONE ---')
   console.log('Owner login:', OWNER_EMAIL)

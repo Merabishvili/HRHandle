@@ -107,6 +107,26 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- candidate-emails ----
+  {
+    name: 'candidate-emails-application-received',
+    url: '/settings/email-templates',
+    output: 'public/guide/screenshots/candidate-emails-application-received.png',
+    preActions: async (page) => {
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(500)
+    },
+  },
+  {
+    name: 'candidate-emails-rejection-reasons',
+    url: '/settings/rejection-reasons',
+    output: 'public/guide/screenshots/candidate-emails-rejection-reasons.png',
+    preActions: async (page) => {
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(500)
+    },
+  },
+
   // ---- schedule-interview ----
   {
     name: 'schedule-interview-list',
