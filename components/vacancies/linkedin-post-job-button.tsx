@@ -40,7 +40,6 @@ function buildLinkedInJobUrl(pageId: string, vacancy: VacancyData): string {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hrhandle.com'
 
   const params = new URLSearchParams()
-  params.set('companyId', pageId)
   params.set('title', vacancy.title)
   params.set('description', buildDescription(vacancy))
   if (vacancy.location) params.set('location', vacancy.location)
@@ -54,7 +53,7 @@ function buildLinkedInJobUrl(pageId: string, vacancy: VacancyData): string {
     params.set('applyUrl', `${siteUrl}/apply/${vacancy.application_form_token}`)
   }
 
-  return `https://www.linkedin.com/hiring/jobs/create/?${params.toString()}`
+  return `https://www.linkedin.com/company/${pageId}/admin/create-job/?${params.toString()}`
 }
 
 export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButtonProps) {
