@@ -107,6 +107,17 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- team-and-roles ----
+  {
+    name: 'team-and-roles-page',
+    url: '/settings/team',
+    output: 'public/guide/screenshots/team-and-roles-page.png',
+    preActions: async (page) => {
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(500)
+    },
+  },
+
   // ---- custom-fields ----
   {
     name: 'custom-fields-settings',
