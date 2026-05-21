@@ -14,7 +14,7 @@
 |---|---|---|---|---|
 | `RESEND_API_KEY` | Resend API key for sending emails | Resend | `lib/email.ts`, `lib/env.ts` | `re_xxxxxxxxxxxx` |
 | `NEXT_PUBLIC_SITE_URL` | Canonical site URL — used in email links and OAuth redirects | App | `lib/email.ts`, `lib/google/calendar.ts`, `lib/zoom/meetings.ts`, `lib/microsoft/graph.ts`, `app/api/auth/*/route.ts`, `lib/env.ts` | `https://staging.hrhandle.com` |
-| `GOOGLE_CLIENT_ID` | Google OAuth app client ID (for Calendar integration) | Google | `lib/google/calendar.ts`, `lib/env.ts` | `123456789-abc.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_ID` | Google OAuth app client ID (for Calendar integration and sign-in) | Google | `lib/google/calendar.ts`, `lib/env.ts`, Supabase auth | `123456789-abc.apps.googleusercontent.com` |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth app client secret | Google | `lib/google/calendar.ts`, `lib/env.ts` | `GOCSPX-xxxxxxxx` |
 | `ZOOM_CLIENT_ID` | Zoom OAuth app client ID | Zoom | `lib/zoom/meetings.ts`, `lib/env.ts` | `AbCdEfGhIj` |
 | `ZOOM_CLIENT_SECRET` | Zoom OAuth app client secret | Zoom | `lib/zoom/meetings.ts`, `lib/env.ts` | `xxxxxxxxxxxxxxxxxxxx` |
@@ -34,6 +34,17 @@
 | `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` | Overrides `emailRedirectTo` in sign-up to redirect to local dev server instead of production | `components/auth/sign-up-form.tsx` | `http://localhost:3000/auth/callback` |
 
 **Important:** This variable MUST NOT be added to Vercel. It is only for `.env.local`. The `NEXT_PUBLIC_` prefix means it is visible in browser bundle — it is safe only because local dev URLs are not sensitive.
+
+### Guide screenshot script (local only)
+
+These variables are read by `scripts/capture-screenshots.ts` and `scripts/seed-demo-org.ts`. They are never deployed to Vercel.
+
+| Name | Purpose | Files That Use It | Example |
+|---|---|---|---|
+| `STAGING_DEMO_EMAIL` | Email of the seeded demo user the screenshot script logs in as. | `scripts/capture-screenshots.ts` | `demo.owner@hrhandle-demo.com` |
+| `STAGING_DEMO_PASSWORD` | Password for the seeded demo user. | `scripts/capture-screenshots.ts` | `DemoUser!2026` |
+| `SCREENSHOT_BASE_URL` | Optional override for the URL the screenshot script targets. Defaults to `https://staging.hrhandle.com`. | `scripts/capture-screenshots.ts` | `http://localhost:3000` |
+| `VERCEL_PROTECTION_BYPASS` | Vercel Deployment Protection bypass token. When set, the screenshot script sends `x-vercel-protection-bypass` and `x-vercel-set-bypass-cookie` headers so Playwright can reach the app behind the protection wall. Generate one in Vercel Project Settings → Deployment Protection → Protection Bypass for Automation. | `scripts/capture-screenshots.ts` | `<32-char token>` |
 
 ## Validation
 

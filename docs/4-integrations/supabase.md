@@ -146,10 +146,54 @@ Validated by `lib/env.ts` using `@t3-oss/env-nextjs`. `NEXT_PUBLIC_SUPABASE_URL`
 
 ## Supabase Configuration Notes
 
-- Site URL: `https://staging.hrhandle.com` (staging), `https://hrhandle.com` (production)
-- Allowed redirect URLs: `https://hrhandle.com/**`, `https://staging.hrhandle.com/**`, `http://localhost:3000/**`
 - Email auth provider: enabled
 - Google OAuth provider: enabled (uses Supabase's built-in OAuth, not the custom Google Calendar OAuth)
 - Azure (Microsoft) OAuth provider: enabled with scope `email`
 - SMTP: Resend — `smtp.resend.com:465`, username `resend`, sender `HRHandle <noreply@hrhandle.com>`
 - Email templates in Supabase dashboard use `token_hash` links (not `{{ .ConfirmationURL }}`) for signup and password reset
+
+### URL Configuration
+
+**Site URL** (Authentication → URL Configuration → Site URL field):
+| Project | Site URL |
+|---|---|
+| Staging (`quotchdymcnjlnwtjmgu`) | `https://staging.hrhandle.com` |
+| Production (`fnpyfwhvgzoxgyjafbsg`) | `https://hrhandle.com` |
+
+The Site URL is the fallback redirect destination when `redirectTo` is not specified or doesn't match the allow list. Getting this wrong causes `/?code=...` to appear in the URL after OAuth.
+
+**Production redirect URLs** (Authentication → URL Configuration on `fnpyfwhvgzoxgyjafbsg`):
+```
+https://hrhandle.com/**
+https://hrhandle.com/auth/callback
+https://hrhandle.com/auth/login
+https://hrhandle.com/auth/reset-password
+https://hrhandle.com/auth/sign-up-success
+http://hrhandle.com/auth/sign-up-success
+http://hrhandle.com/auth/login
+http://hrhandle.com/auth/reset-password
+http://hrhandle.com/auth/callback
+http://hrhandle.com/callback
+http://hrhandle.com
+http://hrhandle.com/**
+https://fnpyfwhvgzoxgyjafbsg.supabase.co/auth/v1/callback
+```
+
+**Staging redirect URLs** (Authentication → URL Configuration on `quotchdymcnjlnwtjmgu`):
+```
+https://v0.app/chat/api/supabase/redirect/iMVdPQPuOsb
+http://localhost:3000/auth/callback
+http://localhost:3000/auth/reset-password
+http://localhost:3000/auth/login
+http://staging.hrhandle.com/callback
+http://staging.hrhandle.com/auth/callback
+http://staging.hrhandle.com/auth/reset-password
+http://staging.hrhandle.com/auth/login
+https://staging.hrhandle.com/auth/sign-up-success
+https://staging.hrhandle.com/auth/callback
+https://staging.hrhandle.com/auth/login
+https://staging.hrhandle.com/auth/reset-password
+http://staging.hrhandle.com/auth/sign-up-success
+https://staging.hrhandle.com/**
+http://staging.hrhandle.com/**
+```

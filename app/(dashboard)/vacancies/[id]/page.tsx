@@ -20,7 +20,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
-import { LinkedInShareButton } from '@/components/vacancies/linkedin-share-button'
 import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
 import { VacancyApplicationsToolbar } from '@/components/vacancies/vacancy-applications-toolbar'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
@@ -30,6 +29,8 @@ import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applicat
 import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
 import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
 import { AddCandidateToVacancyDialog } from '@/components/vacancies/add-candidate-to-vacancy-dialog'
+import { LinkedInPostJobButton } from '@/components/vacancies/linkedin-post-job-button'
+import { getLinkedInIntegration } from '@/lib/actions/integrations'
 
 interface VacancyRow {
   id: string
@@ -173,9 +174,10 @@ export default async function VacancyDetailPage({
     redirect('/dashboard')
   }
 
-  const [vacancyStatusesRaw, candidateStatusesRaw] = await Promise.all([
+  const [vacancyStatusesRaw, candidateStatusesRaw, linkedInIntegration] = await Promise.all([
     getVacancyStatuses(),
     getCandidateStatuses(),
+    getLinkedInIntegration(),
   ])
 
   const [
@@ -397,15 +399,20 @@ export default async function VacancyDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <LinkedInShareButton
-            title={vacancy.title}
-            location={vacancy.location}
-            employmentType={vacancy.employment_type}
-            department={vacancy.department}
-            description={vacancy.description}
-            responsibilities={vacancy.responsibilities ?? null}
-            requirements={vacancy.requirements}
-          />
+          {linkedInIntegration && (
+            <LinkedInPostJobButton
+              pageId={linkedInIntegration.external_page_id}
+              vacancy={{
+                title: vacancy.title,
+                description: vacancy.description,
+                responsibilities: vacancy.responsibilities ?? null,
+                requirements: vacancy.requirements ?? null,
+                location: vacancy.location,
+                employment_type: vacancy.employment_type,
+                application_form_token: vacancy.application_form_token,
+              }}
+            />
+          )}
           <Button variant="outline" asChild>
             <Link href={`/vacancies/${id}/pipeline`}>
               <LayoutGrid className="mr-2 h-4 w-4" />Pipeline

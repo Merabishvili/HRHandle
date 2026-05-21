@@ -130,3 +130,33 @@ Note: The CI pipeline uses hardcoded placeholder env vars in the build step to a
 - Public pages: `/jobs/[slug]`, `/apply/[token]`, `/join`
 - Auth pages: `/auth/login`, `/auth/sign-up`, `/auth/forgot-password`, `/auth/reset-password`
 - If you sign up locally, you must confirm the email before accessing the dashboard — the confirmation email will use `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` as the redirect base if set
+
+## Capturing guide screenshots (one-time setup)
+
+The guide pages under `/guide/[slug]` reference screenshots in `public/guide/screenshots/`. They are produced by a Playwright script that runs against staging:
+
+```bash
+# 1. Install browser binaries (once)
+npx playwright install chromium
+
+# 2. Seed the demo org on staging Supabase (idempotent)
+NEXT_PUBLIC_SUPABASE_URL=https://quotchdymcnjlnwtjmgu.supabase.co \
+SUPABASE_SERVICE_ROLE_KEY=<staging legacy JWT service_role key> \
+npm run guide:seed
+
+# 3. Add the printed credentials + the Vercel bypass token to .env.local
+#    STAGING_DEMO_EMAIL=demo.owner@hrhandle-demo.com
+#    STAGING_DEMO_PASSWORD=DemoUser!2026
+#    VERCEL_PROTECTION_BYPASS=<token from Vercel Protection Bypass for Automation>
+#    SUPABASE_SERVICE_ROLE_KEY=<staging legacy JWT service_role key>
+
+# 4. Capture all configured shots
+npm run guide:screenshots
+```
+
+What each piece does:
+
+- **Seed script** — creates the Acme Corporation demo org with users, vacancies, pipeline applications, vacancy questions, custom fields, rejection reasons + templates, and a demo LinkedIn integration. Refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at the staging project, so it cannot accidentally write to production.
+- **Service role key** — needs to be the **legacy JWT-based** `service_role` key (starts with `eyJ`), not the newer `sb_secret_*` key. Supabase's auth admin endpoints currently reject the new key format. Find the legacy key under Settings → API → Legacy anon/service_role API keys.
+- **Vercel bypass token** — staging is behind Vercel Deployment Protection. Without the bypass header, Playwright lands on Vercel's auth wall instead of the app. Generate the token under Vercel Project Settings → Deployment Protection → Protection Bypass for Automation.
+- **Demo email / password** — printed at the end of `guide:seed`. The screenshot script does not use the password directly (Supabase Turnstile blocks `signInWithPassword`); instead it uses the admin client to mint a magic-link `hashed_token` and exchanges it via `verifyOtp` for a session, which is then injected as a cookie into Playwright.

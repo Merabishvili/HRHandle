@@ -46,6 +46,8 @@
 | `/privacy` | `app/privacy/page.tsx` | Privacy policy |
 | `/terms` | `app/terms/page.tsx` | Terms and conditions |
 | `/refund` | `app/refund/page.tsx` | Refund policy |
+| `/guide` | `app/guide/page.tsx` | Public guide index (categories + FAQ) |
+| `/guide/[slug]` | `app/guide/[slug]/page.tsx` | Public guide article (MDX rendered) |
 
 ### Authenticated Dashboard Routes
 | Path | File | Description |
@@ -111,3 +113,25 @@ HRHandle does not use a global client-side state manager (no Redux, Zustand, etc
 - **UI primitives**: `components/ui/` — shadcn/ui components (accordion, button, card, dialog, etc.).
 - **Feature components**: `components/[domain]/` — compose UI primitives, call server actions.
 - **cn() utility**: `lib/utils.ts` — combines `clsx` + `tailwind-merge` for conditional class names.
+
+## Guide pattern (`content/guides/*.mdx` + `lib/guides/`)
+
+Guides are static MDX files in `content/guides/`, registered in `lib/guides/registry.ts` (slug, title, summary, category, order). The `[slug]` route uses `next-mdx-remote/rsc` to compile MDX server-side at request time and `generateStaticParams` to prerender every guide that has an MDX file. `remark-gfm` is passed in `MDXRemote` options so GitHub-flavored markdown tables render. Custom `<Screenshot>` is the only authoring component required; styled defaults for headings, lists, links, and GFM tables live in `components/guide/mdx-components.tsx`.
+
+Annotated screenshots are produced by `scripts/capture-screenshots.ts` (Playwright). Each shot in `scripts/screenshot-config.ts` declares a URL, optional pre-actions, and CSS-selector-based annotations. The script logs into a seeded demo org on staging, navigates, injects DOM overlays (red arrows + numbered boxes), and saves PNGs to `public/guide/screenshots/`.
+
+## Candidate Components (`components/candidates/`)
+
+| File | Type | Purpose |
+|---|---|---|
+| `status-pill.tsx` | Server | Coloured pill badge for any entity status; `PILL_STYLES` map keys on status `code` |
+| `summary-strip.tsx` | Server | Horizontal card showing: location/timezone, years experience (computed from `candidate_experience`), salary expectation, notice period, languages. Returns null when all fields are empty. |
+| `pipeline-mini-bar.tsx` | Server | Read-only 5-stage progress bar (Applied → Screening → Interview → Offer → Hired). Accepts `currentStageCode`; done stages green, active highlighted, future muted. Used inside `application-evaluation.tsx`. |
+| `contact-card.tsx` | Client | Email, phone, LinkedIn rows with copy-to-clipboard buttons. Checkmark shown for 1.2 s after copy. |
+| `metadata-footer.tsx` | Server | 2-col grid: Source, Added (relative), Last Updated, Candidate ID (short, monospace). |
+| `activity-feed.tsx` | Client | Unified activity feed consuming `candidate_activity` view rows. Filter chips (All / Notes / Interviews / Stage changes / Documents). Inline note composer (Enter to post). Delete on note items. |
+| `experience-section.tsx` | Client | Timeline with absolute left rail + dots. First entry expanded by default; others collapsed. Each entry expandable/collapsible. Edit/Delete buttons in expanded body. |
+
+## `components/ui/status-pill.tsx`
+
+Shared status pill used across candidates and applications. `PILL_STYLES` maps status codes to `oklch()`-based Tailwind background + text colour pairs.

@@ -16,3 +16,8 @@ node_modules
 .DS_Store
 pnpm-lock.yaml
 tsconfig.tsbuildinfo
+
+# Playwright (used by guide screenshot script)
+playwright-report/
+test-results/
+playwright/.cache/

@@ -27,6 +27,12 @@ function hasValidMagicNumber(buf: ArrayBuffer): boolean {
   return MAGIC_NUMBERS.some(({ bytes }) => bytes.every((b, i) => view[i] === b))
 }
 
+// Gemini returns dates as "YYYY-MM" — PostgreSQL DATE requires "YYYY-MM-DD"
+function toDateString(date: string | null): string | null {
+  if (!date) return null
+  return /^\d{4}-\d{2}$/.test(date) ? `${date}-01` : date
+}
+
 export type PublicApplyResult =
   | { success: true }
   | { success: false; error: string }
@@ -48,6 +54,8 @@ export async function submitPublicApplication(
   const phone = (formData.get('phone') as string | null)?.trim() || null
   const linkedinUrl = (formData.get('linkedin_profile_url') as string | null)?.trim() || null
   const cvFile = formData.get('cv') as File | null
+  const experienceJson = (formData.get('experience_json') as string | null) || '[]'
+  const educationJson = (formData.get('education_json') as string | null) || '[]'
 
   // ── 3. Basic validation ────────────────────────────────────────────────────
   if (!token) return { success: false, error: 'Invalid form link.' }
@@ -56,20 +64,19 @@ export async function submitPublicApplication(
   if (!email || !z.string().email().safeParse(email).success) {
     return { success: false, error: 'A valid email address is required.' }
   }
-  if (!cvFile || cvFile.size === 0) return { success: false, error: 'CV upload is required.' }
-
-  // ── 4. File validation ─────────────────────────────────────────────────────
-  if (!ALLOWED_MIME_TYPES.includes(cvFile.type)) {
-    return { success: false, error: 'CV must be a PDF or Word document.' }
-  }
-  if (cvFile.size > MAX_FILE_BYTES) {
-    return { success: false, error: 'CV file must be 10 MB or smaller.' }
-  }
-
-  // Read file bytes early so we can validate magic numbers and reuse buffer for upload
-  const fileBytes = await cvFile.arrayBuffer()
-  if (!hasValidMagicNumber(fileBytes)) {
-    return { success: false, error: 'CV must be a valid PDF or Word document.' }
+  // ── 4. File validation (only when a file was provided) ────────────────────
+  let fileBytes: ArrayBuffer | null = null
+  if (cvFile && cvFile.size > 0) {
+    if (!ALLOWED_MIME_TYPES.includes(cvFile.type)) {
+      return { success: false, error: 'CV must be a PDF or Word document.' }
+    }
+    if (cvFile.size > MAX_FILE_BYTES) {
+      return { success: false, error: 'CV file must be 10 MB or smaller.' }
+    }
+    fileBytes = await cvFile.arrayBuffer()
+    if (!hasValidMagicNumber(fileBytes)) {
+      return { success: false, error: 'CV must be a valid PDF or Word document.' }
+    }
   }
 
   // ── 5. Resolve vacancy from token ─────────────────────────────────────────
@@ -218,38 +225,91 @@ export async function submitPublicApplication(
     return { success: false, error: 'Failed to submit application. Please try again.' }
   }
 
-  // ── 13. Upload CV ──────────────────────────────────────────────────────────
-  try {
-    const rawExt = cvFile.name.split('.').pop()?.toLowerCase() ?? ''
-    const ext = ['pdf', 'doc', 'docx'].includes(rawExt) ? rawExt : 'pdf'
-    const storagePath = `${orgId}/${candidateId}/${crypto.randomUUID()}.${ext}`
-
-    const { error: storageError } = await supabase.storage
-      .from('candidate-documents')
-      .upload(storagePath, fileBytes, {
-        contentType: cvFile.type,
-        upsert: false,
-      })
-
-    if (!storageError) {
-      const { error: docError } = await supabase.from('candidate_documents').insert({
-        organization_id: orgId,
-        candidate_id: candidateId,
-        uploaded_by: null,
-        file_name: cvFile.name,
-        file_size: cvFile.size,
-        file_size_bytes: cvFile.size,
-        mime_type: cvFile.type,
-        file_path: storagePath,
-        document_type: 'cv',
-      })
-      if (docError) console.error('[public-apply] candidate_documents insert failed:', docError)
+  // ── 13. Save parsed experience + education (best-effort, non-fatal) ─────────
+  if (isNewCandidate) {
+    try {
+      const expRows: unknown[] = JSON.parse(experienceJson)
+      if (Array.isArray(expRows) && expRows.length > 0) {
+        const rows = expRows
+          .filter((e): e is Record<string, unknown> => typeof e === 'object' && e !== null && typeof (e as Record<string, unknown>).company === 'string' && typeof (e as Record<string, unknown>).title === 'string')
+          .map((e) => ({
+            organization_id: orgId,
+            candidate_id: candidateId,
+            company: e.company as string,
+            title: e.title as string,
+            start_date: toDateString(e.start_date as string | null),
+            end_date: toDateString(e.end_date as string | null),
+            is_current: Boolean(e.is_current),
+            description: (e.description as string | null) ?? null,
+          }))
+        if (rows.length > 0) {
+          const { error: expErr } = await supabase.from('candidate_experience').insert(rows)
+          if (expErr) console.error('[public-apply] experience insert failed:', expErr)
+        }
+      }
+    } catch {
+      // Non-fatal — bad JSON or schema mismatch
     }
-  } catch (err) {
-    console.error('[public-apply] CV upload block error:', err)
+
+    try {
+      const eduRows: unknown[] = JSON.parse(educationJson)
+      if (Array.isArray(eduRows) && eduRows.length > 0) {
+        const rows = eduRows
+          .filter((e): e is Record<string, unknown> => typeof e === 'object' && e !== null && typeof (e as Record<string, unknown>).institution === 'string')
+          .map((e) => ({
+            organization_id: orgId,
+            candidate_id: candidateId,
+            institution: e.institution as string,
+            degree: (e.degree as string | null) ?? null,
+            field_of_study: (e.field_of_study as string | null) ?? null,
+            start_year: typeof e.start_year === 'number' ? e.start_year : null,
+            end_year: typeof e.end_year === 'number' ? e.end_year : null,
+            is_ongoing: Boolean(e.is_ongoing),
+          }))
+        if (rows.length > 0) {
+          const { error: eduErr } = await supabase.from('candidate_education').insert(rows)
+          if (eduErr) console.error('[public-apply] education insert failed:', eduErr)
+        }
+      }
+    } catch {
+      // Non-fatal
+    }
   }
 
-  // ── 14. Notify org owners/admins of new application ───────────────────────
+  // ── 15. Upload CV (optional) ───────────────────────────────────────────────
+  if (cvFile && cvFile.size > 0 && fileBytes) {
+    try {
+      const rawExt = cvFile.name.split('.').pop()?.toLowerCase() ?? ''
+      const ext = ['pdf', 'doc', 'docx'].includes(rawExt) ? rawExt : 'pdf'
+      const storagePath = `${orgId}/${candidateId}/${crypto.randomUUID()}.${ext}`
+
+      const { error: storageError } = await supabase.storage
+        .from('candidate-documents')
+        .upload(storagePath, fileBytes, {
+          contentType: cvFile.type,
+          upsert: false,
+        })
+
+      if (!storageError) {
+        const { error: docError } = await supabase.from('candidate_documents').insert({
+          organization_id: orgId,
+          candidate_id: candidateId,
+          uploaded_by: null,
+          file_name: cvFile.name,
+          file_size: cvFile.size,
+          file_size_bytes: cvFile.size,
+          mime_type: cvFile.type,
+          file_path: storagePath,
+          document_type: 'cv',
+        })
+        if (docError) console.error('[public-apply] candidate_documents insert failed:', docError)
+      }
+    } catch (err) {
+      console.error('[public-apply] CV upload block error:', err)
+    }
+  }
+
+  // ── 16. Notify org owners/admins of new application ───────────────────────
   try {
     const { data: orgMembers } = await supabase
       .from('profiles')
@@ -268,7 +328,7 @@ export async function submitPublicApplication(
     // Non-fatal
   }
 
-  // ── 15. Send confirmation email ────────────────────────────────────────────
+  // ── 17. Send confirmation email ────────────────────────────────────────────
   try {
     const [{ data: org }, { data: templateRow }] = await Promise.all([
       supabase.from('organizations').select('name').eq('id', orgId).single(),

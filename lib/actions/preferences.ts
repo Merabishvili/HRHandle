@@ -5,9 +5,6 @@ import { getAuthContext, type ActionResult } from './index'
 
 export type ColumnEntity = 'candidates' | 'vacancies'
 
-export const DEFAULT_CANDIDATE_COLUMNS = ['current_position', 'current_company', 'created_at']
-export const DEFAULT_VACANCY_COLUMNS = ['department', 'location', 'end_date']
-
 export async function updateColumnPreferences(
   entity: ColumnEntity,
   columns: string[]

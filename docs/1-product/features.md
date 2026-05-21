@@ -34,11 +34,12 @@
 
 | Feature | Description | Files |
 |---------|-------------|-------|
-| Create candidate | First name, last name, email, phone, DOB (min age 16), LinkedIn, source, company, position, years experience, status, linked vacancy | `app/(dashboard)/candidates/new/page.tsx`, `components/candidates/candidate-form.tsx`, `lib/actions/candidates.ts` |
-| Edit candidate | Same form | `app/(dashboard)/candidates/[id]/edit/page.tsx` |
+| Create candidate | Two-path entry: "Upload CV first" (AI parse + auto-fill) or "Fill manually" | `app/(dashboard)/candidates/new/page.tsx`, `components/candidates/candidate-form.tsx`, `lib/actions/candidates.ts` |
+| Edit candidate | Same form (edit always shows fields directly) | `app/(dashboard)/candidates/[id]/edit/page.tsx` |
 | Delete candidate | Soft-delete | `lib/actions/candidates.ts#deleteCandidate` |
 | Candidate list | Filterable list with search, status tabs | `app/(dashboard)/candidates/page.tsx`, `components/candidates/candidates-toolbar.tsx` |
-| Candidate detail | Profile info, applications, notes, documents, custom fields, evaluations | `app/(dashboard)/candidates/[id]/page.tsx` |
+| Candidate detail | Profile info, experience, education, applications, notes, documents, custom fields, evaluations | `app/(dashboard)/candidates/[id]/page.tsx` |
+| Experience & education | Inline add/edit/delete from candidate detail page | `components/candidates/experience-section.tsx`, `components/candidates/education-section.tsx`, `lib/actions/candidate-background.ts` |
 | Candidate notes | Add, view, delete time-stamped notes | `components/candidates/candidate-notes.tsx`, `lib/actions/notes.ts` |
 | Candidate documents | Upload PDF/Word (max 10 MB), magic-byte validation, download via signed URLs | `components/candidates/candidate-documents.tsx`, `lib/actions/documents.ts` |
 | General status | Owner/admin can mark candidate as Active, Hired, Archived | `components/candidates/candidate-status-select.tsx`, `components/candidates/candidate-status-actions.tsx` |
@@ -62,8 +63,9 @@
 | Feature | Description | Files |
 |---------|-------------|-------|
 | Public apply page | Branded with org logo and vacancy details | `app/apply/[token]/page.tsx` |
-| Application form | Name, email, phone, LinkedIn, CV upload; Turnstile captcha | `components/apply/apply-form.tsx` |
-| Submission handling | IP rate limit (5/hr), vacancy cap (500), duplicate detection by email, magic-byte CV validation | `lib/actions/public-apply.ts` |
+| Application form | CV upload first → AI parse → auto-fills name, email, phone, LinkedIn, shows experience/education preview; candidate reviews and submits | `components/apply/apply-form.tsx` |
+| CV parsing | Extracts text from PDF/DOCX; sends to Gemini Flash with a predefined JSON schema; validates response with Zod | `lib/cv-parser.ts`, `app/api/parse-cv/route.ts` |
+| Submission handling | IP rate limit (5/hr public form, 10/hr parse API), vacancy cap (500), duplicate detection by email, magic-byte CV validation, saves parsed experience/education | `lib/actions/public-apply.ts` |
 | Confirmation email | Sends `application_received` template to applicant | `lib/actions/public-apply.ts`, `lib/email.ts` |
 | Notification | Notifies org owners/admins of new application | `lib/actions/public-apply.ts` |
 | JSON-LD schema | JobPosting structured data for SEO | `app/apply/[token]/page.tsx` |
@@ -124,3 +126,17 @@
 | Trial banner | Shows days remaining in trial, expired state | `components/dashboard/trial-banner.tsx` |
 | Expired redirect | When trial ends (or status=expired), auto-redirects to `/subscription` | `app/(dashboard)/layout.tsx` |
 | Payment wiring | **Not implemented** — buttons display but no payment provider connected (LemonSqueezy planned) | `components/subscription/plan-cards.tsx` |
+
+## Guides
+
+Public feature walkthroughs with annotated screenshots, served from a static-cacheable Next.js route. Linked from the dashboard header (opens in a new tab) and shared with prospects.
+
+| Feature | Description | Files |
+|---------|-------------|-------|
+| Guide index | Lists every guide grouped by category plus a short FAQ | `app/guide/page.tsx`, `lib/guides/registry.ts` |
+| Guide page | MDX-rendered article with sidebar nav and annotated screenshots | `app/guide/[slug]/page.tsx`, `components/guide/guide-shell.tsx`, `components/guide/guide-sidebar.tsx`, `components/guide/mdx-components.tsx` |
+| Guide registry | Single source of truth for slug, title, summary, category, order; index page shows "Coming soon" for entries with no MDX yet | `lib/guides/registry.ts` |
+| Guide loader | Reads MDX file + frontmatter from `content/guides/*.mdx` | `lib/guides/loader.ts` |
+| Dashboard Help link | Top-right link in the dashboard header, opens `/guide` in a new tab | `components/dashboard/help-link.tsx`, `components/dashboard/header.tsx` |
+| Screenshot capture | Playwright script that logs into staging, navigates to each page, injects annotation overlays, saves PNGs to `public/guide/screenshots/` | `scripts/capture-screenshots.ts`, `scripts/screenshot-config.ts` |
+| Demo data seed | Idempotent script that creates a demo org (Acme Corporation), two demo users, and seeded vacancies on staging Supabase | `scripts/seed-demo-org.ts` |

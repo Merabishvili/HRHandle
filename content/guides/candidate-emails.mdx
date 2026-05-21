@@ -1,0 +1,67 @@
+---
+title: Candidate emails
+summary: Configure rejection templates and applicant communications.
+updated: 2026-05-22
+---
+
+HRHandle sends three kinds of automated emails to candidates. The wording is fully editable per organization, so the message feels like it's from you, not from HRHandle.
+
+## The three email types
+
+| Type | Sent when | Editable |
+|---|---|---|
+| **Application Received** | A candidate submits the public apply form. | Yes — single template per org. |
+| **Interview Invitation** | An interview is scheduled with the "Send email" option checked. | Yes — single template per org. |
+| **Rejection** | An application is moved to the Rejected stage and "Send rejection email" is on. | Yes — one template **per rejection reason**, so different reasons can use different wording. |
+
+All three live under **Settings → Email Templates**.
+
+## Edit a general template
+
+Open **Settings → Email Templates** and pick **Application Received** or **Interview Invitation**. The editor has the subject and message body on the left, a live preview on the right.
+
+<Screenshot
+  src="/guide/screenshots/candidate-emails-application-received.png"
+  alt="Application Received tab with subject and body fields on the left and a styled email preview on the right"
+  caption="Edit text on the left, see the rendered email preview on the right."
+/>
+
+The greeting (`Dear <Candidate Name>`), heading, and footer are added automatically — you only edit the variable middle paragraph.
+
+## Use variables to personalise
+
+Anywhere in the subject or body you can drop in `{{variables}}`. They are substituted at send time.
+
+| Variable | What gets inserted |
+|---|---|
+| `{{candidate_name}}` | Full name of the recipient |
+| `{{role}}` | The vacancy title |
+| `{{company}}` | Your organization name |
+
+So `An update from {{company}} — {{role}}` becomes `An update from Acme Corporation — Senior Software Engineer` in the actual email.
+
+## Rejection: one template per reason
+
+The **Rejection** tab is different — instead of a single template, you maintain one template per **rejection reason**. This lets you send a slightly different message depending on why the candidate was rejected (experience level vs. salary vs. position filled, etc.).
+
+Rejection reasons themselves are managed in a separate page: **Settings → Rejection Reasons**.
+
+<Screenshot
+  src="/guide/screenshots/candidate-emails-rejection-reasons.png"
+  alt="The Rejection Reasons settings page listing the configured reasons for the organization"
+  caption="Each reason on this page can have its own rejection email template."
+/>
+
+When a recruiter rejects a candidate from the pipeline, the dialog shows the list of reasons; picking one auto-selects the matching template. They can still edit the email before sending.
+
+## Sending behaviour
+
+- **Application Received** is sent automatically by the public apply form. There is no per-candidate switch.
+- **Interview Invitation** has an explicit "Send email" toggle on the schedule form. If you turn it off, the interview is still saved but no email goes out.
+- **Rejection** has an explicit "Send rejection email" toggle in the rejection dialog. If you turn it off, the application is still marked as rejected but no email is sent.
+
+All emails go out via Resend on the `hrhandle.com` domain — replies come back to the email address tied to your organization's owner.
+
+## Reset to default
+
+Each editable template has a **Reset to default** button. It restores the shipping wording without losing your other templates, in case you edit something and want to start over.

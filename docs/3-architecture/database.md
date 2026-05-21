@@ -148,6 +148,21 @@ Free-text notes attached to a candidate by a team member.
 
 ---
 
+### `candidate_activity` (view)
+Read-only view unioning all activity events for a candidate. Used by the candidate details page activity feed. Security invoker so RLS on base tables is respected.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK of the source row |
+| organization_id | uuid | |
+| candidate_id | uuid | |
+| type | text | 'application', 'note', 'document', 'interview' |
+| title | text | Human-readable label |
+| meta | jsonb | Type-specific payload (status name, file name, etc.) |
+| created_at | timestamptz | Used for feed ordering |
+
+---
+
 ### `candidate_statuses`
 Global lookup. General state of a candidate.
 
@@ -172,9 +187,11 @@ Core candidate record.
 | last_name | text | NOT NULL | — | max 100 |
 | email | text | NULL | — | |
 | phone | text | NULL | — | max 30 |
-| current_company | text | NULL | — | max 200 |
-| current_position | text | NULL | — | max 200 |
-| years_of_experience | numeric | NULL | — | 0–60 |
+| location | text | NULL | — | max 200; city or region |
+| timezone | text | NULL | — | max 100; e.g. 'Europe/London' |
+| languages | text[] | NULL | '{}' | array of language names |
+| salary_expectation | text | NULL | — | max 200; free-text range or amount |
+| notice_period | text | NULL | — | max 100; e.g. '2 weeks', '1 month' |
 | linkedin_profile_url | text | NULL | — | URL |
 | source | text | NULL | — | max 100; 'Public Form' for web applicants |
 | general_status_id | uuid | NULL | — | FK → candidate_statuses |
@@ -182,7 +199,52 @@ Core candidate record.
 | created_at | timestamptz | NULL | — | |
 | updated_at | timestamptz | NULL | — | |
 | deleted_at | timestamptz | NULL | — | Soft-delete |
-| date_of_birth | date | NULL | — | Candidate must be 16+ |
+| current_company | text | NULL | — | **deprecated** — still in DB for backward compat; not surfaced in edit form |
+| current_position | text | NULL | — | **deprecated** — still in DB for backward compat; not surfaced in edit form |
+| years_of_experience | numeric | NULL | — | **deprecated** — still in DB for backward compat; not surfaced in edit form |
+| date_of_birth | date | NULL | — | **deprecated** — still in DB for backward compat; not surfaced in edit form |
+
+---
+
+### `candidate_education`
+Education history for a candidate. Created by CV parsing or manual entry.
+
+| Column | Type | Nullable | Default | Notes |
+|---|---|---|---|---|
+| id | uuid | NOT NULL | — | PK |
+| organization_id | uuid | NOT NULL | — | FK → organizations (cascade delete) |
+| candidate_id | uuid | NOT NULL | — | FK → candidates (cascade delete) |
+| institution | text | NOT NULL | — | |
+| degree | text | NULL | — | e.g. Bachelor's, Master's |
+| field_of_study | text | NULL | — | |
+| start_year | smallint | NULL | — | |
+| end_year | smallint | NULL | — | |
+| is_ongoing | boolean | NOT NULL | false | |
+| created_at | timestamptz | NOT NULL | now() | |
+| updated_at | timestamptz | NOT NULL | now() | |
+
+RLS: org members can manage their org's records.
+
+---
+
+### `candidate_experience`
+Work experience entries for a candidate. Created by CV parsing or manual entry.
+
+| Column | Type | Nullable | Default | Notes |
+|---|---|---|---|---|
+| id | uuid | NOT NULL | — | PK |
+| organization_id | uuid | NOT NULL | — | FK → organizations (cascade delete) |
+| candidate_id | uuid | NOT NULL | — | FK → candidates (cascade delete) |
+| company | text | NOT NULL | — | |
+| title | text | NOT NULL | — | |
+| start_date | date | NULL | — | |
+| end_date | date | NULL | — | |
+| is_current | boolean | NOT NULL | false | |
+| description | text | NULL | — | |
+| created_at | timestamptz | NOT NULL | now() | |
+| updated_at | timestamptz | NOT NULL | now() | |
+
+RLS: org members can manage their org's records.
 
 ---
 
