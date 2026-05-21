@@ -44,6 +44,7 @@ These variables are read by `scripts/capture-screenshots.ts` and `scripts/seed-d
 | `STAGING_DEMO_EMAIL` | Email of the seeded demo user the screenshot script logs in as. | `scripts/capture-screenshots.ts` | `demo.owner@hrhandle-demo.com` |
 | `STAGING_DEMO_PASSWORD` | Password for the seeded demo user. | `scripts/capture-screenshots.ts` | `DemoUser!2026` |
 | `SCREENSHOT_BASE_URL` | Optional override for the URL the screenshot script targets. Defaults to `https://staging.hrhandle.com`. | `scripts/capture-screenshots.ts` | `http://localhost:3000` |
+| `VERCEL_PROTECTION_BYPASS` | Vercel Deployment Protection bypass token. When set, the screenshot script sends `x-vercel-protection-bypass` and `x-vercel-set-bypass-cookie` headers so Playwright can reach the app behind the protection wall. Generate one in Vercel Project Settings → Deployment Protection → Protection Bypass for Automation. | `scripts/capture-screenshots.ts` | `<32-char token>` |
 
 ## Validation
 

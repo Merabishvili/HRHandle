@@ -141,15 +141,22 @@ npx playwright install chromium
 
 # 2. Seed the demo org on staging Supabase (idempotent)
 NEXT_PUBLIC_SUPABASE_URL=https://quotchdymcnjlnwtjmgu.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=<staging-service-role-key> \
+SUPABASE_SERVICE_ROLE_KEY=<staging legacy JWT service_role key> \
 npm run guide:seed
 
-# 3. Add the printed credentials to .env.local
+# 3. Add the printed credentials + the Vercel bypass token to .env.local
 #    STAGING_DEMO_EMAIL=demo.owner@hrhandle-demo.com
 #    STAGING_DEMO_PASSWORD=DemoUser!2026
+#    VERCEL_PROTECTION_BYPASS=<token from Vercel Protection Bypass for Automation>
+#    SUPABASE_SERVICE_ROLE_KEY=<staging legacy JWT service_role key>
 
 # 4. Capture all configured shots
 npm run guide:screenshots
 ```
 
-The seed script refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at the staging project, so it cannot accidentally write to production.
+What each piece does:
+
+- **Seed script** — creates the Acme Corporation demo org with users, vacancies, pipeline applications, vacancy questions, custom fields, rejection reasons + templates, and a demo LinkedIn integration. Refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at the staging project, so it cannot accidentally write to production.
+- **Service role key** — needs to be the **legacy JWT-based** `service_role` key (starts with `eyJ`), not the newer `sb_secret_*` key. Supabase's auth admin endpoints currently reject the new key format. Find the legacy key under Settings → API → Legacy anon/service_role API keys.
+- **Vercel bypass token** — staging is behind Vercel Deployment Protection. Without the bypass header, Playwright lands on Vercel's auth wall instead of the app. Generate the token under Vercel Project Settings → Deployment Protection → Protection Bypass for Automation.
+- **Demo email / password** — printed at the end of `guide:seed`. The screenshot script does not use the password directly (Supabase Turnstile blocks `signInWithPassword`); instead it uses the admin client to mint a magic-link `hashed_token` and exchanges it via `verifyOtp` for a session, which is then injected as a cookie into Playwright.

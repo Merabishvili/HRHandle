@@ -116,7 +116,7 @@ HRHandle does not use a global client-side state manager (no Redux, Zustand, etc
 
 ## Guide pattern (`content/guides/*.mdx` + `lib/guides/`)
 
-Guides are static MDX files in `content/guides/`, registered in `lib/guides/registry.ts` (slug, title, summary, category, order). The `[slug]` route uses `next-mdx-remote/rsc` to compile MDX server-side at request time and `generateStaticParams` to prerender every guide that has an MDX file. Custom `<Screenshot>` is the only MDX component required; styled defaults for headings, lists, links live in `components/guide/mdx-components.tsx`.
+Guides are static MDX files in `content/guides/`, registered in `lib/guides/registry.ts` (slug, title, summary, category, order). The `[slug]` route uses `next-mdx-remote/rsc` to compile MDX server-side at request time and `generateStaticParams` to prerender every guide that has an MDX file. `remark-gfm` is passed in `MDXRemote` options so GitHub-flavored markdown tables render. Custom `<Screenshot>` is the only authoring component required; styled defaults for headings, lists, links, and GFM tables live in `components/guide/mdx-components.tsx`.
 
 Annotated screenshots are produced by `scripts/capture-screenshots.ts` (Playwright). Each shot in `scripts/screenshot-config.ts` declares a URL, optional pre-actions, and CSS-selector-based annotations. The script logs into a seeded demo org on staging, navigates, injects DOM overlays (red arrows + numbered boxes), and saves PNGs to `public/guide/screenshots/`.
 

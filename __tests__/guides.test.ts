@@ -44,6 +44,14 @@ describe('guide MDX files', () => {
     }
   })
 
+  it('every registry entry has a corresponding MDX file', () => {
+    // Phase B is complete: every guide listed in the registry must ship.
+    for (const guide of GUIDES) {
+      const filePath = path.join(CONTENT_DIR, `${guide.slug}.mdx`)
+      expect(fs.existsSync(filePath), `missing MDX file for registry slug ${guide.slug}`).toBe(true)
+    }
+  })
+
   it('every MDX file parses and has frontmatter with title and summary', () => {
     const files = fs.existsSync(CONTENT_DIR) ? fs.readdirSync(CONTENT_DIR) : []
     for (const file of files) {
@@ -52,6 +60,20 @@ describe('guide MDX files', () => {
       const { data } = matter(raw)
       expect(typeof data.title, `title in ${file}`).toBe('string')
       expect(typeof data.summary, `summary in ${file}`).toBe('string')
+    }
+  })
+
+  it('every <Screenshot src=...> in an MDX file points to a real PNG', () => {
+    const files = fs.existsSync(CONTENT_DIR) ? fs.readdirSync(CONTENT_DIR) : []
+    const publicDir = path.join(process.cwd(), 'public')
+    for (const file of files) {
+      if (!file.endsWith('.mdx')) continue
+      const raw = fs.readFileSync(path.join(CONTENT_DIR, file), 'utf8')
+      const srcs = Array.from(raw.matchAll(/<Screenshot[^>]*\bsrc="([^"]+)"/g)).map((m) => m[1])
+      for (const src of srcs) {
+        const abs = path.join(publicDir, src.startsWith('/') ? src.slice(1) : src)
+        expect(fs.existsSync(abs), `screenshot ${src} referenced from ${file} does not exist`).toBe(true)
+      }
     }
   })
 })

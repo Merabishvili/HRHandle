@@ -142,6 +142,36 @@
 
 ---
 
+### Screenshot script authenticates via admin-generated magiclink
+
+**Decision:** `scripts/capture-screenshots.ts` does not call `signInWithPassword`. It uses the Supabase admin client (with the legacy JWT service_role key) to call `auth.admin.generateLink({ type: 'magiclink', email })`, extracts the `hashed_token`, and exchanges it for a session via the anon client's `verifyOtp`. The resulting session is serialized and injected as a cookie into the Playwright browser context.
+
+**Reason:** Supabase's auth backend has Turnstile (captcha) enforcement enabled at the project level, which blocks `signInWithPassword` for non-browser callers (returns `captcha_failed`). `verifyOtp` does not require a captcha because the token comes from a server-trusted source. The admin path also sidesteps the Cloudflare Turnstile widget that fronts the login form itself.
+
+**Files:** `scripts/capture-screenshots.ts`.
+
+---
+
+### Screenshot script ships a Vercel Deployment Protection bypass header
+
+**Decision:** When `VERCEL_PROTECTION_BYPASS` is set, the screenshot script's Playwright context sends `x-vercel-protection-bypass: <token>` and `x-vercel-set-bypass-cookie: true` on every request. The token comes from Vercel Project Settings → Deployment Protection → Protection Bypass for Automation.
+
+**Reason:** Staging is gated behind Vercel Authentication. Without a bypass, headless Chromium lands on Vercel's "Log in to Vercel" page instead of the HRHandle app, so the injected Supabase cookie has nowhere useful to take effect.
+
+**Files:** `scripts/capture-screenshots.ts`, `.env.local` (developer machine only — never committed, never set on Vercel).
+
+---
+
+### GFM markdown features enabled in guide MDX via remark-gfm
+
+**Decision:** `app/guide/[slug]/page.tsx` passes `remarkPlugins: [remarkGfm]` to `MDXRemote`. `components/guide/mdx-components.tsx` provides styled overrides for the elements GFM emits (`table`, `thead`, `tbody`, `tr`, `th`, `td`).
+
+**Reason:** Default `next-mdx-remote` only handles CommonMark, which silently collapses pipe-delimited tables into a paragraph. The guides rely on tables (status definitions, role permissions, field types, etc.), so GFM is required for the markdown to render correctly.
+
+**Files:** `app/guide/[slug]/page.tsx`, `components/guide/mdx-components.tsx`.
+
+---
+
 ## TODO/FIXME/HACK Comments Found in Code
 
 - `lib/actions/notifications.ts` line 74: `// Non-fatal: notifications table may not exist yet` — suggests notifications was added after the initial schema
