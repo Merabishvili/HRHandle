@@ -107,6 +107,26 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- sign-up-and-onboarding ----
+  {
+    name: 'sign-up-and-onboarding-form',
+    url: '/auth/sign-up',
+    output: 'public/guide/screenshots/sign-up-and-onboarding-form.png',
+    preActions: async (page) => {
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(500)
+    },
+  },
+  {
+    name: 'sign-up-and-onboarding-confirm',
+    url: '/auth/sign-up-success',
+    output: 'public/guide/screenshots/sign-up-and-onboarding-confirm.png',
+    preActions: async (page) => {
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(500)
+    },
+  },
+
   // ---- linkedin-integration ----
   {
     name: 'linkedin-integration-settings',
