@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
   DialogContent,
@@ -71,10 +73,12 @@ function CopyButton({ text }: { text: string }) {
 export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButtonProps) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hrhandle.com'
   const linkedInUrl = `https://www.linkedin.com/job-posting/v2/?companyId=${pageId}`
-  const fullDescription = buildFullDescription(vacancy)
   const applyUrl = vacancy.application_form_token
     ? `${siteUrl}/apply/${vacancy.application_form_token}`
     : null
+
+  const [title, setTitle] = useState(vacancy.title)
+  const [description, setDescription] = useState(buildFullDescription(vacancy))
 
   return (
     <Dialog>
@@ -88,29 +92,24 @@ export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButton
         <DialogHeader>
           <DialogTitle>Post to LinkedIn Jobs</DialogTitle>
           <DialogDescription>
-            LinkedIn doesn&apos;t support auto-fill for free job posts. Copy each field below and paste it into the matching step on LinkedIn.
+            LinkedIn doesn&apos;t support auto-fill for free job posts. Edit the fields below if needed, then paste them into the matching step on LinkedIn.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium">Step 1 — Job title</p>
-              <CopyButton text={vacancy.title} />
-            </div>
-            <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
-              {vacancy.title}
-            </div>
+            <p className="text-sm font-medium">Step 1 — Job title</p>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium">Step 2 — Description</p>
-              <CopyButton text={fullDescription} />
-            </div>
-            <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-muted/30 px-3 py-2 text-xs whitespace-pre-wrap">
-              {fullDescription}
-            </div>
+            <p className="text-sm font-medium">Step 2 — Description</p>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={6}
+              className="text-xs"
+            />
             <p className="text-xs text-muted-foreground">
               LinkedIn drafts one from the title — replace it with this on the description step.
             </p>
@@ -119,15 +118,21 @@ export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButton
           {applyUrl && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium">Step 3 — External apply URL</p>
+                <p className="text-sm font-medium">Step 3 — Manage applicants</p>
                 <CopyButton text={applyUrl} />
               </div>
               <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs font-mono break-all">
                 {applyUrl}
               </div>
-              <p className="text-xs text-muted-foreground">
-                On the &quot;Job settings&quot; step, choose &quot;On an external website&quot; and paste this URL so applicants land on your HRHandle form.
-              </p>
+              <div className="rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">On LinkedIn&apos;s &quot;Job settings&quot; step:</p>
+                <ol className="list-decimal pl-4 space-y-0.5">
+                  <li>Find &quot;Manage applicants&quot; and click <strong>Edit</strong></li>
+                  <li>Select <strong>&quot;On an external website&quot;</strong></li>
+                  <li>Paste the URL above into the <strong>Website address</strong> field</li>
+                </ol>
+                <p className="pt-1">This routes applicants to your HRHandle apply form instead of LinkedIn&apos;s default.</p>
+              </div>
             </div>
           )}
         </div>
