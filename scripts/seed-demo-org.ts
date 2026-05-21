@@ -379,6 +379,88 @@ async function ensureCandidates(orgId: string, creatorId: string): Promise<void>
   }
 }
 
+/**
+ * Distribute the seeded candidates across the Senior Software Engineer
+ * vacancy's pipeline stages, so the Kanban board has visual richness for
+ * screenshots. Idempotent: no-ops if an application already links the
+ * candidate and vacancy.
+ */
+async function ensureApplications(orgId: string, creatorId: string): Promise<void> {
+  // Find the target vacancy (SR Engineer is the showcase one).
+  const { data: vacancy } = await admin
+    .from('vacancies')
+    .select('id')
+    .eq('organization_id', orgId)
+    .eq('title', 'Senior Software Engineer')
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!vacancy) {
+    console.log('  vacancy not found, skipping applications')
+    return
+  }
+
+  const { data: statuses } = await admin
+    .from('application_statuses')
+    .select('id, code')
+  const byCode = new Map((statuses ?? []).map((s) => [s.code, s.id as string]))
+
+  // Each candidate goes to a specific pipeline stage on the SR Engineer vacancy.
+  const placements: Array<{ email: string; code: string }> = [
+    { email: 'lukas.becker@example.com', code: 'interview' },
+    { email: 'sofia.rossi@example.com', code: 'screening' },
+    { email: 'marco.silva@example.com', code: 'applied' },
+    { email: 'anna.petrov@example.com', code: 'offer' },
+  ]
+
+  for (const p of placements) {
+    const statusId = byCode.get(p.code)
+    if (!statusId) {
+      console.log(`  status not found: ${p.code}`)
+      continue
+    }
+
+    const { data: candidate } = await admin
+      .from('candidates')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('email', p.email)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (!candidate) {
+      console.log(`  candidate not found: ${p.email}`)
+      continue
+    }
+
+    const { data: existing } = await admin
+      .from('applications')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('candidate_id', candidate.id)
+      .eq('vacancy_id', vacancy.id)
+      .is('deleted_at', null)
+      .maybeSingle()
+
+    if (existing) {
+      await admin
+        .from('applications')
+        .update({ status_id: statusId, last_status_changed_at: new Date().toISOString() })
+        .eq('id', existing.id)
+      console.log(`  application updated: ${p.email} → ${p.code}`)
+    } else {
+      await admin.from('applications').insert({
+        organization_id: orgId,
+        candidate_id: candidate.id,
+        vacancy_id: vacancy.id,
+        status_id: statusId,
+        applied_at: new Date().toISOString(),
+        last_status_changed_at: new Date().toISOString(),
+        created_by: creatorId,
+      })
+      console.log(`  application created: ${p.email} → ${p.code}`)
+    }
+  }
+}
+
 async function main(): Promise<void> {
   console.log(`Seeding demo org on ${SUPABASE_URL}\n`)
 
@@ -402,6 +484,9 @@ async function main(): Promise<void> {
 
   console.log('\nCandidates:')
   await ensureCandidates(orgId, ownerId)
+
+  console.log('\nApplications (pipeline):')
+  await ensureApplications(orgId, ownerId)
 
   console.log('\n--- DONE ---')
   console.log('Owner login:', OWNER_EMAIL)

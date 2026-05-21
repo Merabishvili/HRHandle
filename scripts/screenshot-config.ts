@@ -107,6 +107,30 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- pipeline-kanban ----
+  {
+    name: 'pipeline-kanban-overview',
+    url: '/vacancies',
+    output: 'public/guide/screenshots/pipeline-kanban-overview.png',
+    preActions: async (page) => {
+      // Find the Senior Software Engineer vacancy and navigate to its pipeline.
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const href = await page.evaluate(() => {
+        const links = Array.from(
+          document.querySelectorAll('table a[href^="/vacancies/"]')
+        ) as HTMLAnchorElement[]
+        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
+        return target?.getAttribute('href') ?? null
+      })
+      if (!href) throw new Error('Could not find Senior Software Engineer row')
+      const baseUrl =
+        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
+      await page.goto(`${baseUrl}${href}/pipeline`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(800)
+    },
+  },
   // ---- manage-candidates ----
   {
     name: 'manage-candidates-list',
