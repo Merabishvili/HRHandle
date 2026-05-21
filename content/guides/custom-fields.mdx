@@ -1,0 +1,59 @@
+---
+title: Custom fields
+summary: Capture extra data on vacancies and candidates.
+updated: 2026-05-22
+---
+
+Custom fields let you store information HRHandle doesn't ship with out of the box — things like tech stack, security clearance, preferred languages, or any structured data unique to your hiring process.
+
+You can attach custom fields to **vacancies** and **candidates**, grouped into named sections.
+
+## Configure the schema
+
+Custom fields are configured per organization in **Settings → Custom Fields**. Owners and admins can edit; members can only see them on records.
+
+<Screenshot
+  src="/guide/screenshots/custom-fields-settings.png"
+  alt="The Custom Fields settings page with two panels for Vacancy and Candidate fields"
+  caption="Two independent schemas: one for vacancies, one for candidates."
+/>
+
+Each entity type (vacancy or candidate) can have up to **20 fields total**, organised into any number of **groups**. Groups appear as named sections on the entity's detail page.
+
+## Field types
+
+| Type | What candidates / recruiters see | When to use |
+|---|---|---|
+| **Text** | Single-line input | Short answers — "Tech stack", "Preferred location" |
+| **Long text** | Multi-line textarea | Notes, bios, structured comments |
+| **Number** | Number input | Counts, years, scores |
+| **Date** | Date picker | Availability, target start, expiry dates |
+| **Dropdown** | Select from a fixed list | Categorical data — "Seniority level: Junior / Mid / Senior" |
+| **Checkbox** | Yes/No toggle | Boolean facts — "Remote allowed", "Background check completed" |
+
+Mark any field as **Required** to enforce it on create/edit forms.
+
+## See the fields on a vacancy
+
+Once configured, the fields appear on the vacancy detail page under **Additional Information**, grouped exactly as set up in Settings.
+
+<Screenshot
+  src="/guide/screenshots/custom-fields-vacancy-display.png"
+  alt="A vacancy detail page showing the Additional Information section with custom fields filled in"
+  caption="The Tech requirements group on the Senior Software Engineer vacancy."
+/>
+
+The same pattern works for candidates — their detail page shows a custom field section grouped the same way.
+
+## Edit values
+
+Custom field values are edited inline from the entity's detail page or as part of the create/edit form. Anyone with access to the entity can edit values — only schema changes (adding or removing fields) are restricted to admins.
+
+## Practical examples
+
+- **For vacancies**: required tech stack, seniority level, salary band code, remote policy, hiring manager Slack handle.
+- **For candidates**: security clearance, work authorisation, preferred languages, referral source, notice period, expected start date.
+
+## Why use them
+
+Custom fields keep structured data on the record itself — no spreadsheets, no notes-buried-in-comments. You can filter and sort by them, and they export to CSV alongside the standard fields, which makes reporting and compliance traceable.

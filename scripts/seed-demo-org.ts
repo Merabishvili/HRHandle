@@ -519,6 +519,189 @@ async function ensureVacancyQuestions(orgId: string): Promise<void> {
   }
 }
 
+type FieldType = 'text' | 'long_text' | 'date' | 'number' | 'dropdown' | 'checkbox'
+
+interface FieldSeed {
+  name: string
+  field_type: FieldType
+  is_required: boolean
+  options?: string[]
+  sort_order: number
+}
+
+interface GroupSeed {
+  entity_type: 'vacancy' | 'candidate'
+  name: string
+  sort_order: number
+  fields: FieldSeed[]
+}
+
+const CUSTOM_FIELD_GROUPS: GroupSeed[] = [
+  {
+    entity_type: 'vacancy',
+    name: 'Tech requirements',
+    sort_order: 1,
+    fields: [
+      { name: 'Tech stack', field_type: 'text', is_required: false, sort_order: 1 },
+      { name: 'Years experience minimum', field_type: 'number', is_required: false, sort_order: 2 },
+      { name: 'Remote allowed', field_type: 'checkbox', is_required: false, sort_order: 3 },
+      {
+        name: 'Seniority level',
+        field_type: 'dropdown',
+        is_required: false,
+        options: ['Junior', 'Mid', 'Senior', 'Staff'],
+        sort_order: 4,
+      },
+    ],
+  },
+  {
+    entity_type: 'candidate',
+    name: 'Background',
+    sort_order: 1,
+    fields: [
+      { name: 'Preferred languages', field_type: 'text', is_required: false, sort_order: 1 },
+      { name: 'Notice period (weeks)', field_type: 'number', is_required: false, sort_order: 2 },
+      { name: 'Background check completed', field_type: 'checkbox', is_required: false, sort_order: 3 },
+    ],
+  },
+]
+
+async function ensureCustomFields(orgId: string): Promise<Map<string, string>> {
+  // Returns a map of "<entity_type>:<field_name>" → field_id, so caller can
+  // upsert values without re-querying.
+  const fieldIdByKey = new Map<string, string>()
+
+  for (const group of CUSTOM_FIELD_GROUPS) {
+    let groupId: string
+    const { data: existingGroup } = await admin
+      .from('custom_field_groups')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('entity_type', group.entity_type)
+      .eq('name', group.name)
+      .maybeSingle()
+
+    if (existingGroup) {
+      groupId = existingGroup.id
+      console.log(`  group exists: [${group.entity_type}] ${group.name}`)
+    } else {
+      const { data, error } = await admin
+        .from('custom_field_groups')
+        .insert({
+          organization_id: orgId,
+          entity_type: group.entity_type,
+          name: group.name,
+          sort_order: group.sort_order,
+        })
+        .select('id')
+        .single()
+      if (error || !data) {
+        console.log(`  group insert failed: ${group.name} — ${error?.message}`)
+        continue
+      }
+      groupId = data.id
+      console.log(`  group created: [${group.entity_type}] ${group.name}`)
+    }
+
+    for (const f of group.fields) {
+      const { data: existingField } = await admin
+        .from('custom_fields')
+        .select('id')
+        .eq('group_id', groupId)
+        .eq('name', f.name)
+        .is('deleted_at', null)
+        .maybeSingle()
+
+      if (existingField) {
+        await admin
+          .from('custom_fields')
+          .update({
+            field_type: f.field_type,
+            is_required: f.is_required,
+            options: f.options ?? null,
+            sort_order: f.sort_order,
+          })
+          .eq('id', existingField.id)
+        fieldIdByKey.set(`${group.entity_type}:${f.name}`, existingField.id)
+        console.log(`    field updated: ${f.name}`)
+      } else {
+        const { data, error } = await admin
+          .from('custom_fields')
+          .insert({
+            organization_id: orgId,
+            group_id: groupId,
+            name: f.name,
+            field_type: f.field_type,
+            is_required: f.is_required,
+            options: f.options ?? null,
+            sort_order: f.sort_order,
+          })
+          .select('id')
+          .single()
+        if (error || !data) {
+          console.log(`    field insert failed: ${f.name} — ${error?.message}`)
+          continue
+        }
+        fieldIdByKey.set(`${group.entity_type}:${f.name}`, data.id)
+        console.log(`    field created: ${f.name}`)
+      }
+    }
+  }
+
+  return fieldIdByKey
+}
+
+async function setSrEngineerCustomValues(
+  orgId: string,
+  fieldIdByKey: Map<string, string>
+): Promise<void> {
+  const { data: vacancy } = await admin
+    .from('vacancies')
+    .select('id')
+    .eq('organization_id', orgId)
+    .eq('title', 'Senior Software Engineer')
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!vacancy) return
+
+  const values = [
+    {
+      field_id: fieldIdByKey.get('vacancy:Tech stack'),
+      value_text: 'TypeScript, React, Node.js, PostgreSQL',
+    },
+    {
+      field_id: fieldIdByKey.get('vacancy:Years experience minimum'),
+      value_number: 5,
+    },
+    {
+      field_id: fieldIdByKey.get('vacancy:Remote allowed'),
+      value_boolean: true,
+    },
+    {
+      field_id: fieldIdByKey.get('vacancy:Seniority level'),
+      value_option: 'Senior',
+    },
+  ].filter((v) => v.field_id)
+
+  for (const v of values) {
+    const payload = {
+      organization_id: orgId,
+      field_id: v.field_id!,
+      entity_id: vacancy.id,
+      value_text: 'value_text' in v ? (v as { value_text: string }).value_text : null,
+      value_number: 'value_number' in v ? (v as { value_number: number }).value_number : null,
+      value_boolean: 'value_boolean' in v ? (v as { value_boolean: boolean }).value_boolean : null,
+      value_option: 'value_option' in v ? (v as { value_option: string }).value_option : null,
+      updated_at: new Date().toISOString(),
+    }
+    const { error } = await admin
+      .from('custom_field_values')
+      .upsert(payload, { onConflict: 'field_id,entity_id' })
+    if (error) console.log(`    value upsert failed: ${error.message}`)
+  }
+  console.log('  SR Engineer custom field values set')
+}
+
 async function main(): Promise<void> {
   console.log(`Seeding demo org on ${SUPABASE_URL}\n`)
 
@@ -548,6 +731,12 @@ async function main(): Promise<void> {
 
   console.log('\nVacancy questions (Senior Software Engineer):')
   await ensureVacancyQuestions(orgId)
+
+  console.log('\nCustom field schema:')
+  const fieldIdByKey = await ensureCustomFields(orgId)
+
+  console.log('\nCustom field values (Senior Software Engineer):')
+  await setSrEngineerCustomValues(orgId, fieldIdByKey)
 
   console.log('\n--- DONE ---')
   console.log('Owner login:', OWNER_EMAIL)

@@ -107,6 +107,60 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- custom-fields ----
+  {
+    name: 'custom-fields-settings',
+    url: '/settings/custom-fields',
+    output: 'public/guide/screenshots/custom-fields-settings.png',
+    preActions: async (page) => {
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(400)
+      // Switch to the Vacancies tab — it has 4 seeded fields.
+      await page.getByRole('tab', { name: 'Vacancies' }).click()
+      await page.waitForTimeout(500)
+      // Expand the "Tech requirements" group. The toggle is a <button>
+      // wrapping the chevron + group name + badge.
+      await page
+        .getByRole('button', { name: /Tech requirements/ })
+        .first()
+        .click()
+      await page.waitForTimeout(500)
+    },
+  },
+  {
+    name: 'custom-fields-vacancy-display',
+    url: '/vacancies',
+    output: 'public/guide/screenshots/custom-fields-vacancy-display.png',
+    preActions: async (page) => {
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const href = await page.evaluate(() => {
+        const links = Array.from(
+          document.querySelectorAll('table a[href^="/vacancies/"]')
+        ) as HTMLAnchorElement[]
+        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
+        return target?.getAttribute('href') ?? null
+      })
+      if (!href) throw new Error('Could not find Senior Software Engineer row')
+      const baseUrl =
+        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
+      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(500)
+      // Scroll the Additional Information section into view.
+      await page.evaluate(() => {
+        const headings = Array.from(
+          document.querySelectorAll('h3, [class*="CardTitle"], div')
+        ) as HTMLElement[]
+        const target = headings.find((el) =>
+          (el.textContent || '').trim().startsWith('Additional Information')
+        )
+        target?.scrollIntoView({ block: 'center' })
+      })
+      await page.waitForTimeout(400)
+    },
+  },
+
   // ---- assessments-and-questions ----
   {
     name: 'assessments-vacancy-qe-tab',
