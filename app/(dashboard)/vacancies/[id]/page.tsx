@@ -20,7 +20,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
-import { LinkedInShareButton } from '@/components/vacancies/linkedin-share-button'
 import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
 import { VacancyApplicationsToolbar } from '@/components/vacancies/vacancy-applications-toolbar'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
@@ -400,15 +399,6 @@ export default async function VacancyDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <LinkedInShareButton
-            title={vacancy.title}
-            location={vacancy.location}
-            employmentType={vacancy.employment_type}
-            department={vacancy.department}
-            description={vacancy.description}
-            responsibilities={vacancy.responsibilities ?? null}
-            requirements={vacancy.requirements}
-          />
           {linkedInIntegration && (
             <LinkedInPostJobButton
               pageId={linkedInIntegration.external_page_id}
