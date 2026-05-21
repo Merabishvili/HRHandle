@@ -58,6 +58,13 @@ interface CandidateFormProps {
   initialApplicationStatuses?: ApplicationStatus[]
   customFieldGroups?: CustomFieldGroupWithFields[]
   customFieldValues?: CustomFieldValue[]
+  /**
+   * Extra sections rendered between the personal-info card and the
+   * Custom Fields card. Used on the edit page to inject live
+   * ExperienceSection / EducationSection editors in the same vertical
+   * position as the inline Experience/Education on the create page.
+   */
+  extraSections?: React.ReactNode
 }
 
 type EntryMode = null | 'cv' | 'manual'
@@ -70,6 +77,7 @@ export function CandidateForm({
   candidateStatuses,
   customFieldGroups = [],
   customFieldValues = [],
+  extraSections,
 }: CandidateFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -543,6 +551,10 @@ export function CandidateForm({
           </div>
         </CardContent>
       </Card>
+
+      {/* Live Experience / Education editors (edit mode only) — kept in the
+          same vertical position as the inline create-mode sections below. */}
+      {isEditing && extraSections}
 
       {/* Experience (create only) */}
       {!isEditing && (

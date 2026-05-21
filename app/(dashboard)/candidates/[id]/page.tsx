@@ -446,21 +446,21 @@ export default async function CandidateDetailPage({
           {/* 3. Education */}
           <EducationSection candidateId={candidate.id} initialEntries={educationEntries} />
 
-          {/* 4. Activity */}
-          <ActivityFeed
-            candidateId={candidate.id}
-            currentUserId={user.id}
-            currentUserName={profile.full_name ?? null}
-            initialItems={activityItems}
-          />
-
-          {/* Custom fields (if any) */}
+          {/* 4. Additional Information (custom fields, if any) */}
           {customFieldGroups.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5">
               <p className="mb-3 text-[15px] font-bold text-foreground">Additional Information</p>
               <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
             </div>
           )}
+
+          {/* 5. Activity */}
+          <ActivityFeed
+            candidateId={candidate.id}
+            currentUserId={user.id}
+            currentUserName={profile.full_name ?? null}
+            initialItems={activityItems}
+          />
         </div>
 
         {/* ── RIGHT RAIL (sticky) ───────────────────────────────────────────── */}

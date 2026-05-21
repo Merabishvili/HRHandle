@@ -210,10 +210,13 @@ const { data: vacanciesRaw } = await supabase
         candidateStatuses={candidateStatuses}
         customFieldGroups={customFieldGroups}
         customFieldValues={customFieldValues}
+        extraSections={
+          <>
+            <ExperienceSection candidateId={id} initialEntries={experienceEntries} />
+            <EducationSection candidateId={id} initialEntries={educationEntries} />
+          </>
+        }
       />
-
-      <ExperienceSection candidateId={id} initialEntries={experienceEntries} />
-      <EducationSection  candidateId={id} initialEntries={educationEntries} />
     </div>
   )
 }
