@@ -107,6 +107,33 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- schedule-interview ----
+  {
+    name: 'schedule-interview-list',
+    url: '/interviews',
+    output: 'public/guide/screenshots/schedule-interview-list.png',
+    preActions: async (page) => {
+      await page.waitForSelector('a[href="/interviews/new"]', { timeout: 15_000 })
+    },
+    annotations: [
+      {
+        targetSelector: 'a[href="/interviews/new"]',
+        label: 'Schedule Interview',
+        position: 'bottom',
+        style: 'arrow',
+      },
+    ],
+  },
+  {
+    name: 'schedule-interview-form',
+    url: '/interviews/new',
+    output: 'public/guide/screenshots/schedule-interview-form.png',
+    preActions: async (page) => {
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(500)
+    },
+  },
+
   // ---- team-and-roles ----
   {
     name: 'team-and-roles-page',
