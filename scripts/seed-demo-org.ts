@@ -461,6 +461,64 @@ async function ensureApplications(orgId: string, creatorId: string): Promise<voi
   }
 }
 
+interface QuestionSeed {
+  label: string
+  type: 'text' | 'score'
+  sort_order: number
+}
+
+const SR_ENGINEER_QUESTIONS: QuestionSeed[] = [
+  { label: 'Tell us about a recent system you designed end-to-end.', type: 'text', sort_order: 10 },
+  { label: 'How do you approach code reviews on a busy team?', type: 'text', sort_order: 20 },
+  { label: 'TypeScript depth', type: 'score', sort_order: 100 },
+  { label: 'System design clarity', type: 'score', sort_order: 110 },
+  { label: 'Communication and collaboration', type: 'score', sort_order: 120 },
+]
+
+async function ensureVacancyQuestions(orgId: string): Promise<void> {
+  void orgId // referenced in the insert payload below
+
+  const { data: vacancy } = await admin
+    .from('vacancies')
+    .select('id')
+    .eq('organization_id', orgId)
+    .eq('title', 'Senior Software Engineer')
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!vacancy) {
+    console.log('  vacancy not found, skipping questions')
+    return
+  }
+
+  for (const q of SR_ENGINEER_QUESTIONS) {
+    const { data: existing } = await admin
+      .from('vacancy_questions')
+      .select('id')
+      .eq('vacancy_id', vacancy.id)
+      .eq('label', q.label)
+      .maybeSingle()
+
+    if (existing) {
+      const { error } = await admin
+        .from('vacancy_questions')
+        .update({ type: q.type, sort_order: q.sort_order })
+        .eq('id', existing.id)
+      if (error) console.log(`  question update failed: ${q.label} — ${error.message}`)
+      else console.log(`  question updated: ${q.label}`)
+    } else {
+      const { error } = await admin.from('vacancy_questions').insert({
+        organization_id: orgId,
+        vacancy_id: vacancy.id,
+        label: q.label,
+        type: q.type,
+        sort_order: q.sort_order,
+      })
+      if (error) console.log(`  question insert failed: ${q.label} — ${error.message}`)
+      else console.log(`  question created: ${q.label}`)
+    }
+  }
+}
+
 async function main(): Promise<void> {
   console.log(`Seeding demo org on ${SUPABASE_URL}\n`)
 
@@ -487,6 +545,9 @@ async function main(): Promise<void> {
 
   console.log('\nApplications (pipeline):')
   await ensureApplications(orgId, ownerId)
+
+  console.log('\nVacancy questions (Senior Software Engineer):')
+  await ensureVacancyQuestions(orgId)
 
   console.log('\n--- DONE ---')
   console.log('Owner login:', OWNER_EMAIL)

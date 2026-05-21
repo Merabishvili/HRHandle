@@ -107,6 +107,72 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- assessments-and-questions ----
+  {
+    name: 'assessments-vacancy-qe-tab',
+    url: '/vacancies',
+    output: 'public/guide/screenshots/assessments-vacancy-qe-tab.png',
+    preActions: async (page) => {
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const href = await page.evaluate(() => {
+        const links = Array.from(
+          document.querySelectorAll('table a[href^="/vacancies/"]')
+        ) as HTMLAnchorElement[]
+        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
+        return target?.getAttribute('href') ?? null
+      })
+      if (!href) throw new Error('Could not find Senior Software Engineer row')
+      const baseUrl =
+        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
+      await page.goto(`${baseUrl}${href}?tab=qe`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(600)
+    },
+  },
+  {
+    name: 'assessments-application-form',
+    url: '/vacancies',
+    output: 'public/guide/screenshots/assessments-application-form.png',
+    preActions: async (page) => {
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const href = await page.evaluate(() => {
+        const links = Array.from(
+          document.querySelectorAll('table a[href^="/vacancies/"]')
+        ) as HTMLAnchorElement[]
+        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
+        return target?.getAttribute('href') ?? null
+      })
+      if (!href) throw new Error('Could not find Senior Software Engineer row')
+      const baseUrl =
+        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
+      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(500)
+      // Expand the application row for Lukas Becker by clicking its chevron.
+      await page.evaluate(() => {
+        // Each row has a ChevronRight inside a button with title "Assessment & Questionary".
+        // The candidate name lives in a sibling Link.
+        const rows = Array.from(document.querySelectorAll('div')) as HTMLElement[]
+        for (const row of rows) {
+          if (row.querySelector('button[title*="Assessment"]') && /Lukas Becker/.test(row.textContent || '')) {
+            const toggle = row.querySelector('button[title*="Assessment"]') as HTMLButtonElement | null
+            toggle?.click()
+            return
+          }
+        }
+      })
+      await page.waitForTimeout(700)
+      // Scroll the expanded form into view.
+      await page.evaluate(() => {
+        const textarea = document.querySelector('textarea[placeholder*="Enter answer"]') as HTMLElement | null
+        textarea?.scrollIntoView({ block: 'center' })
+      })
+      await page.waitForTimeout(300)
+    },
+  },
+
   // ---- pipeline-kanban ----
   {
     name: 'pipeline-kanban-overview',
