@@ -82,9 +82,16 @@ export async function extractTextFromFile(file: File): Promise<string | null> {
 async function extractFromPDF(file: File): Promise<string | null> {
   try {
     const arrayBuffer = await file.arrayBuffer()
-    const { extractText } = await import('unpdf')
-    const { text } = await extractText(new Uint8Array(arrayBuffer), { mergePages: true })
-    return text || null
+    const pdfjs = await import('pdfjs-dist')
+    pdfjs.GlobalWorkerOptions.workerSrc = ''
+    const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer), verbosity: 0 }).promise
+    const parts: string[] = []
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i)
+      const content = await page.getTextContent()
+      parts.push(content.items.map((item) => ('str' in item ? item.str : '')).join(' '))
+    }
+    return parts.join('\n') || null
   } catch (err) {
     console.error('[cv-parser] extractFromPDF failed:', err)
     return null
