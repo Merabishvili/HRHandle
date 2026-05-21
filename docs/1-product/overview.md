@@ -25,6 +25,7 @@ HRHandle is a SaaS applicant tracking system (ATS) for small-to-medium businesse
 | **Settings** | Profile, organisation, rejection templates, email templates, custom fields, integrations, team. |
 | **Public Apply** | Public-facing application form per vacancy (via token link). Includes CV upload and optional custom questions. |
 | **Public Jobs Page** | Organisation's public job board listing all open vacancies at `/jobs/[slug]`. |
+| **Guides** | Public feature walkthroughs at `/guide` and `/guide/[slug]`. Same URL is opened from the dashboard "Help" link and shared with prospects. |
 
 ## Key User Journeys
 

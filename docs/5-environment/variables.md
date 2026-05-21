@@ -35,6 +35,16 @@
 
 **Important:** This variable MUST NOT be added to Vercel. It is only for `.env.local`. The `NEXT_PUBLIC_` prefix means it is visible in browser bundle — it is safe only because local dev URLs are not sensitive.
 
+### Guide screenshot script (local only)
+
+These variables are read by `scripts/capture-screenshots.ts` and `scripts/seed-demo-org.ts`. They are never deployed to Vercel.
+
+| Name | Purpose | Files That Use It | Example |
+|---|---|---|---|
+| `STAGING_DEMO_EMAIL` | Email of the seeded demo user the screenshot script logs in as. | `scripts/capture-screenshots.ts` | `demo.owner@hrhandle-demo.com` |
+| `STAGING_DEMO_PASSWORD` | Password for the seeded demo user. | `scripts/capture-screenshots.ts` | `DemoUser!2026` |
+| `SCREENSHOT_BASE_URL` | Optional override for the URL the screenshot script targets. Defaults to `https://staging.hrhandle.com`. | `scripts/capture-screenshots.ts` | `http://localhost:3000` |
+
 ## Validation
 
 `lib/env.ts` uses `@t3-oss/env-nextjs` to validate environment variables at startup:

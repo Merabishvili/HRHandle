@@ -126,3 +126,17 @@
 | Trial banner | Shows days remaining in trial, expired state | `components/dashboard/trial-banner.tsx` |
 | Expired redirect | When trial ends (or status=expired), auto-redirects to `/subscription` | `app/(dashboard)/layout.tsx` |
 | Payment wiring | **Not implemented** — buttons display but no payment provider connected (LemonSqueezy planned) | `components/subscription/plan-cards.tsx` |
+
+## Guides
+
+Public feature walkthroughs with annotated screenshots, served from a static-cacheable Next.js route. Linked from the dashboard header (opens in a new tab) and shared with prospects.
+
+| Feature | Description | Files |
+|---------|-------------|-------|
+| Guide index | Lists every guide grouped by category plus a short FAQ | `app/guide/page.tsx`, `lib/guides/registry.ts` |
+| Guide page | MDX-rendered article with sidebar nav and annotated screenshots | `app/guide/[slug]/page.tsx`, `components/guide/guide-shell.tsx`, `components/guide/guide-sidebar.tsx`, `components/guide/mdx-components.tsx` |
+| Guide registry | Single source of truth for slug, title, summary, category, order; index page shows "Coming soon" for entries with no MDX yet | `lib/guides/registry.ts` |
+| Guide loader | Reads MDX file + frontmatter from `content/guides/*.mdx` | `lib/guides/loader.ts` |
+| Dashboard Help link | Top-right link in the dashboard header, opens `/guide` in a new tab | `components/dashboard/help-link.tsx`, `components/dashboard/header.tsx` |
+| Screenshot capture | Playwright script that logs into staging, navigates to each page, injects annotation overlays, saves PNGs to `public/guide/screenshots/` | `scripts/capture-screenshots.ts`, `scripts/screenshot-config.ts` |
+| Demo data seed | Idempotent script that creates a demo org (Acme Corporation), two demo users, and seeded vacancies on staging Supabase | `scripts/seed-demo-org.ts` |

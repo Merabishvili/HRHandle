@@ -1,0 +1,70 @@
+---
+title: Post a vacancy
+summary: Create a new job opening and share a public apply link.
+updated: 2026-05-21
+---
+
+A vacancy in HRHandle holds the description of an open role and acts as the destination for incoming applications. This guide walks through creating one from scratch and sharing the public apply link with candidates.
+
+## Open the new vacancy form
+
+From the sidebar, click **Vacancies**, then **New vacancy** in the top-right corner of the vacancy list.
+
+<Screenshot
+  src="/guide/screenshots/post-a-vacancy-list.png"
+  alt="HRHandle vacancies list with the New vacancy button highlighted"
+  caption="The Vacancies list. Click New vacancy to start."
+/>
+
+## Fill in the core fields
+
+Only three fields are required to save the vacancy: **Title**, **Description**, and **Start date**. Everything else is optional and can be filled in later.
+
+<Screenshot
+  src="/guide/screenshots/post-a-vacancy-form.png"
+  alt="The vacancy creation form with title, description, and start date fields highlighted"
+  caption="The required fields are marked with numbered arrows."
+/>
+
+Other fields worth setting up front:
+
+- **Location** and **Employment type** — shown on the public job board and in the public apply form.
+- **Salary range** and **Currency** — shown only inside HRHandle, not on the public page.
+- **Sector** — used for filtering and reporting.
+- **Hiring manager** — the person responsible for moving applications through the pipeline.
+
+## Choose a status
+
+A new vacancy defaults to **Draft**. Move it to **Open** when you are ready to receive applications.
+
+| Status | What it means |
+|---|---|
+| Draft | Not visible publicly; no public apply link is generated. |
+| Open | Visible on your public job board; public apply link works. |
+| On hold | Hidden from public view; existing applications remain. |
+| Closed | Vacancy is finalised; no new applications accepted. |
+| Archived | Hidden from default lists; kept for historical record. |
+
+## Save and share the public apply link
+
+After saving, you land on the vacancy detail page. Switch to the **Apply Link** tab to generate the shareable public form URL.
+
+<Screenshot
+  src="/guide/screenshots/post-a-vacancy-apply-link.png"
+  alt="Vacancy detail page with the Apply Link tab open and the public URL highlighted"
+  caption="Copy the public apply URL and share it on job boards, LinkedIn, or your own website."
+/>
+
+The link looks like `https://hrhandle.com/apply/<token>` and is unique to this vacancy. Anyone with the link can submit an application — no HRHandle account required on their side.
+
+## What happens next
+
+When a candidate submits the public form:
+
+1. Their CV is parsed automatically and the form pre-fills with extracted data.
+2. A new candidate record is created in your organization's talent pool.
+3. An application is created in the vacancy pipeline at the **Applied** stage.
+4. Owners and admins receive an in-app notification.
+5. The applicant receives a confirmation email.
+
+From there, work the candidate through the [pipeline](/guide/pipeline-kanban) or [schedule an interview](/guide/schedule-interview).

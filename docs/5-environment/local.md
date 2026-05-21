@@ -130,3 +130,26 @@ Note: The CI pipeline uses hardcoded placeholder env vars in the build step to a
 - Public pages: `/jobs/[slug]`, `/apply/[token]`, `/join`
 - Auth pages: `/auth/login`, `/auth/sign-up`, `/auth/forgot-password`, `/auth/reset-password`
 - If you sign up locally, you must confirm the email before accessing the dashboard — the confirmation email will use `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` as the redirect base if set
+
+## Capturing guide screenshots (one-time setup)
+
+The guide pages under `/guide/[slug]` reference screenshots in `public/guide/screenshots/`. They are produced by a Playwright script that runs against staging:
+
+```bash
+# 1. Install browser binaries (once)
+npx playwright install chromium
+
+# 2. Seed the demo org on staging Supabase (idempotent)
+NEXT_PUBLIC_SUPABASE_URL=https://quotchdymcnjlnwtjmgu.supabase.co \
+SUPABASE_SERVICE_ROLE_KEY=<staging-service-role-key> \
+npm run guide:seed
+
+# 3. Add the printed credentials to .env.local
+#    STAGING_DEMO_EMAIL=demo.owner@hrhandle-demo.com
+#    STAGING_DEMO_PASSWORD=DemoUser!2026
+
+# 4. Capture all configured shots
+npm run guide:screenshots
+```
+
+The seed script refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at the staging project, so it cannot accidentally write to production.
