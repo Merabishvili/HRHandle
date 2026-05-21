@@ -42,10 +42,13 @@ export const SHOTS: ShotConfig[] = [
     name: 'post-a-vacancy-list',
     url: '/vacancies',
     output: 'public/guide/screenshots/post-a-vacancy-list.png',
+    preActions: async (page) => {
+      await page.waitForSelector('a[href="/vacancies/new"]', { timeout: 15_000 })
+    },
     annotations: [
       {
-        targetSelector: 'a[href="/vacancies/new"], button:has-text("New vacancy")',
-        label: 'New vacancy',
+        targetSelector: 'a[href="/vacancies/new"]',
+        label: 'Create Vacancy',
         position: 'left',
         style: 'arrow',
       },
@@ -55,22 +58,50 @@ export const SHOTS: ShotConfig[] = [
     name: 'post-a-vacancy-form',
     url: '/vacancies/new',
     output: 'public/guide/screenshots/post-a-vacancy-form.png',
+    fullPage: false,
+    preActions: async (page) => {
+      // Tag the Start Date picker button (no stable selector otherwise).
+      await page.waitForSelector('#title', { timeout: 15_000 })
+      await page.evaluate(() => {
+        const labels = Array.from(document.querySelectorAll('label')) as HTMLLabelElement[]
+        const startDateLabel = labels.find((l) =>
+          l.textContent?.trim().startsWith('Start Date')
+        )
+        const btn = startDateLabel?.parentElement?.querySelector('button')
+        if (btn) btn.setAttribute('data-shot', 'start-date')
+      })
+    },
     annotations: [
       {
-        targetSelector: '[name="title"], input[id*="title"]',
+        targetSelector: '#title',
         label: '1. Title',
         position: 'right',
         style: 'arrow',
       },
       {
-        targetSelector: 'textarea[name="description"], textarea[id*="description"]',
-        label: '2. Description',
+        targetSelector: '[data-shot="start-date"]',
+        label: '2. Start date',
         position: 'right',
         style: 'arrow',
       },
+    ],
+  },
+  {
+    name: 'post-a-vacancy-form-description',
+    url: '/vacancies/new',
+    output: 'public/guide/screenshots/post-a-vacancy-form-description.png',
+    preActions: async (page) => {
+      await page.waitForSelector('#description', { timeout: 15_000 })
+      // Scroll the description field into view.
+      await page.evaluate(() => {
+        document.querySelector('#description')?.scrollIntoView({ block: 'center' })
+      })
+      await page.waitForTimeout(400)
+    },
+    annotations: [
       {
-        targetSelector: 'input[name="start_date"], input[id*="start"]',
-        label: '3. Start date',
+        targetSelector: '#description',
+        label: 'About the Job',
         position: 'right',
         style: 'arrow',
       },
@@ -81,16 +112,32 @@ export const SHOTS: ShotConfig[] = [
     url: '/vacancies',
     output: 'public/guide/screenshots/post-a-vacancy-apply-link.png',
     preActions: async (page) => {
-      // Click the first vacancy in the list, then switch to Apply Link tab.
-      const firstRow = page.locator('a[href^="/vacancies/"]:not([href="/vacancies/new"])').first()
-      await firstRow.click()
+      // Open the Senior Software Engineer vacancy (Open status, has token).
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const link = page.getByRole('link', { name: /Senior Software Engineer/ }).first()
+      await link.click()
       await page.waitForLoadState('networkidle')
-      const applyTab = page.locator('[role="tab"]:has-text("Apply Link")').first()
-      await applyTab.click()
+      // Switch to Apply Link tab.
+      await page.getByRole('tab', { name: 'Apply Link' }).click()
+      // The Apply Link tab may need to render the URL input.
+      await page.waitForTimeout(800)
+      // Tag the public apply URL display. UI renders it inside a span with
+      // font-mono. We tag the parent container so the box wraps the whole
+      // URL row (URL text + copy/open icons).
+      await page.evaluate(() => {
+        const spans = Array.from(
+          document.querySelectorAll('span.font-mono')
+        ) as HTMLElement[]
+        const urlSpan = spans.find((el) => (el.textContent || '').includes('/apply/'))
+        const container = (urlSpan?.closest('div') as HTMLElement) ?? urlSpan ?? null
+        if (container) container.setAttribute('data-shot', 'apply-url')
+      })
     },
     annotations: [
       {
-        targetSelector: 'input[readonly][value*="/apply/"], code:has-text("/apply/")',
+        targetSelector: '[data-shot="apply-url"]',
         label: 'Public apply URL',
         position: 'top',
         style: 'box',

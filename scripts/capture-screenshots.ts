@@ -18,11 +18,16 @@
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright'
 import path from 'node:path'
 import fs from 'node:fs'
+import { createClient } from '@supabase/supabase-js'
 import { SHOTS, type Annotation, type ShotConfig } from './screenshot-config'
 
 const BASE_URL = process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
 const EMAIL = process.env.STAGING_DEMO_EMAIL
 const PASSWORD = process.env.STAGING_DEMO_PASSWORD
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+const VERCEL_BYPASS = process.env.VERCEL_PROTECTION_BYPASS
 const VIEWPORT = { width: 1440, height: 900 }
 
 if (!EMAIL || !PASSWORD) {
@@ -33,13 +38,76 @@ if (!EMAIL || !PASSWORD) {
   process.exit(1)
 }
 
-async function login(page: Page): Promise<void> {
-  await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'domcontentloaded' })
-  await page.fill('input[type="email"]', EMAIL!)
-  await page.fill('input[type="password"]', PASSWORD!)
-  await Promise.all([
-    page.waitForURL(/\/dashboard|\/vacancies|\/candidates/, { timeout: 30_000 }),
-    page.click('button[type="submit"]'),
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error(
+    'Missing NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, or SUPABASE_SERVICE_ROLE_KEY.\n' +
+      'These are needed to bypass the Turnstile captcha via the admin-generated magic link flow.'
+  )
+  process.exit(1)
+}
+
+/**
+ * Build a session for the demo user and inject it as a cookie into the
+ * Playwright browser context.
+ *
+ * Direct password sign-in is blocked by the Supabase project's Turnstile
+ * captcha. Instead, the admin client (with the service_role key) generates
+ * a one-time magic-link token; the anon client then calls verifyOtp with
+ * that token to obtain a real session. verifyOtp does not require a
+ * captcha because it is not a credential check.
+ *
+ * The PASSWORD env var is kept for documentation / manual logins; it is
+ * not used by this flow.
+ */
+async function authenticateContext(context: BrowserContext): Promise<void> {
+  void PASSWORD
+  const admin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: 'magiclink',
+    email: EMAIL!,
+  })
+  if (linkErr || !linkData?.properties?.hashed_token) {
+    throw linkErr ?? new Error('generateLink returned no hashed_token')
+  }
+
+  const anon = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  const { data, error } = await anon.auth.verifyOtp({
+    type: 'magiclink',
+    token_hash: linkData.properties.hashed_token,
+  })
+  if (error || !data.session) {
+    throw error ?? new Error('verifyOtp returned no session')
+  }
+  // Supabase SSR stores the session as a JSON-encoded cookie. Cookie name is
+  // sb-<project-ref>-auth-token; for sessions >4KB it is split into chunks
+  // (sb-<ref>-auth-token.0, .1, …). For a single-session login this fits in
+  // one cookie.
+  const ref = new URL(SUPABASE_URL!).host.split('.')[0]
+  const cookieName = `sb-${ref}-auth-token`
+  const cookieValue = JSON.stringify({
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+    expires_at: data.session.expires_at,
+    expires_in: data.session.expires_in,
+    token_type: data.session.token_type,
+    user: data.session.user,
+  })
+  const domain = new URL(BASE_URL).hostname
+  await context.addCookies([
+    {
+      name: cookieName,
+      value: `base64-${Buffer.from(cookieValue).toString('base64')}`,
+      domain,
+      path: '/',
+      httpOnly: false,
+      secure: BASE_URL.startsWith('https://'),
+      sameSite: 'Lax',
+      expires: data.session.expires_at ?? Math.floor(Date.now() / 1000) + 3600,
+    },
   ])
 }
 
@@ -128,25 +196,31 @@ async function injectAnnotations(page: Page, annotations: Annotation[]): Promise
         let ay = 0
         let rot = 0
         switch (a.position) {
+          // The base polygon is a right-pointing arrow. Rotation makes the tip
+          // point AT the target.
           case 'right':
+            // Label is to the right of target; arrow tip should point LEFT.
             ax = r.right + 2
-            ay = r.top + r.height / 2 - 6
-            rot = 0
-            break
-          case 'left':
-            ax = r.left - 18
             ay = r.top + r.height / 2 - 6
             rot = 180
             break
+          case 'left':
+            // Label is to the left of target; arrow tip should point RIGHT.
+            ax = r.left - 18
+            ay = r.top + r.height / 2 - 6
+            rot = 0
+            break
           case 'top':
+            // Label is above target; arrow tip should point DOWN.
             ax = r.left + r.width / 2 - 6
             ay = r.top - 18
-            rot = 270
+            rot = 90
             break
           case 'bottom':
+            // Label is below target; arrow tip should point UP.
             ax = r.left + r.width / 2 - 6
             ay = r.bottom + 2
-            rot = 90
+            rot = 270
             break
         }
         arrow.style.cssText = [
@@ -210,13 +284,19 @@ async function main(): Promise<void> {
   let browser: Browser | null = null
   try {
     browser = await chromium.launch({ headless: true })
-    const context = await browser.newContext({ viewport: VIEWPORT })
+    const context = await browser.newContext({
+      viewport: VIEWPORT,
+      extraHTTPHeaders: VERCEL_BYPASS
+        ? {
+            'x-vercel-protection-bypass': VERCEL_BYPASS,
+            'x-vercel-set-bypass-cookie': 'true',
+          }
+        : undefined,
+    })
 
-    const loginPage = await context.newPage()
-    console.log(`Logging in at ${BASE_URL}…`)
-    await login(loginPage)
-    await loginPage.close()
-    console.log('Logged in. Capturing shots…\n')
+    console.log(`Authenticating with Supabase as ${EMAIL}…`)
+    await authenticateContext(context)
+    console.log('Session injected. Capturing shots…\n')
 
     for (const shot of SHOTS) {
       await captureShot(context, shot)
