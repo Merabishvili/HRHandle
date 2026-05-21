@@ -108,7 +108,7 @@ export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButton
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={6}
-              className="text-xs"
+              className="text-xs break-all"
             />
             <p className="text-xs text-muted-foreground">
               LinkedIn drafts one from the title — replace it with this on the description step.
@@ -117,12 +117,12 @@ export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButton
 
           {applyUrl && (
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium">Step 3 — Manage applicants</p>
+              <p className="text-sm font-medium">Step 3 — Manage applicants</p>
+              <div className="flex items-start gap-2">
+                <div className="flex-1 min-w-0 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs font-mono break-all">
+                  {applyUrl}
+                </div>
                 <CopyButton text={applyUrl} />
-              </div>
-              <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs font-mono break-all">
-                {applyUrl}
               </div>
               <div className="rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground space-y-1">
                 <p className="font-medium text-foreground">On LinkedIn&apos;s &quot;Job settings&quot; step:</p>
