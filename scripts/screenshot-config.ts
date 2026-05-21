@@ -107,6 +107,79 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- manage-candidates ----
+  {
+    name: 'manage-candidates-list',
+    url: '/candidates',
+    output: 'public/guide/screenshots/manage-candidates-list.png',
+    preActions: async (page) => {
+      await page.waitForSelector('a[href="/candidates/new"]', { timeout: 15_000 })
+    },
+    annotations: [
+      {
+        targetSelector: 'a[href="/candidates/new"]',
+        label: 'Add Candidate',
+        position: 'bottom',
+        style: 'arrow',
+      },
+    ],
+  },
+  {
+    name: 'manage-candidates-entry-mode',
+    url: '/candidates/new',
+    output: 'public/guide/screenshots/manage-candidates-entry-mode.png',
+    preActions: async (page) => {
+      await page.waitForSelector('button:has-text("Upload CV first"), button >> text=Upload CV first', {
+        timeout: 15_000,
+      })
+      await page.waitForTimeout(300)
+      await page.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[]
+        const cv = btns.find((b) => (b.textContent || '').includes('Upload CV first'))
+        const manual = btns.find((b) => (b.textContent || '').includes('Fill manually'))
+        if (cv) cv.setAttribute('data-shot', 'cv-path')
+        if (manual) manual.setAttribute('data-shot', 'manual-path')
+      })
+    },
+    annotations: [
+      {
+        targetSelector: '[data-shot="cv-path"]',
+        label: 'Auto-fill from CV',
+        position: 'bottom',
+        style: 'box',
+      },
+      {
+        targetSelector: '[data-shot="manual-path"]',
+        label: 'Enter by hand',
+        position: 'bottom',
+        style: 'box',
+      },
+    ],
+  },
+  {
+    name: 'manage-candidates-detail',
+    url: '/candidates',
+    output: 'public/guide/screenshots/manage-candidates-detail.png',
+    preActions: async (page) => {
+      // Read the Lukas Becker row's link href and navigate to it directly.
+      await page.waitForSelector('table a[href^="/candidates/"]:not([href="/candidates/new"])', {
+        timeout: 15_000,
+      })
+      const href = await page.evaluate(() => {
+        const links = Array.from(
+          document.querySelectorAll('table a[href^="/candidates/"]')
+        ) as HTMLAnchorElement[]
+        const target = links.find((a) => (a.textContent || '').includes('Lukas Becker'))
+        return target?.getAttribute('href') ?? null
+      })
+      if (!href) throw new Error('Could not find Lukas Becker row link')
+      const baseUrl =
+        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
+      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(600)
+    },
+  },
+
   // ---- public-apply-link ----
   {
     name: 'public-apply-link-activate',

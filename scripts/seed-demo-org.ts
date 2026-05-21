@@ -274,6 +274,111 @@ async function ensureVacancies(orgId: string, creatorId: string): Promise<void> 
   }
 }
 
+interface CandidateSeed {
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  linkedin_profile_url: string | null
+  current_position: string
+  current_company: string
+  location: string
+  source: string
+  status_code: 'active' | 'hired' | 'archived'
+}
+
+const CANDIDATES: CandidateSeed[] = [
+  {
+    first_name: 'Lukas',
+    last_name: 'Becker',
+    email: 'lukas.becker@example.com',
+    phone: '+49 30 1234 5678',
+    linkedin_profile_url: 'https://www.linkedin.com/in/lukas-becker-demo/',
+    current_position: 'Senior Backend Engineer',
+    current_company: 'Stripe',
+    location: 'Berlin, Germany',
+    source: 'LinkedIn',
+    status_code: 'active',
+  },
+  {
+    first_name: 'Sofia',
+    last_name: 'Rossi',
+    email: 'sofia.rossi@example.com',
+    phone: '+39 02 1234 5678',
+    linkedin_profile_url: 'https://www.linkedin.com/in/sofia-rossi-demo/',
+    current_position: 'Product Designer',
+    current_company: 'Figma',
+    location: 'Milan, Italy',
+    source: 'Referral',
+    status_code: 'active',
+  },
+  {
+    first_name: 'Marco',
+    last_name: 'Silva',
+    email: 'marco.silva@example.com',
+    phone: '+44 20 1234 5678',
+    linkedin_profile_url: 'https://www.linkedin.com/in/marco-silva-demo/',
+    current_position: 'Marketing Manager',
+    current_company: 'HubSpot',
+    location: 'London, United Kingdom',
+    source: 'Apply form',
+    status_code: 'active',
+  },
+  {
+    first_name: 'Anna',
+    last_name: 'Petrov',
+    email: 'anna.petrov@example.com',
+    phone: '+1 415 555 0123',
+    linkedin_profile_url: 'https://www.linkedin.com/in/anna-petrov-demo/',
+    current_position: 'Full Stack Developer',
+    current_company: 'Vercel',
+    location: 'Remote',
+    source: 'LinkedIn',
+    status_code: 'active',
+  },
+]
+
+async function ensureCandidates(orgId: string, creatorId: string): Promise<void> {
+  const { data: statuses, error: statusErr } = await admin
+    .from('candidate_statuses')
+    .select('id, code')
+  if (statusErr || !statuses) throw statusErr ?? new Error('candidate_statuses query failed')
+  const statusByCode = new Map(statuses.map((s) => [s.code, s.id]))
+
+  for (const c of CANDIDATES) {
+    const { data: existing } = await admin
+      .from('candidates')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('email', c.email)
+      .is('deleted_at', null)
+      .maybeSingle()
+
+    const payload = {
+      organization_id: orgId,
+      first_name: c.first_name,
+      last_name: c.last_name,
+      email: c.email,
+      phone: c.phone,
+      linkedin_profile_url: c.linkedin_profile_url,
+      current_position: c.current_position,
+      current_company: c.current_company,
+      location: c.location,
+      source: c.source,
+      general_status_id: statusByCode.get(c.status_code) ?? null,
+      created_by: creatorId,
+    }
+
+    if (existing) {
+      await admin.from('candidates').update(payload).eq('id', existing.id)
+      console.log(`  candidate updated: ${c.first_name} ${c.last_name}`)
+    } else {
+      await admin.from('candidates').insert(payload)
+      console.log(`  candidate created: ${c.first_name} ${c.last_name}`)
+    }
+  }
+}
+
 async function main(): Promise<void> {
   console.log(`Seeding demo org on ${SUPABASE_URL}\n`)
 
@@ -294,6 +399,9 @@ async function main(): Promise<void> {
 
   console.log('\nVacancies:')
   await ensureVacancies(orgId, ownerId)
+
+  console.log('\nCandidates:')
+  await ensureCandidates(orgId, ownerId)
 
   console.log('\n--- DONE ---')
   console.log('Owner login:', OWNER_EMAIL)

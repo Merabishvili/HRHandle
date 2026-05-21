@@ -124,14 +124,13 @@ async function injectAnnotations(page: Page, annotations: Annotation[]): Promise
     ].join(';')
     document.body.appendChild(layer)
 
-    items.forEach((a, i) => {
+    items.forEach((a) => {
       const target = document.querySelector(a.targetSelector) as HTMLElement | null
       if (!target) {
         console.warn(`Annotation target not found: ${a.targetSelector}`)
         return
       }
       const r = target.getBoundingClientRect()
-      const num = i + 1
 
       // Box outline around the target.
       if (a.style === 'box') {
@@ -186,7 +185,7 @@ async function injectAnnotations(page: Page, annotations: Annotation[]): Promise
         'box-shadow:0 2px 8px rgba(0,0,0,0.15)',
         'text-align:center',
       ].join(';')
-      label.textContent = a.style === 'box' ? a.label : `${num}. ${a.label.replace(/^\d+\.\s*/, '')}`
+      label.textContent = a.label
       layer.appendChild(label)
 
       // Arrow for non-box style.
