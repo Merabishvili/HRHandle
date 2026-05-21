@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { MDXRemote } from 'next-mdx-remote/rsc'
+import remarkGfm from 'remark-gfm'
 import { GUIDES } from '@/lib/guides/registry'
 import { listExistingGuideSlugs, loadGuide } from '@/lib/guides/loader'
 import { GuideShell } from '@/components/guide/guide-shell'
@@ -57,7 +58,11 @@ export default async function GuidePage({
             <p className="mt-2 text-base text-muted-foreground">{guide.frontmatter.summary}</p>
           </header>
           <div className="prose-styles">
-            <MDXRemote source={guide.content} components={guideMdxComponents} />
+            <MDXRemote
+              source={guide.content}
+              components={guideMdxComponents}
+              options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
+            />
           </div>
         </article>
       </div>

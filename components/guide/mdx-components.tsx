@@ -29,4 +29,18 @@ export const guideMdxComponents: MDXComponents = {
     <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">{children}</code>
   ),
   hr: () => <hr className="my-8 border-border" />,
+  table: ({ children }) => (
+    <div className="my-6 overflow-x-auto">
+      <table className="w-full border-collapse text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="border-b border-border">{children}</thead>,
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => <tr className="border-b border-border last:border-0">{children}</tr>,
+  th: ({ children }) => (
+    <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => <td className="px-3 py-2 align-top text-foreground/90">{children}</td>,
 }
