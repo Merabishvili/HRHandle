@@ -802,6 +802,38 @@ async function ensureRejectionReasons(orgId: string): Promise<void> {
   }
 }
 
+async function ensureLinkedInIntegration(orgId: string, ownerId: string): Promise<void> {
+  // Demo-only fake page ID; LinkedIn never actually receives traffic from this.
+  const DEMO_PAGE_ID = '12345678'
+  const { data: existing } = await admin
+    .from('organization_integrations')
+    .select('id')
+    .eq('organization_id', orgId)
+    .eq('platform', 'linkedin')
+    .maybeSingle()
+
+  const payload = {
+    organization_id: orgId,
+    platform: 'linkedin' as const,
+    external_page_id: DEMO_PAGE_ID,
+    external_page_name: DEMO_PAGE_ID,
+    access_token: 'manual',
+    token_expires_at: null,
+    connected_by: ownerId,
+    connected_at: new Date().toISOString(),
+    is_active: true,
+  }
+
+  if (existing) {
+    await admin.from('organization_integrations').update(payload).eq('id', existing.id)
+    console.log('  LinkedIn integration updated')
+  } else {
+    const { error } = await admin.from('organization_integrations').insert(payload)
+    if (error) console.log(`  LinkedIn integration insert failed: ${error.message}`)
+    else console.log('  LinkedIn integration created')
+  }
+}
+
 async function main(): Promise<void> {
   console.log(`Seeding demo org on ${SUPABASE_URL}\n`)
 
@@ -840,6 +872,9 @@ async function main(): Promise<void> {
 
   console.log('\nRejection reasons + templates:')
   await ensureRejectionReasons(orgId)
+
+  console.log('\nLinkedIn integration (demo):')
+  await ensureLinkedInIntegration(orgId, ownerId)
 
   console.log('\n--- DONE ---')
   console.log('Owner login:', OWNER_EMAIL)

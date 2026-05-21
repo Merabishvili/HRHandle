@@ -107,6 +107,81 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- linkedin-integration ----
+  {
+    name: 'linkedin-integration-settings',
+    url: '/settings/integrations',
+    output: 'public/guide/screenshots/linkedin-integration-settings.png',
+    preActions: async (page) => {
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(500)
+    },
+  },
+  {
+    name: 'linkedin-integration-vacancy-button',
+    url: '/vacancies',
+    output: 'public/guide/screenshots/linkedin-integration-vacancy-button.png',
+    preActions: async (page) => {
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const href = await page.evaluate(() => {
+        const links = Array.from(
+          document.querySelectorAll('table a[href^="/vacancies/"]')
+        ) as HTMLAnchorElement[]
+        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
+        return target?.getAttribute('href') ?? null
+      })
+      if (!href) throw new Error('Could not find Senior Software Engineer row')
+      const baseUrl =
+        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
+      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(500)
+      // Tag the Post to LinkedIn Jobs button so we can annotate it.
+      await page.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[]
+        const target = btns.find((b) => (b.textContent || '').includes('Post to LinkedIn Jobs'))
+        if (target) target.setAttribute('data-shot', 'linkedin-btn')
+      })
+    },
+    annotations: [
+      {
+        targetSelector: '[data-shot="linkedin-btn"]',
+        label: 'Post to LinkedIn Jobs',
+        position: 'bottom',
+        style: 'arrow',
+      },
+    ],
+  },
+  {
+    name: 'linkedin-integration-modal',
+    url: '/vacancies',
+    output: 'public/guide/screenshots/linkedin-integration-modal.png',
+    preActions: async (page) => {
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const href = await page.evaluate(() => {
+        const links = Array.from(
+          document.querySelectorAll('table a[href^="/vacancies/"]')
+        ) as HTMLAnchorElement[]
+        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
+        return target?.getAttribute('href') ?? null
+      })
+      if (!href) throw new Error('Could not find Senior Software Engineer row')
+      const baseUrl =
+        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
+      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(500)
+      // Click the Post to LinkedIn Jobs button to open the modal.
+      await page
+        .getByRole('button', { name: /Post to LinkedIn Jobs/ })
+        .first()
+        .click()
+      await page.waitForTimeout(600)
+    },
+  },
+
   // ---- candidate-emails ----
   {
     name: 'candidate-emails-application-received',
