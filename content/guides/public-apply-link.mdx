@@ -1,0 +1,65 @@
+---
+title: Public apply link
+summary: Share a branded application form for any open vacancy.
+updated: 2026-05-21
+---
+
+Every vacancy can have a public application form on its own URL. Share the link on LinkedIn, a job board, or your own website — candidates apply directly, no HRHandle account required.
+
+## Activate the form
+
+Open a vacancy and switch to the **Apply Link** tab. If the form is not yet active, click **Activate Application Form**.
+
+<Screenshot
+  src="/guide/screenshots/public-apply-link-activate.png"
+  alt="The Apply Link tab on a vacancy with the Activate Application Form button highlighted"
+  caption="Activating the form generates a unique, shareable URL."
+/>
+
+## Copy and share the link
+
+Once active, the tab shows the public URL and a short summary of what candidates will see. Use the icons next to the URL to copy it or open it in a new tab.
+
+<Screenshot
+  src="/guide/screenshots/public-apply-link-active.png"
+  alt="The Apply Link tab in active state with the copy and open icons highlighted"
+  caption="Copy the link with the left icon, or preview it in a new tab with the right icon."
+/>
+
+The link has the shape `https://hrhandle.com/apply/<token>` and works until the form is deactivated.
+
+## What candidates see
+
+Candidates land on a branded page that includes the vacancy description, responsibilities, and requirements. They upload a CV first — HRHandle parses it and pre-fills the personal details — then review and submit.
+
+<Screenshot
+  src="/guide/screenshots/public-apply-link-public-form.png"
+  alt="The public apply page showing the CV upload area at the top and personal detail fields below"
+  caption="CV upload sits at the top; HRHandle's AI extracts name, email, phone, and LinkedIn from the file."
+/>
+
+The candidate-facing form asks for:
+
+| Field | Required |
+|---|---|
+| CV (PDF or Word, up to 10 MB) | Yes |
+| First name | Yes |
+| Last name | Yes |
+| Email | Yes |
+| Phone | No |
+| LinkedIn URL | No |
+
+## After submission
+
+When a candidate submits the form:
+
+1. A candidate record is created in your organization's talent pool.
+2. An application is created in the pipeline at the **Applied** stage.
+3. Owners and admins receive an in-app notification.
+4. The applicant receives a confirmation email.
+
+From there, work the candidate through the [pipeline](/guide/pipeline-kanban) or [schedule an interview](/guide/schedule-interview).
+
+## Deactivating the form
+
+To stop accepting new applications, open the **Apply Link** tab and click **Deactivate Form**. The link stops working immediately. Existing candidates and applications are kept; only new submissions are blocked.

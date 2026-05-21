@@ -107,6 +107,119 @@ export const SHOTS: ShotConfig[] = [
       },
     ],
   },
+  // ---- public-apply-link ----
+  {
+    name: 'public-apply-link-activate',
+    url: '/vacancies',
+    output: 'public/guide/screenshots/public-apply-link-activate.png',
+    preActions: async (page) => {
+      // Click the HR Coordinator vacancy (Draft, no apply token).
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const link = page.getByRole('link', { name: /HR Coordinator/ }).first()
+      await link.click()
+      await page.waitForLoadState('networkidle')
+      await page.getByRole('tab', { name: 'Apply Link' }).click()
+      await page.waitForTimeout(600)
+      // Tag the Activate button.
+      await page.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[]
+        const activate = btns.find((b) => (b.textContent || '').includes('Activate Application Form'))
+        if (activate) activate.setAttribute('data-shot', 'activate-btn')
+      })
+    },
+    annotations: [
+      {
+        targetSelector: '[data-shot="activate-btn"]',
+        label: 'Activate',
+        position: 'right',
+        style: 'arrow',
+      },
+    ],
+  },
+  {
+    name: 'public-apply-link-active',
+    url: '/vacancies',
+    output: 'public/guide/screenshots/public-apply-link-active.png',
+    preActions: async (page) => {
+      // Click the Senior Software Engineer (Open, has active token).
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const link = page.getByRole('link', { name: /Senior Software Engineer/ }).first()
+      await link.click()
+      await page.waitForLoadState('networkidle')
+      await page.getByRole('tab', { name: 'Apply Link' }).click()
+      await page.waitForTimeout(600)
+      // Tag the copy and open-in-new-tab controls inside the URL row.
+      await page.evaluate(() => {
+        const urlSpan = Array.from(document.querySelectorAll('span.font-mono')).find((el) =>
+          (el.textContent || '').includes('/apply/')
+        ) as HTMLElement | undefined
+        const container = urlSpan?.closest('div') as HTMLElement | undefined
+        if (!container) return
+        const copyBtn = container.querySelector('button')
+        if (copyBtn) copyBtn.setAttribute('data-shot', 'copy-btn')
+        const openLink = container.querySelector('a[target="_blank"]')
+        if (openLink) openLink.setAttribute('data-shot', 'open-btn')
+      })
+    },
+    annotations: [
+      {
+        targetSelector: '[data-shot="copy-btn"]',
+        label: 'Copy',
+        position: 'top',
+        style: 'arrow',
+      },
+      {
+        targetSelector: '[data-shot="open-btn"]',
+        label: 'Open',
+        position: 'bottom',
+        style: 'arrow',
+      },
+    ],
+  },
+  {
+    name: 'public-apply-link-public-form',
+    url: '/vacancies',
+    output: 'public/guide/screenshots/public-apply-link-public-form.png',
+    preActions: async (page) => {
+      // Navigate via the dashboard so we always pick up the current token.
+      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
+        timeout: 15_000,
+      })
+      const link = page.getByRole('link', { name: /Senior Software Engineer/ }).first()
+      await link.click()
+      await page.waitForLoadState('networkidle')
+      await page.getByRole('tab', { name: 'Apply Link' }).click()
+      await page.waitForTimeout(400)
+      const applyUrl = await page.evaluate(() => {
+        const urlSpan = Array.from(document.querySelectorAll('span.font-mono')).find((el) =>
+          (el.textContent || '').includes('/apply/')
+        ) as HTMLElement | undefined
+        return urlSpan?.textContent?.trim() ?? null
+      })
+      if (!applyUrl) throw new Error('Could not read public apply URL from dashboard')
+      await page.goto(applyUrl, { waitUntil: 'networkidle' })
+      // Tag the CV upload button.
+      await page.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[]
+        const upload = btns.find((b) =>
+          (b.textContent || '').includes('Upload PDF or Word document')
+        )
+        if (upload) upload.setAttribute('data-shot', 'cv-upload')
+      })
+    },
+    annotations: [
+      {
+        targetSelector: '[data-shot="cv-upload"]',
+        label: 'Upload CV first',
+        position: 'right',
+        style: 'arrow',
+      },
+    ],
+  },
   {
     name: 'post-a-vacancy-apply-link',
     url: '/vacancies',
