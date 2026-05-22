@@ -1,5 +1,14 @@
 # LemonSqueezy — PLANNED / NOT YET IMPLEMENTED
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 Status unchanged — still planned, no code or env vars present yet
+- 🆕 Pricing UI now shows "Spring Offer" campaign discounts (`lib/campaign.ts`) but the "Upgrade Now" button is still not wired to any payment provider
+
+---
+
 ## Status
 
 **This integration is planned but has not been implemented.** No LemonSqueezy code exists in the codebase. The subscription and billing UI is present (pricing cards, subscription page) but payment processing is not wired up.

@@ -1,5 +1,20 @@
 # HRHandle — Business Processes & Rules
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 Trial `member_limit` corrected from **3 → 2** (matches `lib/onboarding.ts:111` and `lib/types/subscription.ts`)
+- 🆕 Custom fields cap documented: max 20 per entity type (`lib/actions/custom-fields.ts:202`)
+- 🆕 Rejection reasons cap documented: max 50 per org (`lib/actions/rejection-reasons.ts:12`)
+- 🆕 Email template length caps: subject ≤ 500 chars, body ≤ 10 000 chars
+- 🆕 Interview reschedule flow (with optional candidate email notification) documented
+- 🆕 LinkedIn integration (manual page-ID only) documented under Integrations section
+- 🆕 Onboarding rollback semantics documented (admin client; org deleted if any downstream step fails)
+- 🔄 "All other tenant tables rely on application-level filtering" — security caveat about RLS gaps surfaced (see `docs/issues-found.md` `S-rls-gaps`)
+
+---
+
 ## Onboarding
 
 1. First dashboard hit by a user with no `organization_id` on their profile triggers `runOnboarding(user)` directly in `app/(dashboard)/layout.tsx` (not via HTTP self-fetch).
@@ -8,7 +23,7 @@
    - Creates organisation with slugified company name + user ID suffix for uniqueness.
    - Iterates `public_page_slug` until unique (adds numeric suffix).
    - Upserts profile with `role='owner'`.
-   - Creates trial subscription (7 days, vacancy_limit=5, candidate_limit=100, member_limit=3).
+   - Creates trial subscription (7 days, vacancy_limit=5, candidate_limit=100, **member_limit=2**).
    - Seeds one "General" rejection reason and one default rejection template.
    - If org insert succeeds but profile upsert fails: org is deleted (rollback).
    - If org + profile succeed but subscription fails: org is deleted (rollback).
@@ -16,9 +31,9 @@
 ## Subscription & Limits
 
 ### Plan Codes
-- `trial` — 5 vacancies, 100 candidates, 3 members, 7 days
-- `individual` — 500 vacancies, 10,000 candidates, 3 members, $20/mo
-- `organization` — 1,000 vacancies, 20,000 candidates, 50 members, $40/mo
+- `trial` — 5 vacancies, 100 candidates, **2** members, 7 days
+- `individual` — 500 vacancies, 10,000 candidates, 3 members, $20/mo ($16/mo annual)
+- `organization` — 1,000 vacancies, 20,000 candidates, 50 members, $40/mo ($32/mo annual)
 
 ### Limit Enforcement
 - `checkPlanLimit(ctx, 'vacancy')` counts non-archived, non-deleted vacancies.
@@ -126,6 +141,49 @@
 - Variables: `{{candidate_name}}`, `{{role}}`, `{{company}}`, `{{interview_date}}`, `{{interview_time}}`, `{{meeting_link}}`, `{{interviewer_name}}`.
 - `applyVariables()` replaces `{{key}}` placeholders and HTML-escapes all values.
 - If no custom template saved, default templates from `lib/email-template-utils.ts` are used.
+
+## Other Per-Org Limits 🆕
+
+| Limit | Value | Source |
+|---|---|---|
+| Custom fields per entity type (candidate / vacancy) | 20 | `lib/actions/custom-fields.ts:202` |
+| Rejection reasons per org | 50 | `lib/actions/rejection-reasons.ts:12` |
+| Active applications per candidate | 5 | `lib/actions/applications.ts:147` |
+| Public-form submissions per IP / hour | 5 | `lib/actions/public-apply.ts:9` |
+| Public-form submissions per vacancy (lifetime) | 500 | `lib/actions/public-apply.ts:10` |
+| Email template subject length | 500 chars | `lib/actions/email-templates.ts` |
+| Email template body length | 10 000 chars | `lib/actions/email-templates.ts` |
+| CV / document file size | 10 MB | `lib/actions/documents.ts`, `app/api/parse-cv/route.ts` |
+| CV parse calls per IP / hour | 10 | `app/api/parse-cv/route.ts` (in-memory) |
+
+## Interview Reschedule 🆕
+
+- Reschedule action (`lib/actions/interviews.ts`) updates `scheduled_at`, optional `meeting_link` and `duration_minutes`.
+- Optionally re-sends `interview_invitation` email to the candidate (template variables re-resolved).
+- Status transitions: `scheduled` ↔ `completed` ↔ `cancelled` ↔ `no_show` via `updateInterviewStatus`.
+
+## Integrations 🆕
+
+### LinkedIn (manual page-ID)
+- Owner / admin enters a LinkedIn company-page ID or URL in **Settings → Integrations**.
+- Stored in `organization_integrations` row (`platform='linkedin'`).
+- Used by `linkedin-post-job-button.tsx` and `linkedin-share-button.tsx` to deep-link sharing.
+- No OAuth flow exists today; `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` env vars are defined but unused.
+
+### Google / Microsoft / Zoom
+- OAuth-based, scoped to the **user** (tokens stored on `profiles`, not `organizations`).
+- Interview creation chooses provider per-interview; "Manual meeting link" fallback always available.
+- See `docs/4-integrations/{google,microsoft,zoom}.md`.
+
+## Audit / Notification Gaps ⚠️
+
+The following events do **not** currently produce notifications or audit-log entries (see `docs/issues-found.md` `F-audit-log`, `F-notifications`):
+
+- Subscription state changes
+- Role / team-member changes
+- Vacancy publish / unpublish
+- Candidate stage transitions
+- Integration connect / disconnect
 
 ## Document Storage
 

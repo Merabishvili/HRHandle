@@ -1,5 +1,14 @@
 # Sentry Error Monitoring
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 CSP whitelist updated to include Pusher (wss://*.pusher.com) — unrelated to Sentry but worth noting in any CSP review
+- 🆕 No `beforeSend` PII filter is configured. Candidate names, emails, application bodies, etc. can leak into Sentry events. Tracked as `S-sentry-pii`.
+
+---
+
 ## Overview
 
 Sentry is used for error monitoring and performance tracing. The `@sentry/nextjs` package (v10.49.0) is integrated via `withSentryConfig` in `next.config.mjs`. Sentry is optional — it only initializes if `NEXT_PUBLIC_SENTRY_DSN` is set.

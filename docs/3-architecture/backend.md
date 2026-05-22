@@ -1,5 +1,20 @@
 # Backend Architecture
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 `lib/actions/candidate-background.ts` — CRUD for candidate work experience and education (8 exported functions)
+- 🆕 `lib/actions/integrations.ts` — `getLinkedInIntegration()` reader for the new `organization_integrations` table
+- 🆕 `lib/cv-parser.ts` — Google Gemini-backed CV parser (PDF/DOCX → structured JSON)
+- 🆕 `app/api/parse-cv/route.ts` — public, IP rate-limited CV-parsing endpoint
+- 🆕 `app/api/integrations/linkedin/{save,disconnect}/route.ts` — LinkedIn company-page integration endpoints
+- 🆕 `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` added to `lib/env.ts` (currently **unused** in code — see open issue `C-unused-env-vars`)
+- 🔄 CSP in `next.config.mjs` now whitelists Pusher (wss://*.pusher.com) — placeholder for future realtime work
+- 🔄 Cron route docs corrected: `vercel.json` **is** in source and defines `0 1 * * *` for `/api/cron/expire-vacancies` (previously said "not present in source")
+
+---
+
 ## Framework Versions
 
 From `package.json`:
@@ -64,6 +79,8 @@ Error codes: `NOT_AUTHENTICATED`, `PLAN_LIMIT`, `VALIDATION`, `NOT_FOUND`, `FORB
 | `lib/actions/notes.ts` | (manages candidate notes) |
 | `lib/actions/preferences.ts` | (manages column preferences) |
 | `lib/actions/application-form.ts` | (manages vacancy application form / questions) |
+| 🆕 `lib/actions/candidate-background.ts` | `getCandidateExperience`, `createExperienceEntry`, `updateExperienceEntry`, `deleteExperienceEntry`, `getCandidateEducation`, `createEducationEntry`, `updateEducationEntry`, `deleteEducationEntry` — uses `ExperienceEntrySchema`/`EducationEntrySchema`, pads `YYYY-MM` → `YYYY-MM-DD` on save |
+| 🆕 `lib/actions/integrations.ts` | `getLinkedInIntegration()` — reads single row from `organization_integrations` for caller's org |
 
 ## API Route Handlers (`app/api/`)
 
@@ -85,6 +102,9 @@ Full documentation in `docs/7-api/endpoints.md`. Route files:
 | `app/api/auth/microsoft/route.ts` | GET | Initiate Microsoft OAuth |
 | `app/api/auth/microsoft/callback/route.ts` | GET | Microsoft OAuth callback — store tokens |
 | `app/api/auth/microsoft/disconnect/route.ts` | POST | Disconnect Microsoft |
+| 🆕 `app/api/parse-cv/route.ts` | POST | Parse CV (PDF/DOCX) via Google Gemini — public, IP rate-limited 10/hr, region `fra1` |
+| 🆕 `app/api/integrations/linkedin/save/route.ts` | POST | Save LinkedIn company page ID for org |
+| 🆕 `app/api/integrations/linkedin/disconnect/route.ts` | POST | Remove LinkedIn integration row |
 
 Auth routes (`app/auth/`):
 

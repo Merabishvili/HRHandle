@@ -1,5 +1,13 @@
 # Cloudflare Turnstile Integration
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 No code changes. Reminder: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is read directly from `process.env` and **not** validated in `lib/env.ts`. Use the test key `1x00000000000000000000AA` locally.
+
+---
+
 ## Overview
 
 Cloudflare Turnstile is used as an invisible CAPTCHA to protect the login and sign-up forms from automated abuse. The widget verifies the user is human without requiring any interaction in most cases.

@@ -1,5 +1,19 @@
 # API Endpoints
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 `POST /api/parse-cv` — public CV-parsing endpoint (IP rate-limited, Gemini-backed)
+- 🆕 `POST /api/integrations/linkedin/save` — store LinkedIn company-page integration
+- 🆕 `POST /api/integrations/linkedin/disconnect` — remove LinkedIn integration
+- 🔄 `GET /api/export/candidates` — column set expanded to include `Location`, `Timezone`, `Languages`, `Salary Expectation`, `Notice Period`, `Experience`, `Education` (was 10 cols, now 17)
+- 🔄 `GET /api/export/applications` — column set expanded similarly (includes experience/education summary)
+- 🔄 `POST /api/onboarding` — rate-limit claim corrected: route relies on DB-backed idempotency (`alreadyInitialized: true` if profile has `organization_id`); no in-memory counter
+- 🔄 Microsoft OAuth — `/settings/integrations?microsoft=*` redirect path standardised (other providers still redirect to `/settings?google=*` / `/settings?zoom=*` — see open issue `BL-microsoft-redirect`)
+
+---
+
 All routes are in `app/api/`. Auth routes (`app/auth/confirm`, `app/auth/callback`) are also route handlers but listed separately.
 
 ---
@@ -198,6 +212,65 @@ Max rows: 10,000
 **Purpose:** Clears Microsoft tokens from `profiles`  
 **File:** `app/api/auth/microsoft/disconnect/route.ts`  
 **Redirects to:** `/settings/integrations?microsoft=disconnected`
+
+---
+
+## CV Parsing 🆕
+
+### `POST /api/parse-cv`
+
+**Auth required:** No (public, IP rate-limited)
+**Purpose:** Parses a CV (PDF / DOCX / DOC) into structured candidate data via Google Generative AI (Gemini 2.5/2.0 Flash). Used by both the internal "New Candidate" form and the public apply form.
+**File:** `app/api/parse-cv/route.ts`
+**Region:** Pinned to `fra1` (Frankfurt) — Vercel route segment config — to avoid Google's US‑region firewall blocks.
+**Max duration:** 90 seconds
+
+**Rate limit:** 10 requests per IP per hour, tracked in an **in-memory map** (resets on cold start — see issue `S-rate-limit-inmemory`).
+
+**Request body:** `multipart/form-data`
+- `file` (required) — File. Allowed MIME types: `application/pdf`, `application/msword`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`. Max size 10 MB. Magic-byte validation enforced.
+
+**Response (200):**
+```json
+{ "success": true, "parsed": { "firstName": "...", "lastName": "...", "email": "...", "phone": "...", "linkedinUrl": "...", "experience": [...], "education": [...], "skills": [...], "location": "..." } }
+```
+Schema enforced by `ParsedCVSchema` (`lib/validations/candidate-background.ts`).
+
+**Errors:**
+- `400` — `{ "success": false, "reason": "invalid_file" | "parse_failed" }`
+- `422` — `{ "success": false, "reason": "<specific>" }` (validation rejected)
+- `429` — `{ "success": false, "reason": "rate_limited" }`
+- `504` — `{ "success": false, "reason": "timeout" }` (25s parse timeout exceeded)
+
+---
+
+## Integrations — LinkedIn 🆕
+
+### `POST /api/integrations/linkedin/save`
+
+**Auth required:** Yes (Supabase session, owner/admin)
+**Purpose:** Stores a LinkedIn company-page ID for the caller's organization so the "Share to LinkedIn" button has a target.
+**File:** `app/api/integrations/linkedin/save/route.ts`
+**Side effect:** Upserts `organization_integrations` row with `platform = 'linkedin'`.
+
+**Request body:** `application/x-www-form-urlencoded`
+- `page_id` — numeric LinkedIn company page ID OR full URL (e.g. `https://www.linkedin.com/company/12345/`). Numeric ID extracted from URL.
+
+**Redirects:**
+- Success → `/settings/integrations?linkedin=connected`
+- Invalid page id → `/settings/integrations?linkedin=invalid_page_id`
+- DB failure → `/settings/integrations?linkedin=error`
+
+> ⚠️ Note: `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` exist in `lib/env.ts` but are **not used** by this endpoint — there is no LinkedIn OAuth flow today; the integration is manual page-ID entry. See open issue `C-unused-env-vars`.
+
+---
+
+### `POST /api/integrations/linkedin/disconnect`
+
+**Auth required:** Yes (Supabase session, owner/admin)
+**Purpose:** Removes the LinkedIn integration row for the caller's organization.
+**File:** `app/api/integrations/linkedin/disconnect/route.ts`
+**Redirects to:** `/settings/integrations?linkedin=disconnected`
 
 ---
 

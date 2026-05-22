@@ -1,5 +1,14 @@
 # CI/CD
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 No structural deployment changes since previous audit
+- 🔄 Added note that `vercel.json` defines the daily expire-vacancies cron (`0 1 * * *`) — previously docs said cron was only configured in Vercel dashboard
+
+---
+
 ## Overview
 
 Continuous deployment is handled by Vercel. There is no separate CI workflow file (e.g. GitHub Actions) in the repository — Vercel's build serves as the CI gate.

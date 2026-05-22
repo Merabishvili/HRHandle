@@ -1,5 +1,15 @@
 # Environment Variables
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 `GOOGLE_GEMINI_API_KEY` documented — was already used by `lib/cv-parser.ts` but missing from this file
+- 🆕 `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` documented as **defined-but-unused** (no LinkedIn OAuth flow today; manual page ID only)
+- 🔄 Validation section corrected — `lib/env.ts` does **not** currently validate `CRON_SECRET`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, or `GOOGLE_GEMINI_API_KEY`. These are read directly via `process.env.*` at use-sites. See open issue `C-env-validation-gaps`.
+
+---
+
 ## Required Variables
 
 | Name | Purpose | Service | Files That Use It | Example |
@@ -20,7 +30,10 @@
 | `ZOOM_CLIENT_SECRET` | Zoom OAuth app client secret | Zoom | `lib/zoom/meetings.ts`, `lib/env.ts` | `xxxxxxxxxxxxxxxxxxxx` |
 | `MICROSOFT_CLIENT_ID` | Azure AD app client ID | Microsoft | `lib/microsoft/graph.ts`, `lib/env.ts` | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
 | `MICROSOFT_CLIENT_SECRET` | Azure AD app client secret | Microsoft | `lib/microsoft/graph.ts`, `lib/env.ts` | `xxxxxxxxxxxxxxxxxxxxxxxxxx` |
-| `CRON_SECRET` | Bearer token for cron endpoint authentication | App | `app/api/cron/expire-vacancies/route.ts` | `a-long-random-string` |
+| 🆕 `GOOGLE_GEMINI_API_KEY` | Google Generative AI API key for CV parsing (Gemini 2.5/2.0 Flash). Read directly via `process.env`; not in `lib/env.ts`. CV parse silently returns `parse_failed` if missing. | Google AI | `lib/cv-parser.ts` | `AIzaSy...` |
+| ⚠️ `LINKEDIN_CLIENT_ID` | Defined in `lib/env.ts` for a future LinkedIn OAuth flow. **Not used by any code today** (LinkedIn integration is manual page-ID entry — see `docs/4-integrations/` and `app/api/integrations/linkedin/*`). | LinkedIn (planned) | `lib/env.ts` only | `77abcxyz123` |
+| ⚠️ `LINKEDIN_CLIENT_SECRET` | Companion to `LINKEDIN_CLIENT_ID` — also unused. | LinkedIn (planned) | `lib/env.ts` only | `WPL_AP1.xxxxxx` |
+| `CRON_SECRET` | Bearer token for cron endpoint authentication. Read directly via `process.env`; not validated in `lib/env.ts`. If unset the cron endpoint will reject all requests. | App | `app/api/cron/expire-vacancies/route.ts` | `a-long-random-string` |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public) | Cloudflare | `app/auth/login/page.tsx`, `components/auth/sign-up-form.tsx` | `0x4AAAAAAA...` |
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry Data Source Name — enables error monitoring if set | Sentry | `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`, `next.config.mjs` | `https://xxx@oyyy.ingest.sentry.io/zzz` |
 | `SENTRY_ORG` | Sentry organization slug for source map upload | Sentry | `next.config.mjs` | `my-org` |
@@ -48,13 +61,17 @@ These variables are read by `scripts/capture-screenshots.ts` and `scripts/seed-d
 
 ## Validation
 
-`lib/env.ts` uses `@t3-oss/env-nextjs` to validate environment variables at startup:
+`lib/env.ts` uses `@t3-oss/env-nextjs` to validate **a subset** of environment variables at startup:
 
+**Validated:**
 - `NEXT_PUBLIC_SUPABASE_URL` — required, must be valid URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — required, non-empty string
 - `SUPABASE_SERVICE_ROLE_KEY` — required, non-empty string
 - `NEXT_PUBLIC_SITE_URL` — optional, must be valid URL if set; **never set to empty string** (will throw at build time)
-- All others — optional, must be non-empty string if set
+- `RESEND_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` — optional, non-empty string if set
+
+**🔄 NOT validated** (read directly via `process.env.*` — typos and missing values fail silently or at runtime):
+- `GOOGLE_GEMINI_API_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`, `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL`, `STAGING_DEMO_*`, `SCREENSHOT_BASE_URL`, `VERCEL_PROTECTION_BYPASS`
 
 ## Security Notes
 

@@ -1,5 +1,17 @@
 # HRHandle — Frontend Architecture
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 `components/candidates/experience-section.tsx` & `education-section.tsx` — timeline-style editors on candidate detail page
+- 🆕 `components/candidates/activity-feed.tsx` — reads the rebuilt `candidate_activity` view (kind/headline/body/meta/actor_name)
+- 🆕 `components/vacancies/linkedin-post-job-button.tsx` — uses the saved LinkedIn page ID
+- 🆕 `components/apply/apply-form.tsx` — public form now CV-parses on upload (silent failures shown as "could not auto-fill")
+- 🔄 `components/vacancies/vacancy-form.tsx` has grown to ~40 KB — flagged for splitting (`A-large-files` in issues-found.md)
+
+---
+
 ## Framework & Key Libraries
 
 | Package | Version | Purpose |

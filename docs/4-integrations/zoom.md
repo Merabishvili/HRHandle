@@ -1,5 +1,13 @@
 # Zoom Integration
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 No code changes. Note: there is still no Zoom-meeting deletion when an interview is cancelled (Google Calendar **does** delete events) — tracked as `BL-zoom-cleanup`.
+
+---
+
 ## Overview
 
 Zoom OAuth allows team members to create Zoom meetings directly from the interview scheduling flow. Tokens are stored per-user in the `profiles` table.

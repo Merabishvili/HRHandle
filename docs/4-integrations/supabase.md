@@ -1,5 +1,14 @@
 # Supabase Integration
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 (revised 2026-05-08) Live-DB verification confirms RLS is enabled on every public table with ≥1 policy. The "RLS gaps" claim from an earlier audit pass was a false positive — see retraction of `S-004` in `docs/issues-found.md`.
+- 🆕 `candidate_activity` view rebuilt with column rename (`type→kind`, `title→headline`) + new `body`, `actor_name` columns. Direct consumers must update field names.
+
+---
+
 ## Auth Flows
 
 ### Email/Password Sign-up

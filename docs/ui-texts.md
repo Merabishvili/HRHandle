@@ -1,5 +1,15 @@
 # UI Text Inventory
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 LinkedIn integration status messages (`?linkedin=connected|disconnected|invalid_page_id|error`) — surfaced as toasts on `/settings/integrations`
+- 🆕 CV-parsing UI states on apply form: "Parsing CV…", "Auto-filled from CV", "Could not auto-fill — please fill manually" (`components/apply/apply-form.tsx`)
+- 🔄 Capitalisation inconsistency noted: `email.confirm_heading = "Thanks for Applying!"` vs `apply_form.success_heading = "You've Applied!"` (see issue `BL-text-consistency`)
+
+---
+
 | Key | Text | Location (File) | UI Location Description |
 |---|---|---|---|
 | login.title | Welcome back | `app/auth/login/page.tsx:128` | Login card title |

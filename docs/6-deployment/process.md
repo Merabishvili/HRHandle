@@ -1,5 +1,14 @@
 # Deployment Process
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 No structural changes to the staging→main deploy flow
+- 🆕 New env vars to set on Vercel before deploy if you want the relevant features: `GOOGLE_GEMINI_API_KEY` (CV parsing), `CRON_SECRET` (cron auth)
+
+---
+
 ## Two Environments
 
 | | Staging | Production |

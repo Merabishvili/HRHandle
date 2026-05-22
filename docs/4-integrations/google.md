@@ -1,5 +1,14 @@
 # Google Integration
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 No structural changes to Google OAuth / Calendar flows since previous audit
+- 🆕 A separate Google service — **Generative AI (Gemini)** — is now used for CV parsing. See [`google-generative-ai.md`](google-generative-ai.md). It uses a different env var (`GOOGLE_GEMINI_API_KEY`) and is not part of OAuth.
+
+---
+
 ## Overview
 
 The Google integration has two separate uses:
