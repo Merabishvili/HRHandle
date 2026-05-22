@@ -34,7 +34,8 @@ _Last updated: 2026-05-08_
 | ⚠️ `LINKEDIN_CLIENT_ID` | Defined in `lib/env.ts` for a future LinkedIn OAuth flow. **Not used by any code today** (LinkedIn integration is manual page-ID entry — see `docs/4-integrations/` and `app/api/integrations/linkedin/*`). | LinkedIn (planned) | `lib/env.ts` only | `77abcxyz123` |
 | ⚠️ `LINKEDIN_CLIENT_SECRET` | Companion to `LINKEDIN_CLIENT_ID` — also unused. | LinkedIn (planned) | `lib/env.ts` only | `WPL_AP1.xxxxxx` |
 | `CRON_SECRET` | Bearer token for cron endpoint authentication. Read directly via `process.env`; not validated in `lib/env.ts`. If unset the cron endpoint will reject all requests. | App | `app/api/cron/expire-vacancies/route.ts` | `a-long-random-string` |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public) | Cloudflare | `app/auth/login/page.tsx`, `components/auth/sign-up-form.tsx` | `0x4AAAAAAA...` |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public) | Cloudflare | `app/auth/login/page.tsx`, `components/auth/sign-up-form.tsx`, `components/apply/apply-form.tsx` | `0x4AAAAAAA...` |
+| 🆕 `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile **secret** key — server-side verification for the public apply form. Validated in `lib/env.ts` as optional; when unset, `lib/turnstile.ts` fails-open with a warning so deployments can roll out the env var separately from code. **Never** prefix with `NEXT_PUBLIC_`. | Cloudflare | `lib/turnstile.ts`, `lib/env.ts` | `0x4AAAAAAA...` |
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry Data Source Name — enables error monitoring if set | Sentry | `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`, `next.config.mjs` | `https://xxx@oyyy.ingest.sentry.io/zzz` |
 | `SENTRY_ORG` | Sentry organization slug for source map upload | Sentry | `next.config.mjs` | `my-org` |
 | `SENTRY_PROJECT` | Sentry project slug for source map upload | Sentry | `next.config.mjs` | `hrhandle` |

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendApplicationConfirmationEmail } from '@/lib/email'
 import { createOrgNotifications } from '@/lib/actions/notifications'
+import { verifyCaptcha } from '@/lib/turnstile'
 import { headers } from 'next/headers'
 
 const MAX_SUBMISSIONS_PER_IP_PER_HOUR = 5
@@ -45,6 +46,18 @@ export async function submitPublicApplication(
   // ── 1. Honeypot ────────────────────────────────────────────────────────────
   const honeypot = formData.get('website') as string | null
   if (honeypot) return { success: true } // silently drop bots
+
+  // ── 1b. Captcha verification ───────────────────────────────────────────────
+  const captchaToken = formData.get('cf_turnstile_token') as string | null
+  const captchaHeaders = await headers()
+  const captchaIp =
+    captchaHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    captchaHeaders.get('x-real-ip') ||
+    null
+  const captchaOk = await verifyCaptcha(captchaToken, captchaIp)
+  if (!captchaOk) {
+    return { success: false, error: 'Security check failed. Please refresh and try again.' }
+  }
 
   // ── 2. Read fields ─────────────────────────────────────────────────────────
   const token = formData.get('token') as string | null

@@ -24,7 +24,7 @@
 
 ### Auth flows
 - **Sign-up confirmation**: uses `token_hash` via `/auth/confirm` route — works cross-browser, no PKCE verifier needed
-- **Password reset**: `app/auth/forgot-password/page.tsx` uses `createBrowserClient` with `flowType: 'implicit'` — **this is intentional, do not change to `createClient()`**. Default PKCE flow generates a verifier bound to localStorage; server-side `verifyOtp` cannot verify it without the verifier. Implicit flow produces a plain OTP.
+- **Password reset**: `app/auth/forgot-password/page.tsx` submits to server action `requestPasswordReset()` in `lib/actions/auth.ts`. The server action calls `createBrowserClient` with `flowType: 'implicit'` (the "browser" name is a misnomer — it's a stateless HTTP wrapper that works server-side) — **this is intentional, do not change to `createClient()`**. Default PKCE flow generates a verifier bound to localStorage; server-side `verifyOtp` cannot verify it without the verifier. Implicit flow produces a plain OTP. The server action also enforces 5/IP/hour + 5/email/hour rate limits and returns a generic response to close the email-enumeration leak.
 - **OAuth (Google, Microsoft)**: uses PKCE via `/auth/callback` — standard, works in same browser session
 - **Email template links** must use `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=...` (not `{{ .ConfirmationURL }}`) for signup and password reset — using `ConfirmationURL` breaks cross-browser confirmation
 
@@ -45,6 +45,7 @@
 ### Environment variables — critical rules
 - `NEXT_PUBLIC_SITE_URL` — optional but must be a valid URL if set; **never set to empty string** — t3-oss/env-nextjs will throw at build time
 - `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` — local `.env.local` only, overrides `emailRedirectTo` in sign-up; **must NOT be added to Vercel**
+- `TURNSTILE_SECRET_KEY` — server-only secret for Cloudflare Turnstile verification on the public apply form (`lib/turnstile.ts`). **Never** prefix `NEXT_PUBLIC_`. When unset, the apply form fails-open with a server warning; set on Vercel to activate enforcement. Distinct from the Supabase CAPTCHA secret used for login/sign-up (which lives in the Supabase dashboard).
 
 ### Google OAuth Configuration
 

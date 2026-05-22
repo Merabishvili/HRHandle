@@ -94,9 +94,11 @@ _Last updated: 2026-05-08_
 
 ## Public Application Form
 
-### Rate Limiting
-- Per-IP: max 5 submissions per hour (checked against `applications.ip_address` and `created_at`).
-- Per-vacancy: max 500 total applications (cap on public submissions).
+### Bot / Abuse Protection
+- **Honeypot** — hidden `website` field; if filled by a bot, submission silently returns success and is dropped.
+- **Cloudflare Turnstile** — invisible captcha widget mounted on the form; token verified server-side via `lib/turnstile.ts` against Cloudflare's `siteverify` endpoint using `TURNSTILE_SECRET_KEY`. Fails-open with a warning if the env var is unset (rollout-friendly); rejects when configured-and-invalid.
+- **Per-IP rate limit:** max 5 submissions per hour (checked against `applications.ip_address` and `created_at`).
+- **Per-vacancy cap:** max 500 total applications.
 
 ### Duplicate Detection
 - Match by email + `active` general status within the same org.
@@ -115,11 +117,35 @@ _Last updated: 2026-05-08_
 3. Org owners and admins notified via `notifications` table.
 4. Candidate receives confirmation email using org's `application_received` template or the default.
 
+## Audit Log
+
+Compliance-relevant events are written to `public.activity_log` via the best-effort `writeAuditLog()` helper in `lib/audit-log.ts`. Writes use the admin client so they bypass RLS for the writer; reads remain org-scoped via the existing SELECT policy. Audit failures are logged to stderr but never propagate to the calling action — never a reason to fail a user-facing operation.
+
+| Event | Entity type | Action | Source |
+|---|---|---|---|
+| Vacancy status change | `vacancy` | `status_changed` | `lib/actions/vacancies.ts:updateVacancyStatus` |
+| Application/candidate stage change | `application` | `status_changed` | `lib/actions/applications.ts:updateApplicationStatus` |
+| LinkedIn integration connect | `integration` | `connected` | `app/api/integrations/linkedin/save/route.ts` |
+| LinkedIn integration disconnect | `integration` | `disconnected` | `app/api/integrations/linkedin/disconnect/route.ts` |
+
+**Not yet wired** (tracked under `F-002` in `docs/issues-found.md`): subscription events (no billing webhook), role changes (no role-update server action exists), Google/Zoom/Microsoft OAuth connect events.
+
+The `details jsonb` column carries structured context — typically `{ before, after }` for status changes and `{ platform, external_page_id }` for integrations. The `message` field carries a human-readable summary like `"draft → open"`.
+
+## Password Reset
+
+- Form posts through server action `requestPasswordReset()` in `lib/actions/auth.ts` (not directly to Supabase from the browser) so rate limits and a generic response can be enforced server-side.
+- **Rate limit:** 5 requests per IP per hour AND 5 requests per email per hour. In-memory map, resets on cold start (sufficient for current scale; see [[migrate-to-durable-rate-limit]] if/when a hardening pass lands).
+- **Response is generic** — `'If an account exists for that email, a reset link has been sent.'` — same for known and unknown emails to close the enumeration leak.
+- Implicit flow is preserved by using `createBrowserClient` inside the server action with `flowType: 'implicit'` (see `CLAUDE.md` for why this matters).
+- No captcha currently — deferred per session light-limits policy.
+
 ## Team Invitations
 
 - Only `owner` and `admin` roles can invite.
 - Invitation email must not already be a member of the org.
 - No duplicate pending invitations for the same email.
+- **Rate limit:** 25 invitations / user / hour. Enforced via DB count on `team_invitations.invited_by` (rolling 1-hour window). Exceeding the cap returns "Too many invitations sent recently. Please try again in an hour." Counted only against successfully inserted invitations — duplicate-pending and role-rejection attempts do not consume budget.
 - Invitation expires in 7 days.
 - If email sending fails: invitation record is deleted (rollback).
 - On acceptance: user's email must match invitation email (case-insensitive).

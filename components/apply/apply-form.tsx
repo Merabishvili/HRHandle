@@ -1,6 +1,8 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { submitPublicApplication } from '@/lib/actions/public-apply'
 import type { ParsedCVInput } from '@/lib/validations/candidate-background'
 import { Loader2, Upload, X, CheckCircle2, FileText, AlertCircle } from 'lucide-react'
@@ -11,10 +13,12 @@ type ParseState = 'idle' | 'parsing' | 'done' | 'failed'
 
 export function ApplyForm({ token }: { token: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   const [submitted, setSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
 
   // CV file + parse state
   const [cvFile, setCvFile] = useState<File | null>(null)
@@ -103,6 +107,11 @@ export function ApplyForm({ token }: { token: string }) {
       return
     }
 
+    if (!captchaToken) {
+      setError('Security check not complete. Please wait a moment and try again.')
+      return
+    }
+
     setIsLoading(true)
 
     const fd = new FormData()
@@ -116,11 +125,14 @@ export function ApplyForm({ token }: { token: string }) {
     fd.append('website', '') // Honeypot
     fd.append('experience_json', JSON.stringify(parsed?.experience ?? []))
     fd.append('education_json', JSON.stringify(parsed?.education ?? []))
+    fd.append('cf_turnstile_token', captchaToken)
 
     const result = await submitPublicApplication(fd)
 
     if (!result.success) {
       setError(result.error)
+      turnstileRef.current?.reset()
+      setCaptchaToken(null)
       setIsLoading(false)
       return
     }
@@ -299,7 +311,7 @@ export function ApplyForm({ token }: { token: string }) {
 
         <button
           type="submit"
-          disabled={isLoading || parseState === 'parsing'}
+          disabled={isLoading || parseState === 'parsing' || !captchaToken}
           className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
         >
           {isLoading ? (
@@ -311,6 +323,15 @@ export function ApplyForm({ token }: { token: string }) {
             'Apply Now'
           )}
         </button>
+
+        <Turnstile
+          ref={turnstileRef}
+          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+          onSuccess={(t) => setCaptchaToken(t)}
+          onError={() => setCaptchaToken(null)}
+          onExpire={() => setCaptchaToken(null)}
+          options={{ size: 'invisible' }}
+        />
 
         <p className="text-center text-xs text-gray-400">
           By submitting, you agree to your information being stored for recruitment purposes.

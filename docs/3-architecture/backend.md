@@ -62,6 +62,8 @@ Error codes: `NOT_AUTHENTICATED`, `PLAN_LIMIT`, `VALIDATION`, `NOT_FOUND`, `FORB
 | File | Exported functions |
 |---|---|
 | `lib/actions/index.ts` | `getAuthContext`, `checkPlanLimit` |
+| `lib/actions/auth.ts` | `requestPasswordReset` (rate-limited password-reset trigger; preserves implicit flow) |
+| `lib/audit-log.ts` (helper, not a `'use server'` action) | `writeAuditLog` — best-effort insert into `activity_log` via admin client. Called from `updateVacancyStatus`, `updateApplicationStatus`, LinkedIn save/disconnect routes. See [docs/2-business/processes.md](../2-business/processes.md) "Audit Log". |
 | `lib/actions/candidates.ts` | `createCandidate`, `updateCandidate`, `updateCandidateStatus`, `deleteCandidate`, `searchCandidatesForVacancy` |
 | `lib/actions/vacancies.ts` | `createVacancy`, `updateVacancy`, `updateVacancyStatus`, `duplicateVacancy`, `deleteVacancy` |
 | `lib/actions/applications.ts` | `updateApplicationStatus`, `createApplication`, `removeApplication`, `rejectApplication` |

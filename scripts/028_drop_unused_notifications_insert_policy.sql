@@ -1,0 +1,22 @@
+-- Migration 028: Fix Supabase advisor finding S-NEW-2 (rls_policy_always_true)
+--
+-- The `"Service role insert notifications"` policy on public.notifications was
+-- defined as `FOR INSERT WITH CHECK (true)` and (despite the name) applied to
+-- role `public`. That meant any unauthenticated caller could insert arbitrary
+-- notification rows targeting any org/user — a spam/phishing surface.
+--
+-- The name was misleading: service_role bypasses RLS entirely, so the policy
+-- was never actually used by the service role. The only inserter in app code
+-- is `createOrgNotifications()` in `lib/actions/notifications.ts:72`, which
+-- uses `createAdminClient()` (service role) and bypasses RLS regardless.
+--
+-- Fix: drop the policy. With no INSERT policy and RLS enabled, default-deny
+-- applies — anon and authenticated callers can no longer insert. Service-role
+-- inserts continue to work (they don't evaluate RLS).
+--
+-- Rollback: if a future feature legitimately needs authenticated insert,
+-- add a narrow policy scoped to caller's org + recipient_id check.
+--
+-- Apply to BOTH Supabase projects (staging + production). See CLAUDE.md.
+
+DROP POLICY IF EXISTS "Service role insert notifications" ON public.notifications;

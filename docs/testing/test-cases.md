@@ -1232,22 +1232,12 @@ _Last updated: 2026-05-08_
 
 ### TC-089
 **Feature:** Health Check  
-**Description:** Health endpoint returns 200 when database is reachable  
-**Preconditions:** Database connected  
+**Description:** Liveness endpoint returns 200 when the Next.js function is serving  
+**Preconditions:** App deployed  
 **Steps:**
 1. Call `GET /api/health`
-**Expected Result:** `{ status: "ok", checks: { database: "ok" } }`  
+**Expected Result:** HTTP 200 with body `{ "status": "ok" }`  
 **Priority:** Medium  
 **Type:** Integration
 
----
-
-### TC-090
-**Feature:** Health Check  
-**Description:** Health endpoint returns 503 when database is unreachable  
-**Preconditions:** Database unavailable  
-**Steps:**
-1. Call `GET /api/health`
-**Expected Result:** `{ status: "degraded", checks: { database: "error" } }` with HTTP 503  
-**Priority:** Medium  
-**Type:** Integration
+_TC-090 (DB unreachable → 503) removed 2026-05-23: the health endpoint no longer queries the database (see `docs/issues-found.md` S-001). DB health is monitored via Supabase's own status page, not this endpoint._

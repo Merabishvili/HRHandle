@@ -2,7 +2,7 @@
 
 _Last updated: 2026-05-08_
 
-All tests pass (`npx vitest run` → 15 files, 299 tests). New files added in
+All tests pass (`npx vitest run` → 15 files, 296 tests). New files added in
 this audit pass:
 
 | # | File | Target | Coverage |
@@ -11,11 +11,11 @@ this audit pass:
 | 2 | `lib/__tests__/campaign.test.ts` | `lib/campaign.ts` | 8 tests — boundary date (active / on-end / past), monthly vs annual discount, rounding, zero, deactivated campaign |
 | 3 | `lib/validations/__tests__/application.test.ts` | `lib/validations/application.ts` (`ApplicationSchema`) | 11 tests — minimal payload, full payload, null nullables, non-UUID rejection (custom messages), 2000-char `notes` boundary |
 | 4 | `lib/validations/__tests__/settings.test.ts` | `lib/validations/settings.ts` (`ProfileSchema`, `OrganizationSchema`) | 19 tests — name length boundaries, phone length, logo_url URL validation, all slug regex edges (hyphen-start, hyphen-end, uppercase, underscores, leading/trailing digit) |
-| 5 | `app/api/health/__tests__/route.test.ts` | `GET /api/health` | 4 tests — ok path, DB error path, exception path, asserts the route queries `organizations` |
+| 5 | `app/api/health/__tests__/route.test.ts` | `GET /api/health` | 1 test — liveness probe returns 200 + `{status:"ok"}`. _Reduced from 4 → 1 on 2026-05-23 when the endpoint was simplified to liveness-only (S-001)._ |
 | 6 | `app/api/cron/expire-vacancies/__tests__/route.test.ts` | `GET /api/cron/expire-vacancies` | 6 tests — happy path, missing header, wrong secret, different-length secret (timing-safe-compare throws), missing `CRON_SECRET` env, RPC failure |
 | 7 | `app/api/parse-cv/__tests__/route.test.ts` | `POST /api/parse-cv` | 7 tests — no file, disallowed MIME, success forwarding, parser timeout (504), schema-invalid (422), 11th call rate-limited from a unique IP, "unknown" IP bypasses limiter |
 
-**Net new test count: 64.**
+**Net new test count: 61** (was 64 — health-route tests reduced from 4 to 1 on 2026-05-23).
 
 ## Coverage gaps that remain (documented in `docs/issues-found.md`)
 

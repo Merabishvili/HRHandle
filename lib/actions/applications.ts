@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 import { sendApplicationRejectionEmail } from '@/lib/email'
+import { writeAuditLog } from '@/lib/audit-log'
 
 export async function updateApplicationStatus(
   applicationId: string,
@@ -11,16 +12,20 @@ export async function updateApplicationStatus(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  // Fetch application to get candidate_id
+  // Fetch application to get candidate_id + previous status code for audit log
   const { data: application } = await ctx.supabase
     .from('applications')
-    .select('id, candidate_id, status_id')
+    .select('id, candidate_id, status_id, application_statuses ( code )')
     .eq('id', applicationId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .single()
 
   if (!application) return { success: false, error: 'Application not found' }
+
+  type StatusJoin = { code: string } | { code: string }[] | null
+  const beforeJoin = application.application_statuses as StatusJoin
+  const beforeCode = Array.isArray(beforeJoin) ? beforeJoin[0]?.code : beforeJoin?.code
 
   const { error } = await ctx.supabase
     .from('applications')
@@ -40,6 +45,23 @@ export async function updateApplicationStatus(
     .select('code')
     .eq('id', newStatusId)
     .single()
+
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'application',
+    entityId: applicationId,
+    action: 'status_changed',
+    message:
+      beforeCode && newStatus?.code
+        ? `${beforeCode} → ${newStatus.code}`
+        : `status changed to ${newStatus?.code ?? 'unknown'}`,
+    details: {
+      candidate_id: application.candidate_id,
+      before: beforeCode ?? null,
+      after: newStatus?.code ?? null,
+    },
+  })
 
   if (newStatus) {
     const { data: candidateStatuses } = await ctx.supabase

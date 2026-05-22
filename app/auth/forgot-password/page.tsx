@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createBrowserClient } from '@supabase/ssr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Briefcase, Loader2, Mail } from 'lucide-react'
+import { requestPasswordReset } from '@/lib/actions/auth'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -22,29 +22,20 @@ export default function ForgotPasswordPage() {
     setSuccess(null)
     setIsLoading(true)
 
-    try {
-      // Implicit flow so the recovery token is a plain OTP (token_hash-verifiable
-      // server-side without a PKCE code verifier — works cross-browser).
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        { auth: { flowType: 'implicit' } },
-      )
+    // The server action enforces rate limits (per IP + per email) and triggers
+    // Supabase's password-reset email using implicit flow internally — see
+    // lib/actions/auth.ts and CLAUDE.md for why implicit flow is required.
+    const result = await requestPasswordReset(
+      email,
+      `${window.location.origin}/auth/confirm?type=recovery&next=/auth/reset-password`,
+    )
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth/confirm?type=recovery&next=/auth/reset-password`,
-      })
-
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      setSuccess('Password reset link has been sent to your email.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send reset email.')
-    } finally {
-      setIsLoading(false)
+    if (result.success) {
+      setSuccess(result.message)
+    } else {
+      setError(result.error)
     }
+    setIsLoading(false)
   }
 
   return (

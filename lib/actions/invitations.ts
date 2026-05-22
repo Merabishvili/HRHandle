@@ -12,6 +12,8 @@ const InviteSchema = z.object({
   role: z.enum(['admin', 'member']),
 })
 
+const MAX_INVITES_PER_USER_PER_HOUR = 25
+
 export async function inviteTeamMember(
   email: string,
   role: 'admin' | 'member'
@@ -52,6 +54,20 @@ export async function inviteTeamMember(
 
   if (existingInvite) {
     return { success: false, error: 'An invitation is already pending for this email.' }
+  }
+
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count: recentInvites } = await ctx.supabase
+    .from('team_invitations')
+    .select('id', { count: 'exact', head: true })
+    .eq('invited_by', ctx.userId)
+    .gte('created_at', oneHourAgo)
+
+  if ((recentInvites ?? 0) >= MAX_INVITES_PER_USER_PER_HOUR) {
+    return {
+      success: false,
+      error: 'Too many invitations sent recently. Please try again in an hour.',
+    }
   }
 
   const admin = createAdminClient()

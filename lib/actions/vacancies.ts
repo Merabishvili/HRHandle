@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, checkPlanLimit, type ActionResult } from './index'
 import { VacancySchema, type VacancyInput } from '@/lib/validations/vacancy'
+import { writeAuditLog } from '@/lib/audit-log'
 
 export async function createVacancy(input: VacancyInput): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
@@ -85,6 +86,18 @@ export async function updateVacancyStatus(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
+  // Capture before/after status codes for the audit log (read both in parallel)
+  const [{ data: vacancyBefore }, { data: newStatus }] = await Promise.all([
+    ctx.supabase
+      .from('vacancies')
+      .select('status_id, vacancy_statuses ( code )')
+      .eq('id', id)
+      .eq('organization_id', ctx.orgId)
+      .is('deleted_at', null)
+      .single(),
+    ctx.supabase.from('vacancy_statuses').select('code').eq('id', statusId).single(),
+  ])
+
   const { error } = await ctx.supabase
     .from('vacancies')
     .update({ status_id: statusId })
@@ -93,6 +106,21 @@ export async function updateVacancyStatus(
     .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update vacancy status' }
+
+  type StatusJoin = { code: string } | { code: string }[] | null
+  const beforeJoin = vacancyBefore?.vacancy_statuses as StatusJoin
+  const beforeCode = Array.isArray(beforeJoin) ? beforeJoin[0]?.code : beforeJoin?.code
+  const afterCode = newStatus?.code ?? null
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'vacancy',
+    entityId: id,
+    action: 'status_changed',
+    message:
+      beforeCode && afterCode ? `${beforeCode} → ${afterCode}` : `status changed to ${afterCode}`,
+    details: { before: beforeCode ?? null, after: afterCode },
+  })
 
   revalidatePath('/vacancies')
   revalidatePath(`/vacancies/${id}`)

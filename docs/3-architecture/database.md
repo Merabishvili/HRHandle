@@ -4,6 +4,7 @@ _Last updated: 2026-05-08_
 
 ## Changelog
 
+- 🔄 (2026-05-23) `activity_log` table is now actively written to via `lib/audit-log.ts` (helper added). Wired call sites: vacancy status change, application status change, LinkedIn integration connect/disconnect. The table itself was always present in the schema (`001_create_schema.sql`) but had zero writers and zero rows until this change.
 - 🆕 `candidate_experience` table — work history (migration `20260514_candidate_background.sql`). RLS enabled.
 - 🆕 `candidate_education` table — education history (migration `20260514_candidate_background.sql`). RLS enabled.
 - 🆕 `organization_integrations` table — third-party platform credential storage, currently scoped to `platform = 'linkedin'` (migration `20260517_organization_integrations.sql`). RLS enabled.

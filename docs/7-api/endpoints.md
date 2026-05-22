@@ -23,26 +23,15 @@ All routes are in `app/api/`. Auth routes (`app/auth/confirm`, `app/auth/callbac
 ### `GET /api/health`
 
 **Auth required:** No  
-**Purpose:** Simple health check — verifies database connectivity  
+**Purpose:** Liveness probe — confirms the Next.js function is serving requests. Intentionally does **not** check database or third-party dependency health (clients should subscribe to upstream status pages for those).  
 **File:** `app/api/health/route.ts`
 
 **Response (200):**
 ```json
-{
-  "status": "ok",
-  "checks": { "database": "ok" },
-  "timestamp": "2025-01-01T00:00:00.000Z"
-}
+{ "status": "ok" }
 ```
 
-**Response (503):**
-```json
-{
-  "status": "degraded",
-  "checks": { "database": "error" },
-  "timestamp": "..."
-}
-```
+The endpoint cannot return non-200; if the Next.js function is unhealthy, the request fails to reach this handler and the platform returns its own error.
 
 ---
 

@@ -116,7 +116,6 @@ Same pattern as Google but `provider: 'azure'` with `scopes: 'email'`.
 - `app/api/auth/google/callback/route.ts`
 - `app/api/auth/zoom/callback/route.ts`
 - `app/api/auth/microsoft/callback/route.ts`
-- `app/api/health/route.ts`
 - `app/api/cron/expire-vacancies/route.ts`
 - `app/apply/[token]/page.tsx`
 - `app/jobs/[slug]/page.tsx`
