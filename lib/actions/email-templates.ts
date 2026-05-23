@@ -35,6 +35,14 @@ export async function getEmailTemplates(): Promise<
   return { success: true, data: result }
 }
 
+// HTML safety (S-016): admin-supplied template body is stored verbatim and
+// later interpolated into a transactional HTML email by `lib/email.ts`. We do
+// not sanitize HTML here because (a) the editing surface is restricted to
+// owner/admin roles, who already have privileged write access to the org's
+// data; (b) any XSS risk is on the recipient's email-client side, where most
+// modern clients strip <script>/<iframe>/event handlers; and (c) sanitizing
+// would block legitimate formatting (links, bold, etc.). Reassess if a
+// non-admin path to template editing is ever added.
 export async function saveEmailTemplate(
   templateType: TemplateType,
   subject: string,

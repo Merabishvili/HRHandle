@@ -27,6 +27,7 @@ import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applications-list'
 import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
+import { DeleteVacancyButton } from '@/components/vacancies/delete-vacancy-button'
 import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
 import { AddCandidateToVacancyDialog } from '@/components/vacancies/add-candidate-to-vacancy-dialog'
 import { LinkedInPostJobButton } from '@/components/vacancies/linkedin-post-job-button'
@@ -419,6 +420,7 @@ export default async function VacancyDetailPage({
             </Link>
           </Button>
           <DuplicateVacancyButton vacancyId={id} />
+          <DeleteVacancyButton vacancyId={id} vacancyTitle={vacancy.title} />
           <Button asChild>
             <Link href={`/vacancies/${id}/edit`}>
               <Edit className="mr-2 h-4 w-4" />Edit Vacancy

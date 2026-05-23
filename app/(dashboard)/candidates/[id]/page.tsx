@@ -11,6 +11,7 @@ import { MetadataFooter } from '@/components/candidates/metadata-footer'
 import { CandidateStatusSelect } from '@/components/candidates/candidate-status-select'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
 import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
+import { DeleteCandidateButton } from '@/components/candidates/delete-candidate-button'
 import { CandidateApplicationsList } from '@/components/candidates/candidate-applications-list'
 import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
@@ -373,6 +374,7 @@ export default async function CandidateDetailPage({
             currentStatusId={candidate.general_status_id}
             statusOptions={candidateStatuses}
           />
+          <DeleteCandidateButton candidateId={id} candidateName={fullName} />
           <Button asChild size="sm" className="h-9 gap-1.5">
             <Link href={`/candidates/${id}/edit`}>
               <Pencil className="h-3.5 w-3.5" />

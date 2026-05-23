@@ -109,12 +109,16 @@ export async function createInterview(
     sendInvitation?: boolean
     timezone?: string
   } = {}
-): Promise<ActionResult<{ id: string; meetLink: string | null }>> {
+): Promise<ActionResult<{ id: string; meetLink: string | null; warnings: string[] }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = InterviewSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+
+  // Non-fatal failures (email, notification) are collected here so the caller
+  // can surface them as toasts after the interview is already saved.
+  const warnings: string[] = []
 
   const { data: candidate } = await ctx.supabase
     .from('candidates')
@@ -300,6 +304,7 @@ export async function createInterview(
         })
       } catch (err) {
         console.error('[interviews] email send failed:', err)
+        warnings.push('email_failed')
       }
     }
   }
@@ -332,5 +337,5 @@ export async function createInterview(
 
   revalidatePath('/interviews')
   revalidatePath(`/candidates/${parsed.data.candidate_id}`)
-  return { success: true, data: { id: data.id, meetLink } }
+  return { success: true, data: { id: data.id, meetLink, warnings } }
 }

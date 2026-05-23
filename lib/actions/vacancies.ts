@@ -158,6 +158,13 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
     const endDate = new Date(today)
     endDate.setDate(endDate.getDate() + diffDays)
     newEndDate = endDate.toISOString().split('T')[0]
+  } else {
+    // BL-012: if the original was open-ended (no end_date), default the
+    // duplicate to today + 90 days so it doesn't silently inherit a null
+    // deadline. The user can still clear it on the edit page.
+    const fallbackEnd = new Date(today)
+    fallbackEnd.setDate(fallbackEnd.getDate() + 90)
+    newEndDate = fallbackEnd.toISOString().split('T')[0]
   }
 
   const { data: draftStatus } = await ctx.supabase

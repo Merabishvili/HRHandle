@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { createInterview } from '@/lib/actions/interviews'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -206,6 +207,12 @@ export function InterviewForm({
       setError(result.error)
       setIsLoading(false)
       return
+    }
+
+    if (result.data.warnings.includes('email_failed')) {
+      toast.warning('Interview scheduled, but the invitation email could not be sent.')
+    } else {
+      toast.success('Interview scheduled.')
     }
 
     router.push('/interviews')
