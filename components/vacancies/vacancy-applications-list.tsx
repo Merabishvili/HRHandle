@@ -5,17 +5,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { VacancyApplicationRow } from './vacancy-application-row'
 import type { RejectionReason, RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 
-interface AppStatus {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-}
-
-interface GeneralStatus {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-}
+import type {
+  ApplicationStatusOption as AppStatus,
+  CandidateStatusOption as GeneralStatus,
+} from '@/lib/types/database'
 
 interface Question {
   id: string

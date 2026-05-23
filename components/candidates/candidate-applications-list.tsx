@@ -5,12 +5,7 @@ import { Briefcase } from 'lucide-react'
 import { ApplicationEvaluation } from './application-evaluation'
 import type { RejectionReason, RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 
-interface AppStatus {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-  sort_order: number
-}
+import type { ApplicationStatusOption as AppStatus } from '@/lib/types/database'
 
 interface Question {
   id: string

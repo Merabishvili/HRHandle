@@ -44,18 +44,10 @@ interface CandidateRow {
   deleted_at: string | null
 }
 
-interface CandidateStatusOption {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-}
-
-interface AppStatusRow {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-  sort_order: number
-}
+import type {
+  CandidateStatusOption,
+  ApplicationStatusOption as AppStatusRow,
+} from '@/lib/types/database'
 
 interface ApplicationRow {
   id: string

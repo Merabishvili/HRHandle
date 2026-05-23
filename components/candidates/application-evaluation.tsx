@@ -49,11 +49,7 @@ interface ExistingEvaluation {
   answers: ExistingAnswer[]
 }
 
-interface AppStatus {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-}
+import type { ApplicationStatusOption as AppStatus } from '@/lib/types/database'
 
 interface ApplicationEvaluationProps {
   applicationId: string

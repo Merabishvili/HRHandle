@@ -85,11 +85,10 @@ interface SectorRow {
   code: string
 }
 
-interface CandidateGeneralStatusRow {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-}
+import type {
+  CandidateStatusOption as CandidateGeneralStatusRow,
+  ApplicationStatusOption as AppStatusRow,
+} from '@/lib/types/database'
 
 interface ApplicationRow {
   id: string
@@ -97,13 +96,6 @@ interface ApplicationRow {
   vacancy_id: string
   status_id: string | null
   applied_at: string
-}
-
-interface AppStatusRow {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-  sort_order: number
 }
 
 interface CandidateRow {
@@ -505,9 +497,7 @@ export default async function VacancyDetailPage({
                           : '?',
                         appliedAt: application.applied_at,
                         statusId: application.status_id,
-                        generalStatus: generalStatus
-                          ? { id: generalStatus.id, name: generalStatus.name, code: generalStatus.code }
-                          : null,
+                        generalStatus: generalStatus ?? null,
                         existingEvaluation: evaluationsByApp.get(application.id) ?? null,
                       }
                     })}

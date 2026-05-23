@@ -53,12 +53,7 @@ interface CandidateRow {
   updated_at: string
 }
 
-interface CandidateStatusOption {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-  sort_order: number
-}
+import type { CandidateStatusOption } from '@/lib/types/database'
 
 interface ApplicationRow {
   id: string
