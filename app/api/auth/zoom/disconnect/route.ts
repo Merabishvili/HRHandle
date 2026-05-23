@@ -19,5 +19,5 @@ export async function POST() {
     .update({ zoom_access_token: null, zoom_refresh_token: null, zoom_token_expiry: null })
     .eq('id', user.id)
 
-  return NextResponse.redirect(new URL('/settings?zoom=disconnected', BASE))
+  return NextResponse.redirect(new URL('/settings/integrations?zoom=disconnected', BASE))
 }

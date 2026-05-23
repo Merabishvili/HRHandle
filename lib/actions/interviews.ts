@@ -1,10 +1,11 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 import { InterviewSchema, type InterviewInput } from '@/lib/validations/interview'
-import { getValidAccessToken, createCalendarEventWithMeet } from '@/lib/google/calendar'
-import { getValidZoomAccessToken, createZoomMeeting } from '@/lib/zoom/meetings'
+import { getValidAccessToken, createCalendarEventWithMeet, deleteCalendarEvent } from '@/lib/google/calendar'
+import { getValidZoomAccessToken, createZoomMeeting, deleteZoomMeeting, parseZoomMeetingIdFromJoinUrl } from '@/lib/zoom/meetings'
 import { getValidMicrosoftAccessToken, createTeamsMeeting } from '@/lib/microsoft/graph'
 import { sendInterviewInvitationEmail } from '@/lib/email'
 import { createOrgNotifications } from '@/lib/actions/notifications'
@@ -15,6 +16,48 @@ export async function updateInterviewStatus(
 ): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  // BL-010: when an interview is cancelled, delete the external calendar
+  // event / video meeting so it doesn't linger on the interviewer's calendar
+  // or in Zoom. Best-effort — failure to clean up does not block the status
+  // update.
+  if (status === 'cancelled') {
+    const { data: interview } = await ctx.supabase
+      .from('interviews')
+      .select('google_calendar_event_id, meeting_link, interviewer_id')
+      .eq('id', interviewId)
+      .eq('organization_id', ctx.orgId)
+      .single()
+
+    if (interview) {
+      const cleanupUserId = interview.interviewer_id ?? ctx.userId
+
+      if (interview.google_calendar_event_id) {
+        try {
+          const googleToken = await getValidAccessToken(cleanupUserId)
+          if (googleToken) {
+            await deleteCalendarEvent(googleToken, interview.google_calendar_event_id as string)
+          }
+        } catch (err) {
+          console.error('[interviews] Google calendar event delete failed:', err)
+          Sentry.captureException(err, { tags: { area: 'interviews', op: 'cancel_google_cleanup' } })
+        }
+      }
+
+      const zoomMeetingId = parseZoomMeetingIdFromJoinUrl(interview.meeting_link as string | null)
+      if (zoomMeetingId) {
+        try {
+          const zoomToken = await getValidZoomAccessToken(cleanupUserId)
+          if (zoomToken) {
+            await deleteZoomMeeting(zoomToken, zoomMeetingId)
+          }
+        } catch (err) {
+          console.error('[interviews] Zoom meeting delete failed:', err)
+          Sentry.captureException(err, { tags: { area: 'interviews', op: 'cancel_zoom_cleanup' } })
+        }
+      }
+    }
+  }
 
   const { error } = await ctx.supabase
     .from('interviews')
@@ -92,6 +135,7 @@ export async function rescheduleInterview(
       }
     } catch (err) {
       console.error('[interviews] reschedule email send failed:', err)
+      Sentry.captureException(err, { tags: { area: 'interviews', op: 'reschedule_email' } })
     }
   }
 
@@ -304,6 +348,7 @@ export async function createInterview(
         })
       } catch (err) {
         console.error('[interviews] email send failed:', err)
+        Sentry.captureException(err, { tags: { area: 'interviews', op: 'invitation_email' } })
         warnings.push('email_failed')
       }
     }
@@ -333,6 +378,7 @@ export async function createInterview(
   } catch (err) {
     // Non-fatal: interview was created. Surface the error so we can debug.
     console.error('[interviews] post-create notification failed:', err)
+    Sentry.captureException(err, { tags: { area: 'interviews', op: 'post_create_notification' } })
   }
 
   revalidatePath('/interviews')

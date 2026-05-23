@@ -26,5 +26,5 @@ export async function POST() {
     })
     .eq('id', user.id)
 
-  return NextResponse.redirect(new URL('/settings?google=disconnected', BASE))
+  return NextResponse.redirect(new URL('/settings/integrations?google=disconnected', BASE))
 }

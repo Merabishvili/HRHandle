@@ -5,7 +5,25 @@ import { getAuthContext, type ActionResult } from './index'
 import { sendApplicationRejectionEmail } from '@/lib/email'
 import { writeAuditLog } from '@/lib/audit-log'
 import { createOrgNotifications } from '@/lib/actions/notifications'
-import { MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE } from '@/lib/types/constants'
+import {
+  MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE,
+  APPLICATION_STATUS,
+  ACTIVE_APPLICATION_STATUS_CODES,
+  CANDIDATE_STATUS,
+} from '@/lib/types/constants'
+
+/**
+ * A-003: PostgREST's relation embedding sometimes returns a single row as an
+ * object and sometimes wrapped in an array (depending on whether the FK is
+ * `!inner` and on PostgREST's join inference). This predicate normalises both
+ * shapes to a single object so callers can branchlessly compare `.code`.
+ */
+function unwrapStatusRelation<T extends { code: string }>(
+  rel: T | T[] | null | undefined
+): T | null {
+  if (!rel) return null
+  return Array.isArray(rel) ? rel[0] ?? null : rel
+}
 
 export async function updateApplicationStatus(
   applicationId: string,
@@ -72,9 +90,9 @@ export async function updateApplicationStatus(
 
     const statusMap = new Map((candidateStatuses || []).map((s) => [s.code, s.id]))
 
-    if (newStatus.code === 'hired') {
+    if (newStatus.code === APPLICATION_STATUS.HIRED) {
       // Moving to Hired → set candidate status to Hired
-      const hiredId = statusMap.get('hired')
+      const hiredId = statusMap.get(CANDIDATE_STATUS.HIRED)
       if (hiredId) {
         await ctx.supabase
           .from('candidates')
@@ -134,13 +152,12 @@ export async function updateApplicationStatus(
         .neq('id', applicationId)
 
       type AppWithStatus = { id: string; application_statuses: { code: string } | { code: string }[] | null }
-      const hasOtherHired = (hiredApps as AppWithStatus[] || []).some((a) => {
-        const s = a.application_statuses
-        return s && (Array.isArray(s) ? s[0]?.code === 'hired' : s.code === 'hired')
-      })
+      const hasOtherHired = (hiredApps as AppWithStatus[] || []).some(
+        (a) => unwrapStatusRelation(a.application_statuses)?.code === APPLICATION_STATUS.HIRED
+      )
 
       if (!hasOtherHired) {
-        const activeId = statusMap.get('active')
+        const activeId = statusMap.get(CANDIDATE_STATUS.ACTIVE)
         if (activeId) {
           // Only revert if currently hired (don't override archived)
           const { data: candidate } = await ctx.supabase
@@ -154,7 +171,7 @@ export async function updateApplicationStatus(
             (s) => s.id === candidate?.general_status_id
           )?.code
 
-          if (currentCode === 'hired') {
+          if (currentCode === CANDIDATE_STATUS.HIRED) {
             await ctx.supabase
               .from('candidates')
               .update({ general_status_id: activeId })
@@ -188,7 +205,7 @@ export async function createApplication(input: {
 
   const statusesRaw = candidateCheck?.candidate_statuses as { code: string }[] | { code: string } | null
   const generalCode = Array.isArray(statusesRaw) ? statusesRaw[0]?.code : (statusesRaw as { code: string } | null)?.code
-  if (generalCode && generalCode !== 'active') {
+  if (generalCode && generalCode !== CANDIDATE_STATUS.ACTIVE) {
     return { success: false, error: 'Only active candidates can be added to a vacancy.' }
   }
 
@@ -196,7 +213,7 @@ export async function createApplication(input: {
   const { data: activeStatusesRaw } = await ctx.supabase
     .from('application_statuses')
     .select('id, code')
-    .in('code', ['applied', 'screening', 'interview', 'offer'])
+    .in('code', ACTIVE_APPLICATION_STATUS_CODES)
 
   const activeStatusIds = (activeStatusesRaw || []).map((s) => s.id)
 
@@ -229,7 +246,7 @@ export async function createApplication(input: {
   if (existing) return { success: false, error: 'This candidate is already being considered for this vacancy.' }
 
   // Get the "applied" status id
-  const appliedStatus = (activeStatusesRaw || []).find((s) => s.code === 'applied')
+  const appliedStatus = (activeStatusesRaw || []).find((s) => s.code === APPLICATION_STATUS.APPLIED)
   if (!appliedStatus) return { success: false, error: 'Application status configuration missing.' }
 
   const { data, error } = await ctx.supabase
@@ -321,10 +338,9 @@ export async function rejectApplication(input: {
     .neq('id', input.applicationId)
 
   type AppWithStatus = { id: string; application_statuses: { code: string } | { code: string }[] | null }
-  const hasOtherHired = (hiredApps as AppWithStatus[] || []).some((a) => {
-    const s = a.application_statuses
-    return s && (Array.isArray(s) ? s[0]?.code === 'hired' : s.code === 'hired')
-  })
+  const hasOtherHired = (hiredApps as AppWithStatus[] || []).some(
+    (a) => unwrapStatusRelation(a.application_statuses)?.code === APPLICATION_STATUS.HIRED
+  )
 
   if (!hasOtherHired) {
     const { data: candidate } = await ctx.supabase
@@ -337,8 +353,8 @@ export async function rejectApplication(input: {
       (s) => s.id === candidate?.general_status_id
     )?.code
 
-    if (currentCode === 'hired') {
-      const activeId = statusMap.get('active')
+    if (currentCode === CANDIDATE_STATUS.HIRED) {
+      const activeId = statusMap.get(CANDIDATE_STATUS.ACTIVE)
       if (activeId) {
         await ctx.supabase
           .from('candidates')

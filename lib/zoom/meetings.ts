@@ -134,3 +134,26 @@ export async function createZoomMeeting(
   const data = await res.json()
   return { joinUrl: data.join_url, meetingId: String(data.id) }
 }
+
+export async function deleteZoomMeeting(
+  accessToken: string,
+  meetingId: string
+): Promise<boolean> {
+  const res = await fetch(`${MEETINGS_API.replace('/users/me/meetings', '/meetings')}/${meetingId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  // 204 = deleted, 404 = already gone, treat both as success.
+  return res.ok || res.status === 404
+}
+
+/**
+ * Parse a Zoom meeting ID out of a join URL like
+ * `https://us02web.zoom.us/j/82345678901?pwd=…`. Returns null if the URL is
+ * not a recognisable Zoom join URL.
+ */
+export function parseZoomMeetingIdFromJoinUrl(joinUrl: string | null): string | null {
+  if (!joinUrl) return null
+  const match = joinUrl.match(/zoom\.us\/(?:j|s|w)\/(\d{9,12})/)
+  return match ? match[1] : null
+}

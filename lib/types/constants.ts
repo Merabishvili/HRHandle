@@ -20,3 +20,47 @@ export const MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE = 5
  * Audit ref: C-014 (was an inline string in `components/auth/sign-up-form.tsx`).
  */
 export const AUTH_CALLBACK_PATH = '/auth/callback'
+
+/**
+ * Application-pipeline status codes — the `code` column on `application_statuses`.
+ * Source of truth for the literal union in `lib/types/application.ts`.
+ *
+ * Audit ref: A-006 (was a sprinkle of magic strings across server actions).
+ */
+export const APPLICATION_STATUS = {
+  APPLIED: 'applied',
+  SCREENING: 'screening',
+  INTERVIEW: 'interview',
+  OFFER: 'offer',
+  HIRED: 'hired',
+  REJECTED: 'rejected',
+  WITHDRAWN: 'withdrawn',
+} as const
+
+export type ApplicationStatusCode =
+  (typeof APPLICATION_STATUS)[keyof typeof APPLICATION_STATUS]
+
+/**
+ * Status codes considered "active" — a candidate is counted against the
+ * `MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE` cap while any of their applications
+ * are in one of these states.
+ */
+export const ACTIVE_APPLICATION_STATUS_CODES: readonly ApplicationStatusCode[] = [
+  APPLICATION_STATUS.APPLIED,
+  APPLICATION_STATUS.SCREENING,
+  APPLICATION_STATUS.INTERVIEW,
+  APPLICATION_STATUS.OFFER,
+] as const
+
+/**
+ * Candidate general-status codes — the `code` column on `candidate_statuses`.
+ * Source of truth for the literal union in `lib/types/candidate.ts`.
+ */
+export const CANDIDATE_STATUS = {
+  ACTIVE: 'active',
+  HIRED: 'hired',
+  ARCHIVED: 'archived',
+} as const
+
+export type CandidateStatusCode =
+  (typeof CANDIDATE_STATUS)[keyof typeof CANDIDATE_STATUS]

@@ -146,10 +146,14 @@ export default async function CandidatesPage({
     filterVacancyTitle = vacancy?.title || null
   }
 
+  // candidate_statuses is selected so PostgREST can `.order('candidate_statuses(sort_order)')`
+  // when sort === 'status'. The actual sort_order value is not used by the row
+  // type below; it's only there for the DB-side sort path (F-010).
   const FIELDS = `
     id, first_name, last_name, email, phone, current_company,
     current_position, years_of_experience, source, general_status_id,
-    created_at, updated_at
+    created_at, updated_at,
+    candidate_statuses (sort_order)
   `
 
   // If a vacancy filter is applied but no candidates have applied to it, skip
@@ -185,33 +189,28 @@ export default async function CandidatesPage({
       baseQuery = baseQuery.in('id', candidateIdsForFilter)
     }
 
-    if (sort === 'status') {
-      const { data: allRaw, count } = await baseQuery.order('created_at', { ascending: false })
-      totalCount = count
-      const statusSortOrder = new Map(candidateStatuses.map((s) => [s.id, s.sort_order]))
-      const sorted = ((allRaw || []) as CandidateRow[]).sort((a, b) => {
-        const aOrder = a.general_status_id ? (statusSortOrder.get(a.general_status_id) ?? 999) : 999
-        const bOrder = b.general_status_id ? (statusSortOrder.get(b.general_status_id) ?? 999) : 999
-        return aOrder - bOrder
-      })
-      candidates = sorted.slice(from, to + 1)
-    } else {
-      let sortedQuery = baseQuery.order('created_at', { ascending: false })
-      switch (sort) {
-        case 'created_asc':
-          sortedQuery = baseQuery.order('created_at', { ascending: true })
-          break
-        case 'experience_desc':
-          sortedQuery = baseQuery.order('years_of_experience', { ascending: false, nullsFirst: false })
-          break
-        case 'experience_asc':
-          sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
-          break
-      }
-      const result = await sortedQuery.range(from, to)
-      candidates = (result.data || []) as CandidateRow[]
-      totalCount = result.count
+    let sortedQuery = baseQuery.order('created_at', { ascending: false })
+    switch (sort) {
+      case 'created_asc':
+        sortedQuery = baseQuery.order('created_at', { ascending: true })
+        break
+      case 'experience_desc':
+        sortedQuery = baseQuery.order('years_of_experience', { ascending: false, nullsFirst: false })
+        break
+      case 'experience_asc':
+        sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
+        break
+      case 'status':
+        // F-010: order by the related candidate_statuses.sort_order so the
+        // DB does the paging instead of pulling every row into memory.
+        sortedQuery = baseQuery
+          .order('candidate_statuses(sort_order)', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: false })
+        break
     }
+    const result = await sortedQuery.range(from, to)
+    candidates = (result.data || []) as CandidateRow[]
+    totalCount = result.count
   }
 
   const totalPages = Math.ceil((totalCount ?? 0) / PAGE_SIZE)

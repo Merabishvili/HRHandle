@@ -6,7 +6,7 @@ import { env } from '@/lib/env'
 
 export async function GET() {
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
-    return NextResponse.redirect(new URL('/settings?google=not_configured', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
+    return NextResponse.redirect(new URL('/settings/integrations?google=not_configured', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
   }
 
   const supabase = await createClient()

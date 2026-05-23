@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error')
 
   if (error || !code || !state) {
-    return NextResponse.redirect(new URL('/settings?google=denied', BASE))
+    return NextResponse.redirect(new URL('/settings/integrations?google=denied', BASE))
   }
 
   const cookieStore = await cookies()
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   cookieStore.delete('google_oauth_state')
 
   if (state !== savedState) {
-    return NextResponse.redirect(new URL('/settings?google=error', BASE))
+    return NextResponse.redirect(new URL('/settings/integrations?google=error', BASE))
   }
 
   const supabase = await createClient()
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   const tokens = await exchangeCodeForTokens(code)
   if (!tokens) {
-    return NextResponse.redirect(new URL('/settings?google=error', BASE))
+    return NextResponse.redirect(new URL('/settings/integrations?google=error', BASE))
   }
 
   const admin = createAdminClient()
@@ -46,5 +46,5 @@ export async function GET(request: NextRequest) {
     })
     .eq('id', user.id)
 
-  return NextResponse.redirect(new URL('/settings?google=connected', BASE))
+  return NextResponse.redirect(new URL('/settings/integrations?google=connected', BASE))
 }

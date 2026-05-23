@@ -1,5 +1,6 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
 import { getAuthContext } from './index'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -75,11 +76,19 @@ export async function createOrgNotifications(
         `[notifications] insert failed (type=${notification.type}, recipients=${recipientIds.length}):`,
         error,
       )
+      Sentry.captureException(error, {
+        tags: { area: 'notifications', op: 'insert' },
+        extra: { type: notification.type, recipientCount: recipientIds.length },
+      })
     }
   } catch (err) {
     console.error(
       `[notifications] unexpected error (type=${notification.type}):`,
       err,
     )
+    Sentry.captureException(err, {
+      tags: { area: 'notifications', op: 'insert' },
+      extra: { type: notification.type, recipientCount: recipientIds.length },
+    })
   }
 }

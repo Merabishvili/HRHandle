@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const savedState = cookieStore.get('zoom_oauth_state')?.value
 
   if (!code || !state || state !== savedState) {
-    return NextResponse.redirect(new URL('/settings?zoom=error', BASE))
+    return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
   }
 
   cookieStore.delete('zoom_oauth_state')
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
   const tokens = await exchangeZoomCode(code)
   if (!tokens) {
-    return NextResponse.redirect(new URL('/settings?zoom=error', BASE))
+    return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
   }
 
   const admin = createAdminClient()
@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
     .eq('id', user.id)
 
   if (error) {
-    return NextResponse.redirect(new URL('/settings?zoom=error', BASE))
+    return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
   }
 
-  return NextResponse.redirect(new URL('/settings?zoom=connected', BASE))
+  return NextResponse.redirect(new URL('/settings/integrations?zoom=connected', BASE))
 }
