@@ -1,20 +1,23 @@
 import { env } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+const OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
+const SCOPE_CALENDAR_EVENTS = 'https://www.googleapis.com/auth/calendar.events'
+const SCOPE_USERINFO_EMAIL = 'https://www.googleapis.com/auth/userinfo.email'
 
 export function getGoogleOAuthUrl(state: string): string {
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID ?? '',
     redirect_uri: getRedirectUri(),
     response_type: 'code',
-    scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email',
+    scope: `${SCOPE_CALENDAR_EVENTS} ${SCOPE_USERINFO_EMAIL}`,
     access_type: 'offline',
     prompt: 'consent',
     state,
   })
-  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`
+  return `${OAUTH_AUTH_URL}?${params}`
 }
 
 export function getRedirectUri(): string {

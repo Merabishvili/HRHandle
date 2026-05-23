@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
 import { inviteTeamMember, revokeInvitation } from '@/lib/actions/invitations'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -71,11 +72,11 @@ export function TeamInvitations({
     startTransition(async () => {
       const result = await revokeInvitation(id)
       if (!result.success) {
-        setError(result.error)
+        toast.error(result.error)
         return
       }
       setInvitations((prev) => prev.filter((inv) => inv.id !== id))
-      setSuccess(`Invitation to ${inviteeEmail} revoked.`)
+      toast.success(`Invitation to ${inviteeEmail} revoked.`)
     })
   }
 

@@ -23,7 +23,8 @@ export async function loadGuide(slug: string): Promise<LoadedGuide | null> {
   let raw: string
   try {
     raw = await fs.readFile(filePath, 'utf8')
-  } catch {
+  } catch (err) {
+    console.warn(`[guides/loader] failed to read guide "${slug}":`, err instanceof Error ? err.message : err)
     return null
   }
 
@@ -45,7 +46,8 @@ export async function listExistingGuideSlugs(): Promise<string[]> {
     return entries
       .filter((name) => name.endsWith('.mdx'))
       .map((name) => name.replace(/\.mdx$/, ''))
-  } catch {
+  } catch (err) {
+    console.warn(`[guides/loader] failed to read content dir "${CONTENT_DIR}":`, err instanceof Error ? err.message : err)
     return []
   }
 }

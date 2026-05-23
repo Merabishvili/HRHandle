@@ -7,6 +7,17 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { CheckCircle2, XCircle } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import type { LinkedInIntegration } from '@/lib/actions/integrations'
 
 interface LinkedInConnectProps {
@@ -64,9 +75,27 @@ export function LinkedInConnect({ integration }: LinkedInConnectProps) {
         </div>
 
         {integration ? (
-          <form action="/api/integrations/linkedin/disconnect" method="POST">
-            <Button type="submit" variant="outline" size="sm">Disconnect</Button>
-          </form>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm">Disconnect</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Disconnect LinkedIn?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You won&apos;t be able to post jobs directly to LinkedIn from this
+                  workspace until you reconnect. Existing posts on LinkedIn
+                  remain unchanged.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <form action="/api/integrations/linkedin/disconnect" method="POST">
+                  <AlertDialogAction type="submit">Disconnect</AlertDialogAction>
+                </form>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : (
           <form action="/api/integrations/linkedin/save" method="POST" className="flex flex-col items-end gap-1.5">
             <div className="flex items-center gap-2">

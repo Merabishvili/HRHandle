@@ -24,6 +24,7 @@ export function ApplyForm({ token }: { token: string }) {
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [parseState, setParseState] = useState<ParseState>('idle')
   const [parsed, setParsed] = useState<ParsedCVInput | null>(null)
+  const [parseFailureReason, setParseFailureReason] = useState<'network' | 'file' | null>(null)
 
   // Personal fields (pre-fillable from CV parse)
   const [firstName, setFirstName] = useState('')
@@ -52,6 +53,7 @@ export function ApplyForm({ token }: { token: string }) {
     setCvFile(file)
     setParsed(null)
     setParseState('parsing')
+    setParseFailureReason(null)
 
     try {
       const fd = new FormData()
@@ -69,9 +71,16 @@ export function ApplyForm({ token }: { token: string }) {
         if (data.phone && !phone) setPhone(data.phone)
         if (data.linkedin_profile_url && !linkedinUrl) setLinkedinUrl(data.linkedin_profile_url)
       } else {
+        // Server returned a non-success response — most likely the file
+        // was malformed / unreadable.
+        setParseFailureReason('file')
         setParseState('failed')
       }
-    } catch {
+    } catch (err) {
+      // fetch() itself failed → network/CORS/offline. Distinct from a
+      // server-side parse failure on a malformed file.
+      console.warn('[apply-form] CV parse network error:', err)
+      setParseFailureReason('network')
       setParseState('failed')
     }
   }
@@ -80,6 +89,7 @@ export function ApplyForm({ token }: { token: string }) {
     setCvFile(null)
     setParsed(null)
     setParseState('idle')
+    setParseFailureReason(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -145,9 +155,9 @@ export function ApplyForm({ token }: { token: string }) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-sm text-center">
         <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-        <h2 className="mt-4 text-xl font-bold text-gray-900">You&apos;ve Applied!</h2>
+        <h2 className="mt-4 text-xl font-bold text-gray-900">Thanks for Applying!</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Thank you for applying. We&apos;ve sent a confirmation to <strong>{email}</strong>.
+          We&apos;ve sent a confirmation to <strong>{email}</strong>.
           We will review your details and be in touch.
         </p>
       </div>
@@ -209,7 +219,9 @@ export function ApplyForm({ token }: { token: string }) {
               {parseState === 'failed' && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-amber-600">
                   <AlertCircle className="h-3.5 w-3.5" />
-                  Could not auto-fill — please complete the form manually
+                  {parseFailureReason === 'network'
+                    ? 'Could not reach the server — please check your connection and complete the form manually.'
+                    : 'Could not read this file — please complete the form manually.'}
                 </div>
               )}
             </div>
