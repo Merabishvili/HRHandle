@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendTeamInviteEmail } from '@/lib/email'
 import { createOrgNotifications } from '@/lib/actions/notifications'
+import { isOrgAdmin } from '@/lib/permissions'
 
 const InviteSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -22,7 +23,7 @@ export async function inviteTeamMember(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only owners and admins can invite team members' }
   }
 
@@ -139,7 +140,7 @@ export async function revokeInvitation(invitationId: string): Promise<ActionResu
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only owners and admins can revoke invitations' }
   }
 

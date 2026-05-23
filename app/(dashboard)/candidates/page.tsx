@@ -152,63 +152,66 @@ export default async function CandidatesPage({
     created_at, updated_at
   `
 
-  let baseQuery = supabase
-    .from('candidates')
-    .select(FIELDS, { count: 'exact' })
-    .eq('organization_id', organizationId)
-    .is('deleted_at', null)
+  // If a vacancy filter is applied but no candidates have applied to it, skip
+  // the candidates query entirely instead of running a doomed query with a
+  // fake UUID. (BL-001)
+  const forceEmpty =
+    !!vacancyFilter && (!candidateIdsForFilter || candidateIdsForFilter.length === 0)
 
-  // Search filter
-  if (search.trim()) {
-    baseQuery = baseQuery.or(
-      `first_name.ilike.%${search.trim()}%,last_name.ilike.%${search.trim()}%`
-    )
-  }
-
-  // Status filter
-  if (statusFilter) {
-    baseQuery = baseQuery.eq('general_status_id', statusFilter)
-  }
-
-  // Vacancy filter
-  if (vacancyFilter) {
-    if (!candidateIdsForFilter || candidateIdsForFilter.length === 0) {
-      baseQuery = baseQuery.in('id', ['00000000-0000-0000-0000-000000000000'])
-    } else {
-      baseQuery = baseQuery.in('id', candidateIdsForFilter)
-    }
-  }
-
-  // Status sort: fetch all then sort in-memory (status is in a related table)
   let candidates: CandidateRow[]
   let totalCount: number | null
 
-  if (sort === 'status') {
-    const { data: allRaw, count } = await baseQuery.order('created_at', { ascending: false })
-    totalCount = count
-    const statusSortOrder = new Map(candidateStatuses.map((s) => [s.id, s.sort_order]))
-    const sorted = ((allRaw || []) as CandidateRow[]).sort((a, b) => {
-      const aOrder = a.general_status_id ? (statusSortOrder.get(a.general_status_id) ?? 999) : 999
-      const bOrder = b.general_status_id ? (statusSortOrder.get(b.general_status_id) ?? 999) : 999
-      return aOrder - bOrder
-    })
-    candidates = sorted.slice(from, to + 1)
+  if (forceEmpty) {
+    candidates = []
+    totalCount = 0
   } else {
-    let sortedQuery = baseQuery.order('created_at', { ascending: false })
-    switch (sort) {
-      case 'created_asc':
-        sortedQuery = baseQuery.order('created_at', { ascending: true })
-        break
-      case 'experience_desc':
-        sortedQuery = baseQuery.order('years_of_experience', { ascending: false, nullsFirst: false })
-        break
-      case 'experience_asc':
-        sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
-        break
+    let baseQuery = supabase
+      .from('candidates')
+      .select(FIELDS, { count: 'exact' })
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null)
+
+    if (search.trim()) {
+      baseQuery = baseQuery.or(
+        `first_name.ilike.%${search.trim()}%,last_name.ilike.%${search.trim()}%`
+      )
     }
-    const result = await sortedQuery.range(from, to)
-    candidates = (result.data || []) as CandidateRow[]
-    totalCount = result.count
+
+    if (statusFilter) {
+      baseQuery = baseQuery.eq('general_status_id', statusFilter)
+    }
+
+    if (vacancyFilter && candidateIdsForFilter && candidateIdsForFilter.length > 0) {
+      baseQuery = baseQuery.in('id', candidateIdsForFilter)
+    }
+
+    if (sort === 'status') {
+      const { data: allRaw, count } = await baseQuery.order('created_at', { ascending: false })
+      totalCount = count
+      const statusSortOrder = new Map(candidateStatuses.map((s) => [s.id, s.sort_order]))
+      const sorted = ((allRaw || []) as CandidateRow[]).sort((a, b) => {
+        const aOrder = a.general_status_id ? (statusSortOrder.get(a.general_status_id) ?? 999) : 999
+        const bOrder = b.general_status_id ? (statusSortOrder.get(b.general_status_id) ?? 999) : 999
+        return aOrder - bOrder
+      })
+      candidates = sorted.slice(from, to + 1)
+    } else {
+      let sortedQuery = baseQuery.order('created_at', { ascending: false })
+      switch (sort) {
+        case 'created_asc':
+          sortedQuery = baseQuery.order('created_at', { ascending: true })
+          break
+        case 'experience_desc':
+          sortedQuery = baseQuery.order('years_of_experience', { ascending: false, nullsFirst: false })
+          break
+        case 'experience_asc':
+          sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
+          break
+      }
+      const result = await sortedQuery.range(from, to)
+      candidates = (result.data || []) as CandidateRow[]
+      totalCount = result.count
+    }
   }
 
   const totalPages = Math.ceil((totalCount ?? 0) / PAGE_SIZE)

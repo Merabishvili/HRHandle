@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { isOrgAdmin } from '@/lib/permissions'
 import {
   DEFAULT_TEMPLATES,
   resolveTemplate,
@@ -42,7 +43,7 @@ export async function saveEmailTemplate(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can edit email templates.' }
   }
 
@@ -79,7 +80,7 @@ export async function resetEmailTemplate(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can reset email templates.' }
   }
 

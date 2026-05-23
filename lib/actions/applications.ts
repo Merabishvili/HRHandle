@@ -212,7 +212,7 @@ export async function createApplication(input: {
   if ((count ?? 0) >= MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE) {
     return {
       success: false,
-      error: `This candidate is already being considered for ${MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE} vacancies. Move or close one before adding a new one.`,
+      error: `This candidate is already active on ${MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one.`,
     }
   }
 

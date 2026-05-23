@@ -65,7 +65,15 @@ export function AddApplicationDialog({
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setVacancyId(''); setError(null) } }}>
       <DialogTrigger asChild>
-        <Button size="sm" disabled={atLimit} title={atLimit ? 'Already being considered for 5 vacancies' : undefined}>
+        <Button
+          size="sm"
+          disabled={atLimit}
+          title={
+            atLimit
+              ? `Active on ${MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE} vacancies — move one to Hired or Rejected, or archive it, before adding a new one.`
+              : undefined
+          }
+        >
           <Plus className="mr-1 h-4 w-4" />
           Add to Vacancy
         </Button>
@@ -77,7 +85,7 @@ export function AddApplicationDialog({
         <div className="space-y-4 pt-2">
           {atLimit && (
             <p className="text-sm text-destructive">
-              This candidate is already being considered for 5 vacancies. Move or close one before adding a new one.
+              This candidate is already active on {MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one.
             </p>
           )}
           <div className="space-y-2">
