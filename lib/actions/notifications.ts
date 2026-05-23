@@ -70,8 +70,16 @@ export async function createOrgNotifications(
 
   try {
     const { error } = await supabase.from('notifications').insert(rows)
-    if (error) console.error('[notifications] insert failed:', error)
+    if (error) {
+      console.error(
+        `[notifications] insert failed (type=${notification.type}, recipients=${recipientIds.length}):`,
+        error,
+      )
+    }
   } catch (err) {
-    console.error('[notifications] unexpected error:', err)
+    console.error(
+      `[notifications] unexpected error (type=${notification.type}):`,
+      err,
+    )
   }
 }

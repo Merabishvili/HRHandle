@@ -54,6 +54,7 @@ interface VacancyRow {
   end_date: string | null
   description: string
   requirements: string | null
+  responsibilities: string | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -157,6 +158,7 @@ const { data: vacanciesRaw } = await supabase
     end_date,
     description,
     requirements,
+    responsibilities,
     created_by,
     created_at,
     updated_at,

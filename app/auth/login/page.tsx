@@ -203,7 +203,7 @@ function LoginForm() {
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
               disabled={isLoading}
-              className="h-4 w-4 rounded border-border accent-primary"
+              className="h-4 w-4 rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
             <label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer select-none">
               Keep me signed in

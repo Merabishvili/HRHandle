@@ -59,10 +59,13 @@ export function DashboardSidebar({
       <Button
         variant="ghost"
         size="icon"
+        aria-label={isMobileOpen ? 'Close navigation' : 'Open navigation'}
+        aria-expanded={isMobileOpen}
+        aria-controls="dashboard-sidebar"
         className="fixed top-4 left-4 z-50 lg:hidden"
         onClick={() => setIsMobileOpen((prev: boolean) => !prev)}
       >
-        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isMobileOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
       </Button>
 
       {isMobileOpen && (
@@ -73,6 +76,8 @@ export function DashboardSidebar({
       )}
 
       <aside
+        id="dashboard-sidebar"
+        aria-label="Primary navigation"
         className={cn(
           'fixed top-0 left-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar transition-transform lg:translate-x-0',
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'

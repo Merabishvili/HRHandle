@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatDistanceToNow } from 'date-fns'
@@ -46,18 +47,28 @@ export function NotificationsBell() {
 
   const handleClick = async (n: Notification) => {
     if (!n.read_at) {
-      await markNotificationRead(n.id)
-      setNotifications((prev) =>
-        prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x))
-      )
+      try {
+        await markNotificationRead(n.id)
+        setNotifications((prev) =>
+          prev.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x))
+        )
+      } catch (err) {
+        console.error('[notifications-bell] mark-read failed:', err)
+        toast.error('Could not mark notification as read.')
+      }
     }
     setOpen(false)
     if (n.link) router.push(n.link)
   }
 
   const handleMarkAllRead = async () => {
-    await markAllNotificationsRead()
-    setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })))
+    try {
+      await markAllNotificationsRead()
+      setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })))
+    } catch (err) {
+      console.error('[notifications-bell] mark-all-read failed:', err)
+      toast.error('Could not mark notifications as read.')
+    }
   }
 
   return (

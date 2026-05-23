@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { createApplication } from '@/lib/actions/applications'
+import { MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE } from '@/lib/types/constants'
 
 interface Vacancy {
   id: string
@@ -44,7 +45,7 @@ export function AddApplicationDialog({
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const atLimit = activeApplicationCount >= 5
+  const atLimit = activeApplicationCount >= MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE
 
   const handleSubmit = () => {
     if (!vacancyId) { setError('Please select a vacancy.'); return }

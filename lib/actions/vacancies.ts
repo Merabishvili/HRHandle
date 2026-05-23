@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { differenceInCalendarDays } from 'date-fns'
 import { getAuthContext, checkPlanLimit, type ActionResult } from './index'
 import { VacancySchema, type VacancyInput } from '@/lib/validations/vacancy'
 import { writeAuditLog } from '@/lib/audit-log'
@@ -148,8 +149,11 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
   const todayStr = today.toISOString().split('T')[0]
   let newEndDate: string | null = null
   if (orig.end_date && orig.start_date) {
-    const diffDays = Math.round(
-      (new Date(orig.end_date).getTime() - new Date(orig.start_date).getTime()) / 86_400_000
+    // differenceInCalendarDays handles DST + day-boundary correctly, unlike
+    // (end-start)/86_400_000 which can be off-by-one near midnight or DST shifts.
+    const diffDays = differenceInCalendarDays(
+      new Date(orig.end_date),
+      new Date(orig.start_date),
     )
     const endDate = new Date(today)
     endDate.setDate(endDate.getDate() + diffDays)

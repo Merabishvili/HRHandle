@@ -40,7 +40,8 @@ export async function rescheduleInterview(
 
   const scheduledDate = new Date(scheduledAt)
   if (Number.isNaN(scheduledDate.getTime())) return { success: false, error: 'Invalid date/time' }
-  if (scheduledDate < new Date()) return { success: false, error: 'Interview must be in the future' }
+  const now = new Date()
+  if (scheduledDate <= now) return { success: false, error: 'Interview must be in the future' }
 
   const { data: interview, error: fetchErr } = await ctx.supabase
     .from('interviews')
@@ -61,11 +62,17 @@ export async function rescheduleInterview(
 
   if (sendEmail) {
     try {
-      const [{ data: candidate }, { data: vacancy }, { data: senderProfile }] = await Promise.all([
+      // allSettled so a transient failure on one fetch (e.g. the inviter
+      // profile) doesn't cancel the whole email send — fallbacks handle
+      // the missing parts (audit P-004).
+      const [candidateRes, vacancyRes, senderRes] = await Promise.allSettled([
         ctx.supabase.from('candidates').select('first_name, last_name, email').eq('id', interview.candidate_id).eq('organization_id', ctx.orgId).single(),
         ctx.supabase.from('vacancies').select('title').eq('id', interview.vacancy_id).eq('organization_id', ctx.orgId).single(),
         ctx.supabase.from('profiles').select('full_name, email').eq('id', ctx.userId).single(),
       ])
+      const candidate = candidateRes.status === 'fulfilled' ? candidateRes.value.data : null
+      const vacancy = vacancyRes.status === 'fulfilled' ? vacancyRes.value.data : null
+      const senderProfile = senderRes.status === 'fulfilled' ? senderRes.value.data : null
 
       if (candidate?.email) {
         const meetLink = interview.google_meet_link || interview.meeting_link || null
@@ -140,12 +147,16 @@ export async function createInterview(
     const accessToken = await getValidAccessToken(ctx.userId)
 
     if (accessToken) {
-      const [{ data: vacancy }, { data: interviewer }] = await Promise.all([
+      // allSettled so a missing interviewer profile or vacancy title doesn't
+      // block Meet/Teams creation — we fall back to defaults (audit P-004).
+      const [vacancyRes, interviewerRes] = await Promise.allSettled([
         ctx.supabase.from('vacancies').select('title').eq('id', parsed.data.vacancy_id).eq('organization_id', ctx.orgId).single(),
         parsed.data.interviewer_id
           ? ctx.supabase.from('profiles').select('email').eq('id', parsed.data.interviewer_id).eq('organization_id', ctx.orgId).single()
           : Promise.resolve({ data: null }),
       ])
+      const vacancy = vacancyRes.status === 'fulfilled' ? vacancyRes.value.data : null
+      const interviewer = interviewerRes.status === 'fulfilled' ? interviewerRes.value.data : null
 
       const startIso = parsed.data.scheduled_at
       const endIso = new Date(
@@ -214,12 +225,16 @@ export async function createInterview(
     const accessToken = await getValidMicrosoftAccessToken(ctx.userId)
 
     if (accessToken) {
-      const [{ data: vacancy }, { data: interviewer }] = await Promise.all([
+      // allSettled so a missing interviewer profile or vacancy title doesn't
+      // block Meet/Teams creation — we fall back to defaults (audit P-004).
+      const [vacancyRes, interviewerRes] = await Promise.allSettled([
         ctx.supabase.from('vacancies').select('title').eq('id', parsed.data.vacancy_id).eq('organization_id', ctx.orgId).single(),
         parsed.data.interviewer_id
           ? ctx.supabase.from('profiles').select('email').eq('id', parsed.data.interviewer_id).eq('organization_id', ctx.orgId).single()
           : Promise.resolve({ data: null }),
       ])
+      const vacancy = vacancyRes.status === 'fulfilled' ? vacancyRes.value.data : null
+      const interviewer = interviewerRes.status === 'fulfilled' ? interviewerRes.value.data : null
 
       const startIso = parsed.data.scheduled_at
       const endIso = new Date(
@@ -310,8 +325,9 @@ export async function createInterview(
       body: vacancy?.title ? `For ${vacancy.title}` : undefined,
       link: `/interviews`,
     })
-  } catch {
-    // Non-fatal
+  } catch (err) {
+    // Non-fatal: interview was created. Surface the error so we can debug.
+    console.error('[interviews] post-create notification failed:', err)
   }
 
   revalidatePath('/interviews')

@@ -184,8 +184,7 @@ export default async function CandidatesPage({
   let totalCount: number | null
 
   if (sort === 'status') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: allRaw, count } = await (baseQuery as any).order('created_at', { ascending: false })
+    const { data: allRaw, count } = await baseQuery.order('created_at', { ascending: false })
     totalCount = count
     const statusSortOrder = new Map(candidateStatuses.map((s) => [s.id, s.sort_order]))
     const sorted = ((allRaw || []) as CandidateRow[]).sort((a, b) => {
@@ -195,8 +194,7 @@ export default async function CandidatesPage({
     })
     candidates = sorted.slice(from, to + 1)
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let sortedQuery: any = baseQuery
+    let sortedQuery = baseQuery.order('created_at', { ascending: false })
     switch (sort) {
       case 'created_asc':
         sortedQuery = baseQuery.order('created_at', { ascending: true })
@@ -207,8 +205,6 @@ export default async function CandidatesPage({
       case 'experience_asc':
         sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
         break
-      default:
-        sortedQuery = baseQuery.order('created_at', { ascending: false })
     }
     const result = await sortedQuery.range(from, to)
     candidates = (result.data || []) as CandidateRow[]

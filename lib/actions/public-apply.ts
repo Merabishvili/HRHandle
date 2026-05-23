@@ -41,6 +41,14 @@ export type PublicApplyResult =
 export async function submitPublicApplication(
   formData: FormData
 ): Promise<PublicApplyResult> {
+  // The apply form is unauthenticated — applicants have no Supabase session,
+  // so RLS-protected writes on candidates/applications cannot use the anon
+  // client. Access is gated by:
+  //   - Cloudflare Turnstile (step 1b, when TURNSTILE_SECRET_KEY is set)
+  //   - The `application_form_token` validated against `vacancies` (step 5);
+  //     no DB write happens before that check passes
+  //   - Per-IP and per-vacancy rate limits (steps 6–7)
+  // See docs/issues-found.md S-010 for the threat-model rationale.
   const supabase = createAdminClient()
 
   // ── 1. Honeypot ────────────────────────────────────────────────────────────
@@ -157,6 +165,14 @@ export async function submitPublicApplication(
     .eq('code', 'active')
     .single()
 
+  if (!activeStatus) {
+    // The 'active' candidate status is seeded globally — its absence indicates
+    // a misconfigured DB. Fail loudly rather than silently dropping all matches
+    // via `.eq('general_status_id', '')` further down (audit B-004).
+    console.error('[public-apply] missing candidate_statuses row for code=active')
+    return { success: false, error: 'Application could not be processed. Please try again later.' }
+  }
+
   // ── 9. Duplicate detection (email match is sufficient — phone is optional) ─
   let candidateId: string
   let isNewCandidate = false
@@ -166,7 +182,7 @@ export async function submitPublicApplication(
     .select('id')
     .eq('organization_id', orgId)
     .eq('email', email)
-    .eq('general_status_id', activeStatus?.id ?? '')
+    .eq('general_status_id', activeStatus.id)
     .is('deleted_at', null)
     .maybeSingle()
 
@@ -198,7 +214,7 @@ export async function submitPublicApplication(
         phone,
         linkedin_profile_url: linkedinUrl || null,
         source: 'Public Form',
-        general_status_id: activeStatus?.id || null,
+        general_status_id: activeStatus.id,
       })
       .select('id')
       .single()
@@ -239,53 +255,68 @@ export async function submitPublicApplication(
   }
 
   // ── 13. Save parsed experience + education (best-effort, non-fatal) ─────────
+  // Zod-parse before persisting — schema matches what the parse-cv API produces
+  // (lib/validations/candidate-background.ts ParsedCVSchema inner objects).
   if (isNewCandidate) {
+    const PublicExperienceItem = z.object({
+      company: z.string().min(1).max(200),
+      title: z.string().min(1).max(200),
+      start_date: z.string().nullable().optional(),
+      end_date: z.string().nullable().optional(),
+      is_current: z.boolean().default(false),
+      description: z.string().max(1000).nullable().optional(),
+    })
+    const PublicEducationItem = z.object({
+      institution: z.string().min(1).max(200),
+      degree: z.string().max(100).nullable().optional(),
+      field_of_study: z.string().max(200).nullable().optional(),
+      start_year: z.number().int().min(1900).max(new Date().getFullYear() + 1).nullable().optional(),
+      end_year: z.number().int().min(1900).max(new Date().getFullYear() + 10).nullable().optional(),
+      is_ongoing: z.boolean().default(false),
+    })
+
     try {
-      const expRows: unknown[] = JSON.parse(experienceJson)
-      if (Array.isArray(expRows) && expRows.length > 0) {
-        const rows = expRows
-          .filter((e): e is Record<string, unknown> => typeof e === 'object' && e !== null && typeof (e as Record<string, unknown>).company === 'string' && typeof (e as Record<string, unknown>).title === 'string')
-          .map((e) => ({
-            organization_id: orgId,
-            candidate_id: candidateId,
-            company: e.company as string,
-            title: e.title as string,
-            start_date: toDateString(e.start_date as string | null),
-            end_date: toDateString(e.end_date as string | null),
-            is_current: Boolean(e.is_current),
-            description: (e.description as string | null) ?? null,
-          }))
-        if (rows.length > 0) {
-          const { error: expErr } = await supabase.from('candidate_experience').insert(rows)
-          if (expErr) console.error('[public-apply] experience insert failed:', expErr)
-        }
+      const parsed = z.array(PublicExperienceItem).safeParse(JSON.parse(experienceJson))
+      if (parsed.success && parsed.data.length > 0) {
+        const rows = parsed.data.map((e) => ({
+          organization_id: orgId,
+          candidate_id: candidateId,
+          company: e.company,
+          title: e.title,
+          start_date: toDateString(e.start_date ?? null),
+          end_date: toDateString(e.end_date ?? null),
+          is_current: e.is_current,
+          description: e.description ?? null,
+        }))
+        const { error: expErr } = await supabase.from('candidate_experience').insert(rows)
+        if (expErr) console.error('[public-apply] experience insert failed:', expErr)
+      } else if (!parsed.success) {
+        console.warn('[public-apply] experience JSON failed validation:', parsed.error.issues[0]?.message)
       }
-    } catch {
-      // Non-fatal — bad JSON or schema mismatch
+    } catch (err) {
+      console.error('[public-apply] experience parse error:', err)
     }
 
     try {
-      const eduRows: unknown[] = JSON.parse(educationJson)
-      if (Array.isArray(eduRows) && eduRows.length > 0) {
-        const rows = eduRows
-          .filter((e): e is Record<string, unknown> => typeof e === 'object' && e !== null && typeof (e as Record<string, unknown>).institution === 'string')
-          .map((e) => ({
-            organization_id: orgId,
-            candidate_id: candidateId,
-            institution: e.institution as string,
-            degree: (e.degree as string | null) ?? null,
-            field_of_study: (e.field_of_study as string | null) ?? null,
-            start_year: typeof e.start_year === 'number' ? e.start_year : null,
-            end_year: typeof e.end_year === 'number' ? e.end_year : null,
-            is_ongoing: Boolean(e.is_ongoing),
-          }))
-        if (rows.length > 0) {
-          const { error: eduErr } = await supabase.from('candidate_education').insert(rows)
-          if (eduErr) console.error('[public-apply] education insert failed:', eduErr)
-        }
+      const parsed = z.array(PublicEducationItem).safeParse(JSON.parse(educationJson))
+      if (parsed.success && parsed.data.length > 0) {
+        const rows = parsed.data.map((e) => ({
+          organization_id: orgId,
+          candidate_id: candidateId,
+          institution: e.institution,
+          degree: e.degree ?? null,
+          field_of_study: e.field_of_study ?? null,
+          start_year: e.start_year ?? null,
+          end_year: e.end_year ?? null,
+          is_ongoing: e.is_ongoing,
+        }))
+        const { error: eduErr } = await supabase.from('candidate_education').insert(rows)
+        if (eduErr) console.error('[public-apply] education insert failed:', eduErr)
+      } else if (!parsed.success) {
+        console.warn('[public-apply] education JSON failed validation:', parsed.error.issues[0]?.message)
       }
-    } catch {
-      // Non-fatal
+    } catch (err) {
+      console.error('[public-apply] education parse error:', err)
     }
   }
 
@@ -337,8 +368,9 @@ export async function submitPublicApplication(
       body: `Applied for ${vacancy.title}`,
       link: `/vacancies/${vacancy.id}?tab=applications`,
     })
-  } catch {
-    // Non-fatal
+  } catch (err) {
+    // Non-fatal: application has already been recorded.
+    console.error('[public-apply] new-application notification failed:', err)
   }
 
   // ── 17. Send confirmation email ────────────────────────────────────────────

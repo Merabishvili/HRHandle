@@ -119,6 +119,10 @@ function isRetryable(err: unknown): boolean {
 export async function parseCV(text: string): Promise<CVParseResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
+    // Validated as optional in lib/env.ts. CV parsing is a non-essential
+    // feature; degrade silently in production but warn so the missing key
+    // is visible in server logs (audit S-019).
+    console.warn('[cv-parser] GOOGLE_GEMINI_API_KEY not set — returning parse_failed')
     return { success: false, reason: 'parse_failed' }
   }
 

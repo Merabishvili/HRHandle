@@ -230,6 +230,14 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
+      {/* Skip-to-content link (audit AC-011). Hidden until keyboard-focused. */}
+      <a
+        href="#dashboard-main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+      >
+        Skip to main content
+      </a>
+
       <DashboardSidebar
         user={user}
         profile={profile}
@@ -249,7 +257,7 @@ export default async function DashboardLayout({
           trialEndAt={subscription?.trial_end_at ?? null}
           isExpired={isExpired}
         />
-        <main className="flex-1 p-4 lg:p-8">{children}</main>
+        <main id="dashboard-main" tabIndex={-1} className="flex-1 p-4 lg:p-8">{children}</main>
         <SessionGuard />
       </div>
     </div>

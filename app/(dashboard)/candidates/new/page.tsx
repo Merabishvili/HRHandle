@@ -73,9 +73,9 @@ export default async function NewCandidatePage({
       </div>
 
       <CandidateForm
-        vacancies={(vacancies || []) as any}
+        vacancies={vacancies || []}
         defaultVacancyId={defaultVacancyId}
-        candidateStatuses={(candidateStatuses || []) as any}
+        candidateStatuses={candidateStatuses || []}
         defaultApplicationStatusId={defaultApplicationStatus?.id || null}
         customFieldGroups={customFieldGroups}
       />

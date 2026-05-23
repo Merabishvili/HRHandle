@@ -128,6 +128,21 @@ Compliance-relevant events are written to `public.activity_log` via the best-eff
 | LinkedIn integration connect | `integration` | `connected` | `app/api/integrations/linkedin/save/route.ts` |
 | LinkedIn integration disconnect | `integration` | `disconnected` | `app/api/integrations/linkedin/disconnect/route.ts` |
 
+### In-app notifications
+
+In addition to the audit log, the following user-facing notifications fire via `createOrgNotifications` in `lib/actions/notifications.ts`:
+
+| Event | Type | Recipients | Source |
+|---|---|---|---|
+| Interview scheduled | `interview_scheduled` | Creator + interviewer | `lib/actions/interviews.ts` |
+| Public application submitted | `new_application` | Org owners + admins | `lib/actions/public-apply.ts` |
+| Candidate hired (stage → `hired`) | `candidate_hired` | Org owners + admins (excluding actor) | `lib/actions/applications.ts` |
+| Team invite sent | `team_invite_sent` | Other org owners + admins (excluding sender) | `lib/actions/invitations.ts` |
+
+All notification writes go through `createOrgNotifications` → admin-client insert into `public.notifications` (RLS bypassed for writes; users SELECT their own). Failures are logged but never propagate to the calling action.
+
+Deferred (tracked under F-001 in `docs/issues-found.md`): password-reset success — Supabase handles the actual reset client-side, so capturing it server-side needs either a Supabase auth webhook or wrapping `updateUser` in a new server action.
+
 **Not yet wired** (tracked under `F-002` in `docs/issues-found.md`): subscription events (no billing webhook), role changes (no role-update server action exists), Google/Zoom/Microsoft OAuth connect events.
 
 The `details jsonb` column carries structured context — typically `{ before, after }` for status changes and `{ platform, external_page_id }` for integrations. The `message` field carries a human-readable summary like `"draft → open"`.

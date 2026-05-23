@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 import { sendApplicationRejectionEmail } from '@/lib/email'
 import { writeAuditLog } from '@/lib/audit-log'
+import { createOrgNotifications } from '@/lib/actions/notifications'
+import { MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE } from '@/lib/types/constants'
 
 export async function updateApplicationStatus(
   applicationId: string,
@@ -79,6 +81,47 @@ export async function updateApplicationStatus(
           .update({ general_status_id: hiredId })
           .eq('id', application.candidate_id)
           .eq('organization_id', ctx.orgId)
+      }
+
+      // Notify org owners + admins that a candidate was hired (the meaningful
+      // stage transition — other stages would be too noisy to ping on every
+      // change). Best-effort: failures are logged but never break the action.
+      try {
+        const [{ data: candidate }, { data: appWithVacancy }, { data: members }] =
+          await Promise.all([
+            ctx.supabase
+              .from('candidates')
+              .select('first_name, last_name')
+              .eq('id', application.candidate_id)
+              .single(),
+            ctx.supabase
+              .from('applications')
+              .select('vacancies ( id, title )')
+              .eq('id', applicationId)
+              .single(),
+            ctx.supabase
+              .from('profiles')
+              .select('id')
+              .eq('organization_id', ctx.orgId)
+              .in('role', ['owner', 'admin'])
+              .neq('id', ctx.userId),
+          ])
+
+        type VacJoin = { id: string; title: string } | { id: string; title: string }[] | null
+        const vac = appWithVacancy?.vacancies as VacJoin
+        const vacRow = Array.isArray(vac) ? vac[0] : vac
+
+        const recipientIds = (members || []).map((m) => m.id)
+        if (recipientIds.length > 0 && candidate) {
+          await createOrgNotifications(ctx.orgId, recipientIds, {
+            type: 'candidate_hired',
+            title: `Candidate hired: ${candidate.first_name} ${candidate.last_name}`,
+            body: vacRow?.title ? `For ${vacRow.title}` : undefined,
+            link: vacRow?.id ? `/vacancies/${vacRow.id}?tab=applications` : undefined,
+          })
+        }
+      } catch (err) {
+        console.error('[applications] candidate-hired notification failed:', err)
       }
     } else {
       // Moving away from any stage → check if candidate has any other hired application
@@ -166,8 +209,11 @@ export async function createApplication(input: {
     .is('deleted_at', null)
     .in('status_id', activeStatusIds)
 
-  if ((count ?? 0) >= 5) {
-    return { success: false, error: 'This candidate is already being considered for 5 vacancies. Move or close one before adding a new one.' }
+  if ((count ?? 0) >= MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE) {
+    return {
+      success: false,
+      error: `This candidate is already being considered for ${MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE} vacancies. Move or close one before adding a new one.`,
+    }
   }
 
   // Prevent duplicate application to the same vacancy
@@ -360,8 +406,10 @@ export async function rejectApplication(input: {
           customBody: finalBody,
         })
       }
-    } catch {
-      // Email failure is non-fatal; status was already updated
+    } catch (err) {
+      // Email failure is non-fatal; status was already updated. Log so the
+      // operator can investigate Resend / template / SMTP issues.
+      console.error('[applications] rejection email send failed:', err)
     }
   }
 
