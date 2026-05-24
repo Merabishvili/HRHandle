@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { writeAuditLog } from '@/lib/audit-log'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -25,6 +26,24 @@ export async function POST() {
       google_token_expiry: null,
     })
     .eq('id', user.id)
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.organization_id) {
+    void writeAuditLog({
+      orgId: profile.organization_id,
+      userId: user.id,
+      entityType: 'integration',
+      entityId: null,
+      action: 'disconnected',
+      message: 'Google Calendar integration disconnected',
+      details: { platform: 'google_calendar' },
+    })
+  }
 
   return NextResponse.redirect(new URL('/settings/integrations?google=disconnected', BASE))
 }

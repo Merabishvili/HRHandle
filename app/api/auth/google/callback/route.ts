@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { exchangeCodeForTokens } from '@/lib/google/calendar'
+import { writeAuditLog } from '@/lib/audit-log'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -45,6 +46,24 @@ export async function GET(request: NextRequest) {
       google_token_expiry: Date.now() + tokens.expires_in * 1000,
     })
     .eq('id', user.id)
+
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.organization_id) {
+    void writeAuditLog({
+      orgId: profile.organization_id,
+      userId: user.id,
+      entityType: 'integration',
+      entityId: null,
+      action: 'connected',
+      message: 'Google Calendar integration connected',
+      details: { platform: 'google_calendar' },
+    })
+  }
 
   return NextResponse.redirect(new URL('/settings/integrations?google=connected', BASE))
 }
