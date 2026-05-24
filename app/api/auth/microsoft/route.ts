@@ -20,7 +20,10 @@ export async function GET() {
 
   const state = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url')
   const cookieStore = await cookies()
-  cookieStore.set('microsoft_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 600, path: '/' })
+  // sameSite=lax (not strict) — see app/api/auth/google/route.ts for the
+  // shared rationale: strict cookies aren't sent on the cross-site navigation
+  // that happens when the provider redirects the user back to our callback.
+  cookieStore.set('microsoft_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600, path: '/' })
 
   return NextResponse.redirect(getMicrosoftOAuthUrl(state))
 }

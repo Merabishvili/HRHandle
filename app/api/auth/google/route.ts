@@ -18,7 +18,12 @@ export async function GET() {
 
   const state = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url')
   const cookieStore = await cookies()
-  cookieStore.set('google_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 600, path: '/' })
+  // sameSite=lax (not strict) is required for OAuth state cookies: when Google
+  // redirects the user back to /api/auth/google/callback, the browser treats
+  // it as a cross-site navigation and `strict` cookies are NOT sent. `lax`
+  // allows the cookie on top-level navigations like this OAuth round-trip
+  // while still blocking cross-site sub-requests for CSRF protection.
+  cookieStore.set('google_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600, path: '/' })
 
   return NextResponse.redirect(getGoogleOAuthUrl(state))
 }
