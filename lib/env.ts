@@ -44,4 +44,10 @@ export const env = createEnv({
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
+  // Vercel often injects an empty string for unset env vars instead of leaving
+  // them undefined. Without this, `z.string().min(1).optional()` rejects ''
+  // (it's defined-but-too-short), and the build fails. With this on, '' is
+  // treated as "absent" before validation runs — matching local-dev behaviour
+  // where missing env vars are simply undefined.
+  emptyStringAsUndefined: true,
 })
