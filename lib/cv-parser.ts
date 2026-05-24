@@ -82,7 +82,12 @@ export async function extractTextFromFile(file: File): Promise<string | null> {
 async function extractFromPDF(file: File): Promise<string | null> {
   try {
     const arrayBuffer = await file.arrayBuffer()
-    const pdfjs = await import('pdfjs-dist')
+    // Use the legacy build — pdfjs-dist's default build assumes browser APIs
+    // (DOMMatrix etc.) that don't exist on Vercel's Node runtime. The legacy
+    // bundle is shipped specifically for Node + older browser targets.
+    // Locked to pdfjs-dist@^4.x because v5 dropped this build and requires
+    // Node ≥22.
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
     pdfjs.GlobalWorkerOptions.workerSrc = ''
     const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer), verbosity: 0 }).promise
     const parts: string[] = []
