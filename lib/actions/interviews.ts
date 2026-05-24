@@ -369,14 +369,16 @@ export async function createInterview(
       recipientIds.add(parsed.data.interviewer_id)
     }
 
-    await createOrgNotifications(ctx.orgId, [...recipientIds], {
+    const notifyResult = await createOrgNotifications(ctx.orgId, [...recipientIds], {
       type: 'interview_scheduled',
       title: `Interview scheduled: ${candidate.first_name} ${candidate.last_name}`,
       body: vacancy?.title ? `For ${vacancy.title}` : undefined,
       link: `/interviews`,
     })
+    if (!notifyResult.success) warnings.push('notification_failed')
   } catch (err) {
     // Non-fatal: interview was created. Surface the error so we can debug.
+    warnings.push('notification_failed')
     console.error('[interviews] post-create notification failed:', err)
     Sentry.captureException(err, { tags: { area: 'interviews', op: 'post_create_notification' } })
   }

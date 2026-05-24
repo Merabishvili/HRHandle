@@ -209,8 +209,13 @@ export function InterviewForm({
       return
     }
 
-    if (result.data.warnings.includes('email_failed')) {
+    const w = result.data.warnings
+    if (w.includes('email_failed') && w.includes('notification_failed')) {
+      toast.warning('Interview scheduled, but the invitation email and in-app notification could not be sent.')
+    } else if (w.includes('email_failed')) {
       toast.warning('Interview scheduled, but the invitation email could not be sent.')
+    } else if (w.includes('notification_failed')) {
+      toast.warning('Interview scheduled, but the in-app notification could not be sent.')
     } else {
       toast.success('Interview scheduled.')
     }

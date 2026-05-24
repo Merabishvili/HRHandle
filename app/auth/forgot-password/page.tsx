@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
+import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +17,8 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -22,18 +26,22 @@ export default function ForgotPasswordPage() {
     setSuccess(null)
     setIsLoading(true)
 
-    // The server action enforces rate limits (per IP + per email) and triggers
-    // Supabase's password-reset email using implicit flow internally — see
-    // lib/actions/auth.ts and CLAUDE.md for why implicit flow is required.
+    // The server action enforces captcha verification + rate limits (per IP +
+    // per email) and triggers Supabase's password-reset email using implicit
+    // flow internally — see lib/actions/auth.ts and CLAUDE.md for why implicit
+    // flow is required.
     const result = await requestPasswordReset(
       email,
       `${window.location.origin}/auth/confirm?type=recovery&next=/auth/reset-password`,
+      captchaToken,
     )
 
     if (result.success) {
       setSuccess(result.message)
     } else {
       setError(result.error)
+      turnstileRef.current?.reset()
+      setCaptchaToken(null)
     }
     setIsLoading(false)
   }
@@ -98,6 +106,15 @@ export default function ForgotPasswordPage() {
                   'Send reset link'
                 )}
               </Button>
+
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                onSuccess={(token) => setCaptchaToken(token)}
+                onError={() => setCaptchaToken(null)}
+                onExpire={() => setCaptchaToken(null)}
+                options={{ size: 'invisible' }}
+              />
             </form>
 
             <div className="mt-6 text-center text-sm">

@@ -3,6 +3,7 @@
 import { headers } from 'next/headers'
 import { createBrowserClient } from '@supabase/ssr'
 import { z } from 'zod'
+import { verifyCaptcha } from '@/lib/turnstile'
 
 const MAX_RESET_REQUESTS_PER_IP_PER_HOUR = 5
 const MAX_RESET_REQUESTS_PER_EMAIL_PER_HOUR = 5
@@ -40,6 +41,7 @@ export type RequestPasswordResetResult =
 export async function requestPasswordReset(
   email: string,
   redirectTo: string,
+  captchaToken?: string | null,
 ): Promise<RequestPasswordResetResult> {
   const parsed = ResetSchema.safeParse({ email, redirectTo })
   if (!parsed.success) {
@@ -53,6 +55,14 @@ export async function requestPasswordReset(
     headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     headersList.get('x-real-ip') ||
     'unknown'
+
+  // Turnstile verification. `verifyCaptcha` fails open when TURNSTILE_SECRET_KEY
+  // is unset (with a server warning), so this is no-op until the env var is
+  // configured. Once configured, an absent or invalid token is rejected.
+  const captchaOk = await verifyCaptcha(captchaToken ?? null, ip !== 'unknown' ? ip : null)
+  if (!captchaOk) {
+    return { success: false, error: 'Security check failed. Please try again.' }
+  }
 
   if (ip !== 'unknown' && !checkLimit(`ip:${ip}`, MAX_RESET_REQUESTS_PER_IP_PER_HOUR)) {
     return { success: false, error: RATE_LIMIT_ERROR }
