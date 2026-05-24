@@ -194,7 +194,17 @@ export async function createInterview(
   if (options.createMeet && parsed.data.type === 'video') {
     const accessToken = await getValidAccessToken(ctx.userId)
 
-    if (accessToken) {
+    if (!accessToken) {
+      // Either Google isn't connected, the stored token is invalid, or refresh
+      // failed. Surface this so the user knows to reconnect Google Calendar.
+      console.error('[interviews] Meet creation skipped — no Google access token for user', ctx.userId)
+      Sentry.captureMessage('[interviews] meet_creation_failed: no Google access token', {
+        level: 'warning',
+        tags: { area: 'interviews', op: 'create_meet' },
+        extra: { userId: ctx.userId, interviewId: data.id },
+      })
+      warnings.push('meet_creation_failed')
+    } else {
       // allSettled so a missing interviewer profile or vacancy title doesn't
       // block Meet/Teams creation — we fall back to defaults (audit P-004).
       const [vacancyRes, interviewerRes] = await Promise.allSettled([
@@ -226,7 +236,7 @@ export async function createInterview(
       })
 
       if (result.meetLink || result.eventId) {
-        await ctx.supabase
+        const { error: updErr } = await ctx.supabase
           .from('interviews')
           .update({
             google_meet_link: result.meetLink,
@@ -234,7 +244,33 @@ export async function createInterview(
           })
           .eq('id', data.id)
           .eq('organization_id', ctx.orgId)
-        meetLink = result.meetLink
+        if (updErr) {
+          console.error('[interviews] failed to persist google_meet_link on interview', data.id, updErr)
+          Sentry.captureException(updErr, {
+            tags: { area: 'interviews', op: 'persist_meet_link' },
+            extra: { interviewId: data.id },
+          })
+          warnings.push('meet_creation_failed')
+        } else {
+          meetLink = result.meetLink
+          if (!result.meetLink) {
+            // Event was created but Google did not return a Meet entry point
+            // (conference create may still be processing). Surface this so
+            // the user knows to refresh / pick up the link later.
+            console.warn('[interviews] Google event created without Meet entryPoint, interview', data.id, 'eventId', result.eventId)
+            warnings.push('meet_creation_failed')
+          }
+        }
+      } else {
+        // Calendar API call failed (handled inside createCalendarEventWithMeet,
+        // which returns { meetLink:null, eventId:null } on non-OK responses).
+        console.error('[interviews] createCalendarEventWithMeet returned no meet link or event id for interview', data.id)
+        Sentry.captureMessage('[interviews] meet_creation_failed: Google Calendar API returned no event', {
+          level: 'warning',
+          tags: { area: 'interviews', op: 'create_meet' },
+          extra: { userId: ctx.userId, interviewId: data.id },
+        })
+        warnings.push('meet_creation_failed')
       }
     }
   }

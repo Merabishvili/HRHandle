@@ -210,7 +210,14 @@ export function InterviewForm({
     }
 
     const w = result.data.warnings
-    if (w.includes('email_failed') && w.includes('notification_failed')) {
+    // meet_creation_failed is the most actionable warning (user can reconnect
+    // Google to fix), so surface it on its own when present. Otherwise combine
+    // email + notification warnings.
+    if (w.includes('meet_creation_failed')) {
+      toast.warning(
+        'Interview scheduled, but the Google Meet link could not be created. Reconnect Google Calendar in Settings → Integrations and try again.',
+      )
+    } else if (w.includes('email_failed') && w.includes('notification_failed')) {
       toast.warning('Interview scheduled, but the invitation email and in-app notification could not be sent.')
     } else if (w.includes('email_failed')) {
       toast.warning('Interview scheduled, but the invitation email could not be sent.')

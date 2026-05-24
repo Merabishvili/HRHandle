@@ -139,7 +139,22 @@ export async function createCalendarEventWithMeet(
     body: JSON.stringify(event),
   })
 
-  if (!res.ok) return { meetLink: null, eventId: null }
+  if (!res.ok) {
+    // Log the Google API response so failures (auth, quota, malformed event)
+    // are diagnosable in production. Body is best-effort — drop if it's not
+    // parseable.
+    let bodyExcerpt = ''
+    try {
+      bodyExcerpt = (await res.text()).slice(0, 500)
+    } catch {
+      /* swallow */
+    }
+    console.error(
+      `[google/calendar] createCalendarEventWithMeet failed: ${res.status} ${res.statusText}`,
+      bodyExcerpt,
+    )
+    return { meetLink: null, eventId: null }
+  }
 
   const data = await res.json()
   const meetLink =
