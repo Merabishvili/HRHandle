@@ -82,21 +82,15 @@ export async function extractTextFromFile(file: File): Promise<string | null> {
 async function extractFromPDF(file: File): Promise<string | null> {
   try {
     const arrayBuffer = await file.arrayBuffer()
-    // Use the legacy build — pdfjs-dist's default build assumes browser APIs
-    // (DOMMatrix etc.) that don't exist on Vercel's Node runtime. The legacy
-    // bundle is shipped specifically for Node + older browser targets.
-    // Locked to pdfjs-dist@^4.x because v5 dropped this build and requires
-    // Node ≥22.
-    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    pdfjs.GlobalWorkerOptions.workerSrc = ''
-    const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer), verbosity: 0 }).promise
-    const parts: string[] = []
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i)
-      const content = await page.getTextContent()
-      parts.push(content.items.map((item) => ('str' in item ? item.str : '')).join(' '))
-    }
-    return parts.join('\n') || null
+    // `unpdf` is a thin wrapper around pdfjs-dist that handles all the
+    // worker / DOMMatrix-polyfill plumbing internally. Using it directly
+    // instead of pdfjs-dist avoids the
+    //   "Setting up fake worker failed: No workerSrc specified"
+    // crash that occurs on Vercel's bundled Node serverless runtime.
+    const { extractText, getDocumentProxy } = await import('unpdf')
+    const pdf = await getDocumentProxy(new Uint8Array(arrayBuffer))
+    const { text } = await extractText(pdf, { mergePages: true })
+    return text || null
   } catch (err) {
     console.error('[cv-parser] extractFromPDF failed:', err)
     return null
