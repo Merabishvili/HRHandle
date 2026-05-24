@@ -1,5 +1,19 @@
 # Database Schema
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 (2026-05-23) `activity_log` table is now actively written to via `lib/audit-log.ts` (helper added). Wired call sites: vacancy status change, application status change, LinkedIn integration connect/disconnect. The table itself was always present in the schema (`001_create_schema.sql`) but had zero writers and zero rows until this change.
+- 🆕 `candidate_experience` table — work history (migration `20260514_candidate_background.sql`). RLS enabled.
+- 🆕 `candidate_education` table — education history (migration `20260514_candidate_background.sql`). RLS enabled.
+- 🆕 `organization_integrations` table — third-party platform credential storage, currently scoped to `platform = 'linkedin'` (migration `20260517_organization_integrations.sql`). RLS enabled.
+- 🆕 `candidates` columns added (migration `20260515_candidate_profile_fields.sql`): `location`, `timezone`, `languages text[]`, `salary_expectation`, `notice_period`.
+- 🔄 `candidate_activity` view rebuilt with **breaking column rename**: `type` → `kind`, `title` → `headline`. Queries that read the old names will return no rows (silent, not an error). Search & replace required in any direct view consumers.
+- 🔄 (revised 2026-05-08) Live-DB verification via Supabase MCP confirms **every public table has RLS enabled with at least one policy** (`vacancies`, `candidates`, `applications` each have 4 policies; `profiles` has 6). An earlier audit pass incorrectly claimed RLS was missing on most tables because the original RLS migration is not in the repo's `supabase/migrations/` folder — only newer additive migrations are. The RLS itself is live in the DB. See `docs/issues-found.md` retraction of `S-004`.
+
+---
+
 ## Multi-Tenant Isolation
 
 Every tenant (organization) is identified by `organization_id` (UUID). All tenant data tables include a NOT NULL `organization_id` column. Row Level Security (RLS) on all tables filters rows by `organization_id`, preventing cross-tenant data access. The admin client (`SUPABASE_SERVICE_ROLE_KEY`) bypasses RLS and is only used server-side for privileged operations (onboarding, document storage, notifications, invitation management).
@@ -156,9 +170,11 @@ Read-only view unioning all activity events for a candidate. Used by the candida
 | id | uuid | PK of the source row |
 | organization_id | uuid | |
 | candidate_id | uuid | |
-| type | text | 'application', 'note', 'document', 'interview' |
-| title | text | Human-readable label |
-| meta | jsonb | Type-specific payload (status name, file name, etc.) |
+| kind | text | 🔄 (renamed from `type`) 'application', 'note', 'document', 'interview' |
+| headline | text | 🔄 (renamed from `title`) Human-readable label (e.g. `"Applied to Senior Engineer"`, `"Interview scheduled"`) |
+| body | text | 🆕 Long-form text (note body, etc.); null for most rows |
+| meta | text | Type-specific payload (status name, file name, document type, etc.). Note: now `text` not `jsonb`. |
+| actor_name | text | 🆕 Display name of the user who triggered the event |
 | created_at | timestamptz | Used for feed ordering |
 
 ---
@@ -375,6 +391,27 @@ The tenant record. One organization per account (no multi-org memberships).
 | updated_at | timestamptz | NULL | — | |
 | public_page_token | uuid | NULL | gen_random_uuid() | Legacy UUID for old public job links |
 | public_page_slug | text | NOT NULL | — | Human-readable slug for `/jobs/{slug}` |
+
+---
+
+### `organization_integrations` 🆕
+Per-org credentials for third-party platforms. Currently only used for LinkedIn company-page metadata.
+
+| Column | Type | Nullable | Default | Notes |
+|---|---|---|---|---|
+| id | uuid | NOT NULL | gen_random_uuid() | PK |
+| organization_id | uuid | NOT NULL | — | FK → organizations (cascade delete) |
+| platform | text | NOT NULL | — | CHECK constraint: must be `'linkedin'` |
+| external_page_id | text | NULL | — | LinkedIn numeric company-page ID |
+| external_page_name | text | NULL | — | Display name (when known) |
+| access_token | text | NULL | — | Reserved for future OAuth — unused today |
+| token_expires_at | timestamptz | NULL | — | Reserved for future OAuth — unused today |
+| connected_by | uuid | NULL | — | FK → profiles (SET NULL on delete) |
+| connected_at | timestamptz | NOT NULL | now() | |
+| is_active | boolean | NOT NULL | true | |
+
+**Constraints:** UNIQUE(`organization_id`, `platform`) — one row per platform per org.
+**RLS:** `org_members_can_read_integrations` (SELECT) and `org_members_can_manage_integrations` (ALL). Both gate on caller's `profiles.organization_id`.
 
 ---
 

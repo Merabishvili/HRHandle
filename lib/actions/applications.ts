@@ -3,6 +3,27 @@
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 import { sendApplicationRejectionEmail } from '@/lib/email'
+import { writeAuditLog } from '@/lib/audit-log'
+import { createOrgNotifications } from '@/lib/actions/notifications'
+import {
+  MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE,
+  APPLICATION_STATUS,
+  ACTIVE_APPLICATION_STATUS_CODES,
+  CANDIDATE_STATUS,
+} from '@/lib/types/constants'
+
+/**
+ * A-003: PostgREST's relation embedding sometimes returns a single row as an
+ * object and sometimes wrapped in an array (depending on whether the FK is
+ * `!inner` and on PostgREST's join inference). This predicate normalises both
+ * shapes to a single object so callers can branchlessly compare `.code`.
+ */
+function unwrapStatusRelation<T extends { code: string }>(
+  rel: T | T[] | null | undefined
+): T | null {
+  if (!rel) return null
+  return Array.isArray(rel) ? rel[0] ?? null : rel
+}
 
 export async function updateApplicationStatus(
   applicationId: string,
@@ -11,16 +32,20 @@ export async function updateApplicationStatus(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  // Fetch application to get candidate_id
+  // Fetch application to get candidate_id + previous status code for audit log
   const { data: application } = await ctx.supabase
     .from('applications')
-    .select('id, candidate_id, status_id')
+    .select('id, candidate_id, status_id, application_statuses ( code )')
     .eq('id', applicationId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .single()
 
   if (!application) return { success: false, error: 'Application not found' }
+
+  type StatusJoin = { code: string } | { code: string }[] | null
+  const beforeJoin = application.application_statuses as StatusJoin
+  const beforeCode = Array.isArray(beforeJoin) ? beforeJoin[0]?.code : beforeJoin?.code
 
   const { error } = await ctx.supabase
     .from('applications')
@@ -41,6 +66,23 @@ export async function updateApplicationStatus(
     .eq('id', newStatusId)
     .single()
 
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'application',
+    entityId: applicationId,
+    action: 'status_changed',
+    message:
+      beforeCode && newStatus?.code
+        ? `${beforeCode} → ${newStatus.code}`
+        : `status changed to ${newStatus?.code ?? 'unknown'}`,
+    details: {
+      candidate_id: application.candidate_id,
+      before: beforeCode ?? null,
+      after: newStatus?.code ?? null,
+    },
+  })
+
   if (newStatus) {
     const { data: candidateStatuses } = await ctx.supabase
       .from('candidate_statuses')
@@ -48,15 +90,56 @@ export async function updateApplicationStatus(
 
     const statusMap = new Map((candidateStatuses || []).map((s) => [s.code, s.id]))
 
-    if (newStatus.code === 'hired') {
+    if (newStatus.code === APPLICATION_STATUS.HIRED) {
       // Moving to Hired → set candidate status to Hired
-      const hiredId = statusMap.get('hired')
+      const hiredId = statusMap.get(CANDIDATE_STATUS.HIRED)
       if (hiredId) {
         await ctx.supabase
           .from('candidates')
           .update({ general_status_id: hiredId })
           .eq('id', application.candidate_id)
           .eq('organization_id', ctx.orgId)
+      }
+
+      // Notify org owners + admins that a candidate was hired (the meaningful
+      // stage transition — other stages would be too noisy to ping on every
+      // change). Best-effort: failures are logged but never break the action.
+      try {
+        const [{ data: candidate }, { data: appWithVacancy }, { data: members }] =
+          await Promise.all([
+            ctx.supabase
+              .from('candidates')
+              .select('first_name, last_name')
+              .eq('id', application.candidate_id)
+              .single(),
+            ctx.supabase
+              .from('applications')
+              .select('vacancies ( id, title )')
+              .eq('id', applicationId)
+              .single(),
+            ctx.supabase
+              .from('profiles')
+              .select('id')
+              .eq('organization_id', ctx.orgId)
+              .in('role', ['owner', 'admin'])
+              .neq('id', ctx.userId),
+          ])
+
+        type VacJoin = { id: string; title: string } | { id: string; title: string }[] | null
+        const vac = appWithVacancy?.vacancies as VacJoin
+        const vacRow = Array.isArray(vac) ? vac[0] : vac
+
+        const recipientIds = (members || []).map((m) => m.id)
+        if (recipientIds.length > 0 && candidate) {
+          await createOrgNotifications(ctx.orgId, recipientIds, {
+            type: 'candidate_hired',
+            title: `Candidate hired: ${candidate.first_name} ${candidate.last_name}`,
+            body: vacRow?.title ? `For ${vacRow.title}` : undefined,
+            link: vacRow?.id ? `/vacancies/${vacRow.id}?tab=applications` : undefined,
+          })
+        }
+      } catch (err) {
+        console.error('[applications] candidate-hired notification failed:', err)
       }
     } else {
       // Moving away from any stage → check if candidate has any other hired application
@@ -69,13 +152,12 @@ export async function updateApplicationStatus(
         .neq('id', applicationId)
 
       type AppWithStatus = { id: string; application_statuses: { code: string } | { code: string }[] | null }
-      const hasOtherHired = (hiredApps as AppWithStatus[] || []).some((a) => {
-        const s = a.application_statuses
-        return s && (Array.isArray(s) ? s[0]?.code === 'hired' : s.code === 'hired')
-      })
+      const hasOtherHired = (hiredApps as AppWithStatus[] || []).some(
+        (a) => unwrapStatusRelation(a.application_statuses)?.code === APPLICATION_STATUS.HIRED
+      )
 
       if (!hasOtherHired) {
-        const activeId = statusMap.get('active')
+        const activeId = statusMap.get(CANDIDATE_STATUS.ACTIVE)
         if (activeId) {
           // Only revert if currently hired (don't override archived)
           const { data: candidate } = await ctx.supabase
@@ -89,7 +171,7 @@ export async function updateApplicationStatus(
             (s) => s.id === candidate?.general_status_id
           )?.code
 
-          if (currentCode === 'hired') {
+          if (currentCode === CANDIDATE_STATUS.HIRED) {
             await ctx.supabase
               .from('candidates')
               .update({ general_status_id: activeId })
@@ -123,7 +205,7 @@ export async function createApplication(input: {
 
   const statusesRaw = candidateCheck?.candidate_statuses as { code: string }[] | { code: string } | null
   const generalCode = Array.isArray(statusesRaw) ? statusesRaw[0]?.code : (statusesRaw as { code: string } | null)?.code
-  if (generalCode && generalCode !== 'active') {
+  if (generalCode && generalCode !== CANDIDATE_STATUS.ACTIVE) {
     return { success: false, error: 'Only active candidates can be added to a vacancy.' }
   }
 
@@ -131,7 +213,7 @@ export async function createApplication(input: {
   const { data: activeStatusesRaw } = await ctx.supabase
     .from('application_statuses')
     .select('id, code')
-    .in('code', ['applied', 'screening', 'interview', 'offer'])
+    .in('code', ACTIVE_APPLICATION_STATUS_CODES)
 
   const activeStatusIds = (activeStatusesRaw || []).map((s) => s.id)
 
@@ -144,8 +226,11 @@ export async function createApplication(input: {
     .is('deleted_at', null)
     .in('status_id', activeStatusIds)
 
-  if ((count ?? 0) >= 5) {
-    return { success: false, error: 'This candidate is already being considered for 5 vacancies. Move or close one before adding a new one.' }
+  if ((count ?? 0) >= MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE) {
+    return {
+      success: false,
+      error: `This candidate is already active on ${MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one.`,
+    }
   }
 
   // Prevent duplicate application to the same vacancy
@@ -161,7 +246,7 @@ export async function createApplication(input: {
   if (existing) return { success: false, error: 'This candidate is already being considered for this vacancy.' }
 
   // Get the "applied" status id
-  const appliedStatus = (activeStatusesRaw || []).find((s) => s.code === 'applied')
+  const appliedStatus = (activeStatusesRaw || []).find((s) => s.code === APPLICATION_STATUS.APPLIED)
   if (!appliedStatus) return { success: false, error: 'Application status configuration missing.' }
 
   const { data, error } = await ctx.supabase
@@ -253,10 +338,9 @@ export async function rejectApplication(input: {
     .neq('id', input.applicationId)
 
   type AppWithStatus = { id: string; application_statuses: { code: string } | { code: string }[] | null }
-  const hasOtherHired = (hiredApps as AppWithStatus[] || []).some((a) => {
-    const s = a.application_statuses
-    return s && (Array.isArray(s) ? s[0]?.code === 'hired' : s.code === 'hired')
-  })
+  const hasOtherHired = (hiredApps as AppWithStatus[] || []).some(
+    (a) => unwrapStatusRelation(a.application_statuses)?.code === APPLICATION_STATUS.HIRED
+  )
 
   if (!hasOtherHired) {
     const { data: candidate } = await ctx.supabase
@@ -269,8 +353,8 @@ export async function rejectApplication(input: {
       (s) => s.id === candidate?.general_status_id
     )?.code
 
-    if (currentCode === 'hired') {
-      const activeId = statusMap.get('active')
+    if (currentCode === CANDIDATE_STATUS.HIRED) {
+      const activeId = statusMap.get(CANDIDATE_STATUS.ACTIVE)
       if (activeId) {
         await ctx.supabase
           .from('candidates')
@@ -338,8 +422,10 @@ export async function rejectApplication(input: {
           customBody: finalBody,
         })
       }
-    } catch {
-      // Email failure is non-fatal; status was already updated
+    } catch (err) {
+      // Email failure is non-fatal; status was already updated. Log so the
+      // operator can investigate Resend / template / SMTP issues.
+      console.error('[applications] rejection email send failed:', err)
     }
   }
 

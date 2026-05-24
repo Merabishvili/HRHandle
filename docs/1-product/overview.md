@@ -1,5 +1,15 @@
 # HRHandle — Product Overview
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 AI-assisted CV parsing surfaces structured candidate fields on both public-apply and internal "New Candidate" forms
+- 🆕 Candidate background (work history + education) is now first-class
+- 🆕 LinkedIn integration (manual page-ID) lets owners/admins re-post vacancies from within the app
+
+---
+
 ## Purpose
 
 HRHandle is a SaaS applicant tracking system (ATS) for small-to-medium businesses and recruiting teams. It centralises the end-to-end recruitment workflow: creating job vacancies, sourcing and tracking candidates, managing applications through a pipeline, scheduling interviews, and communicating with candidates via email.

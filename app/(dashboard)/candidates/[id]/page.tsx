@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCandidateStatuses, getApplicationStatuses, getVacancyStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, Pencil, CalendarPlus, Calendar } from 'lucide-react'
+import { ChevronLeft, Pencil, CalendarPlus, Calendar, Video, ExternalLink } from 'lucide-react'
 import { StatusPill } from '@/components/ui/status-pill'
 import { SummaryStrip } from '@/components/candidates/summary-strip'
 import { ContactCard } from '@/components/candidates/contact-card'
@@ -11,6 +11,7 @@ import { MetadataFooter } from '@/components/candidates/metadata-footer'
 import { CandidateStatusSelect } from '@/components/candidates/candidate-status-select'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
 import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
+import { DeleteCandidateButton } from '@/components/candidates/delete-candidate-button'
 import { CandidateApplicationsList } from '@/components/candidates/candidate-applications-list'
 import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
@@ -43,18 +44,10 @@ interface CandidateRow {
   deleted_at: string | null
 }
 
-interface CandidateStatusOption {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-}
-
-interface AppStatusRow {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-  sort_order: number
-}
+import type {
+  CandidateStatusOption,
+  ApplicationStatusOption as AppStatusRow,
+} from '@/lib/types/database'
 
 interface ApplicationRow {
   id: string
@@ -373,6 +366,7 @@ export default async function CandidateDetailPage({
             currentStatusId={candidate.general_status_id}
             statusOptions={candidateStatuses}
           />
+          <DeleteCandidateButton candidateId={id} candidateName={fullName} />
           <Button asChild size="sm" className="h-9 gap-1.5">
             <Link href={`/candidates/${id}/edit`}>
               <Pencil className="h-3.5 w-3.5" />
@@ -489,14 +483,33 @@ export default async function CandidateDetailPage({
             </div>
             {interviews.length > 0 ? (
               <div className="space-y-2">
-                {interviews.slice(0, 3).map((iv) => (
-                  <div key={iv.id} className="rounded-lg bg-muted/50 px-3 py-2.5">
-                    <p className="text-[13px] font-medium capitalize text-foreground">{iv.type} Interview</p>
-                    <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-                      {format(new Date(iv.scheduled_at), 'MMM d, yyyy · h:mm a')}
-                    </p>
-                  </div>
-                ))}
+                {interviews.slice(0, 3).map((iv) => {
+                  const meetLink = iv.google_meet_link || iv.meeting_link
+                  return (
+                    <div key={iv.id} className="rounded-lg bg-muted/50 px-3 py-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-medium capitalize text-foreground">{iv.type} Interview</p>
+                          <p className="mt-0.5 text-[11.5px] text-muted-foreground">
+                            {format(new Date(iv.scheduled_at), 'MMM d, yyyy · h:mm a')}
+                          </p>
+                        </div>
+                        {meetLink && (
+                          <a
+                            href={meetLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20"
+                          >
+                            <Video className="h-3 w-3" />
+                            Join
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
                 {interviews.length > 3 && (
                   <p className="text-center text-xs text-muted-foreground">+{interviews.length - 3} more</p>
                 )}

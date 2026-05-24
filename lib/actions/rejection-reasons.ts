@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { isOrgAdmin } from '@/lib/permissions'
 
 export interface RejectionReason {
   id: string
@@ -32,7 +33,7 @@ export async function createRejectionReason(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can manage rejection reasons.' }
   }
 
@@ -72,7 +73,7 @@ export async function updateRejectionReason(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can manage rejection reasons.' }
   }
 
@@ -96,7 +97,7 @@ export async function deleteRejectionReason(id: string): Promise<ActionResult<vo
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can manage rejection reasons.' }
   }
 

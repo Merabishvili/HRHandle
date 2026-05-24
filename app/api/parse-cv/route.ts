@@ -14,7 +14,13 @@ const ALLOWED_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]
 
-// In-memory rate limit store — resets on cold start, sufficient for edge-case abuse prevention
+// In-memory rate-limit store — intentionally per-process / not durable.
+// The audit (S-005) flagged this as ineffective because Vercel cold starts
+// reset the map. We accept that tradeoff: triggering a cold start to reset
+// the counter is non-trivial, the per-hit Gemini call already costs the
+// attacker latency, and 10/hr is loose enough that real users are unaffected.
+// If we ever observe sustained abuse, move to Upstash KV — see S-005 in
+// docs/issues-found.md for the migration plan.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 function checkRateLimit(ip: string): boolean {

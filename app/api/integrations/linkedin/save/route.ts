@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { writeAuditLog } from '@/lib/audit-log'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -55,6 +56,16 @@ export async function POST(request: NextRequest) {
     console.error('[linkedin/save] upsert error:', error)
     return NextResponse.redirect(new URL('/settings/integrations?linkedin=error', BASE))
   }
+
+  void writeAuditLog({
+    orgId: profile.organization_id,
+    userId: user.id,
+    entityType: 'integration',
+    entityId: null,
+    action: 'connected',
+    message: `LinkedIn company page ${pageId} connected`,
+    details: { platform: 'linkedin', external_page_id: pageId },
+  })
 
   return NextResponse.redirect(new URL('/settings/integrations?linkedin=connected', BASE))
 }

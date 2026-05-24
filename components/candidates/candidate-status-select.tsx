@@ -69,7 +69,10 @@ export function CandidateStatusSelect({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={isPending}>
-        <button className="inline-flex items-center gap-1 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <button
+          aria-label={`Candidate status: ${activeOption.name}. Click to change.`}
+          className="inline-flex items-center gap-1 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <Badge
             variant="secondary"
             className={cn(
@@ -77,9 +80,9 @@ export function CandidateStatusSelect({
               'cursor-pointer select-none pr-1.5'
             )}
           >
-            {isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
+            {isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" aria-hidden="true" /> : null}
             {activeOption.name}
-            <ChevronDown className="ml-1 h-3 w-3 opacity-60" />
+            <ChevronDown className="ml-1 h-3 w-3 opacity-60" aria-hidden="true" />
           </Badge>
         </button>
       </DropdownMenuTrigger>

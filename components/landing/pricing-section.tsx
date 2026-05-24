@@ -26,7 +26,7 @@ export function PricingSection({ plans, campaign, campaignActive }: PricingSecti
       {campaignActive && (
         <div className="mb-6 flex justify-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-medium text-orange-700">
-            <Zap className="h-4 w-4" />
+            <Zap className="h-4 w-4" aria-label="Promotion" />
             🌸 {campaign.name} — special pricing until{' '}
             {new Date(campaign.endDate).toLocaleDateString('en-US', {
               month: 'long',
@@ -38,10 +38,18 @@ export function PricingSection({ plans, campaign, campaignActive }: PricingSecti
       )}
 
       <div className="mb-10 flex justify-center">
-        <div className="inline-flex items-center rounded-full border border-border bg-muted p-1">
+        <div
+          role="radiogroup"
+          aria-label="Billing cycle"
+          className="inline-flex items-center rounded-full border border-border bg-muted p-1"
+        >
           <button
+            type="button"
+            role="radio"
+            aria-checked={billing === 'monthly'}
+            aria-label="Monthly billing"
             onClick={() => setBilling('monthly')}
-            className={`relative rounded-full px-5 py-2 text-sm font-medium transition-all ${
+            className={`relative rounded-full px-5 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               billing === 'monthly'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
@@ -55,8 +63,12 @@ export function PricingSection({ plans, campaign, campaignActive }: PricingSecti
             )}
           </button>
           <button
+            type="button"
+            role="radio"
+            aria-checked={billing === 'annual'}
+            aria-label="Annual billing"
             onClick={() => setBilling('annual')}
-            className={`relative rounded-full px-5 py-2 text-sm font-medium transition-all ${
+            className={`relative rounded-full px-5 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               billing === 'annual'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'

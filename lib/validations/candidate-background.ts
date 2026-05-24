@@ -1,3 +1,12 @@
+// Boundary with `./candidate.ts`:
+//   - `candidate.ts` validates the `candidates` table row (name, email,
+//     contact info) — used by the manual create/edit form.
+//   - This file validates related rows (`candidate_experience`,
+//     `candidate_education`) AND the AI-parsed CV envelope (`ParsedCVSchema`).
+// The inner experience/education objects inside `ParsedCVSchema` deliberately
+// have relaxed nullability vs. `ExperienceEntrySchema`/`EducationEntrySchema`
+// because the AI output is best-effort and any field may be missing. The
+// stricter per-row schemas are applied later when a user saves an entry.
 import { z } from 'zod'
 
 export const ExperienceEntrySchema = z.object({

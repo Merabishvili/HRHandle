@@ -13,8 +13,10 @@ const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
 })
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hrhandle.com'
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://hrhandle.com'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'HRHandle — Applicant Tracking System for Growing Teams',
     template: '%s — HRHandle',
@@ -36,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://hrhandle.com',
+    url: SITE_URL,
     siteName: 'HRHandle',
     title: 'HRHandle — Applicant Tracking System for Growing Teams',
     description:
@@ -58,7 +60,7 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   alternates: {
-    canonical: 'https://hrhandle.com',
+    canonical: SITE_URL,
   },
   robots: {
     index: true,

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import type { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -18,9 +19,11 @@ import { PRICING_PLANS } from '@/lib/types/subscription'
 import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
 import { PricingSection } from '@/components/landing/pricing-section'
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hrhandle.com'
+
 export const metadata: Metadata = {
   alternates: {
-    canonical: 'https://hrhandle.com',
+    canonical: SITE_URL,
   },
 }
 
@@ -30,7 +33,7 @@ const jsonLd = {
   name: 'HRHandle',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
-  url: 'https://hrhandle.com',
+  url: SITE_URL,
   description:
     'HRHandle is a modern applicant tracking system that helps teams manage vacancies, evaluate candidates with structured scoring, schedule interviews, and share roles on LinkedIn.',
   offers: [
@@ -59,15 +62,19 @@ const jsonLd = {
   provider: {
     '@type': 'Organization',
     name: 'HRHandle',
-    url: 'https://hrhandle.com',
+    url: SITE_URL,
   },
 }
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // CSP nonce (S-014): middleware sets `x-nonce` per request; the inline
+  // JSON-LD script needs it so it isn't blocked once we tighten the CSP.
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   return (
     <div className="min-h-screen">
       <script
         type="application/ld+json"
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
@@ -75,7 +82,7 @@ export default function LandingPage() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Briefcase className="h-5 w-5 text-primary-foreground" />
+                <Briefcase className="h-5 w-5 text-primary-foreground" aria-hidden="true" />
               </div>
               <span className="text-xl font-bold text-foreground">HRHandle</span>
             </div>
@@ -138,7 +145,10 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-20 grid grid-cols-2 gap-8 md:grid-cols-4">
+          <dl
+            aria-label="Key metrics"
+            className="mt-20 grid grid-cols-2 gap-8 md:grid-cols-4"
+          >
             {[
               { label: 'Hiring Steps Automated', value: '10+' },
               { label: 'Avg. Time-to-Hire Reduced', value: '40%' },
@@ -146,13 +156,13 @@ export default function LandingPage() {
               { label: 'Free Trial, No Card Required', value: '7 days' },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-3xl font-bold text-foreground sm:text-4xl">
+                <dt className="mt-1 text-sm text-muted-foreground order-2">{stat.label}</dt>
+                <dd className="text-3xl font-bold text-foreground sm:text-4xl order-1">
                   {stat.value}
-                </div>
-                <div className="mt-1 text-sm text-muted-foreground">{stat.label}</div>
+                </dd>
               </div>
             ))}
-          </div>
+          </dl>
         </div>
       </section>
 
@@ -281,7 +291,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Briefcase className="h-5 w-5 text-primary-foreground" />
+                <Briefcase className="h-5 w-5 text-primary-foreground" aria-hidden="true" />
               </div>
               <span className="text-xl font-bold text-foreground">HRHandle</span>
             </div>

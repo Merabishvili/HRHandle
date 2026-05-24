@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -50,9 +51,16 @@ function CopyButton({ text }: { text: string }) {
       variant="outline"
       size="sm"
       onClick={async () => {
-        await navigator.clipboard.writeText(text)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1500)
+        // navigator.clipboard.writeText can reject on insecure contexts
+        // (non-HTTPS) or when the Permissions API has been denied.
+        try {
+          await navigator.clipboard.writeText(text)
+          setCopied(true)
+          setTimeout(() => setCopied(false), 1500)
+        } catch (err) {
+          console.error('[linkedin-post-job] clipboard write failed:', err)
+          toast.error('Could not copy — please select the text manually.')
+        }
       }}
     >
       {copied ? (

@@ -53,12 +53,7 @@ interface CandidateRow {
   updated_at: string
 }
 
-interface CandidateStatusOption {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-  sort_order: number
-}
+import type { CandidateStatusOption } from '@/lib/types/database'
 
 interface ApplicationRow {
   id: string
@@ -146,57 +141,50 @@ export default async function CandidatesPage({
     filterVacancyTitle = vacancy?.title || null
   }
 
+  // candidate_statuses is selected so PostgREST can `.order('candidate_statuses(sort_order)')`
+  // when sort === 'status'. The actual sort_order value is not used by the row
+  // type below; it's only there for the DB-side sort path (F-010).
   const FIELDS = `
     id, first_name, last_name, email, phone, current_company,
     current_position, years_of_experience, source, general_status_id,
-    created_at, updated_at
+    created_at, updated_at,
+    candidate_statuses (sort_order)
   `
 
-  let baseQuery = supabase
-    .from('candidates')
-    .select(FIELDS, { count: 'exact' })
-    .eq('organization_id', organizationId)
-    .is('deleted_at', null)
+  // If a vacancy filter is applied but no candidates have applied to it, skip
+  // the candidates query entirely instead of running a doomed query with a
+  // fake UUID. (BL-001)
+  const forceEmpty =
+    !!vacancyFilter && (!candidateIdsForFilter || candidateIdsForFilter.length === 0)
 
-  // Search filter
-  if (search.trim()) {
-    baseQuery = baseQuery.or(
-      `first_name.ilike.%${search.trim()}%,last_name.ilike.%${search.trim()}%`
-    )
-  }
-
-  // Status filter
-  if (statusFilter) {
-    baseQuery = baseQuery.eq('general_status_id', statusFilter)
-  }
-
-  // Vacancy filter
-  if (vacancyFilter) {
-    if (!candidateIdsForFilter || candidateIdsForFilter.length === 0) {
-      baseQuery = baseQuery.in('id', ['00000000-0000-0000-0000-000000000000'])
-    } else {
-      baseQuery = baseQuery.in('id', candidateIdsForFilter)
-    }
-  }
-
-  // Status sort: fetch all then sort in-memory (status is in a related table)
   let candidates: CandidateRow[]
   let totalCount: number | null
 
-  if (sort === 'status') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: allRaw, count } = await (baseQuery as any).order('created_at', { ascending: false })
-    totalCount = count
-    const statusSortOrder = new Map(candidateStatuses.map((s) => [s.id, s.sort_order]))
-    const sorted = ((allRaw || []) as CandidateRow[]).sort((a, b) => {
-      const aOrder = a.general_status_id ? (statusSortOrder.get(a.general_status_id) ?? 999) : 999
-      const bOrder = b.general_status_id ? (statusSortOrder.get(b.general_status_id) ?? 999) : 999
-      return aOrder - bOrder
-    })
-    candidates = sorted.slice(from, to + 1)
+  if (forceEmpty) {
+    candidates = []
+    totalCount = 0
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let sortedQuery: any = baseQuery
+    let baseQuery = supabase
+      .from('candidates')
+      .select(FIELDS, { count: 'exact' })
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null)
+
+    if (search.trim()) {
+      baseQuery = baseQuery.or(
+        `first_name.ilike.%${search.trim()}%,last_name.ilike.%${search.trim()}%`
+      )
+    }
+
+    if (statusFilter) {
+      baseQuery = baseQuery.eq('general_status_id', statusFilter)
+    }
+
+    if (vacancyFilter && candidateIdsForFilter && candidateIdsForFilter.length > 0) {
+      baseQuery = baseQuery.in('id', candidateIdsForFilter)
+    }
+
+    let sortedQuery = baseQuery.order('created_at', { ascending: false })
     switch (sort) {
       case 'created_asc':
         sortedQuery = baseQuery.order('created_at', { ascending: true })
@@ -207,8 +195,13 @@ export default async function CandidatesPage({
       case 'experience_asc':
         sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
         break
-      default:
-        sortedQuery = baseQuery.order('created_at', { ascending: false })
+      case 'status':
+        // F-010: order by the related candidate_statuses.sort_order so the
+        // DB does the paging instead of pulling every row into memory.
+        sortedQuery = baseQuery
+          .order('candidate_statuses(sort_order)', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: false })
+        break
     }
     const result = await sortedQuery.range(from, to)
     candidates = (result.data || []) as CandidateRow[]

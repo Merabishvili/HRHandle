@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Lock } from 'lucide-react'
+import { AUTH_CALLBACK_PATH } from '@/lib/types/constants'
 
 function GoogleIcon() {
   return (
@@ -62,7 +63,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
 
   function buildEmailRedirectTo() {
     const origin = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL
-      ? process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL.replace('/auth/callback', '')
+      ? process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL.replace(AUTH_CALLBACK_PATH, '')
       : window.location.origin
     return safeNext ? `${origin}${safeNext}` : `${origin}/dashboard`
   }

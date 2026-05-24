@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { isOrgAdmin } from '@/lib/permissions'
 export interface RejectionTemplate {
   id: string
   name: string
@@ -37,7 +38,7 @@ export async function createRejectionTemplate(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can manage rejection templates.' }
   }
 
@@ -91,7 +92,7 @@ export async function updateRejectionTemplate(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can manage rejection templates.' }
   }
 
@@ -129,7 +130,7 @@ export async function deleteRejectionTemplate(id: string): Promise<ActionResult<
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can manage rejection templates.' }
   }
 

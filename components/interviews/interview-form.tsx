@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { createInterview } from '@/lib/actions/interviews'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -206,6 +207,24 @@ export function InterviewForm({
       setError(result.error)
       setIsLoading(false)
       return
+    }
+
+    const w = result.data.warnings
+    // meet_creation_failed is the most actionable warning (user can reconnect
+    // Google to fix), so surface it on its own when present. Otherwise combine
+    // email + notification warnings.
+    if (w.includes('meet_creation_failed')) {
+      toast.warning(
+        'Interview scheduled, but the Google Meet link could not be created. Reconnect Google Calendar in Settings → Integrations and try again.',
+      )
+    } else if (w.includes('email_failed') && w.includes('notification_failed')) {
+      toast.warning('Interview scheduled, but the invitation email and in-app notification could not be sent.')
+    } else if (w.includes('email_failed')) {
+      toast.warning('Interview scheduled, but the invitation email could not be sent.')
+    } else if (w.includes('notification_failed')) {
+      toast.warning('Interview scheduled, but the in-app notification could not be sent.')
+    } else {
+      toast.success('Interview scheduled.')
     }
 
     router.push('/interviews')

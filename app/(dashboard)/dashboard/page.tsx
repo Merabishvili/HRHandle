@@ -27,13 +27,7 @@ interface CandidateRow {
   created_at: string
 }
 
-interface CandidateStatusRow {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-  is_active: boolean
-  sort_order: number
-}
+import type { CandidateStatusOption as CandidateStatusRow } from '@/lib/types/database'
 
 interface VacancyStatusRow {
   id: string

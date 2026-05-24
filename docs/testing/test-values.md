@@ -1,6 +1,67 @@
 # Test Values
 
-Reference table of valid, invalid, boundary, and edge-case test data for HRHandle.
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 CV-parsing edge cases (file types, magic bytes, size)
+- 🆕 LinkedIn page-ID accepted / rejected inputs
+- 🆕 Candidate experience & education edge cases (open-ended dates, future end dates, very long strings)
+- 🆕 Boundary values for new `candidates` columns (`location`, `timezone`, `languages`, `salary_expectation`, `notice_period`)
+
+---
+
+## CV Parse (added 2026-05-08)
+
+| Case | Value | Expected |
+|---|---|---|
+| Valid PDF | `<5 MB application/pdf>` starting with `%PDF-` | 200 + parsed JSON |
+| Valid DOCX | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` starting with `PK..` | 200 + parsed JSON |
+| Valid DOC | `application/msword` with OLE2 header | 200 + parsed JSON |
+| Wrong MIME | `cv.txt` `text/plain` | 400 `parse_failed` |
+| Too large | 11 MB PDF | 400 `parse_failed` |
+| Empty file | `cv.pdf` size 0 | 400 `parse_failed` |
+| Magic-byte mismatch | `text/plain` renamed to `cv.pdf` | 400 `parse_failed` |
+| Same IP, 11th call within hour | n/a | 429 `rate_limited` |
+| Parser timeout | n/a (simulate Gemini > 25 s) | 504 `timeout` |
+
+## LinkedIn Page ID (added 2026-05-08)
+
+| Case | Value | Expected |
+|---|---|---|
+| Numeric | `12345` | `?linkedin=connected` |
+| Full URL | `https://www.linkedin.com/company/12345/` | `?linkedin=connected` |
+| Shortened URL | `linkedin.com/company/acme-inc/` | `?linkedin=invalid_page_id` |
+| Plain text | `acme` | `?linkedin=invalid_page_id` |
+| Empty | `""` | `?linkedin=invalid_page_id` |
+
+## Candidate Profile (added 2026-05-08)
+
+| Field | Valid examples | Invalid examples |
+|---|---|---|
+| `location` (max 200) | `"Lisbon, Portugal"`, `""` (null OK) | 201-char string |
+| `timezone` (max 100) | `"Europe/London"`, `"UTC"` | Non-IANA strings still accepted (no enum check) |
+| `languages` (text[]) | `["en","pt"]`, `[]` | None (free-form) |
+| `salary_expectation` (max 200) | `"$80k–$100k"` | 201-char string |
+| `notice_period` (max 100) | `"2 weeks"`, `"1 month"` | 101-char string |
+
+## Candidate Experience (added 2026-05-08)
+
+| Case | Value | Expected |
+|---|---|---|
+| Current job | `start_date='2024-01-01'`, `end_date=null`, `is_current=true` | Insert OK |
+| Past job | `start_date='2022-01-01'`, `end_date='2023-12-31'`, `is_current=false` | Insert OK |
+| `YYYY-MM` form input | `"2024-01"` | Padded to `"2024-01-01"` by `padDate` helper |
+| Open-ended (no dates) | both null, `is_current=false` | Insert OK |
+| End before start | `start_date='2024-05-01'`, `end_date='2024-01-01'` | **Not currently rejected** — see `F-007` |
+
+## Plan Limits (added 2026-05-08)
+
+| Plan | vacancy_limit | candidate_limit | member_limit | Notes |
+|---|---|---|---|---|
+| trial | 5 | 100 | **2** | Was incorrectly 3 in earlier docs |
+| individual | 500 | 10 000 | 3 | $20/mo, $16/mo annual |
+| organization | 1 000 | 20 000 | 50 | $40/mo, $32/mo annual |
 
 ---
 

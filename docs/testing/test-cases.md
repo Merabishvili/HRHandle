@@ -1,5 +1,51 @@
 # Test Cases
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 CV-parsing test cases (apply form + new-candidate form)
+- 🆕 LinkedIn integration test cases (save / disconnect / share)
+- 🆕 Candidate experience & education CRUD test cases
+- 🆕 `member_limit = 2` regression test for trial onboarding (replaces previously assumed 3)
+- 🔄 RLS test cases need extending — current tests cover only the 3 tables with explicit RLS; app-level isolation needs explicit integration coverage (`S-rls-gaps`)
+
+---
+
+## New Test Cases (Added 2026-05-08)
+
+### TC-NEW-001 — CV parse on internal "New Candidate" form
+**Steps:** Upload a PDF in the new-candidate form. **Expected:** Form fields auto-fill (name, email, experience entries) within ~10 s; if parse fails, fields stay empty and a non-blocking message appears.
+
+### TC-NEW-002 — CV parse rate limit
+**Steps:** Submit > 10 CVs from the same IP within an hour via the public apply form. **Expected:** 11th request returns 429 `rate_limited`. **Note:** This test will fail on fresh deploys (in-memory limiter resets on cold start — issue `S-rate-limit-inmemory`).
+
+### TC-NEW-003 — CV parse rejects non-CV files
+**Steps:** Upload a `.txt` file. **Expected:** 400 `parse_failed`.
+
+### TC-NEW-004 — LinkedIn page-ID save accepts numeric & URL formats
+**Steps:** Connect LinkedIn integration with (a) `"12345"` and (b) `"https://linkedin.com/company/12345/"`. **Expected:** Both end on `/settings/integrations?linkedin=connected`.
+
+### TC-NEW-005 — LinkedIn page-ID save rejects garbage
+**Steps:** Connect with `"abcd"`. **Expected:** Redirect to `/settings/integrations?linkedin=invalid_page_id`.
+
+### TC-NEW-006 — Candidate experience CRUD
+**Steps:** Create, edit, mark current, delete an experience entry. **Expected:** All actions update `candidate_experience` rows; activity feed shows the entries.
+
+### TC-NEW-007 — Candidate education CRUD
+**Steps:** Same as TC-NEW-006 for education. **Expected:** Updates `candidate_education` rows.
+
+### TC-NEW-008 — Trial onboarding member-limit = 2
+**Steps:** New user completes onboarding. Invite 2 members → both work. Invite a 3rd → blocked with PLAN_LIMIT error. **Expected:** Trial caps team at owner + 1 invitee (member_limit=2).
+
+### TC-NEW-009 — Candidate profile fields (location/timezone/languages/etc.)
+**Steps:** Edit a candidate, set every new field, save. **Expected:** Values persist and round-trip through the edit form.
+
+### TC-NEW-010 — `candidate_activity` view kind/headline rename
+**Steps:** Open a candidate with applications, notes, documents, interviews. **Expected:** Activity feed shows all four kinds with correct headlines (`"Applied to <title>"`, `"Note added"`, `"Document uploaded: …"`, `"<Type> interview scheduled"`).
+
+---
+
 ## Auth
 
 ### TC-001
@@ -1186,22 +1232,12 @@
 
 ### TC-089
 **Feature:** Health Check  
-**Description:** Health endpoint returns 200 when database is reachable  
-**Preconditions:** Database connected  
+**Description:** Liveness endpoint returns 200 when the Next.js function is serving  
+**Preconditions:** App deployed  
 **Steps:**
 1. Call `GET /api/health`
-**Expected Result:** `{ status: "ok", checks: { database: "ok" } }`  
+**Expected Result:** HTTP 200 with body `{ "status": "ok" }`  
 **Priority:** Medium  
 **Type:** Integration
 
----
-
-### TC-090
-**Feature:** Health Check  
-**Description:** Health endpoint returns 503 when database is unreachable  
-**Preconditions:** Database unavailable  
-**Steps:**
-1. Call `GET /api/health`
-**Expected Result:** `{ status: "degraded", checks: { database: "error" } }` with HTTP 503  
-**Priority:** Medium  
-**Type:** Integration
+_TC-090 (DB unreachable → 503) removed 2026-05-23: the health endpoint no longer queries the database (see `docs/issues-found.md` S-001). DB health is monitored via Supabase's own status page, not this endpoint._

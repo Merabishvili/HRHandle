@@ -1,5 +1,8 @@
 import { withSentryConfig } from '@sentry/nextjs'
 
+// Static headers applied to every response. Content-Security-Policy lives in
+// middleware.ts (lib/security-headers.ts) because it needs a per-request nonce
+// to support `'strict-dynamic'` hardening (S-014 / C-015).
 const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
   { key: 'X-Frame-Options', value: 'DENY' },
@@ -9,21 +12,6 @@ const securityHeaders = [
   {
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload',
-  },
-  {
-    key: 'Content-Security-Policy',
-    value: [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.sentry-cdn.com https://*.sentry.io https://vercel.live https://*.vercel.live",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https:",
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://vercel.live https://*.vercel.live wss://*.pusher.com https://*.pusher.com",
-      "frame-src https://vercel.live https://*.vercel.live",
-      "frame-ancestors 'none'",
-      "form-action 'self'",
-      "base-uri 'self'",
-    ].join('; '),
   },
 ]
 

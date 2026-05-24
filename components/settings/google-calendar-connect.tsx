@@ -27,13 +27,22 @@ export function GoogleCalendarConnect({ isConnected }: GoogleCalendarConnectProp
           <AlertDescription>Google Calendar disconnected.</AlertDescription>
         </Alert>
       )}
-      {(status === 'error' || status === 'not_configured') && (
+      {(status === 'error' || status === 'not_configured' || status === 'state_mismatch' || status === 'token_exchange_failed' || status === 'scope_missing' || status === 'denied') && (
         <Alert variant="destructive">
           <XCircle className="h-4 w-4" />
           <AlertDescription>
-            {status === 'not_configured'
-              ? 'Google OAuth credentials are not configured on the server.'
-              : 'Failed to connect Google Calendar. Please try again.'}
+            {status === 'not_configured' &&
+              'Google OAuth credentials are not configured on the server.'}
+            {status === 'state_mismatch' &&
+              'Connection timed out or your browser blocked the security cookie. Try again and complete the Google consent within 10 minutes.'}
+            {status === 'token_exchange_failed' &&
+              'Google rejected the authorisation code. Check the server logs for the underlying error and try again.'}
+            {status === 'scope_missing' &&
+              'You did not grant the Calendar permission needed to create Meet links. Please click Connect Google again and approve all requested permissions.'}
+            {status === 'denied' &&
+              'You declined the Google permission prompt. Click Connect Google to try again.'}
+            {status === 'error' &&
+              'Failed to connect Google Calendar. Please try again.'}
           </AlertDescription>
         </Alert>
       )}

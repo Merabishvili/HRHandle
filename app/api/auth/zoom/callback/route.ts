@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { exchangeZoomCode } from '@/lib/zoom/meetings'
+import { writeAuditLog } from '@/lib/audit-log'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
   const savedState = cookieStore.get('zoom_oauth_state')?.value
 
   if (!code || !state || state !== savedState) {
-    return NextResponse.redirect(new URL('/settings?zoom=error', BASE))
+    return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
   }
 
   cookieStore.delete('zoom_oauth_state')
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   const tokens = await exchangeZoomCode(code)
   if (!tokens) {
-    return NextResponse.redirect(new URL('/settings?zoom=error', BASE))
+    return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
   }
 
   const admin = createAdminClient()
@@ -44,8 +45,26 @@ export async function GET(request: NextRequest) {
     .eq('id', user.id)
 
   if (error) {
-    return NextResponse.redirect(new URL('/settings?zoom=error', BASE))
+    return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
   }
 
-  return NextResponse.redirect(new URL('/settings?zoom=connected', BASE))
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.organization_id) {
+    void writeAuditLog({
+      orgId: profile.organization_id,
+      userId: user.id,
+      entityType: 'integration',
+      entityId: null,
+      action: 'connected',
+      message: 'Zoom integration connected',
+      details: { platform: 'zoom' },
+    })
+  }
+
+  return NextResponse.redirect(new URL('/settings/integrations?zoom=connected', BASE))
 }

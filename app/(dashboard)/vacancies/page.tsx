@@ -151,8 +151,7 @@ export default async function VacanciesPage({
   let totalCount: number | null
 
   if (sort === 'status') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: allRaw, count } = await (baseQuery as any).order('created_at', { ascending: false })
+    const { data: allRaw, count } = await baseQuery.order('created_at', { ascending: false })
     totalCount = count
     const statusSortOrder = new Map(statusOptions.map((s) => [s.id, s.sort_order]))
     const sorted = ((allRaw || []) as VacancyRow[]).sort((a, b) => {
@@ -162,8 +161,7 @@ export default async function VacanciesPage({
     })
     vacancies = sorted.slice(from, to + 1)
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let sortedQuery: any = baseQuery
+    let sortedQuery = baseQuery.order('created_at', { ascending: false })
     switch (sort) {
       case 'created_asc':
         sortedQuery = baseQuery.order('created_at', { ascending: true })
@@ -174,8 +172,6 @@ export default async function VacanciesPage({
       case 'end_desc':
         sortedQuery = baseQuery.order('end_date', { ascending: false, nullsFirst: false })
         break
-      default:
-        sortedQuery = baseQuery.order('created_at', { ascending: false })
     }
     const result = await sortedQuery.range(from, to)
     vacancies = (result.data || []) as VacancyRow[]

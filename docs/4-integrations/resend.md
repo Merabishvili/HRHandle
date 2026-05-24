@@ -1,5 +1,13 @@
 # Resend Email Integration
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 No code changes since previous audit. Send failures still log via `console.error` and are non-fatal (caller continues). See `M-silent-email-failures` for the suggestion to wire these into Sentry.
+
+---
+
 ## Overview
 
 Transactional emails are sent via the [Resend](https://resend.com) API. The `resend` npm package (v6.12.2) is used. All email sending is server-side only.

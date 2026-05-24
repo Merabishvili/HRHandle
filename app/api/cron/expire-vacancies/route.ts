@@ -4,6 +4,12 @@ import { timingSafeEqual } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
+if (!process.env.CRON_SECRET) {
+  console.warn(
+    '[cron/expire-vacancies] CRON_SECRET is not set — every request will 401. Set it on Vercel + .env.local to enable the cron.',
+  )
+}
+
 function isAuthorized(authHeader: string | null): boolean {
   const secret = process.env.CRON_SECRET
   if (!secret || !authHeader) return false

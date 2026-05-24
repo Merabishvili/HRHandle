@@ -1,5 +1,14 @@
 # Supabase Integration
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 (revised 2026-05-08) Live-DB verification confirms RLS is enabled on every public table with ≥1 policy. The "RLS gaps" claim from an earlier audit pass was a false positive — see retraction of `S-004` in `docs/issues-found.md`.
+- 🆕 `candidate_activity` view rebuilt with column rename (`type→kind`, `title→headline`) + new `body`, `actor_name` columns. Direct consumers must update field names.
+
+---
+
 ## Auth Flows
 
 ### Email/Password Sign-up
@@ -107,7 +116,6 @@ Same pattern as Google but `provider: 'azure'` with `scopes: 'email'`.
 - `app/api/auth/google/callback/route.ts`
 - `app/api/auth/zoom/callback/route.ts`
 - `app/api/auth/microsoft/callback/route.ts`
-- `app/api/health/route.ts`
 - `app/api/cron/expire-vacancies/route.ts`
 - `app/apply/[token]/page.tsx`
 - `app/jobs/[slug]/page.tsx`

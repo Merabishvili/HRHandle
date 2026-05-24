@@ -27,6 +27,7 @@ import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applications-list'
 import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
+import { DeleteVacancyButton } from '@/components/vacancies/delete-vacancy-button'
 import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
 import { AddCandidateToVacancyDialog } from '@/components/vacancies/add-candidate-to-vacancy-dialog'
 import { LinkedInPostJobButton } from '@/components/vacancies/linkedin-post-job-button'
@@ -84,11 +85,10 @@ interface SectorRow {
   code: string
 }
 
-interface CandidateGeneralStatusRow {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-}
+import type {
+  CandidateStatusOption as CandidateGeneralStatusRow,
+  ApplicationStatusOption as AppStatusRow,
+} from '@/lib/types/database'
 
 interface ApplicationRow {
   id: string
@@ -96,13 +96,6 @@ interface ApplicationRow {
   vacancy_id: string
   status_id: string | null
   applied_at: string
-}
-
-interface AppStatusRow {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-  sort_order: number
 }
 
 interface CandidateRow {
@@ -419,6 +412,7 @@ export default async function VacancyDetailPage({
             </Link>
           </Button>
           <DuplicateVacancyButton vacancyId={id} />
+          <DeleteVacancyButton vacancyId={id} vacancyTitle={vacancy.title} />
           <Button asChild>
             <Link href={`/vacancies/${id}/edit`}>
               <Edit className="mr-2 h-4 w-4" />Edit Vacancy
@@ -503,9 +497,7 @@ export default async function VacancyDetailPage({
                           : '?',
                         appliedAt: application.applied_at,
                         statusId: application.status_id,
-                        generalStatus: generalStatus
-                          ? { id: generalStatus.id, name: generalStatus.name, code: generalStatus.code }
-                          : null,
+                        generalStatus: generalStatus ?? null,
                         existingEvaluation: evaluationsByApp.get(application.id) ?? null,
                       }
                     })}

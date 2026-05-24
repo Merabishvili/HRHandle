@@ -1,5 +1,15 @@
 # Local Development Setup
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 Set `GOOGLE_GEMINI_API_KEY` if you want CV parsing to work locally — otherwise parse calls return `parse_failed` silently
+- 🆕 Set `CRON_SECRET` to any random string if you want to test `/api/cron/expire-vacancies` locally
+- 🆕 Turnstile test site key `1x00000000000000000000AA` (always passes) is recommended for local — saves you setting up a real key
+
+---
+
 ## Prerequisites
 
 - Node.js 20+ (Next.js 16 requires Node 20+)

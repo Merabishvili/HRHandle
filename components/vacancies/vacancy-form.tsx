@@ -76,7 +76,7 @@ export function VacancyForm({
     start_date: vacancy?.start_date || '',
     end_date: vacancy?.end_date || null,
     description: vacancy?.description || '',
-    responsibilities: (vacancy as any)?.responsibilities || '',
+    responsibilities: vacancy?.responsibilities || '',
     requirements: vacancy?.requirements || '',
     show_on_public_page: vacancy?.show_on_public_page ?? false,
   })
@@ -138,22 +138,30 @@ export function VacancyForm({
       start_date: formData.start_date,
       end_date: formData.end_date || null,
       description: formData.description.trim(),
-      responsibilities: (formData as any).responsibilities?.trim() || null,
+      responsibilities: formData.responsibilities?.trim() || null,
       requirements: formData.requirements?.trim() || null,
-      show_on_public_page: (formData as any).show_on_public_page ?? false,
+      show_on_public_page: formData.show_on_public_page ?? false,
     }
 
-    const result = vacancy
-      ? await updateVacancy(vacancy.id, payload)
-      : await createVacancy(payload)
-
-    if (!result.success) {
-      setError(result.error)
-      setIsLoading(false)
-      return
+    let entityId: string | undefined
+    if (vacancy) {
+      const result = await updateVacancy(vacancy.id, payload)
+      if (!result.success) {
+        setError(result.error)
+        setIsLoading(false)
+        return
+      }
+      entityId = vacancy.id
+    } else {
+      const result = await createVacancy(payload)
+      if (!result.success) {
+        setError(result.error)
+        setIsLoading(false)
+        return
+      }
+      entityId = result.data.id
     }
 
-    const entityId = vacancy?.id ?? (result as any).data?.id
     if (entityId && customFieldGroups.length > 0) {
       const upserts = mapToValueUpserts(cfValues, customFieldGroups)
       if (upserts.length > 0) {
@@ -444,15 +452,15 @@ export function VacancyForm({
             <Textarea
               id="responsibilities"
               placeholder="• Lead backend architecture decisions&#10;• Collaborate with product and design&#10;• Mentor junior engineers..."
-              value={(formData as any).responsibilities || ''}
+              value={formData.responsibilities || ''}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setFormData({ ...formData, responsibilities: e.target.value } as any)
+                setFormData({ ...formData, responsibilities: e.target.value })
               }
               disabled={isLoading}
               rows={5}
               maxLength={5000}
             />
-            <p className="text-xs text-muted-foreground text-right">{((formData as any).responsibilities || '').length} / 5000</p>
+            <p className="text-xs text-muted-foreground text-right">{(formData.responsibilities || '').length} / 5000</p>
           </div>
 
           <div className="space-y-2">
@@ -477,9 +485,9 @@ export function VacancyForm({
             </div>
             <Switch
               id="show_on_public_page"
-              checked={(formData as any).show_on_public_page ?? false}
+              checked={formData.show_on_public_page ?? false}
               onCheckedChange={(checked) =>
-                setFormData({ ...formData, show_on_public_page: checked } as any)
+                setFormData({ ...formData, show_on_public_page: checked })
               }
               disabled={isLoading}
             />

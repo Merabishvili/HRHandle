@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { isOrgAdmin } from '@/lib/permissions'
 import {
   DEFAULT_TEMPLATES,
   resolveTemplate,
@@ -34,6 +35,14 @@ export async function getEmailTemplates(): Promise<
   return { success: true, data: result }
 }
 
+// HTML safety (S-016): admin-supplied template body is stored verbatim and
+// later interpolated into a transactional HTML email by `lib/email.ts`. We do
+// not sanitize HTML here because (a) the editing surface is restricted to
+// owner/admin roles, who already have privileged write access to the org's
+// data; (b) any XSS risk is on the recipient's email-client side, where most
+// modern clients strip <script>/<iframe>/event handlers; and (c) sanitizing
+// would block legitimate formatting (links, bold, etc.). Reassess if a
+// non-admin path to template editing is ever added.
 export async function saveEmailTemplate(
   templateType: TemplateType,
   subject: string,
@@ -42,7 +51,7 @@ export async function saveEmailTemplate(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can edit email templates.' }
   }
 
@@ -79,7 +88,7 @@ export async function resetEmailTemplate(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only admins can reset email templates.' }
   }
 

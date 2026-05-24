@@ -1,5 +1,13 @@
 # Microsoft Integration
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 No flow changes. Note: Microsoft redirects use `/settings/integrations?microsoft=*` while Google & Zoom use `/settings?google=*` / `/settings?zoom=*` — the inconsistency is tracked as `BL-microsoft-redirect` in `docs/issues-found.md`.
+
+---
+
 ## Overview
 
 Microsoft integration serves two purposes:

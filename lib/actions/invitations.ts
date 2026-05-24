@@ -6,11 +6,15 @@ import { getAuthContext, checkPlanLimit, type ActionResult } from './index'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendTeamInviteEmail } from '@/lib/email'
+import { createOrgNotifications } from '@/lib/actions/notifications'
+import { isOrgAdmin } from '@/lib/permissions'
 
 const InviteSchema = z.object({
   email: z.string().email('Invalid email address'),
   role: z.enum(['admin', 'member']),
 })
+
+const MAX_INVITES_PER_USER_PER_HOUR = 25
 
 export async function inviteTeamMember(
   email: string,
@@ -19,7 +23,7 @@ export async function inviteTeamMember(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only owners and admins can invite team members' }
   }
 
@@ -52,6 +56,20 @@ export async function inviteTeamMember(
 
   if (existingInvite) {
     return { success: false, error: 'An invitation is already pending for this email.' }
+  }
+
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count: recentInvites } = await ctx.supabase
+    .from('team_invitations')
+    .select('id', { count: 'exact', head: true })
+    .eq('invited_by', ctx.userId)
+    .gte('created_at', oneHourAgo)
+
+  if ((recentInvites ?? 0) >= MAX_INVITES_PER_USER_PER_HOUR) {
+    return {
+      success: false,
+      error: 'Too many invitations sent recently. Please try again in an hour.',
+    }
   }
 
   const admin = createAdminClient()
@@ -91,6 +109,29 @@ export async function inviteTeamMember(
     return { success: false, error: 'Failed to send invitation email. Please try again.' }
   }
 
+  // Notify other org owners + admins (not the sender) that an invite went out.
+  // Best-effort: failures are logged but don't roll back the invitation.
+  try {
+    const { data: members } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('organization_id', ctx.orgId)
+      .in('role', ['owner', 'admin'])
+      .neq('id', ctx.userId)
+
+    const recipientIds = (members || []).map((m) => m.id)
+    if (recipientIds.length > 0) {
+      await createOrgNotifications(ctx.orgId, recipientIds, {
+        type: 'team_invite_sent',
+        title: `Team invite sent to ${parsed.data.email}`,
+        body: `${inviterProfile?.full_name || 'A team member'} invited a new ${parsed.data.role}`,
+        link: '/settings/team',
+      })
+    }
+  } catch (err) {
+    console.error('[invitations] post-send notification failed:', err)
+  }
+
   revalidatePath('/settings')
   return { success: true, data: undefined }
 }
@@ -99,7 +140,7 @@ export async function revokeInvitation(invitationId: string): Promise<ActionResu
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+  if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only owners and admins can revoke invitations' }
   }
 
@@ -132,7 +173,8 @@ export async function acceptInvitation(token: string): Promise<ActionResult<{ or
 
   if (!invite) return { success: false, error: 'Invitation not found or already used.' }
   if (invite.status !== 'pending') return { success: false, error: 'This invitation has already been used or revoked.' }
-  if (new Date(invite.expires_at) < new Date()) return { success: false, error: 'This invitation has expired.' }
+  const now = new Date()
+  if (new Date(invite.expires_at) <= now) return { success: false, error: 'This invitation has expired.' }
 
   // Verify the logged-in user's email matches the invited email
   if (!user.email || invite.email.toLowerCase() !== user.email.toLowerCase()) {

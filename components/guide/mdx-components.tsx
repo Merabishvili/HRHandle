@@ -16,14 +16,20 @@ export const guideMdxComponents: MDXComponents = {
   ul: ({ children }) => <ul className="mb-4 ml-6 list-disc space-y-1 text-foreground/90">{children}</ul>,
   ol: ({ children }) => <ol className="mb-4 ml-6 list-decimal space-y-1 text-foreground/90">{children}</ol>,
   li: ({ children }) => <li className="leading-7">{children}</li>,
-  a: ({ href, children }) => (
-    <a
-      href={href}
-      className="text-foreground underline decoration-foreground/30 underline-offset-4 hover:decoration-foreground"
-    >
-      {children}
-    </a>
-  ),
+  a: ({ href, children }) => {
+    // C-016: external links open in a new tab and get rel="noopener noreferrer"
+    // to prevent reverse-tab-nabbing. Internal links keep default behaviour.
+    const isExternal = typeof href === 'string' && /^https?:\/\//i.test(href)
+    return (
+      <a
+        href={href}
+        className="text-foreground underline decoration-foreground/30 underline-offset-4 hover:decoration-foreground"
+        {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      >
+        {children}
+      </a>
+    )
+  },
   strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
   code: ({ children }) => (
     <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">{children}</code>

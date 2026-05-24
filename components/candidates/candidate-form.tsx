@@ -51,7 +51,7 @@ interface PendingFile {
 
 interface CandidateFormProps {
   candidate?: Candidate
-  vacancies: Vacancy[]
+  vacancies: Pick<Vacancy, 'id' | 'title'>[]
   defaultVacancyId?: string
   candidateStatuses: CandidateGeneralStatus[]
   defaultApplicationStatusId?: string | null

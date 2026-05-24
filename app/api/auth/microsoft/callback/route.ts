@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { exchangeMicrosoftCode } from '@/lib/microsoft/graph'
+import { writeAuditLog } from '@/lib/audit-log'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -45,6 +46,24 @@ export async function GET(request: NextRequest) {
       microsoft_token_expiry: Date.now() + tokens.expires_in * 1000,
     })
     .eq('id', user.id)
+
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.organization_id) {
+    void writeAuditLog({
+      orgId: profile.organization_id,
+      userId: user.id,
+      entityType: 'integration',
+      entityId: null,
+      action: 'connected',
+      message: 'Microsoft Teams integration connected',
+      details: { platform: 'microsoft_teams' },
+    })
+  }
 
   return NextResponse.redirect(new URL('/settings/integrations?microsoft=connected', BASE))
 }

@@ -1,5 +1,13 @@
 # Cloudflare Turnstile Integration
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 No code changes. Reminder: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is read directly from `process.env` and **not** validated in `lib/env.ts`. Use the test key `1x00000000000000000000AA` locally.
+
+---
+
 ## Overview
 
 Cloudflare Turnstile is used as an invisible CAPTCHA to protect the login and sign-up forms from automated abuse. The widget verifies the user is human without requiring any interaction in most cases.
@@ -9,6 +17,14 @@ Cloudflare Turnstile is used as an invisible CAPTCHA to protect the login and si
 `@marsidev/react-turnstile` v1.5.2
 
 ## Where It Is Used
+
+### Public apply form (`components/apply/apply-form.tsx`)
+
+The widget renders inline (invisible mode). Submit is disabled until `captchaToken` is set; the token is appended to the FormData as `cf_turnstile_token`. The server action `submitPublicApplication` calls `verifyCaptcha()` from `lib/turnstile.ts`, which posts to Cloudflare's `siteverify` endpoint using `TURNSTILE_SECRET_KEY`.
+
+Failure behaviour:
+- `TURNSTILE_SECRET_KEY` unset → server logs a warning and accepts the submission (fail-open during rollout)
+- Secret set + token missing or rejected by Cloudflare → submission rejected with `'Security check failed. Please refresh and try again.'`
 
 ### Login (`app/auth/login/page.tsx`)
 
@@ -34,13 +50,14 @@ The site key is read from `process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY` and passe
 
 The **secret key** is configured in the Supabase dashboard under Auth → CAPTCHA. Supabase validates the token server-side — the secret key is never in the Next.js application code.
 
-## Environment Variable
+## Environment Variables
 
 | Variable | Purpose | Where Configured |
 |---|---|---|
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public) | `.env.local` and Vercel |
+| `TURNSTILE_SECRET_KEY` 🆕 | Cloudflare Turnstile secret — used server-side to verify tokens for the public apply form (login + sign-up still verify via Supabase's CAPTCHA config) | `.env.local` and Vercel — server only |
 
-Note: The corresponding secret key is stored only in Supabase's CAPTCHA configuration and is not an environment variable in this Next.js app. Do not add `NEXT_PUBLIC_TURNSTILE_SECRET_KEY` as a variable — it would be incorrectly exposed to the browser (the `NEXT_PUBLIC_` prefix makes it public).
+**`TURNSTILE_SECRET_KEY` must NOT be prefixed `NEXT_PUBLIC_`** — that would inline it into the browser bundle. The Supabase Auth CAPTCHA dashboard still holds a copy of the same secret for login/sign-up validation; both should be the same value (or different keys per Turnstile widget if you split sites).
 
 ## Turnstile Widget Props
 

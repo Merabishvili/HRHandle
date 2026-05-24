@@ -1,5 +1,16 @@
 # HRHandle — System Architecture Overview
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 CV-parsing service (Google Generative AI / Gemini) introduced as a new external dependency for `/api/parse-cv`
+- 🆕 LinkedIn (manual page-ID integration) added to external services
+- 🆕 Three new tables (`candidate_experience`, `candidate_education`, `organization_integrations`) extend the candidate / integrations domains
+- 🆕 Vercel Analytics added (client-side `<Analytics />` in `app/layout.tsx`)
+
+---
+
 ## High-Level Architecture
 
 ```mermaid

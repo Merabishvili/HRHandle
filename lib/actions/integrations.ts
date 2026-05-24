@@ -1,5 +1,8 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { writeAuditLog } from '@/lib/audit-log'
 import { getAuthContext } from './index'
 
 export type LinkedInIntegration = {
@@ -22,4 +25,36 @@ export async function getLinkedInIntegration(): Promise<LinkedInIntegration | nu
     .single()
 
   return data ?? null
+}
+
+export async function disconnectLinkedInIntegration(): Promise<
+  { success: true } | { success: false; error: string }
+> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('organization_integrations')
+    .delete()
+    .eq('organization_id', ctx.orgId)
+    .eq('platform', 'linkedin')
+
+  if (error) {
+    console.error('[integrations] LinkedIn disconnect failed:', error)
+    return { success: false, error: 'Failed to disconnect LinkedIn' }
+  }
+
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'integration',
+    entityId: null,
+    action: 'disconnected',
+    message: 'LinkedIn integration disconnected',
+    details: { platform: 'linkedin' },
+  })
+
+  revalidatePath('/settings/integrations')
+  return { success: true }
 }

@@ -1,6 +1,8 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { submitPublicApplication } from '@/lib/actions/public-apply'
 import type { ParsedCVInput } from '@/lib/validations/candidate-background'
 import { Loader2, Upload, X, CheckCircle2, FileText, AlertCircle } from 'lucide-react'
@@ -11,15 +13,18 @@ type ParseState = 'idle' | 'parsing' | 'done' | 'failed'
 
 export function ApplyForm({ token }: { token: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   const [submitted, setSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
 
   // CV file + parse state
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [parseState, setParseState] = useState<ParseState>('idle')
   const [parsed, setParsed] = useState<ParsedCVInput | null>(null)
+  const [parseFailureReason, setParseFailureReason] = useState<'network' | 'file' | null>(null)
 
   // Personal fields (pre-fillable from CV parse)
   const [firstName, setFirstName] = useState('')
@@ -48,6 +53,7 @@ export function ApplyForm({ token }: { token: string }) {
     setCvFile(file)
     setParsed(null)
     setParseState('parsing')
+    setParseFailureReason(null)
 
     try {
       const fd = new FormData()
@@ -65,9 +71,16 @@ export function ApplyForm({ token }: { token: string }) {
         if (data.phone && !phone) setPhone(data.phone)
         if (data.linkedin_profile_url && !linkedinUrl) setLinkedinUrl(data.linkedin_profile_url)
       } else {
+        // Server returned a non-success response — most likely the file
+        // was malformed / unreadable.
+        setParseFailureReason('file')
         setParseState('failed')
       }
-    } catch {
+    } catch (err) {
+      // fetch() itself failed → network/CORS/offline. Distinct from a
+      // server-side parse failure on a malformed file.
+      console.warn('[apply-form] CV parse network error:', err)
+      setParseFailureReason('network')
       setParseState('failed')
     }
   }
@@ -76,6 +89,7 @@ export function ApplyForm({ token }: { token: string }) {
     setCvFile(null)
     setParsed(null)
     setParseState('idle')
+    setParseFailureReason(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -103,6 +117,11 @@ export function ApplyForm({ token }: { token: string }) {
       return
     }
 
+    if (!captchaToken) {
+      setError('Security check not complete. Please wait a moment and try again.')
+      return
+    }
+
     setIsLoading(true)
 
     const fd = new FormData()
@@ -116,11 +135,14 @@ export function ApplyForm({ token }: { token: string }) {
     fd.append('website', '') // Honeypot
     fd.append('experience_json', JSON.stringify(parsed?.experience ?? []))
     fd.append('education_json', JSON.stringify(parsed?.education ?? []))
+    fd.append('cf_turnstile_token', captchaToken)
 
     const result = await submitPublicApplication(fd)
 
     if (!result.success) {
       setError(result.error)
+      turnstileRef.current?.reset()
+      setCaptchaToken(null)
       setIsLoading(false)
       return
     }
@@ -133,9 +155,9 @@ export function ApplyForm({ token }: { token: string }) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-sm text-center">
         <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-        <h2 className="mt-4 text-xl font-bold text-gray-900">You&apos;ve Applied!</h2>
+        <h2 className="mt-4 text-xl font-bold text-gray-900">Thanks for Applying!</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Thank you for applying. We&apos;ve sent a confirmation to <strong>{email}</strong>.
+          We&apos;ve sent a confirmation to <strong>{email}</strong>.
           We will review your details and be in touch.
         </p>
       </div>
@@ -197,7 +219,9 @@ export function ApplyForm({ token }: { token: string }) {
               {parseState === 'failed' && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-amber-600">
                   <AlertCircle className="h-3.5 w-3.5" />
-                  Could not auto-fill — please complete the form manually
+                  {parseFailureReason === 'network'
+                    ? 'Could not reach the server — please check your connection and complete the form manually.'
+                    : 'Could not read this file — please complete the form manually.'}
                 </div>
               )}
             </div>
@@ -299,7 +323,7 @@ export function ApplyForm({ token }: { token: string }) {
 
         <button
           type="submit"
-          disabled={isLoading || parseState === 'parsing'}
+          disabled={isLoading || parseState === 'parsing' || !captchaToken}
           className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
         >
           {isLoading ? (
@@ -311,6 +335,15 @@ export function ApplyForm({ token }: { token: string }) {
             'Apply Now'
           )}
         </button>
+
+        <Turnstile
+          ref={turnstileRef}
+          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+          onSuccess={(t) => setCaptchaToken(t)}
+          onError={() => setCaptchaToken(null)}
+          onExpire={() => setCaptchaToken(null)}
+          options={{ size: 'invisible' }}
+        />
 
         <p className="text-center text-xs text-gray-400">
           By submitting, you agree to your information being stored for recruitment purposes.

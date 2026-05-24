@@ -1,5 +1,6 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
 import { getAuthContext } from './index'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -50,13 +51,16 @@ export async function markAllNotificationsRead(): Promise<void> {
     .is('read_at', null)
 }
 
-// Called from other server actions (public-apply, interviews) — not a client-callable action
+// Called from other server actions (public-apply, interviews) — not a
+// client-callable action. Returns `{ success: false }` on failure so callers
+// can surface a warning (e.g., add to an `email_failed`-style warnings array)
+// without aborting the operation. Never throws.
 export async function createOrgNotifications(
   orgId: string,
   recipientIds: string[],
   notification: { type: string; title: string; body?: string; link?: string }
-): Promise<void> {
-  if (recipientIds.length === 0) return
+): Promise<{ success: boolean }> {
+  if (recipientIds.length === 0) return { success: true }
   const supabase = createAdminClient()
 
   const rows = recipientIds.map((rid) => ({
@@ -70,8 +74,27 @@ export async function createOrgNotifications(
 
   try {
     const { error } = await supabase.from('notifications').insert(rows)
-    if (error) console.error('[notifications] insert failed:', error)
+    if (error) {
+      console.error(
+        `[notifications] insert failed (type=${notification.type}, recipients=${recipientIds.length}):`,
+        error,
+      )
+      Sentry.captureException(error, {
+        tags: { area: 'notifications', op: 'insert' },
+        extra: { type: notification.type, recipientCount: recipientIds.length },
+      })
+      return { success: false }
+    }
+    return { success: true }
   } catch (err) {
-    console.error('[notifications] unexpected error:', err)
+    console.error(
+      `[notifications] unexpected error (type=${notification.type}):`,
+      err,
+    )
+    Sentry.captureException(err, {
+      tags: { area: 'notifications', op: 'insert' },
+      extra: { type: notification.type, recipientCount: recipientIds.length },
+    })
+    return { success: false }
   }
 }

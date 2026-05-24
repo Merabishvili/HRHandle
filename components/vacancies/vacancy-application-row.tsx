@@ -30,17 +30,10 @@ import { updateApplicationStatus, removeApplication } from '@/lib/actions/applic
 import { saveEvaluation } from '@/lib/actions/evaluations'
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 
-interface AppStatus {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-}
-
-interface GeneralStatus {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-}
+import type {
+  ApplicationStatusOption as AppStatus,
+  CandidateStatusOption as GeneralStatus,
+} from '@/lib/types/database'
 
 interface Question {
   id: string

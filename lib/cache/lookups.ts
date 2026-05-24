@@ -3,6 +3,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 // Global lookup tables change rarely — cache them for 1 hour.
 // Call revalidateTag('lookup-vacancy-statuses') etc. if you ever update these tables.
+//
+// IMPORTANT (audit P-005): the cache keys here are intentionally NOT scoped per
+// organization because the underlying tables (`vacancy_statuses`, `candidate_statuses`,
+// `application_statuses`, `sectors`) are global lookups shared across tenants.
+// If you add a helper that caches tenant-scoped data, include the org_id in the
+// cache key — e.g. `['vacancies', orgId]` — to prevent cross-tenant data leaks.
 
 export const getVacancyStatuses = unstable_cache(
   async () => {

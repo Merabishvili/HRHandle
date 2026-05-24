@@ -54,6 +54,7 @@ interface VacancyRow {
   end_date: string | null
   description: string
   requirements: string | null
+  responsibilities: string | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -65,13 +66,7 @@ interface VacancyRow {
   }[] | null
 }
 
-interface CandidateStatusRow {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-  is_active: boolean
-  sort_order: number
-}
+import type { CandidateStatusOption as CandidateStatusRow } from '@/lib/types/database'
 
 
 export default async function EditCandidatePage({
@@ -157,6 +152,7 @@ const { data: vacanciesRaw } = await supabase
     end_date,
     description,
     requirements,
+    responsibilities,
     created_by,
     created_at,
     updated_at,

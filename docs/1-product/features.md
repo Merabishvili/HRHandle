@@ -1,5 +1,18 @@
 # HRHandle — Features
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🆕 CV parsing on both internal "New Candidate" form and public apply form (Gemini Flash; PDF/DOCX → structured fields)
+- 🆕 Candidate Experience & Education sections on candidate detail page (CRUD with timeline UI)
+- 🆕 Activity Feed on candidate detail (`candidate_activity` view: applications, notes, documents, interviews)
+- 🆕 LinkedIn integration — owner/admin saves a company-page ID in Settings → Integrations; "Post to LinkedIn" and "Share" buttons on vacancies use it
+- 🆕 Per-candidate profile fields: `location`, `timezone`, `languages`, `salary_expectation`, `notice_period`
+- 🔄 LinkedIn feature scope is broader than previously documented (page post + personal share, in addition to manual share-link)
+
+---
+
 ## Authentication
 
 | Feature | Description | Files |
@@ -25,7 +38,8 @@
 | Vacancy detail | Info, applications list, application form tab, custom fields | `app/(dashboard)/vacancies/[id]/page.tsx` |
 | Kanban pipeline | Per-vacancy Kanban board with drag-and-drop status changes | `app/(dashboard)/vacancies/[id]/pipeline/page.tsx`, `components/pipeline/kanban-board.tsx` |
 | Public page toggle | `show_on_public_page` flag; generates `application_form_token` if not yet set | `lib/actions/vacancies.ts` |
-| LinkedIn share | Share vacancy to LinkedIn | `components/vacancies/linkedin-share-button.tsx` |
+| LinkedIn share | 🔄 Share single vacancy to LinkedIn profile (deep-link) | `components/vacancies/linkedin-share-button.tsx` |
+| 🆕 LinkedIn post-as-page | Post a vacancy to the org's connected LinkedIn company page | `components/vacancies/linkedin-post-job-button.tsx`, `app/api/integrations/linkedin/save/route.ts` |
 | Vacancy questions | Add custom scoring/text questions per vacancy for evaluations | `components/vacancies/vacancy-questions.tsx` |
 | CSV export | Download all applications for a vacancy as CSV | `app/api/export/applications/route.ts` |
 | Auto-expiry cron | Daily cron calls `expire_past_vacancies()` Supabase RPC to close past vacancies | `app/api/cron/expire-vacancies/route.ts`, `vercel.json` |

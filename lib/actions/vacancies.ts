@@ -1,8 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { differenceInCalendarDays } from 'date-fns'
 import { getAuthContext, checkPlanLimit, type ActionResult } from './index'
 import { VacancySchema, type VacancyInput } from '@/lib/validations/vacancy'
+import { writeAuditLog } from '@/lib/audit-log'
 
 export async function createVacancy(input: VacancyInput): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
@@ -85,6 +87,18 @@ export async function updateVacancyStatus(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
+  // Capture before/after status codes for the audit log (read both in parallel)
+  const [{ data: vacancyBefore }, { data: newStatus }] = await Promise.all([
+    ctx.supabase
+      .from('vacancies')
+      .select('status_id, vacancy_statuses ( code )')
+      .eq('id', id)
+      .eq('organization_id', ctx.orgId)
+      .is('deleted_at', null)
+      .single(),
+    ctx.supabase.from('vacancy_statuses').select('code').eq('id', statusId).single(),
+  ])
+
   const { error } = await ctx.supabase
     .from('vacancies')
     .update({ status_id: statusId })
@@ -93,6 +107,21 @@ export async function updateVacancyStatus(
     .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update vacancy status' }
+
+  type StatusJoin = { code: string } | { code: string }[] | null
+  const beforeJoin = vacancyBefore?.vacancy_statuses as StatusJoin
+  const beforeCode = Array.isArray(beforeJoin) ? beforeJoin[0]?.code : beforeJoin?.code
+  const afterCode = newStatus?.code ?? null
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'vacancy',
+    entityId: id,
+    action: 'status_changed',
+    message:
+      beforeCode && afterCode ? `${beforeCode} → ${afterCode}` : `status changed to ${afterCode}`,
+    details: { before: beforeCode ?? null, after: afterCode },
+  })
 
   revalidatePath('/vacancies')
   revalidatePath(`/vacancies/${id}`)
@@ -120,12 +149,22 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
   const todayStr = today.toISOString().split('T')[0]
   let newEndDate: string | null = null
   if (orig.end_date && orig.start_date) {
-    const diffDays = Math.round(
-      (new Date(orig.end_date).getTime() - new Date(orig.start_date).getTime()) / 86_400_000
+    // differenceInCalendarDays handles DST + day-boundary correctly, unlike
+    // (end-start)/86_400_000 which can be off-by-one near midnight or DST shifts.
+    const diffDays = differenceInCalendarDays(
+      new Date(orig.end_date),
+      new Date(orig.start_date),
     )
     const endDate = new Date(today)
     endDate.setDate(endDate.getDate() + diffDays)
     newEndDate = endDate.toISOString().split('T')[0]
+  } else {
+    // BL-012: if the original was open-ended (no end_date), default the
+    // duplicate to today + 90 days so it doesn't silently inherit a null
+    // deadline. The user can still clear it on the edit page.
+    const fallbackEnd = new Date(today)
+    fallbackEnd.setDate(fallbackEnd.getDate() + 90)
+    newEndDate = fallbackEnd.toISOString().split('T')[0]
   }
 
   const { data: draftStatus } = await ctx.supabase

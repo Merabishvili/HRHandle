@@ -14,22 +14,32 @@ function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(value)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1200)
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1200)
+    } catch (err) {
+      console.error('[contact-card] clipboard write failed:', err)
+    }
   }
 
   return (
-    <button
-      onClick={handleCopy}
-      className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-      aria-label="Copy"
-    >
-      {copied
-        ? <Check className="h-3.5 w-3.5 text-[oklch(0.65_0.17_145)]" />
-        : <Copy className="h-3.5 w-3.5" />
-      }
-    </button>
+    <>
+      <button
+        onClick={handleCopy}
+        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        aria-label={copied ? 'Copied to clipboard' : 'Copy'}
+      >
+        {copied
+          ? <Check className="h-3.5 w-3.5 text-[oklch(0.65_0.17_145)]" aria-hidden="true" />
+          : <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+        }
+      </button>
+      {/* Live region announces the copy action for screen readers (audit AC-003) */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {copied ? 'Copied to clipboard' : ''}
+      </span>
+    </>
   )
 }
 

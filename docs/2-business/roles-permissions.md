@@ -1,5 +1,16 @@
 # HRHandle — Roles & Permissions
 
+_Last updated: 2026-05-08_
+
+## Changelog
+
+- 🔄 (revised 2026-05-08) Live-DB verification confirms RLS is enabled on every public table — earlier "RLS gaps" claim retracted. See "Supabase RLS" section below.
+- 🆕 LinkedIn-integration management (save / disconnect) gated to owner+admin via `organization_integrations` RLS.
+- 🆕 Custom field management gated to owner+admin (`lib/actions/custom-fields.ts:104`).
+- 🆕 Rejection-reason management gated to owner+admin (`lib/actions/rejection-reasons.ts:35-36, 75-76, 99-100`).
+
+---
+
 ## Roles
 
 | Role | Assigned | Description |
@@ -42,9 +53,12 @@
 ### Plan-limit checks
 - `lib/actions/index.ts#checkPlanLimit`: called before create operations for vacancy, candidate, member.
 
-### Supabase RLS
-- All tenant data tables enforce Row Level Security. All queries from the server Supabase client use the authenticated user's JWT, so RLS policies automatically restrict cross-org access.
-- Admin client (`createAdminClient`) bypasses RLS — used only for privileged server-side operations (onboarding, storage, notifications).
+### Supabase RLS 🔄 (corrected 2026-05-08 via live-DB check)
+- **Every public table has RLS enabled and at least one policy.** Verified via `pg_policies`: `vacancies`, `candidates`, `applications` have 4 policies each, `profiles` has 6, the rest have 1–3.
+- The original RLS migration is not checked in to `supabase/migrations/` — only later additive ones are. This caused an earlier audit pass to incorrectly report RLS as missing on most tables.
+- `.eq('organization_id', ctx.orgId)` filtering in server actions remains defence-in-depth.
+- Admin client (`createAdminClient`) bypasses RLS — used for privileged server-side operations (onboarding, storage, notifications, public-apply).
+- ⚠️ Advisor flagged `notifications.Service role insert notifications` policy as `WITH CHECK (true)` — effectively unconditional INSERT (tracked as `S-NEW-2`).
 
 ## Auth Context
 
