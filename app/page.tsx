@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import type { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -65,11 +66,15 @@ const jsonLd = {
   },
 }
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // CSP nonce (S-014): middleware sets `x-nonce` per request; the inline
+  // JSON-LD script needs it so it isn't blocked once we tighten the CSP.
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   return (
     <div className="min-h-screen">
       <script
         type="application/ld+json"
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">

@@ -33,6 +33,14 @@
 - **Do NOT revert to HTTP self-fetch** — the old approach called `/api/onboarding` via `fetch()` with forwarded cookies; Supabase SSR does not recognise the session that way and returns 401
 - The `/api/onboarding` route still exists for external use and delegates to the same `lib/onboarding.ts`
 
+### Content-Security-Policy — per-request nonce
+
+CSP is set in `middleware.ts` (via `lib/security-headers.ts:buildCsp(nonce)`), **not** in `next.config.mjs`. Each request gets a fresh nonce that is:
+- Forwarded to the app via the `x-nonce` request header (server components read it via `headers().get('x-nonce')`)
+- Set on the response `Content-Security-Policy` header
+
+When adding inline `<script>` tags in server components, **always** stamp the nonce on them (e.g., `<script nonce={nonce} dangerouslySetInnerHTML={...} />`) or the browser will block them once Phase 2 drops `'unsafe-inline'`. Next.js framework scripts are auto-nonced when the request header is present.
+
 ### Supabase clients — which to use
 
 | Client | File | Use for |
