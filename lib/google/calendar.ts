@@ -29,8 +29,12 @@ export async function exchangeCodeForTokens(code: string): Promise<{
   access_token: string
   refresh_token: string
   expires_in: number
+  scope?: string
 } | null> {
-  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return null
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+    console.error('[google/calendar] exchangeCodeForTokens: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not configured')
+    return null
+  }
 
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
@@ -44,8 +48,30 @@ export async function exchangeCodeForTokens(code: string): Promise<{
     }),
   })
 
-  if (!res.ok) return null
+  if (!res.ok) {
+    let bodyExcerpt = ''
+    try {
+      bodyExcerpt = (await res.text()).slice(0, 500)
+    } catch {
+      /* swallow */
+    }
+    console.error(
+      `[google/calendar] exchangeCodeForTokens failed: ${res.status} ${res.statusText} (redirect_uri=${getRedirectUri()})`,
+      bodyExcerpt,
+    )
+    return null
+  }
   return res.json()
+}
+
+/**
+ * Returns true if the granted `scope` string from a token-exchange response
+ * includes the scopes needed to create Calendar events with Meet conferences.
+ */
+export function hasRequiredCalendarScopes(scope: string | undefined | null): boolean {
+  if (!scope) return false
+  const granted = new Set(scope.split(/\s+/))
+  return granted.has(SCOPE_CALENDAR_EVENTS) || granted.has('https://www.googleapis.com/auth/calendar')
 }
 
 async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; expiry: number } | null> {
