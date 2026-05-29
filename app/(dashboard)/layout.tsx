@@ -6,6 +6,7 @@ import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/header'
 import { TrialBanner } from '@/components/dashboard/trial-banner'
 import { SessionGuard } from '@/components/auth/session-guard'
+import { PostHogIdentify } from '@/components/analytics/posthog-identify'
 
 interface ProfileRow {
   id: string
@@ -259,6 +260,7 @@ export default async function DashboardLayout({
         />
         <main id="dashboard-main" tabIndex={-1} className="flex-1 p-4 lg:p-8">{children}</main>
         <SessionGuard />
+        <PostHogIdentify userId={user.id} orgId={profile.organization_id} role={profile.role} />
       </div>
     </div>
   )

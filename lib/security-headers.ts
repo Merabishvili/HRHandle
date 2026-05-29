@@ -21,11 +21,16 @@ export function buildCsp(nonce: string): string {
     // browsers ignore the trailing `'unsafe-inline'` / `'unsafe-eval'` when
     // `'strict-dynamic'` is present — they're kept here as a legacy fallback
     // for older browsers that don't recognise `'strict-dynamic'`.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' 'unsafe-eval' https://js.sentry-cdn.com https://*.sentry.io https://vercel.live https://*.vercel.live https://challenges.cloudflare.com`,
+    // PostHog (EU) ships its recorder/array assets from eu-assets; under
+    // 'strict-dynamic' modern browsers trust them via the nonced bundle, but the
+    // host is listed for legacy-browser fallback.
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' 'unsafe-eval' https://js.sentry-cdn.com https://*.sentry.io https://vercel.live https://*.vercel.live https://challenges.cloudflare.com https://eu-assets.i.posthog.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://vercel.live https://*.vercel.live wss://*.pusher.com https://*.pusher.com https://challenges.cloudflare.com",
+    // PostHog (EU) event ingestion + asset fetch — required in connect-src;
+    // 'strict-dynamic' does not apply to connect-src so these must be explicit.
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://vercel.live https://*.vercel.live wss://*.pusher.com https://*.pusher.com https://challenges.cloudflare.com https://eu.i.posthog.com https://eu-assets.i.posthog.com",
     "frame-src https://vercel.live https://*.vercel.live https://challenges.cloudflare.com",
     "frame-ancestors 'none'",
     "form-action 'self'",

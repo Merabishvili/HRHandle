@@ -4,6 +4,7 @@ _Last updated: 2026-05-08_
 
 ## Changelog
 
+- 🆕 PostHog product analytics added (client-side provider in `app/providers.tsx`, EU cloud, production-only). CSP allow-lists PostHog EU hosts.
 - 🆕 CV-parsing service (Google Generative AI / Gemini) introduced as a new external dependency for `/api/parse-cv`
 - 🆕 LinkedIn (manual page-ID integration) added to external services
 - 🆕 Three new tables (`candidate_experience`, `candidate_education`, `organization_integrations`) extend the candidate / integrations domains
@@ -39,6 +40,7 @@ graph TB
         MS[Microsoft Graph API<br/>+ OAuth 2.0]
         SENTRY[Sentry<br/>Error Tracking]
         CF[Cloudflare Turnstile<br/>CAPTCHA]
+        POSTHOG[PostHog<br/>Product Analytics]
     end
 
     UI -->|fetch/form| SA
@@ -54,6 +56,7 @@ graph TB
     SA --> ZOOM
     SA --> MS
     UI --> CF
+    UI --> POSTHOG
     Vercel --> SENTRY
 ```
 
@@ -109,9 +112,11 @@ app/
   join/                 # Team invitation acceptance
   page.tsx              # Landing page (redirects to dashboard or shows landing)
   layout.tsx            # Root layout with ThemeProvider, Toaster, Sentry
+  providers.tsx         # PostHog provider + App Router pageview tracking
   robots.ts             # Robots.txt
   sitemap.ts            # XML sitemap
 components/
+  analytics/            # PostHog identify component
   apply/                # Public apply form component
   auth/                 # Sign-up form, session guard, sign-out button
   candidates/           # All candidate-related UI
@@ -135,6 +140,7 @@ lib/
   supabase/             # client / server / admin / middleware factory functions
   types/                # TypeScript interfaces and type constants
   validations/          # Zod schemas (candidate, vacancy, interview, etc.)
+  analytics.ts          # PostHog typed capture() helper
   campaign.ts           # Campaign pricing logic
   email-template-utils.ts # applyVariables, escapeHtml, DEFAULT_TEMPLATES
   email.ts              # Resend email sending functions
