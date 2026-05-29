@@ -4,6 +4,7 @@ _Last updated: 2026-05-08_
 
 ## Changelog
 
+- 🆕 PostHog analytics vars `NEXT_PUBLIC_POSTHOG_KEY` + `NEXT_PUBLIC_POSTHOG_HOST` added (both optional, validated in `lib/env.ts`). Production only; see `docs/4-integrations/posthog.md`.
 - 🆕 `GOOGLE_GEMINI_API_KEY` documented — was already used by `lib/cv-parser.ts` but missing from this file
 - 🆕 `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` documented as **defined-but-unused** (no LinkedIn OAuth flow today; manual page ID only)
 - 🔄 Validation section corrected — `lib/env.ts` does **not** currently validate `CRON_SECRET`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, or `GOOGLE_GEMINI_API_KEY`. These are read directly via `process.env.*` at use-sites. See open issue `C-env-validation-gaps`.
@@ -40,6 +41,8 @@ _Last updated: 2026-05-08_
 | `SENTRY_ORG` | Sentry organization slug for source map upload | Sentry | `next.config.mjs` | `my-org` |
 | `SENTRY_PROJECT` | Sentry project slug for source map upload | Sentry | `next.config.mjs` | `hrhandle` |
 | `SENTRY_AUTH_TOKEN` | Sentry CLI auth token for source map upload (not in lib/env.ts — Vercel build env only) | Sentry | `next.config.mjs` (via Sentry CLI) | `sntrys_xxxx` |
+| 🆕 `NEXT_PUBLIC_POSTHOG_KEY` | PostHog Project API key (public). Empty/unset disables PostHog. **Set in production only** — leave unset in `.env.local` to keep dev traffic out of production analytics. | PostHog | `app/providers.tsx`, `lib/env.ts` | `phc_xxxx` |
+| 🆕 `NEXT_PUBLIC_POSTHOG_HOST` | PostHog ingestion host. Defaults to `https://eu.i.posthog.com` (EU cloud) when unset. | PostHog | `app/providers.tsx`, `lib/env.ts` | `https://eu.i.posthog.com` |
 
 ## Local Development Only
 
@@ -70,6 +73,7 @@ These variables are read by `scripts/capture-screenshots.ts` and `scripts/seed-d
 - `SUPABASE_SERVICE_ROLE_KEY` — required, non-empty string
 - `NEXT_PUBLIC_SITE_URL` — optional, must be valid URL if set; **never set to empty string** (will throw at build time)
 - `RESEND_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` — optional, non-empty string if set
+- `NEXT_PUBLIC_POSTHOG_KEY` — optional, non-empty string if set; `NEXT_PUBLIC_POSTHOG_HOST` — optional, must be valid URL if set
 
 **🔄 NOT validated** (read directly via `process.env.*` — typos and missing values fail silently or at runtime):
 - `GOOGLE_GEMINI_API_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`, `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL`, `STAGING_DEMO_*`, `SCREENSHOT_BASE_URL`, `VERCEL_PROTECTION_BYPASS`
