@@ -11,20 +11,24 @@ import { usePathname, useSearchParams } from 'next/navigation'
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com'
 
-export function PostHogProvider({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    if (!posthogKey || posthog.__loaded) return
-    posthog.init(posthogKey, {
-      api_host: posthogHost,
-      // Only create person profiles for identified (logged-in) users. Anonymous
-      // visitors on /apply and /jobs stay profile-less — better privacy, less quota.
-      person_profiles: 'identified_only',
-      // App Router client-side navigations don't fire full page loads, so we
-      // capture $pageview manually in PostHogPageView below.
-      capture_pageview: false,
-    })
-  }, [])
+// Initialize at module load (client only), NOT inside an effect. React fires
+// child effects before parent effects, so an effect here would run *after* the
+// dashboard's <PostHogIdentify> — which would then see PostHog "not loaded" and
+// silently skip identify, leaving every event attributed to an anonymous id.
+// Module scope runs before any component effect, so identify works.
+if (typeof window !== 'undefined' && posthogKey && !posthog.__loaded) {
+  posthog.init(posthogKey, {
+    api_host: posthogHost,
+    // Only create person profiles for identified (logged-in) users. Anonymous
+    // visitors on /apply and /jobs stay profile-less — better privacy, less quota.
+    person_profiles: 'identified_only',
+    // App Router client-side navigations don't fire full page loads, so we
+    // capture $pageview manually in PostHogPageView below.
+    capture_pageview: false,
+  })
+}
 
+export function PostHogProvider({ children }: { children: ReactNode }) {
   if (!posthogKey) {
     return <>{children}</>
   }

@@ -25,13 +25,15 @@
 ### Auth flows
 - **Sign-up confirmation**: uses `token_hash` via `/auth/confirm` route — works cross-browser, no PKCE verifier needed
 - **Password reset**: `app/auth/forgot-password/page.tsx` submits to server action `requestPasswordReset()` in `lib/actions/auth.ts`. The server action calls `createBrowserClient` with `flowType: 'implicit'` (the "browser" name is a misnomer — it's a stateless HTTP wrapper that works server-side) — **this is intentional, do not change to `createClient()`**. Default PKCE flow generates a verifier bound to localStorage; server-side `verifyOtp` cannot verify it without the verifier. Implicit flow produces a plain OTP. The server action also enforces 5/IP/hour + 5/email/hour rate limits and returns a generic response to close the email-enumeration leak.
-- **OAuth (Google, Microsoft)**: uses PKCE via `/auth/callback` — standard, works in same browser session
+- **OAuth (Google, Microsoft)**: uses PKCE via `/auth/callback` — standard, works in same browser session. First-time OAuth users (no `user_metadata.company_name`) are intercepted by the dashboard layout and redirected to `/onboarding/company` to set their name + org name before `runOnboarding()` runs; email sign-up carries `company_name` in metadata and skips this hop
 - **Email template links** must use `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=...` (not `{{ .ConfirmationURL }}`) for signup and password reset — using `ConfirmationURL` breaks cross-browser confirmation
 
 ### Onboarding
-- Dashboard layout (`app/(dashboard)/layout.tsx`) calls `runOnboarding(user)` from `lib/onboarding.ts` directly when no `organization_id` is on the profile
+- Dashboard layout (`app/(dashboard)/layout.tsx`) calls `runOnboarding(user)` from `lib/onboarding.ts` directly when no `organization_id` is on the profile — **but only after** the OAuth company-name redirect: if `user_metadata.company_name` is missing the layout sends the user to `/onboarding/company` first
+- The page `/onboarding/company` collects name + company and submits to the server action `completeCompanyOnboarding` (in `lib/actions/onboarding.ts`), which calls `runOnboarding(user, { fullName, companyName })` and redirects to `/dashboard`
+- `runOnboarding` accepts an optional `{ fullName?, companyName? }` arg that overrides `user_metadata` lookups; falls back to "New User" / "New Organization" only when neither source has a value
 - **Do NOT revert to HTTP self-fetch** — the old approach called `/api/onboarding` via `fetch()` with forwarded cookies; Supabase SSR does not recognise the session that way and returns 401
-- The `/api/onboarding` route still exists for external use and delegates to the same `lib/onboarding.ts`
+- The `/api/onboarding` route still exists for external use and delegates to the same `lib/onboarding.ts`. Optional JSON body `{ fullName?, companyName? }` overrides `user_metadata`
 
 ### Content-Security-Policy — per-request nonce
 

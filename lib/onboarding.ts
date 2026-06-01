@@ -14,7 +14,17 @@ export type OnboardingResult =
   | { success: true; alreadyInitialized?: boolean }
   | { success: false; error: string }
 
-export async function runOnboarding(user: User): Promise<OnboardingResult> {
+export interface OnboardingOptions {
+  /** Overrides user_metadata.company_name. Used by the OAuth /onboarding/company flow. */
+  companyName?: string
+  /** Overrides user_metadata.full_name. */
+  fullName?: string
+}
+
+export async function runOnboarding(
+  user: User,
+  opts: OnboardingOptions = {}
+): Promise<OnboardingResult> {
   const admin = createAdminClient()
 
   const { data: existingProfile, error: existingProfileError } = await admin
@@ -32,10 +42,14 @@ export async function runOnboarding(user: User): Promise<OnboardingResult> {
   }
 
   const fullName =
-    (user.user_metadata?.full_name as string | undefined)?.trim() || 'New User'
+    opts.fullName?.trim() ||
+    (user.user_metadata?.full_name as string | undefined)?.trim() ||
+    'New User'
 
   const companyName =
-    (user.user_metadata?.company_name as string | undefined)?.trim() || 'New Organization'
+    opts.companyName?.trim() ||
+    (user.user_metadata?.company_name as string | undefined)?.trim() ||
+    'New Organization'
 
   const baseSlug = slugify(companyName) || `org-${user.id.slice(0, 8)}`
   const uniqueSlug = `${baseSlug}-${user.id.slice(0, 6)}`

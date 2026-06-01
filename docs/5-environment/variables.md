@@ -73,7 +73,7 @@ These variables are read by `scripts/capture-screenshots.ts` and `scripts/seed-d
 - `SUPABASE_SERVICE_ROLE_KEY` — required, non-empty string
 - `NEXT_PUBLIC_SITE_URL` — optional, must be valid URL if set; **never set to empty string** (will throw at build time)
 - `RESEND_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` — optional, non-empty string if set
-- `NEXT_PUBLIC_POSTHOG_KEY` — optional, non-empty string if set; `NEXT_PUBLIC_POSTHOG_HOST` — optional, must be valid URL if set
+- `NEXT_PUBLIC_POSTHOG_KEY` — optional, non-empty string if set; `NEXT_PUBLIC_POSTHOG_HOST` — optional string if set (intentionally **not** URL-validated, so a malformed host can't break the production build)
 
 **🔄 NOT validated** (read directly via `process.env.*` — typos and missing values fail silently or at runtime):
 - `GOOGLE_GEMINI_API_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`, `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL`, `STAGING_DEMO_*`, `SCREENSHOT_BASE_URL`, `VERCEL_PROTECTION_BYPASS`

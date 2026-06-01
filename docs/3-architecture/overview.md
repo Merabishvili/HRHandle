@@ -4,6 +4,7 @@ _Last updated: 2026-05-08_
 
 ## Changelog
 
+- 🆕 OAuth sign-up now routes first-time Google/Microsoft users through `/onboarding/company` to collect their name + company name (dashboard layout intercepts when `user_metadata.company_name` is missing). Email sign-up unchanged.
 - 🆕 PostHog product analytics added (client-side provider in `app/providers.tsx`, EU cloud, production-only). CSP allow-lists PostHog EU hosts.
 - 🆕 CV-parsing service (Google Generative AI / Gemini) introduced as a new external dependency for `/api/parse-cv`
 - 🆕 LinkedIn (manual page-ID integration) added to external services
@@ -68,7 +69,7 @@ graph TB
 3. `app/(dashboard)/layout.tsx` (Server Component):
    - Calls `supabase.auth.getUser()`.
    - Fetches profile and subscription.
-   - Checks if onboarding needed → calls `runOnboarding()`.
+   - If `profile.organization_id` is missing: redirects to `/join?token=...` (pending invite), else to `/onboarding/company` (no `user_metadata.company_name` — typical for OAuth sign-up), else calls `runOnboarding()` (email sign-up with company name already in metadata).
    - Checks if trial expired → redirects to `/subscription`.
 4. `app/(dashboard)/candidates/page.tsx` fetches data server-side.
 5. HTML streamed to browser with React hydration.
@@ -107,6 +108,8 @@ app/
     health/             # Health check
     onboarding/         # POST — delegates to lib/onboarding.ts
   auth/                 # Public auth pages (login, sign-up, etc.)
+  onboarding/           # Post-OAuth company-name collection (authenticated, outside dashboard layout)
+    company/            # /onboarding/company — server action completeCompanyOnboarding
   apply/                # Public candidate application form
   jobs/                 # Public vacancy listings by org slug
   join/                 # Team invitation acceptance
@@ -119,6 +122,7 @@ components/
   analytics/            # PostHog identify component
   apply/                # Public apply form component
   auth/                 # Sign-up form, session guard, sign-out button
+  onboarding/           # Company-onboarding form (post-OAuth)
   candidates/           # All candidate-related UI
   custom-fields/        # Custom field display and form components
   dashboard/            # Sidebar, header, notifications bell, trial banner

@@ -91,7 +91,7 @@ Full documentation in `docs/7-api/endpoints.md`. Route files:
 | Route | Method(s) | Purpose |
 |---|---|---|
 | `app/api/health/route.ts` | GET | Health check |
-| `app/api/onboarding/route.ts` | POST | Run onboarding (delegates to `lib/onboarding.ts`) |
+| `app/api/onboarding/route.ts` | POST | Run onboarding (delegates to `lib/onboarding.ts`). Optional JSON body `{ fullName?, companyName? }` overrides `user_metadata` lookups. |
 | `app/api/cron/expire-vacancies/route.ts` | GET | Cron: expire past vacancies (calls Supabase RPC) |
 | `app/api/export/candidates/route.ts` | GET | Export candidates as CSV |
 | `app/api/export/applications/route.ts` | GET | Export applications for a vacancy as CSV |
@@ -127,7 +127,9 @@ The middleware runs on every request matched by the config pattern (everything e
 
 Matcher pattern excludes `_next/static`, `_next/image`, `favicon.ico`, and common image extensions.
 
-The dashboard layout (`app/(dashboard)/layout.tsx`) performs a secondary auth check and runs onboarding if needed.
+The dashboard layout (`app/(dashboard)/layout.tsx`) performs a secondary auth check and runs onboarding if needed. When the user has no `organization_id` and no `user_metadata.company_name` (typical first-time Google/Microsoft sign-up — providers don't return a company), the layout redirects to `/onboarding/company` to collect name + company before creating the org. Email sign-up carries `company_name` in metadata from the sign-up form and skips this hop.
+
+The middleware (`lib/supabase/middleware.ts`) auth-gates both `/dashboard/*` and `/onboarding/*` — unauthenticated hits redirect to `/auth/login`.
 
 ## Background Jobs / Cron
 

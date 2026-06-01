@@ -24,6 +24,10 @@ supabase.auth.signInWithOAuth({ provider: 'azure', options: { redirectTo: callba
 
 No tokens are stored in the `profiles` table for sign-in.
 
+### First-time sign-up flow
+
+Microsoft does not return a company name in `user_metadata`. First-time OAuth users (no `organization_id` AND no `user_metadata.company_name`) are redirected by the dashboard layout to `/onboarding/company` to collect name + company name before `runOnboarding` creates the org. See `docs/4-integrations/google.md` for the same flow on Google's side.
+
 ## Microsoft Graph / Teams Meeting Integration
 
 A separate OAuth flow that allows creating Teams meetings via Microsoft Calendar events.
