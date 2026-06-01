@@ -134,6 +134,17 @@ export default async function DashboardLayout({
       }
     }
 
+    // First-time OAuth users have no company_name in metadata (Google/Microsoft
+    // don't return it). Send them to /onboarding/company to collect it before
+    // creating the org — otherwise runOnboarding falls back to "New Organization".
+    // Email-signup users have it set by the sign-up form and skip this hop.
+    const metadataCompanyName = user.user_metadata?.company_name
+    const hasCompanyName =
+      typeof metadataCompanyName === 'string' && metadataCompanyName.trim().length > 0
+    if (!hasCompanyName) {
+      redirect('/onboarding/company')
+    }
+
     const result = await runOnboarding(user)
     if (!result.success) {
       throw new Error(`Onboarding failed: ${result.error}`)

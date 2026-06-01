@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { runOnboarding } from '@/lib/onboarding'
+import { runOnboarding, type OnboardingOptions } from '@/lib/onboarding'
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -30,7 +30,18 @@ export async function POST() {
       return NextResponse.json({ success: true, alreadyInitialized: true })
     }
 
-    const result = await runOnboarding(user)
+    // Optional body lets callers (e.g. an OAuth-aware client flow) supply the
+    // names directly when user_metadata doesn't have them.
+    const opts: OnboardingOptions = {}
+    try {
+      const body = (await request.json()) as { fullName?: unknown; companyName?: unknown }
+      if (typeof body?.fullName === 'string') opts.fullName = body.fullName
+      if (typeof body?.companyName === 'string') opts.companyName = body.companyName
+    } catch {
+      // No body / non-JSON body — treat as no overrides.
+    }
+
+    const result = await runOnboarding(user, opts)
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 500 })

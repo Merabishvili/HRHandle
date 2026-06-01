@@ -25,6 +25,10 @@ supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callb
 
 The callback is `app/auth/callback/route.ts` which exchanges the PKCE code for a session. No tokens are stored in the `profiles` table for this flow.
 
+### First-time sign-up flow
+
+Google does not return a company name in `user_metadata`. To avoid auto-creating an org called "New Organization", the dashboard layout intercepts first-time OAuth users (no `organization_id` AND no `user_metadata.company_name`) and redirects them to `/onboarding/company` to collect name + company name before `runOnboarding` runs. See `app/onboarding/company/page.tsx` and `lib/actions/onboarding.ts:completeCompanyOnboarding`. Returning OAuth users have an `organization_id` already and skip the page entirely.
+
 ### Supabase Provider Settings (production — `fnpyfwhvgzoxgyjafbsg`)
 
 | Setting | Value |
