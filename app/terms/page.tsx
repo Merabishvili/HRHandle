@@ -16,7 +16,7 @@ export default function TermsPage() {
         </div>
 
         <h1 className="mb-2 text-3xl font-bold text-foreground">Terms and Conditions</h1>
-        <p className="mb-10 text-sm text-muted-foreground">Last updated: April 22, 2026</p>
+        <p className="mb-10 text-sm text-muted-foreground">Last updated: June 2, 2026</p>
 
         <div className="space-y-8 text-sm leading-relaxed text-foreground">
 
@@ -204,7 +204,10 @@ export default function TermsPage() {
               We may suspend or terminate your account if you violate these Terms, fail to pay
               subscription fees, or if we are required to do so by law. Upon termination, your
               right to access the Service ceases. You may request an export of your data within
-              30 days of termination by contacting us.
+              30 days of termination by contacting us. After this 30-day window your account,
+              organization, and candidate data are permanently deleted as described in our{' '}
+              <Link href="/privacy" className="underline">Privacy Policy</Link>, except where we
+              are required by law to retain specific records longer.
             </p>
           </section>
 

@@ -31,7 +31,6 @@ export interface Candidate {
   general_status_id: UUID | null
 
   // deprecated — kept for backwards compat, not surfaced in UI
-  date_of_birth?: ISODateString | null
   current_company?: string | null
   current_position?: string | null
   years_of_experience?: number | null
