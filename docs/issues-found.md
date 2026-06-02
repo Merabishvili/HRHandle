@@ -248,6 +248,14 @@ Live Supabase MCP queries refuted one critical finding and surfaced five new one
 
 ---
 
+## 🔐 Compliance / Data Protection
+
+| # | Severity | File:Line | Description | Suggested Fix | Status |
+|---|----------|-----------|-------------|---------------|--------|
+| G-001 | High | `lib/cv-parser.ts` + `app/privacy/page.tsx` §5.1 | Gemini API key is on the **free / unpaid tier**. Google's terms (verified 2026-06-03 at https://ai.google.dev/gemini-api/terms) (a) permit Google to use submitted content "to provide, improve, and develop Google products and services", and (b) explicitly prohibit submission of personal information to Unpaid Services. Two consequences: (1) every CV parsed so far technically violated Google's own terms; (2) Privacy Policy §5.1 currently claims *"We use Google's paid Gemini API, under terms which prohibit Google from using customer prompt content to train their models"* — currently a **false statement in a public policy**. The EEA/UK/Switzerland safe-harbour in Google's terms does not apply because the controller is registered in Georgia (outside the EEA). **Calibration:** low real risk while only 3 friend testers use the parser (no real EU candidate traffic yet); becomes a hard blocker before any public launch or paid customer. | Enable billing on the Google Cloud / AI Studio account associated with `GOOGLE_GEMINI_API_KEY`. Gemini 2.5 Flash paid pricing is ~$0.075 per 1M input tokens — cents per month at realistic ATS volume. After enabling: verify the API still works, save a screenshot of the "Paid Services — Google doesn't use your prompts … to improve our products" section, then keep policy §5.1 unchanged. Alternative: gate CV parsing on an env var until billing is enabled. Do **not** ship publicly without one of these paths complete. | **Open — deferred 2026-06-03** per founder decision to skip and continue with other compliance items. Privacy policy §5.1 currently overstates the protection in place; left unchanged for now to avoid policy churn while the underlying fix is deferred. Re-open before any public marketing or real EU candidate traffic. |
+
+---
+
 ## Notes on Methodology
 
 - 10 parallel research agents inspected the codebase from product, business, architecture, integrations, API, UI text, security, bug, quality, and config/a11y angles.
