@@ -133,11 +133,19 @@ The middleware (`lib/supabase/middleware.ts`) auth-gates both `/dashboard/*` and
 
 ## Background Jobs / Cron
 
-**`app/api/cron/expire-vacancies`** — GET
+Two daily cron endpoints, both protected by `Authorization: Bearer {CRON_SECRET}` header (timing-safe comparison) and scheduled via `vercel.json`.
 
-- Protected by `Authorization: Bearer {CRON_SECRET}` header (timing-safe comparison)
+**`app/api/cron/expire-vacancies`** — GET, daily at 01:00 UTC
+
 - Calls Supabase RPC `expire_past_vacancies()`
-- Intended to be called by Vercel Cron (defined in `vercel.json` — not present in source; configured in Vercel dashboard)
+
+**`app/api/cron/purge-deleted`** — GET, daily at 03:00 UTC
+
+- Hard-deletes rows where `deleted_at < now() - interval '30 days'` from candidate-scoped tables (`candidates`, `applications`, `candidate_documents`, `candidate_notes`, `custom_fields`, `vacancies`). Candidate purges cascade to `interviews`, `candidate_evaluations`, `candidate_experience`, `candidate_education` via existing FK CASCADE rules.
+- Vacancies use per-row deletes with try/catch: the RESTRICT FK from `candidate_evaluations.vacancy_id` can block individual purges; these are logged and skipped (counted as `vacancies_skipped_due_to_restrict`) rather than failing the run.
+- Also removes the corresponding files from the `candidate-documents` Supabase Storage bucket (best-effort — storage errors are logged but don't 500 the response, so a transient storage hiccup doesn't block the row purge).
+- Implements the "permanently removed within 30 days" promise in Privacy Policy §7. Tracked as G-003.
+- Returns a counts JSON for observability; same shape logged to `console.log` so Vercel logs capture each run.
 
 ## Supabase Client Types
 
