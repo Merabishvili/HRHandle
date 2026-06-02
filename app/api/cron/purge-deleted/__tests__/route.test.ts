@@ -4,10 +4,11 @@ import { NextRequest } from 'next/server'
 // Build a chainable mock that captures which table.delete().lt().select()
 // chains run and what they should return. Each call to `from(table)` returns
 // a fresh chain so we can inspect them per-table.
-const { fromMock, storageRemoveMock, perTableResponses } = vi.hoisted(() => {
+const { fromMock, storageRemoveMock, authAdminDeleteUserMock, perTableResponses } = vi.hoisted(() => {
   const perTableResponses = new Map<string, { data: unknown; error: { message: string } | null }>()
 
   const storageRemoveMock = vi.fn().mockResolvedValue({ data: [], error: null })
+  const authAdminDeleteUserMock = vi.fn().mockResolvedValue({ data: null, error: null })
 
   function makeQuery(table: string) {
     // Each chain remembers its mode (select|delete|select-after-delete) and
@@ -61,7 +62,7 @@ const { fromMock, storageRemoveMock, perTableResponses } = vi.hoisted(() => {
 
   const fromMock = vi.fn((table: string) => makeQuery(table))
 
-  return { fromMock, storageRemoveMock, perTableResponses }
+  return { fromMock, storageRemoveMock, authAdminDeleteUserMock, perTableResponses }
 })
 
 vi.mock('@/lib/supabase/admin', () => ({
@@ -69,6 +70,11 @@ vi.mock('@/lib/supabase/admin', () => ({
     from: fromMock,
     storage: {
       from: () => ({ remove: storageRemoveMock }),
+    },
+    auth: {
+      admin: {
+        deleteUser: authAdminDeleteUserMock,
+      },
     },
   }),
 }))
@@ -88,6 +94,8 @@ describe('GET /api/cron/purge-deleted', () => {
   beforeEach(() => {
     fromMock.mockClear()
     storageRemoveMock.mockClear()
+    authAdminDeleteUserMock.mockClear()
+    authAdminDeleteUserMock.mockResolvedValue({ data: null, error: null })
     perTableResponses.clear()
     process.env.CRON_SECRET = SECRET
   })
@@ -210,6 +218,68 @@ describe('GET /api/cron/purge-deleted', () => {
     const body = await res.json()
     expect(body.ok).toBe(true)
     expect(body.storage_errors).toBeGreaterThan(0)
+  })
+
+  it('purges organizations past threshold, collects file paths, and deletes auth.users for members (G-007)', async () => {
+    // One org soft-deleted past the threshold.
+    perTableResponses.set('organizations:select', {
+      data: [{ id: 'org-1' }],
+      error: null,
+    })
+    perTableResponses.set('organizations:delete-eq:org-1', {
+      data: null,
+      error: null,
+    })
+    // The org has docs in storage…
+    perTableResponses.set('candidate_documents:select', {
+      data: [{ file_path: 'org-1/cv1.pdf' }, { file_path: 'org-1/cv2.pdf' }],
+      error: null,
+    })
+    // …and two member profiles whose auth.users must also be wiped.
+    perTableResponses.set('profiles:select', {
+      data: [{ id: 'user-owner' }, { id: 'user-member' }],
+      error: null,
+    })
+
+    const res = await GET(makeReq(`Bearer ${SECRET}`))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+
+    expect(body.organizations_purged).toBe(1)
+    expect(body.auth_users_deleted).toBe(2)
+    expect(body.auth_users_delete_errors).toBe(0)
+
+    // auth.admin.deleteUser called once per member.
+    expect(authAdminDeleteUserMock).toHaveBeenCalledTimes(2)
+    const calledIds = authAdminDeleteUserMock.mock.calls.map((c) => c[0])
+    expect(calledIds).toContain('user-owner')
+    expect(calledIds).toContain('user-member')
+
+    // Storage cleanup picked up the org's docs.
+    expect(storageRemoveMock).toHaveBeenCalledTimes(1)
+    const calledPaths = storageRemoveMock.mock.calls[0][0] as string[]
+    expect(calledPaths).toContain('org-1/cv1.pdf')
+    expect(calledPaths).toContain('org-1/cv2.pdf')
+  })
+
+  it('counts auth.admin.deleteUser errors but still returns ok:true', async () => {
+    perTableResponses.set('organizations:select', { data: [{ id: 'org-x' }], error: null })
+    perTableResponses.set('organizations:delete-eq:org-x', { data: null, error: null })
+    perTableResponses.set('profiles:select', { data: [{ id: 'user-a' }], error: null })
+
+    // First call fails, but the run continues anyway.
+    authAdminDeleteUserMock.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'auth.users delete kaboom' },
+    })
+
+    const res = await GET(makeReq(`Bearer ${SECRET}`))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.ok).toBe(true)
+    expect(body.organizations_purged).toBe(1)
+    expect(body.auth_users_delete_errors).toBe(1)
+    expect(body.auth_users_deleted).toBe(0)
   })
 
   it('counts vacancies skipped due to RESTRICT, does not abort the run', async () => {

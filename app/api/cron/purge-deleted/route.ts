@@ -29,6 +29,9 @@ function isAuthorized(authHeader: string | null): boolean {
 }
 
 interface PurgeCounts {
+  organizations_purged: number
+  auth_users_deleted: number
+  auth_users_delete_errors: number
   candidates_purged: number
   orphan_applications: number
   orphan_documents: number
@@ -49,6 +52,9 @@ export async function GET(req: NextRequest) {
   const cutoff = new Date(Date.now() - PURGE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
   const counts: PurgeCounts = {
+    organizations_purged: 0,
+    auth_users_deleted: 0,
+    auth_users_delete_errors: 0,
     candidates_purged: 0,
     orphan_applications: 0,
     orphan_documents: 0,
@@ -60,13 +66,105 @@ export async function GET(req: NextRequest) {
     storage_errors: 0,
   }
 
+  // Collected across multiple steps below; deleted from the candidate-documents
+  // storage bucket in step 3 (best-effort).
+  const filePaths = new Set<string>()
+
+  // ── 0. Organizations past threshold (G-007) ─────────────────────────────────
+  // Done BEFORE the per-table purges so the cascade does the heavy lifting on
+  // child rows in one shot. The org cascade-deletes every public.* row in the
+  // tenant (profiles, candidates, applications, vacancies, custom_fields,
+  // candidate_documents, candidate_notes, etc.) via existing FK CASCADE rules,
+  // so the later per-table sweeps only have to mop up orphans from in-app
+  // soft-deletes (where the org itself is still active).
+  //
+  // auth.users cleanup: profiles.id = auth.users.id (FK). Cascade-deleting a
+  // profile removes the row from public.profiles but NOT from auth.users. We
+  // must call supabase.auth.admin.deleteUser() per former member after the
+  // cascade so the user is fully wiped (otherwise they could sign back in).
+  const { data: orgsToPurge, error: orgsToPurgeError } = await supabase
+    .from('organizations')
+    .select('id')
+    .lt('deleted_at', cutoff)
+
+  if (orgsToPurgeError) {
+    console.error(
+      '[cron/purge-deleted] select organizations-to-purge failed:',
+      orgsToPurgeError.message,
+    )
+  }
+
+  const orgIdsToPurge = (orgsToPurge ?? []).map((o) => o.id as string)
+  const authUserIdsToDelete: string[] = []
+
+  if (orgIdsToPurge.length > 0) {
+    // Collect file paths from documents that will cascade-delete with the orgs.
+    const { data: orgDocs, error: orgDocsError } = await supabase
+      .from('candidate_documents')
+      .select('file_path')
+      .in('organization_id', orgIdsToPurge)
+    if (orgDocsError) {
+      console.error('[cron/purge-deleted] select org docs failed:', orgDocsError.message)
+    } else {
+      for (const d of orgDocs ?? []) {
+        if (d.file_path) filePaths.add(d.file_path)
+      }
+    }
+
+    // Collect auth user IDs from member profiles BEFORE the cascade-delete.
+    const { data: memberProfiles, error: memberProfilesError } = await supabase
+      .from('profiles')
+      .select('id')
+      .in('organization_id', orgIdsToPurge)
+    if (memberProfilesError) {
+      console.error(
+        '[cron/purge-deleted] select member profiles failed:',
+        memberProfilesError.message,
+      )
+    } else {
+      for (const p of memberProfiles ?? []) {
+        if (p.id) authUserIdsToDelete.push(p.id as string)
+      }
+    }
+
+    // Hard-delete each org. Doing it row-by-row in case one fails (unlikely
+    // since cascades are well-defined here, but defensive).
+    for (const orgId of orgIdsToPurge) {
+      const { error } = await supabase.from('organizations').delete().eq('id', orgId)
+      if (error) {
+        console.error(`[cron/purge-deleted] delete organization ${orgId} failed:`, error.message)
+      } else {
+        counts.organizations_purged++
+      }
+    }
+
+    // Delete the corresponding auth.users rows. Best-effort per user.
+    for (const uid of authUserIdsToDelete) {
+      try {
+        const { error } = await supabase.auth.admin.deleteUser(uid)
+        if (error) {
+          console.error(`[cron/purge-deleted] auth.admin.deleteUser(${uid}) failed:`, error.message)
+          counts.auth_users_delete_errors++
+        } else {
+          counts.auth_users_deleted++
+        }
+      } catch (err) {
+        console.error(
+          `[cron/purge-deleted] auth.admin.deleteUser(${uid}) threw:`,
+          err instanceof Error ? err.message : err,
+        )
+        counts.auth_users_delete_errors++
+      }
+    }
+  }
+
+
   // ── 1. Collect storage paths BEFORE deleting rows ──────────────────────────
   // Two sources of paths to clean up: (a) candidate_documents that were
   // individually soft-deleted past the threshold, (b) documents whose parent
   // candidate was soft-deleted past the threshold (these will cascade-delete
   // when we purge the candidate row, but the file in storage doesn't go with
   // them — DB CASCADE doesn't reach into the Supabase Storage bucket).
-  const filePaths = new Set<string>()
 
   const { data: directDocs, error: directDocsError } = await supabase
     .from('candidate_documents')
