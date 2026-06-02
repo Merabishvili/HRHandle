@@ -11,7 +11,14 @@ const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx']
 
 type ParseState = 'idle' | 'parsing' | 'done' | 'failed'
 
-export function ApplyForm({ token }: { token: string }) {
+interface ApplyFormProps {
+  token: string
+  /** Name of the recruiting organization — the data controller. Threaded into
+   * the GDPR Article 13 notice so candidates know who their data goes to. */
+  companyName: string
+}
+
+export function ApplyForm({ token, companyName }: ApplyFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
 
@@ -321,6 +328,50 @@ export function ApplyForm({ token }: { token: string }) {
           </div>
         </div>
 
+        {/*
+          GDPR Article 13 notice — disclosed at the point of collection.
+          Identifies the controller (the recruiting org) and HRHandle's role
+          as processor, the categories of data collected (including the
+          automated CV extraction), the retention rule, and the candidate's
+          rights. Routes rights requests to the controller because under our
+          processor/controller split (privacy policy §1) HRHandle cannot
+          unilaterally fulfil erasure or access for candidate data.
+        */}
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs leading-relaxed text-gray-600">
+          <p className="font-semibold text-gray-700">Before you apply</p>
+          <p className="mt-2">
+            By submitting this form, you&apos;re sharing your personal data with{' '}
+            <strong>{companyName}</strong> — the company recruiting for this position and
+            the data controller for your application. HRHandle operates this form on their
+            behalf as a data processor.
+          </p>
+          <p className="mt-2">
+            <strong>What we collect.</strong> The contact details and CV you submit. If you
+            uploaded a CV, the file is processed through automated extraction to pre-fill
+            the form fields; no automated hiring decision is taken. We also record the IP
+            address of the submission to prevent abuse.
+          </p>
+          <p className="mt-2">
+            <strong>How long we keep it.</strong> Your application is retained while{' '}
+            {companyName} actively considers candidates, and deleted within 30 days of{' '}
+            {companyName} closing the role or terminating their HRHandle subscription.
+          </p>
+          <p className="mt-2">
+            <strong>Your rights.</strong> You can ask to access, correct, or delete your
+            data, or restrict processing. To exercise these rights for this application,
+            contact {companyName} directly. For HRHandle&apos;s role as data processor, see
+            our{' '}
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-gray-900"
+            >
+              Privacy Policy
+            </a>.
+          </p>
+        </div>
+
         <button
           type="submit"
           disabled={isLoading || parseState === 'parsing' || !captchaToken}
@@ -344,10 +395,6 @@ export function ApplyForm({ token }: { token: string }) {
           onExpire={() => setCaptchaToken(null)}
           options={{ size: 'invisible' }}
         />
-
-        <p className="text-center text-xs text-gray-400">
-          By submitting, you agree to your information being stored for recruitment purposes.
-        </p>
       </form>
     </div>
   )

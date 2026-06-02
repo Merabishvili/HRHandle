@@ -167,7 +167,7 @@ export default async function ApplyPage({ params }: PageProps) {
             <p className="mt-1 text-sm text-gray-500">The role may have been filled or closed. Thank you for your interest.</p>
           </div>
         ) : (
-          <ApplyForm token={token} />
+          <ApplyForm token={token} companyName={org?.name || 'this company'} />
         )}
 
         {publicJobsSlug && (
