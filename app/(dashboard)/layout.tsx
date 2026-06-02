@@ -26,6 +26,7 @@ interface ProfileRow {
         slug: string
         logo_url: string | null
         is_active: boolean
+        deleted_at: string | null
         created_at: string
         updated_at: string
       }[]
@@ -106,6 +107,7 @@ export default async function DashboardLayout({
         slug,
         logo_url,
         is_active,
+        deleted_at,
         created_at,
         updated_at
       )
@@ -196,6 +198,15 @@ export default async function DashboardLayout({
   }
 
   const organization = profile.organizations?.[0] || null
+
+  // G-007 chokepoint: if the organisation has been scheduled for deletion,
+  // route every member (owner and team) to the deletion-scheduled page until
+  // either an admin cancels (email-based for now) or the daily purge cron
+  // hard-deletes the org after the 30-day grace promised in Privacy Policy §7.
+  if (organization?.deleted_at) {
+    redirect('/onboarding/account-deletion-scheduled')
+  }
+
   const headersList = await headers()
   const pathname = headersList.get('x-invoke-path') || headersList.get('x-pathname') || ''
 

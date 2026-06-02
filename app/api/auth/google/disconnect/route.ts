@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { writeAuditLog } from '@/lib/audit-log'
+import { revokeGoogleToken } from '@/lib/google/calendar'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -16,6 +17,30 @@ export async function POST() {
 
   if (!user) {
     return NextResponse.redirect(new URL('/auth/login', BASE))
+  }
+
+  // Read the current tokens before NULLing so we can revoke upstream first.
+  // Prefer the refresh token — revoking it kills the whole grant on Google's
+  // side. Fall back to the access token if no refresh token is stored.
+  const { data: tokens } = await supabase
+    .from('profiles')
+    .select('google_refresh_token, google_access_token')
+    .eq('id', user.id)
+    .single()
+
+  const tokenToRevoke =
+    (tokens?.google_refresh_token as string | null) ??
+    (tokens?.google_access_token as string | null)
+
+  // Best-effort upstream revoke (G-006). Local NULL is what actually fulfils
+  // the user's intent — even if Google's endpoint is unreachable, we still
+  // proceed so the user isn't blocked from disconnecting.
+  if (tokenToRevoke) {
+    try {
+      await revokeGoogleToken(tokenToRevoke)
+    } catch (err) {
+      console.warn('[disconnect/google] upstream revoke failed:', err)
+    }
   }
 
   await supabase

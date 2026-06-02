@@ -26,7 +26,7 @@ Zoom OAuth allows team members to create Zoom meetings directly from the intervi
    - `zoom_token_expiry` (Unix ms)
 8. Redirect to `/settings?zoom=connected`
 
-To disconnect: `POST /api/auth/zoom/disconnect` clears the three token columns.
+To disconnect: `POST /api/auth/zoom/disconnect` calls Zoom's OAuth revoke endpoint (`https://zoom.us/oauth/revoke`, Basic-auth with the client credentials) on the stored access token (best-effort — if the revoke fails for any reason the route still clears the local tokens), then clears the three token columns. Tracked as G-006.
 
 ## Token Refresh
 

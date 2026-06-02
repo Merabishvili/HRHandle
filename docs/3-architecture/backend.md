@@ -133,11 +133,20 @@ The middleware (`lib/supabase/middleware.ts`) auth-gates both `/dashboard/*` and
 
 ## Background Jobs / Cron
 
-**`app/api/cron/expire-vacancies`** — GET
+Two daily cron endpoints, both protected by `Authorization: Bearer {CRON_SECRET}` header (timing-safe comparison) and scheduled via `vercel.json`.
 
-- Protected by `Authorization: Bearer {CRON_SECRET}` header (timing-safe comparison)
+**`app/api/cron/expire-vacancies`** — GET, daily at 01:00 UTC
+
 - Calls Supabase RPC `expire_past_vacancies()`
-- Intended to be called by Vercel Cron (defined in `vercel.json` — not present in source; configured in Vercel dashboard)
+
+**`app/api/cron/purge-deleted`** — GET, daily at 03:00 UTC
+
+- **Step 0 (G-007)**: hard-deletes whole `organizations` rows where `deleted_at < now() - interval '30 days'`. Each org delete cascades to every public.* row in the tenant (`profiles`, `candidates`, `applications`, `vacancies`, `custom_fields`, `candidate_documents`, `candidate_notes`, `interviews`, `candidate_evaluations`, `candidate_experience`, `candidate_education`) via existing FK CASCADE rules. Before the cascade, the cron collects (a) all file paths from the org's `candidate_documents` (for storage cleanup in Step 3) and (b) all member `profiles.id` values. After the cascade, calls `supabase.auth.admin.deleteUser()` per former member to remove the corresponding `auth.users` rows — `profiles.id` is a FK to `auth.users.id` so cascading the profile does NOT delete the auth row, and a member could otherwise sign in again.
+- **Steps 1–2**: hard-deletes rows where `deleted_at < now() - interval '30 days'` from the remaining candidate-scoped tables (`candidates`, `applications`, `candidate_documents`, `candidate_notes`, `custom_fields`, `vacancies`) to catch in-app soft-deletes where the parent org is still active. Candidate purges cascade to their children.
+- Vacancies use per-row deletes with try/catch: the RESTRICT FK from `candidate_evaluations.vacancy_id` can block individual purges; these are logged and skipped (counted as `vacancies_skipped_due_to_restrict`) rather than failing the run.
+- **Step 3**: removes the corresponding files from the `candidate-documents` Supabase Storage bucket (best-effort — storage errors are logged but don't 500 the response, so a transient storage hiccup doesn't block the row purge).
+- Implements the "permanently removed within 30 days" promise in Privacy Policy §7. Tracked as G-003 (in-app soft deletes) and G-007 (whole-org termination from the danger zone in `/settings/organization`).
+- Returns a counts JSON for observability; same shape logged to `console.log` so Vercel logs capture each run.
 
 ## Supabase Client Types
 

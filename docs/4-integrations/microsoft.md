@@ -53,7 +53,7 @@ Calendars.ReadWrite OnlineMeetings.ReadWrite offline_access
    - `microsoft_token_expiry` (Unix ms)
 9. Redirect to `/settings/integrations?microsoft=connected`
 
-To disconnect: `POST /api/auth/microsoft/disconnect` clears the three token columns.
+To disconnect: `POST /api/auth/microsoft/disconnect` clears the three token columns. **Unlike Google and Zoom, no upstream revoke call is made**: Microsoft Entra has no documented programmatic OAuth 2.0 revoke endpoint for refresh tokens (the `end_session_endpoint` performs a global sign-out across every Microsoft app, which is too aggressive for a per-integration disconnect). The dangling refresh token in Entra expires on Microsoft's own schedule (typically 90 days of inactivity). Users wanting absolute revocation can remove HRHandle from their authorised apps at https://myaccount.microsoft.com/. See the in-file comment in `app/api/auth/microsoft/disconnect/route.ts`. Tracked as G-006.
 
 ### Token Refresh
 
