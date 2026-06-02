@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 const OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
+const REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
 const SCOPE_CALENDAR_EVENTS = 'https://www.googleapis.com/auth/calendar.events'
 const SCOPE_USERINFO_EMAIL = 'https://www.googleapis.com/auth/userinfo.email'
@@ -72,6 +73,25 @@ export function hasRequiredCalendarScopes(scope: string | undefined | null): boo
   if (!scope) return false
   const granted = new Set(scope.split(/\s+/))
   return granted.has(SCOPE_CALENDAR_EVENTS) || granted.has('https://www.googleapis.com/auth/calendar')
+}
+
+/**
+ * Revoke a Google OAuth token upstream. Per Google's docs, passing the refresh
+ * token revokes the entire grant (including any issued access tokens), so pass
+ * the refresh token in preference to an access token.
+ *
+ * Treats 200 and 400 as success: 200 is a real revoke, 400 means the token was
+ * already invalid (revoked, expired, or unknown). Either way the goal state —
+ * "this token is dead" — is reached. Anything else throws so the caller can log.
+ */
+export async function revokeGoogleToken(token: string): Promise<void> {
+  const res = await fetch(REVOKE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ token }).toString(),
+  })
+  if (res.status === 200 || res.status === 400) return
+  throw new Error(`google revoke failed: HTTP ${res.status}`)
 }
 
 async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; expiry: number } | null> {

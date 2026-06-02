@@ -62,7 +62,7 @@ A separate OAuth flow that allows the app to create Google Calendar events with 
    - `google_token_expiry` (Unix ms)
 8. Redirect to `/settings?google=connected`
 
-To disconnect: `POST /api/auth/google/disconnect` clears the three token columns.
+To disconnect: `POST /api/auth/google/disconnect` calls Google's OAuth revoke endpoint (`https://oauth2.googleapis.com/revoke`) on the stored refresh token (best-effort — if the revoke fails for any reason the route still clears the local tokens), then clears the three token columns. Tracked as G-006.
 
 ### Token Refresh
 
