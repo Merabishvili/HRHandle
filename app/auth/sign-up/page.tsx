@@ -1,13 +1,24 @@
 import { Suspense } from 'react'
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Briefcase } from 'lucide-react'
 import { SignUpForm } from '@/components/auth/sign-up-form'
+import { getBlockedCountry } from '@/lib/sanctions'
 
 export default async function SignUpPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string }>
 }) {
+  // G-008: country gate. Block new account creation from jurisdictions on the
+  // hardcoded sanctions/FATF-call-for-action list. Header is set by Vercel
+  // edge; absent in local dev / tests → fails open (does not block).
+  const headersList = await headers()
+  if (getBlockedCountry(headersList)) {
+    redirect('/not-available')
+  }
+
   const { next } = await searchParams
   const safeNext = next?.startsWith('/') ? next : ''
 

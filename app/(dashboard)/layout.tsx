@@ -136,6 +136,19 @@ export default async function DashboardLayout({
       }
     }
 
+    // G-008 country gate, OAuth-loophole closure: a user from a blocked
+    // jurisdiction can bypass /auth/sign-up by clicking "Continue with Google"
+    // on /auth/login (which is intentionally NOT country-gated because it
+    // serves existing customers who travel). At this point in the layout we
+    // know the user has no organization yet — i.e. this is effectively new
+    // account creation. Block here too. Existing customers (with org_id) are
+    // never affected because they don't reach this branch.
+    const { getBlockedCountry } = await import('@/lib/sanctions')
+    const requestHeaders = await headers()
+    if (getBlockedCountry(requestHeaders)) {
+      redirect('/not-available')
+    }
+
     // First-time OAuth users have no company_name in metadata (Google/Microsoft
     // don't return it). Send them to /onboarding/company to collect it before
     // creating the org — otherwise runOnboarding falls back to "New Organization".
