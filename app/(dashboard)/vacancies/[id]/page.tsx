@@ -32,6 +32,8 @@ import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-selec
 import { AddCandidateToVacancyDialog } from '@/components/vacancies/add-candidate-to-vacancy-dialog'
 import { LinkedInPostJobButton } from '@/components/vacancies/linkedin-post-job-button'
 import { getLinkedInIntegration } from '@/lib/actions/integrations'
+import { AiInterviewQuestions } from '@/components/vacancies/ai-interview-questions'
+import type { InterviewQuestionsSet } from '@/lib/ai/interview-questions'
 
 interface VacancyRow {
   id: string
@@ -52,6 +54,12 @@ interface VacancyRow {
   description: string
   responsibilities: string | null
   requirements: string | null
+  interview_questions: {
+    behavioural: string[]
+    technical: string[]
+    situational: string[]
+    closing: string[]
+  } | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -145,7 +153,14 @@ export default async function VacancyDetailPage({
 }) {
   const { id } = await params
   const { appSearch = '', appStatus, tab } = await searchParams
-  const defaultTab = tab === 'qe' ? 'qe' : tab === 'application-form' ? 'application-form' : 'applications'
+  const defaultTab =
+    tab === 'qe'
+      ? 'qe'
+      : tab === 'application-form'
+        ? 'application-form'
+        : tab === 'interview-questions'
+          ? 'interview-questions'
+          : 'applications'
   const supabase = await createClient()
 
   const {
@@ -198,6 +213,7 @@ export default async function VacancyDetailPage({
         description,
         responsibilities,
         requirements,
+        interview_questions,
         created_by,
         created_at,
         updated_at,
@@ -448,6 +464,12 @@ export default async function VacancyDetailPage({
             >
               Apply Link
             </TabsTrigger>
+            <TabsTrigger
+              value="interview-questions"
+              className="-mb-px rounded-none !border-x-0 !border-t-0 border-b-2 border-transparent !bg-transparent px-4 py-2.5 text-sm font-normal text-muted-foreground !shadow-none data-[state=active]:border-b-primary data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:!shadow-none"
+            >
+              Interview questions
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -647,6 +669,18 @@ export default async function VacancyDetailPage({
             <ApplicationFormTab
               vacancyId={id}
               initialToken={vacancy.application_form_token ?? null}
+            />
+          </div>
+        </TabsContent>
+
+        {/* Interview questions tab */}
+        <TabsContent value="interview-questions" className="mt-4">
+          <div className="max-w-3xl">
+            <AiInterviewQuestions
+              vacancyId={id}
+              savedQuestions={
+                (vacancy.interview_questions as InterviewQuestionsSet | null) ?? null
+              }
             />
           </div>
         </TabsContent>

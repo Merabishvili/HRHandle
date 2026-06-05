@@ -64,12 +64,12 @@ If the AI cannot help (e.g. data too thin, model timeout, rate limit hit), the U
 | **CV parsing** | Live | `POST /api/parse-cv` | Public apply form (`/apply/[token]`) — runs on file upload | Google Gemini | 30 / hour / IP |
 | **Candidate summary** | Live | `POST /api/ai/candidate-summary` | Candidate detail page, top of left column — explicit "Generate" button | Google Gemini | 100 / hour / org |
 | **JD generator** | Live | `POST /api/ai/jd-generator` | Vacancy create/edit form, inside the Vacancy Details card — collapsible AI assist panel with per-section Generate, per-section Copy, and an explicit "Apply all to form" button (confirms before overwriting existing text) | Google Gemini | 100 / hour / org |
+| **Interview questions** | Live | `POST /api/ai/interview-questions` | Vacancy detail page → "Interview questions" tab — single Generate button produces 4 categorised sections (behavioural / technical / situational / closing), per-question Copy + per-category Copy-all. Recruiter explicitly clicks "Save to vacancy" to persist (overwrites previous saved set with confirm). Saved questions stored as JSONB on `vacancies.interview_questions`. | Google Gemini | 100 / hour / org |
 
 ### Planned features (not yet shipped)
 
 - **Bias / inclusive-language check** — vacancy form, "Check inclusive language" button.
 - **Email drafting** — candidate detail page, "Suggest email" button for rejection / interview / offer.
-- **Interview question suggestions** — vacancy or interview page.
 - **Structured interview note extraction** — paste free-text notes, AI extracts into scorecard fields.
 - **AI screening** *(later, with full EU AI Act prep)* — applicant list per vacancy, "AI screening" tab showing advisory fit indicators per candidate. Never changes candidate state automatically.
 
@@ -112,3 +112,4 @@ For higher-risk features (AI screening), a more formal risk assessment + bias-mo
 |---|---|---|
 | 2026-06-05 | Initial creation. CV parsing + candidate summary live. Six design principles documented. EU AI Act mapping table added. | Aleksandre Merabishvili |
 | 2026-06-05 | JD generator added (G-010). Per-section Generate buttons, per-section Copy, and an explicit "Apply all to form" action that confirms before overwriting any non-empty form field. No candidate data sent to the AI for this feature. | Aleksandre Merabishvili |
+| 2026-06-05 | Interview questions added (G-011). Four categories (behavioural, technical, situational, closing). Strict no-protected-class / no-salary prompt guard. Per-question Copy + per-category Copy-all. "Save to vacancy" persists the set to a new `vacancies.interview_questions` JSONB column (migration 032). Per-question Delete on the saved view. No candidate data sent to the AI for this feature. | Aleksandre Merabishvili |

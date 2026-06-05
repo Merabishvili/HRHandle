@@ -212,6 +212,17 @@ export default function PrivacyPage() {
                 are not added to the vacancy unless the recruiter explicitly clicks
                 &quot;Apply all to form&quot; or copies a section manually.
               </li>
+              <li>
+                <strong>Interview question suggestions</strong> — when a recruiter clicks
+                the &quot;Generate questions&quot; button on a vacancy&apos;s Interview
+                Questions tab, the AI suggests four categories of questions (behavioural,
+                technical, situational, closing) based on the vacancy fields (title,
+                description, responsibilities, requirements, department, location,
+                employment type, sector, and any optional context the recruiter typed).
+                No candidate data is sent to the AI for this feature. The suggestions are
+                advisory; the recruiter chooses whether to save them to the vacancy
+                (overwriting the previously-saved set) or copy individual questions.
+              </li>
             </ul>
             <p className="mt-3">
               The AI output is informational only. No AI feature in HRHandle makes any automated
