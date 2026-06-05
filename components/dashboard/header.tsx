@@ -1,9 +1,10 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import type { Profile, Organization, Subscription } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
+import { clearSessionTracking } from '@/lib/session'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -14,7 +15,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { LogOut, User as UserIcon, Settings, CreditCard } from 'lucide-react'
+import { LogOut, User as UserIcon, Settings, CreditCard, ChevronRight } from 'lucide-react'
+import { NotificationsBell } from '@/components/dashboard/notifications-bell'
+import { HelpLink } from '@/components/dashboard/help-link'
 
 interface DashboardHeaderProps {
   user: User
@@ -36,15 +39,37 @@ function getInitials(profile: Profile, user: User): string {
   return user.email?.slice(0, 2).toUpperCase() || 'U'
 }
 
+const PAGE_LABELS: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/vacancies': 'Vacancies',
+  '/candidates': 'Candidates',
+  '/interviews': 'Interviews',
+  '/settings': 'Settings',
+  '/subscription': 'Subscription',
+}
+
+function getPlanLabel(subscription?: Subscription | null): string {
+  if (!subscription) return 'Trial'
+  if (subscription.plan_code === 'individual') return 'Individual'
+  if (subscription.plan_code === 'organization') return 'Organization'
+  return 'Trial'
+}
+
 export function DashboardHeader({
   user,
   profile,
-  organization,
+  organization: _organization,
   subscription,
 }: DashboardHeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
+
+  const pageLabel = Object.entries(PAGE_LABELS).find(([key]) =>
+    pathname === key || pathname.startsWith(key + '/')
+  )?.[1] ?? ''
 
   const handleSignOut = async () => {
+    clearSessionTracking()
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/')
@@ -52,40 +77,55 @@ export function DashboardHeader({
   }
 
   const initials = getInitials(profile, user)
+  const planLabel = getPlanLabel(subscription)
+  const statusLabel = subscription?.status
+    ? subscription.status.replace('_', ' ')
+    : 'active'
 
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-border bg-background">
-      <div className="flex h-full items-center justify-between px-4 lg:px-8">
+    <header className="sticky top-0 z-30 h-14 border-b border-border bg-card">
+      <div className="flex h-full items-center justify-between px-4 lg:px-6">
         <div className="w-10 lg:hidden" />
 
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          {organization && (
-            <div className="hidden min-w-0 md:block">
-              <p className="truncate text-sm font-medium">{organization.name}</p>
-              {subscription && (
-                <p className="text-xs text-muted-foreground">
-                  {subscription.plan_code === 'individual' ? 'Individual' : subscription.plan_code === 'organization' ? 'Organization' : 'Trial'} ·{' '}
-                  {subscription.status.replace('_', ' ')}
-                </p>
-              )}
-            </div>
+        {/* Breadcrumb */}
+        <div className="hidden lg:flex items-center gap-1.5 text-sm">
+          <span className="text-muted-foreground">HRHandle</span>
+          {pageLabel && (
+            <>
+              <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+              <span className="font-medium text-foreground">{pageLabel}</span>
+            </>
           )}
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
-                <AvatarImage
-                  src={profile.avatar_url || undefined}
-                  alt={profile.full_name || 'User'}
-                />
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
+        {/* User area */}
+        <div className="flex items-center gap-1.5">
+          <HelpLink />
+          <NotificationsBell />
+
+          <div className="hidden text-right md:block">
+            <p className="text-sm font-medium leading-tight text-foreground">
+              {profile.full_name || user.email?.split('@')[0] || 'User'}
+            </p>
+            <p className="text-xs leading-tight text-muted-foreground capitalize">
+              {planLabel} · {statusLabel}
+            </p>
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage
+                    src={profile.avatar_url || undefined}
+                    alt={profile.full_name || 'User'}
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
 
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
@@ -123,7 +163,8 @@ export function DashboardHeader({
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   )

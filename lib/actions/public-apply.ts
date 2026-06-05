@@ -1,7 +1,10 @@
 'use server'
 
+import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendApplicationConfirmationEmail } from '@/lib/email'
+import { createOrgNotifications } from '@/lib/actions/notifications'
+import { verifyCaptcha } from '@/lib/turnstile'
 import { headers } from 'next/headers'
 
 const MAX_SUBMISSIONS_PER_IP_PER_HOUR = 5
@@ -13,6 +16,24 @@ const ALLOWED_MIME_TYPES = [
 ]
 const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB
 
+// Magic byte signatures to verify files aren't just renamed with a trusted extension
+const MAGIC_NUMBERS = [
+  { bytes: [0x25, 0x50, 0x44, 0x46] },                                    // %PDF
+  { bytes: [0x50, 0x4b, 0x03, 0x04] },                                    // PK (ZIP / DOCX)
+  { bytes: [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1] },          // OLE2 (DOC)
+]
+
+function hasValidMagicNumber(buf: ArrayBuffer): boolean {
+  const view = new Uint8Array(buf, 0, 8)
+  return MAGIC_NUMBERS.some(({ bytes }) => bytes.every((b, i) => view[i] === b))
+}
+
+// Gemini returns dates as "YYYY-MM" — PostgreSQL DATE requires "YYYY-MM-DD"
+function toDateString(date: string | null): string | null {
+  if (!date) return null
+  return /^\d{4}-\d{2}$/.test(date) ? `${date}-01` : date
+}
+
 export type PublicApplyResult =
   | { success: true }
   | { success: false; error: string }
@@ -20,11 +41,31 @@ export type PublicApplyResult =
 export async function submitPublicApplication(
   formData: FormData
 ): Promise<PublicApplyResult> {
+  // The apply form is unauthenticated — applicants have no Supabase session,
+  // so RLS-protected writes on candidates/applications cannot use the anon
+  // client. Access is gated by:
+  //   - Cloudflare Turnstile (step 1b, when TURNSTILE_SECRET_KEY is set)
+  //   - The `application_form_token` validated against `vacancies` (step 5);
+  //     no DB write happens before that check passes
+  //   - Per-IP and per-vacancy rate limits (steps 6–7)
+  // See docs/issues-found.md S-010 for the threat-model rationale.
   const supabase = createAdminClient()
 
   // ── 1. Honeypot ────────────────────────────────────────────────────────────
   const honeypot = formData.get('website') as string | null
   if (honeypot) return { success: true } // silently drop bots
+
+  // ── 1b. Captcha verification ───────────────────────────────────────────────
+  const captchaToken = formData.get('cf_turnstile_token') as string | null
+  const captchaHeaders = await headers()
+  const captchaIp =
+    captchaHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    captchaHeaders.get('x-real-ip') ||
+    null
+  const captchaOk = await verifyCaptcha(captchaToken, captchaIp)
+  if (!captchaOk) {
+    return { success: false, error: 'Security check failed. Please refresh and try again.' }
+  }
 
   // ── 2. Read fields ─────────────────────────────────────────────────────────
   const token = formData.get('token') as string | null
@@ -34,22 +75,29 @@ export async function submitPublicApplication(
   const phone = (formData.get('phone') as string | null)?.trim() || null
   const linkedinUrl = (formData.get('linkedin_profile_url') as string | null)?.trim() || null
   const cvFile = formData.get('cv') as File | null
+  const experienceJson = (formData.get('experience_json') as string | null) || '[]'
+  const educationJson = (formData.get('education_json') as string | null) || '[]'
 
   // ── 3. Basic validation ────────────────────────────────────────────────────
   if (!token) return { success: false, error: 'Invalid form link.' }
   if (!firstName) return { success: false, error: 'First name is required.' }
   if (!lastName) return { success: false, error: 'Last name is required.' }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !z.string().email().safeParse(email).success) {
     return { success: false, error: 'A valid email address is required.' }
   }
-  if (!cvFile || cvFile.size === 0) return { success: false, error: 'CV upload is required.' }
-
-  // ── 4. File validation (server-side MIME check) ────────────────────────────
-  if (!ALLOWED_MIME_TYPES.includes(cvFile.type)) {
-    return { success: false, error: 'CV must be a PDF or Word document.' }
-  }
-  if (cvFile.size > MAX_FILE_BYTES) {
-    return { success: false, error: 'CV file must be 10 MB or smaller.' }
+  // ── 4. File validation (only when a file was provided) ────────────────────
+  let fileBytes: ArrayBuffer | null = null
+  if (cvFile && cvFile.size > 0) {
+    if (!ALLOWED_MIME_TYPES.includes(cvFile.type)) {
+      return { success: false, error: 'CV must be a PDF or Word document.' }
+    }
+    if (cvFile.size > MAX_FILE_BYTES) {
+      return { success: false, error: 'CV file must be 10 MB or smaller.' }
+    }
+    fileBytes = await cvFile.arrayBuffer()
+    if (!hasValidMagicNumber(fileBytes)) {
+      return { success: false, error: 'CV must be a valid PDF or Word document.' }
+    }
   }
 
   // ── 5. Resolve vacancy from token ─────────────────────────────────────────
@@ -63,13 +111,16 @@ export async function submitPublicApplication(
       vacancy_statuses ( code )
     `)
     .eq('application_form_token', token)
+    .is('deleted_at', null)
     .single()
 
   if (!vacancy) return { success: false, error: 'This apply link is no longer active.' }
 
-  // Vacancy must be active
-  const statusCode = (vacancy.vacancy_statuses as any)?.[0]?.code
-  if (vacancy.archived_at || statusCode === 'closed' || statusCode === 'archived') {
+  // Vacancy must be open (draft/on_hold/closed/archived are all blocked)
+  type StatusJoin = { code: string } | { code: string }[] | null
+  const statusJoin = vacancy.vacancy_statuses as StatusJoin
+  const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
+  if (vacancy.archived_at || statusCode !== 'open') {
     return { success: false, error: 'This position is no longer open.' }
   }
 
@@ -81,6 +132,7 @@ export async function submitPublicApplication(
     .select('id', { count: 'exact', head: true })
     .eq('vacancy_id', vacancy.id)
     .eq('organization_id', orgId)
+    .is('deleted_at', null)
 
   if ((appCount ?? 0) >= MAX_APPLICATIONS_PER_VACANCY) {
     return { success: false, error: 'This position is no longer open.' }
@@ -113,21 +165,26 @@ export async function submitPublicApplication(
     .eq('code', 'active')
     .single()
 
-  // ── 9. Duplicate detection (email AND phone must both match, active only) ──
-  // Only attempt match when both fields are present in the submission
-  let candidateId: string
+  if (!activeStatus) {
+    // The 'active' candidate status is seeded globally — its absence indicates
+    // a misconfigured DB. Fail loudly rather than silently dropping all matches
+    // via `.eq('general_status_id', '')` further down (audit B-004).
+    console.error('[public-apply] missing candidate_statuses row for code=active')
+    return { success: false, error: 'Application could not be processed. Please try again later.' }
+  }
 
-  const { data: matchedCandidate } = (email && phone)
-    ? await supabase
-        .from('candidates')
-        .select('id')
-        .eq('organization_id', orgId)
-        .eq('email', email)
-        .eq('phone', phone)
-        .eq('general_status_id', activeStatus?.id ?? '')
-        .is('deleted_at', null)
-        .maybeSingle()
-    : { data: null }
+  // ── 9. Duplicate detection (email match is sufficient — phone is optional) ─
+  let candidateId: string
+  let isNewCandidate = false
+
+  const { data: matchedCandidate } = await supabase
+    .from('candidates')
+    .select('id')
+    .eq('organization_id', orgId)
+    .eq('email', email)
+    .eq('general_status_id', activeStatus.id)
+    .is('deleted_at', null)
+    .maybeSingle()
 
   if (matchedCandidate) {
     candidateId = matchedCandidate.id
@@ -157,7 +214,7 @@ export async function submitPublicApplication(
         phone,
         linkedin_profile_url: linkedinUrl || null,
         source: 'Public Form',
-        general_status_id: activeStatus?.id || null,
+        general_status_id: activeStatus.id,
       })
       .select('id')
       .single()
@@ -167,6 +224,7 @@ export async function submitPublicApplication(
     }
 
     candidateId = newCandidate.id
+    isNewCandidate = true
   }
 
   // ── 11. Find "applied" application status ──────────────────────────────────
@@ -189,38 +247,133 @@ export async function submitPublicApplication(
     })
 
   if (appError) {
+    // Roll back newly-created candidate to avoid orphaned records
+    if (isNewCandidate) {
+      await supabase.from('candidates').delete().eq('id', candidateId)
+    }
     return { success: false, error: 'Failed to submit application. Please try again.' }
   }
 
-  // ── 13. Upload CV ──────────────────────────────────────────────────────────
-  try {
-    const fileBytes = await cvFile.arrayBuffer()
-    const ext = cvFile.name.split('.').pop() || 'pdf'
-    const storagePath = `${orgId}/${candidateId}/${Date.now()}.${ext}`
+  // ── 13. Save parsed experience + education (best-effort, non-fatal) ─────────
+  // Zod-parse before persisting — schema matches what the parse-cv API produces
+  // (lib/validations/candidate-background.ts ParsedCVSchema inner objects).
+  if (isNewCandidate) {
+    const PublicExperienceItem = z.object({
+      company: z.string().min(1).max(200),
+      title: z.string().min(1).max(200),
+      start_date: z.string().nullable().optional(),
+      end_date: z.string().nullable().optional(),
+      is_current: z.boolean().default(false),
+      description: z.string().max(1000).nullable().optional(),
+    })
+    const PublicEducationItem = z.object({
+      institution: z.string().min(1).max(200),
+      degree: z.string().max(100).nullable().optional(),
+      field_of_study: z.string().max(200).nullable().optional(),
+      start_year: z.number().int().min(1900).max(new Date().getFullYear() + 1).nullable().optional(),
+      end_year: z.number().int().min(1900).max(new Date().getFullYear() + 10).nullable().optional(),
+      is_ongoing: z.boolean().default(false),
+    })
 
-    const { error: storageError } = await supabase.storage
-      .from('candidate-documents')
-      .upload(storagePath, fileBytes, {
-        contentType: cvFile.type,
-        upsert: false,
-      })
-
-    if (!storageError) {
-      await supabase.from('candidate_documents').insert({
-        organization_id: orgId,
-        candidate_id: candidateId,
-        file_name: cvFile.name,
-        file_size: cvFile.size,
-        mime_type: cvFile.type,
-        storage_path: storagePath,
-        document_type: 'cv',
-      })
+    try {
+      const parsed = z.array(PublicExperienceItem).safeParse(JSON.parse(experienceJson))
+      if (parsed.success && parsed.data.length > 0) {
+        const rows = parsed.data.map((e) => ({
+          organization_id: orgId,
+          candidate_id: candidateId,
+          company: e.company,
+          title: e.title,
+          start_date: toDateString(e.start_date ?? null),
+          end_date: toDateString(e.end_date ?? null),
+          is_current: e.is_current,
+          description: e.description ?? null,
+        }))
+        const { error: expErr } = await supabase.from('candidate_experience').insert(rows)
+        if (expErr) console.error('[public-apply] experience insert failed:', expErr)
+      } else if (!parsed.success) {
+        console.warn('[public-apply] experience JSON failed validation:', parsed.error.issues[0]?.message)
+      }
+    } catch (err) {
+      console.error('[public-apply] experience parse error:', err)
     }
-  } catch {
-    // CV upload failure is non-fatal — candidate + application already created
+
+    try {
+      const parsed = z.array(PublicEducationItem).safeParse(JSON.parse(educationJson))
+      if (parsed.success && parsed.data.length > 0) {
+        const rows = parsed.data.map((e) => ({
+          organization_id: orgId,
+          candidate_id: candidateId,
+          institution: e.institution,
+          degree: e.degree ?? null,
+          field_of_study: e.field_of_study ?? null,
+          start_year: e.start_year ?? null,
+          end_year: e.end_year ?? null,
+          is_ongoing: e.is_ongoing,
+        }))
+        const { error: eduErr } = await supabase.from('candidate_education').insert(rows)
+        if (eduErr) console.error('[public-apply] education insert failed:', eduErr)
+      } else if (!parsed.success) {
+        console.warn('[public-apply] education JSON failed validation:', parsed.error.issues[0]?.message)
+      }
+    } catch (err) {
+      console.error('[public-apply] education parse error:', err)
+    }
   }
 
-  // ── 14. Send confirmation email ────────────────────────────────────────────
+  // ── 15. Upload CV (optional) ───────────────────────────────────────────────
+  if (cvFile && cvFile.size > 0 && fileBytes) {
+    try {
+      const rawExt = cvFile.name.split('.').pop()?.toLowerCase() ?? ''
+      const ext = ['pdf', 'doc', 'docx'].includes(rawExt) ? rawExt : 'pdf'
+      const storagePath = `${orgId}/${candidateId}/${crypto.randomUUID()}.${ext}`
+
+      const { error: storageError } = await supabase.storage
+        .from('candidate-documents')
+        .upload(storagePath, fileBytes, {
+          contentType: cvFile.type,
+          upsert: false,
+        })
+
+      if (!storageError) {
+        const { error: docError } = await supabase.from('candidate_documents').insert({
+          organization_id: orgId,
+          candidate_id: candidateId,
+          uploaded_by: null,
+          file_name: cvFile.name,
+          file_size: cvFile.size,
+          file_size_bytes: cvFile.size,
+          mime_type: cvFile.type,
+          file_path: storagePath,
+          document_type: 'cv',
+        })
+        if (docError) console.error('[public-apply] candidate_documents insert failed:', docError)
+      }
+    } catch (err) {
+      console.error('[public-apply] CV upload block error:', err)
+    }
+  }
+
+  // ── 16. Notify org owners/admins of new application ───────────────────────
+  try {
+    const { data: orgMembers } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('organization_id', orgId)
+      .in('role', ['owner', 'admin'])
+
+    const recipientIds = (orgMembers || []).map((m) => m.id)
+    await createOrgNotifications(orgId, recipientIds, {
+      type: 'new_application',
+      title: `New application: ${firstName} ${lastName}`,
+      body: `Applied for ${vacancy.title}`,
+      link: `/vacancies/${vacancy.id}?tab=applications`,
+    })
+  } catch (err) {
+    // Non-fatal: application has already been recorded.
+    console.error('[public-apply] new-application notification failed:', err)
+  }
+
+  // ── 17. Send confirmation email ────────────────────────────────────────────
   try {
     const [{ data: org }, { data: templateRow }] = await Promise.all([
       supabase.from('organizations').select('name').eq('id', orgId).single(),

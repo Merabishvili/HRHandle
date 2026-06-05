@@ -1,0 +1,59 @@
+---
+title: Team and roles
+summary: Invite teammates and assign owner, admin, or member roles.
+updated: 2026-05-22
+---
+
+Bring colleagues into your HRHandle workspace and control what each person can do. Every user in an organization has exactly one role — owner, admin, or member.
+
+## The three roles
+
+| Role | Who has it | What they can do |
+|---|---|---|
+| **Owner** | The person who created the organization (one per org) | Everything: invite/remove members, change org settings, manage billing and subscription, all workflow actions. |
+| **Admin** | Anyone invited as Admin | Everything except changing org-level settings (name, logo, billing). Can invite other members and admins. |
+| **Member** | Anyone invited as Member | Day-to-day work: create vacancies and candidates, move applications, schedule interviews, send rejections. Cannot invite teammates or see Subscription/Team settings. |
+
+A short version: Members do the work, Admins manage the team, Owners control the org.
+
+## Invite a teammate
+
+Open **Settings → Team**. The page shows current members at the top and an invite form below.
+
+<Screenshot
+  src="/guide/screenshots/team-and-roles-page.png"
+  alt="The Team settings page with two members listed and an invite form below"
+  caption="Members on top; invite form to add a new teammate as Member or Admin."
+/>
+
+1. Enter the new teammate's email.
+2. Pick **Member** or **Admin** in the role dropdown.
+3. Click **Invite**.
+
+The invitee receives an email with a secure link to `/join?token=...`. When they sign up or sign in, the link is consumed automatically and they land in your organization with the role you assigned.
+
+Pending invites appear in their own section below the form. You can resend or revoke them from there.
+
+## Changing a teammate's role
+
+The current implementation doesn't expose a role-change action in the UI — to switch someone between Member and Admin, revoke their seat and re-invite at the new level. (This is a deliberate constraint to keep audit logs clean.)
+
+## Who can invite
+
+Inviting and revoking invitations is **Admin or Owner only**. Members opening **Settings → Team** are redirected to their Profile page. The same applies to **Subscription** — members don't see it.
+
+## Limits
+
+The number of seats your organization can use is controlled by your plan:
+
+| Plan | Seats included |
+|---|---|
+| Trial | 2 |
+| Individual ($20 / month) | 3 |
+| Organization ($40 / month) | 50 |
+
+If you try to invite past the limit, HRHandle blocks the invite and points you at the **Subscription** page to upgrade.
+
+## Removing someone
+
+Open the member's row and click the small actions menu, then choose **Remove from organization**. Their profile is deactivated; any candidates, vacancies, and applications they created stay in place under your org — only the user's access is removed. The owner cannot remove themselves; transfer ownership in **Settings → Organization** first if you need to.

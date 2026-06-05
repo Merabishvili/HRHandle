@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfileForm } from '@/components/settings/profile-form'
+import { ChangePasswordForm } from '@/components/settings/change-password-form'
 
 export default async function ProfileSettingsPage() {
   const supabase = await createClient()
@@ -15,6 +16,9 @@ export default async function ProfileSettingsPage() {
     .single()
 
   if (!profile) redirect('/dashboard')
+
+  // Detect OAuth-only accounts (no email/password identity)
+  const isOAuthOnly = !user.identities?.some((i) => i.provider === 'email')
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -48,6 +52,21 @@ export default async function ProfileSettingsPage() {
               {new Date(profile.created_at).toLocaleDateString()}
             </span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle>Change Password</CardTitle>
+          <CardDescription>
+            Update your password. You will remain signed in on this device.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChangePasswordForm
+            userEmail={user.email ?? ''}
+            isOAuthOnly={isOAuthOnly}
+          />
         </CardContent>
       </Card>
     </div>

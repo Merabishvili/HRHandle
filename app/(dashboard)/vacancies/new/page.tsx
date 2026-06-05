@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { VacancyForm } from '@/components/vacancies/vacancy-form'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
+import { getVacancyStatuses } from '@/lib/cache/lookups'
 
 interface SectorRow {
   id: string
@@ -45,28 +46,19 @@ export default async function NewVacancyPage() {
     redirect('/dashboard')
   }
 
-  const organizationId = profile.organization_id
-
-  const [{ data: sectorsRaw }, { data: statusOptionsRaw }, customFieldGroups] = await Promise.all([
+  const [{ data: sectorsRaw }, customFieldGroups, statusOptionsRaw] = await Promise.all([
     supabase
       .from('sectors')
       .select('id, name, code, is_active, sort_order, created_at')
       .eq('is_active', true)
       .order('sort_order', { ascending: true }),
 
-    supabase
-      .from('vacancy_statuses')
-      .select('id, name, code, is_active, sort_order')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
-
     getCustomFieldSchema('vacancy'),
+    getVacancyStatuses(),
   ])
 
   const sectors = (sectorsRaw || []) as SectorRow[]
-  const statusOptions = (statusOptionsRaw || []) as VacancyStatusRow[]
-
-  const defaultDraftStatus = statusOptions.find((status) => status.code === 'draft') || null
+  const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
 
   return (
     <div className="max-w-3xl space-y-6">

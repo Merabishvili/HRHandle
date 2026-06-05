@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/expire-vacancies",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/purge-deleted",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

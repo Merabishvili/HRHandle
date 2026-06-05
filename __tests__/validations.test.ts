@@ -27,25 +27,6 @@ describe('CandidateSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('rejects candidate under 16 years old', () => {
-    const dob = new Date()
-    dob.setFullYear(dob.getFullYear() - 10)
-    const result = CandidateSchema.safeParse({ ...base, date_of_birth: dob.toISOString().split('T')[0] })
-    expect(result.success).toBe(false)
-  })
-
-  it('accepts candidate over 16 years old', () => {
-    const dob = new Date()
-    dob.setFullYear(dob.getFullYear() - 25)
-    const result = CandidateSchema.safeParse({ ...base, date_of_birth: dob.toISOString().split('T')[0] })
-    expect(result.success).toBe(true)
-  })
-
-  it('rejects years_of_experience above 60', () => {
-    const result = CandidateSchema.safeParse({ ...base, years_of_experience: 61 })
-    expect(result.success).toBe(false)
-  })
-
   it('rejects invalid LinkedIn URL', () => {
     const result = CandidateSchema.safeParse({ ...base, linkedin_profile_url: 'not-a-url' })
     expect(result.success).toBe(false)

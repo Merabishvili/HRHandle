@@ -1,6 +1,5 @@
 import { Resend } from 'resend'
-import { format } from 'date-fns'
-import { applyVariables, DEFAULT_TEMPLATES } from '@/lib/email-template-utils'
+import { applyVariables, escapeHtml, DEFAULT_TEMPLATES } from '@/lib/email-template-utils'
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY
@@ -12,8 +11,8 @@ const FROM = 'HRHandle <noreply@hrhandle.com>'
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 function senderFrom(senderName: string) {
-  const safe = senderName.replace(/"/g, '')
-  return `${safe} via HRHandle <noreply@hrhandle.com>`
+  const safe = senderName.replace(/["\r\n]/g, '').trim()
+  return `${safe} <noreply@hrhandle.com>`
 }
 
 export async function sendTeamInviteEmail({
@@ -29,8 +28,10 @@ export async function sendTeamInviteEmail({
   role: string
   token: string
 }) {
-  const joinUrl = `${BASE_URL}/join?token=${token}`
+  const joinUrl = `${BASE_URL}/join?token=${encodeURIComponent(token)}`
   const roleLabel = role === 'admin' ? 'Admin' : 'Member'
+  const safeInviter = escapeHtml(inviterName)
+  const safeOrg = escapeHtml(organizationName)
 
   return getResend().emails.send({
     from: FROM,
@@ -44,8 +45,8 @@ export async function sendTeamInviteEmail({
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
     <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">You've been invited</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
-      <strong style="color: #111827;">${inviterName}</strong> has invited you to join
-      <strong style="color: #111827;">${organizationName}</strong> as a <strong style="color: #111827;">${roleLabel}</strong>.
+      <strong style="color: #111827;">${safeInviter}</strong> has invited you to join
+      <strong style="color: #111827;">${safeOrg}</strong> as a <strong style="color: #111827;">${roleLabel}</strong>.
     </p>
     <a href="${joinUrl}"
        style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none;
@@ -78,6 +79,8 @@ export async function sendInterviewInvitationEmail({
   meetingLink,
   customSubject,
   customBody,
+  rescheduled = false,
+  timezone,
 }: {
   to: string
   candidateName: string
@@ -91,10 +94,18 @@ export async function sendInterviewInvitationEmail({
   meetingLink: string | null
   customSubject?: string
   customBody?: string
+  rescheduled?: boolean
+  timezone?: string
 }) {
-  const date = format(new Date(scheduledAt), 'EEEE, MMMM d, yyyy')
-  const time = format(new Date(scheduledAt), 'h:mm a')
+  const tz = timezone || 'UTC'
+  const d = new Date(scheduledAt)
+  const date = d.toLocaleDateString('en-US', { timeZone: tz, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  const time = d.toLocaleTimeString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })
   const typeLabel = interviewType === 'video' ? 'Video Call' : interviewType === 'phone' ? 'Phone Call' : 'On-site'
+  const safeCandidate = escapeHtml(candidateName)
+  const safeSenderName = escapeHtml(senderName)
+  const safeSenderEmail = escapeHtml(senderEmail)
+  const safeMeetingLink = meetingLink && meetingLink.startsWith('https://') ? meetingLink : null
 
   const vars = {
     candidate_name: candidateName,
@@ -106,14 +117,17 @@ export async function sendInterviewInvitationEmail({
     interviewer_name: senderName,
   }
   const defaults = DEFAULT_TEMPLATES.interview_invitation
-  const subject = applyVariables(customSubject ?? defaults.subject, vars)
+  const subject = rescheduled
+    ? `Interview Rescheduled: ${vacancyTitle}`
+    : applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
+  const headingText = rescheduled ? 'Interview Rescheduled' : 'Interview Invitation'
 
-  const meetingRow = meetingLink
+  const meetingRow = safeMeetingLink
     ? `<tr>
         <td style="padding: 6px 0; color: #6b7280; width: 130px;">Meeting link</td>
         <td style="padding: 6px 0;">
-          <a href="${meetingLink}" style="color: #111827; font-weight: 600;">${meetingLink}</a>
+          <a href="${safeMeetingLink}" style="color: #111827; font-weight: 600;">${escapeHtml(safeMeetingLink)}</a>
         </td>
       </tr>`
     : ''
@@ -129,9 +143,9 @@ export async function sendInterviewInvitationEmail({
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
-    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Interview Invitation</h1>
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${headingText}</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
-      Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
+      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
       ${body}
     </p>
 
@@ -155,8 +169,8 @@ export async function sendInterviewInvitationEmail({
       ${meetingRow}
     </table>
 
-    ${meetingLink ? `
-    <a href="${meetingLink}"
+    ${safeMeetingLink ? `
+    <a href="${safeMeetingLink}"
        style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none;
               padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-bottom: 24px;">
       Join Meeting
@@ -164,8 +178,8 @@ export async function sendInterviewInvitationEmail({
 
     <p style="color: #6b7280; font-size: 13px; margin: 24px 0 0;">
       If you have any questions, please reply to this email or contact
-      <strong style="color: #111827;">${senderName}</strong> at
-      <a href="mailto:${senderEmail}" style="color: #111827;">${senderEmail}</a>.
+      <strong style="color: #111827;">${safeSenderName}</strong> at
+      <a href="mailto:${safeSenderEmail}" style="color: #111827;">${safeSenderEmail}</a>.
     </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle</p>
@@ -194,6 +208,7 @@ export async function sendApplicationConfirmationEmail({
   const defaults = DEFAULT_TEMPLATES.application_received
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
+  const safeCandidate = escapeHtml(candidateName)
 
   return getResend().emails.send({
     from: FROM,
@@ -207,7 +222,7 @@ export async function sendApplicationConfirmationEmail({
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
     <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Thanks for Applying!</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
-      Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
+      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
       ${body}
     </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
@@ -241,6 +256,9 @@ export async function sendApplicationRejectionEmail({
   const defaults = DEFAULT_TEMPLATES.rejection
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
+  const safeCandidate = escapeHtml(candidateName)
+  const safeSenderName = escapeHtml(senderName)
+  const safeSenderEmail = escapeHtml(senderEmail)
 
   return getResend().emails.send({
     from: senderFrom(senderName),
@@ -255,13 +273,13 @@ export async function sendApplicationRejectionEmail({
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
     <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Hiring Update</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
-      Dear <strong style="color: #111827;">${candidateName}</strong>,<br><br>
+      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
       ${body}
     </p>
     <p style="color: #6b7280; font-size: 13px; margin: 0;">
       If you have any questions, you are welcome to contact
-      <strong style="color: #111827;">${senderName}</strong> at
-      <a href="mailto:${senderEmail}" style="color: #111827;">${senderEmail}</a>.
+      <strong style="color: #111827;">${safeSenderName}</strong> at
+      <a href="mailto:${safeSenderEmail}" style="color: #111827;">${safeSenderEmail}</a>.
     </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle</p>

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { KanbanBoard } from '@/components/pipeline/kanban-board'
 import type { ApplicationStatus } from '@/lib/types/application'
+import { getApplicationStatuses } from '@/lib/cache/lookups'
 
 interface PipelineApplicationRow {
   id: string
@@ -44,7 +45,7 @@ export default async function VacancyPipelinePage({
 
   const [
     { data: vacancy },
-    { data: statusesRaw },
+    statusesRaw,
     { data: applicationsRaw },
     { data: rejectionReasonsRaw },
     { data: rejectionTemplatesRaw },
@@ -55,13 +56,10 @@ export default async function VacancyPipelinePage({
       .eq('id', id)
       .eq('organization_id', organizationId)
       .is('archived_at', null)
+      .is('deleted_at', null)
       .single(),
 
-    supabase
-      .from('application_statuses')
-      .select('id, name, code, sort_order, is_active')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
+    getApplicationStatuses(),
 
     supabase
       .from('applications')
@@ -87,7 +85,7 @@ export default async function VacancyPipelinePage({
 
   if (!vacancy) notFound()
 
-  const statuses = (statusesRaw || []) as ApplicationStatus[]
+  const statuses = (statusesRaw || []).filter((s) => s.is_active) as ApplicationStatus[]
   const applicationsData = (applicationsRaw || []) as PipelineApplicationRow[]
 
   // Fetch candidates separately to avoid unreliable nested joins
@@ -98,6 +96,7 @@ export default async function VacancyPipelinePage({
       .from('candidates')
       .select('id, first_name, last_name, current_position, current_company')
       .in('id', candidateIds)
+      .is('deleted_at', null)
     for (const c of (candidatesRaw || []) as PipelineCandidateRow[]) {
       candidateMap.set(c.id, c)
     }

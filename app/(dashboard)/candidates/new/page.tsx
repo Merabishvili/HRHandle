@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
+import { getCandidateStatuses, getApplicationStatuses } from '@/lib/cache/lookups'
 
 export default async function NewCandidatePage({
   searchParams,
@@ -36,8 +37,8 @@ export default async function NewCandidatePage({
 
   const [
     { data: vacancies },
-    { data: candidateStatuses },
-    { data: applicationStatuses },
+    candidateStatusesAll,
+    applicationStatusesAll,
     customFieldGroups,
   ] = await Promise.all([
     supabase
@@ -46,23 +47,15 @@ export default async function NewCandidatePage({
       .eq('organization_id', organizationId)
       .order('title'),
 
-    supabase
-      .from('candidate_statuses')
-      .select('id, name, code, is_active, sort_order')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
-
-    supabase
-      .from('application_statuses')
-      .select('id, code')
-      .eq('is_active', true),
-
+    getCandidateStatuses(),
+    getApplicationStatuses(),
     getCustomFieldSchema('candidate'),
   ])
 
-  // ✅ find default "new" status
-  const defaultApplicationStatus =
-    applicationStatuses?.find((s) => s.code === 'new') || null
+  const candidateStatuses = (candidateStatusesAll || []).filter((s) => s.is_active)
+  const applicationStatuses = (applicationStatusesAll || []).filter((s) => s.is_active)
+
+  const defaultApplicationStatus = applicationStatuses.find((s) => s.code === 'new') || null
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -80,9 +73,9 @@ export default async function NewCandidatePage({
       </div>
 
       <CandidateForm
-        vacancies={(vacancies || []) as any}
+        vacancies={vacancies || []}
         defaultVacancyId={defaultVacancyId}
-        candidateStatuses={(candidateStatuses || []) as any}
+        candidateStatuses={candidateStatuses || []}
         defaultApplicationStatusId={defaultApplicationStatus?.id || null}
         customFieldGroups={customFieldGroups}
       />

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { VacancyForm } from '@/components/vacancies/vacancy-form'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { getVacancyStatuses } from '@/lib/cache/lookups'
 
 interface VacancyRow {
   id: string
@@ -24,7 +25,9 @@ interface VacancyRow {
   start_date: string
   end_date: string | null
   description: string
+  responsibilities: string | null
   requirements: string | null
+  show_on_public_page: boolean
   created_by: string | null
   created_at: string
   updated_at: string
@@ -80,7 +83,7 @@ export default async function EditVacancyPage({
 
   const organizationId = profile.organization_id
 
-  const [{ data: vacancyRaw }, { data: sectorsRaw }, { data: statusOptionsRaw }] =
+  const [{ data: vacancyRaw }, { data: sectorsRaw }, statusOptionsRaw] =
     await Promise.all([
       supabase
         .from('vacancies')
@@ -101,7 +104,9 @@ export default async function EditVacancyPage({
           start_date,
           end_date,
           description,
+          responsibilities,
           requirements,
+          show_on_public_page,
           created_by,
           created_at,
           updated_at,
@@ -110,6 +115,7 @@ export default async function EditVacancyPage({
         .eq('id', id)
         .eq('organization_id', organizationId)
         .is('archived_at', null)
+        .is('deleted_at', null)
         .single(),
 
       supabase
@@ -118,16 +124,12 @@ export default async function EditVacancyPage({
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
 
-      supabase
-        .from('vacancy_statuses')
-        .select('id, name, code, is_active, sort_order')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true }),
+      getVacancyStatuses(),
     ])
 
   const vacancy = vacancyRaw as VacancyRow | null
   const sectors = (sectorsRaw || []) as SectorRow[]
-  const statusOptions = (statusOptionsRaw || []) as VacancyStatusRow[]
+  const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
 
   if (!vacancy) {
     notFound()

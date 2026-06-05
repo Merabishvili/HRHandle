@@ -15,6 +15,8 @@ export async function activateApplicationForm(
     .select('id, application_form_token')
     .eq('id', vacancyId)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .is('archived_at', null)
     .single()
 
   if (!vacancy) return { success: false, error: 'Vacancy not found' }
@@ -30,6 +32,7 @@ export async function activateApplicationForm(
     .from('vacancies')
     .update({ application_form_token: token })
     .eq('id', vacancyId)
+    .eq('organization_id', ctx.orgId)
 
   if (error) return { success: false, error: 'Failed to activate form' }
 
@@ -48,6 +51,7 @@ export async function deactivateApplicationForm(
     .select('id')
     .eq('id', vacancyId)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
     .single()
 
   if (!vacancy) return { success: false, error: 'Vacancy not found' }
@@ -56,6 +60,7 @@ export async function deactivateApplicationForm(
     .from('vacancies')
     .update({ application_form_token: null })
     .eq('id', vacancyId)
+    .eq('organization_id', ctx.orgId)
 
   if (error) return { success: false, error: 'Failed to deactivate form' }
 

@@ -46,9 +46,28 @@ export async function updateOrganization(
   const parsed = OrganizationSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
 
+  const updatePayload: Record<string, unknown> = { name: parsed.data.name.trim() }
+  if ('logo_url' in parsed.data) {
+    updatePayload.logo_url = parsed.data.logo_url ?? null
+  }
+  if (parsed.data.public_page_slug) {
+    const newSlug = parsed.data.public_page_slug.trim()
+    // Check uniqueness — another org must not already own this slug
+    const { data: existing } = await ctx.supabase
+      .from('organizations')
+      .select('id')
+      .eq('public_page_slug', newSlug)
+      .neq('id', ctx.orgId)
+      .maybeSingle()
+    if (existing) {
+      return { success: false, error: 'This public URL is already taken. Please choose another.' }
+    }
+    updatePayload.public_page_slug = newSlug
+  }
+
   const { error } = await ctx.supabase
     .from('organizations')
-    .update({ name: parsed.data.name.trim() })
+    .update(updatePayload)
     .eq('id', ctx.orgId)
 
   if (error) return { success: false, error: 'Failed to update organization' }

@@ -29,6 +29,7 @@ import { updateApplicationStatus, removeApplication } from '@/lib/actions/applic
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
+import { PipelineMiniBar } from '@/components/candidates/pipeline-mini-bar'
 
 interface Question {
   id: string
@@ -48,11 +49,7 @@ interface ExistingEvaluation {
   answers: ExistingAnswer[]
 }
 
-interface AppStatus {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-}
+import type { ApplicationStatusOption as AppStatus } from '@/lib/types/database'
 
 interface ApplicationEvaluationProps {
   applicationId: string
@@ -259,13 +256,18 @@ export function ApplicationEvaluation({
           </div>
         </div>
 
+        {/* Pipeline mini bar */}
+        <div className="px-4 pb-3">
+          <PipelineMiniBar currentStageCode={appStatus?.code ?? null} />
+        </div>
+
         {/* Expandable evaluation form */}
         {expanded && (
           <div className="border-t border-border px-4 pb-4 pt-4 space-y-4">
             {questions.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 No evaluation questions configured for this vacancy.{' '}
-                <Link href={`/vacancies/${vacancyId}`} className="underline hover:no-underline">
+                <Link href={`/vacancies/${vacancyId}?tab=qe`} className="underline hover:no-underline">
                   Add questions
                 </Link>
               </p>

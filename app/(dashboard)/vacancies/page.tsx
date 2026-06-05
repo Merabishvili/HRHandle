@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
+import { getVacancyStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { VacancyActions } from '@/components/vacancies/vacancy-actions'
 import { VacanciesToolbar } from '@/components/vacancies/vacancies-toolbar'
+import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 import {
   DEFAULT_VACANCY_COLUMNS,
@@ -109,23 +110,18 @@ export default async function VacanciesPage({
 
   const { data: orgData } = await supabase
     .from('organizations')
-    .select('public_page_token')
+    .select('public_page_slug')
     .eq('id', organizationId)
     .single()
 
-  const publicPageToken = orgData?.public_page_token as string | null
+  const publicPageSlug = orgData?.public_page_slug as string | null
 
   const colPrefs = (profile?.column_preferences as Record<string, string[]>) || {}
   const activeColumns: string[] = colPrefs.vacancies?.length
     ? colPrefs.vacancies
     : DEFAULT_VACANCY_COLUMNS
 
-  const { data: statusOptionsRaw } = await supabase
-    .from('vacancy_statuses')
-    .select('id, name, code, is_active, sort_order')
-    .order('sort_order', { ascending: true })
-
-  const statusOptions = (statusOptionsRaw || []) as VacancyStatusOption[]
+  const statusOptions = (await getVacancyStatuses()) as VacancyStatusOption[]
   const statusMap = new Map(statusOptions.map((s) => [s.id, s]))
 
   const FIELDS = `
@@ -141,6 +137,7 @@ export default async function VacanciesPage({
     .select(FIELDS, { count: 'exact' })
     .eq('organization_id', organizationId)
     .is('archived_at', null)
+    .is('deleted_at', null)
 
   if (search.trim()) {
     baseQuery = baseQuery.ilike('title', `%${search.trim()}%`)
@@ -154,8 +151,7 @@ export default async function VacanciesPage({
   let totalCount: number | null
 
   if (sort === 'status') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: allRaw, count } = await (baseQuery as any).order('created_at', { ascending: false })
+    const { data: allRaw, count } = await baseQuery.order('created_at', { ascending: false })
     totalCount = count
     const statusSortOrder = new Map(statusOptions.map((s) => [s.id, s.sort_order]))
     const sorted = ((allRaw || []) as VacancyRow[]).sort((a, b) => {
@@ -165,8 +161,7 @@ export default async function VacanciesPage({
     })
     vacancies = sorted.slice(from, to + 1)
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let sortedQuery: any = baseQuery
+    let sortedQuery = baseQuery.order('created_at', { ascending: false })
     switch (sort) {
       case 'created_asc':
         sortedQuery = baseQuery.order('created_at', { ascending: true })
@@ -177,8 +172,6 @@ export default async function VacanciesPage({
       case 'end_desc':
         sortedQuery = baseQuery.order('end_date', { ascending: false, nullsFirst: false })
         break
-      default:
-        sortedQuery = baseQuery.order('created_at', { ascending: false })
     }
     const result = await sortedQuery.range(from, to)
     vacancies = (result.data || []) as VacancyRow[]
@@ -230,16 +223,16 @@ export default async function VacanciesPage({
         </Button>
       </div>
 
-      {publicPageToken && (
+      {publicPageSlug && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
           <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="text-muted-foreground">Your public jobs page:</span>
           <Link
-            href={`/jobs/${publicPageToken}`}
+            href={`/jobs/${publicPageSlug}`}
             target="_blank"
             className="font-medium text-primary hover:underline truncate"
           >
-            {process.env.NEXT_PUBLIC_APP_URL ?? ''}/jobs/{publicPageToken}
+            {process.env.NEXT_PUBLIC_APP_URL ?? ''}/jobs/{publicPageSlug}
           </Link>
         </div>
       )}
@@ -247,24 +240,28 @@ export default async function VacanciesPage({
       <VacanciesToolbar
         initialSearch={search}
         initialSort={sort}
-        initialStatus={statusFilter || ''}
         selectedColumns={activeColumns}
-        statusOptions={statusOptions}
       />
 
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>All Vacancies</CardTitle>
-          <CardDescription>
-            {totalCount ?? 0} total vacancies
-            {search && ` · filtered by "${search}"`}
-            {totalPages > 1 && ` · page ${page} of ${totalPages}`}
-          </CardDescription>
-        </CardHeader>
+      <div className="flex items-center justify-between gap-4">
+        <FilterPillTabs
+          tabs={[
+            { value: 'all', label: 'All' },
+            ...statusOptions.map((s) => ({ value: s.id, label: s.name })),
+          ]}
+          paramKey="status"
+          activeValue={statusFilter || ''}
+        />
+        <p className="text-sm text-muted-foreground shrink-0">
+          {totalCount ?? 0} {(totalCount ?? 0) === 1 ? 'vacancy' : 'vacancies'}
+          {search && ` · "${search}"`}
+          {totalPages > 1 && ` · page ${page} of ${totalPages}`}
+        </p>
+      </div>
 
-        <CardContent>
-          {vacancies.length > 0 ? (
-            <div className="overflow-x-auto">
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        {vacancies.length > 0 ? (
+          <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -447,8 +444,7 @@ export default async function VacanciesPage({
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   )
 }

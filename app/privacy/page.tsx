@@ -16,7 +16,7 @@ export default function PrivacyPage() {
         </div>
 
         <h1 className="mb-2 text-3xl font-bold text-foreground">Privacy Policy</h1>
-        <p className="mb-10 text-sm text-muted-foreground">Last updated: April 22, 2026</p>
+        <p className="mb-10 text-sm text-muted-foreground">Last updated: June 2, 2026</p>
 
         <div className="space-y-8 text-sm leading-relaxed text-foreground">
 
@@ -65,17 +65,21 @@ export default function PrivacyPage() {
 
             <h3 className="mb-2 mt-4 font-medium">2.4 Candidate Data</h3>
             <p className="mb-2">
-              You enter candidate data into HRHandle as part of your recruitment process. This
-              may include:
+              You enter candidate data into HRHandle as part of your recruitment process, or
+              candidates submit it themselves through your public application page. This may
+              include:
             </p>
             <ul className="list-disc space-y-1 pl-5">
               <li>Full name, email address, and phone number</li>
-              <li>Date of birth</li>
               <li>Current company and position, years of experience</li>
               <li>LinkedIn profile URL</li>
               <li>CVs, resumes, cover letters, and other uploaded documents</li>
+              <li>Information automatically extracted from uploaded CVs (work experience, education) — see Section 5 for details on how this extraction works</li>
               <li>Recruiter notes and interview records</li>
               <li>Application status and history</li>
+              <li>
+                For candidates who apply through the public application page: the IP address from which the application was submitted. We use this to prevent abuse (rate-limiting and duplicate-submission detection). It is stored alongside the application record and deleted together with it.
+              </li>
             </ul>
             <p className="mt-3">
               Some of this data may be imported by your recruiters directly from LinkedIn. You
@@ -148,6 +152,11 @@ export default function PrivacyPage() {
                     <td className="py-2">USA / Global</td>
                   </tr>
                   <tr>
+                    <td className="py-2 pr-4">Google Generative AI (Gemini API)</td>
+                    <td className="py-2 pr-4">Automated extraction of structured fields from uploaded CVs (name, email, work experience, education) — see &quot;AI features&quot; below</td>
+                    <td className="py-2">USA / Global</td>
+                  </tr>
+                  <tr>
                     <td className="py-2 pr-4">LinkedIn (optional)</td>
                     <td className="py-2 pr-4">Vacancy posting via LinkedIn API</td>
                     <td className="py-2">USA / Global</td>
@@ -169,6 +178,26 @@ export default function PrivacyPage() {
               All sub-processors are contractually obligated to process data only as instructed
               and to maintain appropriate security measures.
             </p>
+
+            <h3 className="mb-2 mt-4 font-medium">5.1 AI features (CV parsing)</h3>
+            <p>
+              When you or a candidate uploads a CV (PDF or Word document), the file is sent to
+              Google&apos;s Gemini API to extract structured fields — name, contact details, work
+              experience, and education — so they can be pre-filled into the candidate record.
+              This is the only purpose for which CVs are sent to Google.
+            </p>
+            <p className="mt-3">
+              The extraction is informational only. It does not make any automated decision
+              about a candidate. Every hiring decision (advancing, rejecting, hiring) is taken
+              by a human recruiter on your team. Article 22 GDPR (automated decision-making with
+              legal or similarly significant effect) therefore does not apply to this feature.
+            </p>
+            <p className="mt-3">
+              We use Google&apos;s paid Gemini API, under terms which prohibit Google from using
+              customer prompt content to train their models. If the extraction fails or is
+              unavailable, the application still proceeds and the recruiter (or candidate) can
+              fill in the fields manually.
+            </p>
           </section>
 
           <section>
@@ -185,13 +214,23 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-3 text-lg font-semibold">7. Data Retention</h2>
             <p>
-              We retain your account and organization data for as long as your account is active
-              and for up to 90 days after account termination to allow for recovery requests.
+              We retain your account, organization, and candidate data for as long as your
+              account is active.
             </p>
             <p className="mt-3">
-              Candidate data is retained as long as you maintain an active subscription. Upon
-              account deletion, all associated candidate data is permanently deleted within 30
-              days, except where we are required by law to retain it longer.
+              After your account is terminated (by you or by us), you have <strong>30 days</strong> to
+              request an export of your data. During this 30-day window the data remains
+              recoverable. After the 30-day window, your account, organization, and all
+              associated candidate data, documents, and application records are permanently
+              deleted, except where we are required by law to retain specific records longer
+              (for example, invoicing records under Georgian tax law).
+            </p>
+            <p className="mt-3">
+              Within the active life of your account, when you delete a candidate or document
+              from within the Service, the record is marked for deletion immediately and
+              permanently removed within 30 days. Backup snapshots taken before deletion are
+              kept under Supabase&apos;s backup-retention policy and are not used for selective
+              restoration of deleted records.
             </p>
           </section>
 
@@ -214,11 +253,51 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="mb-3 text-lg font-semibold">9. Cookies</h2>
+            <h2 className="mb-3 text-lg font-semibold">9. Cookies and analytics</h2>
             <p>
-              HRHandle uses only essential cookies required for authentication and session
-              management (set by Supabase Auth). We do not use tracking, advertising, or
-              analytics cookies.
+              We use cookies and browser storage in two categories:
+            </p>
+
+            <h3 className="mb-2 mt-4 font-medium">9.1 Essential</h3>
+            <p>
+              Cookies and storage required for authentication, session management, CSRF
+              protection, and remembering your sign-in preference. These are set by Supabase
+              Auth and our own application code, and cannot be disabled without breaking the
+              Service. We do not use advertising or cross-site tracking cookies.
+            </p>
+
+            <h3 className="mb-2 mt-4 font-medium">9.2 Product analytics</h3>
+            <p>
+              In production we use the following analytics tools to understand how the Service
+              is used and to improve it:
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>
+                <strong>PostHog</strong> (hosted in the EU, <code>eu.i.posthog.com</code>) —
+                captures page views, clicks, and product events. Person profiles are created
+                only for signed-in users (configured as <code>identified_only</code>).
+                Anonymous visitors to the landing page and public application pages do not
+                receive a PostHog person profile.
+              </li>
+              <li>
+                <strong>Vercel Analytics</strong> — counts page views and basic traffic
+                signals (referrer, country, device type) on production deployments. Vercel
+                Analytics is privacy-friendly and does not use cross-site tracking cookies.
+              </li>
+            </ul>
+            <p className="mt-3">
+              We do not run PostHog or Vercel Analytics on the candidate apply pages in a way
+              that captures candidate-entered content, and we do not send candidate personal
+              data (name, email, CV content) to either tool.
+            </p>
+
+            <h3 className="mb-2 mt-4 font-medium">9.3 Error monitoring</h3>
+            <p>
+              Sentry collects technical error details (stack traces, browser/OS, request
+              metadata) when something fails in the Service. Before any error is sent to
+              Sentry, we run a server-side scrubbing step that removes known personal-data
+              fields (names, emails, phone numbers, CV content, dates of birth, and similar)
+              from the payload, so error reports do not contain candidate personal data.
             </p>
           </section>
 

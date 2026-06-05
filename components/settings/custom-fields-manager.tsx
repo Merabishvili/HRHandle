@@ -37,7 +37,9 @@ interface Props {
 }
 
 const FIELD_TYPE_LABELS: Record<FieldType, string> = {
-  text: 'Free Text',
+  text: 'Short Text (100 chars)',
+  long_text: 'Long Text (5000 chars)',
+  date: 'Date',
   number: 'Number',
   dropdown: 'Dropdown',
   checkbox: 'Yes / No',
@@ -540,6 +542,7 @@ function EntitySection({
           value={newGroupName}
           onChange={(e) => setNewGroupName(e.target.value)}
           placeholder={`New ${label.toLowerCase()} group name`}
+          maxLength={100}
           className="h-9 text-sm"
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -580,9 +583,9 @@ export function CustomFieldsManager({ candidateGroups, vacancyGroups }: Props) {
       </div>
 
       {activeTab === 'candidate' ? (
-        <EntitySection entityType="candidate" groups={candidateGroups} />
+        <EntitySection key="candidate" entityType="candidate" groups={candidateGroups} />
       ) : (
-        <EntitySection entityType="vacancy" groups={vacancyGroups} />
+        <EntitySection key="vacancy" entityType="vacancy" groups={vacancyGroups} />
       )}
     </div>
   )

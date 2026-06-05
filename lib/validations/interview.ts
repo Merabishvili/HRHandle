@@ -6,7 +6,10 @@ export const InterviewSchema = z
     vacancy_id: z.string().uuid('Invalid vacancy'),
     application_id: z.string().uuid().nullable().optional(),
     interviewer_id: z.string().uuid().nullable().optional(),
-    scheduled_at: z.string().min(1, 'Scheduled date/time is required'),
+    scheduled_at: z
+      .string()
+      .min(1, 'Scheduled date/time is required')
+      .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid date/time' }),
     duration_minutes: z.number().int().min(15).max(480).default(60),
     type: z.enum(['phone', 'video', 'onsite']),
   })

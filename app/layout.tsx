@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { PostHogProvider } from './providers'
 import './globals.css'
 
 const geistSans = Geist({
@@ -13,8 +14,10 @@ const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
 })
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hrhandle.com'
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://hrhandle.com'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'HRHandle — Applicant Tracking System for Growing Teams',
     template: '%s — HRHandle',
@@ -36,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://hrhandle.com',
+    url: SITE_URL,
     siteName: 'HRHandle',
     title: 'HRHandle — Applicant Tracking System for Growing Teams',
     description:
@@ -58,7 +61,7 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   alternates: {
-    canonical: 'https://hrhandle.com',
+    canonical: SITE_URL,
   },
   robots: {
     index: true,
@@ -102,7 +105,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} bg-background`}
     >
       <body className="min-h-screen font-sans antialiased">
-        {children}
+        <PostHogProvider>{children}</PostHogProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

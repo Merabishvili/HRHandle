@@ -2,6 +2,7 @@ import { env } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const TOKEN_URL = 'https://zoom.us/oauth/token'
+const REVOKE_URL = 'https://zoom.us/oauth/revoke'
 const MEETINGS_API = 'https://api.zoom.us/v2/users/me/meetings'
 
 export function getZoomRedirectUri(): string {
@@ -45,6 +46,34 @@ export async function exchangeZoomCode(code: string): Promise<{
 
   if (!res.ok) return null
   return res.json()
+}
+
+/**
+ * Revoke a Zoom OAuth token upstream. Per Zoom's docs the endpoint accepts an
+ * access token (refresh tokens are not the right input here, unlike Google).
+ *
+ * Treats 200 and 400 as success: 200 confirms the revoke (Zoom returns
+ * `{"status":"success"}`); 400 means the token was already invalid. Either way
+ * the goal state — "this token is dead upstream" — is reached. Anything else
+ * throws so the caller can log.
+ *
+ * Throws when client credentials are missing (the route's caller should not
+ * call this in that case).
+ */
+export async function revokeZoomToken(token: string): Promise<void> {
+  if (!env.ZOOM_CLIENT_ID || !env.ZOOM_CLIENT_SECRET) {
+    throw new Error('zoom credentials not configured')
+  }
+  const res = await fetch(REVOKE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${getBasicAuthHeader()}`,
+    },
+    body: new URLSearchParams({ token }).toString(),
+  })
+  if (res.status === 200 || res.status === 400) return
+  throw new Error(`zoom revoke failed: HTTP ${res.status}`)
 }
 
 async function refreshZoomToken(
@@ -133,4 +162,27 @@ export async function createZoomMeeting(
   if (!res.ok) return null
   const data = await res.json()
   return { joinUrl: data.join_url, meetingId: String(data.id) }
+}
+
+export async function deleteZoomMeeting(
+  accessToken: string,
+  meetingId: string
+): Promise<boolean> {
+  const res = await fetch(`${MEETINGS_API.replace('/users/me/meetings', '/meetings')}/${meetingId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  // 204 = deleted, 404 = already gone, treat both as success.
+  return res.ok || res.status === 404
+}
+
+/**
+ * Parse a Zoom meeting ID out of a join URL like
+ * `https://us02web.zoom.us/j/82345678901?pwd=…`. Returns null if the URL is
+ * not a recognisable Zoom join URL.
+ */
+export function parseZoomMeetingIdFromJoinUrl(joinUrl: string | null): string | null {
+  if (!joinUrl) return null
+  const match = joinUrl.match(/zoom\.us\/(?:j|s|w)\/(\d{9,12})/)
+  return match ? match[1] : null
 }

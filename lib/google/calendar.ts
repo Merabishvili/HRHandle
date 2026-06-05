@@ -1,20 +1,24 @@
 import { env } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+const OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
+const REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
+const SCOPE_CALENDAR_EVENTS = 'https://www.googleapis.com/auth/calendar.events'
+const SCOPE_USERINFO_EMAIL = 'https://www.googleapis.com/auth/userinfo.email'
 
 export function getGoogleOAuthUrl(state: string): string {
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID ?? '',
     redirect_uri: getRedirectUri(),
     response_type: 'code',
-    scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email',
+    scope: `${SCOPE_CALENDAR_EVENTS} ${SCOPE_USERINFO_EMAIL}`,
     access_type: 'offline',
     prompt: 'consent',
     state,
   })
-  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`
+  return `${OAUTH_AUTH_URL}?${params}`
 }
 
 export function getRedirectUri(): string {
@@ -26,8 +30,12 @@ export async function exchangeCodeForTokens(code: string): Promise<{
   access_token: string
   refresh_token: string
   expires_in: number
+  scope?: string
 } | null> {
-  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return null
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+    console.error('[google/calendar] exchangeCodeForTokens: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not configured')
+    return null
+  }
 
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
@@ -41,8 +49,49 @@ export async function exchangeCodeForTokens(code: string): Promise<{
     }),
   })
 
-  if (!res.ok) return null
+  if (!res.ok) {
+    let bodyExcerpt = ''
+    try {
+      bodyExcerpt = (await res.text()).slice(0, 500)
+    } catch {
+      /* swallow */
+    }
+    console.error(
+      `[google/calendar] exchangeCodeForTokens failed: ${res.status} ${res.statusText} (redirect_uri=${getRedirectUri()})`,
+      bodyExcerpt,
+    )
+    return null
+  }
   return res.json()
+}
+
+/**
+ * Returns true if the granted `scope` string from a token-exchange response
+ * includes the scopes needed to create Calendar events with Meet conferences.
+ */
+export function hasRequiredCalendarScopes(scope: string | undefined | null): boolean {
+  if (!scope) return false
+  const granted = new Set(scope.split(/\s+/))
+  return granted.has(SCOPE_CALENDAR_EVENTS) || granted.has('https://www.googleapis.com/auth/calendar')
+}
+
+/**
+ * Revoke a Google OAuth token upstream. Per Google's docs, passing the refresh
+ * token revokes the entire grant (including any issued access tokens), so pass
+ * the refresh token in preference to an access token.
+ *
+ * Treats 200 and 400 as success: 200 is a real revoke, 400 means the token was
+ * already invalid (revoked, expired, or unknown). Either way the goal state —
+ * "this token is dead" — is reached. Anything else throws so the caller can log.
+ */
+export async function revokeGoogleToken(token: string): Promise<void> {
+  const res = await fetch(REVOKE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ token }).toString(),
+  })
+  if (res.status === 200 || res.status === 400) return
+  throw new Error(`google revoke failed: HTTP ${res.status}`)
 }
 
 async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; expiry: number } | null> {
@@ -136,7 +185,22 @@ export async function createCalendarEventWithMeet(
     body: JSON.stringify(event),
   })
 
-  if (!res.ok) return { meetLink: null, eventId: null }
+  if (!res.ok) {
+    // Log the Google API response so failures (auth, quota, malformed event)
+    // are diagnosable in production. Body is best-effort — drop if it's not
+    // parseable.
+    let bodyExcerpt = ''
+    try {
+      bodyExcerpt = (await res.text()).slice(0, 500)
+    } catch {
+      /* swallow */
+    }
+    console.error(
+      `[google/calendar] createCalendarEventWithMeet failed: ${res.status} ${res.statusText}`,
+      bodyExcerpt,
+    )
+    return { meetLink: null, eventId: null }
+  }
 
   const data = await res.json()
   const meetLink =

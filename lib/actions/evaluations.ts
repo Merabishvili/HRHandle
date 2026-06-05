@@ -21,10 +21,25 @@ export async function addVacancyQuestion(
     return { success: false, error: 'Not authorized' }
   }
 
+  const trimmedLabel = label.trim()
+  if (!trimmedLabel) return { success: false, error: 'Question label is required' }
+  if (trimmedLabel.length > 500) return { success: false, error: 'Question label must be 500 characters or fewer' }
+
+  const { data: vacancyCheck } = await ctx.supabase
+    .from('vacancies')
+    .select('id')
+    .eq('id', vacancyId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .single()
+
+  if (!vacancyCheck) return { success: false, error: 'Vacancy not found' }
+
   const { data: existing } = await ctx.supabase
     .from('vacancy_questions')
     .select('sort_order')
     .eq('vacancy_id', vacancyId)
+    .eq('organization_id', ctx.orgId)
     .order('sort_order', { ascending: false })
     .limit(1)
 
@@ -35,7 +50,7 @@ export async function addVacancyQuestion(
     .insert({
       vacancy_id: vacancyId,
       organization_id: ctx.orgId,
-      label: label.trim(),
+      label: trimmedLabel,
       type,
       sort_order: nextSortOrder,
     })
@@ -86,6 +101,17 @@ export async function saveEvaluation(input: {
 }): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  // Verify the application belongs to this org before upserting
+  const { data: appCheck } = await ctx.supabase
+    .from('applications')
+    .select('id')
+    .eq('id', input.applicationId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .single()
+
+  if (!appCheck) return { success: false, error: 'Application not found' }
 
   const { data: evaluation, error: evalError } = await ctx.supabase
     .from('candidate_evaluations')

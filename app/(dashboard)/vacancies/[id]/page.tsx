@@ -10,15 +10,16 @@ import {
   Clock,
   LayoutGrid,
   UserCircle,
+  Download,
 } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
+import { getVacancyStatuses, getCandidateStatuses, getApplicationStatuses } from '@/lib/cache/lookups'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
-import { LinkedInShareButton } from '@/components/vacancies/linkedin-share-button'
 import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
 import { VacancyApplicationsToolbar } from '@/components/vacancies/vacancy-applications-toolbar'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
@@ -26,6 +27,11 @@ import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applications-list'
 import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
+import { DeleteVacancyButton } from '@/components/vacancies/delete-vacancy-button'
+import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
+import { AddCandidateToVacancyDialog } from '@/components/vacancies/add-candidate-to-vacancy-dialog'
+import { LinkedInPostJobButton } from '@/components/vacancies/linkedin-post-job-button'
+import { getLinkedInIntegration } from '@/lib/actions/integrations'
 
 interface VacancyRow {
   id: string
@@ -44,6 +50,7 @@ interface VacancyRow {
   start_date: string
   end_date: string | null
   description: string
+  responsibilities: string | null
   requirements: string | null
   created_by: string | null
   created_at: string
@@ -78,11 +85,10 @@ interface SectorRow {
   code: string
 }
 
-interface CandidateGeneralStatusRow {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-}
+import type {
+  CandidateStatusOption as CandidateGeneralStatusRow,
+  ApplicationStatusOption as AppStatusRow,
+} from '@/lib/types/database'
 
 interface ApplicationRow {
   id: string
@@ -90,13 +96,6 @@ interface ApplicationRow {
   vacancy_id: string
   status_id: string | null
   applied_at: string
-}
-
-interface AppStatusRow {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-  sort_order: number
 }
 
 interface CandidateRow {
@@ -136,25 +135,17 @@ function formatSalary(vacancy: VacancyRow): string | null {
   return null
 }
 
-function getCandidateFullName(candidate?: { first_name: string; last_name: string } | null): string {
-  if (!candidate) return 'Unknown candidate'
-  return `${candidate.first_name} ${candidate.last_name}`.trim()
-}
-
-function getCandidateInitials(candidate?: { first_name: string; last_name: string } | null): string {
-  if (!candidate) return '?'
-  return `${candidate.first_name?.[0] || ''}${candidate.last_name?.[0] || ''}`.toUpperCase()
-}
 
 export default async function VacancyDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ appSearch?: string; appStatus?: string }>
+  searchParams: Promise<{ appSearch?: string; appStatus?: string; tab?: string }>
 }) {
   const { id } = await params
-  const { appSearch = '', appStatus } = await searchParams
+  const { appSearch = '', appStatus, tab } = await searchParams
+  const defaultTab = tab === 'qe' ? 'qe' : tab === 'application-form' ? 'application-form' : 'applications'
   const supabase = await createClient()
 
   const {
@@ -176,11 +167,15 @@ export default async function VacancyDetailPage({
     redirect('/dashboard')
   }
 
+  const [vacancyStatusesRaw, candidateStatusesRaw, linkedInIntegration] = await Promise.all([
+    getVacancyStatuses(),
+    getCandidateStatuses(),
+    getLinkedInIntegration(),
+  ])
+
   const [
     { data: vacancyRaw },
-    { data: vacancyStatusesRaw },
     { data: sectorsRaw },
-    { data: candidateStatusesRaw },
   ] = await Promise.all([
     supabase
       .from('vacancies')
@@ -201,6 +196,7 @@ export default async function VacancyDetailPage({
         start_date,
         end_date,
         description,
+        responsibilities,
         requirements,
         created_by,
         created_at,
@@ -221,22 +217,13 @@ export default async function VacancyDetailPage({
       .eq('id', id)
       .eq('organization_id', organizationId)
       .is('archived_at', null)
+      .is('deleted_at', null)
       .single(),
-
-    supabase
-      .from('vacancy_statuses')
-      .select('id, name, code')
-      .order('sort_order', { ascending: true }),
 
     supabase
       .from('sectors')
       .select('id, name, code')
       .order('name', { ascending: true }),
-
-    supabase
-      .from('candidate_statuses')
-      .select('id, name, code')
-      .order('sort_order', { ascending: true }),
   ])
 
   const vacancy = vacancyRaw as VacancyRow | null
@@ -245,15 +232,16 @@ export default async function VacancyDetailPage({
     notFound()
   }
 
-  const vacancyStatuses = (vacancyStatusesRaw || []) as VacancyStatusRow[]
+  const vacancyStatuses = (vacancyStatusesRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
   const sectors = (sectorsRaw || []) as SectorRow[]
   const candidateStatuses = (candidateStatusesRaw || []) as CandidateGeneralStatusRow[]
 
   const candidateStatusMap = new Map(candidateStatuses.map((s) => [s.id, s]))
 
+  const appStatusesRaw = await getApplicationStatuses()
+
   const [
     { data: applicationsRaw, count: applicantsCount },
-    { data: appStatusesRaw },
     { data: questionsRaw },
     { data: rejectionReasonsRaw },
     { data: rejectionTemplatesRaw },
@@ -269,12 +257,6 @@ export default async function VacancyDetailPage({
       if (appStatus) q = q.eq('status_id', appStatus)
       return q
     })(),
-
-    supabase
-      .from('application_statuses')
-      .select('id, name, code, sort_order')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
 
     supabase
       .from('vacancy_questions')
@@ -297,7 +279,6 @@ export default async function VacancyDetailPage({
 
   const allApplications = (applicationsRaw || []) as ApplicationRow[]
   const appStatuses = (appStatusesRaw || []) as AppStatusRow[]
-  const appStatusMap = new Map(appStatuses.map((s) => [s.id, s]))
   const questions = (questionsRaw || []) as { id: string; label: string; type: 'text' | 'score'; sort_order: number }[]
   const canEditQuestions = profile?.role === 'owner' || profile?.role === 'admin'
 
@@ -309,6 +290,7 @@ export default async function VacancyDetailPage({
       .from('candidates')
       .select('id, first_name, last_name, general_status_id')
       .in('id', appCandidateIds)
+      .is('deleted_at', null)
     for (const c of (appCandidatesRaw || []) as CandidateRow[]) {
       appCandidateMap.set(c.id, c)
     }
@@ -385,9 +367,11 @@ export default async function VacancyDetailPage({
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-foreground">{vacancy.title}</h1>
               {vacancyStatus ? (
-                <Badge variant="secondary" className={VACANCY_STATUS_COLORS[vacancyStatus.code]}>
-                  {vacancyStatus.name}
-                </Badge>
+                <VacancyStatusSelect
+                  vacancyId={vacancy.id}
+                  current={vacancyStatus}
+                  options={vacancyStatuses}
+                />
               ) : (
                 <Badge variant="secondary">Unknown</Badge>
               )}
@@ -408,21 +392,27 @@ export default async function VacancyDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <LinkedInShareButton
-            title={vacancy.title}
-            location={vacancy.location}
-            employmentType={vacancy.employment_type}
-            department={vacancy.department}
-            description={vacancy.description}
-            responsibilities={(vacancy as any).responsibilities ?? null}
-            requirements={vacancy.requirements}
-          />
+          {linkedInIntegration && (
+            <LinkedInPostJobButton
+              pageId={linkedInIntegration.external_page_id}
+              vacancy={{
+                title: vacancy.title,
+                description: vacancy.description,
+                responsibilities: vacancy.responsibilities ?? null,
+                requirements: vacancy.requirements ?? null,
+                location: vacancy.location,
+                employment_type: vacancy.employment_type,
+                application_form_token: vacancy.application_form_token,
+              }}
+            />
+          )}
           <Button variant="outline" asChild>
             <Link href={`/vacancies/${id}/pipeline`}>
               <LayoutGrid className="mr-2 h-4 w-4" />Pipeline
             </Link>
           </Button>
           <DuplicateVacancyButton vacancyId={id} />
+          <DeleteVacancyButton vacancyId={id} vacancyTitle={vacancy.title} />
           <Button asChild>
             <Link href={`/vacancies/${id}/edit`}>
               <Edit className="mr-2 h-4 w-4" />Edit Vacancy
@@ -432,7 +422,7 @@ export default async function VacancyDetailPage({
       </div>
 
       {/* Main layout */}
-      <Tabs defaultValue="applications">
+      <Tabs defaultValue={defaultTab}>
         <div className="border-b border-border">
           <TabsList className="h-auto w-fit rounded-none bg-transparent p-0 gap-0">
             <TabsTrigger
@@ -466,14 +456,26 @@ export default async function VacancyDetailPage({
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Applications list */}
             <div className="lg:col-span-2">
-              <VacancyApplicationsToolbar
-                initialSearch={appSearch}
-                initialStatus={appStatus || ''}
-                appStatuses={appStatuses}
-              />
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <VacancyApplicationsToolbar
+                  initialSearch={appSearch}
+                  initialStatus={appStatus || ''}
+                  appStatuses={appStatuses}
+                />
+                <div className="flex items-center gap-2">
+                  <AddCandidateToVacancyDialog vacancyId={id} />
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`/api/export/applications?vacancy_id=${id}`} download>
+                      <Download className="mr-2 h-3.5 w-3.5" />
+                      Export CSV
+                    </a>
+                  </Button>
+                </div>
+              </div>
               {filteredApplications.length > 0 ? (
                 <>
                   <VacancyApplicationsList
+                    key={filteredApplications.map((a) => a.id).join(',')}
                     allStatuses={appStatuses}
                     rejectionReasons={rejectionReasonsRaw ?? []}
                     rejectionTemplates={rejectionTemplatesRaw ?? []}
@@ -495,9 +497,7 @@ export default async function VacancyDetailPage({
                           : '?',
                         appliedAt: application.applied_at,
                         statusId: application.status_id,
-                        generalStatus: generalStatus
-                          ? { id: generalStatus.id, name: generalStatus.name, code: generalStatus.code }
-                          : null,
+                        generalStatus: generalStatus ?? null,
                         existingEvaluation: evaluationsByApp.get(application.id) ?? null,
                       }
                     })}
@@ -513,9 +513,9 @@ export default async function VacancyDetailPage({
                     {appSearch || appStatus ? 'Try adjusting your filters.' : 'Add candidates to start tracking their progress.'}
                   </p>
                   {!appSearch && !appStatus && (
-                    <Button className="mt-6" asChild>
-                      <Link href={`/candidates/new?vacancy=${id}`}>Add Candidate</Link>
-                    </Button>
+                    <div className="mt-6">
+                      <AddCandidateToVacancyDialog vacancyId={id} />
+                    </div>
                   )}
                 </div>
               )}

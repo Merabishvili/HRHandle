@@ -1,0 +1,65 @@
+---
+title: Sign up and onboarding
+summary: Create your organization and start your 7-day free trial.
+updated: 2026-05-22
+---
+
+Creating an HRHandle organization is a one-screen sign-up plus an email confirmation. No setup wizard, no credit card. Your organization, profile, and 7-day trial are provisioned the first time you load the dashboard.
+
+## Step 1 — Fill the sign-up form
+
+Open [hrhandle.com](https://hrhandle.com) and click **Sign Up**, or go directly to `/auth/sign-up`. Enter your full name, company name, work email, and a password of at least 8 characters.
+
+<Screenshot
+  src="/guide/screenshots/sign-up-and-onboarding-form.png"
+  alt="The HRHandle sign-up form with Full name, Company, Work email, and Password fields"
+  caption="A single form. No payment details needed for the trial."
+/>
+
+You can also sign up with **Google** or **Microsoft** if your work email is on one of those providers — the OAuth flow gets you straight to the confirmation step without needing a password.
+
+## Step 2 — Confirm your email
+
+After submitting, HRHandle sends you a confirmation link. You stay on a "Check your email" screen until you click the link.
+
+<Screenshot
+  src="/guide/screenshots/sign-up-and-onboarding-confirm.png"
+  alt="The post sign-up screen instructing the user to check their email for a confirmation link"
+  caption="Open the confirmation email and click the link — it works from any browser."
+/>
+
+The link uses HRHandle's `token_hash` flow, so you can open the email in a different browser or on your phone — it doesn't have to be the same browser you signed up in.
+
+## Step 3 — Your organization is created automatically
+
+Click the confirmation link. You land on `/dashboard`. Behind the scenes, the first dashboard load does three things at once:
+
+1. **Creates your organization** with the company name you entered.
+2. **Creates your profile** with the role **Owner** — the highest level of access.
+3. **Starts a 7-day Trial subscription** with seat and feature limits suitable for evaluation.
+
+You don't see these steps as a wizard — by the time the dashboard renders, everything is already provisioned. You're free to start posting vacancies, adding candidates, and inviting teammates immediately.
+
+## What's included in the trial
+
+| Limit | Trial |
+|---|---|
+| Vacancies | 5 |
+| Candidates | 100 |
+| Team seats | 2 (you + 1 invitee) |
+| Days | 7 from sign-up |
+
+You can use every feature during the trial — public apply forms, pipeline, custom fields, integrations, email templates, all of it. If you hit a limit before deciding, upgrade in **Settings → Subscription**.
+
+## After the trial
+
+When the trial expires, the dashboard redirects you to **Subscription** until a paid plan is chosen. Your data is never deleted — pick a plan and pick up where you left off.
+
+## Where to go next
+
+A handful of guides cover the actions most teams take in their first session:
+
+- [Post your first vacancy](/guide/post-a-vacancy)
+- [Activate the public apply link](/guide/public-apply-link)
+- [Invite a teammate](/guide/team-and-roles)
+- [Connect Google, Zoom, or Microsoft for interview scheduling](/guide/schedule-interview)

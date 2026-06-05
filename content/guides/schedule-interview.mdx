@@ -1,0 +1,70 @@
+---
+title: Schedule interview
+summary: Book interviews and auto-create Google Meet, Zoom, or Teams links.
+updated: 2026-05-22
+---
+
+Interviews in HRHandle are bound to a specific candidate and vacancy, so every booking automatically appears on the right pipeline card and the right candidate profile. If you've connected a calendar or video provider in **Settings → Integrations**, HRHandle can create the meeting link and calendar event for you.
+
+## Open the schedule form
+
+From the sidebar, click **Interviews**, then **Schedule Interview** in the top-right corner. You can also schedule directly from a vacancy's pipeline or a candidate detail page — both shortcuts pre-fill the candidate and vacancy for you.
+
+<Screenshot
+  src="/guide/screenshots/schedule-interview-list.png"
+  alt="The Interviews list with the Schedule Interview button highlighted"
+  caption="Click Schedule Interview to open the booking form."
+/>
+
+## Fill in the form
+
+The form is grouped into three sections.
+
+<Screenshot
+  src="/guide/screenshots/schedule-interview-form.png"
+  alt="The Schedule Interview form with candidate, vacancy, date, time, duration, type, and meeting link sections"
+  caption="Pick the candidate first; the vacancy dropdown narrows to roles they've applied to."
+/>
+
+### Who and what
+- **Candidate**: search by name. The dropdown lists everyone in your talent pool.
+- **Vacancy**: once a candidate is selected, this narrows to the roles they have an application for. You can only schedule interviews against an existing application.
+- **Interviewer**: any active team member. Optional but recommended — the interviewer gets a notification and the calendar invite (if integrations are connected).
+
+### When and how long
+- **Date** and **Time** are required. They are stored in your local timezone.
+- **Duration** defaults to 60 minutes; choose from 15 to 120.
+- **Interview Type**: Video Call, Phone Call, or On-site. The type controls which meeting-link options are available below.
+
+### Meeting link
+For **Video Call** interviews, you can either paste your own link or have HRHandle generate one. If you've connected providers in **Settings → Integrations**, you'll see one-click options:
+
+| Source | What gets created |
+|---|---|
+| **Manual** | Paste any URL (Zoom personal room, Whereby, etc.). |
+| **Google Meet** | A Google Calendar event with an embedded Meet link, on the connected Google account. |
+| **Zoom** | A Zoom meeting on the connected Zoom account. |
+| **Microsoft Teams** | A Microsoft 365 calendar event with a Teams meeting on the connected Microsoft account. |
+
+For **Phone Call** and **On-site** interviews, the meeting-link section is reduced to a single text field for the dial-in number or address.
+
+## What happens after you save
+
+1. The interview is stored on the candidate and vacancy. It shows up on both detail pages and the candidate's pipeline card.
+2. If you chose an auto-generated provider, the calendar event and meeting link are created in the background and attached to the record.
+3. The interviewer (if set) and the user who scheduled it both receive an in-app notification.
+4. Optionally, an email invitation is sent to the candidate with all the details and the meeting link.
+
+## Editing or cancelling
+
+Click any interview row to open its detail panel. From there you can reschedule (changes the calendar event in place), cancel (removes the calendar event), or change the interviewer.
+
+## Integrations setup
+
+Auto-generated meeting links require connecting the provider once in **Settings → Integrations**:
+
+- **Google Calendar** — OAuth to your Google account. Required for Google Meet.
+- **Zoom** — OAuth to your Zoom account.
+- **Microsoft 365** — OAuth to your Microsoft account. Required for Teams.
+
+Each connection is per-user, not per-organization, so each interviewer who wants auto-generated links must connect their own account.

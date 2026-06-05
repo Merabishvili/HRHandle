@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { createApplication } from '@/lib/actions/applications'
+import { MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE } from '@/lib/types/constants'
 
 interface Vacancy {
   id: string
@@ -37,12 +39,13 @@ export function AddApplicationDialog({
   availableVacancies,
   activeApplicationCount,
 }: AddApplicationDialogProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [vacancyId, setVacancyId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const atLimit = activeApplicationCount >= 5
+  const atLimit = activeApplicationCount >= MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE
 
   const handleSubmit = () => {
     if (!vacancyId) { setError('Please select a vacancy.'); return }
@@ -52,6 +55,7 @@ export function AddApplicationDialog({
       if (result.success) {
         setOpen(false)
         setVacancyId('')
+        router.refresh()
       } else {
         setError(result.error)
       }
@@ -61,7 +65,15 @@ export function AddApplicationDialog({
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setVacancyId(''); setError(null) } }}>
       <DialogTrigger asChild>
-        <Button size="sm" disabled={atLimit} title={atLimit ? 'Already being considered for 5 vacancies' : undefined}>
+        <Button
+          size="sm"
+          disabled={atLimit}
+          title={
+            atLimit
+              ? `Active on ${MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE} vacancies — move one to Hired or Rejected, or archive it, before adding a new one.`
+              : undefined
+          }
+        >
           <Plus className="mr-1 h-4 w-4" />
           Add to Vacancy
         </Button>
@@ -73,7 +85,7 @@ export function AddApplicationDialog({
         <div className="space-y-4 pt-2">
           {atLimit && (
             <p className="text-sm text-destructive">
-              This candidate is already being considered for 5 vacancies. Move or close one before adding a new one.
+              This candidate is already active on {MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one.
             </p>
           )}
           <div className="space-y-2">

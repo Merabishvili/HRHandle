@@ -1,8 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { differenceInCalendarDays } from 'date-fns'
 import { getAuthContext, checkPlanLimit, type ActionResult } from './index'
 import { VacancySchema, type VacancyInput } from '@/lib/validations/vacancy'
+import { writeAuditLog } from '@/lib/audit-log'
 
 export async function createVacancy(input: VacancyInput): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
@@ -14,12 +16,17 @@ export async function createVacancy(input: VacancyInput): Promise<ActionResult<{
   const parsed = VacancySchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
 
+  const tokenForInsert = parsed.data.show_on_public_page
+    ? Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url')
+    : undefined
+
   const { data, error } = await ctx.supabase
     .from('vacancies')
     .insert({
       ...parsed.data,
       organization_id: ctx.orgId,
       created_by: ctx.userId,
+      ...(tokenForInsert ? { application_form_token: tokenForInsert } : {}),
     })
     .select('id')
     .single()
@@ -40,11 +47,31 @@ export async function updateVacancy(
   const parsed = VacancySchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
 
+  const updatePayload: Record<string, unknown> = { ...parsed.data }
+
+  // Auto-generate application_form_token when show_on_public_page is being enabled
+  if (parsed.data.show_on_public_page) {
+    const { data: existing } = await ctx.supabase
+      .from('vacancies')
+      .select('application_form_token')
+      .eq('id', id)
+      .eq('organization_id', ctx.orgId)
+      .is('deleted_at', null)
+      .single()
+
+    if (!existing?.application_form_token) {
+      updatePayload.application_form_token = Buffer.from(
+        crypto.getRandomValues(new Uint8Array(32))
+      ).toString('base64url')
+    }
+  }
+
   const { error } = await ctx.supabase
     .from('vacancies')
-    .update(parsed.data)
+    .update(updatePayload)
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update vacancy' }
 
@@ -60,13 +87,41 @@ export async function updateVacancyStatus(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
+  // Capture before/after status codes for the audit log (read both in parallel)
+  const [{ data: vacancyBefore }, { data: newStatus }] = await Promise.all([
+    ctx.supabase
+      .from('vacancies')
+      .select('status_id, vacancy_statuses ( code )')
+      .eq('id', id)
+      .eq('organization_id', ctx.orgId)
+      .is('deleted_at', null)
+      .single(),
+    ctx.supabase.from('vacancy_statuses').select('code').eq('id', statusId).single(),
+  ])
+
   const { error } = await ctx.supabase
     .from('vacancies')
     .update({ status_id: statusId })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update vacancy status' }
+
+  type StatusJoin = { code: string } | { code: string }[] | null
+  const beforeJoin = vacancyBefore?.vacancy_statuses as StatusJoin
+  const beforeCode = Array.isArray(beforeJoin) ? beforeJoin[0]?.code : beforeJoin?.code
+  const afterCode = newStatus?.code ?? null
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'vacancy',
+    entityId: id,
+    action: 'status_changed',
+    message:
+      beforeCode && afterCode ? `${beforeCode} → ${afterCode}` : `status changed to ${afterCode}`,
+    details: { before: beforeCode ?? null, after: afterCode },
+  })
 
   revalidatePath('/vacancies')
   revalidatePath(`/vacancies/${id}`)
@@ -82,9 +137,10 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
 
   const { data: orig } = await ctx.supabase
     .from('vacancies')
-    .select('*')
+    .select('title, sector_id, status_id, department, location, employment_type, hiring_manager_name, salary_min, salary_max, salary_currency, openings_count, start_date, end_date, description, responsibilities, requirements')
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
     .single()
 
   if (!orig) return { success: false, error: 'Vacancy not found' }
@@ -93,12 +149,22 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
   const todayStr = today.toISOString().split('T')[0]
   let newEndDate: string | null = null
   if (orig.end_date && orig.start_date) {
-    const diffDays = Math.round(
-      (new Date(orig.end_date).getTime() - new Date(orig.start_date).getTime()) / 86_400_000
+    // differenceInCalendarDays handles DST + day-boundary correctly, unlike
+    // (end-start)/86_400_000 which can be off-by-one near midnight or DST shifts.
+    const diffDays = differenceInCalendarDays(
+      new Date(orig.end_date),
+      new Date(orig.start_date),
     )
     const endDate = new Date(today)
     endDate.setDate(endDate.getDate() + diffDays)
     newEndDate = endDate.toISOString().split('T')[0]
+  } else {
+    // BL-012: if the original was open-ended (no end_date), default the
+    // duplicate to today + 90 days so it doesn't silently inherit a null
+    // deadline. The user can still clear it on the edit page.
+    const fallbackEnd = new Date(today)
+    fallbackEnd.setDate(fallbackEnd.getDate() + 90)
+    newEndDate = fallbackEnd.toISOString().split('T')[0]
   }
 
   const { data: draftStatus } = await ctx.supabase
@@ -187,9 +253,10 @@ export async function deleteVacancy(id: string): Promise<ActionResult<void>> {
 
   const { error } = await ctx.supabase
     .from('vacancies')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to delete vacancy' }
 

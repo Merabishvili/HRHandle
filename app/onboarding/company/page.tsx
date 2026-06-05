@@ -1,0 +1,49 @@
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { Briefcase } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
+import { CompanyOnboardingForm } from '@/components/onboarding/company-form'
+
+export default async function CompanyOnboardingPage() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/auth/login')
+  }
+
+  // Already onboarded — skip the form. Handles back-button after submit and
+  // users who arrive here from a stale tab after another session completed it.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profile?.organization_id) {
+    redirect('/dashboard')
+  }
+
+  const defaultFullName =
+    typeof user.user_metadata?.full_name === 'string'
+      ? (user.user_metadata.full_name as string)
+      : ''
+
+  return (
+    <div className="min-h-screen bg-background px-4 py-12 flex items-center justify-center">
+      <div className="w-full max-w-md">
+        <div className="flex justify-center mb-8">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <Briefcase className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <span className="text-2xl font-bold text-foreground">HRHandle</span>
+          </Link>
+        </div>
+        <CompanyOnboardingForm defaultFullName={defaultFullName} />
+      </div>
+    </div>
+  )
+}

@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, Paperclip, Trash2, Download, FileText } from 'lucide-react'
+import { Loader2, Paperclip, Trash2, ExternalLink, FileText } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 interface Document {
@@ -84,17 +84,20 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
     })
   }
 
-  const handleDownload = (docId: string) => {
+  const handleOpen = (docId: string, mimeType: string) => {
     startTransition(async () => {
       const result = await getDocumentSignedUrl(docId)
       if (!result.success) {
         setError(result.error)
         return
       }
-      const a = document.createElement('a')
-      a.href = result.data.url
-      a.download = result.data.filename
-      a.click()
+      const isWord =
+        mimeType === 'application/msword' ||
+        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      const target = isWord
+        ? `https://docs.google.com/viewer?url=${encodeURIComponent(result.data.url)}`
+        : result.data.url
+      window.open(target, '_blank', 'noopener,noreferrer')
     })
   }
 
@@ -177,10 +180,11 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                    onClick={() => handleDownload(doc.id)}
+                    title="Open in new tab"
+                    onClick={() => handleOpen(doc.id, doc.mime_type)}
                     disabled={isPending}
                   >
-                    <Download className="h-3.5 w-3.5" />
+                    <ExternalLink className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="ghost"

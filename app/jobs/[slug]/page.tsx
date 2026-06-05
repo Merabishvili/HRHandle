@@ -2,20 +2,27 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export const revalidate = 300 // 5 minutes
+
 interface PageProps {
-  params: Promise<{ token: string }>
+  params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: PageProps) {
-  const { token } = await params
+async function resolveOrg(slug: string) {
   const supabase = createAdminClient()
 
   const { data: org } = await supabase
     .from('organizations')
-    .select('name')
-    .eq('public_page_token', token)
+    .select('id, name, logo_url, public_page_slug')
+    .eq('public_page_slug', slug)
     .single()
 
+  return org
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { slug } = await params
+  const org = await resolveOrg(slug)
   if (!org) return { title: 'Jobs' }
   return {
     title: `Open Positions — ${org.name}`,
@@ -31,15 +38,10 @@ const employmentLabel: Record<string, string> = {
 }
 
 export default async function PublicJobsPage({ params }: PageProps) {
-  const { token } = await params
+  const { slug } = await params
   const supabase = createAdminClient()
 
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, logo_url')
-    .eq('public_page_token', token)
-    .single()
-
+  const org = await resolveOrg(slug)
   if (!org) notFound()
 
   const { data: vacanciesRaw } = await supabase
@@ -52,17 +54,22 @@ export default async function PublicJobsPage({ params }: PageProps) {
       employment_type,
       description,
       application_form_token,
-      archived_at,
       vacancy_statuses ( code )
     `)
     .eq('organization_id', org.id)
     .eq('show_on_public_page', true)
     .is('deleted_at', null)
+    .is('archived_at', null)
     .order('created_at', { ascending: false })
 
+  // Only show open vacancies with a form token.
+  // Supabase may return the joined row as an object or a single-element array
+  // depending on relationship configuration — handle both.
+  type StatusJoin = { code: string } | { code: string }[] | null
   const vacancies = (vacanciesRaw || []).filter((v) => {
-    const code = (v.vacancy_statuses as any)?.[0]?.code
-    return !v.archived_at && code !== 'closed' && code !== 'archived' && v.application_form_token
+    const statusJoin = v.vacancy_statuses as StatusJoin
+    const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
+    return statusCode === 'open' && v.application_form_token
   })
 
   return (

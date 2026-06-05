@@ -91,6 +91,7 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
             onChange={(e) => setLabel(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             disabled={isPending}
+            maxLength={500}
             className="flex-1 text-sm"
           />
           <Button onClick={handleAdd} disabled={isPending || !label.trim()} size="sm">

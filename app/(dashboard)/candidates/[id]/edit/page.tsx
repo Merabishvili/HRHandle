@@ -4,8 +4,12 @@ import { ArrowLeft } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
 import { CandidateForm } from '@/components/candidates/candidate-form'
+import { ExperienceSection } from '@/components/candidates/experience-section'
+import { EducationSection } from '@/components/candidates/education-section'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { getCandidateStatuses } from '@/lib/cache/lookups'
+import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 
 interface PageParams {
   id: string
@@ -16,13 +20,14 @@ interface CandidateRow {
   organization_id: string
   first_name: string
   last_name: string
-  date_of_birth: string | null
   email: string | null
   phone: string | null
-  current_company: string | null
-  current_position: string | null
-  years_of_experience: number | null
   linkedin_profile_url: string | null
+  location: string | null
+  timezone: string | null
+  languages: string[]
+  salary_expectation: string | null
+  notice_period: string | null
   source: string | null
   general_status_id: string | null
   created_by: string | null
@@ -49,6 +54,7 @@ interface VacancyRow {
   end_date: string | null
   description: string
   requirements: string | null
+  responsibilities: string | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -60,13 +66,7 @@ interface VacancyRow {
   }[] | null
 }
 
-interface CandidateStatusRow {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-  is_active: boolean
-  sort_order: number
-}
+import type { CandidateStatusOption as CandidateStatusRow } from '@/lib/types/database'
 
 
 export default async function EditCandidatePage({
@@ -104,13 +104,14 @@ export default async function EditCandidatePage({
       organization_id,
       first_name,
       last_name,
-      date_of_birth,
       email,
       phone,
-      current_company,
-      current_position,
-      years_of_experience,
       linkedin_profile_url,
+      location,
+      timezone,
+      languages,
+      salary_expectation,
+      notice_period,
       source,
       general_status_id,
       created_by,
@@ -129,12 +130,7 @@ export default async function EditCandidatePage({
     notFound()
   }
 
-  const { data: candidateStatusesRaw } = await supabase
-    .from('candidate_statuses')
-    .select('id, name, code, is_active, sort_order')
-    .order('sort_order', { ascending: true })
-
-  const candidateStatuses = (candidateStatusesRaw || []) as CandidateStatusRow[]
+  const candidateStatuses = (await getCandidateStatuses()) as CandidateStatusRow[]
 
 const { data: vacanciesRaw } = await supabase
   .from('vacancies')
@@ -156,6 +152,7 @@ const { data: vacanciesRaw } = await supabase
     end_date,
     description,
     requirements,
+    responsibilities,
     created_by,
     created_at,
     updated_at,
@@ -168,6 +165,7 @@ const { data: vacanciesRaw } = await supabase
   `)
   .eq('organization_id', organizationId)
   .is('archived_at', null)
+  .is('deleted_at', null)
   .order('title', { ascending: true })
 
   const vacanciesAll = (vacanciesRaw || []) as VacancyRow[]
@@ -177,10 +175,15 @@ const { data: vacanciesRaw } = await supabase
     return statusCode === 'open' || statusCode === 'draft'
   })
 
-  const [customFieldGroups, customFieldValues] = await Promise.all([
+  const [customFieldGroups, customFieldValues, { data: experienceRaw }, { data: educationRaw }] = await Promise.all([
     getCustomFieldSchema('candidate'),
     getCustomFieldValues(id),
+    supabase.from('candidate_experience').select('*').eq('candidate_id', id).eq('organization_id', organizationId).order('start_date', { ascending: false, nullsFirst: false }),
+    supabase.from('candidate_education').select('*').eq('candidate_id', id).eq('organization_id', organizationId).order('start_year', { ascending: false, nullsFirst: false }),
   ])
+
+  const experienceEntries = (experienceRaw || []) as CandidateExperience[]
+  const educationEntries  = (educationRaw  || []) as CandidateEducation[]
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -203,6 +206,12 @@ const { data: vacanciesRaw } = await supabase
         candidateStatuses={candidateStatuses}
         customFieldGroups={customFieldGroups}
         customFieldValues={customFieldValues}
+        extraSections={
+          <>
+            <ExperienceSection candidateId={id} initialEntries={experienceEntries} />
+            <EducationSection candidateId={id} initialEntries={educationEntries} />
+          </>
+        }
       />
     </div>
   )

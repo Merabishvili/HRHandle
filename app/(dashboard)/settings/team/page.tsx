@@ -42,8 +42,8 @@ export default async function TeamSettingsPage() {
         </CardHeader>
         <CardContent>
           <TeamInvitations
-            pendingInvitations={(invitesRaw || []) as any}
-            teamMembers={(membersRaw || []) as any}
+            pendingInvitations={invitesRaw || []}
+            teamMembers={membersRaw || []}
             currentUserId={user.id}
           />
         </CardContent>

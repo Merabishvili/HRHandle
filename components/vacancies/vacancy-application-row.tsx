@@ -30,17 +30,10 @@ import { updateApplicationStatus, removeApplication } from '@/lib/actions/applic
 import { saveEvaluation } from '@/lib/actions/evaluations'
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from '@/components/pipeline/rejection-dialog'
 
-interface AppStatus {
-  id: string
-  name: string
-  code: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | 'withdrawn'
-}
-
-interface GeneralStatus {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-}
+import type {
+  ApplicationStatusOption as AppStatus,
+  CandidateStatusOption as GeneralStatus,
+} from '@/lib/types/database'
 
 interface Question {
   id: string
@@ -89,7 +82,7 @@ export function VacancyApplicationRow({
   initials,
   appliedAt,
   currentStatusId,
-  generalStatus,
+  generalStatus: _generalStatus,
   allStatuses,
   rejectionReasons,
   rejectionTemplates,
@@ -256,7 +249,7 @@ export function VacancyApplicationRow({
             {questions.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No assessment questions configured for this vacancy.{' '}
-                <Link href={`/vacancies/${vacancyId}`} className="underline hover:no-underline">
+                <Link href={`/vacancies/${vacancyId}?tab=qe`} className="underline hover:no-underline">
                   Add questions
                 </Link>
               </p>

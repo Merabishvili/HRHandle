@@ -18,9 +18,9 @@ export default async function JoinPage({
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Not logged in — send to sign-up, come back here after
+  // Not logged in — send to login, come back here after
   if (!user) {
-    redirect(`/auth/sign-up?next=/join?token=${token}`)
+    redirect(`/auth/sign-up?next=${encodeURIComponent(`/join?token=${token}`)}`)
   }
 
   const result = await acceptInvitation(token)

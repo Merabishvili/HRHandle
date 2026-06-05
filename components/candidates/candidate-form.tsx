@@ -18,9 +18,15 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { DatePicker } from '@/components/ui/date-picker'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, Linkedin, Paperclip, X, Upload } from 'lucide-react'
+import { Loader2, Linkedin, Paperclip, X, Upload, FileText, Wand2, PenLine, CheckCircle2, AlertCircle, Plus, Trash2, Check, Briefcase, GraduationCap } from 'lucide-react'
+import { bulkCreateExperienceEntries, bulkCreateEducationEntries } from '@/lib/actions/candidate-background'
+import type { ParsedCVInput } from '@/lib/validations/candidate-background'
+
+type ExpLocal = { localId: string; company: string; title: string; start_date: string | null; end_date: string | null; is_current: boolean; description: string | null }
+type EduLocal = { localId: string; institution: string; degree: string | null; field_of_study: string | null; start_year: number | null; end_year: number | null; is_ongoing: boolean }
+const BLANK_EXP: Omit<ExpLocal, 'localId'> = { company: '', title: '', start_date: null, end_date: null, is_current: false, description: null }
+const BLANK_EDU: Omit<EduLocal, 'localId'> = { institution: '', degree: null, field_of_study: null, start_year: null, end_year: null, is_ongoing: false }
 import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
 import type {
   Candidate,
@@ -45,14 +51,24 @@ interface PendingFile {
 
 interface CandidateFormProps {
   candidate?: Candidate
-  vacancies: Vacancy[]
+  vacancies: Pick<Vacancy, 'id' | 'title'>[]
   defaultVacancyId?: string
   candidateStatuses: CandidateGeneralStatus[]
   defaultApplicationStatusId?: string | null
   initialApplicationStatuses?: ApplicationStatus[]
   customFieldGroups?: CustomFieldGroupWithFields[]
   customFieldValues?: CustomFieldValue[]
+  /**
+   * Extra sections rendered between the personal-info card and the
+   * Custom Fields card. Used on the edit page to inject live
+   * ExperienceSection / EducationSection editors in the same vertical
+   * position as the inline Experience/Education on the create page.
+   */
+  extraSections?: React.ReactNode
 }
+
+type EntryMode = null | 'cv' | 'manual'
+type CvParseState = 'idle' | 'parsing' | 'done' | 'failed'
 
 export function CandidateForm({
   candidate,
@@ -61,9 +77,11 @@ export function CandidateForm({
   candidateStatuses,
   customFieldGroups = [],
   customFieldValues = [],
+  extraSections,
 }: CandidateFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cvUploadRef = useRef<HTMLInputElement>(null)
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -72,6 +90,20 @@ export function CandidateForm({
     () => valuesToMap(customFieldValues)
   )
 
+  // Two-path entry state (create-only)
+  const [entryMode, setEntryMode] = useState<EntryMode>(candidate ? 'manual' : null)
+  const [cvParseState, setCvParseState] = useState<CvParseState>('idle')
+  const [parsedCV, setParsedCV] = useState<ParsedCVInput | null>(null)
+  const [cvFileName, setCvFileName] = useState<string | null>(null)
+
+  // Pending experience/education for create form (local state, saved on submit)
+  const [pendingExp, setPendingExp] = useState<ExpLocal[]>([])
+  const [pendingEdu, setPendingEdu] = useState<EduLocal[]>([])
+  const [addingExp, setAddingExp] = useState(false)
+  const [addExpForm, setAddExpForm] = useState<Omit<ExpLocal, 'localId'>>(BLANK_EXP)
+  const [addingEdu, setAddingEdu] = useState(false)
+  const [addEduForm, setAddEduForm] = useState<Omit<EduLocal, 'localId'>>(BLANK_EDU)
+
   const [selectedVacancyId, setSelectedVacancyId] = useState<string>(
     defaultVacancyId || ''
   )
@@ -79,13 +111,14 @@ export function CandidateForm({
   const [formData, setFormData] = useState<CandidateFormData>({
     first_name: candidate?.first_name || '',
     last_name: candidate?.last_name || '',
-    date_of_birth: candidate?.date_of_birth ?? null,
     email: candidate?.email || '',
     phone: candidate?.phone || '',
-    current_company: candidate?.current_company || '',
-    current_position: candidate?.current_position || '',
-    years_of_experience: candidate?.years_of_experience ?? null,
     linkedin_profile_url: candidate?.linkedin_profile_url || '',
+    location: (candidate as {location?: string | null})?.location ?? null,
+    timezone: (candidate as {timezone?: string | null})?.timezone ?? null,
+    languages: (candidate as {languages?: string[]})?.languages ?? [],
+    salary_expectation: (candidate as {salary_expectation?: string | null})?.salary_expectation ?? null,
+    notice_period: (candidate as {notice_period?: string | null})?.notice_period ?? null,
     source: candidate?.source || '',
     general_status_id: candidate?.general_status_id ||
       candidateStatuses.find((s) => s.code === 'active')?.id || null,
@@ -94,9 +127,75 @@ export function CandidateForm({
 
   const isEditing = !!candidate
   const [pendingNote, setPendingNote] = useState('')
+  const submittingRef = useRef(false)
 
   const handleChange = <K extends keyof CandidateFormData>(key: K, value: CandidateFormData[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleCVUploadForParsing = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (cvUploadRef.current) cvUploadRef.current.value = ''
+
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    if (!['pdf', 'doc', 'docx'].includes(ext ?? '')) {
+      setError('CV must be a PDF or Word document.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('CV file must be 10 MB or smaller.')
+      return
+    }
+
+    setError(null)
+    setCvFileName(file.name)
+    setCvParseState('parsing')
+    setParsedCV(null)
+    // Add to pending documents so CV is uploaded on save
+    setPendingFiles([{ id: `cv-${Date.now()}`, file, documentType: 'cv' }])
+
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/parse-cv', { method: 'POST', body: fd })
+      const json = await res.json()
+
+      if (json.success && json.data) {
+        const data: ParsedCVInput = json.data
+        setParsedCV(data)
+        setCvParseState('done')
+        setFormData((prev) => ({
+          ...prev,
+          first_name: data.first_name || prev.first_name,
+          last_name: data.last_name || prev.last_name,
+          email: data.email || prev.email,
+          phone: data.phone || prev.phone,
+          linkedin_profile_url: data.linkedin_profile_url || prev.linkedin_profile_url,
+          location: data.location || (prev as {location?: string | null}).location,
+          timezone: data.timezone || (prev as {timezone?: string | null}).timezone,
+          languages: (data.languages?.length ? data.languages : null) ?? (prev as {languages?: string[]}).languages ?? [],
+          salary_expectation: data.salary_expectation || (prev as {salary_expectation?: string | null}).salary_expectation,
+          notice_period: data.notice_period || (prev as {notice_period?: string | null}).notice_period,
+        }))
+        if (data.experience.length > 0) {
+          setPendingExp(data.experience
+            .filter((e) => e.company && e.title)
+            .map((e, i) => ({ localId: `cv-exp-${i}`, company: e.company ?? '', title: e.title ?? '', start_date: e.start_date ?? null, end_date: e.end_date ?? null, is_current: e.is_current, description: e.description ?? null }))
+          )
+        }
+        if (data.education.length > 0) {
+          setPendingEdu(data.education
+            .filter((e) => e.institution)
+            .map((e, i) => ({ localId: `cv-edu-${i}`, institution: e.institution ?? '', degree: e.degree ?? null, field_of_study: e.field_of_study ?? null, start_year: e.start_year ?? null, end_year: e.end_year ?? null, is_ongoing: e.is_ongoing }))
+          )
+        }
+      } else {
+        setCvParseState('failed')
+      }
+    } catch {
+      setCvParseState('failed')
+    }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,19 +211,22 @@ export function CandidateForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submittingRef.current) return
+    submittingRef.current = true
     setError(null)
     setIsLoading(true)
 
     const payload = {
       first_name: formData.first_name,
       last_name: formData.last_name,
-      date_of_birth: formData.date_of_birth || null,
       email: formData.email || null,
       phone: formData.phone || null,
-      current_company: formData.current_company || null,
-      current_position: formData.current_position || null,
-      years_of_experience: formData.years_of_experience ?? null,
       linkedin_profile_url: formData.linkedin_profile_url || null,
+      location: (formData as {location?: string | null}).location || null,
+      timezone: (formData as {timezone?: string | null}).timezone || null,
+      languages: (formData as {languages?: string[]}).languages ?? [],
+      salary_expectation: (formData as {salary_expectation?: string | null}).salary_expectation || null,
+      notice_period: (formData as {notice_period?: string | null}).notice_period || null,
       source: formData.source || null,
       general_status_id: formData.general_status_id || null,
     }
@@ -136,6 +238,7 @@ export function CandidateForm({
     if (!result.success) {
       setError(result.error)
       setIsLoading(false)
+      submittingRef.current = false
       return
     }
 
@@ -148,12 +251,25 @@ export function CandidateForm({
     }
 
     if (!isEditing && result.data?.id) {
+      const expEntries = pendingExp.filter((e) => e.company.trim() && e.title.trim()).map(({ localId: _id, ...e }) => e)
+      if (expEntries.length > 0) await bulkCreateExperienceEntries(result.data.id, expEntries)
+      const eduEntries = pendingEdu.filter((e) => e.institution.trim()).map(({ localId: _id, ...e }) => e)
+      if (eduEntries.length > 0) await bulkCreateEducationEntries(result.data.id, eduEntries)
+    }
+
+    if (!isEditing && result.data?.id) {
       // Upload queued documents
       for (const entry of pendingFiles) {
         const fd = new FormData()
         fd.append('file', entry.file)
         fd.append('document_type', entry.documentType)
-        await uploadDocument(result.data.id, fd)
+        const uploadResult = await uploadDocument(result.data.id, fd)
+        if (!uploadResult.success) {
+          setError(`Document upload failed: ${uploadResult.error}`)
+          setIsLoading(false)
+          submittingRef.current = false
+          return
+        }
       }
       // Save initial note
       if (pendingNote.trim()) {
@@ -161,9 +277,50 @@ export function CandidateForm({
       }
     }
 
-    router.push(isEditing ? `/candidates/${candidate.id}` : '/candidates')
-    router.refresh()
+    router.push(isEditing ? `/candidates/${candidate.id}` : `/candidates/${result.data?.id}`)
     setIsLoading(false)
+  }
+
+  // Path selection screen (create-only)
+  if (!candidate && entryMode === null) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">How would you like to add this candidate?</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setEntryMode('cv')}
+            className="group flex flex-col items-start gap-3 rounded-xl border-2 border-border bg-card px-6 py-5 text-left hover:border-primary/60 hover:bg-muted/30 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                <Wand2 className="h-5 w-5 text-primary" />
+              </div>
+              <p className="font-semibold text-foreground">Upload CV first</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Upload a PDF or Word CV and we&apos;ll fill in the candidate details automatically using AI.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setEntryMode('manual')}
+            className="group flex flex-col items-start gap-3 rounded-xl border-2 border-border bg-card px-6 py-5 text-left hover:border-primary/60 hover:bg-muted/30 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                <PenLine className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="font-semibold text-foreground">Fill manually</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Enter candidate details by hand. You can still attach a CV as a document.
+            </p>
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -172,6 +329,61 @@ export function CandidateForm({
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+      )}
+
+      {/* CV Upload + Parse Banner (create, cv mode only) */}
+      {!candidate && entryMode === 'cv' && (
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wand2 className="h-4 w-4" />
+              Upload CV to auto-fill
+            </CardTitle>
+            <CardDescription>Fields will be filled automatically from the CV.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <input
+              ref={cvUploadRef}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="hidden"
+              onChange={handleCVUploadForParsing}
+            />
+            {cvParseState === 'idle' ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => cvUploadRef.current?.click()}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Select CV file
+              </Button>
+            ) : (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 px-3 py-2.5">
+                <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate text-sm">{cvFileName}</span>
+                {cvParseState === 'parsing' && (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Parsing…
+                  </span>
+                )}
+                {cvParseState === 'done' && (
+                  <span className="flex items-center gap-1.5 text-xs text-green-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Fields filled
+                  </span>
+                )}
+                {cvParseState === 'failed' && (
+                  <span className="flex items-center gap-1.5 text-xs text-amber-600">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Could not parse — fill manually
+                  </span>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Personal Information */}
@@ -208,20 +420,8 @@ export function CandidateForm({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Date of Birth</Label>
-              <DatePicker
-                value={formData.date_of_birth ?? null}
-                onChange={(v) => handleChange('date_of_birth', v)}
-                placeholder="Select date of birth"
-                disabled={isLoading}
-                fromYear={1940}
-                toYear={new Date().getFullYear()}
-              />
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="general_status_id">General Status</Label>
               <Select
                 value={formData.general_status_id || ''}
@@ -270,23 +470,23 @@ export function CandidateForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="current_company">Current Company</Label>
+              <Label htmlFor="location">Location</Label>
               <Input
-                id="current_company"
-                placeholder="e.g. ABC Tech"
-                value={formData.current_company ?? ''}
-                onChange={(e) => handleChange('current_company', e.target.value)}
+                id="location"
+                placeholder="e.g. Tbilisi, Georgia"
+                value={(formData as {location?: string | null}).location ?? ''}
+                onChange={(e) => handleChange('location' as keyof typeof formData, e.target.value || null)}
                 disabled={isLoading}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="current_position">Current Position</Label>
+              <Label htmlFor="timezone">Timezone</Label>
               <Input
-                id="current_position"
-                placeholder="e.g. Senior Backend Engineer"
-                value={formData.current_position ?? ''}
-                onChange={(e) => handleChange('current_position', e.target.value)}
+                id="timezone"
+                placeholder="e.g. GMT+4"
+                value={(formData as {timezone?: string | null}).timezone ?? ''}
+                onChange={(e) => handleChange('timezone' as keyof typeof formData, e.target.value || null)}
                 disabled={isLoading}
               />
             </div>
@@ -294,24 +494,40 @@ export function CandidateForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="years_of_experience">Years of Experience</Label>
+              <Label htmlFor="salary_expectation">Salary Expectation</Label>
               <Input
-                id="years_of_experience"
-                type="number"
-                min={0}
-                step="0.5"
-                placeholder="e.g. 5"
-                value={formData.years_of_experience ?? ''}
-                onChange={(e) =>
-                  handleChange(
-                    'years_of_experience',
-                    e.target.value ? Number(e.target.value) : null
-                  )
-                }
+                id="salary_expectation"
+                placeholder="e.g. $80,000 – $100,000"
+                value={(formData as {salary_expectation?: string | null}).salary_expectation ?? ''}
+                onChange={(e) => handleChange('salary_expectation' as keyof typeof formData, e.target.value || null)}
                 disabled={isLoading}
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="notice_period">Notice Period</Label>
+              <Input
+                id="notice_period"
+                placeholder="e.g. 1 month"
+                value={(formData as {notice_period?: string | null}).notice_period ?? ''}
+                onChange={(e) => handleChange('notice_period' as keyof typeof formData, e.target.value || null)}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="languages">Languages</Label>
+            <Input
+              id="languages"
+              placeholder="e.g. English, Georgian, Russian"
+              value={((formData as {languages?: string[]}).languages ?? []).join(', ')}
+              onChange={(e) => handleChange('languages' as keyof typeof formData, e.target.value ? e.target.value.split(',').map((l) => l.trim()).filter(Boolean) : [])}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="linkedin_profile_url">LinkedIn Profile</Label>
               <div className="flex gap-2">
@@ -324,7 +540,7 @@ export function CandidateForm({
                   disabled={isLoading}
                 />
                 {formData.linkedin_profile_url && (
-                  <a href={formData.linkedin_profile_url} target="_blank" rel="noopener noreferrer">
+                  <a href={/^https?:\/\//i.test(formData.linkedin_profile_url) ? formData.linkedin_profile_url : `https://${formData.linkedin_profile_url}`} target="_blank" rel="noopener noreferrer">
                     <Button type="button" variant="outline" size="icon" title="Open LinkedIn profile">
                       <Linkedin className="h-4 w-4 text-[#0A66C2]" />
                     </Button>
@@ -335,6 +551,166 @@ export function CandidateForm({
           </div>
         </CardContent>
       </Card>
+
+      {/* Live Experience / Education editors (edit mode only) — kept in the
+          same vertical position as the inline create-mode sections below. */}
+      {isEditing && extraSections}
+
+      {/* Experience (create only) */}
+      {!isEditing && (
+        <Card className="border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                Experience
+              </CardTitle>
+              <CardDescription>Work history entries.</CardDescription>
+            </div>
+            {!addingExp && (
+              <Button type="button" variant="outline" size="sm" onClick={() => { setAddingExp(true); setAddExpForm(BLANK_EXP) }} disabled={isLoading}>
+                <Plus className="h-4 w-4 mr-1" />Add
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {addingExp && (
+              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Company *</Label>
+                    <Input value={addExpForm.company} onChange={(e) => setAddExpForm((p) => ({ ...p, company: e.target.value }))} placeholder="Company name" maxLength={200} disabled={isLoading} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Title *</Label>
+                    <Input value={addExpForm.title} onChange={(e) => setAddExpForm((p) => ({ ...p, title: e.target.value }))} placeholder="Job title" maxLength={200} disabled={isLoading} />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Start date</Label>
+                    <Input type="month" value={addExpForm.start_date ?? ''} onChange={(e) => setAddExpForm((p) => ({ ...p, start_date: e.target.value || null }))} disabled={isLoading} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">End date</Label>
+                    <Input type="month" value={addExpForm.end_date ?? ''} onChange={(e) => setAddExpForm((p) => ({ ...p, end_date: e.target.value || null }))} disabled={isLoading || addExpForm.is_current} />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="checkbox" checked={addExpForm.is_current} onChange={(e) => setAddExpForm((p) => ({ ...p, is_current: e.target.checked, end_date: e.target.checked ? null : p.end_date }))} className="rounded" />
+                  Currently working here
+                </label>
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setAddingExp(false); setAddExpForm(BLANK_EXP) }}>
+                    <X className="h-4 w-4 mr-1" />Cancel
+                  </Button>
+                  <Button type="button" size="sm" disabled={!addExpForm.company.trim() || !addExpForm.title.trim()} onClick={() => { setPendingExp((p) => [...p, { ...addExpForm, localId: `exp-${Date.now()}` }]); setAddExpForm(BLANK_EXP); setAddingExp(false) }}>
+                    <Check className="h-4 w-4 mr-1" />Add
+                  </Button>
+                </div>
+              </div>
+            )}
+            {pendingExp.length === 0 && !addingExp && (
+              <p className="py-4 text-center text-sm text-muted-foreground">No experience added yet.</p>
+            )}
+            {pendingExp.map((entry) => (
+              <div key={entry.localId} className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/10 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{entry.title}</p>
+                  <p className="text-sm text-muted-foreground truncate">{entry.company}</p>
+                  {(entry.start_date || entry.is_current || entry.end_date) && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{entry.start_date ?? '?'} – {entry.is_current ? 'Present' : (entry.end_date ?? '?')}</p>
+                  )}
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => setPendingExp((p) => p.filter((e) => e.localId !== entry.localId))}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Education (create only) */}
+      {!isEditing && (
+        <Card className="border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-4 w-4" />
+                Education
+              </CardTitle>
+              <CardDescription>Academic background.</CardDescription>
+            </div>
+            {!addingEdu && (
+              <Button type="button" variant="outline" size="sm" onClick={() => { setAddingEdu(true); setAddEduForm(BLANK_EDU) }} disabled={isLoading}>
+                <Plus className="h-4 w-4 mr-1" />Add
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {addingEdu && (
+              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Institution *</Label>
+                  <Input value={addEduForm.institution} onChange={(e) => setAddEduForm((p) => ({ ...p, institution: e.target.value }))} placeholder="University or school name" maxLength={200} disabled={isLoading} />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Degree</Label>
+                    <Input value={addEduForm.degree ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, degree: e.target.value || null }))} placeholder="e.g. Bachelor's" maxLength={100} disabled={isLoading} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Field of study</Label>
+                    <Input value={addEduForm.field_of_study ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, field_of_study: e.target.value || null }))} placeholder="e.g. Computer Science" maxLength={200} disabled={isLoading} />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Start year</Label>
+                    <Input type="number" min={1950} max={new Date().getFullYear()} value={addEduForm.start_year ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, start_year: e.target.value ? Number(e.target.value) : null }))} placeholder="e.g. 2018" disabled={isLoading} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">End year</Label>
+                    <Input type="number" min={1950} max={new Date().getFullYear() + 10} value={addEduForm.end_year ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, end_year: e.target.value ? Number(e.target.value) : null }))} placeholder="e.g. 2022" disabled={isLoading || addEduForm.is_ongoing} />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="checkbox" checked={addEduForm.is_ongoing} onChange={(e) => setAddEduForm((p) => ({ ...p, is_ongoing: e.target.checked, end_year: e.target.checked ? null : p.end_year }))} className="rounded" />
+                  Currently studying
+                </label>
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setAddingEdu(false); setAddEduForm(BLANK_EDU) }}>
+                    <X className="h-4 w-4 mr-1" />Cancel
+                  </Button>
+                  <Button type="button" size="sm" disabled={!addEduForm.institution.trim()} onClick={() => { setPendingEdu((p) => [...p, { ...addEduForm, localId: `edu-${Date.now()}` }]); setAddEduForm(BLANK_EDU); setAddingEdu(false) }}>
+                    <Check className="h-4 w-4 mr-1" />Add
+                  </Button>
+                </div>
+              </div>
+            )}
+            {pendingEdu.length === 0 && !addingEdu && (
+              <p className="py-4 text-center text-sm text-muted-foreground">No education added yet.</p>
+            )}
+            {pendingEdu.map((entry) => (
+              <div key={entry.localId} className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/10 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{entry.institution}</p>
+                  {(entry.degree || entry.field_of_study) && (
+                    <p className="text-sm text-muted-foreground truncate">{[entry.degree, entry.field_of_study].filter(Boolean).join(', ')}</p>
+                  )}
+                  {(entry.start_year || entry.end_year || entry.is_ongoing) && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{entry.start_year ?? '?'} – {entry.is_ongoing ? 'Present' : (entry.end_year ?? '?')}</p>
+                  )}
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => setPendingEdu((p) => p.filter((e) => e.localId !== entry.localId))}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recruitment Details */}
       <Card className="border-border">
@@ -393,8 +769,8 @@ export function CandidateForm({
         </CardContent>
       </Card>
 
-      {/* Documents — only on create */}
-      {!isEditing && (
+      {/* Documents — only on create, and only in manual mode (cv mode auto-queues the parsed file) */}
+      {!isEditing && entryMode !== 'cv' && (
         <Card className="border-border">
           <CardHeader>
             <CardTitle>Documents</CardTitle>

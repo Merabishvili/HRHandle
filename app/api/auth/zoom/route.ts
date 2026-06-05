@@ -7,7 +7,7 @@ import { env } from '@/lib/env'
 export async function GET() {
   if (!env.ZOOM_CLIENT_ID || !env.ZOOM_CLIENT_SECRET) {
     return NextResponse.redirect(
-      new URL('/settings?zoom=not_configured', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000')
+      new URL('/settings/integrations?zoom=not_configured', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000')
     )
   }
 
@@ -20,9 +20,12 @@ export async function GET() {
     )
   }
 
-  const state = Buffer.from(user.id).toString('base64url')
+  const state = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url')
   const cookieStore = await cookies()
-  cookieStore.set('zoom_oauth_state', state, { httpOnly: true, secure: true, maxAge: 600, path: '/' })
+  // sameSite=lax (not strict) — see app/api/auth/google/route.ts for the
+  // shared rationale: strict cookies aren't sent on the cross-site navigation
+  // that happens when the provider redirects the user back to our callback.
+  cookieStore.set('zoom_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600, path: '/' })
 
   return NextResponse.redirect(getZoomOAuthUrl(state))
 }

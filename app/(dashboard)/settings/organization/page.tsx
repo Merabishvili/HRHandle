@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { OrganizationForm } from '@/components/settings/organization-form'
+import { DangerZone } from '@/components/settings/danger-zone'
 
 export default async function OrganizationSettingsPage() {
   const supabase = await createClient()
@@ -19,14 +20,14 @@ export default async function OrganizationSettingsPage() {
 
   const { data: organization } = await supabase
     .from('organizations')
-    .select('id, name, slug, logo_url, is_active, created_at, updated_at')
+    .select('id, name, slug, public_page_slug, logo_url, is_active, created_at, updated_at')
     .eq('id', profile.organization_id)
     .single()
 
   if (!organization) redirect('/settings/profile')
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl space-y-6">
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Organization</CardTitle>
@@ -36,6 +37,8 @@ export default async function OrganizationSettingsPage() {
           <OrganizationForm organization={organization} />
         </CardContent>
       </Card>
+
+      <DangerZone organizationName={organization.name} />
     </div>
   )
 }

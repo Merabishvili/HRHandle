@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { GoogleCalendarConnect } from '@/components/settings/google-calendar-connect'
 import { ZoomConnect } from '@/components/settings/zoom-connect'
 import { MicrosoftConnect } from '@/components/settings/microsoft-connect'
+import { LinkedInConnect } from '@/components/settings/linkedin-connect'
+import { getLinkedInIntegration } from '@/lib/actions/integrations'
 
 export default async function IntegrationsSettingsPage() {
   const supabase = await createClient()
@@ -18,6 +20,8 @@ export default async function IntegrationsSettingsPage() {
     .single()
 
   if (!profile) redirect('/dashboard')
+
+  const linkedInIntegration = await getLinkedInIntegration()
 
   return (
     <div className="max-w-2xl">
@@ -39,6 +43,11 @@ export default async function IntegrationsSettingsPage() {
             <div className="border-t border-border pt-6">
               <Suspense fallback={null}>
                 <MicrosoftConnect isConnected={!!profile.microsoft_refresh_token} />
+              </Suspense>
+            </div>
+            <div className="border-t border-border pt-6">
+              <Suspense fallback={null}>
+                <LinkedInConnect integration={linkedInIntegration} />
               </Suspense>
             </div>
           </div>

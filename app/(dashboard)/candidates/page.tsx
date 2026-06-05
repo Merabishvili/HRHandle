@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
+import { getCandidateStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Users, Mail, Phone, MoreHorizontal } from 'lucide-react'
+import { Plus, Users, Mail, Phone, MoreHorizontal, Download } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { CandidateStatusActions } from '@/components/candidates/candidate-status-actions'
 import { CandidatesToolbar } from '@/components/candidates/candidates-toolbar'
+import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
 import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import {
   DEFAULT_CANDIDATE_COLUMNS,
@@ -52,12 +53,7 @@ interface CandidateRow {
   updated_at: string
 }
 
-interface CandidateStatusOption {
-  id: string
-  name: string
-  code: 'active' | 'hired' | 'archived'
-  sort_order: number
-}
+import type { CandidateStatusOption } from '@/lib/types/database'
 
 interface ApplicationRow {
   id: string
@@ -119,12 +115,7 @@ export default async function CandidatesPage({
     ? colPrefs.candidates
     : DEFAULT_CANDIDATE_COLUMNS
 
-  const { data: candidateStatusesRaw } = await supabase
-    .from('candidate_statuses')
-    .select('id, name, code, sort_order')
-    .order('sort_order', { ascending: true })
-
-  const candidateStatuses = (candidateStatusesRaw || []) as CandidateStatusOption[]
+  const candidateStatuses = (await getCandidateStatuses()) as CandidateStatusOption[]
   const statusMap = new Map(candidateStatuses.map((s) => [s.id, s]))
 
   // Resolve vacancy filter
@@ -150,57 +141,50 @@ export default async function CandidatesPage({
     filterVacancyTitle = vacancy?.title || null
   }
 
+  // candidate_statuses is selected so PostgREST can `.order('candidate_statuses(sort_order)')`
+  // when sort === 'status'. The actual sort_order value is not used by the row
+  // type below; it's only there for the DB-side sort path (F-010).
   const FIELDS = `
     id, first_name, last_name, email, phone, current_company,
     current_position, years_of_experience, source, general_status_id,
-    created_at, updated_at
+    created_at, updated_at,
+    candidate_statuses (sort_order)
   `
 
-  let baseQuery = supabase
-    .from('candidates')
-    .select(FIELDS, { count: 'exact' })
-    .eq('organization_id', organizationId)
-    .is('deleted_at', null)
+  // If a vacancy filter is applied but no candidates have applied to it, skip
+  // the candidates query entirely instead of running a doomed query with a
+  // fake UUID. (BL-001)
+  const forceEmpty =
+    !!vacancyFilter && (!candidateIdsForFilter || candidateIdsForFilter.length === 0)
 
-  // Search filter
-  if (search.trim()) {
-    baseQuery = baseQuery.or(
-      `first_name.ilike.%${search.trim()}%,last_name.ilike.%${search.trim()}%`
-    )
-  }
-
-  // Status filter
-  if (statusFilter) {
-    baseQuery = baseQuery.eq('general_status_id', statusFilter)
-  }
-
-  // Vacancy filter
-  if (vacancyFilter) {
-    if (!candidateIdsForFilter || candidateIdsForFilter.length === 0) {
-      baseQuery = baseQuery.in('id', ['00000000-0000-0000-0000-000000000000'])
-    } else {
-      baseQuery = baseQuery.in('id', candidateIdsForFilter)
-    }
-  }
-
-  // Status sort: fetch all then sort in-memory (status is in a related table)
   let candidates: CandidateRow[]
   let totalCount: number | null
 
-  if (sort === 'status') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: allRaw, count } = await (baseQuery as any).order('created_at', { ascending: false })
-    totalCount = count
-    const statusSortOrder = new Map(candidateStatuses.map((s) => [s.id, s.sort_order]))
-    const sorted = ((allRaw || []) as CandidateRow[]).sort((a, b) => {
-      const aOrder = a.general_status_id ? (statusSortOrder.get(a.general_status_id) ?? 999) : 999
-      const bOrder = b.general_status_id ? (statusSortOrder.get(b.general_status_id) ?? 999) : 999
-      return aOrder - bOrder
-    })
-    candidates = sorted.slice(from, to + 1)
+  if (forceEmpty) {
+    candidates = []
+    totalCount = 0
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let sortedQuery: any = baseQuery
+    let baseQuery = supabase
+      .from('candidates')
+      .select(FIELDS, { count: 'exact' })
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null)
+
+    if (search.trim()) {
+      baseQuery = baseQuery.or(
+        `first_name.ilike.%${search.trim()}%,last_name.ilike.%${search.trim()}%`
+      )
+    }
+
+    if (statusFilter) {
+      baseQuery = baseQuery.eq('general_status_id', statusFilter)
+    }
+
+    if (vacancyFilter && candidateIdsForFilter && candidateIdsForFilter.length > 0) {
+      baseQuery = baseQuery.in('id', candidateIdsForFilter)
+    }
+
+    let sortedQuery = baseQuery.order('created_at', { ascending: false })
     switch (sort) {
       case 'created_asc':
         sortedQuery = baseQuery.order('created_at', { ascending: true })
@@ -211,8 +195,13 @@ export default async function CandidatesPage({
       case 'experience_asc':
         sortedQuery = baseQuery.order('years_of_experience', { ascending: true, nullsFirst: false })
         break
-      default:
-        sortedQuery = baseQuery.order('created_at', { ascending: false })
+      case 'status':
+        // F-010: order by the related candidate_statuses.sort_order so the
+        // DB does the paging instead of pulling every row into memory.
+        sortedQuery = baseQuery
+          .order('candidate_statuses(sort_order)', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: false })
+        break
     }
     const result = await sortedQuery.range(from, to)
     candidates = (result.data || []) as CandidateRow[]
@@ -228,6 +217,7 @@ export default async function CandidatesPage({
     .select('id, title')
     .eq('organization_id', organizationId)
     .is('archived_at', null)
+    .is('deleted_at', null)
 
   const vacancyOptions = (vacancyOptionsRaw || []) as VacancyOption[]
   const vacancyMap = new Map(vacancyOptions.map((v) => [v.id, v]))
@@ -282,6 +272,12 @@ export default async function CandidatesPage({
               <Link href="/candidates">Clear filter</Link>
             </Button>
           )}
+          <Button variant="outline" asChild>
+            <a href="/api/export/candidates" download>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </a>
+          </Button>
           <Button asChild>
             <Link href={vacancyFilter ? `/candidates/new?vacancy=${vacancyFilter}` : '/candidates/new'}>
               <Plus className="mr-2 h-4 w-4" />
@@ -296,22 +292,27 @@ export default async function CandidatesPage({
         initialSort={sort}
         initialStatus={statusFilter || ''}
         selectedColumns={activeColumns}
-        statusOptions={candidateStatuses}
       />
 
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>All Candidates</CardTitle>
-          <CardDescription>
-            {totalCount ?? 0} total candidates
-            {search && ` · filtered by "${search}"`}
-            {totalPages > 1 && ` · page ${page} of ${totalPages}`}
-          </CardDescription>
-        </CardHeader>
+      <div className="flex items-center justify-between gap-4">
+        <FilterPillTabs
+          tabs={[
+            { value: 'all', label: 'All' },
+            ...candidateStatuses.map((s) => ({ value: s.id, label: s.name })),
+          ]}
+          paramKey="status"
+          activeValue={statusFilter || ''}
+        />
+        <p className="text-sm text-muted-foreground shrink-0">
+          {totalCount ?? 0} {(totalCount ?? 0) === 1 ? 'candidate' : 'candidates'}
+          {search && ` · "${search}"`}
+          {totalPages > 1 && ` · page ${page} of ${totalPages}`}
+        </p>
+      </div>
 
-        <CardContent>
-          {candidates.length > 0 ? (
-            <div className="overflow-x-auto">
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        {candidates.length > 0 ? (
+          <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -529,8 +530,7 @@ export default async function CandidatesPage({
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   )
 }
