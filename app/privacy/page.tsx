@@ -202,6 +202,16 @@ export default function PrivacyPage() {
                 displayed to the recruiter. The summary is not saved to the candidate record
                 unless the recruiter chooses to save it as a note.
               </li>
+              <li>
+                <strong>Job-description suggestions</strong> — when a recruiter clicks
+                a &quot;Generate&quot; button while creating or editing a vacancy, the AI
+                suggests one or more sections (About the job, Responsibilities,
+                Requirements) based on the recruiter-provided role data (title, department,
+                location, employment type, sector, and any optional context the recruiter
+                typed). No candidate data is sent to the AI for this feature. The suggestions
+                are not added to the vacancy unless the recruiter explicitly clicks
+                &quot;Apply all to form&quot; or copies a section manually.
+              </li>
             </ul>
             <p className="mt-3">
               The AI output is informational only. No AI feature in HRHandle makes any automated

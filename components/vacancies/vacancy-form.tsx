@@ -21,6 +21,8 @@ import { Switch } from '@/components/ui/switch'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Loader2 } from 'lucide-react'
 import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
+import { AiJdSuggest } from '@/components/vacancies/ai-jd-suggest'
+import type { JdSection } from '@/lib/ai/jd-generator'
 import type {
   Vacancy,
   VacancyFormData,
@@ -431,6 +433,41 @@ export function VacancyForm({
         </CardHeader>
 
         <CardContent className="space-y-4">
+          <AiJdSuggest
+            getFormSnapshot={() => ({
+              title: formData.title,
+              department: formData.department || null,
+              location: formData.location || null,
+              employment_type: formData.employment_type ?? null,
+              sector_name:
+                sectors.find((s) => s.id === formData.sector_id)?.name ?? null,
+            })}
+            getExistingFieldText={(section: JdSection) =>
+              section === 'description'
+                ? formData.description
+                : section === 'responsibilities'
+                  ? (formData.responsibilities ?? '')
+                  : (formData.requirements ?? '')
+            }
+            onApplyAll={(generated) => {
+              setFormData((prev) => ({
+                ...prev,
+                description:
+                  generated.description !== undefined
+                    ? generated.description
+                    : prev.description,
+                responsibilities:
+                  generated.responsibilities !== undefined
+                    ? generated.responsibilities
+                    : prev.responsibilities,
+                requirements:
+                  generated.requirements !== undefined
+                    ? generated.requirements
+                    : prev.requirements,
+              }))
+            }}
+          />
+
           <div className="space-y-2">
             <Label htmlFor="description">About the Job *</Label>
             <Textarea

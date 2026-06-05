@@ -63,10 +63,10 @@ If the AI cannot help (e.g. data too thin, model timeout, rate limit hit), the U
 |---|---|---|---|---|---|
 | **CV parsing** | Live | `POST /api/parse-cv` | Public apply form (`/apply/[token]`) — runs on file upload | Google Gemini | 30 / hour / IP |
 | **Candidate summary** | Live | `POST /api/ai/candidate-summary` | Candidate detail page, top of left column — explicit "Generate" button | Google Gemini | 100 / hour / org |
+| **JD generator** | Live | `POST /api/ai/jd-generator` | Vacancy create/edit form, inside the Vacancy Details card — collapsible AI assist panel with per-section Generate, per-section Copy, and an explicit "Apply all to form" button (confirms before overwriting existing text) | Google Gemini | 100 / hour / org |
 
 ### Planned features (not yet shipped)
 
-- **Job-description generator** — vacancy form, optional "Suggest with AI" button. Recruiter copies relevant sentences manually.
 - **Bias / inclusive-language check** — vacancy form, "Check inclusive language" button.
 - **Email drafting** — candidate detail page, "Suggest email" button for rejection / interview / offer.
 - **Interview question suggestions** — vacancy or interview page.
@@ -111,3 +111,4 @@ For higher-risk features (AI screening), a more formal risk assessment + bias-mo
 | Date | Change | Reviewer |
 |---|---|---|
 | 2026-06-05 | Initial creation. CV parsing + candidate summary live. Six design principles documented. EU AI Act mapping table added. | Aleksandre Merabishvili |
+| 2026-06-05 | JD generator added (G-010). Per-section Generate buttons, per-section Copy, and an explicit "Apply all to form" action that confirms before overwriting any non-empty form field. No candidate data sent to the AI for this feature. | Aleksandre Merabishvili |
