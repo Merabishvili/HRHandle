@@ -179,24 +179,45 @@ export default function PrivacyPage() {
               and to maintain appropriate security measures.
             </p>
 
-            <h3 className="mb-2 mt-4 font-medium">5.1 AI features (CV parsing)</h3>
+            <h3 className="mb-2 mt-4 font-medium">5.1 AI-assisted features</h3>
             <p>
-              When you or a candidate uploads a CV (PDF or Word document), the file is sent to
-              Google&apos;s Gemini API to extract structured fields — name, contact details, work
-              experience, and education — so they can be pre-filled into the candidate record.
-              This is the only purpose for which CVs are sent to Google.
+              HRHandle includes a small number of AI-assisted features that send candidate or
+              vacancy data to Google&apos;s Gemini API to help the recruiter — never to replace
+              their judgement. Each feature is opt-in per request: nothing is generated
+              automatically, and the recruiter must explicitly click a button to invoke it.
             </p>
             <p className="mt-3">
-              The extraction is informational only. It does not make any automated decision
-              about a candidate. Every hiring decision (advancing, rejecting, hiring) is taken
-              by a human recruiter on your team. Article 22 GDPR (automated decision-making with
-              legal or similarly significant effect) therefore does not apply to this feature.
+              Current AI-assisted features:
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>
+                <strong>CV parsing</strong> — when a CV (PDF or Word document) is uploaded, the
+                file is sent to Gemini to extract structured fields (name, contact details, work
+                experience, education) so they can be pre-filled into the application form.
+              </li>
+              <li>
+                <strong>Candidate summary</strong> — when a recruiter clicks the
+                &quot;Generate summary&quot; button on a candidate record, a short factual
+                summary of the candidate&apos;s public/professional background is generated and
+                displayed to the recruiter. The summary is not saved to the candidate record
+                unless the recruiter chooses to save it as a note.
+              </li>
+            </ul>
+            <p className="mt-3">
+              The AI output is informational only. No AI feature in HRHandle makes any automated
+              decision about a candidate — no automatic ranking, no automatic rejection, no
+              automatic advancement. Every hiring decision (advancing, rejecting, hiring) is
+              taken by a human recruiter on your team. Article 22 GDPR (automated decision-making
+              with legal or similarly significant effect) therefore does not apply.
             </p>
             <p className="mt-3">
-              We use Google&apos;s paid Gemini API, under terms which prohibit Google from using
-              customer prompt content to train their models. If the extraction fails or is
-              unavailable, the application still proceeds and the recruiter (or candidate) can
-              fill in the fields manually.
+              We record an internal log entry each time an AI feature is invoked (recruiter,
+              candidate, feature name, timestamp) for traceability under the EU AI Act&apos;s
+              high-risk-AI logging requirements. We do not log the AI output itself.
+            </p>
+            <p className="mt-3">
+              If an AI feature is unavailable or fails for any reason, the workflow proceeds
+              normally and the recruiter completes the task manually.
             </p>
           </section>
 

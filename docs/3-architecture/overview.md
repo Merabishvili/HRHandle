@@ -4,6 +4,7 @@ _Last updated: 2026-05-08_
 
 ## Changelog
 
+- 🆕 AI-assisted hiring features framework (`lib/ai/`). First feature: candidate summary (`/api/ai/candidate-summary` + `<AiSummaryPanel>`). Six design principles in `docs/9-compliance/ai-features.md` (advisory-only, no auto-fill, no auto-decision, every call audit-logged). Tracked as G-009. Existing CV parsing brought under the same framework.
 - 🆕 OAuth sign-up now routes first-time Google/Microsoft users through `/onboarding/company` to collect their name + company name (dashboard layout intercepts when `user_metadata.company_name` is missing). Email sign-up unchanged.
 - 🆕 PostHog product analytics added (client-side provider in `app/providers.tsx`, EU cloud, production-only). CSP allow-lists PostHog EU hosts.
 - 🆕 CV-parsing service (Google Generative AI / Gemini) introduced as a new external dependency for `/api/parse-cv`
@@ -137,6 +138,7 @@ components/
   vacancies/            # All vacancy-related UI
 lib/
   actions/              # Server actions per domain (candidates, vacancies, etc.)
+  ai/                   # AI-assisted features (Gemini) — advisory-only, button-triggered
   cache/                # Next.js unstable_cache wrappers for lookup tables
   google/               # Google Calendar + OAuth utilities
   microsoft/            # Microsoft Graph + OAuth utilities

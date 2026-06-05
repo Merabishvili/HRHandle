@@ -143,19 +143,23 @@ The per-controller list (Art. 30(2)(a) requires naming each controller HRHandle 
 | Transfer mechanism | SCCs (all sub-processors). |
 | Security (Art. 32) | Turnstile invisible challenge on the form ([S-006 fix](../issues-found.md)); per-IP + per-vacancy rate limits; admin-client usage gated behind token verification ([S-010 rationale](../issues-found.md)). |
 
-## P-3 — Automated CV parsing via Google Gemini
+## P-3 — AI-assisted features via Google Gemini
 
-> ⚠️ **Open compliance issue [G-001](../issues-found.md)**: HRHandle's Gemini API key is currently on the **unpaid tier**. Google's terms permit use of submitted CV content to improve their models, and explicitly forbid sending personal data on that tier. Privacy Policy §5.1 currently overstates the protection in place. This activity must be reviewed (enable billing on Gemini, or gate CV parsing) before any real EU candidate traffic.
+> ⚠️ **Open compliance issue [G-001](../issues-found.md)**: HRHandle's Gemini API key is currently on the **unpaid tier**. Google's terms permit use of submitted content to improve their models, and explicitly forbid sending personal data on that tier. Privacy Policy §5.1 currently overstates the protection in place. This activity must be reviewed (enable billing on Gemini, or gate AI features) before any real EU candidate traffic.
+
+> 🎯 **Design principle:** every AI feature in HRHandle is **advisory only and explicitly triggered**. No auto-running, no auto-fill of stored fields, no automated decisions. See [`docs/9-compliance/ai-features.md`](./ai-features.md) for the full inventory, prompt-update policy, and EU AI Act mapping.
 
 | Field | Value |
 |---|---|
-| Categories of processing | Uploading a candidate's CV file (PDF or Word) to Google's Gemini API for automated extraction of structured fields (name, contact details, work experience, education), in order to pre-fill the application form. No automated hiring decision is taken. Article 22 GDPR does not apply. |
-| Data subject categories | Candidates who choose to upload a CV. |
-| Personal data categories | The CV file contents (which may include — depending on the candidate — name, contact, education, work history, skills, salary expectations, photo, and possibly Art. 9 special categories such as health, religion, trade-union membership, sexual orientation if the candidate volunteered them in free text). |
+| Categories of processing | Sending candidate or vacancy data to Google's Gemini API on explicit recruiter request, to generate informational output (CV field extraction, professional summary, etc.) that the recruiter then reviews. No automated hiring decision is taken. Article 22 GDPR does not apply. |
+| Current features | **CV parsing** (file → structured fields, via `/api/parse-cv`); **candidate summary** (button-triggered 2-3 sentence neutral summary, via `/api/ai/candidate-summary`). Planned: JD generator, bias check, email drafting, interview question suggestions. |
+| Data subject categories | Candidates whose CV is uploaded; candidates whose summary is requested by a recruiter. |
+| Personal data categories | The candidate fields explicitly chosen for each feature. For CV parsing: full file contents (may include Art. 9 special categories if the candidate volunteered them). For candidate summary: name, current role/company, location, languages, work-history entries, education entries — **email, phone, LinkedIn URL, date of birth are NOT sent**. |
 | Sub-processors | Google Generative AI (Gemini API). |
-| Retention | Google's terms-driven retention: paid-tier API retains briefly for abuse detection; **unpaid-tier currently in use may include retention for product improvement — see G-001**. |
+| Retention | Google's terms-driven retention: paid-tier API retains prompts/responses briefly for abuse detection only; **unpaid-tier currently in use may include retention for product improvement — see G-001**. AI output content is not persisted by HRHandle unless the recruiter explicitly chooses to (e.g. "Save as note"). |
+| Internal logging | Every AI feature invocation is logged in `activity_log` with `action: 'ai_assist'` and feature metadata, for EU AI Act traceability. The AI output content itself is not logged. |
 | Transfer mechanism | SCCs with Google. The EU/UK/Switzerland safe-harbour clause in Google's Gemini API terms does not apply to a Georgian-registered controller. |
-| Security (Art. 32) | API key kept server-side; no exposure to the browser; per-IP rate limit on `/api/parse-cv` ([S-005 accepted](../issues-found.md)). |
+| Security (Art. 32) | API key kept server-side; no exposure to the browser; per-IP rate limit on `/api/parse-cv` (30/hr); per-org rate limit on `/api/ai/candidate-summary` (100/hr); authenticated endpoints (except the public apply-form CV parse) require an active session and a candidate scoped to the user's organization. |
 
 ## P-4 — Interview scheduling and integration calendar events
 

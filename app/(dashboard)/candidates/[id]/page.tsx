@@ -16,6 +16,7 @@ import { CandidateApplicationsList } from '@/components/candidates/candidate-app
 import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
 import { ActivityFeed } from '@/components/candidates/activity-feed'
+import { AiSummaryPanel } from '@/components/candidates/ai-summary-panel'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { format } from 'date-fns'
@@ -391,6 +392,9 @@ export default async function CandidateDetailPage({
 
         {/* ── LEFT COLUMN ──────────────────────────────────────────────────── */}
         <div className="space-y-4">
+
+          {/* 0. AI summary (assistant, explicit-click only) */}
+          <AiSummaryPanel candidateId={id} />
 
           {/* 1. Applied Vacancies */}
           <div className="rounded-xl border border-border bg-card p-5">
