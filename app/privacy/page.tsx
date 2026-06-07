@@ -223,6 +223,22 @@ export default function PrivacyPage() {
                 advisory; the recruiter chooses whether to save them to the vacancy
                 (overwriting the previously-saved set) or copy individual questions.
               </li>
+              <li>
+                <strong>Interview-note structuring</strong> — when a recruiter pastes their
+                free-text interview notes and clicks &quot;Extract structure&quot; on the
+                candidate detail page, the AI returns a structured view (summary,
+                strengths, concerns, skills demonstrated, follow-ups). The notes the
+                recruiter pasted are sent to Google&apos;s Gemini API along with the
+                candidate&apos;s name and the title of the role they are being considered
+                for. The AI is explicitly instructed not to make any hiring
+                recommendation, not to include the candidate&apos;s salary expectations
+                in the structured output, and not to infer protected characteristics
+                (age, gender, race, religion, family or marital status, disability, etc.)
+                even if the notes hint at them. The structured output is not saved
+                anywhere unless the recruiter clicks &quot;Save as note&quot;, which
+                creates a single candidate note prefixed with &quot;AI interview notes
+                (not reviewed by recruiter)&quot; so it is clearly traceable.
+              </li>
             </ul>
             <p className="mt-3">
               The AI output is informational only. No AI feature in HRHandle makes any automated

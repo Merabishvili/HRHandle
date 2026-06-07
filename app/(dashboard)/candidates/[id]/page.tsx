@@ -17,6 +17,7 @@ import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
 import { ActivityFeed } from '@/components/candidates/activity-feed'
 import { AiSummaryPanel } from '@/components/candidates/ai-summary-panel'
+import { AiNotesExtractor } from '@/components/candidates/ai-notes-extractor'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { format } from 'date-fns'
@@ -463,6 +464,9 @@ export default async function CandidateDetailPage({
 
         {/* ── RIGHT RAIL (sticky) ───────────────────────────────────────────── */}
         <div className="sticky top-6 space-y-4">
+
+          {/* AI: structure interview notes (collapsible, explicit-click only) */}
+          <AiNotesExtractor candidateId={id} />
 
           {/* Contact */}
           <ContactCard
