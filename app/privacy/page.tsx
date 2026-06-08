@@ -239,6 +239,18 @@ export default function PrivacyPage() {
                 creates a single candidate note prefixed with &quot;AI interview notes
                 (not reviewed by recruiter)&quot; so it is clearly traceable.
               </li>
+              <li>
+                <strong>Inclusive-language check</strong> — when a recruiter clicks
+                &quot;Run check&quot; on a vacancy form, the AI scans the vacancy&apos;s
+                description, responsibilities, and requirements fields for phrases that
+                may deter underrepresented candidates (gender-coded, age-coded,
+                culture-coded, pronoun bias, potentially discriminatory phrasing,
+                vague cultural-fit requirements). It returns a list of flagged
+                passages with the reason and a suggested neutral replacement. Only the
+                vacancy text is sent to the AI for this feature; no candidate data is
+                involved. The form is never modified by the AI; the recruiter chooses
+                whether to apply any of the suggestions.
+              </li>
             </ul>
             <p className="mt-3">
               The AI output is informational only. No AI feature in HRHandle makes any automated

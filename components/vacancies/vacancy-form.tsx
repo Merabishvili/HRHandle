@@ -23,6 +23,7 @@ import { Loader2 } from 'lucide-react'
 import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
 import { AiJdSuggest } from '@/components/vacancies/ai-jd-suggest'
 import type { JdSection } from '@/lib/ai/jd-generator'
+import { AiBiasCheck } from '@/components/vacancies/ai-bias-check'
 import type {
   Vacancy,
   VacancyFormData,
@@ -466,6 +467,14 @@ export function VacancyForm({
                     : prev.requirements,
               }))
             }}
+          />
+
+          <AiBiasCheck
+            getFormSnapshot={() => ({
+              description: formData.description,
+              responsibilities: formData.responsibilities ?? '',
+              requirements: formData.requirements ?? '',
+            })}
           />
 
           <div className="space-y-2">
