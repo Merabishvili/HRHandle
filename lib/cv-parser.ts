@@ -4,7 +4,9 @@ import { ParsedCVSchema, type ParsedCVInput } from '@/lib/validations/candidate-
 const PARSE_TIMEOUT_MS = 25_000
 const MIN_TEXT_LENGTH = 100
 const RETRY_DELAY_MS = 2_000
-const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash']
+// gemini-2.0-flash was retired by Google in mid-2026; replaced with
+// gemini-2.5-flash-lite (same family, stable, cheaper than 2.5-flash).
+const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite']
 
 const CV_PROMPT = `You are a CV/resume parser. Extract structured information from the CV text below.
 

@@ -13,7 +13,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const IQ_TIMEOUT_MS = 25_000
 const RETRY_DELAY_MS = 1_500
-const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash'] as const
+// gemini-2.0-flash was retired by Google in mid-2026; replaced with
+// gemini-2.5-flash-lite (same family, stable, cheaper than 2.5-flash).
+const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'] as const
 
 export type InterviewQuestionCategory =
   | 'behavioural'

@@ -121,7 +121,7 @@ describe('summarizeCandidate', () => {
     expect(generateContentMock).toHaveBeenCalledTimes(2)
     // Confirm both models were tried in order.
     expect(getGenerativeModelMock).toHaveBeenNthCalledWith(1, { model: 'gemini-2.5-flash' })
-    expect(getGenerativeModelMock).toHaveBeenNthCalledWith(2, { model: 'gemini-2.0-flash' })
+    expect(getGenerativeModelMock).toHaveBeenNthCalledWith(2, { model: 'gemini-2.5-flash-lite' })
   })
 
   it('returns failed when both models throw', async () => {
