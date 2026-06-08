@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import * as Sentry from '@sentry/nextjs'
 
 // Fifth feature in lib/ai/. Same Gemini, same fallback, same fail-soft pattern
 // as the others. This one is the lowest-risk-data feature in the framework:
@@ -226,6 +227,9 @@ async function callGeminiWithTimeout(
     return result.text
   } catch (err) {
     console.error('[ai/bias-check] gemini call failed:', err)
+    Sentry.captureException(err, {
+      tags: { feature: 'bias_check', model: modelName },
+    })
     return { error: 'failed' }
   }
 }

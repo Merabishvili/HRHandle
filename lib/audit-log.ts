@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export interface AuditLogEntry {
@@ -36,8 +37,22 @@ export async function writeAuditLog(entry: AuditLogEntry): Promise<void> {
         entity: entry.entityType,
         action: entry.action,
       })
+      Sentry.captureException(new Error(`audit-log insert failed: ${error.message}`), {
+        tags: {
+          feature: 'audit_log',
+          entity_type: entry.entityType,
+          action: entry.action,
+        },
+      })
     }
   } catch (err) {
     console.error('[audit-log] unexpected error:', err)
+    Sentry.captureException(err, {
+      tags: {
+        feature: 'audit_log',
+        entity_type: entry.entityType,
+        action: entry.action,
+      },
+    })
   }
 }

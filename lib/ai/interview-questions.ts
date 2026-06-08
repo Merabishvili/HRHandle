@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import * as Sentry from '@sentry/nextjs'
 
 // Third feature in lib/ai/. Same Gemini, same fallback, same fail-soft pattern
 // as candidate-summary and jd-generator. The only meaningful difference is the
@@ -189,6 +190,9 @@ async function callGeminiWithTimeout(
     return result.text
   } catch (err) {
     console.error('[ai/interview-questions] gemini call failed:', err)
+    Sentry.captureException(err, {
+      tags: { feature: 'interview_questions', model: modelName },
+    })
     return { error: 'failed' }
   }
 }

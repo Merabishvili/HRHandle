@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import * as Sentry from '@sentry/nextjs'
 
 // Mirrors the cv-parser.ts shape on purpose: same two-model fallback, same
 // timeout budget, same "fail soft" return type. When we add the next AI
@@ -144,6 +145,9 @@ async function callGeminiWithTimeout(
     return result.text
   } catch (err) {
     console.error('[ai/candidate-summary] gemini call failed:', err)
+    Sentry.captureException(err, {
+      tags: { feature: 'candidate_summary', model: modelName },
+    })
     return { error: 'failed' }
   }
 }

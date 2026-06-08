@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import * as Sentry from '@sentry/nextjs'
 import { ParsedCVSchema, type ParsedCVInput } from '@/lib/validations/candidate-background'
 
 const PARSE_TIMEOUT_MS = 25_000
@@ -170,12 +171,14 @@ export async function parseCV(text: string): Promise<CVParseResult> {
       if (err instanceof Error && err.message === 'timeout') {
         if (modelIdx < MODELS.length - 1) continue
         console.error('[cv-parser] Gemini timed out on all models')
+        Sentry.captureException(err, { tags: { feature: 'cv_parser', reason: 'timeout' } })
         return { success: false, reason: 'timeout' }
       }
       if (isRetryable(err) && modelIdx < MODELS.length - 1) {
         continue
       }
       console.error('[cv-parser] Gemini call threw:', err)
+      Sentry.captureException(err, { tags: { feature: 'cv_parser' } })
       return { success: false, reason: 'parse_failed' }
     }
   }

@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import * as Sentry from '@sentry/nextjs'
 
 // Mirrors candidate-summary.ts on purpose. Same Gemini API, same fallback,
 // same fail-soft return type. Per-feature file rather than a shared helper
@@ -128,6 +129,9 @@ async function callGeminiWithTimeout(
     return result.text
   } catch (err) {
     console.error('[ai/jd-generator] gemini call failed:', err)
+    Sentry.captureException(err, {
+      tags: { feature: 'jd_generator', model: modelName },
+    })
     return { error: 'failed' }
   }
 }

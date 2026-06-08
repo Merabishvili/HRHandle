@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import * as Sentry from '@sentry/nextjs'
 
 // Fourth feature in lib/ai/. Same Gemini, same fallback, same fail-soft return
 // shape as the others. Like candidate-summary (but unlike jd-generator and
@@ -146,6 +147,9 @@ async function callGeminiWithTimeout(
     return result.text
   } catch (err) {
     console.error('[ai/note-extractor] gemini call failed:', err)
+    Sentry.captureException(err, {
+      tags: { feature: 'note_extractor', model: modelName },
+    })
     return { error: 'failed' }
   }
 }
