@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { createCandidate, updateCandidate } from '@/lib/actions/candidates'
 import { uploadDocument } from '@/lib/actions/documents'
 import { createNote } from '@/lib/actions/notes'
@@ -141,10 +142,12 @@ export function CandidateForm({
     const ext = file.name.split('.').pop()?.toLowerCase()
     if (!['pdf', 'doc', 'docx'].includes(ext ?? '')) {
       setError('CV must be a PDF or Word document.')
+      toast.error('CV must be a PDF or Word document.')
       return
     }
     if (file.size > 10 * 1024 * 1024) {
       setError('CV file must be 10 MB or smaller.')
+      toast.error('CV file must be 10 MB or smaller.')
       return
     }
 
@@ -237,6 +240,7 @@ export function CandidateForm({
 
     if (!result.success) {
       setError(result.error)
+      toast.error(result.error)
       setIsLoading(false)
       submittingRef.current = false
       return
@@ -266,6 +270,7 @@ export function CandidateForm({
         const uploadResult = await uploadDocument(result.data.id, fd)
         if (!uploadResult.success) {
           setError(`Document upload failed: ${uploadResult.error}`)
+          toast.error(`Document upload failed: ${uploadResult.error}`)
           setIsLoading(false)
           submittingRef.current = false
           return

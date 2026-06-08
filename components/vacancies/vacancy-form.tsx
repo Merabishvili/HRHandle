@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { createVacancy, updateVacancy, deleteVacancy } from '@/lib/actions/vacancies'
 import { saveCustomFieldValues } from '@/lib/actions/custom-fields'
 import { Button } from '@/components/ui/button'
@@ -84,15 +85,30 @@ export function VacancyForm({
     show_on_public_page: vacancy?.show_on_public_page ?? false,
   })
 
-  const validateForm = (): string | null => {
-    if (!formData.title.trim()) return 'Job title is required.'
-    if (!formData.start_date) return 'Start date is required.'
-    if (!formData.description.trim()) return 'About the job is required.'
-    if (!formData.sector_id) return 'Sector is required.'
-    if (!formData.status_id) return 'Status is required.'
+  /**
+   * Validates the form. Returns the first error along with the DOM id of the
+   * field that triggered it, so the submit handler can scroll/focus the
+   * specific input instead of just dumping an error message at the top of a
+   * long form (which the user might never see). Field ids match the `id=`
+   * attributes on each input or wrapper.
+   */
+  const validateForm = (): { message: string; fieldId: string } | null => {
+    if (!formData.title.trim())
+      return { message: 'Job title is required.', fieldId: 'title' }
+    if (!formData.start_date)
+      return { message: 'Start date is required.', fieldId: 'field-start_date' }
+    if (!formData.description.trim())
+      return { message: 'About the job is required.', fieldId: 'description' }
+    if (!formData.sector_id)
+      return { message: 'Sector is required.', fieldId: 'sector_id' }
+    if (!formData.status_id)
+      return { message: 'Status is required.', fieldId: 'status_id' }
 
     if ((formData.openings_count || 0) < 1) {
-      return 'Openings count must be at least 1.'
+      return {
+        message: 'Openings count must be at least 1.',
+        fieldId: 'openings_count',
+      }
     }
 
     if (
@@ -100,7 +116,10 @@ export function VacancyForm({
       formData.salary_max != null &&
       formData.salary_max < formData.salary_min
     ) {
-      return 'Maximum salary must be greater than or equal to minimum salary.'
+      return {
+        message: 'Maximum salary must be greater than or equal to minimum salary.',
+        fieldId: 'salary_max',
+      }
     }
 
     if (
@@ -108,10 +127,41 @@ export function VacancyForm({
       formData.start_date &&
       new Date(formData.end_date) < new Date(formData.start_date)
     ) {
-      return 'End date cannot be earlier than start date.'
+      return {
+        message: 'End date cannot be earlier than start date.',
+        fieldId: 'field-end_date',
+      }
     }
 
     return null
+  }
+
+  /**
+   * On a validation failure: show a toast (visible regardless of scroll
+   * position), set the persistent error Alert at the top, and scroll the
+   * offending field into view + focus it so the user lands directly on
+   * the problem. For non-native-input fields (DatePicker), the wrapper
+   * div carries the id; for native inputs/SelectTriggers, the input
+   * itself carries it.
+   */
+  const reportValidationError = (validationError: {
+    message: string
+    fieldId: string
+  }) => {
+    setError(validationError.message)
+    toast.error(validationError.message)
+    if (typeof window === 'undefined') return
+    const el = document.getElementById(validationError.fieldId)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // Wait for the smooth scroll to settle before focusing, so the focus
+    // ring lands in the centred position rather than scrolling further.
+    setTimeout(() => {
+      const focusable = el.matches('input, textarea, button, select')
+        ? (el as HTMLElement)
+        : el.querySelector<HTMLElement>('input, textarea, button, select')
+      focusable?.focus({ preventScroll: true })
+    }, 350)
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -120,7 +170,7 @@ export function VacancyForm({
 
     const validationError = validateForm()
     if (validationError) {
-      setError(validationError)
+      reportValidationError(validationError)
       return
     }
 
@@ -151,6 +201,7 @@ export function VacancyForm({
       const result = await updateVacancy(vacancy.id, payload)
       if (!result.success) {
         setError(result.error)
+        toast.error(result.error)
         setIsLoading(false)
         return
       }
@@ -159,6 +210,7 @@ export function VacancyForm({
       const result = await createVacancy(payload)
       if (!result.success) {
         setError(result.error)
+        toast.error(result.error)
         setIsLoading(false)
         return
       }
@@ -343,7 +395,7 @@ export function VacancyForm({
 
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
+            <div id="field-start_date" className="space-y-2">
               <Label>Start Date *</Label>
               <DatePicker
                 value={formData.start_date || null}
@@ -355,7 +407,7 @@ export function VacancyForm({
               />
             </div>
 
-            <div className="space-y-2">
+            <div id="field-end_date" className="space-y-2">
               <Label>End Date</Label>
               <DatePicker
                 value={formData.end_date ?? null}
