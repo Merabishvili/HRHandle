@@ -433,3 +433,64 @@ export async function rejectApplication(input: {
   revalidatePath('/candidates', 'page')
   return { success: true, data: undefined }
 }
+
+/**
+ * Reject multiple applications in one batch — used by the bulk-action toolbar
+ * on a vacancy's Candidates tab. Same per-row behaviour as `rejectApplication`
+ * (status update, rejection_reason_id + rejection_template_id stamped on the
+ * row, candidate's general status synced, optional templated email sent), just
+ * iterated. Each application is processed independently, so a failure on one
+ * does not block the rest — the caller receives counts of {succeeded, failed}.
+ *
+ * Implementation note: applications are processed serially rather than in
+ * parallel, because the candidate_statuses join inside `rejectApplication`
+ * fans out a handful of DB reads per call. At typical batch sizes (5-30
+ * applications) the serial latency is fine and we keep the request pattern
+ * predictable. If batch sizes grow into the hundreds, this is the obvious
+ * place to switch to a chunked Promise.all.
+ */
+export async function rejectApplicationsBatch(input: {
+  applicationIds: string[]
+  statusId: string
+  rejectionReasonId: string | null
+  templateId: string | null
+  sendEmail: boolean
+}): Promise<
+  ActionResult<{ succeeded: number; failed: number; failures: { id: string; error: string }[] }>
+> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  if (input.applicationIds.length === 0) {
+    return { success: false, error: 'No applications selected' }
+  }
+
+  // De-duplicate the input — if the UI ever double-counts a selection, we
+  // shouldn't double-process the rejection.
+  const uniqueIds = Array.from(new Set(input.applicationIds))
+
+  let succeeded = 0
+  const failures: { id: string; error: string }[] = []
+
+  for (const applicationId of uniqueIds) {
+    const result = await rejectApplication({
+      applicationId,
+      statusId: input.statusId,
+      rejectionReasonId: input.rejectionReasonId,
+      templateId: input.templateId,
+      sendEmail: input.sendEmail,
+    })
+    if (result.success) {
+      succeeded++
+    } else {
+      failures.push({ id: applicationId, error: result.error })
+    }
+  }
+
+  // Each rejectApplication call already revalidates the relevant paths, so
+  // we don't add another revalidate here — that would just thrash the cache.
+  return {
+    success: true,
+    data: { succeeded, failed: failures.length, failures },
+  }
+}

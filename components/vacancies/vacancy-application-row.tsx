@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { Trash2, Loader2, ChevronRight, CheckCircle2, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
@@ -62,6 +63,17 @@ interface Props {
   questions: Question[]
   existingEvaluation: ExistingEvaluation | null
   onRemoved: (applicationId: string) => void
+  /**
+   * Bulk-action selection state, wired from the parent list. When `selectable`
+   * is true (the parent has rejection support configured), each row renders a
+   * checkbox at the start of the row. `selected` reflects the parent's state;
+   * `onSelectedChange` mutates it.
+   */
+  selectable?: boolean
+  selected?: boolean
+  onSelectedChange?: (selected: boolean) => void
+  /** If true the row is muted + the checkbox is hidden (already rejected). */
+  selectionDisabled?: boolean
 }
 
 function calcScore(
@@ -89,6 +101,10 @@ export function VacancyApplicationRow({
   vacancyId,
   questions,
   existingEvaluation,
+  selectable = false,
+  selected = false,
+  onSelectedChange,
+  selectionDisabled = false,
   onRemoved,
 }: Props) {
   const [statusId, setStatusId] = useState<string>(currentStatusId ?? '')
@@ -169,6 +185,19 @@ export function VacancyApplicationRow({
         <div className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-muted/50">
           {/* Expand toggle + candidate info */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
+            {selectable && !selectionDisabled && (
+              <Checkbox
+                checked={selected}
+                onCheckedChange={(v) => onSelectedChange?.(v === true)}
+                aria-label={`Select ${candidateName}`}
+                className="shrink-0"
+              />
+            )}
+            {selectable && selectionDisabled && (
+              // Reserve the same horizontal space so rejected rows align with
+              // selectable rows above/below.
+              <div className="w-4 shrink-0" />
+            )}
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
