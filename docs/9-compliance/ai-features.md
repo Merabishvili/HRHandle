@@ -1,11 +1,11 @@
 # AI Features — Design Principles & Inventory
 
-_Last updated: 2026-06-05_
+_Last updated: 2026-06-09_
 _Owner: Aleksandre Merabishvili (sole founder + DPO)_
 
 ## Document control
 
-- **Tracked as:** [G-009](../issues-found.md) (initial AI features). [G-001](../issues-found.md) (Gemini paid-tier prerequisite) was closed on 2026-06-09 when billing was enabled on the Gemini account.
+- **Tracked as:** [G-009](../issues-found.md) (initial AI features), [G-014](../issues-found.md) (assessment suggester), [G-015](../issues-found.md) (email drafter). [G-001](../issues-found.md) (Gemini paid-tier prerequisite) was closed on 2026-06-09 when billing was enabled on the Gemini account.
 - **Review cadence:** at every release that adds, modifies, or removes an AI feature; and at least quarterly
 - **Related docs:** [`docs/9-compliance/ropa.md`](./ropa.md) (Activity P-3) · [`app/privacy/page.tsx`](../../app/privacy/page.tsx) §5.1 · [`docs/issues-found.md`](../issues-found.md)
 
@@ -37,6 +37,8 @@ Each feature sends only the data necessary for its task. Specifically:
 
 - CV parsing sends the **file content** (unavoidable for the task).
 - Candidate summary sends **name, current role/company, location, languages, work-history entries, education entries**. It does **NOT** send email, phone, LinkedIn URL, or date of birth.
+- Email drafter sends **candidate first name, role title, sender first name, recruiter free-text context, and (in improve mode) the recruiter's draft**. It does **NOT** send the candidate's email, phone, LinkedIn URL, last name, date of birth, or any application/evaluation history.
+- Assessment suggester sends **vacancy text only** (title, description, responsibilities, requirements, sector, optional recruiter notes). No candidate data is sent.
 - Future features must justify in code comments why each field is needed.
 
 ### 4. Traceability
@@ -67,10 +69,11 @@ If the AI cannot help (e.g. data too thin, model timeout, rate limit hit), the U
 | **Interview questions** | Live | `POST /api/ai/interview-questions` | Vacancy detail page → "Interview questions" tab — single Generate button produces 4 categorised sections (behavioural / technical / situational / closing), per-question Copy + per-category Copy-all. Recruiter explicitly clicks "Save to vacancy" to persist (overwrites previous saved set with confirm). Saved questions stored as JSONB on `vacancies.interview_questions`. | Google Gemini | 100 / hour / org |
 | **Interview-note structuring** | Live | `POST /api/ai/note-extractor` | Candidate detail page → right sidebar, collapsible "Structure interview notes" panel — recruiter pastes raw notes (50-8000 chars), clicks Extract, gets summary + strengths + concerns + skills demonstrated + follow-ups. Per-section Copy + explicit "Save as note" (one note, prefixed "AI interview notes (not reviewed by recruiter)"). Output never auto-saved. | Google Gemini | 100 / hour / org |
 | **Inclusive-language check** | Live | `POST /api/ai/bias-check` | Vacancy create/edit form, inside the Vacancy Details card (collapsible panel below the JD generator) — single Run-check button scans description/responsibilities/requirements for biased phrasing and returns a list of findings (field, exact phrase, category, reason, suggested replacement). Per-finding Copy of the suggestion. Form is never modified. Server-side filter rejects findings whose phrase isn't an exact substring of the input — guards against model hallucination. | Google Gemini | 100 / hour / org |
+| **Assessment suggester** | Live | `POST /api/ai/assessment-suggester` | Vacancy detail page → Assessment tab — full-width AI panel above the Questionary + Evaluation Criteria cards. Single Generate button produces two lists: skill labels (scored 1–10) and open-ended prompts. Per-item Copy + per-item "Add" button that persists via the existing `addVacancyQuestion` server action (one row in `vacancy_questions`, type `score` or `text`). Already-added items show a "✓ Added" marker so the recruiter can't double-add by regenerating. No candidate data sent. | Google Gemini | 100 / hour / org |
+| **Email drafter** | Live | `POST /api/ai/email-drafter` | Candidate detail page → right sidebar, collapsible "AI email drafter" panel. Recruiter picks email type (rejection / interview invite / offer / follow-up / custom), mode (generate from scratch / improve my draft), and an optional role context. Output is a `{subject, body}` pair the recruiter copies into their email tool. Nothing is sent automatically; the panel does not have a "send" action. Improve mode requires a ≥20-char draft. Strict prompt rules forbid protected-class references, fabricated dates/salaries, and unauthorised outcome promises. Sends only candidate first name + role title + sender first name + recruiter context (no email/phone/LinkedIn/DOB). | Google Gemini | 100 / hour / org |
 
 ### Planned features (not yet shipped)
 
-- **Email drafting** — candidate detail page, "Suggest email" button for rejection / interview / offer.
 - **AI screening** *(later, with full EU AI Act prep)* — applicant list per vacancy, "AI screening" tab showing advisory fit indicators per candidate. Never changes candidate state automatically.
 
 ## Prompt-update policy
@@ -93,7 +96,7 @@ HRHandle's AI features fall under the EU AI Act's **high-risk** category (Annex 
 | Logging and traceability | `writeAuditLog` entry on every AI invocation (principle 4) |
 | Transparency to users | Privacy Policy §5.1; apply-form Article 13 notice (G-002) |
 | Human oversight | Principle 1 ("assistant only, never decider") — every AI output is reviewed by the recruiter before any action is taken |
-| Accuracy & robustness | Two-model fallback (Gemini 2.5 Flash → 2.0 Flash), timeout per call, "too thin" guard against fabrication |
+| Accuracy & robustness | Two-model fallback (Gemini 2.5 Flash → 2.5 Flash Lite), timeout per call, "too thin" guard against fabrication |
 | Post-market monitoring | Audit log analytics + recruiter feedback (planned: thumbs-up/down on AI output per feature) |
 
 For higher-risk features (AI screening), a more formal risk assessment + bias-monitoring framework will be required. Those features are deferred until the appropriate framework exists.
@@ -115,3 +118,5 @@ For higher-risk features (AI screening), a more formal risk assessment + bias-mo
 | 2026-06-05 | Interview questions added (G-011). Four categories (behavioural, technical, situational, closing). Strict no-protected-class / no-salary prompt guard. Per-question Copy + per-category Copy-all. "Save to vacancy" persists the set to a new `vacancies.interview_questions` JSONB column (migration 032). Per-question Delete on the saved view. No candidate data sent to the AI for this feature. | Aleksandre Merabishvili |
 | 2026-06-05 | Interview-note structuring added (G-012). Right-sidebar panel on candidate page. Sends recruiter-pasted notes + candidate name + role title to Gemini. Strict prompt rules: no protected-class inference, no hiring recommendation, no salary in output. Per-section Copy + explicit "Save as note" via existing `createNote` action. Audit log records feature + raw-notes length only; output content is not logged. | Aleksandre Merabishvili |
 | 2026-06-05 | Inclusive-language check added (G-013). Collapsible panel below the JD generator in the Vacancy Details card. Sends vacancy text only — no candidate data. Server-side filter enforces the "exact substring of the input" rule on every finding (guards against model hallucination) and rejects findings with invalid category values. Per-finding Copy of the suggestion. Audit log records feature + findings count only. | Aleksandre Merabishvili |
+| 2026-06-09 | Assessment suggester added (G-014). Full-width AI panel on the Assessment tab. Suggests skill labels (score-type, scored 1–10) and open-ended prompts (text-type). Sends vacancy text only — no candidate data. Per-item Add button persists via the existing `addVacancyQuestion` server action; recruiter chooses what to add. Already-added items are marked so regeneration cannot duplicate. Strict prompt rules forbid protected-class language, salary criteria, and coded language. Audit log records feature + skill/prompt counts only. | Aleksandre Merabishvili |
+| 2026-06-09 | Email drafter added (G-015). Collapsible right-sidebar panel on candidate detail page. Generate-from-scratch and improve-my-draft modes for rejection / interview invite / offer / follow-up / custom emails. Sends candidate **first name only**, role title (optional), sender first name, and the recruiter's free-text context (and draft in improve mode). Does NOT send email/phone/LinkedIn/DOB/last name. No send action — recruiter copies the result into their email tool. Strict prompt rules: never reference protected characteristics, never invent dates/salaries/products, use placeholders, never promise outcomes in follow-ups, never write a binding offer. Audit log records feature + email type + mode + draft-char count only. | Aleksandre Merabishvili |

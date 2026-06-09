@@ -18,6 +18,7 @@ import { EducationSection } from '@/components/candidates/education-section'
 import { ActivityFeed } from '@/components/candidates/activity-feed'
 import { AiSummaryPanel } from '@/components/candidates/ai-summary-panel'
 import { AiNotesExtractor } from '@/components/candidates/ai-notes-extractor'
+import { AiEmailDrafter } from '@/components/candidates/ai-email-drafter'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { format } from 'date-fns'
@@ -467,6 +468,17 @@ export default async function CandidateDetailPage({
 
           {/* AI: structure interview notes (collapsible, explicit-click only) */}
           <AiNotesExtractor candidateId={id} />
+
+          {/* AI: draft a candidate email (collapsible, explicit-click only) */}
+          <AiEmailDrafter
+            candidateId={id}
+            vacancyOptions={applications
+              .map((a) => {
+                const v = vacancyMap.get(a.vacancy_id)
+                return v ? { id: v.id, title: v.title } : null
+              })
+              .filter((v): v is { id: string; title: string } => v !== null)}
+          />
 
           {/* Contact */}
           <ContactCard
