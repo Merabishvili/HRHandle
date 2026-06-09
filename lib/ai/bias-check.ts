@@ -4,10 +4,6 @@ import * as Sentry from '@sentry/nextjs'
 // Fifth feature in lib/ai/. Same Gemini, same fallback, same fail-soft pattern
 // as the others. This one is the lowest-risk-data feature in the framework:
 // only vacancy text is sent (no candidate data, no recruiter PII).
-//
-// G-001 still applies (free-tier Gemini permits training on submitted content)
-// but vacancy text isn't personal data so the privacy risk is the lowest of
-// the framework — same posture as jd-generator.
 
 const BIAS_TIMEOUT_MS = 20_000
 const RETRY_DELAY_MS = 1_500

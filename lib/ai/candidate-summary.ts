@@ -5,15 +5,6 @@ import * as Sentry from '@sentry/nextjs'
 // timeout budget, same "fail soft" return type. When we add the next AI
 // feature, look for shared concerns before extracting a helper — premature
 // abstraction is worse than two similar files.
-//
-// Currently the Gemini API key may be on the UNPAID tier (see G-001 in
-// docs/issues-found.md). Google's terms permit them to use unpaid-tier
-// content to improve their models AND explicitly forbid sending personal
-// data to the unpaid services. Every CV / candidate field we send here is
-// personal data. The remediation (enable billing on the Gemini account, or
-// gate AI features on an env var) MUST be in place before any real EU
-// candidate traffic. The privacy policy claim about the paid tier is
-// already softened in G-001's tracking entry.
 
 const SUMMARY_TIMEOUT_MS = 20_000
 const RETRY_DELAY_MS = 1_500

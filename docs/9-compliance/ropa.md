@@ -145,7 +145,7 @@ The per-controller list (Art. 30(2)(a) requires naming each controller HRHandle 
 
 ## P-3 — AI-assisted features via Google Gemini
 
-> ⚠️ **Open compliance issue [G-001](../issues-found.md)**: HRHandle's Gemini API key is currently on the **unpaid tier**. Google's terms permit use of submitted content to improve their models, and explicitly forbid sending personal data on that tier. Privacy Policy §5.1 currently overstates the protection in place. This activity must be reviewed (enable billing on Gemini, or gate AI features) before any real EU candidate traffic.
+> ℹ️ **[G-001](../issues-found.md) closed 2026-06-09** — billing is enabled on the Gemini account. The same API key now authenticates under Google's paid-services terms, which prohibit Google from using submitted prompts or responses to improve their models. Privacy Policy §5.1 has been updated to reflect this truthfully.
 
 > 🎯 **Design principle:** every AI feature in HRHandle is **advisory only and explicitly triggered**. No auto-running, no auto-fill of stored fields, no automated decisions. See [`docs/9-compliance/ai-features.md`](./ai-features.md) for the full inventory, prompt-update policy, and EU AI Act mapping.
 
@@ -156,7 +156,7 @@ The per-controller list (Art. 30(2)(a) requires naming each controller HRHandle 
 | Data subject categories | Candidates whose CV is uploaded; candidates whose summary is requested by a recruiter. |
 | Personal data categories | The candidate fields explicitly chosen for each feature. For CV parsing: full file contents (may include Art. 9 special categories if the candidate volunteered them). For candidate summary: name, current role/company, location, languages, work-history entries, education entries — **email, phone, LinkedIn URL, date of birth are NOT sent**. |
 | Sub-processors | Google Generative AI (Gemini API). |
-| Retention | Google's terms-driven retention: paid-tier API retains prompts/responses briefly for abuse detection only; **unpaid-tier currently in use may include retention for product improvement — see G-001**. AI output content is not persisted by HRHandle unless the recruiter explicitly chooses to (e.g. "Save as note"). |
+| Retention | Google's paid-services terms: prompts and responses retained briefly for abuse detection only; not used for model training. AI output content is not persisted by HRHandle unless the recruiter explicitly chooses to (e.g. "Save as note"). |
 | Internal logging | Every AI feature invocation is logged in `activity_log` with `action: 'ai_assist'` and feature metadata, for EU AI Act traceability. The AI output content itself is not logged. |
 | Transfer mechanism | SCCs with Google. The EU/UK/Switzerland safe-harbour clause in Google's Gemini API terms does not apply to a Georgian-registered controller. |
 | Security (Art. 32) | API key kept server-side; no exposure to the browser; per-IP rate limit on `/api/parse-cv` (30/hr); per-org rate limit on `/api/ai/candidate-summary` (100/hr); authenticated endpoints (except the public apply-form CV parse) require an active session and a candidate scoped to the user's organization. |
@@ -200,7 +200,7 @@ The authoritative sub-processor list is in [Privacy Policy §5](../../app/privac
 | PostHog | C-4 | Product analytics | EU (eu.i.posthog.com) |
 | Cloudflare Turnstile | C-1, P-2 | CAPTCHA | USA / Global |
 | Google (OAuth, Calendar, Meet) | C-1 (sign-in), P-4 | Authentication and calendar integration | USA / Global |
-| Google Generative AI (Gemini API) | P-3 | **AI-assisted CV parsing — see G-001** | USA / Global |
+| Google Generative AI (Gemini API) | P-3 | AI-assisted CV parsing + 5 other AI features (paid tier; no model-training use) | USA / Global |
 | Microsoft (Graph, Outlook, Teams) | C-1 (sign-in), P-4 | Authentication and calendar integration | USA / Global |
 | Zoom | P-4 | Video meeting creation | USA / Global |
 | LinkedIn | (planned) | Vacancy posting | USA / Global |

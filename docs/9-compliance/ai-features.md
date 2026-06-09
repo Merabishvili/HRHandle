@@ -5,7 +5,7 @@ _Owner: Aleksandre Merabishvili (sole founder + DPO)_
 
 ## Document control
 
-- **Tracked as:** [G-009](../issues-found.md) (initial AI features) + [G-001](../issues-found.md) (Gemini paid-tier prerequisite, deferred)
+- **Tracked as:** [G-009](../issues-found.md) (initial AI features). [G-001](../issues-found.md) (Gemini paid-tier prerequisite) was closed on 2026-06-09 when billing was enabled on the Gemini account.
 - **Review cadence:** at every release that adds, modifies, or removes an AI feature; and at least quarterly
 - **Related docs:** [`docs/9-compliance/ropa.md`](./ropa.md) (Activity P-3) · [`app/privacy/page.tsx`](../../app/privacy/page.tsx) §5.1 · [`docs/issues-found.md`](../issues-found.md)
 
@@ -103,7 +103,7 @@ For higher-risk features (AI screening), a more formal risk assessment + bias-mo
 - [ ] Confirm every shipped feature still follows the six design principles (no auto-fill, no auto-decision, etc.). Spot-check the route handlers and UI components.
 - [ ] Re-read each prompt string and confirm it has not drifted toward judgement language.
 - [ ] Review `activity_log` for `action = 'ai_assist'` patterns: are usage volumes within expected bounds? Any features that no one uses?
-- [ ] Confirm G-001 status. If Gemini billing has been enabled, update Privacy Policy §5.1 to restore the paid-tier no-training claim.
+- [ ] Re-confirm Gemini account is still on the paid tier (billing active, no quota-exhaustion errors). The privacy claim in §5.1 depends on this being true.
 - [ ] Sanity-check the rate limits against actual usage.
 
 ## Changelog

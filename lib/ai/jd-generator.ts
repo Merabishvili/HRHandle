@@ -5,13 +5,6 @@ import * as Sentry from '@sentry/nextjs'
 // same fail-soft return type. Per-feature file rather than a shared helper
 // because each prompt is the feature's actual product surface — keeping them
 // next to their feature makes review and prompt-update PRs cleaner.
-//
-// G-001 still applies: while the Gemini API key is on the unpaid tier,
-// Google's terms permit them to use submitted content for product
-// improvement. Vacancy text isn't personal data, so the privacy risk for
-// JD generation is lower than for candidate summary or CV parsing — but
-// the policy gap is the same and the resolution is the same (enable
-// billing).
 
 const JD_TIMEOUT_MS = 20_000
 const RETRY_DELAY_MS = 1_500

@@ -5,12 +5,6 @@ import * as Sentry from '@sentry/nextjs'
 // as candidate-summary and jd-generator. The only meaningful difference is the
 // JSON response shape — we explicitly ask Gemini for structured output and
 // validate it on the way back so the UI doesn't have to.
-//
-// G-001 still applies: while the Gemini API key is unpaid, Google's terms
-// allow training on submitted content. Vacancy text isn't personal data so
-// the candidate-risk story is the same as JD generator (lower than candidate
-// summary or CV parsing), but the policy gap is the same and the fix is the
-// same (enable billing).
 
 const IQ_TIMEOUT_MS = 25_000
 const RETRY_DELAY_MS = 1_500

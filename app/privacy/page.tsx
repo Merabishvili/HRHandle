@@ -265,6 +265,12 @@ export default function PrivacyPage() {
               high-risk-AI logging requirements. We do not log the AI output itself.
             </p>
             <p className="mt-3">
+              We use Google&apos;s paid Gemini API for all of these features. Under Google&apos;s
+              paid-services terms, Google is not permitted to use customer prompt content or
+              responses to train or improve their models. Google retains prompts and responses
+              briefly only for abuse detection.
+            </p>
+            <p className="mt-3">
               If an AI feature is unavailable or fails for any reason, the workflow proceeds
               normally and the recruiter completes the task manually.
             </p>

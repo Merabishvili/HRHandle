@@ -5,9 +5,7 @@ import * as Sentry from '@sentry/nextjs'
 // shape as the others. Like candidate-summary (but unlike jd-generator and
 // interview-questions), this feature DOES send candidate-relevant data to
 // Google — the recruiter's free-text notes will typically contain candidate
-// observations. G-001 still applies (Gemini unpaid tier permits training on
-// content); the paid-tier switch is more pressing the more features in this
-// lane we ship.
+// observations.
 
 const EXTRACT_TIMEOUT_MS = 25_000
 const RETRY_DELAY_MS = 1_500
