@@ -11,13 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Loader2 } from 'lucide-react'
 import { rejectApplication } from '@/lib/actions/applications'
 
@@ -124,16 +118,19 @@ export function RejectionDialog({
                 No rejection reasons configured. You can still reject — add reasons in Settings → Rejection Reasons.
               </p>
             ) : (
-              <Select value={reasonId} onValueChange={setReasonId} disabled={isPending}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a reason…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {reasons.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={reasonId}
+                onValueChange={setReasonId}
+                disabled={isPending}
+                placeholder="Select a reason…"
+                searchPlaceholder="Search reasons…"
+                emptyText="No reasons match your search."
+                options={reasons.map((r) => ({
+                  value: r.id,
+                  label: r.name,
+                  searchText: r.name,
+                }))}
+              />
             )}
           </div>
 
@@ -158,26 +155,22 @@ export function RejectionDialog({
                     No templates configured. A default email will be sent. Configure templates in Settings → Email Templates.
                   </p>
                 ) : (
-                  <Select
+                  <SearchableSelect
                     value={templateId}
                     onValueChange={setTemplateId}
                     disabled={isPending}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a template…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NO_TEMPLATE}>— No template (use default) —</SelectItem>
-                      {templates.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name}
-                          {t.reason_id === reasonId && reasonId
-                            ? ' ✓'
-                            : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Select a template…"
+                    searchPlaceholder="Search templates…"
+                    emptyText="No templates match your search."
+                    options={[
+                      { value: NO_TEMPLATE, label: '— No template (use default) —' },
+                      ...templates.map((t) => ({
+                        value: t.id,
+                        label: t.reason_id === reasonId && reasonId ? `${t.name} ✓` : t.name,
+                        searchText: `${t.name} ${t.subject}`,
+                      })),
+                    ]}
+                  />
                 )}
               </div>
 

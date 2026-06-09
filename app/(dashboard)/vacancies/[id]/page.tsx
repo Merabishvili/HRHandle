@@ -438,7 +438,12 @@ export default async function VacancyDetailPage({
       </div>
 
       {/* Main layout */}
-      <Tabs defaultValue={defaultTab}>
+      {/* `key={defaultTab}` forces the Tabs to remount when the `?tab=` URL
+          param changes. Without it, links like the "Add questions" CTA inside
+          the Candidates tab would update the URL but the active tab would
+          stay on Candidates (Radix Tabs is uncontrolled here and ignores
+          subsequent defaultValue changes once mounted). */}
+      <Tabs key={defaultTab} defaultValue={defaultTab}>
         <div className="border-b border-border">
           <TabsList className="h-auto w-fit rounded-none bg-transparent p-0 gap-0">
             <TabsTrigger
