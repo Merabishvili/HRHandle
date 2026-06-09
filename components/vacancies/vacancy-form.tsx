@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Switch } from '@/components/ui/switch'
@@ -260,24 +261,22 @@ export function VacancyForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="sector_id">Sector *</Label>
-              <Select
+              <SearchableSelect
+                id="sector_id"
                 value={formData.sector_id || ''}
                 onValueChange={(value: string) =>
                   setFormData({ ...formData, sector_id: value || null })
                 }
                 disabled={isLoading}
-              >
-                <SelectTrigger id="sector_id">
-                  <SelectValue placeholder="Select sector" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sectors.map((sector) => (
-                    <SelectItem key={sector.id} value={sector.id}>
-                      {sector.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Select sector"
+                searchPlaceholder="Search sectors…"
+                emptyText="No sectors found."
+                options={sectors.map((sector) => ({
+                  value: sector.id,
+                  label: sector.name,
+                  searchText: sector.name,
+                }))}
+              />
             </div>
 
             <div className="space-y-2">

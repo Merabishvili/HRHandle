@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Textarea } from '@/components/ui/textarea'
@@ -751,23 +752,23 @@ export function CandidateForm({
             {!isEditing && (
               <div className="space-y-2">
                 <Label htmlFor="initial_vacancy_id">Initial Vacancy</Label>
-                <Select
+                <SearchableSelect
+                  id="initial_vacancy_id"
                   value={selectedVacancyId || 'none'}
                   onValueChange={(value) => setSelectedVacancyId(value === 'none' ? '' : value)}
                   disabled={isLoading}
-                >
-                  <SelectTrigger id="initial_vacancy_id">
-                    <SelectValue placeholder="Select a vacancy (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No vacancy assigned</SelectItem>
-                    {vacancies.map((vacancy) => (
-                      <SelectItem key={vacancy.id} value={vacancy.id}>
-                        {vacancy.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Select a vacancy (optional)"
+                  searchPlaceholder="Search vacancies…"
+                  emptyText="No vacancies found."
+                  options={[
+                    { value: 'none', label: 'No vacancy assigned' },
+                    ...vacancies.map((vacancy) => ({
+                      value: vacancy.id,
+                      label: vacancy.title,
+                      searchText: vacancy.title,
+                    })),
+                  ]}
+                />
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
 
 // Constructor-style mock — vi.fn() with an arrow body isn't constructable, so
 // we use a function-keyword implementation that sets fields on `this`. Same

@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -251,40 +252,39 @@ export function InterviewForm({
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="candidate">Candidate *</Label>
-            <Select
+            <SearchableSelect
+              id="candidate"
               value={candidateId}
               onValueChange={handleCandidateChange}
               disabled={isLoading}
-            >
-              <SelectTrigger id="candidate">
-                <SelectValue placeholder="Select a candidate" />
-              </SelectTrigger>
-              <SelectContent>
-                {candidates.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {getCandidateFullName(c)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Select a candidate"
+              searchPlaceholder="Search candidates…"
+              emptyText="No candidates found."
+              options={candidates.map((c) => ({
+                value: c.id,
+                label: getCandidateFullName(c),
+                searchText: `${getCandidateFullName(c)} ${c.email ?? ''}`,
+                description: c.email ?? undefined,
+              }))}
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="vacancy">Vacancy *</Label>
-            <Select
+            <SearchableSelect
+              id="vacancy"
               value={vacancyId}
               onValueChange={handleVacancyChange}
               disabled={isLoading || !candidateId}
-            >
-              <SelectTrigger id="vacancy">
-                <SelectValue placeholder={candidateId ? 'Select a vacancy' : 'Select candidate first'} />
-              </SelectTrigger>
-              <SelectContent>
-                {availableVacancies.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>{v.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder={candidateId ? 'Select a vacancy' : 'Select candidate first'}
+              searchPlaceholder="Search vacancies…"
+              emptyText="No vacancies found."
+              options={availableVacancies.map((v) => ({
+                value: v.id,
+                label: v.title,
+                searchText: v.title,
+              }))}
+            />
             <p className="text-sm text-muted-foreground">
               Only vacancies this candidate is being considered for are shown.
             </p>
@@ -292,21 +292,23 @@ export function InterviewForm({
 
           <div className="space-y-2">
             <Label htmlFor="interviewer">Interviewer</Label>
-            <Select
+            <SearchableSelect
+              id="interviewer"
               value={interviewerId || 'none'}
               onValueChange={handleInterviewerChange}
               disabled={isLoading}
-            >
-              <SelectTrigger id="interviewer">
-                <SelectValue placeholder="Select an interviewer (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Not assigned</SelectItem>
-                {teamMembers.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Select an interviewer (optional)"
+              searchPlaceholder="Search team members…"
+              emptyText="No matching team members."
+              options={[
+                { value: 'none', label: 'Not assigned' },
+                ...teamMembers.map((m) => ({
+                  value: m.id,
+                  label: m.full_name,
+                  searchText: m.full_name,
+                })),
+              ]}
+            />
           </div>
         </CardContent>
       </Card>

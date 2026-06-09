@@ -11,13 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Label } from '@/components/ui/label'
 import { createApplication } from '@/lib/actions/applications'
 import { MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE } from '@/lib/types/constants'
@@ -93,19 +87,20 @@ export function AddApplicationDialog({
             {availableVacancies.length === 0 ? (
               <p className="text-sm text-muted-foreground">No open vacancies available to apply to.</p>
             ) : (
-              <Select value={vacancyId} onValueChange={setVacancyId} disabled={isPending}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a vacancy…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableVacancies.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      <span className="font-medium">{v.title}</span>
-                      {v.department && <span className="ml-2 text-muted-foreground text-xs">{v.department}</span>}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={vacancyId}
+                onValueChange={setVacancyId}
+                disabled={isPending}
+                placeholder="Select a vacancy…"
+                searchPlaceholder="Search vacancies…"
+                emptyText="No vacancies found."
+                options={availableVacancies.map((v) => ({
+                  value: v.id,
+                  label: v.title,
+                  searchText: `${v.title} ${v.department ?? ''}`,
+                  description: v.department ?? undefined,
+                }))}
+              />
             )}
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
