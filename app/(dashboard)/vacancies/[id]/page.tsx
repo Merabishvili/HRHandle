@@ -33,6 +33,7 @@ import { AddCandidateToVacancyDialog } from '@/components/vacancies/add-candidat
 import { LinkedInPostJobButton } from '@/components/vacancies/linkedin-post-job-button'
 import { getLinkedInIntegration } from '@/lib/actions/integrations'
 import { AiInterviewQuestions } from '@/components/vacancies/ai-interview-questions'
+import { AiAssessmentSuggester } from '@/components/vacancies/ai-assessment-suggester'
 import type { InterviewQuestionsSet } from '@/lib/ai/interview-questions'
 
 interface VacancyRow {
@@ -631,8 +632,19 @@ export default async function VacancyDetailPage({
           </div>
         </TabsContent>
 
-        {/* Questionary & Evaluation tab — two columns */}
-        <TabsContent value="qe" className="mt-4">
+        {/* Questionary & Evaluation tab — two columns + AI panel above */}
+        <TabsContent value="qe" className="mt-4 space-y-6">
+          <AiAssessmentSuggester
+            vacancyId={id}
+            existingSkillLabels={questions
+              .filter((q) => q.type === 'score')
+              .map((q) => q.label)}
+            existingPromptLabels={questions
+              .filter((q) => q.type === 'text')
+              .map((q) => q.label)}
+            canEdit={canEditQuestions}
+          />
+
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Left: Text questions (Questionary) */}
             <Card className="border-border">
