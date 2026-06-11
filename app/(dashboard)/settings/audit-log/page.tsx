@@ -53,16 +53,9 @@ export default async function AuditLogPage({
 
   const totalPages = Math.max(1, Math.ceil(logResult.data.total / pageSize))
 
-  const buildPaginationHref = ({
-    page: targetPage,
-    pageSize: targetPageSize,
-  }: { page?: number; pageSize?: PageSize }) => {
-    const params = new URLSearchParams(filterToSearchParams(filter))
-    const effectivePageSize = targetPageSize ?? pageSize
-    if (effectivePageSize !== 20) params.set('pageSize', String(effectivePageSize))
-    params.set('page', String(targetPage ?? page))
-    return `/settings/audit-log?${params.toString()}`
-  }
+  // Preserved URL params for the paginator's links. Plain object (not a
+  // function prop) so it serialises across the server→client boundary.
+  const paginationPreserved = filterToSearchParams(filter)
 
   const exportHref = (() => {
     const params = new URLSearchParams(filterToSearchParams(filter))
@@ -98,7 +91,8 @@ export default async function AuditLogPage({
         totalPages={totalPages}
         totalCount={logResult.data.total}
         pageSize={pageSize}
-        buildHref={buildPaginationHref}
+        basePath="/settings/audit-log"
+        preservedParams={paginationPreserved}
         ariaLabel="Audit log pagination"
       />
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Briefcase } from 'lucide-react'
 import { ApplicationEvaluation } from './application-evaluation'
 import type { RejectionReason, RejectionTemplate } from '@/components/pipeline/rejection-dialog'
@@ -62,6 +62,14 @@ export function CandidateApplicationsList({
   rejectionTemplates,
 }: Props) {
   const [applications, setApplications] = useState(initialApplications)
+
+  // Re-sync local state when the server prop changes. Without this, a
+  // `router.refresh()` from a child (offer create, etc) re-renders the
+  // parent with fresh data, but our local copy keeps the stale snapshot
+  // because `useState` only reads its initial value on first mount.
+  useEffect(() => {
+    setApplications(initialApplications)
+  }, [initialApplications])
 
   if (applications.length === 0) {
     return (

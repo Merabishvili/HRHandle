@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { Plus, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,14 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
   const [questions, setQuestions] = useState(initialQuestions)
   const [label, setLabel] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  // Re-sync when the server prop changes (e.g. after the AI assessment
+  // suggester runs router.refresh()). Without this, useState keeps the
+  // stale snapshot from first mount and the newly-added question doesn't
+  // appear until the recruiter manually reloads.
+  useEffect(() => {
+    setQuestions(initialQuestions)
+  }, [initialQuestions])
   const [isPending, startTransition] = useTransition()
 
   const placeholder = questionType === 'text'

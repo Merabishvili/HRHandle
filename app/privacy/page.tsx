@@ -327,21 +327,6 @@ export default function PrivacyPage() {
                 involved. Each suggestion is added to the vacancy only when the
                 recruiter explicitly clicks the &quot;Add&quot; button next to it.
               </li>
-              <li>
-                <strong>Email drafter</strong> — when a recruiter opens the AI email
-                drafter on a candidate&apos;s page and clicks &quot;Draft email&quot;
-                (or &quot;Improve draft&quot;), the AI returns a subject line and a
-                plain-text body for the recruiter to review and edit. The
-                candidate&apos;s first name, the role title (if a specific role is
-                selected), the recruiter&apos;s first name, the recruiter&apos;s
-                free-text notes, and — in &quot;improve&quot; mode — the
-                recruiter&apos;s own draft are sent to Google&apos;s Gemini API. The
-                candidate&apos;s email address, phone number, LinkedIn URL, last name,
-                date of birth, application history, and evaluation history are
-                <em>not</em> sent. No email is ever sent automatically: the drafter
-                returns text only, and the recruiter copies it into their own email
-                tool to send.
-              </li>
             </ul>
             <p className="mt-3">
               The AI output is informational only. No AI feature in HRHandle makes any automated

@@ -248,20 +248,15 @@ export default async function CandidatesPage({
   // Build column label map for header
   const optColMap = new Map(OPTIONAL_CANDIDATE_COLUMNS.map((c) => [c.key, c.label]))
 
-  const buildPaginationHref = ({
-    page: targetPage,
-    pageSize: targetPageSize,
-  }: { page?: number; pageSize?: PageSize }) => {
-    const params = new URLSearchParams()
-    if (vacancyFilter) params.set('vacancy', vacancyFilter)
-    if (search) params.set('search', search)
-    if (sort !== 'created_desc') params.set('sort', sort)
-    if (statusFilter) params.set('status', statusFilter)
-    const effectivePageSize = targetPageSize ?? pageSize
-    if (effectivePageSize !== 20) params.set('pageSize', String(effectivePageSize))
-    params.set('page', String(targetPage ?? page))
-    return `/candidates?${params.toString()}`
-  }
+  // Preserved URL params for the paginator's links. Plain object — no
+  // function prop, so it serialises across the server→client boundary
+  // (React 19 RSC forbids functions defined in server components from
+  // being passed into client components).
+  const paginationPreserved: Record<string, string> = {}
+  if (vacancyFilter) paginationPreserved.vacancy = vacancyFilter
+  if (search) paginationPreserved.search = search
+  if (sort !== 'created_desc') paginationPreserved.sort = sort
+  if (statusFilter) paginationPreserved.status = statusFilter
 
   return (
     <div className="space-y-6">
@@ -505,7 +500,8 @@ export default async function CandidatesPage({
                 totalPages={totalPages}
                 totalCount={totalCount ?? 0}
                 pageSize={pageSize}
-                buildHref={buildPaginationHref}
+                basePath="/candidates"
+                preservedParams={paginationPreserved}
                 ariaLabel="Candidate list pagination"
               />
             </div>

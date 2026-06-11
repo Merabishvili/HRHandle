@@ -202,19 +202,12 @@ export default async function VacanciesPage({
 
   const optColMap = new Map(OPTIONAL_VACANCY_COLUMNS.map((c) => [c.key, c.label]))
 
-  const buildPaginationHref = ({
-    page: targetPage,
-    pageSize: targetPageSize,
-  }: { page?: number; pageSize?: PageSize }) => {
-    const params = new URLSearchParams()
-    if (search) params.set('search', search)
-    if (sort !== 'created_desc') params.set('sort', sort)
-    if (statusFilter) params.set('status', statusFilter)
-    const effectivePageSize = targetPageSize ?? pageSize
-    if (effectivePageSize !== 20) params.set('pageSize', String(effectivePageSize))
-    params.set('page', String(targetPage ?? page))
-    return `/vacancies?${params.toString()}`
-  }
+  // Preserved URL params for the paginator's links. Plain object (not a
+  // function prop) so it serialises across the server→client boundary.
+  const paginationPreserved: Record<string, string> = {}
+  if (search) paginationPreserved.search = search
+  if (sort !== 'created_desc') paginationPreserved.sort = sort
+  if (statusFilter) paginationPreserved.status = statusFilter
 
   return (
     <div className="space-y-6">
@@ -418,7 +411,8 @@ export default async function VacanciesPage({
                 totalPages={totalPages}
                 totalCount={totalCount ?? 0}
                 pageSize={pageSize}
-                buildHref={buildPaginationHref}
+                basePath="/vacancies"
+                preservedParams={paginationPreserved}
                 ariaLabel="Vacancy list pagination"
               />
             </div>

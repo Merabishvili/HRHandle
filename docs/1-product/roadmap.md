@@ -21,7 +21,7 @@ A short tour so context for the rest of the roadmap is fresh.
 
 | Area | Shipped | What |
 |---|---|---|
-| AI features | G-009 → G-015 | Candidate summary, JD generator, interview questions, note-extractor, inclusive-language check, assessment suggester, email drafter. Six design principles in [ai-features.md](../9-compliance/ai-features.md). |
+| AI features | G-009 → G-014 | Candidate summary, JD generator, interview questions, note-extractor, inclusive-language check, assessment suggester. G-015 email drafter shipped 2026-06-09 then retired 2026-06-21 (founder removed it — recruiter-managed templates already covered the real customer-facing email needs). Six design principles in [ai-features.md](../9-compliance/ai-features.md). |
 | Candidate experience | G-016, G-017, G-018, G-022 | Public `/status/<token>` page (abstracted Applied/In review/Interview/Decision/Closed buckets), opt-in auto-emails on screening/interview transitions, full offer process: structured-but-minimal `offers` table, recruiter panel inside each application row, candidate `/offer/<token>` Accept/Decline page that flows accept into the existing `hired` pipeline path, **candidate self-withdraw** button on the status page (G-022) that cancels any active offer and notifies the recruiter. |
 | Operational completeness | G-019, G-020 | `/settings/audit-log` viewer (filters + CSV export over the populated-but-previously-unreachable `activity_log` table) and `/settings/trash` (restore + hard-delete-now for soft-deleted candidates and vacancies; candidate restore cascades the applications back using the IDs captured in the candidate-delete audit row from BL-007). |
 | Recruiter productivity | G-021, G-023, G-024, **G-025** | @-mentions in candidate notes; global cmd-K search; bulk move-to-stage; **scorecard sharing** via token-gated `/scorecard/<token>` for non-HRHandle stakeholders (hiring managers, execs) — third token-page in a row, same risk model as G-016 + G-018. |
@@ -42,7 +42,7 @@ Phase 2 of the candidate-facing experience. Moved from "Big features" to "Recent
 - **E-signature** (DocuSign / Dropbox Sign) — v2.
 - **Counter-offer / negotiation flow** — v2; today's revision path is withdraw + create new.
 - **Per-org saved offer template** — v2; recruiters duplicate an old offer in the meantime.
-- **AI-assisted offer drafting** — would build on the existing AI email drafter pattern; v2.
+- **AI-assisted offer drafting** — v2 if customers ask. The AI email drafter pattern (G-015) was retired before this would have shipped, so a future iteration starts from scratch.
 
 ### 🟡 Multi-language UI (i18n)
 

@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  DEFAULT_PAGE_SIZE,
   getPageWindow,
   PAGE_GAP,
   PAGE_SIZE_OPTIONS,
@@ -23,13 +24,14 @@ export interface TablePaginationProps {
   totalPages: number
   totalCount: number
   pageSize: PageSize
-  /** Build a URL from the requested page and/or pageSize. The caller owns the
-   * URL because they know what other filters (search, sort, status…) belong
-   * on the link. Page is 1-based. Changing pageSize always resets to page 1
-   * — the row at offset 60 isn't necessarily near the same position in a
-   * different paging — and the helper accepts both at once to make that the
-   * single-source navigation. */
-  buildHref: (opts: { page?: number; pageSize?: PageSize }) => string
+  /** Path the navigation links target, e.g. `/candidates`. */
+  basePath: string
+  /** All current URL search params except `page` and `pageSize`. These are
+   * preserved verbatim on every pagination link so the recruiter's filters
+   * survive the navigation. Passing a plain object (rather than a function)
+   * keeps the contract serialisable across the server→client boundary
+   * required by React Server Components. */
+  preservedParams: Record<string, string>
   /** Optional aria-label for the nav landmark. Defaults to "Pagination". */
   ariaLabel?: string
 }
@@ -39,9 +41,22 @@ export function TablePagination({
   totalPages,
   totalCount,
   pageSize,
-  buildHref,
+  basePath,
+  preservedParams,
   ariaLabel = 'Pagination',
 }: TablePaginationProps) {
+  const buildHref = (opts: { page?: number; pageSize?: PageSize }): string => {
+    const params = new URLSearchParams(preservedParams)
+    const effectivePageSize = opts.pageSize ?? pageSize
+    if (effectivePageSize !== DEFAULT_PAGE_SIZE) {
+      params.set('pageSize', String(effectivePageSize))
+    } else {
+      params.delete('pageSize')
+    }
+    params.set('page', String(opts.page ?? currentPage))
+    const qs = params.toString()
+    return qs ? `${basePath}?${qs}` : basePath
+  }
   const router = useRouter()
   const safeCurrent = Math.min(Math.max(1, currentPage), Math.max(1, totalPages))
   const from = (safeCurrent - 1) * pageSize + 1
