@@ -45,6 +45,7 @@ export async function getEmailTemplates(): Promise<
     rejection: resolveWithFlag('rejection'),
     status_change_screening: resolveWithFlag('status_change_screening'),
     status_change_interview: resolveWithFlag('status_change_interview'),
+    offer_sent: resolveWithFlag('offer_sent'),
   }
 
   return { success: true, data: result }

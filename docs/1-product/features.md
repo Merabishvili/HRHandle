@@ -71,6 +71,18 @@ _Last updated: 2026-05-08_
 | Reject application | Select reason + template, optional rejection email | `lib/actions/applications.ts#rejectApplication`, `components/pipeline/rejection-dialog.tsx` |
 | Remove application | Soft-delete application | `lib/actions/applications.ts#removeApplication` |
 | Application row | Shows candidate info, status, actions per application | `components/vacancies/vacancy-application-row.tsx` |
+| 🆕 Status auto-emails | Per-org opt-in transactional emails when an application moves into Screening or Interview | `lib/actions/applications.ts#updateApplicationStatus`, `lib/applications-status-emails.ts` |
+
+## Offers
+
+| Feature | Description | Files |
+|---------|-------------|-------|
+| 🆕 Create offer | Per-application offer draft with optional structured fields (compensation amount + currency + period, start date, respond-by date) and required free-text body + role title; owner/admin only | `lib/actions/offers.ts#createOffer`, `components/offers/offer-form.tsx` |
+| 🆕 Send offer | Generates a public token, marks the offer `sent`, fires an email to the candidate with a link to the offer page; uses the `offer_sent` template (editable in settings) | `lib/actions/offers.ts#sendOffer`, `lib/email.ts#sendOfferEmail` |
+| 🆕 Withdraw offer | Owner/admin can pull a sent offer back; candidate page shows withdrawn state | `lib/actions/offers.ts#withdrawOffer` |
+| 🆕 Auto-expire | Daily cron flips sent offers past their `expiry_date` to `expired` so the recruiter UI and reporting stay accurate | `app/api/cron/purge-deleted/route.ts` |
+| 🆕 Candidate accept/decline | Token-gated `/offer/<token>` page; Accept moves the application to `hired` via the existing pipeline path (candidate status syncs to `hired`); Decline accepts an optional free-text reason | `app/offer/[token]/page.tsx`, `components/offers/offer-respond-form.tsx`, `lib/actions/offers.ts#acceptOfferByToken`, `lib/actions/offers.ts#declineOfferByToken` |
+| 🆕 Recruiter panel | Inside each application row, shows the active offer's state + summary + action buttons (Send / Edit / Delete for drafts; Copy link / Withdraw for sent); collapsible "previous offers" history | `components/offers/offer-panel.tsx` |
 
 ## Public Application Form
 

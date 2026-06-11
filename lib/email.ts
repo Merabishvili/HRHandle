@@ -327,6 +327,68 @@ export async function sendApplicationStatusChangedEmail({
   })
 }
 
+/** Auto-email fired by `sendOffer` when the recruiter transitions an offer
+ * from draft → sent. The body is intentionally generic — the offer page at
+ * `offerUrl` shows the structured details (compensation, dates) and the
+ * full markdown body. This email is purely the doorbell. */
+export async function sendOfferEmail({
+  to,
+  candidateName,
+  vacancyTitle,
+  organizationName,
+  offerUrl,
+  customSubject,
+  customBody,
+}: {
+  to: string
+  candidateName: string
+  vacancyTitle: string
+  organizationName: string
+  offerUrl: string
+  customSubject?: string
+  customBody?: string
+}) {
+  const vars = {
+    candidate_name: candidateName,
+    role: vacancyTitle,
+    company: organizationName,
+    offer_url: offerUrl,
+  }
+  const defaults = DEFAULT_TEMPLATES.offer_sent
+  const subject = applyVariables(customSubject ?? defaults.subject, vars)
+  const body = applyVariables(customBody ?? defaults.body, vars)
+  const safeCandidate = escapeHtml(candidateName)
+  const safeOfferUrl = escapeHtml(offerUrl)
+
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">You have an offer</h1>
+    <p style="color: #6b7280; margin: 0 0 24px;">
+      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
+      ${body}
+    </p>
+    <p style="margin: 0 0 16px;">
+      <a href="${safeOfferUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">View your offer</a>
+    </p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 16px;">
+      Keep this link private — it's the only way to view and respond to this offer.
+    </p>
+    <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
+  </div>
+</body>
+</html>`,
+  })
+}
+
 export async function sendApplicationRejectionEmail({
   to,
   candidateName,

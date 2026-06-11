@@ -1,6 +1,6 @@
 # HRHandle — Product Roadmap
 
-_Last updated: 2026-06-14_
+_Last updated: 2026-06-15_
 _Owner: Aleksandre Merabishvili_
 
 This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
@@ -22,7 +22,7 @@ A short tour so context for the rest of the roadmap is fresh.
 | Area | Shipped | What |
 |---|---|---|
 | AI features | G-009 → G-015 | Candidate summary, JD generator, interview questions, note-extractor, inclusive-language check, assessment suggester, email drafter. Six design principles in [ai-features.md](../9-compliance/ai-features.md). |
-| Candidate experience | G-016, G-017 | Public `/status/<token>` page (abstracted Applied/In review/Interview/Decision/Closed buckets) + opt-in auto-emails on screening/interview transitions. |
+| Candidate experience | G-016, G-017, **G-018** | Public `/status/<token>` page (abstracted Applied/In review/Interview/Decision/Closed buckets), opt-in auto-emails on screening/interview transitions, **and now the full offer process: structured-but-minimal `offers` table, recruiter panel inside each application row, candidate `/offer/<token>` Accept/Decline page that flows accept into the existing `hired` pipeline path**. |
 | Compliance | G-001 → G-008 | Gemini paid tier, Article 13 notice, 30-day purge cron, breach playbook, ROPA, OAuth revoke, self-serve org delete, sign-up country gate. |
 | Polish | F-009, BL-006, BL-007 | List pagination controls + page-size selector, dashboard loading skeletons, candidate-delete cascade + accurate confirmation. |
 
@@ -32,19 +32,15 @@ A short tour so context for the rest of the roadmap is fresh.
 
 These are large enough that each will be its own multi-PR effort. Each one has a sketch but not a finalized design.
 
-### 🟢 Offer process
+### ✅ Offer process — shipped 2026-06-15 (G-018)
 
-The current `offer` status is just a pipeline bucket — there's no actual workflow. A real offer step would mean:
+Phase 2 of the candidate-facing experience. Moved from "Big features" to "Recently shipped" — see the table above. Sub-features deferred to a future PR:
 
-- **Offer record** — a row attached to an application that captures: role title (separate from vacancy title in case of negotiation), salary + currency, start date, employment type, expiry date, free-text notes/benefits, status (draft / sent / accepted / declined / expired / withdrawn).
-- **Offer letter generation** — an HTML email + a printable PDF, both produced from a per-org template. Could reuse the existing `email_templates` table pattern (add `offer` template type) and the existing AI email drafter for the "improve my draft" mode.
-- **Acceptance tracking** — candidate-facing accept/decline page (mirrors the G-016 status-page token pattern: `/offer/<token>` with accept/decline buttons). Status updates automatically reflect back into the application + the candidate's general status (`hired` on accept).
-- **Audit trail** — every state change is an audit-log row.
-- **No e-signature in v1** — explicit "I accept" click is enough for verbal/soft offers; e-signature integration (DocuSign / Dropbox Sign) is a v2 if customers ask.
-
-Sequencing: this is the natural pair to G-016 — both are candidate-facing token URLs. Shipping it would close the workflow from "applied" all the way to "hired" without recruiters having to leave the app for the actual offer.
-
-Track at: this row (no separate G-018 yet).
+- **PDF offer letter generation** — the in-product HTML email + candidate offer page cover the common cases; PDF is v2 if customers ask.
+- **E-signature** (DocuSign / Dropbox Sign) — v2.
+- **Counter-offer / negotiation flow** — v2; today's revision path is withdraw + create new.
+- **Per-org saved offer template** — v2; recruiters duplicate an old offer in the meantime.
+- **AI-assisted offer drafting** — would build on the existing AI email drafter pattern; v2.
 
 ### 🟡 Multi-language UI (i18n)
 
@@ -176,16 +172,9 @@ Small effort, real value because the data plumbing already exists.
 2. **Restore-from-trash UI** (`/settings/trash`) — `restored_at` / `restored_by` columns exist (migration 030). BL-007 left `application_ids` in the candidate-delete audit row so restore can cascade. ~2 days.
 3. **Email tracking toggle** — Resend supports opens/clicks; expose as a per-org switch on `/settings/email-templates`. ~half day.
 
-### Phase 2 — Offer process
+### Phase 2 — Offer process ✅ shipped 2026-06-15 (G-018)
 
-Biggest single product gap. Closes the workflow from "applied" to "hired" without recruiters leaving the app. Multi-step PR sequence:
-
-1. **Schema + actions** — `offers` table (1:1 with `applications`), create/update server actions, audit-logged. ~2 days.
-2. **Offer letter generation** — HTML email + printable PDF from a per-org template (extend `email_templates` with an `offer` type). Reuse the AI email drafter's "improve my draft" mode. ~2 days.
-3. **Candidate-facing `/offer/<token>`** — accept / decline page mirroring the G-016 status-page token pattern. Status updates flow back into the application + the candidate's general status (`hired` on accept). ~2 days.
-4. **Recruiter UI** — offer panel on the application row + candidate detail page. ~2 days.
-
-Total ~1.5 weeks. Track as G-018.
+Shipped as a single PR rather than the originally-sketched four-step rollout: schema (migration 035) + state-machine + actions + recruiter panel + candidate `/offer/<token>` page + auto-expire cron + audit logging all bundled together. PDF generation, e-signature, counter-offer flow, per-org template, and AI assist remain v2.
 
 ### Phase 3 — Recruiter productivity (ATS table-stakes)
 
@@ -265,3 +254,4 @@ When other phases are in flight, batch:
 |---|---|---|
 | 2026-06-14 | Initial creation. Pulled in the AI features bundle, candidate-facing experience bundle, compliance work, and the polish PRs as "recently shipped". Recorded offer process + multi-language UI as the founder's top two new ideas. Listed common ATS gaps that nobody has filed yet. | Aleksandre Merabishvili |
 | 2026-06-14 | Added "Execution sequence" section with ten phases. Phase 1 (operational completeness) → Phase 2 (offer process) → Phases 3–5 (productivity, reporting, integrations) → Phase 6 (identity) → Phase 7 (i18n, decoupled) → Phase 8 (AI screening, blocked) → Phase 9 (tech debt) → Phase 10 (billing, intentionally last). | Aleksandre Merabishvili |
+| 2026-06-15 | Phase 2 (offer process / G-018) shipped. Moved from "Big features" + "Phase 2" into "Recently shipped". V2 sub-features (PDF, e-signature, counter-offer, per-org template, AI drafting) documented as deferred. | Aleksandre Merabishvili |

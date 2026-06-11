@@ -4,6 +4,7 @@ export type TemplateType =
   | 'rejection'
   | 'status_change_screening'
   | 'status_change_interview'
+  | 'offer_sent'
 
 /** Subset of TemplateType that's opt-IN per org. The send logic skips when no
  * row exists; admins enable by editing the template in /settings/email-templates. */
@@ -53,6 +54,11 @@ export const DEFAULT_TEMPLATES: Record<TemplateType, EmailTemplate> = {
     template_type: 'status_change_interview',
     subject: 'Your application is moving to the interview stage — {{role}}',
     body: 'Good news — your application for the {{role}} role at {{company}} is now in the interview stage. The recruiter will contact you directly with the interview details.',
+  },
+  offer_sent: {
+    template_type: 'offer_sent',
+    subject: 'Your offer from {{company}} — {{role}}',
+    body: '{{company}} is pleased to extend you an offer for the {{role}} role. The full details are available at the link below. You can accept or decline directly from that page.',
   },
 }
 

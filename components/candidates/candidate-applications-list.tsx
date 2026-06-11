@@ -37,7 +37,12 @@ interface ApplicationItem {
   /** G-016 candidate-facing status page token. Backfilled for historic rows
    * but kept nullable in the type so a missing migration doesn't crash. */
   publicToken: string | null
+  /** G-018 offers attached to this application (newest first). */
+  offers: OfferRow[]
+  canManageOffers: boolean
 }
+
+import type { OfferRow } from '@/components/offers/offer-panel'
 
 interface Props {
   candidateId: string
@@ -86,6 +91,8 @@ export function CandidateApplicationsList({
           questions={app.questions}
           existingEvaluation={app.existingEvaluation}
           publicToken={app.publicToken}
+          offers={app.offers}
+          canManageOffers={app.canManageOffers}
           onRemoved={(id) => setApplications((prev) => prev.filter((a) => a.id !== id))}
         />
       ))}

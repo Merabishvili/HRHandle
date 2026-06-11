@@ -46,6 +46,13 @@ const TEMPLATE_META: Partial<Record<TemplateType, { label: string; description: 
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{status_url}}'],
     previewHeading: 'Moving to the interview stage',
   },
+  offer_sent: {
+    label: 'Offer sent',
+    description:
+      'Sent automatically when a recruiter sends an offer to a candidate. Contains a link to the candidate’s offer page where they can review the structured terms and accept or decline.',
+    variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{offer_url}}'],
+    previewHeading: 'You have an offer',
+  },
 }
 
 
@@ -241,6 +248,7 @@ export function EmailTemplatesManager({ initialTemplates, initialRejectionTempla
     { id: 'rejection', label: 'Rejection' },
     { id: 'status_change_screening', label: 'Status: Under review' },
     { id: 'status_change_interview', label: 'Status: Interview' },
+    { id: 'offer_sent', label: 'Offer sent' },
   ]
 
   return (

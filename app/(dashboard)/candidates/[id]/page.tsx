@@ -63,6 +63,24 @@ interface ApplicationRow {
   public_token: string | null
 }
 
+interface OfferRowForList {
+  id: string
+  application_id: string
+  status: 'draft' | 'sent' | 'accepted' | 'declined' | 'expired' | 'withdrawn'
+  role_title: string
+  compensation_amount: number | null
+  compensation_currency: string | null
+  compensation_period: 'annual' | 'monthly' | 'hourly' | 'project' | 'other' | null
+  start_date: string | null
+  expiry_date: string | null
+  body: string
+  recruiter_message: string | null
+  public_token: string | null
+  sent_at: string | null
+  responded_at: string | null
+  decline_reason: string | null
+}
+
 interface VacancyOption {
   id: string
   title: string
@@ -139,7 +157,7 @@ export default async function CandidateDetailPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('organization_id, full_name')
+    .select('organization_id, full_name, role')
     .eq('id', user.id)
     .single()
 
@@ -250,6 +268,29 @@ export default async function CandidateDetailPage({
           evaluationsByApp.set(e.application_id, { id: e.id, score: e.score, answers: answersByEval.get(e.id) ?? [] })
         }
       }
+    }
+  }
+
+  // Offers for these applications (G-018). Fetched here so the OfferPanel
+  // can render the active offer + history without an extra round-trip.
+  const offersByApplication = new Map<string, OfferRowForList[]>()
+  if (appIds.length > 0) {
+    const { data: offersRaw } = await supabase
+      .from('offers')
+      .select(
+        `id, application_id, status, role_title,
+         compensation_amount, compensation_currency, compensation_period,
+         start_date, expiry_date, body, recruiter_message, public_token,
+         sent_at, responded_at, decline_reason`,
+      )
+      .in('application_id', appIds)
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+    for (const row of (offersRaw || []) as OfferRowForList[]) {
+      const arr = offersByApplication.get(row.application_id) ?? []
+      arr.push(row)
+      offersByApplication.set(row.application_id, arr)
     }
   }
 
@@ -437,6 +478,8 @@ export default async function CandidateDetailPage({
                   questions: questionsByVacancy.get(app.vacancy_id) ?? [],
                   existingEvaluation: evaluationsByApp.get(app.id) ?? null,
                   publicToken: app.public_token,
+                  offers: offersByApplication.get(app.id) ?? [],
+                  canManageOffers: profile.role === 'owner' || profile.role === 'admin',
                 }
               })}
             />

@@ -114,6 +114,19 @@ export default function PrivacyPage() {
               produce automatic emails (offers, hires, rejections, and withdrawals are
               handled by the recruiter directly).
             </p>
+            <p className="mt-2">
+              When the recruiter sends an offer, we create a separate token-gated offer
+              page at <span className="font-mono text-sm">/offer/&lt;token&gt;</span> on
+              this Service. Like the status page, the token is the only credential — there
+              is no login. The page shows the role title, employer name, the structured
+              terms the recruiter entered (compensation, currency, period, start date,
+              respond-by date — any of which may be blank), the recruiter&apos;s
+              plain-text offer details, and an optional personal note. The candidate can
+              accept or decline directly from the page; declining accepts an optional free-
+              text reason which only the recruiter sees. The offer page does not show any
+              other candidate&apos;s data and does not show recruiter-internal notes,
+              evaluation scores, or audit trail.
+            </p>
           </section>
 
           <section>

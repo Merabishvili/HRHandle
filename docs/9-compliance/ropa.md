@@ -1,6 +1,6 @@
 # Records of Processing Activities (ROPA)
 
-_Last updated: 2026-06-12_
+_Last updated: 2026-06-15_
 _Owner: Aleksandre Merabishvili (sole founder + DPO)_
 _GDPR reference: Article 30_
 
@@ -135,7 +135,7 @@ The per-controller list (Art. 30(2)(a) requires naming each controller HRHandle 
 
 | Field | Value |
 |---|---|
-| Categories of processing | Receiving anonymous applications from candidates through the customer's public apply page, creating a candidate record + application record (with a per-application `public_token` for the candidate-facing status page — [G-016](../issues-found.md)), sending the candidate a confirmation email that includes the status-page link. Optionally (per-org opt-in per stage — [G-017](../issues-found.md)) sending a single transactional email when an application moves to "screening" or "interview", containing the role title, organisation name, and a link back to the candidate's status page. |
+| Categories of processing | Receiving anonymous applications from candidates through the customer's public apply page, creating a candidate record + application record (with a per-application `public_token` for the candidate-facing status page — [G-016](../issues-found.md)), sending the candidate a confirmation email that includes the status-page link. Optionally (per-org opt-in per stage — [G-017](../issues-found.md)) sending a single transactional email when an application moves to "screening" or "interview", containing the role title, organisation name, and a link back to the candidate's status page. **Offers ([G-018](../issues-found.md))**: when a recruiter sends an offer, an `offers` row is created with a unique `public_token`; the candidate receives an email with a link to `/offer/<token>` where they review the structured terms (role title, optional compensation amount / currency / period, optional start and respond-by dates, plain-text body, optional recruiter note) and accept or decline directly. Decline can carry an optional free-text reason. Offer acceptance moves the application to "hired" via the same path as a recruiter-initiated status change. |
 | Data subject categories | Candidates applying via the public apply form. |
 | Personal data categories | All of P-1 above, plus the **IP address** of the submitting browser, retained alongside the application for abuse-prevention purposes (see Privacy §2.4). The candidate is told this in the GDPR Art. 13 notice rendered above the submit button ([G-002](../issues-found.md)). The per-application `public_token` is an opaque 32-char hex string — not personal data on its own; combined with the URL it lets the holder view that one application's abstracted status. |
 | Sub-processors | Supabase; Resend (confirmation email); Cloudflare Turnstile (CAPTCHA); Google Generative AI / Gemini (for P-3 below). |

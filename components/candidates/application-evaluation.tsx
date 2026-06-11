@@ -68,8 +68,14 @@ interface ApplicationEvaluationProps {
   /** Public candidate-facing status page token (G-016). Null for very old rows
    * pre-migration 033 — the Copy-link button hides in that case. */
   publicToken: string | null
+  /** G-018 offers for this application (newest first). */
+  offers: OfferRow[]
+  canManageOffers: boolean
   onRemoved?: (applicationId: string) => void
 }
+
+import type { OfferRow } from '@/components/offers/offer-panel'
+import { OfferPanel } from '@/components/offers/offer-panel'
 
 function calcScore(
   questions: Question[],
@@ -98,6 +104,8 @@ export function ApplicationEvaluation({
   questions,
   existingEvaluation,
   publicToken,
+  offers,
+  canManageOffers,
   onRemoved,
 }: ApplicationEvaluationProps) {
   const [expanded, setExpanded] = useState(false)
@@ -291,6 +299,20 @@ export function ApplicationEvaluation({
         <div className="px-4 pb-3">
           <PipelineMiniBar currentStageCode={appStatus?.code ?? null} />
         </div>
+
+        {/* Offer panel — always visible while there's an active offer or the
+            recruiter has the role to create one. Hidden entirely otherwise so
+            historic applications don't get visual noise. */}
+        {(canManageOffers || offers.length > 0) && (
+          <div className="border-t border-border px-4 pb-3 pt-3">
+            <OfferPanel
+              applicationId={applicationId}
+              vacancyTitle={vacancyTitle}
+              offers={offers}
+              canEdit={canManageOffers}
+            />
+          </div>
+        )}
 
         {/* Expandable evaluation form */}
         {expanded && (
