@@ -1,6 +1,6 @@
 # Records of Processing Activities (ROPA)
 
-_Last updated: 2026-06-17_
+_Last updated: 2026-06-20_
 _Owner: Aleksandre Merabishvili (sole founder + DPO)_
 _GDPR reference: Article 30_
 
@@ -123,7 +123,7 @@ The per-controller list (Art. 30(2)(a) requires naming each controller HRHandle 
 
 | Field | Value |
 |---|---|
-| Categories of processing | Storing, organising, displaying, updating, exporting, and deleting candidate records — names, contact, evaluation scores, recruiter notes — under the recruiter customer's direction. |
+| Categories of processing | Storing, organising, displaying, updating, exporting, and deleting candidate records — names, contact, evaluation scores, recruiter notes — under the recruiter customer's direction. **Scorecard sharing ([G-025](../issues-found.md))**: owners/admins can generate a token-gated public URL at `/scorecard/<token>` to share a candidate's evaluation answers + scores with a non-HRHandle stakeholder (typically a hiring manager who is not on the customer's team). The page exposes only the candidate's full name, role title, organisation name, recruiter-entered evaluation content, and the name + date of whoever first shared. It does NOT expose the candidate's contact information, application status, recruiter notes, AI-generated content, offer details, or audit trail. The token is revocable at any time, after which the URL stops working immediately. |
 | Data subject categories | Candidates (job applicants and passive candidates added by recruiters). |
 | Personal data categories | First and last name; email address; phone; LinkedIn URL; current company and position; years of experience; location; timezone; languages; salary expectation; notice period; source; general status; recruiter-authored notes (with optional `mentions` array of internal teammate ids tagged via @-mention — [G-021](../issues-found.md)); structured evaluation scores; application status history. |
 | Sub-processors | Supabase Postgres (USA). |

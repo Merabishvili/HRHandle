@@ -76,6 +76,7 @@ interface ApplicationEvaluationProps {
 
 import type { OfferRow } from '@/components/offers/offer-panel'
 import { OfferPanel } from '@/components/offers/offer-panel'
+import { ShareScorecardButton } from '@/components/scorecards/share-scorecard-button'
 
 function calcScore(
   questions: Question[],
@@ -281,6 +282,17 @@ export function ApplicationEvaluation({
               >
                 {statusLinkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <LinkIcon className="h-3.5 w-3.5" />}
               </Button>
+            )}
+
+            {/* G-025: Share scorecard with someone outside HRHandle. Only
+                useful once the evaluation has at least one saved answer; the
+                button stays out of the way otherwise. */}
+            {canManageOffers && existingEvaluation && (
+              <ShareScorecardButton
+                applicationId={applicationId}
+                candidateName={candidateName}
+                vacancyTitle={vacancyTitle}
+              />
             )}
 
             <Button

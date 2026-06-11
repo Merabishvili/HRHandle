@@ -138,6 +138,21 @@ export default function PrivacyPage() {
               other candidate&apos;s data and does not show recruiter-internal notes,
               evaluation scores, or audit trail.
             </p>
+            <p className="mt-2">
+              When a recruiter chooses to share a candidate&apos;s evaluation
+              scorecard with someone outside HRHandle (typically a hiring manager
+              or executive who does not have an account), we generate a separate
+              token-gated page at <span className="font-mono text-sm">/scorecard/&lt;token&gt;</span> on
+              this Service. The page shows only the candidate&apos;s full name,
+              the role title, the recruiting organisation&apos;s name, the
+              evaluation answers and per-question scores entered by the
+              recruiter, and the name + date of the recruiter who first shared
+              it. It does <strong>not</strong> show the candidate&apos;s email,
+              phone, LinkedIn, application status, recruiter notes, AI-generated
+              content, offer terms, or any other recruiter-internal data. The
+              recruiter can revoke the link at any time, at which point the URL
+              stops working immediately.
+            </p>
           </section>
 
           <section>
