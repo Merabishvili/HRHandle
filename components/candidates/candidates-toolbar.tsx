@@ -19,12 +19,15 @@ import {
   DEFAULT_CANDIDATE_COLUMNS,
   CANDIDATE_SORT_OPTIONS,
 } from '@/lib/types/columns'
+import { SavedViewsMenu } from '@/components/saved-views/saved-views-menu'
+import type { SavedView } from '@/lib/actions/saved-views'
 
 interface CandidatesToolbarProps {
   initialSearch: string
   initialSort: string
   initialStatus: string
   selectedColumns: string[]
+  savedViews: SavedView[]
 }
 
 const FIXED_COLUMNS = [
@@ -37,6 +40,7 @@ export function CandidatesToolbar({
   initialSearch,
   initialSort,
   selectedColumns: initialColumns,
+  savedViews,
 }: CandidatesToolbarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -88,6 +92,12 @@ export function CandidatesToolbar({
             className="pl-9"
           />
         </div>
+
+        <SavedViewsMenu
+          kind="candidates"
+          views={savedViews}
+          currentParams={Object.fromEntries(searchParams.entries())}
+        />
 
         <Select value={initialSort || 'created_desc'} onValueChange={handleSortChange}>
           <SelectTrigger className="w-[240px]">

@@ -74,6 +74,7 @@ _Last updated: 2026-05-08_
 | 🆕 Status auto-emails | Per-org opt-in transactional emails when an application moves into Screening or Interview | `lib/actions/applications.ts#updateApplicationStatus`, `lib/applications-status-emails.ts` |
 | 🆕 Bulk move-to-stage | Vacancy applications toolbar "Move to stage ▾" dropdown lets recruiters move multiple selected applications to a chosen status at once; 50-row cap; skips rows already at the target | `components/vacancies/bulk-move-dialog.tsx`, `components/vacancies/vacancy-applications-list.tsx`, `lib/actions/applications.ts#moveApplicationsBatch`, `lib/applications/batch.ts` |
 | 🆕 Scorecard sharing | Token-gated public page at `/scorecard/<token>` lets owners/admins share a candidate's evaluation answers + scores with a non-HRHandle stakeholder; lazy token generation; revocable; stable first-sharer attribution across revoke/re-share; hides contact info / status / notes / AI / offer details / audit | `app/scorecard/[token]/page.tsx`, `components/scorecards/share-scorecard-dialog.tsx`, `components/scorecards/share-scorecard-button.tsx`, `lib/actions/scorecards.ts`, `lib/scorecards/projection.ts` |
+| 🆕 Saved filter views | Per-user, per-list-kind saved filter combinations on the candidates and vacancies list pages; loaded from a dropdown; inline Update / Rename / Delete on the active view; "Modified" badge when filters diverge | `components/saved-views/saved-views-menu.tsx`, `lib/actions/saved-views.ts`, `lib/saved-views/filter-encoding.ts`, `lib/saved-views/list-kinds.ts` |
 
 ## Offers
 

@@ -1,6 +1,6 @@
 # HRHandle — Product Roadmap
 
-_Last updated: 2026-06-20_
+_Last updated: 2026-06-21_
 _Owner: Aleksandre Merabishvili_
 
 This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
@@ -98,7 +98,7 @@ Real features competing ATSes have that HRHandle does not. Some are 1–2 day wi
 
 - ⚪ **Bulk operations beyond batch reject** — bulk add tags + bulk assign to a vacancy (bulk move-to-stage shipped 2026-06-19 as G-024).
 - ✅ Global search across candidates / vacancies / notes (cmd-K) — shipped 2026-06-18 as G-023.
-- ⚪ **Saved filters / smart lists** — recruiter saves a filter combination ("Frontend engineers in Tbilisi") as a named view.
+- ✅ Saved filters / smart lists — shipped 2026-06-21 as G-026.
 - ✅ Internal @-mentions in notes — shipped 2026-06-17 as G-021.
 - ⚪ **CSV import** — bulk candidate import to complement the existing CSV export.
 - ⚪ **Reference checks workflow** — request, collect, store references against a candidate.
@@ -171,7 +171,7 @@ Order: easy-to-hard.
 3. ✅ Candidate withdraw button on `/status/[token]` — shipped 2026-06-17 as G-022.
 4. ✅ Global search (cmd-K) — shipped 2026-06-18 as G-023. Uses `ilike` rather than full-text; upgrade path to FTS documented in `lib/search/query.ts` for when an org passes ~5K rows.
 5. ✅ Bulk move-to-stage — shipped 2026-06-19 as G-024. Bulk-add-tags still on the list under "Workflow" ATS gaps below.
-6. **Saved filters / smart lists** — recruiter saves a filter combination as a named view. New `saved_views` table.
+6. ✅ Saved filters / smart lists — shipped 2026-06-21 as G-026. Per-user; cross-org sharing deferred to a v2.
 7. **CSV import** — bulk candidate import to mirror the existing CSV export.
 8. ✅ Scorecard sharing — shipped 2026-06-20 as G-025. Third token-page (status, offer, scorecard) all using the same admin-client + 404-not-deleted risk model.
 
@@ -246,3 +246,4 @@ When other phases are in flight, batch:
 | 2026-06-18 | Phase 3.4 shipped: global cmd-K search across candidates / vacancies / notes (G-023). Uses `ilike` rather than tsvector — FTS upgrade path is documented for when an org passes ~5K rows. | Aleksandre Merabishvili |
 | 2026-06-19 | Phase 3.5 shipped: bulk move-to-stage on the vacancy applications toolbar (G-024). Bulk-add-tags + bulk-assign-to-vacancy remain on the ATS gaps list for later. | Aleksandre Merabishvili |
 | 2026-06-20 | Phase 3.8 shipped: scorecard sharing via token-gated `/scorecard/<token>` (G-025). Third token-page in a row using the same admin-client + 404-not-deleted risk model as G-016 status and G-018 offer. Remaining Phase 3 items: 3.6 saved filters, 3.7 CSV import. | Aleksandre Merabishvili |
+| 2026-06-21 | Phase 3.6 shipped: saved filter views per-recruiter-per-list-kind on the candidates and vacancies list pages (G-026). Cross-org sharing deferred. Last Phase 3 item is 3.7 CSV import. | Aleksandre Merabishvili |

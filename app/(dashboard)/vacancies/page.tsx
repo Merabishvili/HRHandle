@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getVacancyStatuses } from '@/lib/cache/lookups'
+import { listSavedViews } from '@/lib/actions/saved-views'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -124,6 +125,7 @@ export default async function VacanciesPage({
     : DEFAULT_VACANCY_COLUMNS
 
   const statusOptions = (await getVacancyStatuses()) as VacancyStatusOption[]
+  const savedViewsResult = await listSavedViews('vacancies')
   const statusMap = new Map(statusOptions.map((s) => [s.id, s]))
 
   const FIELDS = `
@@ -248,6 +250,7 @@ export default async function VacanciesPage({
         initialSearch={search}
         initialSort={sort}
         selectedColumns={activeColumns}
+        savedViews={savedViewsResult.success ? savedViewsResult.data : []}
       />
 
       <div className="flex items-center justify-between gap-4">
