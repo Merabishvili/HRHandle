@@ -6,6 +6,7 @@ import { isOrgAdmin } from '@/lib/permissions'
 import {
   DEFAULT_TEMPLATES,
   resolveTemplate,
+  isOptInTemplate,
   type TemplateType,
   type EmailTemplate,
 } from '@/lib/email-template-utils'
@@ -18,7 +19,7 @@ export async function getEmailTemplates(): Promise<
 
   const { data } = await ctx.supabase
     .from('email_templates')
-    .select('template_type, subject, body')
+    .select('template_type, subject, body, is_enabled')
     .eq('organization_id', ctx.orgId)
 
   const saved: Partial<Record<TemplateType, EmailTemplate>> = {}
@@ -26,10 +27,24 @@ export async function getEmailTemplates(): Promise<
     saved[row.template_type as TemplateType] = row as EmailTemplate
   }
 
+  // For the always-on legacy template types, missing rows fall back to default
+  // and is_enabled defaults to true. For opt-IN types (status_change_*),
+  // missing rows return the default body but is_enabled defaults to false so
+  // the UI shows the feature as off until the admin toggles it on.
+  const resolveWithFlag = (type: TemplateType): EmailTemplate => {
+    const row = saved[type]
+    const base = resolveTemplate(row ?? null, type)
+    const isEnabled =
+      typeof row?.is_enabled === 'boolean' ? row.is_enabled : !isOptInTemplate(type)
+    return { ...base, is_enabled: isEnabled }
+  }
+
   const result: Record<TemplateType, EmailTemplate> = {
-    application_received: resolveTemplate(saved.application_received ?? null, 'application_received'),
-    interview_invitation: resolveTemplate(saved.interview_invitation ?? null, 'interview_invitation'),
-    rejection: resolveTemplate(saved.rejection ?? null, 'rejection'),
+    application_received: resolveWithFlag('application_received'),
+    interview_invitation: resolveWithFlag('interview_invitation'),
+    rejection: resolveWithFlag('rejection'),
+    status_change_screening: resolveWithFlag('status_change_screening'),
+    status_change_interview: resolveWithFlag('status_change_interview'),
   }
 
   return { success: true, data: result }
@@ -63,6 +78,19 @@ export async function saveEmailTemplate(
   if (!trimmedBody) return { success: false, error: 'Message body is required.' }
   if (trimmedBody.length > 10000) return { success: false, error: 'Message body must be 10,000 characters or fewer.' }
 
+  // Preserve existing is_enabled on update. For brand-new rows, default to
+  // false for opt-in types (admins enable via the toggle separately) and true
+  // for always-on legacy types so they keep firing as before.
+  const { data: existing } = await ctx.supabase
+    .from('email_templates')
+    .select('is_enabled')
+    .eq('organization_id', ctx.orgId)
+    .eq('template_type', templateType)
+    .maybeSingle()
+
+  const isEnabled =
+    existing?.is_enabled ?? (isOptInTemplate(templateType) ? false : true)
+
   const { error } = await ctx.supabase
     .from('email_templates')
     .upsert(
@@ -71,12 +99,60 @@ export async function saveEmailTemplate(
         template_type: templateType,
         subject: trimmedSubject,
         body: trimmedBody,
+        is_enabled: isEnabled,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'organization_id,template_type' }
     )
 
   if (error) return { success: false, error: 'Failed to save email template. Please try again.' }
+
+  revalidatePath('/settings/email-templates')
+  return { success: true, data: undefined }
+}
+
+/** Toggle the is_enabled flag on a template row. For opt-in templates, this is
+ * the gate the auto-email send logic checks. If no row exists yet, this
+ * creates one with the default body so the toggle has somewhere to live. */
+export async function setEmailTemplateEnabled(
+  templateType: TemplateType,
+  isEnabled: boolean
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  if (!isOrgAdmin(ctx.role)) {
+    return { success: false, error: 'Only admins can edit email templates.' }
+  }
+
+  // Read the current row so we preserve any custom subject/body the admin
+  // already saved. Falls back to the platform default if no row yet.
+  const { data: existing } = await ctx.supabase
+    .from('email_templates')
+    .select('subject, body')
+    .eq('organization_id', ctx.orgId)
+    .eq('template_type', templateType)
+    .maybeSingle()
+
+  const fallback = DEFAULT_TEMPLATES[templateType]
+  const subject = existing?.subject ?? fallback.subject
+  const body = existing?.body ?? fallback.body
+
+  const { error } = await ctx.supabase
+    .from('email_templates')
+    .upsert(
+      {
+        organization_id: ctx.orgId,
+        template_type: templateType,
+        subject,
+        body,
+        is_enabled: isEnabled,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'organization_id,template_type' }
+    )
+
+  if (error) return { success: false, error: 'Failed to update email template.' }
 
   revalidatePath('/settings/email-templates')
   return { success: true, data: undefined }

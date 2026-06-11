@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
-import { sendApplicationRejectionEmail } from '@/lib/email'
+import { sendApplicationRejectionEmail, sendApplicationStatusChangedEmail } from '@/lib/email'
+import { shouldEmailForTransition } from '@/lib/applications-status-emails'
 import { writeAuditLog } from '@/lib/audit-log'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import {
@@ -32,10 +33,11 @@ export async function updateApplicationStatus(
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  // Fetch application to get candidate_id + previous status code for audit log
+  // Fetch application to get candidate_id + previous status code + sort_order for audit log
+  // and the auto-email forward-direction gate.
   const { data: application } = await ctx.supabase
     .from('applications')
-    .select('id, candidate_id, status_id, application_statuses ( code )')
+    .select('id, candidate_id, status_id, application_statuses ( code, sort_order )')
     .eq('id', applicationId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
@@ -43,9 +45,14 @@ export async function updateApplicationStatus(
 
   if (!application) return { success: false, error: 'Application not found' }
 
-  type StatusJoin = { code: string } | { code: string }[] | null
+  type StatusJoin =
+    | { code: string; sort_order: number }
+    | { code: string; sort_order: number }[]
+    | null
   const beforeJoin = application.application_statuses as StatusJoin
-  const beforeCode = Array.isArray(beforeJoin) ? beforeJoin[0]?.code : beforeJoin?.code
+  const beforeRow = Array.isArray(beforeJoin) ? beforeJoin[0] : beforeJoin
+  const beforeCode = beforeRow?.code
+  const beforeSortOrder = beforeRow?.sort_order ?? null
 
   const { error } = await ctx.supabase
     .from('applications')
@@ -62,7 +69,7 @@ export async function updateApplicationStatus(
   // Sync candidate general_status based on application pipeline stage
   const { data: newStatus } = await ctx.supabase
     .from('application_statuses')
-    .select('code')
+    .select('code, sort_order')
     .eq('id', newStatusId)
     .single()
 
@@ -181,6 +188,83 @@ export async function updateApplicationStatus(
         }
       }
     }
+  }
+
+  // ── G-017: Auto-email the candidate on a forward move into screening or
+  // interview, if the org has opted in by saving a template row for that type.
+  // Wrapped end-to-end in try/catch — email failures must never block the
+  // status update or surface as a user-facing error.
+  try {
+    const target = shouldEmailForTransition(
+      beforeCode,
+      newStatus?.code,
+      beforeSortOrder,
+      newStatus?.sort_order ?? null,
+    )
+
+    if (target) {
+      // Lookup the org's template row. If absent, opt-IN is OFF → skip.
+      const { data: templateRow } = await ctx.supabase
+        .from('email_templates')
+        .select('subject, body, is_enabled')
+        .eq('organization_id', ctx.orgId)
+        .eq('template_type', target.type)
+        .maybeSingle()
+
+      if (templateRow && templateRow.is_enabled !== false) {
+        const [{ data: candidate }, { data: appJoin }, { data: org }] = await Promise.all([
+          ctx.supabase
+            .from('candidates')
+            .select('first_name, last_name, email')
+            .eq('id', application.candidate_id)
+            .single(),
+          ctx.supabase
+            .from('applications')
+            .select('public_token, vacancies ( title )')
+            .eq('id', applicationId)
+            .single(),
+          ctx.supabase
+            .from('organizations')
+            .select('name')
+            .eq('id', ctx.orgId)
+            .single(),
+        ])
+
+        type VacJoin = { title: string } | { title: string }[] | null
+        const vac = appJoin?.vacancies as VacJoin
+        const vacancyTitle = (Array.isArray(vac) ? vac[0]?.title : vac?.title) ?? 'the role'
+        const publicToken = (appJoin?.public_token as string | null | undefined) ?? null
+
+        if (candidate?.email) {
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+          await sendApplicationStatusChangedEmail({
+            to: candidate.email,
+            candidateName: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim() || 'there',
+            vacancyTitle,
+            organizationName: org?.name || 'the company',
+            stage: target.stage,
+            statusUrl: publicToken ? `${baseUrl}/status/${publicToken}` : undefined,
+            customSubject: templateRow.subject || undefined,
+            customBody: templateRow.body || undefined,
+          })
+
+          void writeAuditLog({
+            orgId: ctx.orgId,
+            userId: ctx.userId,
+            entityType: 'application',
+            entityId: applicationId,
+            action: 'status_change_email_sent',
+            message: `auto-email sent for transition to ${newStatus?.code ?? target.stage}`,
+            details: {
+              candidate_id: application.candidate_id,
+              stage: target.stage,
+            },
+          })
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[applications] status-change auto-email failed:', err)
   }
 
   revalidatePath('/vacancies/[id]/pipeline', 'page')

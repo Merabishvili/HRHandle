@@ -6,23 +6,45 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { saveEmailTemplate, resetEmailTemplate } from '@/lib/actions/email-templates'
-import { DEFAULT_TEMPLATES, type TemplateType, type EmailTemplate } from '@/lib/email-template-utils'
+import { saveEmailTemplate, resetEmailTemplate, setEmailTemplateEnabled } from '@/lib/actions/email-templates'
+import {
+  DEFAULT_TEMPLATES,
+  isOptInTemplate,
+  type TemplateType,
+  type EmailTemplate,
+} from '@/lib/email-template-utils'
 import { Loader2, RotateCcw, Save } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 import { RejectionTemplatesManager } from '@/components/settings/rejection-templates-manager'
 import type { RejectionTemplate } from '@/lib/actions/rejection-templates'
 import type { RejectionReason } from '@/lib/actions/rejection-reasons'
 
-const TEMPLATE_META: Partial<Record<TemplateType, { label: string; description: string; variables: string[] }>> = {
+const TEMPLATE_META: Partial<Record<TemplateType, { label: string; description: string; variables: string[]; previewHeading?: string }>> = {
   application_received: {
     label: 'Application Received',
     description: 'Sent to a candidate after they apply via the public apply link.',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}'],
+    previewHeading: 'Thanks for Applying!',
   },
   interview_invitation: {
     label: 'Interview Invitation',
     description: 'Sent to a candidate when an interview is scheduled with "Send email" checked.',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{interview_date}}', '{{interview_time}}', '{{meeting_link}}'],
+    previewHeading: 'Interview Invitation',
+  },
+  status_change_screening: {
+    label: 'Status: Under review',
+    description:
+      'Sent automatically when a recruiter moves an application to the "Screening" stage. Disabled by default — toggle on below to opt in. Each candidate gets a link back to their status page.',
+    variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{status_url}}'],
+    previewHeading: 'Your application is under review',
+  },
+  status_change_interview: {
+    label: 'Status: Interview stage',
+    description:
+      'Sent automatically when a recruiter moves an application to the "Interview" stage. Disabled by default — toggle on below to opt in. The recruiter still emails interview details separately.',
+    variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{status_url}}'],
+    previewHeading: 'Moving to the interview stage',
   },
 }
 
@@ -50,6 +72,17 @@ function TemplateEditor({
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [isEnabled, setIsEnabled] = useState<boolean>(initial.is_enabled ?? !isOptInTemplate(type))
+  const optIn = isOptInTemplate(type)
+
+  const handleToggleEnabled = (next: boolean) => {
+    setError(null)
+    startTransition(async () => {
+      const result = await setEmailTemplateEnabled(type, next)
+      if (!result.success) { setError(result.error); return }
+      setIsEnabled(next)
+    })
+  }
 
   const isModified = subject !== defaults.subject || body !== defaults.body
 
@@ -99,6 +132,27 @@ function TemplateEditor({
           ))}
         </div>
       </div>
+
+      {optIn && (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {isEnabled ? 'Auto-email is on' : 'Auto-email is off'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {isEnabled
+                ? 'Candidates will receive this email automatically when an application moves to this stage.'
+                : 'No email will be sent for this transition. Recruiters can still email candidates manually.'}
+            </p>
+          </div>
+          <Switch
+            checked={isEnabled}
+            onCheckedChange={handleToggleEnabled}
+            disabled={isPending}
+            aria-label="Enable auto-email for this status change"
+          />
+        </div>
+      )}
 
       {error && (
         <Alert variant="destructive">
@@ -157,7 +211,7 @@ function TemplateEditor({
             </div>
             <div className="border-t border-border pt-3 space-y-2 text-gray-700">
               <p className="font-semibold text-gray-900">
-                {type === 'application_received' ? 'Thanks for Applying!' : 'Interview Invitation'}
+                {meta.previewHeading ?? meta.label}
               </p>
               <p>Dear <strong>Jane Smith</strong>,</p>
               <p>{previewBody}</p>
@@ -185,6 +239,8 @@ export function EmailTemplatesManager({ initialTemplates, initialRejectionTempla
     { id: 'application_received', label: 'Application Received' },
     { id: 'interview_invitation', label: 'Interview Invitation' },
     { id: 'rejection', label: 'Rejection' },
+    { id: 'status_change_screening', label: 'Status: Under review' },
+    { id: 'status_change_interview', label: 'Status: Interview' },
   ]
 
   return (

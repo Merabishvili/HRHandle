@@ -104,6 +104,16 @@ export default function PrivacyPage() {
               purge ([G-003](https://github.com/Merabishvili/HRHandle/blob/main/docs/issues-found.md))
               if the application is soft-deleted.
             </p>
+            <p className="mt-2">
+              In addition, recruiters can opt their organisation in to two automatic
+              status-change emails: one when an application moves to the &quot;Under review&quot;
+              stage and one when it moves to the &quot;Interview&quot; stage. Each email
+              contains the role title, employer, and the candidate&apos;s status page link.
+              These emails are off by default and only fire when an admin saves a template
+              and toggles them on in HRHandle&apos;s settings; no other status transitions
+              produce automatic emails (offers, hires, rejections, and withdrawals are
+              handled by the recruiter directly).
+            </p>
           </section>
 
           <section>
