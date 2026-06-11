@@ -160,8 +160,108 @@ Listed here for memory, not action. See [issues-found.md](../issues-found.md) fo
 
 ---
 
+## Execution sequence
+
+Sorted top-down. Each phase is self-contained — finish it before starting the next, except where noted. Billing is intentionally last.
+
+Two cross-cutting rules:
+- **Always-on**: keep `docs/issues-found.md` audit hygiene up to date; any new bug found mid-phase gets a row.
+- **WCAG audit (AC-012) and strict tsconfig cleanup (C-012/A-007)** are tech-debt items that can be interleaved opportunistically — don't wait for a dedicated phase.
+
+### Phase 1 — Operational completeness (finish what's plumbed)
+
+Small effort, real value because the data plumbing already exists.
+
+1. **Audit-log viewer UI** (`/settings/audit-log`) — `activity_log` is already written to from every meaningful action; this just exposes it. ~1 day. Compliance + admin trust win.
+2. **Restore-from-trash UI** (`/settings/trash`) — `restored_at` / `restored_by` columns exist (migration 030). BL-007 left `application_ids` in the candidate-delete audit row so restore can cascade. ~2 days.
+3. **Email tracking toggle** — Resend supports opens/clicks; expose as a per-org switch on `/settings/email-templates`. ~half day.
+
+### Phase 2 — Offer process
+
+Biggest single product gap. Closes the workflow from "applied" to "hired" without recruiters leaving the app. Multi-step PR sequence:
+
+1. **Schema + actions** — `offers` table (1:1 with `applications`), create/update server actions, audit-logged. ~2 days.
+2. **Offer letter generation** — HTML email + printable PDF from a per-org template (extend `email_templates` with an `offer` type). Reuse the AI email drafter's "improve my draft" mode. ~2 days.
+3. **Candidate-facing `/offer/<token>`** — accept / decline page mirroring the G-016 status-page token pattern. Status updates flow back into the application + the candidate's general status (`hired` on accept). ~2 days.
+4. **Recruiter UI** — offer panel on the application row + candidate detail page. ~2 days.
+
+Total ~1.5 weeks. Track as G-018.
+
+### Phase 3 — Recruiter productivity (ATS table-stakes)
+
+Things competitors have. Order by easy-to-hard:
+
+1. **Email tracking** *(if not done in Phase 1)*.
+2. **Internal @-mentions** in candidate notes + interview notes. Reuses the existing `notifications` table.
+3. **Candidate withdraw button** on `/status/[token]` — G-016 follow-up. Tiny.
+4. **Global search** (cmd-K) across candidates / vacancies / notes. Postgres full-text on the existing columns.
+5. **Bulk operations beyond batch reject** — bulk move-to-stage, bulk add tags. Extends the existing selection-state pattern.
+6. **Saved filters / smart lists** — recruiter saves a filter combination as a named view. New `saved_views` table.
+7. **CSV import** — bulk candidate import to mirror the existing CSV export.
+8. **Scorecard sharing** — token-based read-only link to a candidate's evaluation, for hiring managers who aren't HRHandle users.
+
+### Phase 4 — Reporting
+
+Analytics for recruiters and managers. The data exists; this is just queries + charts. Order by value:
+
+1. **Pipeline conversion** — applied → screening → interview → offer → hired funnel per vacancy.
+2. **Time-to-hire** per vacancy / per role family / per recruiter.
+3. **Source effectiveness** — which sources (public form, LinkedIn, manual, referrals) produce the most hires.
+4. *(Deliberately skip "recruiter productivity" metrics for now — feels surveillance-y for a small team.)*
+
+### Phase 5 — Integrations
+
+Where customers want HRHandle to plug in. Order by user demand × build effort:
+
+1. **Slack / Teams notifications** — org-level webhook for events. Builds on the existing `createOrgNotifications` plumbing.
+2. **Calendly / Cal.com integration** — candidate self-serve interview scheduling once the recruiter advances them to "Interview".
+3. **LinkedIn jobs auto-cross-post** — extends the existing LinkedIn page-post integration.
+4. **Reference checks workflow** — request, collect, store references against a candidate.
+
+### Phase 6 — Identity & SSO
+
+Required for enterprise sales.
+
+1. **2FA / TOTP** for recruiter accounts. Supabase Auth supports MFA — opt-in per user, mandatory per org for owner/admin roles.
+2. **SSO (SAML)** for enterprise customers — needs WorkOS or Auth0 integration.
+
+### Phase 7 — Multi-language UI (i18n)
+
+Decoupled from the rest. Triggered by a market-launch decision. Strategy already sketched at the top of "Big features".
+
+Sub-sequence when it lands:
+1. `next-intl` setup + locale routing.
+2. Public surfaces first — `/apply/[token]` and `/status/[token]`.
+3. Recruiter dashboard surfaces.
+4. Email templates.
+
+### Phase 8 — AI screening
+
+Blocked on the EU AI Act risk-management framework for higher-risk features. Don't start until that framework exists.
+
+### Phase 9 — Tech debt (one focused PR pass)
+
+When other phases are in flight, batch:
+1. WCAG accessibility audit (AC-012) — browser-based contrast measurement.
+2. Strict tsconfig (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) — 87 errors across ~40 files; needs a dedicated cleanup PR.
+3. Component splits (A-002, A-005) — bundle with a `react-hook-form` migration.
+4. Keyset / cursor pagination (F-009 follow-up) — only when an org passes ~5K rows.
+
+### Phase 10 — Billing & subscription
+
+**Intentionally last.** Until billing is wired, every billing-adjacent item stays parked.
+
+1. **Billing provider wiring** — LemonSqueezy (already documented in `docs/4-integrations/lemonsqueezy.md`) or Stripe.
+2. **F-004 — Cancel subscription UI** with confirmation flow.
+3. **BL-004 — `PLAN_LIMIT` structured error code + upgrade CTA** on every plan-limited action.
+4. **C-007 / C-008 — Move hardcoded plan limits + campaign config out of code** into a DB-backed plans table.
+5. **Self-serve upgrade flow** with prorated billing changes.
+
+---
+
 ## Changelog
 
 | Date | Change | Reviewer |
 |---|---|---|
 | 2026-06-14 | Initial creation. Pulled in the AI features bundle, candidate-facing experience bundle, compliance work, and the polish PRs as "recently shipped". Recorded offer process + multi-language UI as the founder's top two new ideas. Listed common ATS gaps that nobody has filed yet. | Aleksandre Merabishvili |
+| 2026-06-14 | Added "Execution sequence" section with ten phases. Phase 1 (operational completeness) → Phase 2 (offer process) → Phases 3–5 (productivity, reporting, integrations) → Phase 6 (identity) → Phase 7 (i18n, decoupled) → Phase 8 (AI screening, blocked) → Phase 9 (tech debt) → Phase 10 (billing, intentionally last). | Aleksandre Merabishvili |
