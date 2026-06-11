@@ -133,6 +133,8 @@ _Last updated: 2026-05-08_
 | Zoom | Connect/disconnect Zoom for meeting creation | `components/settings/zoom-connect.tsx` |
 | Microsoft | Connect/disconnect Microsoft/Teams | `components/settings/microsoft-connect.tsx` |
 | Column preferences | Choose which columns appear in candidate/vacancy lists | `components/shared/column-manager-dialog.tsx`, `lib/actions/preferences.ts` |
+| 🆕 Audit log | Owner/admin read-only viewer over `activity_log` with action/entity/user/date filters, paginated, with CSV export | `app/(dashboard)/settings/audit-log/page.tsx`, `components/settings/audit-log-table.tsx`, `components/settings/audit-log-filters.tsx`, `app/api/export/audit-log/route.ts`, `lib/actions/audit-log.ts`, `lib/audit-log/filter.ts` |
+| 🆕 Trash | Owner/admin page listing soft-deleted candidates and vacancies; per-row Restore (cascade-undeletes the candidate's applications using BL-007's audit row) and Delete-now (skips the 30-day grace) | `app/(dashboard)/settings/trash/page.tsx`, `components/settings/trash-list.tsx`, `lib/actions/restore.ts`, `lib/trash/impact.ts` |
 
 ## Notifications
 

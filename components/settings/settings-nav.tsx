@@ -12,6 +12,8 @@ import {
   XCircle,
   Plug,
   CreditCard,
+  ListChecks,
+  Trash2,
 } from 'lucide-react'
 
 interface NavItem {
@@ -30,6 +32,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/settings/email-templates',   label: 'Email Templates',   icon: Mail,       adminOnly: true },
   { href: '/settings/rejection-reasons', label: 'Rejection Reasons', icon: XCircle,    adminOnly: true },
   { href: '/settings/integrations',      label: 'Integrations',      icon: Plug },
+  { href: '/settings/audit-log',         label: 'Audit log',         icon: ListChecks, adminOnly: true },
+  { href: '/settings/trash',             label: 'Trash',             icon: Trash2,     adminOnly: true },
   { href: '/settings/billing',           label: 'Billing',           icon: CreditCard, ownerOnly: true },
 ]
 
