@@ -60,6 +60,7 @@ interface ApplicationRow {
   applied_at: string
   updated_at: string
   created_by: string | null
+  public_token: string | null
 }
 
 interface VacancyOption {
@@ -195,7 +196,7 @@ export default async function CandidateDetailPage({
   // Applications + vacancies
   const { data: applicationsRaw } = await supabase
     .from('applications')
-    .select('id, candidate_id, vacancy_id, status_id, applied_at, updated_at, created_by')
+    .select('id, candidate_id, vacancy_id, status_id, applied_at, updated_at, created_by, public_token')
     .eq('organization_id', organizationId)
     .eq('candidate_id', id)
     .is('deleted_at', null)
@@ -435,6 +436,7 @@ export default async function CandidateDetailPage({
                   appStatus: appStatus ?? null,
                   questions: questionsByVacancy.get(app.vacancy_id) ?? [],
                   existingEvaluation: evaluationsByApp.get(app.id) ?? null,
+                  publicToken: app.public_token,
                 }
               })}
             />

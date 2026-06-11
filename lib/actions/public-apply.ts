@@ -235,7 +235,10 @@ export async function submitPublicApplication(
     .single()
 
   // ── 12. Create application ─────────────────────────────────────────────────
-  const { error: appError } = await supabase
+  // public_token is the candidate-facing status page key (G-016). Generated
+  // here at INSERT time so the link goes into the confirmation email below.
+  const publicToken = crypto.randomUUID().replace(/-/g, '')
+  const { data: newApp, error: appError } = await supabase
     .from('applications')
     .insert({
       organization_id: orgId,
@@ -244,9 +247,12 @@ export async function submitPublicApplication(
       status_id: appliedStatus?.id || null,
       ip_address: ipRaw !== 'unknown' ? ipRaw : null,
       source_type: 'public_form',
+      public_token: publicToken,
     })
+    .select('id, public_token')
+    .single()
 
-  if (appError) {
+  if (appError || !newApp) {
     // Roll back newly-created candidate to avoid orphaned records
     if (isNewCandidate) {
       await supabase.from('candidates').delete().eq('id', candidateId)
@@ -385,6 +391,7 @@ export async function submitPublicApplication(
         .maybeSingle(),
     ])
 
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     await sendApplicationConfirmationEmail({
       to: email,
       candidateName: `${firstName} ${lastName}`,
@@ -392,6 +399,7 @@ export async function submitPublicApplication(
       organizationName: org?.name || 'the company',
       customSubject: templateRow?.subject,
       customBody: templateRow?.body,
+      statusUrl: `${baseUrl}/status/${newApp.public_token}`,
     })
   } catch {
     // Email failure is non-fatal

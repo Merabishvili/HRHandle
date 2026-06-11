@@ -1,6 +1,6 @@
 # Records of Processing Activities (ROPA)
 
-_Last updated: 2026-06-09_
+_Last updated: 2026-06-11_
 _Owner: Aleksandre Merabishvili (sole founder + DPO)_
 _GDPR reference: Article 30_
 
@@ -135,11 +135,11 @@ The per-controller list (Art. 30(2)(a) requires naming each controller HRHandle 
 
 | Field | Value |
 |---|---|
-| Categories of processing | Receiving anonymous applications from candidates through the customer's public apply page, creating a candidate record + application record, sending the candidate a confirmation email. |
+| Categories of processing | Receiving anonymous applications from candidates through the customer's public apply page, creating a candidate record + application record (with a per-application `public_token` for the candidate-facing status page — [G-016](../issues-found.md)), sending the candidate a confirmation email that includes the status-page link. |
 | Data subject categories | Candidates applying via the public apply form. |
-| Personal data categories | All of P-1 above, plus the **IP address** of the submitting browser, retained alongside the application for abuse-prevention purposes (see Privacy §2.4). The candidate is told this in the GDPR Art. 13 notice rendered above the submit button ([G-002](../issues-found.md)). |
+| Personal data categories | All of P-1 above, plus the **IP address** of the submitting browser, retained alongside the application for abuse-prevention purposes (see Privacy §2.4). The candidate is told this in the GDPR Art. 13 notice rendered above the submit button ([G-002](../issues-found.md)). The per-application `public_token` is an opaque 32-char hex string — not personal data on its own; combined with the URL it lets the holder view that one application's abstracted status. |
 | Sub-processors | Supabase; Resend (confirmation email); Cloudflare Turnstile (CAPTCHA); Google Generative AI / Gemini (for P-3 below). |
-| Retention | Same as P-1. IP address is deleted with the application record. |
+| Retention | Same as P-1. IP address and `public_token` are deleted with the application record. |
 | Transfer mechanism | SCCs (all sub-processors). |
 | Security (Art. 32) | Turnstile invisible challenge on the form ([S-006 fix](../issues-found.md)); per-IP + per-vacancy rate limits; admin-client usage gated behind token verification ([S-010 rationale](../issues-found.md)). |
 

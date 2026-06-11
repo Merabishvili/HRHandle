@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { ChevronRight, Loader2, CheckCircle2, Clock, Trash2 } from 'lucide-react'
+import { ChevronRight, Loader2, CheckCircle2, Clock, Trash2, Link as LinkIcon, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -65,6 +65,9 @@ interface ApplicationEvaluationProps {
   rejectionTemplates: RejectionTemplate[]
   questions: Question[]
   existingEvaluation: ExistingEvaluation | null
+  /** Public candidate-facing status page token (G-016). Null for very old rows
+   * pre-migration 033 — the Copy-link button hides in that case. */
+  publicToken: string | null
   onRemoved?: (applicationId: string) => void
 }
 
@@ -94,10 +97,24 @@ export function ApplicationEvaluation({
   rejectionTemplates,
   questions,
   existingEvaluation,
+  publicToken,
   onRemoved,
 }: ApplicationEvaluationProps) {
   const [expanded, setExpanded] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [statusLinkCopied, setStatusLinkCopied] = useState(false)
+
+  const copyStatusLink = async () => {
+    if (!publicToken) return
+    const url = `${window.location.origin}/status/${publicToken}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setStatusLinkCopied(true)
+      setTimeout(() => setStatusLinkCopied(false), 1500)
+    } catch (err) {
+      console.error('[application-evaluation] clipboard write failed:', err)
+    }
+  }
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [appStatus, setAppStatus] = useState<AppStatus | null>(initialAppStatus)
@@ -243,6 +260,20 @@ export function ApplicationEvaluation({
                 ))}
               </SelectContent>
             </Select>
+
+            {publicToken && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                onClick={copyStatusLink}
+                disabled={isPending}
+                title="Copy candidate status page link"
+                aria-label="Copy candidate status page link"
+              >
+                {statusLinkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <LinkIcon className="h-3.5 w-3.5" />}
+              </Button>
+            )}
 
             <Button
               size="sm"

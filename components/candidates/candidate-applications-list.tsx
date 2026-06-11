@@ -34,6 +34,9 @@ interface ApplicationItem {
   appStatus: AppStatus | null
   questions: Question[]
   existingEvaluation: ExistingEvaluation | null
+  /** G-016 candidate-facing status page token. Backfilled for historic rows
+   * but kept nullable in the type so a missing migration doesn't crash. */
+  publicToken: string | null
 }
 
 interface Props {
@@ -82,6 +85,7 @@ export function CandidateApplicationsList({
           rejectionTemplates={rejectionTemplates}
           questions={app.questions}
           existingEvaluation={app.existingEvaluation}
+          publicToken={app.publicToken}
           onRemoved={(id) => setApplications((prev) => prev.filter((a) => a.id !== id))}
         />
       ))}

@@ -196,6 +196,7 @@ export async function sendApplicationConfirmationEmail({
   organizationName,
   customSubject,
   customBody,
+  statusUrl,
 }: {
   to: string
   candidateName: string
@@ -203,12 +204,31 @@ export async function sendApplicationConfirmationEmail({
   organizationName: string
   customSubject?: string
   customBody?: string
+  /** Public candidate-facing status URL (G-016). When provided, rendered as a
+   * CTA button under the body. Omitting it keeps the legacy template intact. */
+  statusUrl?: string
 }) {
-  const vars = { candidate_name: candidateName, role: vacancyTitle, company: organizationName }
+  const vars = {
+    candidate_name: candidateName,
+    role: vacancyTitle,
+    company: organizationName,
+    status_url: statusUrl ?? '',
+  }
   const defaults = DEFAULT_TEMPLATES.application_received
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
+  const safeStatusUrl = statusUrl ? escapeHtml(statusUrl) : null
+
+  const statusCta = safeStatusUrl
+    ? `
+    <p style="margin: 0 0 24px;">
+      <a href="${safeStatusUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">Track your application</a>
+    </p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 16px;">
+      Keep this link private — it's the only way to view your status without contacting the recruiter.
+    </p>`
+    : ''
 
   return getResend().emails.send({
     from: FROM,
@@ -225,6 +245,7 @@ export async function sendApplicationConfirmationEmail({
       Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
       ${body}
     </p>
+    ${statusCta}
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
   </div>

@@ -86,6 +86,24 @@ export default function PrivacyPage() {
               are responsible for ensuring you have a lawful basis to collect and store this
               data under applicable law.
             </p>
+
+            <h3 className="mb-2 mt-4 font-medium">2.5 Candidate status page</h3>
+            <p className="mb-2">
+              When a candidate applies for a role, we create a private, token-gated status page
+              at <span className="font-mono text-sm">/status/&lt;token&gt;</span> on this Service
+              that shows only that candidate&apos;s own application status. The token is an
+              opaque 32-character random string and is the only credential to the page — there
+              is no login. The page does <strong>not</strong> show recruiter notes, evaluation
+              scores, internal pipeline stage names, or any other recruiter-internal data; it
+              shows the role title, employer (the recruiting organisation&apos;s name), the date
+              the candidate applied, the date of the last status change, and a simplified
+              status bucket (Applied / In review / Interview / Decision / Closed). Candidates
+              receive the link in the application-confirmation email; recruiters can also
+              re-share it from inside HRHandle. The link can be revoked by the recruiter at
+              any time by removing the application; the token is also deleted by our 30-day
+              purge ([G-003](https://github.com/Merabishvili/HRHandle/blob/main/docs/issues-found.md))
+              if the application is soft-deleted.
+            </p>
           </section>
 
           <section>

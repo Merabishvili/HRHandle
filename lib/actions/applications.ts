@@ -249,6 +249,10 @@ export async function createApplication(input: {
   const appliedStatus = (activeStatusesRaw || []).find((s) => s.code === APPLICATION_STATUS.APPLIED)
   if (!appliedStatus) return { success: false, error: 'Application status configuration missing.' }
 
+  // public_token is the candidate-facing status page key (G-016) — generated
+  // for every new application, including recruiter-added ones, so the link
+  // exists if the recruiter chooses to share it.
+  const publicToken = crypto.randomUUID().replace(/-/g, '')
   const { data, error } = await ctx.supabase
     .from('applications')
     .insert({
@@ -257,6 +261,7 @@ export async function createApplication(input: {
       organization_id: ctx.orgId,
       status_id: appliedStatus.id,
       applied_at: new Date().toISOString(),
+      public_token: publicToken,
     })
     .select('id')
     .single()
