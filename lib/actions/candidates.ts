@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext, checkPlanLimit, type ActionResult } from './index'
 import { CandidateSchema, type CandidateInput } from '@/lib/validations/candidate'
 import { ApplicationSchema } from '@/lib/validations/application'
+import { writeAuditLog } from '@/lib/audit-log'
+import { buildCandidateDeleteAuditDetails } from '@/lib/candidate-delete-cascade'
 
 export async function createCandidate(
   input: CandidateInput,
@@ -123,20 +125,78 @@ export async function updateCandidateStatus(
   return { success: true, data: undefined }
 }
 
+/** Lightweight pre-confirm read used by the delete dialog so the recruiter
+ * sees the impact before they click. Returns the count of non-deleted
+ * applications attached to the candidate, org-scoped. */
+export async function getCandidateDeleteImpact(
+  candidateId: string,
+): Promise<ActionResult<{ activeApplicationCount: number }>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { count, error } = await ctx.supabase
+    .from('applications')
+    .select('id', { count: 'exact', head: true })
+    .eq('candidate_id', candidateId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+
+  if (error) return { success: false, error: 'Failed to load delete impact' }
+
+  return { success: true, data: { activeApplicationCount: count ?? 0 } }
+}
+
 export async function deleteCandidate(id: string): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
+  const now = new Date().toISOString()
+
+  // Cascade-soft-delete the candidate's active applications FIRST. If we
+  // soft-delete the candidate first and the application UPDATE fails, the
+  // vacancy pipelines briefly show "Unknown candidate" zombie rows (BL-007).
+  // The UPDATE ... RETURNING gives us the IDs that were actually changed,
+  // which we record in the audit log so a future restore action can put them
+  // back. Filtering on `deleted_at IS NULL` makes the action idempotent — a
+  // second invocation does not double-count.
+  const { data: cascadedApps, error: appsError } = await ctx.supabase
+    .from('applications')
+    .update({ deleted_at: now })
+    .eq('candidate_id', id)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .select('id')
+
+  if (appsError) {
+    return { success: false, error: 'Failed to delete candidate applications' }
+  }
+
   const { error } = await ctx.supabase
     .from('candidates')
-    .update({ deleted_at: new Date().toISOString() })
+    .update({ deleted_at: now })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to delete candidate' }
 
+  const applicationIds = (cascadedApps ?? []).map((a) => a.id as string)
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'candidate',
+    entityId: id,
+    action: 'candidate_deleted',
+    message:
+      applicationIds.length === 0
+        ? 'candidate soft-deleted'
+        : `candidate soft-deleted with ${applicationIds.length} application(s)`,
+    details: buildCandidateDeleteAuditDetails(applicationIds),
+  })
+
   revalidatePath('/candidates')
+  // Vacancy pipelines may show the candidate's applications — refresh those too.
+  revalidatePath('/vacancies/[id]', 'page')
   return { success: true, data: undefined }
 }
 

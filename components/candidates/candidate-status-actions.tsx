@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { updateCandidateStatus, deleteCandidate } from '@/lib/actions/candidates'
+import { updateCandidateStatus } from '@/lib/actions/candidates'
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { DeleteCandidateDialog } from '@/components/candidates/delete-candidate-dialog'
 
 interface CandidateGeneralStatusOption {
   id: string
@@ -12,30 +14,23 @@ interface CandidateGeneralStatusOption {
 
 interface CandidateStatusActionsProps {
   candidateId: string
+  candidateName: string
   currentStatusId: string | null
   statusOptions: CandidateGeneralStatusOption[]
 }
 
 export function CandidateStatusActions({
   candidateId,
+  candidateName,
   currentStatusId,
   statusOptions,
 }: CandidateStatusActionsProps) {
   const router = useRouter()
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const handleStatusChange = async (generalStatusId: string) => {
     await updateCandidateStatus(candidateId, generalStatusId)
     router.refresh()
-  }
-
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this candidate? This action cannot be undone.')) {
-      return
-    }
-    const result = await deleteCandidate(candidateId)
-    if (result.success) {
-      router.push('/candidates')
-    }
   }
 
   return (
@@ -49,9 +44,24 @@ export function CandidateStatusActions({
           </DropdownMenuItem>
         ))}
       <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+      <DropdownMenuItem
+        // The dropdown menu would otherwise close before the dialog mounts,
+        // so we prevent the default close behaviour and open the dialog
+        // ourselves. Pattern recommended by Radix for "menu item opens dialog".
+        onSelect={(e) => {
+          e.preventDefault()
+          setDeleteOpen(true)
+        }}
+        className="text-destructive"
+      >
         Delete candidate
       </DropdownMenuItem>
+      <DeleteCandidateDialog
+        candidateId={candidateId}
+        candidateName={candidateName}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
     </>
   )
 }

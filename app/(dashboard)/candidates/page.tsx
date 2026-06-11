@@ -484,6 +484,7 @@ export default async function CandidatesPage({
                               </DropdownMenuItem>
                               <CandidateStatusActions
                                 candidateId={candidate.id}
+                                candidateName={`${candidate.first_name} ${candidate.last_name}`.trim() || 'this candidate'}
                                 currentStatusId={candidate.general_status_id}
                                 statusOptions={candidateStatuses}
                               />
