@@ -5,9 +5,16 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Ban, X } from 'lucide-react'
+import { Ban, X, ArrowRight, ChevronDown } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { VacancyApplicationRow } from './vacancy-application-row'
 import { BatchRejectionDialog } from './batch-rejection-dialog'
+import { BulkMoveDialog } from './bulk-move-dialog'
 import type {
   RejectionReason,
   RejectionTemplate,
@@ -63,6 +70,7 @@ export function VacancyApplicationsList({
   const [applications, setApplications] = useState(initial)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [batchDialogOpen, setBatchDialogOpen] = useState(false)
+  const [moveTargetStatus, setMoveTargetStatus] = useState<AppStatus | null>(null)
 
   // Resolve the application_statuses entry for the "rejected" code — needed
   // by the batch action and to grey out already-rejected rows.
@@ -116,6 +124,21 @@ export function VacancyApplicationsList({
   const canBatchReject = !!rejectedStatus
   const selectedCount = selected.size
 
+  // Bulk-move targets: every status EXCEPT the dedicated rejection / withdrawn
+  // codes (each has its own flow), kept in the platform sort_order. Lazily
+  // sorted because allStatuses is small enough that this is cheap.
+  const bulkMoveTargets = useMemo(
+    () =>
+      allStatuses
+        .filter(
+          (s) =>
+            s.code !== APPLICATION_STATUS.REJECTED &&
+            s.code !== APPLICATION_STATUS.WITHDRAWN,
+        )
+        .sort((a, b) => a.sort_order - b.sort_order),
+    [allStatuses],
+  )
+
   if (applications.length === 0) return null
 
   return (
@@ -145,6 +168,25 @@ export function VacancyApplicationsList({
               <X className="mr-1.5 h-3.5 w-3.5" />
               Clear
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
+                  Move to stage
+                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {bulkMoveTargets.map((s) => (
+                  <DropdownMenuItem
+                    key={s.id}
+                    onClick={() => setMoveTargetStatus(s)}
+                  >
+                    {s.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="destructive"
               size="sm"
@@ -209,6 +251,17 @@ export function VacancyApplicationsList({
           onSuccess={handleBatchSuccess}
         />
       )}
+
+      <BulkMoveDialog
+        open={!!moveTargetStatus}
+        onOpenChange={(o) => !o && setMoveTargetStatus(null)}
+        applicationIds={Array.from(selected)}
+        targetStatus={moveTargetStatus}
+        onSuccess={() => {
+          setMoveTargetStatus(null)
+          handleBatchSuccess()
+        }}
+      />
     </>
   )
 }

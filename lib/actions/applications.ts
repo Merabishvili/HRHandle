@@ -721,3 +721,126 @@ export async function rejectApplicationsBatch(input: {
     data: { succeeded, failed: failures.length, failures },
   }
 }
+
+/** Defensive upper bound for one bulk-move call. With ~100ms per
+ * updateApplicationStatus call (auth lookup + status update + audit log +
+ * candidate-status sync + optional email), 50 rows ≈ 5s — sits comfortably
+ * inside Vercel's serverless timeout. If batch sizes ever grow past this,
+ * the obvious next step is to lift `getAuthContext` out of the per-row
+ * call (mirrors the same future refactor sketched on `rejectApplicationsBatch`). */
+const MAX_BULK_MOVE_BATCH = 50
+
+export interface BulkMoveResult {
+  moved: number
+  skipped: number
+  failed: number
+  failures: { id: string; error: string }[]
+}
+
+/**
+ * Bulk move multiple applications to a target status (G-024). Used by the
+ * "Move to stage" dropdown on the vacancy applications toolbar — the
+ * recruiter selects rows, picks a target stage, and we apply the same
+ * per-row updateApplicationStatus path for each one so audit logging,
+ * candidate-status sync, and the opt-in status-change auto-email all fire
+ * without us re-implementing them.
+ *
+ * Per-row outcomes are classified:
+ * - `moved`: the per-row updateApplicationStatus succeeded.
+ * - `skipped`: the row was already at the target status — we detect this
+ *   before calling the action so we don't generate noise audit rows for
+ *   no-op changes.
+ * - `failed`: the per-row call returned an error (RLS, stale state, etc).
+ *
+ * Rejection / withdrawn targets are blocked here because rejection has its
+ * own dedicated `rejectApplicationsBatch` flow (with reason + template +
+ * opt-in email selection) and `withdrawn` is candidate-initiated.
+ */
+export async function moveApplicationsBatch(input: {
+  applicationIds: string[]
+  targetStatusId: string
+}): Promise<ActionResult<BulkMoveResult>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  if (input.applicationIds.length === 0) {
+    return { success: false, error: 'No applications selected' }
+  }
+  if (input.applicationIds.length > MAX_BULK_MOVE_BATCH) {
+    return {
+      success: false,
+      error: `Too many applications selected. Move at most ${MAX_BULK_MOVE_BATCH} at a time.`,
+    }
+  }
+
+  // Verify the target status exists in this org's scope and isn't a
+  // rejection / withdrawn target (each has its own flow).
+  const { data: targetStatus } = await ctx.supabase
+    .from('application_statuses')
+    .select('code')
+    .eq('id', input.targetStatusId)
+    .single()
+  if (!targetStatus) {
+    return { success: false, error: 'Target status not found' }
+  }
+  if (
+    targetStatus.code === APPLICATION_STATUS.REJECTED ||
+    targetStatus.code === APPLICATION_STATUS.WITHDRAWN
+  ) {
+    return {
+      success: false,
+      error:
+        targetStatus.code === APPLICATION_STATUS.REJECTED
+          ? 'Use the Reject selected action for rejections.'
+          : 'Candidates withdraw their own applications from the status page.',
+    }
+  }
+
+  const uniqueIds = Array.from(new Set(input.applicationIds))
+
+  // Skip rows that are already at the target status so we don't generate
+  // a no-op audit row + (with opt-in) a duplicate auto-email. One small
+  // lookup is faster than a per-row no-op write.
+  const { data: currentStates } = await ctx.supabase
+    .from('applications')
+    .select('id, status_id')
+    .in('id', uniqueIds)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+  const statusById = new Map(
+    ((currentStates ?? []) as { id: string; status_id: string | null }[]).map((r) => [
+      r.id,
+      r.status_id,
+    ]),
+  )
+
+  let moved = 0
+  let skipped = 0
+  const failures: { id: string; error: string }[] = []
+
+  for (const applicationId of uniqueIds) {
+    const existingStatusId = statusById.get(applicationId)
+    if (existingStatusId === input.targetStatusId) {
+      skipped++
+      continue
+    }
+    if (existingStatusId === undefined) {
+      // Row didn't come back in the lookup — already deleted, or RLS hid it.
+      failures.push({ id: applicationId, error: 'Application not found' })
+      continue
+    }
+    const result = await updateApplicationStatus(applicationId, input.targetStatusId)
+    if (result.success) {
+      moved++
+    } else {
+      failures.push({ id: applicationId, error: result.error })
+    }
+  }
+
+  // updateApplicationStatus already revalidates the pipeline + candidates
+  // routes per call, so no additional revalidatePath here.
+  return {
+    success: true,
+    data: { moved, skipped, failed: failures.length, failures },
+  }
+}

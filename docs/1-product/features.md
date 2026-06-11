@@ -72,6 +72,7 @@ _Last updated: 2026-05-08_
 | Remove application | Soft-delete application | `lib/actions/applications.ts#removeApplication` |
 | Application row | Shows candidate info, status, actions per application | `components/vacancies/vacancy-application-row.tsx` |
 | 🆕 Status auto-emails | Per-org opt-in transactional emails when an application moves into Screening or Interview | `lib/actions/applications.ts#updateApplicationStatus`, `lib/applications-status-emails.ts` |
+| 🆕 Bulk move-to-stage | Vacancy applications toolbar "Move to stage ▾" dropdown lets recruiters move multiple selected applications to a chosen status at once; 50-row cap; skips rows already at the target | `components/vacancies/bulk-move-dialog.tsx`, `components/vacancies/vacancy-applications-list.tsx`, `lib/actions/applications.ts#moveApplicationsBatch`, `lib/applications/batch.ts` |
 
 ## Offers
 
