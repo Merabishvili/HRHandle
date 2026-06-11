@@ -127,6 +127,12 @@ _Last updated: 2026-05-08_
 | Interview list | Upcoming and past interviews, filterable | `app/(dashboard)/interviews/page.tsx` |
 | In-app notification | Creator and interviewer notified on schedule | `lib/actions/interviews.ts` |
 
+## Global Search
+
+| Feature | Description | Files |
+|---------|-------------|-------|
+| 🆕 Cmd-K palette | Header pill + Cmd-K (Mac) / Ctrl-K + "/" keyboard shortcuts open a command palette that searches candidates, vacancies, and notes in parallel. Org-scoped, soft-deleted rows excluded, capped at 5 per group | `components/global-search/global-search-dialog.tsx`, `components/global-search/search-trigger.tsx`, `lib/actions/search.ts`, `lib/search/query.ts` |
+
 ## Settings
 
 | Feature | Description | Files |

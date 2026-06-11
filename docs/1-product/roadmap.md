@@ -1,6 +1,6 @@
 # HRHandle — Product Roadmap
 
-_Last updated: 2026-06-17_
+_Last updated: 2026-06-18_
 _Owner: Aleksandre Merabishvili_
 
 This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
@@ -24,7 +24,7 @@ A short tour so context for the rest of the roadmap is fresh.
 | AI features | G-009 → G-015 | Candidate summary, JD generator, interview questions, note-extractor, inclusive-language check, assessment suggester, email drafter. Six design principles in [ai-features.md](../9-compliance/ai-features.md). |
 | Candidate experience | G-016, G-017, G-018, G-022 | Public `/status/<token>` page (abstracted Applied/In review/Interview/Decision/Closed buckets), opt-in auto-emails on screening/interview transitions, full offer process: structured-but-minimal `offers` table, recruiter panel inside each application row, candidate `/offer/<token>` Accept/Decline page that flows accept into the existing `hired` pipeline path, **candidate self-withdraw** button on the status page (G-022) that cancels any active offer and notifies the recruiter. |
 | Operational completeness | G-019, G-020 | `/settings/audit-log` viewer (filters + CSV export over the populated-but-previously-unreachable `activity_log` table) and `/settings/trash` (restore + hard-delete-now for soft-deleted candidates and vacancies; candidate restore cascades the applications back using the IDs captured in the candidate-delete audit row from BL-007). |
-| Recruiter productivity | **G-021** | @-mentions in candidate notes (typeahead in the composer + chip rendering on saved notes + in-app notifications to tagged teammates). |
+| Recruiter productivity | G-021, **G-023** | @-mentions in candidate notes (typeahead in the composer + chip rendering on saved notes + in-app notifications to tagged teammates). **Global cmd-K search** across candidates / vacancies / notes — header pill + Cmd-K / Ctrl-K / "/" shortcuts. |
 | Compliance | G-001 → G-008 | Gemini paid tier, Article 13 notice, 30-day purge cron, breach playbook, ROPA, OAuth revoke, self-serve org delete, sign-up country gate. |
 | Polish | F-009, BL-006, BL-007 | List pagination controls + page-size selector, dashboard loading skeletons, candidate-delete cascade + accurate confirmation. |
 
@@ -97,7 +97,7 @@ Real features competing ATSes have that HRHandle does not. Some are 1–2 day wi
 ### Workflow
 
 - ⚪ **Bulk operations beyond batch reject** — bulk move-to-stage, bulk assign to a vacancy, bulk add tags.
-- ⚪ **Global search** across candidates / vacancies / notes from any page (cmd-K).
+- ✅ Global search across candidates / vacancies / notes (cmd-K) — shipped 2026-06-18 as G-023.
 - ⚪ **Saved filters / smart lists** — recruiter saves a filter combination ("Frontend engineers in Tbilisi") as a named view.
 - ✅ Internal @-mentions in notes — shipped 2026-06-17 as G-021.
 - ⚪ **CSV import** — bulk candidate import to complement the existing CSV export.
@@ -169,7 +169,7 @@ Order: easy-to-hard.
 1. ⏭️ Email tracking — deferred (see Phase 1).
 2. ✅ Internal @-mentions in candidate notes — shipped 2026-06-17 as G-021. Interview notes share the same `candidate_notes` row so they benefit automatically.
 3. ✅ Candidate withdraw button on `/status/[token]` — shipped 2026-06-17 as G-022.
-4. **Global search** (cmd-K) across candidates / vacancies / notes. Postgres full-text on the existing columns. ← next.
+4. ✅ Global search (cmd-K) — shipped 2026-06-18 as G-023. Uses `ilike` rather than full-text; upgrade path to FTS documented in `lib/search/query.ts` for when an org passes ~5K rows.
 5. **Bulk operations beyond batch reject** — bulk move-to-stage, bulk add tags. Extends the existing selection-state pattern.
 6. **Saved filters / smart lists** — recruiter saves a filter combination as a named view. New `saved_views` table.
 7. **CSV import** — bulk candidate import to mirror the existing CSV export.
@@ -243,3 +243,4 @@ When other phases are in flight, batch:
 | 2026-06-15 | Phase 2 (offer process / G-018) shipped. Moved from "Big features" + "Phase 2" into "Recently shipped". V2 sub-features (PDF, e-signature, counter-offer, per-org template, AI drafting) documented as deferred. | Aleksandre Merabishvili |
 | 2026-06-16 | Phase 1 partially shipped: audit-log viewer (G-019) + restore-from-trash UI (G-020). Email-tracking toggle (1.3) deferred — Resend tracking is domain-level, not per-send, so an in-product toggle without two-domain infra would be misleading. | Aleksandre Merabishvili |
 | 2026-06-17 | Phase 3 bundle A shipped: @-mentions in candidate notes (G-021) + candidate self-withdraw on the status page (G-022). Phase 3 next item is global search (cmd-K). | Aleksandre Merabishvili |
+| 2026-06-18 | Phase 3.4 shipped: global cmd-K search across candidates / vacancies / notes (G-023). Uses `ilike` rather than tsvector — FTS upgrade path is documented for when an org passes ~5K rows. | Aleksandre Merabishvili |

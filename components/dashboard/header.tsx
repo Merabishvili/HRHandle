@@ -17,6 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { LogOut, User as UserIcon, Settings, CreditCard, ChevronRight } from 'lucide-react'
 import { NotificationsBell } from '@/components/dashboard/notifications-bell'
+import { SearchTrigger } from '@/components/global-search/search-trigger'
 import { HelpLink } from '@/components/dashboard/help-link'
 
 interface DashboardHeaderProps {
@@ -100,6 +101,7 @@ export function DashboardHeader({
 
         {/* User area */}
         <div className="flex items-center gap-1.5">
+          <SearchTrigger />
           <HelpLink />
           <NotificationsBell />
 
