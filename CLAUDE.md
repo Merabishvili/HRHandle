@@ -85,4 +85,6 @@ Full detail in `docs/claude-code-workflow.md`. Summary:
 
 ## What's left to build
 
+See [`docs/1-product/roadmap.md`](docs/1-product/roadmap.md) — single index of planned features, tracked open items, ATS gaps not yet filed, and accepted tech debt. Update it when scoping new work.
+
 ## Things that went wrong before — don't repeat

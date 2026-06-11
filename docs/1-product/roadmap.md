@@ -1,0 +1,167 @@
+# HRHandle — Product Roadmap
+
+_Last updated: 2026-06-14_
+_Owner: Aleksandre Merabishvili_
+
+This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
+
+**How to use this doc.** Each item links out to the doc where its detail lives (compliance, audit, architecture). New items get added here first. When work ships, move the row to the "Recently shipped" section at the top and link the PR/commit. Quarterly review: prune stale items, re-prioritize the rest.
+
+The roadmap is intentionally opinionated — it includes items that are tracked, items that are postponed for billing, and **ATS gaps that nobody has filed yet** but a serious recruiter will notice. Items have a status tag so you can scan:
+
+- 🟢 **Ready** — scoped enough to start; no external blocker
+- 🟡 **Blocked** — waiting on something concrete (billing, framework, decision)
+- ⚪ **Idea** — not scoped yet; one-line description is the entire spec right now
+
+---
+
+## Recently shipped (post-audit)
+
+A short tour so context for the rest of the roadmap is fresh.
+
+| Area | Shipped | What |
+|---|---|---|
+| AI features | G-009 → G-015 | Candidate summary, JD generator, interview questions, note-extractor, inclusive-language check, assessment suggester, email drafter. Six design principles in [ai-features.md](../9-compliance/ai-features.md). |
+| Candidate experience | G-016, G-017 | Public `/status/<token>` page (abstracted Applied/In review/Interview/Decision/Closed buckets) + opt-in auto-emails on screening/interview transitions. |
+| Compliance | G-001 → G-008 | Gemini paid tier, Article 13 notice, 30-day purge cron, breach playbook, ROPA, OAuth revoke, self-serve org delete, sign-up country gate. |
+| Polish | F-009, BL-006, BL-007 | List pagination controls + page-size selector, dashboard loading skeletons, candidate-delete cascade + accurate confirmation. |
+
+---
+
+## Big features
+
+These are large enough that each will be its own multi-PR effort. Each one has a sketch but not a finalized design.
+
+### 🟢 Offer process
+
+The current `offer` status is just a pipeline bucket — there's no actual workflow. A real offer step would mean:
+
+- **Offer record** — a row attached to an application that captures: role title (separate from vacancy title in case of negotiation), salary + currency, start date, employment type, expiry date, free-text notes/benefits, status (draft / sent / accepted / declined / expired / withdrawn).
+- **Offer letter generation** — an HTML email + a printable PDF, both produced from a per-org template. Could reuse the existing `email_templates` table pattern (add `offer` template type) and the existing AI email drafter for the "improve my draft" mode.
+- **Acceptance tracking** — candidate-facing accept/decline page (mirrors the G-016 status-page token pattern: `/offer/<token>` with accept/decline buttons). Status updates automatically reflect back into the application + the candidate's general status (`hired` on accept).
+- **Audit trail** — every state change is an audit-log row.
+- **No e-signature in v1** — explicit "I accept" click is enough for verbal/soft offers; e-signature integration (DocuSign / Dropbox Sign) is a v2 if customers ask.
+
+Sequencing: this is the natural pair to G-016 — both are candidate-facing token URLs. Shipping it would close the workflow from "applied" all the way to "hired" without recruiters having to leave the app for the actual offer.
+
+Track at: this row (no separate G-018 yet).
+
+### 🟡 Multi-language UI (i18n)
+
+HRHandle's interface is English-only today. There's zero i18n plumbing — no `next-intl`, no locale routing under `app/[locale]/...`, no translation files. The candidate `languages` field is unrelated (it captures which languages the *candidate* speaks).
+
+Strategy when it's time:
+
+- **Library choice**: `next-intl` is the standard for Next.js App Router. ICU MessageFormat for plurals/dates.
+- **Catalogue extraction**: all user-visible strings currently live inline in `.tsx`. A first pass would need a string-extraction sweep (this is the bulk of the work — probably 2–3K strings).
+- **Locale storage**: per-user (`profiles.locale`) + per-org default for the public surfaces (apply form, status page).
+- **Public surfaces first**: localize `/apply/[token]` and `/status/[token]` first — those are read by candidates who didn't choose to use HRHandle, and they're the smallest surfaces.
+- **Start languages**: probably Georgian + Russian + Turkish + Spanish first (matching the founder's market focus). English is the source language.
+- **No translation of customer content**: vacancy bodies, candidate notes, etc. stay in whatever language the recruiter typed.
+
+Blocked on: a decision about which markets to launch in. Until then the work just bloats every PR.
+
+### 🟡 AI screening
+
+Already documented as planned in [ai-features.md](../9-compliance/ai-features.md#planned-features-not-yet-shipped): applicant list per vacancy with advisory fit indicators per candidate, never changes candidate state automatically.
+
+Blocked on: building the EU AI Act risk-management framework for higher-risk features (the current six AI features sit under the "low-risk advisory" framing; screening crosses into Annex III "high-risk" with a much heavier obligation set).
+
+### 🟢 Restore-from-trash UI (F-011 follow-up)
+
+Migration 030 added `restored_at` + `restored_by` columns to `candidates` and `vacancies` but the restore action was never wired because there's no admin UI to call it from. The BL-007 PR also carries `application_ids` in the candidate-delete audit log so a future restore can scope its cascade.
+
+Scope:
+- `/settings/trash` admin page listing soft-deleted candidates + vacancies in the org (newest first).
+- "Restore" button per row → server action sets `deleted_at = NULL`, populates `restored_at` / `restored_by`. For candidates, also unsets `deleted_at` on the application rows recorded in the candidate-delete audit row.
+- Hard-delete-now button as an opt-out of the 30-day grace period.
+
+Track at: F-011 in [issues-found.md](../issues-found.md).
+
+### 🟢 Audit-log viewer UI
+
+The `activity_log` table is populated by `writeAuditLog` from every status change, AI invocation, OAuth connect/disconnect, candidate delete, org delete, etc. (F-002 + G-009 + many others wired this). **No UI exists** to read it.
+
+Scope:
+- `/settings/audit-log` admin page with filters (entity type, action, user, date range).
+- Plain table view; export to CSV for compliance reviews.
+- Read-only, owner/admin role.
+
+Track at: this row (no audit item — the data plumbing is done, this is just the viewer).
+
+---
+
+## Tracked open items
+
+Live items from [issues-found.md](../issues-found.md). All are postponed for non-engineering reasons.
+
+| ID | Title | Why parked |
+|---|---|---|
+| F-004 | Cancel-subscription UI | 🟡 Blocked — needs billing provider wiring (LemonSqueezy planned) |
+| BL-004 | `PLAN_LIMIT` error code + upgrade CTA | 🟡 Blocked — same reason |
+| C-007 / C-008 | Move hardcoded plan limits + campaign config out of code | 🟡 Blocked — shape depends on what the billing provider exposes |
+| C-012 / A-007 | Strict tsconfig (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) | 🟡 Blocked — 87 errors across ~40 files; dedicated cleanup PR needed |
+| AC-012 | WCAG accessibility audit | 🟡 Blocked — needs browser-based contrast measurement on every status palette in light + dark |
+| A-002 / A-005 | Component splits (`candidates/page.tsx`, `vacancy-form.tsx`) | 🟡 Blocked — naive splits would regress maintainability; needs form-library migration first |
+
+---
+
+## ATS gaps (not yet tracked anywhere)
+
+Real features competing ATSes have that HRHandle does not. Some are 1–2 day wins; others are full epics. None are filed in `issues-found.md` yet — list them here, promote to roadmap items when they get scoped.
+
+### Workflow
+
+- ⚪ **Bulk operations beyond batch reject** — bulk move-to-stage, bulk assign to a vacancy, bulk add tags.
+- ⚪ **Global search** across candidates / vacancies / notes from any page (cmd-K).
+- ⚪ **Saved filters / smart lists** — recruiter saves a filter combination ("Frontend engineers in Tbilisi") as a named view.
+- ⚪ **Internal @-mentions in notes** — notify the named teammate (uses the existing notifications table).
+- ⚪ **CSV import** — bulk candidate import to complement the existing CSV export.
+- ⚪ **Reference checks workflow** — request, collect, store references against a candidate.
+- ⚪ **Scorecard sharing** — share a candidate's evaluation scorecard with a hiring manager who isn't an HRHandle user (token-based read-only link, mirrors G-016 pattern).
+- ⚪ **Candidate withdraw button** on `/status/[token]` — currently only the recruiter can withdraw an application.
+
+### Reporting
+
+- ⚪ **Time-to-hire** per vacancy / per role family / per recruiter.
+- ⚪ **Source effectiveness** — which sources (public form, LinkedIn, manual, referrals) produce the most hires.
+- ⚪ **Pipeline conversion** — applied → screening → interview → offer → hired funnel per vacancy.
+- ⚪ **Recruiter productivity** — applications reviewed / week, evaluations completed / week.
+
+### Integrations
+
+- ⚪ **Slack / Teams notifications** — org-level webhook for events (new application, candidate hired, interview scheduled).
+- ⚪ **Calendly / Cal.com integration** — candidate self-serve interview scheduling once the recruiter advances them to "Interview".
+- ⚪ **Email tracking** — open/click tracking on recruiter-sent emails (Resend supports it; needs a toggle in `/settings/email-templates`).
+- ⚪ **LinkedIn job auto-cross-post** — current LinkedIn integration is page-post only; v2 would be cross-posting to Jobs.
+
+### Identity
+
+- ⚪ **2FA / TOTP** for recruiter accounts.
+- ⚪ **SSO (SAML)** for enterprise customers.
+
+### Operational polish
+
+- ⚪ **Audit-log viewer UI** — see Big Features above.
+- ⚪ **Restore-from-trash UI** — see Big Features above.
+- ⚪ **Per-org default page size** in `profiles.column_preferences` (F-009 follow-up).
+- ⚪ **Mobile-responsive polish** on detail pages — most pages are responsive but the vacancy/candidate detail layouts are designed desktop-first.
+
+---
+
+## Tech debt (deferred, accepted)
+
+Listed here for memory, not action. See [issues-found.md](../issues-found.md) for the deferral rationale on each.
+
+- Keyset / cursor pagination (F-009 follow-up) — re-investigate when an org passes ~5K rows.
+- `count: 'planned'` instead of `count: 'exact'` on the list queries — same trigger.
+- Switch to `react-hook-form` so the vacancy/candidate forms can be split into smaller components (A-005).
+- Subscription / billing tech debt (C-007, C-008) — see the billing PR when it exists.
+
+---
+
+## Changelog
+
+| Date | Change | Reviewer |
+|---|---|---|
+| 2026-06-14 | Initial creation. Pulled in the AI features bundle, candidate-facing experience bundle, compliance work, and the polish PRs as "recently shipped". Recorded offer process + multi-language UI as the founder's top two new ideas. Listed common ATS gaps that nobody has filed yet. | Aleksandre Merabishvili |
