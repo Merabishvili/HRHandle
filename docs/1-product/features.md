@@ -54,7 +54,7 @@ _Last updated: 2026-05-08_
 | Candidate list | Filterable list with search, status tabs | `app/(dashboard)/candidates/page.tsx`, `components/candidates/candidates-toolbar.tsx` |
 | Candidate detail | Profile info, experience, education, applications, notes, documents, custom fields, evaluations | `app/(dashboard)/candidates/[id]/page.tsx` |
 | Experience & education | Inline add/edit/delete from candidate detail page | `components/candidates/experience-section.tsx`, `components/candidates/education-section.tsx`, `lib/actions/candidate-background.ts` |
-| Candidate notes | Add, view, delete time-stamped notes | `components/candidates/candidate-notes.tsx`, `lib/actions/notes.ts` |
+| Candidate notes | Add, view, delete time-stamped notes; @-mention typeahead in the composer fires in-app notifications to tagged teammates | `components/candidates/activity-feed.tsx`, `components/notes/mention-textarea.tsx`, `components/notes/note-display.tsx`, `lib/actions/notes.ts`, `lib/notes/mentions.ts` |
 | Candidate documents | Upload PDF/Word (max 10 MB), magic-byte validation, download via signed URLs | `components/candidates/candidate-documents.tsx`, `lib/actions/documents.ts` |
 | General status | Owner/admin can mark candidate as Active, Hired, Archived | `components/candidates/candidate-status-select.tsx`, `components/candidates/candidate-status-actions.tsx` |
 | Status sync | When application moves to Hired, candidate status syncs to Hired automatically; reverts to Active when de-hired | `lib/actions/applications.ts` |
@@ -102,6 +102,15 @@ _Last updated: 2026-05-08_
 |---------|-------------|-------|
 | Organisation job board | Lists all open vacancies for an org by public slug | `app/jobs/[slug]/page.tsx` |
 | Vacancy listing | Title, location, department, employment type, apply link | `app/jobs/[slug]/page.tsx` |
+
+## Candidate Status Page
+
+| Feature | Description | Files |
+|---------|-------------|-------|
+| 🆕 Status page | Token-gated `/status/<token>` showing abstracted Applied/In review/Interview/Decision/Closed bucket, role, employer, applied date, last update; robots-noindex | `app/status/[token]/page.tsx`, `components/status/status-stepper.tsx`, `lib/application-status-bucket.ts` |
+| 🆕 Tracking-link CTA | Confirmation email includes a "Track your application" button pointing at the candidate's status URL | `lib/email.ts#sendApplicationConfirmationEmail` |
+| 🆕 Status-change auto-emails | Per-org opt-in transactional emails on Screening / Interview transitions, all linking back to the status page | `lib/actions/applications.ts#updateApplicationStatus`, `lib/applications-status-emails.ts` |
+| 🆕 Candidate self-withdraw | Withdraw button on non-terminal applications; confirm dialog with optional reason; cancels any active offer; notifies recruiter owners + admins | `components/status/withdraw-button.tsx`, `lib/actions/applications.ts#withdrawApplicationByToken` |
 
 ## Interviews
 

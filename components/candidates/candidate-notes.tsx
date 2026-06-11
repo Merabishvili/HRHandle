@@ -1,13 +1,16 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
-import { createNote, deleteNote } from '@/lib/actions/notes'
+import { useEffect, useState, useTransition } from 'react'
+import { createNote, deleteNote, listMentionableMembers } from '@/lib/actions/notes'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+
+import { MentionTextarea } from '@/components/notes/mention-textarea'
+import { NoteDisplay } from '@/components/notes/note-display'
+import type { MentionableMember } from '@/lib/notes/mentions'
 
 interface NoteAuthor {
   full_name: string | null
@@ -25,26 +28,47 @@ interface CandidateNotesProps {
   candidateId: string
   initialNotes: Note[]
   currentUserId: string
+  /** Org members the author can @-mention. Loaded server-side and passed
+   * down so the popover is responsive on the first keystroke. */
+  initialMembers: MentionableMember[]
 }
 
-export function CandidateNotes({ candidateId, initialNotes, currentUserId }: CandidateNotesProps) {
+export function CandidateNotes({
+  candidateId,
+  initialNotes,
+  currentUserId,
+  initialMembers,
+}: CandidateNotesProps) {
   const [notes, setNotes] = useState<Note[]>(initialNotes)
   const [text, setText] = useState('')
+  const [mentions, setMentions] = useState<string[]>([])
+  const [members, setMembers] = useState<MentionableMember[]>(initialMembers)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Refresh the member list once on mount in case the parent's snapshot is
+  // stale (someone joined the org while the page was open).
+  useEffect(() => {
+    let cancelled = false
+    listMentionableMembers().then((r) => {
+      if (cancelled) return
+      if (r.success) setMembers(r.data)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleAdd = () => {
     if (!text.trim()) return
     setError(null)
 
     startTransition(async () => {
-      const result = await createNote(candidateId, text.trim())
+      const result = await createNote(candidateId, text.trim(), mentions)
       if (!result.success) {
         setError(result.error)
         return
       }
-      // Server revalidates the page; optimistically add a placeholder
       const optimistic: Note = {
         id: result.data.id,
         text: text.trim(),
@@ -54,7 +78,7 @@ export function CandidateNotes({ candidateId, initialNotes, currentUserId }: Can
       }
       setNotes((prev) => [optimistic, ...prev])
       setText('')
-      textareaRef.current?.focus()
+      setMentions([])
     })
   }
 
@@ -83,16 +107,26 @@ export function CandidateNotes({ candidateId, initialNotes, currentUserId }: Can
         )}
 
         <div className="space-y-2">
-          <Textarea
-            ref={textareaRef}
-            placeholder="Add a note about this candidate…"
+          <MentionTextarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(v, ids) => {
+              setText(v)
+              setMentions(ids)
+            }}
+            members={members}
+            placeholder="Add a note about this candidate… Type @ to mention a teammate."
             rows={3}
             maxLength={5000}
             disabled={isPending}
           />
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between">
+            {mentions.length > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Will notify {mentions.length} teammate{mentions.length === 1 ? '' : 's'}.
+              </p>
+            ) : (
+              <span />
+            )}
             <Button
               size="sm"
               onClick={handleAdd}
@@ -109,9 +143,17 @@ export function CandidateNotes({ candidateId, initialNotes, currentUserId }: Can
         ) : (
           <ul className="space-y-3">
             {notes.map((note) => (
-              <li key={note.id} className="rounded-lg border border-border bg-muted/30 p-3">
+              <li
+                key={note.id}
+                id={`note-${note.id}`}
+                className="rounded-lg border border-border bg-muted/30 p-3"
+              >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="whitespace-pre-wrap text-sm text-foreground">{note.text}</p>
+                  <NoteDisplay
+                    text={note.text}
+                    members={members}
+                    className="flex-1 whitespace-pre-wrap text-sm text-foreground"
+                  />
                   {note.author_id === currentUserId && (
                     <Button
                       variant="ghost"

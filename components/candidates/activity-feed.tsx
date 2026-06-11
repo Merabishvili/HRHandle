@@ -1,11 +1,15 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { createNote, deleteNote } from '@/lib/actions/notes'
+import { useEffect, useMemo, useState, useTransition } from 'react'
+import { createNote, deleteNote, listMentionableMembers } from '@/lib/actions/notes'
 import { Briefcase, FileText, ArrowRight, MessageSquare, Calendar, Loader2, Send, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+
+import { MentionTextarea } from '@/components/notes/mention-textarea'
+import { NoteDisplay } from '@/components/notes/note-display'
+import type { MentionableMember } from '@/lib/notes/mentions'
 
 export type ActivityKind = 'application' | 'document' | 'stage' | 'note' | 'interview'
 
@@ -24,6 +28,10 @@ interface ActivityFeedProps {
   currentUserId: string
   currentUserName: string | null
   initialItems: ActivityItem[]
+  /** Org members the author can @-mention. Optional — when omitted, the
+   * composer still works but the typeahead has nothing to offer until
+   * `listMentionableMembers` returns on mount. */
+  initialMembers?: MentionableMember[]
 }
 
 const KIND_ICON: Record<ActivityKind, React.ReactNode> = {
@@ -58,21 +66,43 @@ function ActivityIcon({ kind }: { kind: ActivityKind }) {
   )
 }
 
-export function ActivityFeed({ candidateId, currentUserId, currentUserName, initialItems }: ActivityFeedProps) {
+export function ActivityFeed({
+  candidateId,
+  currentUserId,
+  currentUserName,
+  initialItems,
+  initialMembers = [],
+}: ActivityFeedProps) {
   const [items, setItems]     = useState<ActivityItem[]>(initialItems)
   const [filter, setFilter]   = useState<ActivityKind | 'all'>('all')
   const [noteText, setNoteText] = useState('')
+  const [noteMentions, setNoteMentions] = useState<string[]>([])
+  const [members, setMembers] = useState<MentionableMember[]>(initialMembers)
   const [isPending, startTransition] = useTransition()
 
   const initials = (currentUserName ?? 'U').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 
   const filtered = filter === 'all' ? items : items.filter((i) => i.kind === filter)
 
+  // Hydrate the member list once so the @-mention typeahead has something to
+  // offer even when no `initialMembers` was passed by the parent.
+  useEffect(() => {
+    if (members.length > 0) return
+    let cancelled = false
+    listMentionableMembers().then((r) => {
+      if (cancelled) return
+      if (r.success) setMembers(r.data)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [members.length])
+
   const handlePost = () => {
     const text = noteText.trim()
     if (!text) return
     startTransition(async () => {
-      const result = await createNote(candidateId, text)
+      const result = await createNote(candidateId, text, noteMentions)
       if (!result.success) return
       const newItem: ActivityItem = {
         id: result.data.id,
@@ -85,6 +115,7 @@ export function ActivityFeed({ candidateId, currentUserId, currentUserName, init
       }
       setItems((prev) => [newItem, ...prev])
       setNoteText('')
+      setNoteMentions([])
     })
   }
 
@@ -95,6 +126,27 @@ export function ActivityFeed({ candidateId, currentUserId, currentUserName, init
       setItems((prev) => prev.filter((i) => i.id !== id))
     })
   }
+
+  // Render either the body as a plain paragraph or — for note items — as a
+  // tokenized display so @-mentions become chips. Memoised so a list of
+  // hundreds of activity items doesn't re-tokenize every render.
+  const noteBodyById = useMemo(() => {
+    const m = new Map<string, React.ReactNode>()
+    for (const item of items) {
+      if (item.kind === 'note' && item.body) {
+        m.set(
+          item.id,
+          <NoteDisplay
+            key={item.id}
+            text={item.body}
+            members={members}
+            className="text-[12.5px] leading-[1.55] text-muted-foreground"
+          />,
+        )
+      }
+    }
+    return m
+  }, [items, members])
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
@@ -131,7 +183,7 @@ export function ActivityFeed({ candidateId, currentUserId, currentUserName, init
       ) : (
         <div className="space-y-0">
           {filtered.map((item, idx) => (
-            <div key={item.id} className="flex gap-3">
+            <div key={item.id} id={item.kind === 'note' ? `note-${item.id}` : undefined} className="flex gap-3">
               {/* Icon + connector */}
               <div className="flex flex-col items-center">
                 <ActivityIcon kind={item.kind} />
@@ -157,7 +209,13 @@ export function ActivityFeed({ candidateId, currentUserId, currentUserName, init
 
                 {item.body && (
                   <div className="mt-1.5 rounded-lg bg-muted px-3 py-2.5">
-                    <p className="text-[12.5px] leading-[1.55] text-muted-foreground">{item.body}</p>
+                    {item.kind === 'note' ? (
+                      noteBodyById.get(item.id) ?? (
+                        <p className="text-[12.5px] leading-[1.55] text-muted-foreground">{item.body}</p>
+                      )
+                    ) : (
+                      <p className="text-[12.5px] leading-[1.55] text-muted-foreground">{item.body}</p>
+                    )}
                   </div>
                 )}
                 {item.meta && !item.body && (
@@ -174,23 +232,46 @@ export function ActivityFeed({ candidateId, currentUserId, currentUserName, init
 
       {/* Note composer */}
       <div className="mt-3.5 border-t border-border/60 pt-3.5">
-        <div className="flex items-center gap-2.5 rounded-lg border border-border px-3 py-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[oklch(0.55_0.18_250/0.1)] text-[11px] font-semibold text-[oklch(0.55_0.18_250)]">
+        <div className="flex items-start gap-2.5 rounded-lg border border-border px-3 py-2.5">
+          <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[oklch(0.55_0.18_250/0.1)] text-[11px] font-semibold text-[oklch(0.55_0.18_250)]">
             {initials}
           </div>
-          <input
-            value={noteText}
-            onChange={(e) => setNoteText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePost() } }}
-            placeholder="Add a note about this candidate…"
-            className="flex-1 bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none"
-            disabled={isPending}
-          />
-          <Button size="sm" className="h-7 px-3 text-xs" onClick={handlePost} disabled={isPending || !noteText.trim()}>
+          <div className="flex-1">
+            <MentionTextarea
+              value={noteText}
+              onChange={(v, ids) => {
+                setNoteText(v)
+                setNoteMentions(ids)
+              }}
+              members={members}
+              placeholder="Add a note about this candidate… Type @ to mention a teammate."
+              rows={1}
+              maxLength={5000}
+              disabled={isPending}
+              className="min-h-[1.75rem] resize-none border-0 px-0 py-1 text-[13px] focus-visible:ring-0 shadow-none bg-transparent"
+            />
+            {noteMentions.length > 0 && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Will notify {noteMentions.length} teammate{noteMentions.length === 1 ? '' : 's'}.
+              </p>
+            )}
+          </div>
+          <Button
+            size="sm"
+            className="mt-0.5 h-7 px-3 text-xs"
+            onClick={handlePost}
+            disabled={isPending || !noteText.trim()}
+          >
             {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
           </Button>
         </div>
       </div>
+
+      {/* `currentUserId` accepted in props for parity with the candidate page;
+          today it's unused locally because deletion is keyed by note ownership
+          checked server-side. Keeping the parameter avoids a churny prop-rename
+          downstream. */}
+      <span className="hidden" data-current-user-id={currentUserId} />
     </div>
   )
 }

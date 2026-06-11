@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { sendApplicationRejectionEmail, sendApplicationStatusChangedEmail } from '@/lib/email'
 import { shouldEmailForTransition } from '@/lib/applications-status-emails'
 import { writeAuditLog } from '@/lib/audit-log'
@@ -355,6 +356,143 @@ export async function createApplication(input: {
   revalidatePath(`/candidates/${input.candidateId}`)
   revalidatePath(`/vacancies/${input.vacancyId}`)
   return { success: true, data: { id: data.id } }
+}
+
+/** Candidate-side withdraw via the public status-page token (G-022). Token is
+ * the credential — same risk model as G-016. Idempotent: a second call on an
+ * already-withdrawn application is a no-op. Cancels any active offer so a
+ * stale Accept button never re-appears on /offer/<token>. */
+export async function withdrawApplicationByToken(
+  token: string,
+  reason: string | null = null,
+): Promise<ActionResult<void>> {
+  // Defensive token shape check before any DB hit.
+  if (!token || !/^[a-f0-9]{16,64}$/i.test(token)) {
+    return { success: false, error: 'Invalid token' }
+  }
+
+  // Token-gated; bypass RLS deliberately, mirroring G-016 + G-018.
+  const admin = createAdminClient()
+
+  const { data: app, error: appErr } = await admin
+    .from('applications')
+    .select(
+      `id, candidate_id, vacancy_id, status_id, organization_id, deleted_at,
+       application_statuses ( code )`,
+    )
+    .eq('public_token', token)
+    .maybeSingle()
+  if (appErr) {
+    console.error('[applications] withdraw lookup failed:', appErr.message)
+    return { success: false, error: 'Failed to load application' }
+  }
+  if (!app || app.deleted_at) {
+    return { success: false, error: 'Application not found' }
+  }
+
+  type StatusJoin = { code: string } | { code: string }[] | null
+  const beforeJoin = app.application_statuses as StatusJoin
+  const beforeCode = Array.isArray(beforeJoin) ? beforeJoin[0]?.code : beforeJoin?.code
+
+  // Block self-withdraw from terminal states. `withdrawn` is a no-op success
+  // so a double-submit on the candidate UI is harmless; the other terminals
+  // (hired / rejected) are recruiter-decided and shouldn't be overridable.
+  const TERMINAL: ReadonlySet<string> = new Set([
+    APPLICATION_STATUS.HIRED,
+    APPLICATION_STATUS.REJECTED,
+  ])
+  if (beforeCode === APPLICATION_STATUS.WITHDRAWN) {
+    return { success: true, data: undefined }
+  }
+  if (beforeCode && TERMINAL.has(beforeCode)) {
+    return {
+      success: false,
+      error: 'This application can no longer be withdrawn. Contact the recruiter directly.',
+    }
+  }
+
+  // Resolve the withdrawn status id.
+  const { data: withdrawnStatus } = await admin
+    .from('application_statuses')
+    .select('id')
+    .eq('code', APPLICATION_STATUS.WITHDRAWN)
+    .single()
+  if (!withdrawnStatus) {
+    return { success: false, error: 'Status configuration missing' }
+  }
+
+  const now = new Date().toISOString()
+
+  const { error: updateErr } = await admin
+    .from('applications')
+    .update({
+      status_id: withdrawnStatus.id,
+      last_status_changed_at: now,
+    })
+    .eq('id', app.id as string)
+    .eq('organization_id', app.organization_id as string)
+  if (updateErr) {
+    console.error('[applications] withdraw update failed:', updateErr.message)
+    return { success: false, error: 'Failed to withdraw' }
+  }
+
+  // Cancel any active offer so the candidate doesn't accidentally accept one
+  // after withdrawing the underlying application.
+  const { data: liveOffers } = await admin
+    .from('offers')
+    .select('id')
+    .eq('application_id', app.id as string)
+    .eq('organization_id', app.organization_id as string)
+    .is('deleted_at', null)
+    .in('status', ['draft', 'sent'])
+  const liveOfferIds = (liveOffers ?? []).map((o) => o.id as string)
+  if (liveOfferIds.length > 0) {
+    await admin
+      .from('offers')
+      .update({
+        status: 'withdrawn',
+        responded_at: now,
+        updated_at: now,
+      })
+      .in('id', liveOfferIds)
+  }
+
+  void writeAuditLog({
+    orgId: app.organization_id as string,
+    userId: null,
+    entityType: 'application',
+    entityId: app.id as string,
+    action: 'application_withdrawn',
+    message: 'application withdrawn by candidate',
+    details: {
+      via: 'candidate_token',
+      before: beforeCode ?? null,
+      has_reason: !!reason,
+      cancelled_offers: liveOfferIds.length,
+    },
+  })
+
+  // Notify owners + admins (best-effort).
+  try {
+    const { data: members } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('organization_id', app.organization_id as string)
+      .in('role', ['owner', 'admin'])
+    const recipientIds = (members ?? []).map((m) => m.id as string)
+    if (recipientIds.length > 0) {
+      await createOrgNotifications(app.organization_id as string, recipientIds, {
+        type: 'application_withdrawn',
+        title: 'A candidate withdrew their application',
+        body: undefined,
+        link: app.candidate_id ? `/candidates/${app.candidate_id as string}` : undefined,
+      })
+    }
+  } catch (err) {
+    console.error('[applications] withdraw notification failed:', err)
+  }
+
+  return { success: true, data: undefined }
 }
 
 export async function removeApplication(applicationId: string): Promise<ActionResult<void>> {

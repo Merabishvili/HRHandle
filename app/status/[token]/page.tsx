@@ -5,6 +5,7 @@ import { Building2, Briefcase, MapPin, Calendar } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { statusCodeToBucket } from '@/lib/application-status-bucket'
 import { StatusStepper } from '@/components/status/status-stepper'
+import { WithdrawButton } from '@/components/status/withdraw-button'
 import type { ApplicationStatus } from '@/lib/types/application'
 
 interface PageProps {
@@ -184,6 +185,17 @@ export default async function StatusPage({ params }: PageProps) {
           <p className="mt-1 text-sm text-gray-700">{view.subtitle}</p>
           <p className="mt-3 text-xs text-gray-500">Last updated {lastUpdatedAt}</p>
         </div>
+
+        {/* G-022: candidate-side withdraw. Only shown for non-terminal buckets;
+            terminal states (Closed, decision-complete hire) already render the
+            outcome above and shouldn't be overridable from the candidate side. */}
+        {!view.isTerminal && view.bucket !== 'closed' && (
+          <WithdrawButton
+            token={token}
+            roleTitle={vacancy.title}
+            organizationName={org.name}
+          />
+        )}
       </section>
 
       <footer className="mt-6 text-center">

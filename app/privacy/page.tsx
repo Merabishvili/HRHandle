@@ -115,6 +115,17 @@ export default function PrivacyPage() {
               handled by the recruiter directly).
             </p>
             <p className="mt-2">
+              The status page also lets the candidate withdraw their application
+              directly. Clicking <strong>Withdraw application</strong> opens a
+              confirmation prompt with an optional free-text reason that only the
+              recruiter sees. On confirm, the application&apos;s status is set to
+              &quot;withdrawn&quot;, any active offer attached to it is automatically
+              withdrawn so a stale accept button never reappears, and the
+              recruiter is notified. The page does not allow a candidate to undo
+              the withdrawal — the candidate can contact the recruiter directly
+              to be re-added.
+            </p>
+            <p className="mt-2">
               When the recruiter sends an offer, we create a separate token-gated offer
               page at <span className="font-mono text-sm">/offer/&lt;token&gt;</span> on
               this Service. Like the status page, the token is the only credential — there
