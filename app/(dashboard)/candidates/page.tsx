@@ -27,12 +27,13 @@ import {
   OPTIONAL_CANDIDATE_COLUMNS,
 } from '@/lib/types/columns'
 import { formatDistanceToNow } from 'date-fns'
-
-const PAGE_SIZE = 20
+import { TablePagination } from '@/components/ui/table-pagination'
+import { parsePageSize, type PageSize } from '@/lib/pagination'
 
 type SearchParams = Promise<{
   vacancy?: string
   page?: string
+  pageSize?: string
   search?: string
   sort?: string
   status?: string
@@ -88,10 +89,11 @@ export default async function CandidatesPage({
 }: {
   searchParams: SearchParams
 }) {
-  const { vacancy: vacancyFilter, page: pageParam, search = '', sort = 'created_desc', status: statusFilter } = await searchParams
+  const { vacancy: vacancyFilter, page: pageParam, pageSize: pageSizeParam, search = '', sort = 'created_desc', status: statusFilter } = await searchParams
   const page = Math.max(1, parseInt(pageParam || '1', 10) || 1)
-  const from = (page - 1) * PAGE_SIZE
-  const to = from + PAGE_SIZE - 1
+  const pageSize: PageSize = parsePageSize(pageSizeParam)
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
 
   const supabase = await createClient()
 
@@ -208,7 +210,7 @@ export default async function CandidatesPage({
     totalCount = result.count
   }
 
-  const totalPages = Math.ceil((totalCount ?? 0) / PAGE_SIZE)
+  const totalPages = Math.ceil((totalCount ?? 0) / pageSize)
 
   // Fetch applications for this page of candidates
   const candidateIds = candidates.map((c) => c.id)
@@ -244,13 +246,18 @@ export default async function CandidatesPage({
   // Build column label map for header
   const optColMap = new Map(OPTIONAL_CANDIDATE_COLUMNS.map((c) => [c.key, c.label]))
 
-  const buildPaginationHref = (targetPage: number) => {
+  const buildPaginationHref = ({
+    page: targetPage,
+    pageSize: targetPageSize,
+  }: { page?: number; pageSize?: PageSize }) => {
     const params = new URLSearchParams()
     if (vacancyFilter) params.set('vacancy', vacancyFilter)
     if (search) params.set('search', search)
     if (sort !== 'created_desc') params.set('sort', sort)
     if (statusFilter) params.set('status', statusFilter)
-    params.set('page', String(targetPage))
+    const effectivePageSize = targetPageSize ?? pageSize
+    if (effectivePageSize !== 20) params.set('pageSize', String(effectivePageSize))
+    params.set('page', String(targetPage ?? page))
     return `/candidates?${params.toString()}`
   }
 
@@ -489,25 +496,14 @@ export default async function CandidatesPage({
                 </TableBody>
               </Table>
 
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t border-border px-2 pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {from + 1}–{Math.min(to + 1, totalCount ?? 0)} of {totalCount ?? 0}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {page > 1 && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={buildPaginationHref(page - 1)}>Previous</Link>
-                      </Button>
-                    )}
-                    {page < totalPages && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={buildPaginationHref(page + 1)}>Next</Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
+              <TablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalCount={totalCount ?? 0}
+                pageSize={pageSize}
+                buildHref={buildPaginationHref}
+                ariaLabel="Candidate list pagination"
+              />
             </div>
           ) : (
             <div className="py-12 text-center">
