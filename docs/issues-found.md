@@ -1,6 +1,6 @@
 # Issues Found — Re-audit 2026-05-08
 
-_Last updated: 2026-06-25 (G-032 shipped — Phase 6.1: 2FA / TOTP per-user + org policy + admin reset)_
+_Last updated: 2026-06-26 (Phase 9 partial: AC-012 WCAG pass + C-012 noUncheckedIndexedAccess; RHF migration + exactOptionalPropertyTypes deferred)_
 
 This document is the consolidated output of an exhaustive multi-agent re-audit
 of the HRHandle staging codebase. Every issue has a stable ID; prefer

@@ -1,6 +1,6 @@
 # HRHandle — Product Roadmap
 
-_Last updated: 2026-06-25_
+_Last updated: 2026-06-26_
 _Owner: Aleksandre Merabishvili_
 
 This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
@@ -87,8 +87,7 @@ Live items from [issues-found.md](../issues-found.md). All are postponed for non
 | F-004 | Cancel-subscription UI | 🟡 Blocked — needs billing provider wiring (LemonSqueezy planned) |
 | BL-004 | `PLAN_LIMIT` error code + upgrade CTA | 🟡 Blocked — same reason |
 | C-007 / C-008 | Move hardcoded plan limits + campaign config out of code | 🟡 Blocked — shape depends on what the billing provider exposes |
-| C-012 / A-007 | Strict tsconfig (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) | 🟡 Blocked — 87 errors across ~40 files; dedicated cleanup PR needed |
-| AC-012 | WCAG accessibility audit | 🟡 Blocked — needs browser-based contrast measurement on every status palette in light + dark |
+| C-012 / A-007 | `exactOptionalPropertyTypes` (remaining strict flag) | 🟡 Deferred — `noUncheckedIndexedAccess` shipped 2026-06-26 as Phase 9.2; the second flag produced ~25 Radix-wrapper / prop-pass-through cosmetic errors. Pick up in a focused follow-up. |
 | A-002 / A-005 | Component splits (`candidates/page.tsx`, `vacancy-form.tsx`) | 🟡 Blocked — naive splits would regress maintainability; needs form-library migration first |
 
 ---
@@ -213,11 +212,10 @@ Blocked on the EU AI Act risk-management framework for higher-risk features. Don
 
 ### Phase 9 — Tech debt (one focused PR pass)
 
-When other phases are in flight, batch:
-1. WCAG accessibility audit (AC-012) — browser-based contrast measurement.
-2. Strict tsconfig (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) — 87 errors across ~40 files; needs a dedicated cleanup PR.
-3. Component splits (A-002, A-005) — bundle with a `react-hook-form` migration.
-4. Keyset / cursor pagination (F-009 follow-up) — only when an org passes ~5K rows.
+1. ✅ **WCAG accessibility audit** (AC-012) — shipped 2026-06-26. Bumped light-mode `--muted-foreground` to pass WCAG AA contrast; added missing aria-labels to icon-only buttons across candidate / vacancy / interview / document surfaces.
+2. ✅ **Strict tsconfig — `noUncheckedIndexedAccess`** (C-012) — shipped 2026-06-26. 108 errors fixed across actions, AI modules, components, tests. **`exactOptionalPropertyTypes` deferred** — ~25 cosmetic Radix/prop-pass-through errors; will tackle in a focused follow-up.
+3. ⚪ **Component splits + `react-hook-form` migration** (A-002, A-005) — deferred to its own session. `components/vacancies/vacancy-form.tsx` (656 LOC) and `app/(dashboard)/candidates/page.tsx` (541 LOC). Rushing risks form-validation regressions in the most-used surfaces; needs a dedicated PR with careful testing.
+4. ⏭️ **Keyset / cursor pagination** (F-009 follow-up) — parked indefinitely. No customer is near the ~5K row trigger; revisit reactively when a slow list query shows up in PostHog or Sentry, not pre-emptively.
 
 ### Phase 10 — Billing & subscription
 
@@ -245,6 +243,7 @@ When other phases are in flight, batch:
 | 2026-06-20 | Phase 3.8 shipped: scorecard sharing via token-gated `/scorecard/<token>` (G-025). Third token-page in a row using the same admin-client + 404-not-deleted risk model as G-016 status and G-018 offer. Remaining Phase 3 items: 3.6 saved filters, 3.7 CSV import. | Aleksandre Merabishvili |
 | 2026-06-21 | Phase 3.6 shipped: saved filter views per-recruiter-per-list-kind on the candidates and vacancies list pages (G-026). Cross-org sharing deferred. Last Phase 3 item is 3.7 CSV import. | Aleksandre Merabishvili |
 | 2026-06-22 | Phase 3.7 shipped: bulk CSV candidate import (G-028). Admin-only `/candidates/import` page with multi-step wizard, downloadable template, auto-mapped columns, preview with validation errors, skip-duplicate-emails, downloadable error CSV report. 1000 rows / 5MB caps. Plan-cap enforced once per batch. No new schema. Phase 3 (Recruiter productivity) is now complete. Next: Phase 4 (Reporting). | Aleksandre Merabishvili |
+| 2026-06-26 | Phase 9 partial shipped: 9.1 WCAG accessibility (AC-012; light-mode `--muted-foreground` darkened for AA contrast, aria-labels added on icon-only buttons across candidate / vacancy / interview / document surfaces) and 9.2 `noUncheckedIndexedAccess` (C-012; 108 errors fixed across actions, AI generators, components, tests — batch-fixed the `parsed.error.errors[0].message` + `MODELS[i]` idioms). 9.3 RHF migration (vacancy-form 656 LOC, candidates/page.tsx 541 LOC) deferred to dedicated session; 9.4 keyset pagination parked until a real slow-query signal. `exactOptionalPropertyTypes` deferred (~25 cosmetic Radix/prop-pass-through). | Aleksandre Merabishvili |
 | 2026-06-25 | Phase 6.1 shipped: 2FA / TOTP (G-032). Per-user enrollment via the Two-factor card on `/settings/profile`; owner-controlled org-wide policy via `/settings/organization`; middleware AAL + enrollment gate; admin reset path on `/settings/team`. Migration 042 adds `organizations.require_mfa`, `organizations.require_mfa_for_admins`, `profiles.mfa_enrolled` (cached). 22 unit tests on the two pure helpers. Phase 6.2 SAML SSO deferred until enterprise customer; will use WorkOS. | Aleksandre Merabishvili |
 | 2026-06-24 | Phase 5 partial shipped: Slack + Teams notifications (G-030) and Calendly (G-031). Two new tables (`webhook_notifications`, plus Calendly fields on `organization_integrations`). 34 unit tests on the pure helpers (payload builders, link builder, webhook HMAC verify, event allow-list). Manual deployment steps for the founder collected in `docs/4-integrations/phase-5-manual-steps.md`. Remaining Phase 5 items: LinkedIn jobs auto-cross-post + reference checks workflow. | Aleksandre Merabishvili |
 | 2026-06-23 | Phase 4 shipped: Reports (G-029). New `/reports` route with three sub-tabs — pipeline conversion funnel, time-to-hire stats + per-vacancy breakdown, source effectiveness. Period selector (7/30/90/365 days + all-time). Migration 039 backfills `applications.source_type = 'manual'` on existing NULLs + sets DEFAULT 'manual' for future inserts. Recharts added (~80KB) for the funnel bar chart. 40 unit tests on the four pure helpers (period, funnel, time-to-hire, source-summary). Recruiter productivity deliberately skipped. Next: Phase 5 (Integrations). | Aleksandre Merabishvili |
