@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { inviteTeamMember, revokeInvitation } from '@/lib/actions/invitations'
+import { adminResetUserFactors } from '@/lib/actions/mfa'
+import { Shield, ShieldOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,6 +45,7 @@ interface TeamMember {
   full_name: string
   email: string | null
   role: string
+  mfa_enrolled?: boolean
 }
 
 interface TeamInvitationsProps {
@@ -110,9 +113,16 @@ export function TeamInvitations({
         <ul className="divide-y divide-border rounded-lg border border-border">
           {teamMembers.map((member) => (
             <li key={member.id} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <p className="text-sm font-medium text-foreground">{member.full_name}</p>
-                <p className="text-xs text-muted-foreground">{member.email || '—'}</p>
+              <div className="flex items-center gap-2">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{member.full_name}</p>
+                  <p className="text-xs text-muted-foreground">{member.email || '—'}</p>
+                </div>
+                {member.mfa_enrolled ? (
+                  <Shield className="h-3.5 w-3.5 text-emerald-600" aria-label="2FA enabled" />
+                ) : (
+                  <ShieldOff className="h-3.5 w-3.5 text-muted-foreground" aria-label="2FA off" />
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="capitalize">
@@ -120,6 +130,20 @@ export function TeamInvitations({
                 </Badge>
                 {member.id === currentUserId && (
                   <span className="text-xs text-muted-foreground">(you)</span>
+                )}
+                {member.id !== currentUserId && member.role !== 'owner' && member.mfa_enrolled && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      if (!confirm(`Reset 2FA for ${member.full_name}? They'll need to re-enroll on their next sign-in.`)) return
+                      const res = await adminResetUserFactors(member.id)
+                      if (res.success) toast.success(`2FA reset for ${member.full_name}`)
+                      else toast.error(res.error)
+                    }}
+                  >
+                    Reset 2FA
+                  </Button>
                 )}
               </div>
             </li>

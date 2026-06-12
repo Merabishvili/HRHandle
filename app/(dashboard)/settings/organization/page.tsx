@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { OrganizationForm } from '@/components/settings/organization-form'
 import { DangerZone } from '@/components/settings/danger-zone'
+import { MfaPolicyCard } from '@/components/settings/mfa-policy-card'
 
 export default async function OrganizationSettingsPage() {
   const supabase = await createClient()
@@ -20,7 +21,7 @@ export default async function OrganizationSettingsPage() {
 
   const { data: organization } = await supabase
     .from('organizations')
-    .select('id, name, slug, public_page_slug, logo_url, is_active, created_at, updated_at')
+    .select('id, name, slug, public_page_slug, logo_url, is_active, created_at, updated_at, require_mfa, require_mfa_for_admins')
     .eq('id', profile.organization_id)
     .single()
 
@@ -37,6 +38,13 @@ export default async function OrganizationSettingsPage() {
           <OrganizationForm organization={organization} />
         </CardContent>
       </Card>
+
+      <MfaPolicyCard
+        initial={{
+          require_mfa: !!organization.require_mfa,
+          require_mfa_for_admins: !!organization.require_mfa_for_admins,
+        }}
+      />
 
       <DangerZone organizationName={organization.name} />
     </div>

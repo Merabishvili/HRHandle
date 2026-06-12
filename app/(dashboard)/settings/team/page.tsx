@@ -21,7 +21,7 @@ export default async function TeamSettingsPage() {
   const [{ data: membersRaw }, { data: invitesRaw }] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, full_name, email, role')
+      .select('id, full_name, email, role, mfa_enrolled')
       .eq('organization_id', profile.organization_id)
       .eq('is_active', true)
       .order('full_name'),

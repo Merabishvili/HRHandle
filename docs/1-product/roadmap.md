@@ -1,6 +1,6 @@
 # HRHandle — Product Roadmap
 
-_Last updated: 2026-06-24_
+_Last updated: 2026-06-25_
 _Owner: Aleksandre Merabishvili_
 
 This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
@@ -28,6 +28,7 @@ A short tour so context for the rest of the roadmap is fresh.
 | Compliance | G-001 → G-008 | Gemini paid tier, Article 13 notice, 30-day purge cron, breach playbook, ROPA, OAuth revoke, self-serve org delete, sign-up country gate. |
 | Reporting | **G-029** | **Reports page** with three sub-tabs: **Pipeline conversion** funnel (applied → screening → interview → offer → hired with stage-to-stage rates), **Time to hire** (median + p25/p75 across hired applications, per-vacancy breakdown), **Source effectiveness** (applications / hires / conversion grouped by `source_type`). Period selector with 7/30/90/365-day + all-time presets. Visible to every signed-in member. Migration 039 backfills `applications.source_type = 'manual'` on existing NULLs + sets DEFAULT 'manual'. Recharts for the funnel bar chart. |
 | Integrations | **G-030, G-031** | **Slack + Teams notifications** (G-030) via per-org incoming webhooks at `/settings/integrations/webhooks` — admins paste a webhook URL, choose from 8 events (application received / hired / rejected / withdrawn, offer sent / accepted / declined, interview scheduled), test message button, per-webhook on/off. Fan-out is best-effort, audit-logged once per dispatch (no payload body retained). **Calendly** (G-031) via OAuth at `/settings/integrations/calendly` — admin connects, HRHandle subscribes to user-scoped webhooks at connect time and stores the HMAC signing key, admin picks one Calendly event type. Recruiter on any candidate page generates a UTM-tagged scheduling URL via the "Calendly link" button; when the candidate books, the webhook receiver verifies the HMAC, creates an interview row, and fans out a Slack/Teams notification. Migrations 040 (`webhook_notifications`) and 041 (Calendly fields on `organization_integrations`). New `CALENDLY_CLIENT_ID` / `CALENDLY_CLIENT_SECRET` env vars. Manual deployment steps in `docs/4-integrations/phase-5-manual-steps.md`. |
+| Identity | **G-032** | **2FA / TOTP** at `/settings/profile` — enroll any TOTP app (Google Authenticator, 1Password, Authy), QR code + manual-entry secret from Supabase Auth, post-login challenge at `/auth/mfa-challenge`. Owner can require 2FA org-wide or for owners/admins only via the policy card on `/settings/organization`. Middleware gates dashboard routes: enrolled-but-aal1 → challenge page; required-but-unenrolled → profile page with sticky banner. Admin recovery: small "Reset 2FA" button on `/settings/team` clears a teammate's factors (audit-logged). Migration 042 (`organizations.require_mfa`, `organizations.require_mfa_for_admins`, `profiles.mfa_enrolled`). 22 unit tests. WebAuthn + SAML SSO deferred. |
 | Polish | F-009, BL-006, BL-007 | List pagination controls + page-size selector, dashboard loading skeletons, candidate-delete cascade + accurate confirmation. |
 
 ---
@@ -123,8 +124,8 @@ Real features competing ATSes have that HRHandle does not. Some are 1–2 day wi
 
 ### Identity
 
-- ⚪ **2FA / TOTP** for recruiter accounts.
-- ⚪ **SSO (SAML)** for enterprise customers.
+- ✅ 2FA / TOTP — shipped 2026-06-25 as G-032. Per-user enrollment, owner-controlled org-wide policy, admin reset.
+- ⚪ **SSO (SAML)** for enterprise customers. Deferred until a paying enterprise asks; will use WorkOS (~$125/mo) rather than building SAML from scratch.
 
 ### Operational polish
 
@@ -193,10 +194,8 @@ Order: easy-to-hard.
 
 ### Phase 6 — Identity & SSO
 
-Required for enterprise sales.
-
-1. **2FA / TOTP** for recruiter accounts. Supabase Auth supports MFA — opt-in per user, mandatory per org for owner/admin roles.
-2. **SSO (SAML)** for enterprise customers — needs WorkOS or Auth0 integration.
+1. ✅ **2FA / TOTP** — shipped 2026-06-25 as G-032. Supabase Auth MFA primitives, per-user opt-in, owner-controlled org-wide policy (`require_mfa` or `require_mfa_for_admins`), middleware AAL gate, admin reset path for lost-phone recovery.
+2. ⏭️ **SSO (SAML)** — deferred until an enterprise customer asks. Will integrate WorkOS (~$125/mo) — JIT user provisioning + SCIM + IDP-initiated and SP-initiated flows. Estimated 1 week from contract.
 
 ### Phase 7 — Multi-language UI (i18n)
 
@@ -246,5 +245,6 @@ When other phases are in flight, batch:
 | 2026-06-20 | Phase 3.8 shipped: scorecard sharing via token-gated `/scorecard/<token>` (G-025). Third token-page in a row using the same admin-client + 404-not-deleted risk model as G-016 status and G-018 offer. Remaining Phase 3 items: 3.6 saved filters, 3.7 CSV import. | Aleksandre Merabishvili |
 | 2026-06-21 | Phase 3.6 shipped: saved filter views per-recruiter-per-list-kind on the candidates and vacancies list pages (G-026). Cross-org sharing deferred. Last Phase 3 item is 3.7 CSV import. | Aleksandre Merabishvili |
 | 2026-06-22 | Phase 3.7 shipped: bulk CSV candidate import (G-028). Admin-only `/candidates/import` page with multi-step wizard, downloadable template, auto-mapped columns, preview with validation errors, skip-duplicate-emails, downloadable error CSV report. 1000 rows / 5MB caps. Plan-cap enforced once per batch. No new schema. Phase 3 (Recruiter productivity) is now complete. Next: Phase 4 (Reporting). | Aleksandre Merabishvili |
+| 2026-06-25 | Phase 6.1 shipped: 2FA / TOTP (G-032). Per-user enrollment via the Two-factor card on `/settings/profile`; owner-controlled org-wide policy via `/settings/organization`; middleware AAL + enrollment gate; admin reset path on `/settings/team`. Migration 042 adds `organizations.require_mfa`, `organizations.require_mfa_for_admins`, `profiles.mfa_enrolled` (cached). 22 unit tests on the two pure helpers. Phase 6.2 SAML SSO deferred until enterprise customer; will use WorkOS. | Aleksandre Merabishvili |
 | 2026-06-24 | Phase 5 partial shipped: Slack + Teams notifications (G-030) and Calendly (G-031). Two new tables (`webhook_notifications`, plus Calendly fields on `organization_integrations`). 34 unit tests on the pure helpers (payload builders, link builder, webhook HMAC verify, event allow-list). Manual deployment steps for the founder collected in `docs/4-integrations/phase-5-manual-steps.md`. Remaining Phase 5 items: LinkedIn jobs auto-cross-post + reference checks workflow. | Aleksandre Merabishvili |
 | 2026-06-23 | Phase 4 shipped: Reports (G-029). New `/reports` route with three sub-tabs — pipeline conversion funnel, time-to-hire stats + per-vacancy breakdown, source effectiveness. Period selector (7/30/90/365 days + all-time). Migration 039 backfills `applications.source_type = 'manual'` on existing NULLs + sets DEFAULT 'manual' for future inserts. Recharts added (~80KB) for the funnel bar chart. 40 unit tests on the four pure helpers (period, funnel, time-to-hire, source-summary). Recruiter productivity deliberately skipped. Next: Phase 5 (Integrations). | Aleksandre Merabishvili |

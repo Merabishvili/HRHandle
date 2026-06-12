@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfileForm } from '@/components/settings/profile-form'
 import { ChangePasswordForm } from '@/components/settings/change-password-form'
+import { TwoFactorSection } from '@/components/mfa/two-factor-section'
+import { listMyFactors } from '@/lib/actions/mfa'
 
 export default async function ProfileSettingsPage() {
   const supabase = await createClient()
@@ -19,6 +21,15 @@ export default async function ProfileSettingsPage() {
 
   // Detect OAuth-only accounts (no email/password identity)
   const isOAuthOnly = !user.identities?.some((i) => i.provider === 'email')
+
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('require_mfa, require_mfa_for_admins')
+    .eq('id', profile.organization_id)
+    .single()
+
+  const factorsResult = await listMyFactors()
+  const factors = factorsResult.success ? factorsResult.data : []
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -69,6 +80,15 @@ export default async function ProfileSettingsPage() {
           />
         </CardContent>
       </Card>
+
+      <TwoFactorSection
+        factors={factors}
+        role={profile.role as 'owner' | 'admin' | 'member'}
+        orgPolicy={{
+          require_mfa: !!org?.require_mfa,
+          require_mfa_for_admins: !!org?.require_mfa_for_admins,
+        }}
+      />
     </div>
   )
 }
