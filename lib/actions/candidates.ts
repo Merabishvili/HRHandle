@@ -57,7 +57,11 @@ export async function createCandidate(
         vacancy_id: linkedVacancyId,
       })
       if (appParsed.success) {
-        await ctx.supabase.from('applications').insert({
+        // Surface the error if the linked-vacancy application insert fails.
+        // Previously the error was swallowed — that masked the G-034
+        // source_type CHECK-constraint regression where every recruiter-
+        // created application failed silently.
+        const { error: appErr } = await ctx.supabase.from('applications').insert({
           ...appParsed.data,
           organization_id: ctx.orgId,
           created_by: ctx.userId,
@@ -67,6 +71,9 @@ export async function createCandidate(
           public_token: crypto.randomUUID().replace(/-/g, ''),
           source_type: 'manual',
         })
+        if (appErr) {
+          console.error('[candidates] linked-vacancy application insert failed:', appErr.message)
+        }
       }
     }
   }
