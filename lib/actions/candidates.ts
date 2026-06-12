@@ -65,6 +65,7 @@ export async function createCandidate(
           applied_at: new Date().toISOString(),
           // Candidate-facing status page token (G-016) — same as other insert paths.
           public_token: crypto.randomUUID().replace(/-/g, ''),
+          source_type: 'manual',
         })
       }
     }

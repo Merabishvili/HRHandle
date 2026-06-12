@@ -347,6 +347,7 @@ export async function createApplication(input: {
       status_id: appliedStatus.id,
       applied_at: new Date().toISOString(),
       public_token: publicToken,
+      source_type: 'manual',
     })
     .select('id')
     .single()

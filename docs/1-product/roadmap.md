@@ -1,6 +1,6 @@
 # HRHandle — Product Roadmap
 
-_Last updated: 2026-06-22_
+_Last updated: 2026-06-23_
 _Owner: Aleksandre Merabishvili_
 
 This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
@@ -26,6 +26,7 @@ A short tour so context for the rest of the roadmap is fresh.
 | Operational completeness | G-019, G-020 | `/settings/audit-log` viewer (filters + CSV export over the populated-but-previously-unreachable `activity_log` table) and `/settings/trash` (restore + hard-delete-now for soft-deleted candidates and vacancies; candidate restore cascades the applications back using the IDs captured in the candidate-delete audit row from BL-007). |
 | Recruiter productivity | G-021, G-023, G-024, G-025, G-026, **G-028** | @-mentions in candidate notes; global cmd-K search; bulk move-to-stage; scorecard sharing via token-gated `/scorecard/<token>`; saved filter views per-recruiter on candidates + vacancies lists (G-026); **bulk CSV candidate import** (G-028) — admin-only `/candidates/import` wizard with downloadable template, auto column-mapping, preview with per-row validation errors, skip-duplicate-emails by default, downloadable error CSV, 1000-row/5MB caps, audit-logged as `candidates_imported`. |
 | Compliance | G-001 → G-008 | Gemini paid tier, Article 13 notice, 30-day purge cron, breach playbook, ROPA, OAuth revoke, self-serve org delete, sign-up country gate. |
+| Reporting | **G-029** | **Reports page** with three sub-tabs: **Pipeline conversion** funnel (applied → screening → interview → offer → hired with stage-to-stage rates), **Time to hire** (median + p25/p75 across hired applications, per-vacancy breakdown), **Source effectiveness** (applications / hires / conversion grouped by `source_type`). Period selector with 7/30/90/365-day + all-time presets. Visible to every signed-in member. Migration 039 backfills `applications.source_type = 'manual'` on existing NULLs + sets DEFAULT 'manual'. Recharts for the funnel bar chart. |
 | Polish | F-009, BL-006, BL-007 | List pagination controls + page-size selector, dashboard loading skeletons, candidate-delete cascade + accurate confirmation. |
 
 ---
@@ -107,10 +108,10 @@ Real features competing ATSes have that HRHandle does not. Some are 1–2 day wi
 
 ### Reporting
 
-- ⚪ **Time-to-hire** per vacancy / per role family / per recruiter.
-- ⚪ **Source effectiveness** — which sources (public form, LinkedIn, manual, referrals) produce the most hires.
-- ⚪ **Pipeline conversion** — applied → screening → interview → offer → hired funnel per vacancy.
-- ⚪ **Recruiter productivity** — applications reviewed / week, evaluations completed / week.
+- ✅ Time-to-hire — shipped 2026-06-23 as part of G-029. Median + p25/p75 + per-vacancy breakdown. Per-recruiter breakdown deliberately skipped.
+- ✅ Source effectiveness — shipped 2026-06-23 as part of G-029. Applications / hires / conversion grouped by `source_type` (manual, public_form, etc).
+- ✅ Pipeline conversion — shipped 2026-06-23 as part of G-029. Cumulative funnel with stage-to-stage conversion rates.
+- ⏭️ **Recruiter productivity** — deliberately skipped per Phase 4 plan (feels surveillance-y for a small team).
 
 ### Integrations
 
@@ -175,14 +176,12 @@ Order: easy-to-hard.
 7. ✅ CSV import — shipped 2026-06-22 as G-028. Admin-only `/candidates/import` wizard, downloadable template, auto column-mapping, preview, skip-duplicate-emails, per-row error CSV, 1000-row/5MB caps. Plan-cap respected per-batch.
 8. ✅ Scorecard sharing — shipped 2026-06-20 as G-025. Third token-page (status, offer, scorecard) all using the same admin-client + 404-not-deleted risk model.
 
-### Phase 4 — Reporting
+### Phase 4 — Reporting ✅ shipped 2026-06-23 (G-029)
 
-Analytics for recruiters and managers. The data exists; this is just queries + charts. Order by value:
-
-1. **Pipeline conversion** — applied → screening → interview → offer → hired funnel per vacancy.
-2. **Time-to-hire** per vacancy / per role family / per recruiter.
-3. **Source effectiveness** — which sources (public form, LinkedIn, manual, referrals) produce the most hires.
-4. *(Deliberately skip "recruiter productivity" metrics for now — feels surveillance-y for a small team.)*
+1. ✅ **Pipeline conversion** — funnel applied → screening → interview → offer → hired with stage-to-stage rates.
+2. ✅ **Time-to-hire** — median + p25/p75 + per-vacancy breakdown. Per-recruiter breakdown deliberately skipped.
+3. ✅ **Source effectiveness** — applications / hires / conversion grouped by `source_type`.
+4. ⏭️ Recruiter productivity — deliberately skipped (surveillance-y for a small team).
 
 ### Phase 5 — Integrations
 
@@ -248,3 +247,4 @@ When other phases are in flight, batch:
 | 2026-06-20 | Phase 3.8 shipped: scorecard sharing via token-gated `/scorecard/<token>` (G-025). Third token-page in a row using the same admin-client + 404-not-deleted risk model as G-016 status and G-018 offer. Remaining Phase 3 items: 3.6 saved filters, 3.7 CSV import. | Aleksandre Merabishvili |
 | 2026-06-21 | Phase 3.6 shipped: saved filter views per-recruiter-per-list-kind on the candidates and vacancies list pages (G-026). Cross-org sharing deferred. Last Phase 3 item is 3.7 CSV import. | Aleksandre Merabishvili |
 | 2026-06-22 | Phase 3.7 shipped: bulk CSV candidate import (G-028). Admin-only `/candidates/import` page with multi-step wizard, downloadable template, auto-mapped columns, preview with validation errors, skip-duplicate-emails, downloadable error CSV report. 1000 rows / 5MB caps. Plan-cap enforced once per batch. No new schema. Phase 3 (Recruiter productivity) is now complete. Next: Phase 4 (Reporting). | Aleksandre Merabishvili |
+| 2026-06-23 | Phase 4 shipped: Reports (G-029). New `/reports` route with three sub-tabs — pipeline conversion funnel, time-to-hire stats + per-vacancy breakdown, source effectiveness. Period selector (7/30/90/365 days + all-time). Migration 039 backfills `applications.source_type = 'manual'` on existing NULLs + sets DEFAULT 'manual' for future inserts. Recharts added (~80KB) for the funnel bar chart. 40 unit tests on the four pure helpers (period, funnel, time-to-hire, source-summary). Recruiter productivity deliberately skipped. Next: Phase 5 (Integrations). | Aleksandre Merabishvili |

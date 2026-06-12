@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Users,
   Calendar,
+  BarChart3,
   Settings,
   CreditCard,
   Menu,
@@ -30,6 +31,7 @@ const navigation = [
   { name: 'Vacancies', href: '/vacancies', icon: Briefcase },
   { name: 'Candidates', href: '/candidates', icon: Users },
   { name: 'Interviews', href: '/interviews', icon: Calendar },
+  { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Subscription', href: '/subscription', icon: CreditCard },
 ]
