@@ -16,6 +16,8 @@ export const env = createEnv({
     CRON_SECRET: z.string().min(1).optional(),
     SENTRY_ORG: z.string().min(1).optional(),
     SENTRY_PROJECT: z.string().min(1).optional(),
+    CALENDLY_CLIENT_ID: z.string().min(1).optional(),
+    CALENDLY_CLIENT_SECRET: z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
@@ -43,6 +45,8 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     SENTRY_ORG: process.env.SENTRY_ORG,
     SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+    CALENDLY_CLIENT_ID: process.env.CALENDLY_CLIENT_ID,
+    CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,

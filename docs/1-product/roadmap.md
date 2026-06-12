@@ -1,6 +1,6 @@
 # HRHandle — Product Roadmap
 
-_Last updated: 2026-06-23_
+_Last updated: 2026-06-24_
 _Owner: Aleksandre Merabishvili_
 
 This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
@@ -27,6 +27,7 @@ A short tour so context for the rest of the roadmap is fresh.
 | Recruiter productivity | G-021, G-023, G-024, G-025, G-026, **G-028** | @-mentions in candidate notes; global cmd-K search; bulk move-to-stage; scorecard sharing via token-gated `/scorecard/<token>`; saved filter views per-recruiter on candidates + vacancies lists (G-026); **bulk CSV candidate import** (G-028) — admin-only `/candidates/import` wizard with downloadable template, auto column-mapping, preview with per-row validation errors, skip-duplicate-emails by default, downloadable error CSV, 1000-row/5MB caps, audit-logged as `candidates_imported`. |
 | Compliance | G-001 → G-008 | Gemini paid tier, Article 13 notice, 30-day purge cron, breach playbook, ROPA, OAuth revoke, self-serve org delete, sign-up country gate. |
 | Reporting | **G-029** | **Reports page** with three sub-tabs: **Pipeline conversion** funnel (applied → screening → interview → offer → hired with stage-to-stage rates), **Time to hire** (median + p25/p75 across hired applications, per-vacancy breakdown), **Source effectiveness** (applications / hires / conversion grouped by `source_type`). Period selector with 7/30/90/365-day + all-time presets. Visible to every signed-in member. Migration 039 backfills `applications.source_type = 'manual'` on existing NULLs + sets DEFAULT 'manual'. Recharts for the funnel bar chart. |
+| Integrations | **G-030, G-031** | **Slack + Teams notifications** (G-030) via per-org incoming webhooks at `/settings/integrations/webhooks` — admins paste a webhook URL, choose from 8 events (application received / hired / rejected / withdrawn, offer sent / accepted / declined, interview scheduled), test message button, per-webhook on/off. Fan-out is best-effort, audit-logged once per dispatch (no payload body retained). **Calendly** (G-031) via OAuth at `/settings/integrations/calendly` — admin connects, HRHandle subscribes to user-scoped webhooks at connect time and stores the HMAC signing key, admin picks one Calendly event type. Recruiter on any candidate page generates a UTM-tagged scheduling URL via the "Calendly link" button; when the candidate books, the webhook receiver verifies the HMAC, creates an interview row, and fans out a Slack/Teams notification. Migrations 040 (`webhook_notifications`) and 041 (Calendly fields on `organization_integrations`). New `CALENDLY_CLIENT_ID` / `CALENDLY_CLIENT_SECRET` env vars. Manual deployment steps in `docs/4-integrations/phase-5-manual-steps.md`. |
 | Polish | F-009, BL-006, BL-007 | List pagination controls + page-size selector, dashboard loading skeletons, candidate-delete cascade + accurate confirmation. |
 
 ---
@@ -115,8 +116,8 @@ Real features competing ATSes have that HRHandle does not. Some are 1–2 day wi
 
 ### Integrations
 
-- ⚪ **Slack / Teams notifications** — org-level webhook for events (new application, candidate hired, interview scheduled).
-- ⚪ **Calendly / Cal.com integration** — candidate self-serve interview scheduling once the recruiter advances them to "Interview".
+- ✅ Slack / Teams notifications — shipped 2026-06-24 as G-030. Per-org webhooks, 8 event types.
+- ✅ Calendly — shipped 2026-06-24 as G-031. OAuth + UTM-tracked links + webhook-driven interview creation. Cal.com deferred.
 - ⚪ **Email tracking** — open/click tracking on recruiter-sent emails (Resend supports it; needs a toggle in `/settings/email-templates`).
 - ⚪ **LinkedIn job auto-cross-post** — current LinkedIn integration is page-post only; v2 would be cross-posting to Jobs.
 
@@ -185,12 +186,10 @@ Order: easy-to-hard.
 
 ### Phase 5 — Integrations
 
-Where customers want HRHandle to plug in. Order by user demand × build effort:
-
-1. **Slack / Teams notifications** — org-level webhook for events. Builds on the existing `createOrgNotifications` plumbing.
-2. **Calendly / Cal.com integration** — candidate self-serve interview scheduling once the recruiter advances them to "Interview".
-3. **LinkedIn jobs auto-cross-post** — extends the existing LinkedIn page-post integration.
-4. **Reference checks workflow** — request, collect, store references against a candidate.
+1. ✅ **Slack + Teams notifications** — shipped 2026-06-24 as G-030. Org-managed incoming webhooks at `/settings/integrations/webhooks`, 8 event types, per-webhook on/off, test message button.
+2. ✅ **Calendly** — shipped 2026-06-24 as G-031. Admin connects via OAuth; recruiter generates UTM-tagged Calendly links per candidate; bookings flow back as interview rows. Cal.com deferred per founder direction (free for customers).
+3. ⚪ **LinkedIn jobs auto-cross-post** — extends the existing LinkedIn page-post integration.
+4. ⚪ **Reference checks workflow** — request, collect, store references against a candidate.
 
 ### Phase 6 — Identity & SSO
 
@@ -247,4 +246,5 @@ When other phases are in flight, batch:
 | 2026-06-20 | Phase 3.8 shipped: scorecard sharing via token-gated `/scorecard/<token>` (G-025). Third token-page in a row using the same admin-client + 404-not-deleted risk model as G-016 status and G-018 offer. Remaining Phase 3 items: 3.6 saved filters, 3.7 CSV import. | Aleksandre Merabishvili |
 | 2026-06-21 | Phase 3.6 shipped: saved filter views per-recruiter-per-list-kind on the candidates and vacancies list pages (G-026). Cross-org sharing deferred. Last Phase 3 item is 3.7 CSV import. | Aleksandre Merabishvili |
 | 2026-06-22 | Phase 3.7 shipped: bulk CSV candidate import (G-028). Admin-only `/candidates/import` page with multi-step wizard, downloadable template, auto-mapped columns, preview with validation errors, skip-duplicate-emails, downloadable error CSV report. 1000 rows / 5MB caps. Plan-cap enforced once per batch. No new schema. Phase 3 (Recruiter productivity) is now complete. Next: Phase 4 (Reporting). | Aleksandre Merabishvili |
+| 2026-06-24 | Phase 5 partial shipped: Slack + Teams notifications (G-030) and Calendly (G-031). Two new tables (`webhook_notifications`, plus Calendly fields on `organization_integrations`). 34 unit tests on the pure helpers (payload builders, link builder, webhook HMAC verify, event allow-list). Manual deployment steps for the founder collected in `docs/4-integrations/phase-5-manual-steps.md`. Remaining Phase 5 items: LinkedIn jobs auto-cross-post + reference checks workflow. | Aleksandre Merabishvili |
 | 2026-06-23 | Phase 4 shipped: Reports (G-029). New `/reports` route with three sub-tabs — pipeline conversion funnel, time-to-hire stats + per-vacancy breakdown, source effectiveness. Period selector (7/30/90/365 days + all-time). Migration 039 backfills `applications.source_type = 'manual'` on existing NULLs + sets DEFAULT 'manual' for future inserts. Recharts added (~80KB) for the funnel bar chart. 40 unit tests on the four pure helpers (period, funnel, time-to-hire, source-summary). Recruiter productivity deliberately skipped. Next: Phase 5 (Integrations). | Aleksandre Merabishvili |

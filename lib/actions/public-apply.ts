@@ -3,6 +3,8 @@
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendApplicationConfirmationEmail } from '@/lib/email'
+import { dispatchWebhookNotification } from '@/lib/notifications/webhook-dispatcher'
+import { applicationReceivedCtx } from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { verifyCaptcha } from '@/lib/turnstile'
 import { headers } from 'next/headers'
@@ -404,6 +406,19 @@ export async function submitPublicApplication(
   } catch {
     // Email failure is non-fatal
   }
+
+  // Fire-and-forget webhook notification (Slack/Teams)
+  await dispatchWebhookNotification(
+    orgId,
+    'application_received',
+    applicationReceivedCtx({
+      applicationId: newApp.id as string,
+      candidateId,
+      candidateName: `${firstName} ${lastName}`.trim(),
+      vacancyTitle: vacancy.title,
+      source: 'Public apply form',
+    })
+  )
 
   return { success: true }
 }

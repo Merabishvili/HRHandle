@@ -77,6 +77,7 @@ interface ApplicationEvaluationProps {
 import type { OfferRow } from '@/components/offers/offer-panel'
 import { OfferPanel } from '@/components/offers/offer-panel'
 import { ShareScorecardButton } from '@/components/scorecards/share-scorecard-button'
+import { CalendlyLinkButton } from '@/components/integrations/calendly-link-button'
 
 function calcScore(
   questions: Question[],
@@ -294,6 +295,8 @@ export function ApplicationEvaluation({
                 vacancyTitle={vacancyTitle}
               />
             )}
+
+            <CalendlyLinkButton applicationId={applicationId} />
 
             <Button
               size="sm"

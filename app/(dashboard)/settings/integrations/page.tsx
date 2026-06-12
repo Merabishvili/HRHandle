@@ -7,6 +7,8 @@ import { ZoomConnect } from '@/components/settings/zoom-connect'
 import { MicrosoftConnect } from '@/components/settings/microsoft-connect'
 import { LinkedInConnect } from '@/components/settings/linkedin-connect'
 import { getLinkedInIntegration } from '@/lib/actions/integrations'
+import Link from 'next/link'
+import { Bell, Calendar as CalendarIcon } from 'lucide-react'
 
 export default async function IntegrationsSettingsPage() {
   const supabase = await createClient()
@@ -49,6 +51,40 @@ export default async function IntegrationsSettingsPage() {
               <Suspense fallback={null}>
                 <LinkedInConnect integration={linkedInIntegration} />
               </Suspense>
+            </div>
+            <div className="border-t border-border pt-6">
+              <Link
+                href="/settings/integrations/webhooks"
+                className="flex items-center justify-between gap-4 rounded-md border bg-card p-4 transition-colors hover:bg-accent/40"
+              >
+                <div className="flex items-start gap-3">
+                  <Bell className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Slack &amp; Microsoft Teams notifications</p>
+                    <p className="text-sm text-muted-foreground">
+                      Send messages to your team when applications, offers, and interviews change.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-primary">Configure →</span>
+              </Link>
+            </div>
+            <div className="border-t border-border pt-6">
+              <Link
+                href="/settings/integrations/calendly"
+                className="flex items-center justify-between gap-4 rounded-md border bg-card p-4 transition-colors hover:bg-accent/40"
+              >
+                <div className="flex items-start gap-3">
+                  <CalendarIcon className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Calendly</p>
+                    <p className="text-sm text-muted-foreground">
+                      Let candidates self-schedule interviews directly from your Calendly link.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-primary">Configure →</span>
+              </Link>
             </div>
           </div>
         </CardContent>

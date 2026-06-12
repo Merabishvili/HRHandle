@@ -7,6 +7,12 @@ import { z } from 'zod'
 import { getAuthContext, type ActionResult } from './index'
 import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
+import { dispatchWebhookNotification } from '@/lib/notifications/webhook-dispatcher'
+import {
+  offerSentCtx,
+  offerAcceptedCtx,
+  offerDeclinedCtx,
+} from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendOfferEmail } from '@/lib/email'
@@ -292,6 +298,22 @@ export async function sendOffer(offerId: string): Promise<ActionResult<{ token: 
     message: 'offer sent to candidate',
     details: { application_id: offer.application_id },
   })
+
+  {
+    type VacJoin = { title: string } | { title: string }[] | null
+    const vac = app.vacancies as VacJoin
+    const vacancyTitle = Array.isArray(vac) ? vac[0]?.title ?? null : vac?.title ?? null
+    await dispatchWebhookNotification(
+      ctx.orgId,
+      'offer_sent',
+      offerSentCtx({
+        candidateId: app.candidate_id,
+        candidateName: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim() || 'Candidate',
+        vacancyTitle,
+        roleTitle: (offer.role_title as string) || vacancyTitle || 'the role',
+      })
+    )
+  }
 
   revalidatePath('/candidates/[id]', 'page')
   return { success: true, data: { token } }
@@ -594,6 +616,32 @@ export async function acceptOfferByToken(token: string): Promise<ActionResult<vo
     console.error('[offers] accept notification failed:', err)
   }
 
+  // Slack/Teams webhook (best-effort).
+  try {
+    const { data: hydratedOffer } = await admin
+      .from('offers')
+      .select('role_title, applications(candidate_id, candidates(first_name, last_name), vacancies(title))')
+      .eq('id', offer.id as string)
+      .single()
+    if (hydratedOffer) {
+      const appJoin = (hydratedOffer as unknown as { applications: { candidate_id: string; candidates: { first_name: string; last_name: string } | null; vacancies: { title: string } | null } | null }).applications
+      if (appJoin?.candidate_id) {
+        await dispatchWebhookNotification(
+          offer.organization_id as string,
+          'offer_accepted',
+          offerAcceptedCtx({
+            candidateId: appJoin.candidate_id,
+            candidateName: appJoin.candidates ? `${appJoin.candidates.first_name} ${appJoin.candidates.last_name}`.trim() : 'Candidate',
+            vacancyTitle: appJoin.vacancies?.title ?? null,
+            roleTitle: (hydratedOffer.role_title as string) || 'the role',
+          })
+        )
+      }
+    }
+  } catch (err) {
+    console.error('[offers] accept webhook failed:', err)
+  }
+
   revalidatePath('/candidates/[id]', 'page')
   return { success: true, data: undefined }
 }
@@ -671,6 +719,31 @@ export async function declineOfferByToken(
     }
   } catch (err) {
     console.error('[offers] decline notification failed:', err)
+  }
+
+  try {
+    const { data: hydratedOffer } = await admin
+      .from('offers')
+      .select('role_title, applications(candidate_id, candidates(first_name, last_name), vacancies(title))')
+      .eq('id', offer.id as string)
+      .single()
+    if (hydratedOffer) {
+      const appJoin = (hydratedOffer as unknown as { applications: { candidate_id: string; candidates: { first_name: string; last_name: string } | null; vacancies: { title: string } | null } | null }).applications
+      if (appJoin?.candidate_id) {
+        await dispatchWebhookNotification(
+          offer.organization_id as string,
+          'offer_declined',
+          offerDeclinedCtx({
+            candidateId: appJoin.candidate_id,
+            candidateName: appJoin.candidates ? `${appJoin.candidates.first_name} ${appJoin.candidates.last_name}`.trim() : 'Candidate',
+            vacancyTitle: appJoin.vacancies?.title ?? null,
+            roleTitle: (hydratedOffer.role_title as string) || 'the role',
+          })
+        )
+      }
+    }
+  } catch (err) {
+    console.error('[offers] decline webhook failed:', err)
   }
 
   revalidatePath('/candidates/[id]', 'page')

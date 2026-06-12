@@ -6,6 +6,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendApplicationRejectionEmail, sendApplicationStatusChangedEmail } from '@/lib/email'
 import { shouldEmailForTransition } from '@/lib/applications-status-emails'
 import { writeAuditLog } from '@/lib/audit-log'
+import { dispatchWebhookNotification } from '@/lib/notifications/webhook-dispatcher'
+import {
+  applicationHiredCtx,
+  applicationRejectedCtx,
+  applicationWithdrawnCtx,
+} from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import {
   MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE,
@@ -90,6 +96,43 @@ export async function updateApplicationStatus(
       after: newStatus?.code ?? null,
     },
   })
+
+  if (newStatus && beforeCode !== newStatus.code) {
+    const eventForCode: Record<string, 'application_hired' | 'application_rejected' | 'application_withdrawn'> = {
+      hired: 'application_hired',
+      rejected: 'application_rejected',
+      withdrawn: 'application_withdrawn',
+    }
+    const eventKey = eventForCode[newStatus.code]
+    if (eventKey) {
+      try {
+        const { data: row } = await ctx.supabase
+          .from('applications')
+          .select('candidate_id, candidates(first_name, last_name), vacancies(title)')
+          .eq('id', applicationId)
+          .single()
+        if (row) {
+          const cand = (row as unknown as { candidates: { first_name: string; last_name: string } | null }).candidates
+          const vac = (row as unknown as { vacancies: { title: string } | null }).vacancies
+          const ctxPayload = {
+            applicationId,
+            candidateId: row.candidate_id as string,
+            candidateName: cand ? `${cand.first_name} ${cand.last_name}`.trim() : 'Candidate',
+            vacancyTitle: vac?.title ?? null,
+          }
+          const builder =
+            eventKey === 'application_hired'
+              ? applicationHiredCtx
+              : eventKey === 'application_rejected'
+                ? applicationRejectedCtx
+                : applicationWithdrawnCtx
+          await dispatchWebhookNotification(ctx.orgId, eventKey, builder(ctxPayload))
+        }
+      } catch (err) {
+        console.error('[applications] webhook dispatch failed:', err)
+      }
+    }
+  }
 
   if (newStatus) {
     const { data: candidateStatuses } = await ctx.supabase
@@ -491,6 +534,32 @@ export async function withdrawApplicationByToken(
     }
   } catch (err) {
     console.error('[applications] withdraw notification failed:', err)
+  }
+
+  try {
+    const { data: cand } = await admin
+      .from('candidates')
+      .select('first_name, last_name')
+      .eq('id', app.candidate_id as string)
+      .single()
+    const { data: vac } = await admin
+      .from('applications')
+      .select('vacancies(title)')
+      .eq('id', app.id as string)
+      .single()
+    const vacTitle = (vac as unknown as { vacancies: { title: string } | null } | null)?.vacancies?.title ?? null
+    await dispatchWebhookNotification(
+      app.organization_id as string,
+      'application_withdrawn',
+      applicationWithdrawnCtx({
+        applicationId: app.id as string,
+        candidateId: app.candidate_id as string,
+        candidateName: cand ? `${cand.first_name} ${cand.last_name}`.trim() : 'Candidate',
+        vacancyTitle: vacTitle,
+      })
+    )
+  } catch (err) {
+    console.error('[applications] withdraw webhook failed:', err)
   }
 
   return { success: true, data: undefined }
