@@ -202,7 +202,7 @@ export function OfferForm({
                   <SelectItem value={NONE_VALUE}>Not specified</SelectItem>
                   {COMPENSATION_PERIODS.map((p) => (
                     <SelectItem key={p} value={p}>
-                      {p[0].toUpperCase() + p.slice(1)} ({COMPENSATION_PERIOD_LABELS[p] || '—'})
+                      {(p[0] ?? '').toUpperCase() + p.slice(1)} ({COMPENSATION_PERIOD_LABELS[p] || '—'})
                     </SelectItem>
                   ))}
                 </SelectContent>

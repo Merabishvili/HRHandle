@@ -184,5 +184,5 @@ export async function deleteZoomMeeting(
 export function parseZoomMeetingIdFromJoinUrl(joinUrl: string | null): string | null {
   if (!joinUrl) return null
   const match = joinUrl.match(/zoom\.us\/(?:j|s|w)\/(\d{9,12})/)
-  return match ? match[1] : null
+  return match?.[1] ?? null
 }

@@ -54,14 +54,14 @@ describe('buildTeamsPayload', () => {
       body: '',
       fields: [{ label: 'A', value: '1' }],
     }) as { sections: { facts: { name: string; value: string }[] }[] }
-    expect(p.sections[0].facts).toEqual([{ name: 'A', value: '1' }])
+    expect(p.sections[0]!.facts).toEqual([{ name: 'A', value: '1' }])
   })
 
   it('adds an OpenUri action when a URL is set', () => {
     const p = buildTeamsPayload({ title: 'T', body: '', url: 'https://example.com' }) as {
       potentialAction: { '@type': string }[]
     }
-    expect(p.potentialAction[0]['@type']).toBe('OpenUri')
+    expect(p.potentialAction[0]!['@type']).toBe('OpenUri')
   })
 })
 

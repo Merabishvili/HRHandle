@@ -136,14 +136,14 @@ describe('generateJobDescriptionSection', () => {
       richInput({ additional_context: 'Must know Kubernetes' }),
       'description',
     )
-    const sent = generateContentMock.mock.calls[0][0] as string
+    const sent = generateContentMock.mock.calls[0]![0] as string
     expect(sent).toContain('Must know Kubernetes')
   })
 
   it('instructs the model to avoid bias / hype language', async () => {
     mockGeminiText('A response.')
     await generateJobDescriptionSection(richInput(), 'description')
-    const sent = generateContentMock.mock.calls[0][0] as string
+    const sent = generateContentMock.mock.calls[0]![0] as string
     // Guard the rule list against drift — these phrases keep the prompt safe.
     expect(sent).toMatch(/rockstar/i)
     expect(sent).toMatch(/ninja/i)
@@ -154,7 +154,7 @@ describe('generateJobDescriptionSection', () => {
   it('asks the model to refuse fabrication when input is thin (TOO_THIN escape hatch)', async () => {
     mockGeminiText('A response.')
     await generateJobDescriptionSection(richInput(), 'responsibilities')
-    const sent = generateContentMock.mock.calls[0][0] as string
+    const sent = generateContentMock.mock.calls[0]![0] as string
     expect(sent).toContain('TOO_THIN')
   })
 

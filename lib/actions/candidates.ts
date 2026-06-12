@@ -18,7 +18,7 @@ export async function createCandidate(
   if (limitError) return { success: false, error: limitError }
 
   const parsed = CandidateSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const { linked_vacancy_ids: _, ...candidateData } = parsed.data
 
@@ -83,7 +83,7 @@ export async function updateCandidate(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = CandidateSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const { linked_vacancy_ids: _, ...candidateData } = parsed.data
 

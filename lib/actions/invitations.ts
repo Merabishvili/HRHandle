@@ -28,7 +28,7 @@ export async function inviteTeamMember(
   }
 
   const parsed = InviteSchema.safeParse({ email, role })
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const limitError = await checkPlanLimit(ctx, 'member')
   if (limitError) return { success: false, error: limitError }

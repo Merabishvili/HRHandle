@@ -190,7 +190,7 @@ describe('deleteOrganization', () => {
     ).rejects.toThrow(/NEXT_REDIRECT:\/onboarding\/account-deletion-scheduled/)
     expect(signOutMock).toHaveBeenCalledTimes(1)
     expect(writeAuditMock).toHaveBeenCalledTimes(1)
-    const auditCall = writeAuditMock.mock.calls[0][0]
+    const auditCall = writeAuditMock.mock.calls[0]![0]
     expect(auditCall.entityType).toBe('organization')
     expect(auditCall.action).toBe('deletion_scheduled')
   })

@@ -46,7 +46,7 @@ describe('writeAuditLog', () => {
       entityId: null,
       action: 'disconnected',
     })
-    const row = insertMock.mock.calls[0][0]
+    const row = insertMock.mock.calls[0]![0]
     expect(row.message).toBeNull()
     expect(row.details).toBeNull()
     expect(row.user_id).toBeNull()

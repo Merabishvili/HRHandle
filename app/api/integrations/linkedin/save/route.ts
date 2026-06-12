@@ -8,7 +8,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 function extractNumericPageId(input: string): string | null {
   if (!input) return null
   const urlMatch = input.match(/linkedin\.com\/company\/(\d+)/)
-  if (urlMatch) return urlMatch[1]
+  if (urlMatch && urlMatch[1]) return urlMatch[1]
   if (/^\d+$/.test(input)) return input
   return null
 }

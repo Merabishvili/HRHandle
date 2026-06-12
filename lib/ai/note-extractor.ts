@@ -173,7 +173,7 @@ export async function extractStructuredNotes(
   const prompt = buildPrompt({ ...input, raw_notes: trimmed })
 
   for (let i = 0; i < MODELS.length; i++) {
-    const modelName = MODELS[i]
+    const modelName = MODELS[i]!
     const result = await callGeminiWithTimeout(apiKey, modelName, prompt)
 
     if (typeof result === 'string') {

@@ -204,14 +204,14 @@ describe('generateInterviewQuestions', () => {
     await generateInterviewQuestions(
       richInput({ additional_context: 'Focus on system-design depth.' }),
     )
-    const sent = generateContentMock.mock.calls[0][0] as string
+    const sent = generateContentMock.mock.calls[0]![0] as string
     expect(sent).toContain('Focus on system-design depth.')
   })
 
   it('instructs the model to avoid protected-class probing', async () => {
     mockGeminiText(VALID_RESPONSE)
     await generateInterviewQuestions(richInput())
-    const sent = generateContentMock.mock.calls[0][0] as string
+    const sent = generateContentMock.mock.calls[0]![0] as string
     // Critical guard. If anyone weakens these instructions, this test fails.
     expect(sent.toLowerCase()).toContain('protected characteristics')
     expect(sent.toLowerCase()).toContain('age')
@@ -224,7 +224,7 @@ describe('generateInterviewQuestions', () => {
   it('asks the model to refuse fabrication when input is thin', async () => {
     mockGeminiText(VALID_RESPONSE)
     await generateInterviewQuestions(richInput())
-    const sent = generateContentMock.mock.calls[0][0] as string
+    const sent = generateContentMock.mock.calls[0]![0] as string
     expect(sent).toContain('TOO_THIN')
   })
 })

@@ -158,7 +158,7 @@ export async function createInterview(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = InterviewSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   // Non-fatal failures (email, notification) are collected here so the caller
   // can surface them as toasts after the interview is already saved.

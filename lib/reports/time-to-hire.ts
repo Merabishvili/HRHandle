@@ -18,12 +18,15 @@ export interface TimeToHireStats {
 /** Linear-interpolated percentile from a *sorted* array. p in [0, 1]. */
 export function percentile(sortedAsc: number[], p: number): number | null {
   if (sortedAsc.length === 0) return null
-  if (sortedAsc.length === 1) return sortedAsc[0]
+  if (sortedAsc.length === 1) return sortedAsc[0] ?? null
   const idx = (sortedAsc.length - 1) * p
   const lo = Math.floor(idx)
   const hi = Math.ceil(idx)
-  if (lo === hi) return sortedAsc[lo]
-  return sortedAsc[lo] + (sortedAsc[hi] - sortedAsc[lo]) * (idx - lo)
+  const loV = sortedAsc[lo]
+  const hiV = sortedAsc[hi]
+  if (loV === undefined || hiV === undefined) return null
+  if (lo === hi) return loV
+  return loV + (hiV - loV) * (idx - lo)
 }
 
 export function summarize(samples: TimeToHireSample[]): TimeToHireStats {
@@ -38,8 +41,8 @@ export function summarize(samples: TimeToHireSample[]): TimeToHireStats {
     p25: percentile(days, 0.25),
     p75: percentile(days, 0.75),
     mean: sum / days.length,
-    min: days[0],
-    max: days[days.length - 1],
+    min: days[0] ?? null,
+    max: days[days.length - 1] ?? null,
   }
 }
 

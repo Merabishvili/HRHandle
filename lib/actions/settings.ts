@@ -10,7 +10,7 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<v
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = ProfileSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const { error } = await ctx.supabase
     .from('profiles')
@@ -44,7 +44,7 @@ export async function updateOrganization(
   }
 
   const parsed = OrganizationSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const updatePayload: Record<string, unknown> = { name: parsed.data.name.trim() }
   if ('logo_url' in parsed.data) {

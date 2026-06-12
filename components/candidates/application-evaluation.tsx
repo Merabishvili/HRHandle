@@ -352,7 +352,7 @@ export function ApplicationEvaluation({
                     onChange={(e) =>
                       setAnswers((prev) => ({
                         ...prev,
-                        [q.id]: { ...prev[q.id], text: e.target.value },
+                        [q.id]: { text: e.target.value, score: prev[q.id]?.score ?? null },
                       }))
                     }
                   />
@@ -365,7 +365,7 @@ export function ApplicationEvaluation({
                         onClick={() =>
                           setAnswers((prev) => ({
                             ...prev,
-                            [q.id]: { ...prev[q.id], score: answers[q.id]?.score === n ? null : n },
+                            [q.id]: { text: prev[q.id]?.text ?? '', score: answers[q.id]?.score === n ? null : n },
                           }))
                         }
                         className={`h-8 w-8 rounded-md text-sm font-medium border transition-colors ${

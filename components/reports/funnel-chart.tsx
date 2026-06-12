@@ -10,7 +10,8 @@ interface FunnelChartProps {
 export function FunnelChart({ data }: FunnelChartProps) {
   const rows = FUNNEL_STAGES.map((stage, idx) => {
     const count = data[stage]
-    const previous = idx === 0 ? null : data[FUNNEL_STAGES[idx - 1]]
+    const prevStage = idx === 0 ? null : FUNNEL_STAGES[idx - 1]
+    const previous = prevStage ? data[prevStage] : null
     const conv = previous === null ? null : stageConversion(previous, count)
     return {
       stage,

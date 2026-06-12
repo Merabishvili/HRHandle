@@ -91,7 +91,7 @@ describe('byVacancy', () => {
     ]
     const out = byVacancy(s)
     expect(out).toHaveLength(1)
-    expect(out[0].vacancyId).toBe('v1')
+    expect(out[0]!.vacancyId).toBe('v1')
   })
 
   it('sorts by hire count desc then title asc', () => {

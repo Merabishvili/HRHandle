@@ -175,7 +175,7 @@ describe('extractStructuredNotes', () => {
   it('builds a prompt that names the candidate and role, includes the safety guards, and quotes the notes verbatim', async () => {
     generateContentMock.mockReturnValueOnce(geminiResponse(validStructure()))
     await extractStructuredNotes(richInput())
-    const prompt = generateContentMock.mock.calls[0][0] as string
+    const prompt = generateContentMock.mock.calls[0]![0] as string
     expect(prompt).toMatch(/Alex Smith/)
     expect(prompt).toMatch(/Senior Backend Engineer/)
     // Protected-class guard

@@ -151,7 +151,7 @@ export async function generateJobDescriptionSection(
   const prompt = buildPrompt(input, section)
 
   for (let i = 0; i < MODELS.length; i++) {
-    const modelName = MODELS[i]
+    const modelName = MODELS[i]!
     const result = await callGeminiWithTimeout(apiKey, modelName, prompt)
 
     if (typeof result === 'string') {

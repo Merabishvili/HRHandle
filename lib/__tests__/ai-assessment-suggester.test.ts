@@ -173,7 +173,7 @@ describe('suggestAssessmentItems', () => {
   it('builds a prompt that includes the strict rules, the TOO_THIN escape, and the role data', async () => {
     generateContentMock.mockReturnValueOnce(geminiResponse(validPayload()))
     await suggestAssessmentItems(richInput())
-    const prompt = generateContentMock.mock.calls[0][0] as string
+    const prompt = generateContentMock.mock.calls[0]![0] as string
 
     // Format guidance — skill labels and open-ended prompts
     expect(prompt).toMatch(/SKILL labels/)
@@ -196,7 +196,7 @@ describe('suggestAssessmentItems', () => {
     await suggestAssessmentItems(
       richInput({ additional_context: 'Focus on ownership of payments service.' }),
     )
-    const prompt = generateContentMock.mock.calls[0][0] as string
+    const prompt = generateContentMock.mock.calls[0]![0] as string
     expect(prompt).toMatch(/Recruiter notes/)
     expect(prompt).toMatch(/ownership of payments service/)
   })

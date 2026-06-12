@@ -26,7 +26,7 @@ export async function createNote(
 
   const parsed = NoteSchema.safeParse({ text })
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0].message }
+    return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
   }
 
   // Verify candidate belongs to org

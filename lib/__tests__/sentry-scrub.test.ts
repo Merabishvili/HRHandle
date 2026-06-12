@@ -49,13 +49,14 @@ describe('scrubPii', () => {
     }
     const out = scrubPii(event)
     const data = out.request!.data as Record<string, Record<string, string>>
-    expect(data.payload.first_name).toBe('[REDACTED]')
-    expect(data.payload.last_name).toBe('[REDACTED]')
-    expect(data.payload.email).toBe('[REDACTED]')
-    expect(data.payload.phone).toBe('[REDACTED]')
-    expect(data.payload.note).toBe('[REDACTED]')
-    expect(data.payload.description).toBe('[REDACTED]')
-    expect(data.payload.vacancy_id).toBe('keep-me')
+    const p = data.payload!
+    expect(p.first_name).toBe('[REDACTED]')
+    expect(p.last_name).toBe('[REDACTED]')
+    expect(p.email).toBe('[REDACTED]')
+    expect(p.phone).toBe('[REDACTED]')
+    expect(p.note).toBe('[REDACTED]')
+    expect(p.description).toBe('[REDACTED]')
+    expect(p.vacancy_id).toBe('keep-me')
   })
 
   it('redacts breadcrumb data', () => {
@@ -68,8 +69,8 @@ describe('scrubPii', () => {
       ],
     }
     const out = scrubPii(event)
-    expect(out.breadcrumbs?.[0].data?.email).toBe('[REDACTED]')
-    expect(out.breadcrumbs?.[0].data?.url).toBe('/api/x')
+    expect(out.breadcrumbs?.[0]?.data?.email).toBe('[REDACTED]')
+    expect(out.breadcrumbs?.[0]?.data?.url).toBe('/api/x')
   })
 
   it('handles deeply-nested arrays of PII without crashing', () => {
@@ -83,9 +84,9 @@ describe('scrubPii', () => {
     }
     const out = scrubPii(event)
     const extra = out.extra as { candidates: Array<{ email: string; vacancy_id: string }> }
-    expect(extra.candidates[0].email).toBe('[REDACTED]')
-    expect(extra.candidates[0].vacancy_id).toBe('v1')
-    expect(extra.candidates[1].email).toBe('[REDACTED]')
+    expect(extra.candidates[0]!.email).toBe('[REDACTED]')
+    expect(extra.candidates[0]!.vacancy_id).toBe('v1')
+    expect(extra.candidates[1]!.email).toBe('[REDACTED]')
   })
 
   it('replaces request.cookies entirely', () => {

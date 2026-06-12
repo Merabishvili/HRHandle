@@ -293,7 +293,7 @@ export function VacancyApplicationRow({
                         placeholder="Enter answer…"
                         value={answers[q.id]?.text ?? ''}
                         onChange={(e) =>
-                          setAnswers((prev) => ({ ...prev, [q.id]: { ...prev[q.id], text: e.target.value } }))
+                          setAnswers((prev) => ({ ...prev, [q.id]: { text: e.target.value, score: prev[q.id]?.score ?? null } }))
                         }
                       />
                     ) : (
@@ -305,7 +305,7 @@ export function VacancyApplicationRow({
                             onClick={() =>
                               setAnswers((prev) => ({
                                 ...prev,
-                                [q.id]: { ...prev[q.id], score: answers[q.id]?.score === n ? null : n },
+                                [q.id]: { text: prev[q.id]?.text ?? '', score: answers[q.id]?.score === n ? null : n },
                               }))
                             }
                             className={`h-8 w-8 rounded-md text-sm font-medium border transition-colors ${

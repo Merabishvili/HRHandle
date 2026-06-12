@@ -62,7 +62,7 @@ export async function createOffer(
 
   const parsed = OfferInputSchema.safeParse(input)
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0].message }
+    return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
   }
 
   // Verify the application belongs to this org and isn't deleted.
@@ -144,7 +144,7 @@ export async function updateOffer(
 
   const parsed = OfferInputSchema.safeParse(input)
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0].message }
+    return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
   }
 
   const { data: existing } = await ctx.supabase
@@ -656,7 +656,7 @@ export async function declineOfferByToken(
   }
   const parsedReason = DeclineSchema.safeParse({ reason })
   if (!parsedReason.success) {
-    return { success: false, error: parsedReason.error.errors[0].message }
+    return { success: false, error: parsedReason.error.errors[0]?.message ?? 'Validation failed' }
   }
 
   const admin = createAdminClient()

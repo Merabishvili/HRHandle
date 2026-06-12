@@ -61,11 +61,12 @@ export function MentionTextarea({
       let query = ''
       while (i >= 0) {
         const ch = text[i]
+        if (ch === undefined) break
         if (ch === '@') {
           // Trigger valid only when '@' is at start of text or follows
           // whitespace — avoids opening the popover inside an email like
           // alex@example.com.
-          const prev = i > 0 ? text[i - 1] : ''
+          const prev = i > 0 ? text[i - 1] ?? '' : ''
           if (i === 0 || /\s/.test(prev)) {
             setTrigger({ start: i, query })
             setHover(0)
@@ -103,7 +104,8 @@ export function MentionTextarea({
       setHover((h) => (h - 1 + matches.length) % matches.length)
     } else if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault()
-      pick(matches[hover])
+      const m = matches[hover]
+      if (m) pick(m)
     } else if (e.key === 'Escape') {
       e.preventDefault()
       setTrigger(null)

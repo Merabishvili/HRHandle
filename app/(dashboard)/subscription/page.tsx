@@ -192,7 +192,7 @@ export default async function SubscriptionPage() {
               {getPlanDisplayName(typedSubscription.plan_code)}
             </span>
 
-            {typedSubscription.plan_code !== 'trial' && (
+            {typedSubscription.plan_code !== 'trial' && currentPlan && (
               <span className="text-muted-foreground">
                 {typedSubscription.billing_cycle === 'annual'
                   ? `$${currentPlan.price_annual}/mo billed annually`

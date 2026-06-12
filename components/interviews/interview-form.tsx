@@ -127,7 +127,7 @@ export function InterviewForm({
   const handleCandidateChange = (id: string) => {
     setCandidateId(id)
     const related = applications.filter((a) => a.candidate_id === id)
-    if (related.length === 1) {
+    if (related.length === 1 && related[0]) {
       setApplicationId(related[0].id)
       setVacancyId(related[0].vacancy_id)
     } else {

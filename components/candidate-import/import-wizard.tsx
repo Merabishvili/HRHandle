@@ -79,7 +79,7 @@ export function ImportWizard() {
       skipEmptyLines: true,
       complete: (results) => {
         if (results.errors.length > 0) {
-          setError(`Parse error: ${results.errors[0].message}`)
+          setError(`Parse error: ${results.errors[0]?.message ?? 'unknown'}`)
           return
         }
         const data = results.data as string[][]

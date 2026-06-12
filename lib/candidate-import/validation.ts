@@ -102,6 +102,7 @@ export function validateRow(raw: RawRow): RowValidationOk | RowValidationError {
   const parsed = ImportRowSchema.safeParse(coerced)
   if (!parsed.success) {
     const first = parsed.error.errors[0]
+    if (!first) return { ok: false, error: 'Validation failed' }
     const path = first.path.join('.')
     return { ok: false, error: path ? `${path}: ${first.message}` : first.message }
   }

@@ -166,7 +166,7 @@ export async function summarizeCandidate(
   const prompt = SUMMARY_PROMPT + buildCandidateContext(input)
 
   for (let i = 0; i < MODELS.length; i++) {
-    const modelName = MODELS[i]
+    const modelName = MODELS[i]!
     const result = await callGeminiWithTimeout(apiKey, modelName, prompt)
 
     if (typeof result === 'string') {

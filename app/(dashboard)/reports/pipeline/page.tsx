@@ -76,6 +76,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Sea
                 <tbody>
                   {FUNNEL_STAGES.slice(1).map((stage, idx) => {
                     const previous = FUNNEL_STAGES[idx]
+                    if (!previous) return null
                     const fromCount = funnel[previous]
                     const toCount = funnel[stage]
                     const conv = stageConversion(fromCount, toCount)

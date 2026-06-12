@@ -131,7 +131,7 @@ export async function parseCV(text: string): Promise<CVParseResult> {
   const genAI = new GoogleGenerativeAI(apiKey)
 
   for (let modelIdx = 0; modelIdx < MODELS.length; modelIdx++) {
-    const model = genAI.getGenerativeModel({ model: MODELS[modelIdx] })
+    const model = genAI.getGenerativeModel({ model: MODELS[modelIdx]! })
 
     if (modelIdx > 0) {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))

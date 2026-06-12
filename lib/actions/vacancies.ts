@@ -14,7 +14,7 @@ export async function createVacancy(input: VacancyInput): Promise<ActionResult<{
   if (limitError) return { success: false, error: limitError }
 
   const parsed = VacancySchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const tokenForInsert = parsed.data.show_on_public_page
     ? Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url')
@@ -45,7 +45,7 @@ export async function updateVacancy(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = VacancySchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const updatePayload: Record<string, unknown> = { ...parsed.data }
 
@@ -157,14 +157,14 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
     )
     const endDate = new Date(today)
     endDate.setDate(endDate.getDate() + diffDays)
-    newEndDate = endDate.toISOString().split('T')[0]
+    newEndDate = endDate.toISOString().split('T')[0] ?? null
   } else {
     // BL-012: if the original was open-ended (no end_date), default the
     // duplicate to today + 90 days so it doesn't silently inherit a null
     // deadline. The user can still clear it on the edit page.
     const fallbackEnd = new Date(today)
     fallbackEnd.setDate(fallbackEnd.getDate() + 90)
-    newEndDate = fallbackEnd.toISOString().split('T')[0]
+    newEndDate = fallbackEnd.toISOString().split('T')[0] ?? null
   }
 
   const { data: draftStatus } = await ctx.supabase

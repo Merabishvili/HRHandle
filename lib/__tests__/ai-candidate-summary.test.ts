@@ -134,7 +134,7 @@ describe('summarizeCandidate', () => {
   it('does NOT include PII like email, phone, linkedin in the prompt', async () => {
     mockGeminiText('A neutral summary.')
     await summarizeCandidate(richInput())
-    const sentPrompt = generateContentMock.mock.calls[0][0] as string
+    const sentPrompt = generateContentMock.mock.calls[0]![0] as string
 
     // The input shape doesn't even accept these fields, but defend against
     // future regressions by asserting these substrings never appear.
@@ -152,7 +152,7 @@ describe('summarizeCandidate', () => {
   it("instructs the model to be neutral and factual, not judgemental", async () => {
     mockGeminiText('Anything.')
     await summarizeCandidate(richInput())
-    const sentPrompt = generateContentMock.mock.calls[0][0] as string
+    const sentPrompt = generateContentMock.mock.calls[0]![0] as string
 
     // Guard against prompt drift that would push the model toward
     // judgement / decision language — the design principle (assistant only).

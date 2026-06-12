@@ -96,7 +96,7 @@ describe('projectScorecard', () => {
     const view = projectScorecard({ overallScore: null, questions: [Q1, Q2], answers })
     const s1 = view.items[0]
     const s2 = view.items[1]
-    if (s1.kind !== 'score' || s2.kind !== 'score') throw new Error('expected score items')
+    if (!s1 || !s2 || s1.kind !== 'score' || s2.kind !== 'score') throw new Error('expected score items')
     expect(s1.score).toBe(10)
     expect(s1.percentage).toBe(100)
     expect(s2.score).toBe(0)

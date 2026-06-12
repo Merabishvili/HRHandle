@@ -12,7 +12,7 @@ function fakeHeaders(map: Record<string, string>) {
     get(name: string): string | null {
       // Match Web Headers semantics: case-insensitive lookup.
       const key = Object.keys(map).find((k) => k.toLowerCase() === name.toLowerCase())
-      return key ? map[key] : null
+      return key ? map[key] ?? null : null
     },
   }
 }

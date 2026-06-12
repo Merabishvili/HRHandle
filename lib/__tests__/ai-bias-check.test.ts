@@ -161,7 +161,7 @@ describe('checkInclusiveLanguage', () => {
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.findings.length).toBe(1)
-      expect(result.findings[0].phrase).toBe('rockstar engineer')
+      expect(result.findings[0]!.phrase).toBe('rockstar engineer')
     }
   })
 
@@ -189,7 +189,7 @@ describe('checkInclusiveLanguage', () => {
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.findings.length).toBe(1)
-      expect(result.findings[0].category).toBe('age_coded')
+      expect(result.findings[0]!.category).toBe('age_coded')
     }
   })
 
@@ -228,7 +228,7 @@ describe('checkInclusiveLanguage', () => {
   it('builds a prompt that lists the categories, the exact-substring rule, the calibration rule, and TOO_THIN', async () => {
     generateContentMock.mockReturnValueOnce(geminiResponse('{"findings": []}'))
     await checkInclusiveLanguage(richInput())
-    const prompt = generateContentMock.mock.calls[0][0] as string
+    const prompt = generateContentMock.mock.calls[0]![0] as string
 
     // Category list
     expect(prompt).toMatch(/gender_coded/)
