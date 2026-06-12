@@ -7,7 +7,6 @@ import { writeAuditLog } from '@/lib/audit-log'
 import { isPlausibleWebhookUrl } from '@/lib/notifications/payload-builders'
 import { sendTestWebhook } from '@/lib/notifications/webhook-dispatcher'
 import {
-  WEBHOOK_EVENTS,
   DEFAULT_ENABLED_EVENTS,
   isWebhookEvent,
   type WebhookEvent,
@@ -196,5 +195,3 @@ export async function sendTestWebhookAction(id: string): Promise<ActionResult<vo
   }
   return { success: true, data: undefined }
 }
-
-export { WEBHOOK_EVENTS }
