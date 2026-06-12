@@ -82,9 +82,11 @@ export default function PrivacyPage() {
               </li>
             </ul>
             <p className="mt-3">
-              Some of this data may be imported by your recruiters directly from LinkedIn. You
-              are responsible for ensuring you have a lawful basis to collect and store this
-              data under applicable law.
+              Some of this data may be imported by your recruiters directly from LinkedIn, or
+              bulk-imported by an organisation owner or admin via the CSV import feature at
+              <span className="font-mono"> /candidates/import</span>. You are responsible for
+              ensuring you have a lawful basis to collect and store this data under applicable
+              law, regardless of the entry path.
             </p>
 
             <h3 className="mb-2 mt-4 font-medium">2.5 Candidate status page</h3>

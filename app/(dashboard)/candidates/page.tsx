@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Users, Mail, Phone, MoreHorizontal, Download } from 'lucide-react'
+import { Plus, Users, Mail, Phone, MoreHorizontal, Download, Upload } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,13 +106,14 @@ export default async function CandidatesPage({
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('organization_id, column_preferences')
+    .select('organization_id, role, column_preferences')
     .eq('id', user.id)
     .single()
 
   if (profileError || !profile?.organization_id) return null
 
   const organizationId = profile.organization_id
+  const canImport = profile.role === 'owner' || profile.role === 'admin'
   const colPrefs = (profile.column_preferences as Record<string, string[]>) || {}
   const activeColumns: string[] = colPrefs.candidates?.length
     ? colPrefs.candidates
@@ -282,6 +283,14 @@ export default async function CandidatesPage({
               Export CSV
             </a>
           </Button>
+          {canImport && (
+            <Button variant="outline" asChild>
+              <Link href="/candidates/import">
+                <Upload className="mr-2 h-4 w-4" />
+                Bulk Import
+              </Link>
+            </Button>
+          )}
           <Button asChild>
             <Link href={vacancyFilter ? `/candidates/new?vacancy=${vacancyFilter}` : '/candidates/new'}>
               <Plus className="mr-2 h-4 w-4" />
