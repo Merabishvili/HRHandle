@@ -378,7 +378,7 @@ export default async function VacancyDetailPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/vacancies"><ArrowLeft className="h-4 w-4" /></Link>
+            <Link href="/vacancies" aria-label="Back to vacancies"><ArrowLeft className="h-4 w-4" /></Link>
           </Button>
           <div>
             <div className="flex items-center gap-3">

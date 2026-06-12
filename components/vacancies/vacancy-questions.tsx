@@ -78,6 +78,7 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                  aria-label="Remove question"
                   onClick={() => handleRemove(q.id)}
                   disabled={isPending}
                 >

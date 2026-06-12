@@ -547,7 +547,7 @@ export function CandidateForm({
                 />
                 {formData.linkedin_profile_url && (
                   <a href={/^https?:\/\//i.test(formData.linkedin_profile_url) ? formData.linkedin_profile_url : `https://${formData.linkedin_profile_url}`} target="_blank" rel="noopener noreferrer">
-                    <Button type="button" variant="outline" size="icon" title="Open LinkedIn profile">
+                    <Button type="button" variant="outline" size="icon" title="Open LinkedIn profile" aria-label="Open LinkedIn profile">
                       <Linkedin className="h-4 w-4 text-[#0A66C2]" />
                     </Button>
                   </a>
@@ -628,7 +628,7 @@ export function CandidateForm({
                     <p className="text-xs text-muted-foreground mt-0.5">{entry.start_date ?? '?'} – {entry.is_current ? 'Present' : (entry.end_date ?? '?')}</p>
                   )}
                 </div>
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => setPendingExp((p) => p.filter((e) => e.localId !== entry.localId))}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" aria-label="Remove experience entry" onClick={() => setPendingExp((p) => p.filter((e) => e.localId !== entry.localId))}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -709,7 +709,7 @@ export function CandidateForm({
                     <p className="text-xs text-muted-foreground mt-0.5">{entry.start_year ?? '?'} – {entry.is_ongoing ? 'Present' : (entry.end_year ?? '?')}</p>
                   )}
                 </div>
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => setPendingEdu((p) => p.filter((e) => e.localId !== entry.localId))}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" aria-label="Remove education entry" onClick={() => setPendingEdu((p) => p.filter((e) => e.localId !== entry.localId))}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -813,6 +813,7 @@ export function CandidateForm({
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      aria-label="Remove file"
                       onClick={() => setPendingFiles((prev) => prev.filter((f) => f.id !== entry.id))}
                       disabled={isLoading}
                     >

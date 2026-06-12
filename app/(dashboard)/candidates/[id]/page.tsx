@@ -379,7 +379,7 @@ export default async function CandidateDetailPage({
         <div className="flex items-start gap-3.5">
           {/* Back button */}
           <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 rounded-md" asChild>
-            <Link href="/candidates">
+            <Link href="/candidates" aria-label="Back to candidates">
               <ChevronLeft className="h-4 w-4" />
             </Link>
           </Button>

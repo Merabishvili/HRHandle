@@ -181,6 +181,7 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground"
                     title="Open in new tab"
+                    aria-label="Open document in new tab"
                     onClick={() => handleOpen(doc.id, doc.mime_type)}
                     disabled={isPending}
                   >
@@ -190,6 +191,7 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    aria-label="Delete document"
                     onClick={() => handleDelete(doc.id)}
                     disabled={isPending}
                   >

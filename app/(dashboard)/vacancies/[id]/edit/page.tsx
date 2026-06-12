@@ -144,7 +144,7 @@ export default async function EditVacancyPage({
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/vacancies/${id}`}>
+          <Link href={`/vacancies/${id}`} aria-label="Back to vacancy">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>

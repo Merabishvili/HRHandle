@@ -254,6 +254,7 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    aria-label="Edit education entry"
                     onClick={() => handleEdit(entry)}
                     disabled={isPending}
                   >
@@ -263,6 +264,7 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    aria-label="Delete education entry"
                     onClick={() => handleDelete(entry.id)}
                     disabled={isPending}
                   >
