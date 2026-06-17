@@ -34,7 +34,7 @@ export function TrialPill({ trialEndAt, status }: TrialPillProps) {
     <div className="hidden md:flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 py-0.5 pl-3 pr-1 text-xs font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
       <span>{label}</span>
       <Link
-        href="/subscription"
+        href="/settings/billing"
         className="ml-1.5 rounded-full border border-amber-300 bg-white px-2.5 py-0.5 font-semibold text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300"
       >
         Upgrade

@@ -47,7 +47,6 @@ const PAGE_LABELS: Record<string, string> = {
   '/candidates': 'Candidates',
   '/interviews': 'Interviews',
   '/settings': 'Settings',
-  '/subscription': 'Subscription',
 }
 
 function getPlanLabel(subscription?: Subscription | null): string {
@@ -155,9 +154,9 @@ export function DashboardHeader({
               Settings
             </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={() => router.push('/subscription')}>
+            <DropdownMenuItem onClick={() => router.push('/settings/billing')}>
               <CreditCard className="mr-2 h-4 w-4" />
-              Subscription
+              Billing
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />

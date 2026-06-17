@@ -33,7 +33,6 @@ const navigation = [
   { name: 'Interviews', href: '/interviews', icon: Calendar },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
-  { name: 'Subscription', href: '/subscription', icon: CreditCard },
 ]
 
 function getPlanLabel(subscription?: Subscription | null): string {
@@ -51,10 +50,7 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const isAdmin = profile.role === 'owner' || profile.role === 'admin'
-  const visibleNavigation = navigation.filter(
-    (item) => item.href !== '/subscription' || isAdmin
-  )
+  const visibleNavigation = navigation
 
   return (
     <>
