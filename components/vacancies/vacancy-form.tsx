@@ -646,9 +646,9 @@ export function VacancyForm({
           ) : isDuplicated ? (
             'Save'
           ) : vacancy ? (
-            'Update Vacancy'
+            'Update vacancy'
           ) : (
-            'Create Vacancy'
+            'Create vacancy'
           )}
         </Button>
       </div>

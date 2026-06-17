@@ -152,7 +152,7 @@ export default async function VacancyPipelinePage({
             Add candidates to this vacancy to see them in the pipeline.
           </p>
           <Button className="mt-6" asChild>
-            <Link href={`/candidates/new?vacancy=${id}`}>Add Candidate</Link>
+            <Link href={`/candidates/new?vacancy=${id}`}>Add candidate</Link>
           </Button>
         </div>
       ) : (

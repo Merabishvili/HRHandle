@@ -91,12 +91,12 @@ export function AddCandidateToVacancyDialog({ vacancyId }: Props) {
       <DialogTrigger asChild>
         <Button size="sm">
           <UserPlus className="mr-2 h-3.5 w-3.5" />
-          Add Candidate
+          Add candidate
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Candidate to Vacancy</DialogTitle>
+          <DialogTitle>Add candidate to vacancy</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-1">

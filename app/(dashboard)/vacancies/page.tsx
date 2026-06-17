@@ -220,7 +220,7 @@ export default async function VacanciesPage({
         <Button asChild>
           <Link href="/vacancies/new">
             <Plus className="mr-2 h-4 w-4" />
-            Create Vacancy
+            Create vacancy
           </Link>
         </Button>
       </div>
@@ -431,7 +431,7 @@ export default async function VacanciesPage({
                 <Button className="mt-4" asChild>
                   <Link href="/vacancies/new">
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Vacancy
+                    Create vacancy
                   </Link>
                 </Button>
               )}

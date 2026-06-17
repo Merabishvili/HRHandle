@@ -432,7 +432,7 @@ export default async function VacancyDetailPage({
           <DeleteVacancyButton vacancyId={id} vacancyTitle={vacancy.title} />
           <Button asChild>
             <Link href={`/vacancies/${id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />Edit Vacancy
+              <Edit className="mr-2 h-4 w-4" />Edit vacancy
             </Link>
           </Button>
         </div>

@@ -294,7 +294,7 @@ export default async function CandidatesPage({
           <Button asChild>
             <Link href={vacancyFilter ? `/candidates/new?vacancy=${vacancyFilter}` : '/candidates/new'}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Candidate
+              Add candidate
             </Link>
           </Button>
         </div>
@@ -529,7 +529,7 @@ export default async function CandidatesPage({
                 <Button className="mt-4" asChild>
                   <Link href="/candidates/new">
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Candidate
+                    Add candidate
                   </Link>
                 </Button>
               )}

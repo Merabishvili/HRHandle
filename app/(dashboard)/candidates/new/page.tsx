@@ -67,7 +67,7 @@ export default async function NewCandidatePage({
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Add Candidate</h1>
+          <h1 className="text-2xl font-bold text-foreground">Add candidate</h1>
           <p className="text-muted-foreground">Add a new candidate to your pipeline.</p>
         </div>
       </div>

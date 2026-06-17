@@ -70,7 +70,7 @@ export default async function NewVacancyPage() {
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Create Vacancy</h1>
+          <h1 className="text-2xl font-bold text-foreground">Create vacancy</h1>
           <p className="text-muted-foreground">
             Add a new job posting to attract candidates.
           </p>

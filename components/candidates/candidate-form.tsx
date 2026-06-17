@@ -428,28 +428,6 @@ export function CandidateForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="general_status_id">General Status</Label>
-              <Select
-                value={formData.general_status_id || ''}
-                onValueChange={(value) => handleChange('general_status_id', value || null)}
-                disabled={isLoading}
-              >
-                <SelectTrigger id="general_status_id">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {candidateStatuses.map((status) => (
-                    <SelectItem key={status.id} value={status.id}>
-                      {status.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -898,7 +876,7 @@ export function CandidateForm({
           ) : isEditing ? (
             'Update Candidate'
           ) : (
-            'Add Candidate'
+            'Add candidate'
           )}
         </Button>
       </div>

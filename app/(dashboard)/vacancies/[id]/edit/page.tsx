@@ -151,7 +151,7 @@ export default async function EditVacancyPage({
 
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            {isDuplicated ? 'New Vacancy (Duplicated)' : 'Edit Vacancy'}
+            {isDuplicated ? 'New vacancy (duplicated)' : 'Edit vacancy'}
           </h1>
           <p className="text-muted-foreground">
             {isDuplicated ? 'Review and save your duplicated vacancy.' : 'Update the job posting details.'}
