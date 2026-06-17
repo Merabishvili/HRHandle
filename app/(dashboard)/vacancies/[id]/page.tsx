@@ -429,7 +429,7 @@ export default async function VacancyDetailPage({
           )}
           <Button variant="outline" asChild>
             <Link href={`/vacancies/${id}/pipeline`}>
-              <LayoutGrid className="mr-2 h-4 w-4" />Pipeline
+              <LayoutGrid className="mr-2 h-4 w-4" />View pipeline
             </Link>
           </Button>
           <DuplicateVacancyButton vacancyId={id} />
