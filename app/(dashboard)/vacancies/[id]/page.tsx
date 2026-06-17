@@ -28,6 +28,7 @@ import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { VacancyApplicationsList } from '@/components/vacancies/vacancy-applications-list'
 import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
 import { DeleteVacancyButton } from '@/components/vacancies/delete-vacancy-button'
+import { CopyApplyLinkButton } from '@/components/vacancies/copy-apply-link-button'
 import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
 import { AddCandidateToVacancyDialog } from '@/components/vacancies/add-candidate-to-vacancy-dialog'
 import { LinkedInPostJobButton } from '@/components/vacancies/linkedin-post-job-button'
@@ -409,6 +410,9 @@ export default async function VacancyDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {vacancy.application_form_token && (
+            <CopyApplyLinkButton token={vacancy.application_form_token} />
+          )}
           {linkedInIntegration && (
             <LinkedInPostJobButton
               pageId={linkedInIntegration.external_page_id}
