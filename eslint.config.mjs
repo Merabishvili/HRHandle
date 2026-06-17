@@ -50,6 +50,11 @@ export default [
     },
   },
   {
-    ignores: ['.next/**', 'node_modules/**'],
+    // Folders ESLint shouldn't scan. `redesign/` is the extracted source
+    // of the design handoff zip (gitignored, contains a vendor support.js
+    // bundle that trips no-assign-module-variable). `design_handoff_*`
+    // are earlier design-handoff sketch directories kept around for
+    // reference only — not production code.
+    ignores: ['.next/**', 'node_modules/**', 'redesign/**', 'design_handoff_*/**'],
   },
 ]
