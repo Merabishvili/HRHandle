@@ -6,7 +6,6 @@ import {
   Briefcase,
   Users,
   Calendar,
-  TrendingUp,
   Plus,
   ArrowRight,
   Clock,
@@ -279,13 +278,6 @@ export default async function DashboardPage() {
       change: 'Across all vacancies',
       href: '/candidates',
     },
-    {
-      title: 'Hiring Rate',
-      value: '---',
-      icon: TrendingUp,
-      change: 'Later metric',
-      href: '/candidates',
-    },
   ]
 
   return (
@@ -306,7 +298,7 @@ export default async function DashboardPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <Card key={stat.title} className="border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
