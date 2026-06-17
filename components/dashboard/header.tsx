@@ -43,9 +43,11 @@ function getInitials(profile: Profile, user: User): string {
 
 const PAGE_LABELS: Record<string, string> = {
   '/dashboard': 'Dashboard',
+  '/pipeline': 'Pipeline',
   '/vacancies': 'Vacancies',
   '/candidates': 'Candidates',
   '/interviews': 'Interviews',
+  '/reports': 'Reports',
   '/settings': 'Settings',
 }
 
