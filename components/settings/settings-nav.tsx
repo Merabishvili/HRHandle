@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   User,
+  Lock,
   Building2,
   Users,
   LayoutGrid,
@@ -24,17 +25,55 @@ interface NavItem {
   ownerOnly?: boolean
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { href: '/settings/profile',           label: 'Profile',           icon: User },
-  { href: '/settings/organization',      label: 'Organization',      icon: Building2,  ownerOnly: true },
-  { href: '/settings/team',              label: 'Team',              icon: Users,      adminOnly: true },
-  { href: '/settings/custom-fields',     label: 'Custom Fields',     icon: LayoutGrid, adminOnly: true },
-  { href: '/settings/email-templates',   label: 'Email Templates',   icon: Mail,       adminOnly: true },
-  { href: '/settings/rejection-reasons', label: 'Rejection Reasons', icon: XCircle,    adminOnly: true },
-  { href: '/settings/integrations',      label: 'Integrations',      icon: Plug },
-  { href: '/settings/audit-log',         label: 'Audit log',         icon: ListChecks, adminOnly: true },
-  { href: '/settings/trash',             label: 'Trash',             icon: Trash2,     adminOnly: true },
-  { href: '/settings/billing',           label: 'Billing',           icon: CreditCard, ownerOnly: true },
+interface NavSection {
+  label: string
+  items: NavItem[]
+}
+
+/**
+ * Settings nav — 4 logical groups per redesign Wave 1.2 / S07.
+ *
+ * Personal           — own user (Profile, Security)
+ * Organization       — org-scoped owner/admin config
+ * Hiring workflow    — content templates + integrations admins manage
+ * Data               — audit + recovery
+ *
+ * Notifications (Personal) and /settings/billing consolidation (replacing
+ * the standalone /subscription route) are scheduled follow-ups — the nav
+ * structure was the user-visible win and ships independently.
+ */
+const NAV_SECTIONS: NavSection[] = [
+  {
+    label: 'Personal',
+    items: [
+      { href: '/settings/profile',  label: 'Profile',  icon: User },
+      { href: '/settings/security', label: 'Security', icon: Lock },
+    ],
+  },
+  {
+    label: 'Organization',
+    items: [
+      { href: '/settings/organization', label: 'Organization', icon: Building2,  ownerOnly: true },
+      { href: '/settings/team',         label: 'Team',         icon: Users,      adminOnly: true },
+      { href: '/settings/billing',      label: 'Billing',      icon: CreditCard, ownerOnly: true },
+    ],
+  },
+  {
+    label: 'Hiring workflow',
+    items: [
+      { href: '/settings/custom-fields',     label: 'Custom Fields',     icon: LayoutGrid, adminOnly: true },
+      { href: '/settings/email-templates',   label: 'Email Templates',   icon: Mail,       adminOnly: true },
+      { href: '/settings/rejection-reasons', label: 'Rejection Reasons', icon: XCircle,    adminOnly: true },
+      { href: '/settings/integrations',      label: 'Integrations',      icon: Plug },
+    ],
+  },
+  {
+    label: 'Data',
+    items: [
+      { href: '/settings/audit-log', label: 'Audit log', icon: ListChecks, adminOnly: true },
+      { href: '/settings/trash',     label: 'Trash',     icon: Trash2,     adminOnly: true },
+    ],
+  },
 ]
 
 interface SettingsNavProps {
@@ -46,35 +85,47 @@ export function SettingsNav({ role }: SettingsNavProps) {
   const isAdmin = role === 'owner' || role === 'admin'
   const isOwner = role === 'owner'
 
-  const visible = NAV_ITEMS.filter((item) => {
-    if (item.ownerOnly && !isOwner) return false
-    if (item.adminOnly && !isAdmin) return false
-    return true
-  })
+  const visibleSections = NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => {
+      if (item.ownerOnly && !isOwner) return false
+      if (item.adminOnly && !isAdmin) return false
+      return true
+    }),
+  })).filter((section) => section.items.length > 0)
 
   return (
     <nav className="w-52 shrink-0">
-      <ul className="space-y-0.5">
-        {visible.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href
-          return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
-                  isActive
-                    ? 'bg-accent text-foreground font-medium'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {item.label}
-              </Link>
-            </li>
-          )
-        })}
+      <ul className="space-y-5">
+        {visibleSections.map((section) => (
+          <li key={section.label}>
+            <p className="mb-1.5 px-3 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground/70">
+              {section.label}
+            </p>
+            <ul className="space-y-0.5">
+              {section.items.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
+                        isActive
+                          ? 'bg-accent text-foreground font-medium'
+                          : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                      )}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {item.label}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </li>
+        ))}
       </ul>
     </nav>
   )

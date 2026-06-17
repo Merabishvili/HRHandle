@@ -2,10 +2,14 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfileForm } from '@/components/settings/profile-form'
-import { ChangePasswordForm } from '@/components/settings/change-password-form'
-import { TwoFactorSection } from '@/components/mfa/two-factor-section'
-import { listMyFactors } from '@/lib/actions/mfa'
 
+/**
+ * Personal → Profile sub-page.
+ *
+ * Per Wave 1.2 / S07 §2.3, password + two-factor moved out to
+ * /settings/security. This page covers identity (name / title / photo)
+ * and read-only account info.
+ */
 export default async function ProfileSettingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -18,18 +22,6 @@ export default async function ProfileSettingsPage() {
     .single()
 
   if (!profile) redirect('/dashboard')
-
-  // Detect OAuth-only accounts (no email/password identity)
-  const isOAuthOnly = !user.identities?.some((i) => i.provider === 'email')
-
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('require_mfa, require_mfa_for_admins')
-    .eq('id', profile.organization_id)
-    .single()
-
-  const factorsResult = await listMyFactors()
-  const factors = factorsResult.success ? factorsResult.data : []
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -65,30 +57,6 @@ export default async function ProfileSettingsPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>Change Password</CardTitle>
-          <CardDescription>
-            Update your password. You will remain signed in on this device.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChangePasswordForm
-            userEmail={user.email ?? ''}
-            isOAuthOnly={isOAuthOnly}
-          />
-        </CardContent>
-      </Card>
-
-      <TwoFactorSection
-        factors={factors}
-        role={profile.role as 'owner' | 'admin' | 'member'}
-        orgPolicy={{
-          require_mfa: !!org?.require_mfa,
-          require_mfa_for_admins: !!org?.require_mfa_for_admins,
-        }}
-      />
     </div>
   )
 }
