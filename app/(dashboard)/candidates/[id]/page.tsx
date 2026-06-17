@@ -404,13 +404,18 @@ export default async function CandidateDetailPage({
 
         {/* Right cluster */}
         <div className="flex shrink-0 items-center gap-2">
-          <DeleteCandidateButton candidateId={id} candidateName={fullName} />
-          <Button asChild size="sm" className="h-9 gap-1.5">
+          <AddApplicationDialog
+            candidateId={id}
+            availableVacancies={openVacancies}
+            activeApplicationCount={activeApplicationCount}
+          />
+          <Button asChild variant="outline" size="sm" className="h-9 gap-1.5">
             <Link href={`/candidates/${id}/edit`}>
               <Pencil className="h-3.5 w-3.5" />
               Edit
             </Link>
           </Button>
+          <DeleteCandidateButton candidateId={id} candidateName={fullName} />
         </div>
       </div>
 
@@ -435,21 +440,14 @@ export default async function CandidateDetailPage({
 
           {/* 1. Applied Vacancies */}
           <div className="rounded-xl border border-border bg-card p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-baseline gap-2">
-                <span className="text-[15px] font-bold text-foreground">Applied vacancies</span>
-                {applications.length > 0 && (
-                  <>
-                    <span className="text-[12px] text-muted-foreground">·</span>
-                    <span className="text-[12px] text-muted-foreground">{activeApplicationCount} of {applications.length} active</span>
-                  </>
-                )}
-              </div>
-              <AddApplicationDialog
-                candidateId={id}
-                availableVacancies={openVacancies}
-                activeApplicationCount={activeApplicationCount}
-              />
+            <div className="mb-4 flex items-baseline gap-2">
+              <span className="text-[15px] font-bold text-foreground">Applied vacancies</span>
+              {applications.length > 0 && (
+                <>
+                  <span className="text-[12px] text-muted-foreground">·</span>
+                  <span className="text-[12px] text-muted-foreground">{activeApplicationCount} of {applications.length} active</span>
+                </>
+              )}
             </div>
             <CandidateApplicationsList
               key={applications.map((a) => a.id).join(',')}
