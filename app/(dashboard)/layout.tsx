@@ -259,8 +259,12 @@ export default async function DashboardLayout({
       !!subscription.trial_end_at &&
       new Date(subscription.trial_end_at) < new Date())
 
-  if (isExpired && !pathname.includes('/subscription')) {
-    redirect('/subscription')
+  // Expired trial: send them to the canonical billing page. The legacy
+  // /subscription route still redirects to /settings/billing, so the
+  // includes() check covers both URLs and avoids a redirect loop if the
+  // user lands on /subscription themselves.
+  if (isExpired && !pathname.includes('/subscription') && !pathname.includes('/settings/billing')) {
+    redirect('/settings/billing')
   }
 
   return (

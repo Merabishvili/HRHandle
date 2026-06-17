@@ -41,18 +41,34 @@ export default async function PipelinePage() {
 
   if (!profile?.organization_id) redirect('/dashboard')
 
-  const { data: firstVacancy } = await supabase
+  // Pick the most recently-created vacancy worth opening for. Prefer open
+  // statuses (where active recruiting is happening); fall back to draft so
+  // first-time users still land on something useful right after the
+  // create-vacancy flow; final fallback to anything non-archived.
+  const { data: vacancies } = await supabase
     .from('vacancies')
     .select('id, vacancy_statuses(code)')
     .eq('organization_id', profile.organization_id)
     .is('archived_at', null)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
-  if (firstVacancy?.id) {
-    redirect(`/vacancies/${firstVacancy.id}/pipeline`)
+  type VacancyRow = { id: string; vacancy_statuses: { code: string } | { code: string }[] | null }
+  const rows = (vacancies ?? []) as VacancyRow[]
+  const codeOf = (v: VacancyRow): string | null => {
+    const j = v.vacancy_statuses
+    if (!j) return null
+    return Array.isArray(j) ? j[0]?.code ?? null : j.code
+  }
+
+  const target =
+    rows.find((v) => codeOf(v) === 'open') ??
+    rows.find((v) => codeOf(v) === 'draft') ??
+    rows[0] ??
+    null
+
+  if (target?.id) {
+    redirect(`/vacancies/${target.id}/pipeline`)
   }
 
   // No vacancies yet — welcome card
