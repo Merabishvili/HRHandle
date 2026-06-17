@@ -8,7 +8,6 @@ import { StatusPill } from '@/components/ui/status-pill'
 import { SummaryStrip } from '@/components/candidates/summary-strip'
 import { ContactCard } from '@/components/candidates/contact-card'
 import { MetadataFooter } from '@/components/candidates/metadata-footer'
-import { CandidateStatusSelect } from '@/components/candidates/candidate-status-select'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
 import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
 import { DeleteCandidateButton } from '@/components/candidates/delete-candidate-button'
@@ -405,11 +404,6 @@ export default async function CandidateDetailPage({
 
         {/* Right cluster */}
         <div className="flex shrink-0 items-center gap-2">
-          <CandidateStatusSelect
-            candidateId={candidate.id}
-            currentStatusId={candidate.general_status_id}
-            statusOptions={candidateStatuses}
-          />
           <DeleteCandidateButton candidateId={id} candidateName={fullName} />
           <Button asChild size="sm" className="h-9 gap-1.5">
             <Link href={`/candidates/${id}/edit`}>
