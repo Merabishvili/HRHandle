@@ -507,7 +507,7 @@ export function InterviewForm({
               Scheduling...
             </>
           ) : (
-            'Schedule Interview'
+            'Schedule interview'
           )}
         </Button>
       </div>

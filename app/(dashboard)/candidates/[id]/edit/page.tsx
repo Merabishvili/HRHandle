@@ -195,7 +195,7 @@ const { data: vacanciesRaw } = await supabase
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit Candidate</h1>
+          <h1 className="text-2xl font-bold text-foreground">Edit candidate</h1>
           <p className="text-muted-foreground">Update candidate information.</p>
         </div>
       </div>

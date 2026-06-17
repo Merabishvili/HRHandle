@@ -145,7 +145,7 @@ export default async function NewInterviewPage({
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Schedule Interview</h1>
+          <h1 className="text-2xl font-bold text-foreground">Schedule interview</h1>
           <p className="text-muted-foreground">Set up an interview with a candidate.</p>
         </div>
       </div>
