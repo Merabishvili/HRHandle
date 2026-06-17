@@ -19,6 +19,7 @@ import { LogOut, User as UserIcon, Settings, CreditCard, ChevronRight } from 'lu
 import { NotificationsBell } from '@/components/dashboard/notifications-bell'
 import { SearchTrigger } from '@/components/global-search/search-trigger'
 import { HelpLink } from '@/components/dashboard/help-link'
+import { TrialPill } from '@/components/dashboard/trial-pill'
 
 interface DashboardHeaderProps {
   user: User
@@ -79,9 +80,6 @@ export function DashboardHeader({
 
   const initials = getInitials(profile, user)
   const planLabel = getPlanLabel(subscription)
-  const statusLabel = subscription?.status
-    ? subscription.status.replace('_', ' ')
-    : 'active'
 
   return (
     <header className="sticky top-0 z-30 h-14 border-b border-border bg-card">
@@ -101,6 +99,10 @@ export function DashboardHeader({
 
         {/* User area */}
         <div className="flex items-center gap-1.5">
+          <TrialPill
+            trialEndAt={subscription?.trial_end_at ?? null}
+            status={subscription?.status ?? null}
+          />
           <SearchTrigger />
           <HelpLink />
           <NotificationsBell />
@@ -110,7 +112,7 @@ export function DashboardHeader({
               {profile.full_name || user.email?.split('@')[0] || 'User'}
             </p>
             <p className="text-xs leading-tight text-muted-foreground capitalize">
-              {planLabel} · {statusLabel}
+              {planLabel}
             </p>
           </div>
 
