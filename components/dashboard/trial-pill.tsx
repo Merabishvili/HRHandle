@@ -5,8 +5,14 @@ interface TrialPillProps {
   status: string | null | undefined
 }
 
-function daysRemaining(endAt: string): number {
-  const diff = new Date(endAt).getTime() - Date.now()
+/**
+ * Days remaining until a trial expiry timestamp, clamped at 0 so an
+ * expired trial reads "0 days left" instead of going negative on the
+ * UI. Exported so the small bit of arithmetic is unit-testable;
+ * `now` is injectable so the tests aren't time-bombed.
+ */
+export function daysRemaining(endAt: string, now: number = Date.now()): number {
+  const diff = new Date(endAt).getTime() - now
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
 
