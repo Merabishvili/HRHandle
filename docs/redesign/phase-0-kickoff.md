@@ -1,6 +1,8 @@
 # Phase 0 — Implementation kickoff playbook
 
-> **Authored:** 2026-06-17. **Purpose:** bridge the design corpus to implementation. Collapses every sub-question surfaced across the 10 flow docs into one batch-sign-off table; turns each [`roadmap.md` Phase 0](roadmap.md#phase-0--pre-work-must-happen-before-any-wave-starts) item into an implementation-ready spec.
+> **Authored:** 2026-06-17. **Last shipping update:** 2026-06-18. **Purpose:** bridge the design corpus to implementation. Collapses every sub-question surfaced across the 10 flow docs into one batch-sign-off table; turns each [`roadmap.md` Phase 0](roadmap.md#phase-0--pre-work-must-happen-before-any-wave-starts) item into an implementation-ready spec.
+>
+> **Status (2026-06-18):** Phase 0 mostly closed and Wave 1 substantially shipped. See the new "Implementation log" appendix at the bottom for the actual commit sequence.
 >
 > **Read this if you're starting to build.** Everything before this (audit, roadmap, AI Fit, mobile docs, 10 flow docs) is design. This is the first implementation-direction document.
 >
@@ -475,3 +477,45 @@ This document is the bridge from design to implementation. Beyond it:
 - The redesign corpus stays as the source of truth — when reality diverges from spec during implementation, update the relevant flow doc rather than letting it drift silently
 
 When all waves ship, the redesign is complete. Until then, this corpus + roadmap is the single source of truth.
+
+---
+
+## Implementation log — 2026-06-18 autonomous session
+
+Pushed to `staging`. 17 commits total. Migration 044 + Migration 045 applied. Migration 046 written, not yet applied.
+
+| Wave | Status | Commits |
+|---|---|---|
+| **0.1** Migration 022 trigger fix | ✅ shipped + applied | `e89a966` |
+| **0.3** G-022 → G-032 reconciliation | ✅ in `audit.md` Appendix C | (initial corpus commit) |
+| **0.4** Exploratory drafts moved to `redesign/_drafts/` | ✅ | (initial corpus commit) |
+| **0.5** Custom-stages schema design | ✅ spec; Migration 046 also written | `c103e43` |
+| **0.7** Notifications sub-page + Migration 045 | ✅ shipped + applied | `39ed3cc`, `5121559` |
+| **0.8** AI Fit Analysis legal consult | 🔴 still you to book | — |
+| **0.9** Pipeline empty state design | ✅ | (in corpus + welcome card live at `/pipeline`) |
+| **1.1** Derive status — drop `CandidateStatusSelect` | ✅ | `ab5b74e`, `efe45bd` (form field too) |
+| **1.2** Settings → 4 groups + Security split + Billing consolidation | ✅ | `a2a66d8`, `9d3e4de`, `6521730` |
+| **1.3** Trial pill replacing banner | ✅ | `5c38262` |
+| **1.4'** Drop dead "Hiring Rate: ---" tile | ✅ | `c4b639c` |
+| **1.5** Terminology pass | ✅ 5 batches | `efe45bd`, `16a9930`, `18ae3b7`, `fac7790`, `74e3b1a` |
+| **1.6** AI calm tag (`AiDraftTag` + `AiDraftPanel` shell) | ✅ | `adbe979`, `293aab7` |
+| **2.1 scaffolding** Top-level `/pipeline` route + sidebar nav | ✅ placeholder | `21c7837`, `6521730` |
+| **2.6 foundation** `pipeline_stages` table | ✅ Migration 046 file written (apply when ready) | `c103e43` |
+
+### Still pending (biggest tickets first)
+
+- **Wave 2.6 implementation** — Migration 047 (drop `applications.status_id` → add `pipeline_stage_id`), update ~20 callsites, wire `seed_default_pipeline_stages` into `createVacancy`, build Pipeline stages manager UI for the Vacancy Settings tab. Multi-week coordinated change.
+- **Wave 2.1 full kanban** — placeholder is live; the real cross-vacancy board (org-wide query, role filter chips, terminal-stage rail, density toggle, Review mode) is L effort.
+- **Wave 2.3 Candidate profile rebuild** — active-application selector + stage-contextual block + Merge dialog per S02.
+- **Wave 2.4 Vacancy detail rebuild** — 5-tab structure per S04. Depends on 2.6.
+- **Wave 2.5 Scorecard system** — must-have flag + recommendation + reason + anti-anchoring.
+- **Wave 2.7 Stepped wizards** for vacancy + candidate creation per S04d.
+- **Wave 3.x** — public-page polish, public-offer countdown, landing refresh, AI Fit Analysis (still blocked on Phase 0.8 legal consult).
+
+### Forward-compat surfaces ready for future work
+
+- `<AiDraftPanel />` shell + `<AiDraftTag />` are imported into AI Fit Analysis and any new AI feature; the existing five AI components already use the calm tag.
+- `lib/actions/notification-preferences.ts` collects all 6 email + 2 in-product preferences forward-compatibly. The in-product side is live (bell respects toggles). The email side is wired in `NotificationPreferencesForm` but the dispatcher integration is deferred — current email surface mostly sends to candidates/invitees (external), not to recruiters who'd opt out.
+- `scripts/046_pipeline_stages.sql` introduces the per-vacancy stage table + cap-10 trigger + RLS + default seeder function. The coordinated swap of `applications.status_id → pipeline_stage_id` is the follow-up.
+
+When the next session opens, this table tells the implementer what's already in place — they don't need to reread the full corpus to figure out where to start.
