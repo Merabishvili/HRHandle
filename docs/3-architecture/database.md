@@ -656,3 +656,47 @@ Global lookup. Status of a vacancy.
 | vacancies | created_by | profiles |
 | vacancy_questions | organization_id | organizations |
 | vacancy_questions | vacancy_id | vacancies |
+
+## Recent additions (2026-06-18 redesign session)
+
+### Migration 044 — fix `sync_candidate_status_on_application_change()` trigger
+
+Migration 022 introduced a trigger that auto-syncs `candidates.general_status_id` when all of a candidate's applications close. It looked up `candidate_statuses.code = 'inactive'`, but Migration 009 had simplified the codes to `'active' | 'hired' | 'archived'` — the lookup silently returned NULL and the trigger was a no-op for every close-out since June 2024. Migration 044 replaces the lookup with `'archived'` via `CREATE OR REPLACE FUNCTION`. Discovered during the redesign audit ([`audit.md` §2.4](../redesign/audit.md#0-status--decisions-locked)).
+
+### Migration 045 — `profiles.notification_preferences` JSONB
+
+Adds per-user notification preferences as a JSONB column. Default value matches `DEFAULT_NOTIFICATION_PREFERENCES` in `lib/types/notification-preferences.ts`. Shape:
+
+```json
+{
+  "email": {
+    "new_applicant": true, "interview_scheduled": true,
+    "offer_awaiting_response": true, "mention": true,
+    "team_invite_update": true, "weekly_digest": false
+  },
+  "in_product": { "show_bell_badge": true, "auto_mark_read": true },
+  "quiet_hours": null
+}
+```
+
+The in-product half is live — `NotificationsBell` reads it on mount and hides the unread badge if `show_bell_badge=false`, skips auto-mark-read if `auto_mark_read=false`. The email half is collected but not yet read by the dispatcher (most email events go to candidates/invitees external to the system; the recruiter-facing email surface is sparse today). `quiet_hours` is reserved for v1.1.
+
+### Migration 046 — `pipeline_stages` table foundation
+
+Per-vacancy custom stages, locked by [`audit.md` Q3](../redesign/audit.md#0-status--decisions-locked):
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `organization_id` | UUID NOT NULL FK organizations | RLS scope |
+| `vacancy_id` | UUID NOT NULL FK vacancies | |
+| `name` | TEXT NOT NULL | free text, any language |
+| `type` | TEXT NOT NULL CHECK in (`standard`, `interview`, `offer`, `review`) | behavior keys off type, never name |
+| `sort_order` | INTEGER NOT NULL | unique per vacancy |
+| `is_terminal` | BOOLEAN NOT NULL DEFAULT FALSE | e.g. Hired / Rejected / Withdrawn |
+| `created_by` | UUID FK profiles | nullable for cascade |
+| `created_at`, `updated_at` | TIMESTAMPTZ | |
+
+Plus a `BEFORE INSERT` trigger enforcing the cap of 10 stages per vacancy, RLS that lets every org member view stages but restricts manage to owner+admin, and a `seed_default_pipeline_stages(vacancy_id, org_id, created_by)` helper mirroring the legacy 7-stage seed (Applied → Screening → Interview → Offer → Hired + Rejected + Withdrawn).
+
+**Status:** schema lives but has no readers yet. The coordinated swap on `applications` (drop `status_id` → add `pipeline_stage_id`) is deferred to a follow-up migration so the ~20 call sites currently reading `applications.status_id` keep working. Wave 2.6 implementation finishes the cutover.

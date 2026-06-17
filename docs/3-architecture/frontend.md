@@ -147,3 +147,41 @@ Annotated screenshots are produced by `scripts/capture-screenshots.ts` (Playwrig
 ## `components/ui/status-pill.tsx`
 
 Shared status pill used across candidates and applications. `PILL_STYLES` maps status codes to `oklch()`-based Tailwind background + text colour pairs.
+
+## Recent additions (2026-06-18 redesign session)
+
+Shipped as Wave 1 / Wave 2 partials of the [redesign](../redesign/) corpus.
+
+### New components
+
+| File | Type | Purpose |
+|---|---|---|
+| `components/ui/ai-draft-tag.tsx` | Server | Calm-blue Sparkles + label pill on AI-generated output. Replaces the pre-S10 alarm-orange "AI-GENERATED — RECRUITER HAS NOT REVIEWED OR EDITED" stamp. Default label "AI draft"; alternatives "AI suggestion" (bias-check, assessment-suggester), "AI-filled · review" (CV parse), "AI-assisted" (persisted provenance). |
+| `components/ui/ai-draft-panel.tsx` | Client | Shared shell for the invoke → draft → review → confirm pattern (S10 §2.3). 4-state status prop (`idle` / `generating` / `ready` / `error`). Forward-looking for new AI surfaces (AI Fit Analysis, future scorecard-from-notes UIs). |
+| `components/dashboard/trial-pill.tsx` | Server | Compact amber pill in the header right cluster, replacing the deleted full-width `TrialBanner`. Renders only when `subscription.status === 'trial'` and `trial_end_at` is set. `daysRemaining()` helper exported for unit tests. |
+| `components/vacancies/copy-apply-link-button.tsx` | Client | Header-level "Copy apply link" — clipboard write + sonner toast + brief Check icon swap + graceful error if blocked. Renders only when `vacancy.application_form_token` is set. |
+| `components/settings/notification-preferences-form.tsx` | Client | Switch-based form for `profiles.notification_preferences` JSONB. 6 email events + 2 in-product toggles; whole-object replace on save. |
+
+### Settings nav restructure
+
+`components/settings/settings-nav.tsx` rewritten from a flat 10-item array to a grouped `NAV_SECTIONS` array of 4 sections: **Personal** (Profile / Notifications / Security) · **Organization** (Organization / Team / Billing) · **Hiring workflow** (Custom fields / Email templates / Rejection reasons / Integrations) · **Data** (Audit log / Trash). Section labels in small-caps muted text; section hidden if every item filters out by role. See [`docs/redesign/flows/S07-settings.md`](../redesign/flows/S07-settings.md) §2.1.
+
+### Removed components
+
+| File | Replacement |
+|---|---|
+| `components/dashboard/trial-banner.tsx` | `components/dashboard/trial-pill.tsx`. The expired-trial branch was unreachable dead code (the layout redirects to `/settings/billing` before render). |
+| `components/candidates/candidate-status-select.tsx` | None — candidate status is derived from applications via the Migration 022 sync trigger (fixed in 044). The `general_status_id` column stays as the trigger's cache; the editable dropdown is gone per Q1. |
+
+### New routes
+
+| Route | Notes |
+|---|---|
+| `/pipeline` | Wave 2.1 scaffolding. Has vacancy → redirect to most-recently-created open (then draft, then any) vacancy's `/vacancies/[id]/pipeline`. Zero vacancies → welcome card with "Create your first vacancy" + "Import candidates" + 3-step orientation strip (locked Q-S01-e). Replaced by the real cross-vacancy kanban in Wave 2.1 full. |
+| `/settings/notifications` | Personal → Notifications. Renders `NotificationPreferencesForm`. |
+| `/settings/security` | Personal → Security. Composes `ChangePasswordForm` + `TwoFactorSection` lifted out of `/settings/profile`. Per-user MFA only — org-wide MFA policy stays on `/settings/organization` per locked Q8. |
+| `/settings/billing` | Was a 5-line redirect to `/subscription`; now hosts the 277-LOC billing UI. The legacy `/subscription` route is the redirect (kept ~6 months per Q-S7-g). |
+
+### Sidebar nav
+
+`components/dashboard/sidebar.tsx`: removed the standalone "Subscription" entry (under Settings → Organization → Billing now); added "Pipeline" (KanbanSquare icon) between Dashboard and Vacancies. Dashboard stays until the full Wave 2.1 kanban replaces it as the post-login landing.
