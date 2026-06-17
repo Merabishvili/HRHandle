@@ -13,8 +13,8 @@ import {
   Users,
   Calendar,
   BarChart3,
+  KanbanSquare,
   Settings,
-  CreditCard,
   Menu,
   X,
 } from 'lucide-react'
@@ -28,6 +28,7 @@ interface DashboardSidebarProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Pipeline', href: '/pipeline', icon: KanbanSquare },
   { name: 'Vacancies', href: '/vacancies', icon: Briefcase },
   { name: 'Candidates', href: '/candidates', icon: Users },
   { name: 'Interviews', href: '/interviews', icon: Calendar },
