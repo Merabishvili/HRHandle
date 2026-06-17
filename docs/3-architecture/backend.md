@@ -184,3 +184,26 @@ The CSP allows `unsafe-inline` and `unsafe-eval` for scripts (needed by Next.js)
 ## TypeScript Configuration
 
 `next.config.mjs` sets `typescript.ignoreBuildErrors: false` — TypeScript errors fail the build.
+
+## Recent additions (2026-06-18 redesign session)
+
+### `lib/actions/notification-preferences.ts`
+
+Two server actions wired into the new Personal → Notifications sub-page (per [`docs/redesign/flows/S07-settings.md`](../redesign/flows/S07-settings.md) §2.4 + Phase 0.7 in the kickoff playbook):
+
+- `getNotificationPreferences(): Result<NotificationPreferences>` — reads the recipient's preferences via the regular Supabase server client. Falls back to `DEFAULT_NOTIFICATION_PREFERENCES` if the column is NULL or the row pre-dates Migration 045 (defensive). Returns `{ success: false, error }` on auth failure.
+- `updateNotificationPreferences(prefs)` — whole-object replace so partial updates can't drift the JSONB shape over time. The client form is the canonical builder; the action just writes what it's given.
+
+Type definitions live in `lib/types/notification-preferences.ts` alongside `EMAIL_EVENT_LABELS` / `IN_PRODUCT_LABELS` (the form copy registry) and `DEFAULT_NOTIFICATION_PREFERENCES` (the runtime default that matches Migration 045's column DEFAULT). Pinned by `lib/__tests__/notification-preferences-shape.test.ts` to catch drift between the two.
+
+### Consumer wiring — `NotificationsBell`
+
+`components/dashboard/notifications-bell.tsx` reads `notification_preferences.in_product` once on mount and respects:
+- `show_bell_badge=false` → hides the unread count badge (bell icon stays visible — user can still open and read)
+- `auto_mark_read=false` → clicking a notification opens its link but does NOT call `markNotificationRead`; user has to use "Mark all read" explicitly
+
+Failure paths (fetch error, missing column, network) silently keep the defaults (true/true) so the bell never silently regresses.
+
+### Deferred — email dispatcher wiring
+
+The 6 email events in the preferences form (`new_applicant`, `interview_scheduled`, `offer_awaiting_response`, `mention`, `team_invite_update`, `weekly_digest`) are collected but not yet read by the email dispatcher. The audit found that most existing email sends in `lib/email.ts` go to candidates / invitees (external addresses), not to recruiters who would opt out. When the internal-email surface grows, the helper goes in `lib/actions/notifications.ts` near `createOrgNotifications` — filter `recipientIds` against the relevant email pref before delivery.
