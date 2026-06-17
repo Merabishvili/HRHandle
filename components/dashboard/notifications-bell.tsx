@@ -12,12 +12,32 @@ import {
   markAllNotificationsRead,
   type Notification,
 } from '@/lib/actions/notifications'
+import { getNotificationPreferences } from '@/lib/actions/notification-preferences'
 
 export function NotificationsBell() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [showBadge, setShowBadge] = useState(true)
+  const [autoMarkRead, setAutoMarkRead] = useState(true)
   const panelRef = useRef<HTMLDivElement>(null)
+
+  // Load prefs once on mount — respects Personal → Notifications toggles
+  // (Wave 1.2 / Phase 0.7). On failure or pre-Migration-045 profile, the
+  // defaults (true/true) stand so the bell never silently disappears.
+  useEffect(() => {
+    let cancelled = false
+    getNotificationPreferences().then((result) => {
+      if (cancelled) return
+      if (result.success && result.data) {
+        setShowBadge(result.data.in_product.show_bell_badge)
+        setAutoMarkRead(result.data.in_product.auto_mark_read)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -46,7 +66,7 @@ export function NotificationsBell() {
   const unreadCount = notifications.filter((n) => !n.read_at).length
 
   const handleClick = async (n: Notification) => {
-    if (!n.read_at) {
+    if (!n.read_at && autoMarkRead) {
       try {
         await markNotificationRead(n.id)
         setNotifications((prev) =>
@@ -81,7 +101,7 @@ export function NotificationsBell() {
         onClick={() => setOpen((v) => !v)}
       >
         <Bell className="h-4 w-4" />
-        {unreadCount > 0 && (
+        {showBadge && unreadCount > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
