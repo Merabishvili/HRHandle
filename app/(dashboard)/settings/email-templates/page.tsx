@@ -31,7 +31,7 @@ export default async function EmailTemplatesSettingsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-foreground">Email Templates</h2>
+        <h2 className="text-lg font-semibold text-foreground">Email templates</h2>
         <p className="text-sm text-muted-foreground">
           Customise the emails sent to candidates. Use variables to personalise the content.
         </p>

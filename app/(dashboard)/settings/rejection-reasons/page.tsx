@@ -23,12 +23,12 @@ export default async function RejectionReasonsSettingsPage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-foreground">Rejection Reasons</h2>
+        <h2 className="text-lg font-semibold text-foreground">Rejection reasons</h2>
         <p className="text-sm text-muted-foreground">
           Define the reasons used when a candidate is not moving forward. Up to 50 reasons.
           Configure the email templates for each reason in{' '}
           <a href="/settings/email-templates" className="underline underline-offset-2 hover:text-foreground">
-            Email Templates
+            Email templates
           </a>
           .
         </p>

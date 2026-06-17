@@ -115,7 +115,7 @@ export function RejectionDialog({
             <Label>Rejection reason</Label>
             {reasons.length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                No rejection reasons configured. You can still reject — add reasons in Settings → Rejection Reasons.
+                No rejection reasons configured. You can still reject — add reasons in Settings → Rejection reasons.
               </p>
             ) : (
               <SearchableSelect
@@ -152,7 +152,7 @@ export function RejectionDialog({
                 <Label>Email template</Label>
                 {templates.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    No templates configured. A default email will be sent. Configure templates in Settings → Email Templates.
+                    No templates configured. A default email will be sent. Configure templates in Settings → Email templates.
                   </p>
                 ) : (
                   <SearchableSelect

@@ -132,7 +132,7 @@ export function BatchRejectionDialog({
             {reasons.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 No rejection reasons configured. You can still reject — add reasons in
-                Settings → Rejection Reasons.
+                Settings → Rejection reasons.
               </p>
             ) : (
               <SearchableSelect
@@ -169,7 +169,7 @@ export function BatchRejectionDialog({
               {templates.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   No templates configured. A default email will be sent. Configure
-                  templates in Settings → Email Templates.
+                  templates in Settings → Email templates.
                 </p>
               ) : (
                 <SearchableSelect

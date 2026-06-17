@@ -61,9 +61,9 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Hiring workflow',
     items: [
-      { href: '/settings/custom-fields',     label: 'Custom Fields',     icon: LayoutGrid, adminOnly: true },
-      { href: '/settings/email-templates',   label: 'Email Templates',   icon: Mail,       adminOnly: true },
-      { href: '/settings/rejection-reasons', label: 'Rejection Reasons', icon: XCircle,    adminOnly: true },
+      { href: '/settings/custom-fields',     label: 'Custom fields',     icon: LayoutGrid, adminOnly: true },
+      { href: '/settings/email-templates',   label: 'Email templates',   icon: Mail,       adminOnly: true },
+      { href: '/settings/rejection-reasons', label: 'Rejection reasons', icon: XCircle,    adminOnly: true },
       { href: '/settings/integrations',      label: 'Integrations',      icon: Plug },
     ],
   },

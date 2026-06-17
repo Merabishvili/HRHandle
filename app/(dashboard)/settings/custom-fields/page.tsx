@@ -26,7 +26,7 @@ export default async function CustomFieldsSettingsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-foreground">Custom Fields</h2>
+        <h2 className="text-lg font-semibold text-foreground">Custom fields</h2>
         <p className="text-sm text-muted-foreground">
           Define custom fields for candidates and vacancies. Up to 20 fields per entity type.
         </p>
