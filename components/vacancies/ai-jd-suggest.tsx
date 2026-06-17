@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AiDraftTag } from '@/components/ui/ai-draft-tag'
 import type { JdSection } from '@/lib/ai/jd-generator'
 
 export interface AiJdSuggestProps {
@@ -281,9 +282,9 @@ export function AiJdSuggest({
 
                 {state.status === 'ok' && (
                   <div>
-                    <p className="mb-1 text-[11px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                      AI-generated — recruiter has not reviewed or edited
-                    </p>
+                    <div className="mb-1">
+                      <AiDraftTag label="AI draft" />
+                    </div>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                       {state.text}
                     </p>

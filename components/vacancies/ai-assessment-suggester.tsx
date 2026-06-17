@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AiDraftTag } from '@/components/ui/ai-draft-tag'
 import { addVacancyQuestion } from '@/lib/actions/evaluations'
 import type { AssessmentSuggestions } from '@/lib/ai/assessment-suggester'
 
@@ -194,9 +195,9 @@ export function AiAssessmentSuggester({
 
       {panel.status === 'ok' && (
         <div className="mt-4 space-y-4">
-          <p className="text-[11px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
-            AI-generated — recruiter has not reviewed or edited
-          </p>
+          <div>
+            <AiDraftTag label="AI suggestion" />
+          </div>
 
           <SuggestionSection
             title="Evaluation criteria (scored 1–10)"

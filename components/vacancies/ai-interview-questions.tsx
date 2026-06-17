@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AiDraftTag } from '@/components/ui/ai-draft-tag'
 import { setInterviewQuestions } from '@/lib/actions/interview-questions'
 import {
   INTERVIEW_QUESTION_CATEGORIES,
@@ -339,9 +340,9 @@ export function AiInterviewQuestions({
 
         {panel.status === 'ok' && (
           <div className="mt-4 space-y-4">
-            <p className="text-[11px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
-              AI-generated — recruiter has not reviewed or edited
-            </p>
+            <div>
+              <AiDraftTag label="AI draft" />
+            </div>
 
             {INTERVIEW_QUESTION_CATEGORIES.map((category) => {
               const list = panel.questions[category]

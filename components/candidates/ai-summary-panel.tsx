@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Sparkles, Loader2, RefreshCw, Save, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AiDraftTag } from '@/components/ui/ai-draft-tag'
 import { createNote } from '@/lib/actions/notes'
 
 export interface AiSummaryPanelProps {
@@ -107,9 +108,9 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
 
       {state.status === 'ok' && (
         <div>
-          <p className="mb-2 text-[11px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
-            AI-generated — recruiter has not reviewed or edited
-          </p>
+          <div className="mb-2">
+            <AiDraftTag label="AI draft" />
+          </div>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
             {state.summary}
           </p>

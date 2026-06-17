@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AiDraftTag } from '@/components/ui/ai-draft-tag'
 import type { BiasCategory, BiasField, BiasFinding } from '@/lib/ai/bias-check'
 
 export interface AiBiasCheckProps {
@@ -176,9 +177,9 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
 
           {panel.status === 'ok' && totalFindings > 0 && (
             <div className="space-y-3">
-              <p className="text-[11px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                AI-flagged — recruiter has not reviewed
-              </p>
+              <div>
+                <AiDraftTag label="AI suggestion" />
+              </div>
 
               {FIELD_ORDER.map((field) => {
                 const items = byField[field]

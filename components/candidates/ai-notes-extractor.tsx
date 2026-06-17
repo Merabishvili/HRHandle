@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AiDraftTag } from '@/components/ui/ai-draft-tag'
 import { createNote } from '@/lib/actions/notes'
 import {
   MAX_NOTES_LENGTH,
@@ -213,9 +214,9 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
 
           {panel.status === 'ok' && (
             <div className="space-y-3">
-              <p className="text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                AI-extracted — recruiter has not reviewed
-              </p>
+              <div>
+                <AiDraftTag label="AI draft" />
+              </div>
 
               {/* Summary */}
               {panel.structured.summary && (
