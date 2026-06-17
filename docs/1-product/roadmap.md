@@ -3,6 +3,8 @@
 _Last updated: 2026-06-26_
 _Owner: Aleksandre Merabishvili_
 
+> **See also:** [`docs/redesign/roadmap.md`](../redesign/roadmap.md) — the standalone roadmap for the proposed UX/IA redesign. Independent of this doc; coordination notes flag overlaps where redesign waves touch Phase 9 / Phase 10 items.
+
 This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
 
 **How to use this doc.** Each item links out to the doc where its detail lives (compliance, audit, architecture). New items get added here first. When work ships, move the row to the "Recently shipped" section at the top and link the PR/commit. Quarterly review: prune stale items, re-prioritize the rest.

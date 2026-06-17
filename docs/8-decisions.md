@@ -172,6 +172,26 @@
 
 ---
 
+## Redesign Audit (2026-06-15 / 2026-06-16)
+
+### Redesign deliverables live in `docs/redesign/`, source materials in `redesign/`
+
+**Decision:** A full UX/IA audit + revised roadmap + per-flow mobile design for the proposed HRHandle redesign (zipped handoff package `Redisign New.zip`) is captured at:
+- [`docs/redesign/audit.md`](redesign/audit.md) — critical audit (cross-cutting problems, regression risk register, per-screen audit, inconsistencies, mobile assessment, feasibility flags, open questions)
+- [`docs/redesign/roadmap.md`](redesign/roadmap.md) — revised roadmap with KEEP / REVISE / DROP / ADD verdicts on each item from the redesign's `ROADMAP.md`, plus a new Phase 0 of foundation pre-work
+- [`docs/redesign/mobile/`](redesign/mobile/) — design output for the four must-work-on-phone flows (apply form / candidate profile / offer approval / today's interviews)
+- [`docs/redesign/flows/`](redesign/flows/) — per-screen detailed analyses, written one per session after roadmap sign-off
+
+Source materials (the extracted zip — `.dc.html` files, screenshots, the redesign's own ROADMAP/SCREEN-SPECS/REDESIGN-DECISIONS docs) live at `redesign/` at the repo root and are **gitignored**.
+
+**Reason:** Two roadmap concepts must not be confused: `docs/1-product/roadmap.md` is the product roadmap (what features to ship). The redesign roadmap is a *different* sequence (how to rebuild existing UI). The redesign roadmap is **standalone** — it does not interleave with Phase 9 / Phase 10 of the product roadmap, but it flags coordination notes where work overlaps (e.g., Wave 2.4 vacancy detail rebuild conflicts with A-005 RHF migration on `vacancy-form.tsx`).
+
+The audit is deliberately adversarial — its goal is to expose problems in the redesign before implementation, not to validate it. Key findings include: the redesign was authored against an older snapshot of HRHandle (G-022 → G-032 features are not reconciled); `application_statuses` has no `type` column so custom stages is a real schema migration (XL effort, not M); the scorecard data model already exists (`vacancy_questions` + `candidate_evaluations`); Migration 022's candidate-status sync trigger has a silent bug (looks for non-existent `'inactive'` code); S11 AI Fit Analysis is blocked by your Phase 8 EU AI Act framework.
+
+**Files (audit deliverables):** `docs/redesign/audit.md`, `docs/redesign/roadmap.md`, `docs/redesign/mobile/*.md`. **Files (source):** `redesign/` (gitignored). **Files (related):** `docs/1-product/roadmap.md` (carries a one-line "see also" link).
+
+---
+
 ## TODO/FIXME/HACK Comments Found in Code
 
 - `lib/actions/notifications.ts` line 74: `// Non-fatal: notifications table may not exist yet` — suggests notifications was added after the initial schema
