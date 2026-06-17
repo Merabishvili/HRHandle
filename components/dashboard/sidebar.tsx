@@ -133,14 +133,19 @@ export function DashboardSidebar({
               </span>
             </div>
 
-            {subscription?.status && (
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs text-sidebar-foreground/60">Status</span>
-                <span className="text-xs font-medium capitalize text-sidebar-foreground">
-                  {subscription.status.replace('_', ' ')}
-                </span>
-              </div>
-            )}
+            {/* Status only shown when it adds information beyond the plan label.
+                For trial accounts it just repeats "Trial · Trial" (audit §2.11);
+                same for healthy paid plans where status === 'active' is implied. */}
+            {subscription?.status &&
+              subscription.status !== 'trial' &&
+              subscription.status !== 'active' && (
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs text-sidebar-foreground/60">Status</span>
+                  <span className="text-xs font-medium capitalize text-sidebar-foreground">
+                    {subscription.status.replace('_', ' ')}
+                  </span>
+                </div>
+              )}
 
             <div className="mt-3 flex gap-3 text-xs text-sidebar-foreground/40">
               <Link href="/terms" className="transition-colors hover:text-sidebar-foreground/70">Terms</Link>
