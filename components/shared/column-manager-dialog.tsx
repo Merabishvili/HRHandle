@@ -128,7 +128,7 @@ export function ColumnManagerDialog({
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleCancel() }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Manage Columns</DialogTitle>
+          <DialogTitle>Manage columns</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">

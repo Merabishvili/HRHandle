@@ -100,7 +100,7 @@ export function RejectionDialog({
     <Dialog open={open} onOpenChange={(v) => { if (!v && !isPending) onCancel() }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Reject Candidate</DialogTitle>
+          <DialogTitle>Reject candidate</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
