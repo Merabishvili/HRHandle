@@ -338,7 +338,7 @@ export function VacancyApplicationRow({
 
                 <Button size="sm" onClick={handleSaveEvaluation} disabled={isPending}>
                   {isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
-                  Save Changes
+                  Save changes
                 </Button>
               </>
             )}

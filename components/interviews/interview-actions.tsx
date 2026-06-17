@@ -191,7 +191,7 @@ export function InterviewActions({
             </Button>
             <Button size="sm" onClick={handleReschedule} disabled={isPending}>
               {isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
-              Save Changes
+              Save changes
             </Button>
           </div>
         </div>

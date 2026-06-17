@@ -405,7 +405,7 @@ export function ApplicationEvaluation({
                   Saving...
                 </>
               ) : (
-                'Save Changes'
+                'Save changes'
               )}
             </Button>
           </div>

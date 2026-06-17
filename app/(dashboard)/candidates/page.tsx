@@ -287,7 +287,7 @@ export default async function CandidatesPage({
             <Button variant="outline" asChild>
               <Link href="/candidates/import">
                 <Upload className="mr-2 h-4 w-4" />
-                Bulk Import
+                Bulk import
               </Link>
             </Button>
           )}
