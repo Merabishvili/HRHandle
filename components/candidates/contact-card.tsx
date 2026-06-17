@@ -70,7 +70,7 @@ function ContactRow({ icon, label, value, href, isLink, last }: ContactRowProps)
               isLink ? 'text-[oklch(0.55_0.18_250)] hover:underline' : 'text-foreground hover:underline'
             )}
           >
-            {isLink ? 'View Profile' : value}
+            {isLink ? 'View profile' : value}
           </a>
         ) : (
           <p className="truncate text-[12.5px] text-foreground">{value}</p>

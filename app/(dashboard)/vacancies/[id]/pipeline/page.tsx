@@ -140,7 +140,7 @@ export default async function VacancyPipelinePage({
         </div>
 
         <Button variant="outline" asChild>
-          <Link href={`/vacancies/${id}`}>View Details</Link>
+          <Link href={`/vacancies/${id}`}>View details</Link>
         </Button>
       </div>
 
