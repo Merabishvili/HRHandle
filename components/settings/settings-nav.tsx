@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   User,
+  Bell,
   Lock,
   Building2,
   Users,
@@ -46,8 +47,9 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Personal',
     items: [
-      { href: '/settings/profile',  label: 'Profile',  icon: User },
-      { href: '/settings/security', label: 'Security', icon: Lock },
+      { href: '/settings/profile',       label: 'Profile',       icon: User },
+      { href: '/settings/notifications', label: 'Notifications', icon: Bell },
+      { href: '/settings/security',      label: 'Security',      icon: Lock },
     ],
   },
   {
