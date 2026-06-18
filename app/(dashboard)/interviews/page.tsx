@@ -154,7 +154,7 @@ export default async function InterviewsPage({
     { value: 'upcoming', label: `Scheduled (${upcomingCount})` },
     { value: 'past', label: `Past (${pastCount})` },
     { value: 'cancelled', label: `Cancelled (${cancelledCount})` },
-    { value: 'no_show', label: `No Show (${noShowCount})` },
+    { value: 'no_show', label: `No show (${noShowCount})` },
   ]
 
   return (
@@ -168,7 +168,7 @@ export default async function InterviewsPage({
         <Button asChild>
           <Link href="/interviews/new">
             <Plus className="mr-2 h-4 w-4" />
-            Schedule Interview
+            Schedule interview
           </Link>
         </Button>
       </div>
@@ -179,7 +179,7 @@ export default async function InterviewsPage({
           { label: 'Scheduled', value: upcomingCount, color: 'text-primary' },
           { label: 'Past', value: pastCount, color: 'text-yellow-600' },
           { label: 'Cancelled', value: cancelledCount, color: 'text-muted-foreground' },
-          { label: 'No Show', value: noShowCount, color: 'text-destructive' },
+          { label: 'No show', value: noShowCount, color: 'text-destructive' },
         ].map((stat) => (
           <div key={stat.label} className="rounded-lg border border-border bg-card px-4 py-3.5">
             <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
@@ -287,7 +287,7 @@ export default async function InterviewsPage({
             <Button className="mt-6" asChild>
               <Link href="/interviews/new">
                 <Plus className="mr-2 h-4 w-4" />
-                Schedule Interview
+                Schedule interview
               </Link>
             </Button>
           )}
