@@ -232,9 +232,8 @@ export default async function PipelinePage() {
                           'rounded-md px-2 py-0.5 text-xs font-medium tabular-nums',
                           c > 0 ? APPLICATION_STATUS_COLORS[s.code] : 'bg-muted text-muted-foreground/60',
                         )}
-                        title={s.name}
                       >
-                        {s.name.slice(0, 3)} {c}
+                        {s.name} {c}
                       </span>
                     )
                   })}
@@ -244,9 +243,8 @@ export default async function PipelinePage() {
                         'rounded-md px-2 py-0.5 text-xs font-medium tabular-nums',
                         APPLICATION_STATUS_COLORS['hired'],
                       )}
-                      title="Hired"
                     >
-                      Hir {hiredCount}
+                      Hired {hiredCount}
                     </span>
                   )}
                 </div>
