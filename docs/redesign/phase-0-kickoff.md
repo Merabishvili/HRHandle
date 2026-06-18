@@ -482,7 +482,12 @@ When all waves ship, the redesign is complete. Until then, this corpus + roadmap
 
 ## Implementation log — 2026-06-18 autonomous session
 
-Pushed to `staging`. 17 commits total. Migration 044 + Migration 045 applied. Migration 046 written, not yet applied.
+Pushed to `staging`. 17 commits in the initial autonomous push. A follow-on
+polish session added 13 more commits (8 sentence-case sweeps, 1 capitalize-CSS
+batch fix, 2 pipeline-overview UX, 2 Wave 3.2 slice deliveries — brand-blue +
+role count + track-link).
+
+Migration 044 + Migration 045 applied. Migration 046 written, not yet applied.
 
 | Wave | Status | Commits |
 |---|---|---|
@@ -501,6 +506,11 @@ Pushed to `staging`. 17 commits total. Migration 044 + Migration 045 applied. Mi
 | **1.6** AI calm tag (`AiDraftTag` + `AiDraftPanel` shell) | ✅ | `adbe979`, `293aab7` |
 | **2.1 scaffolding** Top-level `/pipeline` route + sidebar nav | ✅ placeholder | `21c7837`, `6521730` |
 | **2.6 foundation** `pipeline_stages` table | ✅ Migration 046 file written (apply when ready) | `c103e43` |
+| **2.1 polish** `/pipeline` overview: full stage names + redundant-status suppression | ✅ | `fe4f1a2`, `ed8b68a` |
+| **3.2 visual slice** Public listing brand-blue bar + role count | ✅ | `f94deb1` |
+| **3.2 wiring slice** "Track your application" link on apply confirmation card | ✅ — uses `application.public_token` returned from `submitPublicApplication` | `2a7e202` |
+| **Capitalize CSS audit** 5 multi-word-mangling spots (sidebar status, pipeline status name, interviews badge, team invitations meta, FIELD_TYPE_LABELS) | ✅ | `aebd11e` |
+| **Sentence-case sweep** 60+ string fixes across dashboard forms, cards, candidate profile, vacancy detail, public apply form | ✅ | `b1577e8`, `154861d`, `9c294e0`, `0365995`, `d106872`, `50a2946`, `e42efb3` |
 
 ### Still pending (biggest tickets first)
 
@@ -510,7 +520,8 @@ Pushed to `staging`. 17 commits total. Migration 044 + Migration 045 applied. Mi
 - **Wave 2.4 Vacancy detail rebuild** — 5-tab structure per S04. Depends on 2.6.
 - **Wave 2.5 Scorecard system** — must-have flag + recommendation + reason + anti-anchoring.
 - **Wave 2.7 Stepped wizards** for vacancy + candidate creation per S04d.
-- **Wave 3.x** — public-page polish, public-offer countdown, landing refresh, AI Fit Analysis (still blocked on Phase 0.8 legal consult).
+- **Wave 3.2 remainder** — screening-questions section on apply form (depends on Wave 2.5 `vacancy_questions.kind` + `screening_answer_type` columns), status-page offer-pending state (link to `/offer/[token]` when there's a `sent` offer on the application), terminal-state tiles for hired/withdrawn/expired.
+- **Wave 3.x other** — public-offer countdown, landing refresh, AI Fit Analysis (still blocked on Phase 0.8 legal consult).
 
 ### Forward-compat surfaces ready for future work
 
