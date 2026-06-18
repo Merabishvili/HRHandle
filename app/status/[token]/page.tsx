@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { format } from 'date-fns'
-import { Building2, Briefcase, MapPin, Calendar } from 'lucide-react'
+import { Building2, Briefcase, MapPin, Calendar, FileText } from 'lucide-react'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { statusCodeToBucket } from '@/lib/application-status-bucket'
@@ -108,6 +109,26 @@ export default async function StatusPage({ params }: PageProps) {
   const showStepper = view.bucket !== 'closed'
   const decisionComplete = view.outcome === 'hired'
 
+  // S05 §2.3 — surface a pending offer at the top of the status tile.
+  // Reads offers where status='sent' (signed and delivered, awaiting candidate
+  // response). Drop any whose expiry_date has already passed so we don't
+  // route the candidate to a /offer page they can no longer act on.
+  const { data: offersRaw } = await supabase
+    .from('offers')
+    .select('public_token, expiry_date, sent_at')
+    .eq('application_id', app.id)
+    .eq('status', 'sent')
+    .is('deleted_at', null)
+    .order('sent_at', { ascending: false })
+    .limit(1)
+
+  const pendingOffer = (() => {
+    const row = offersRaw?.[0]
+    if (!row || !row.public_token) return null
+    if (row.expiry_date && new Date(row.expiry_date) < new Date()) return null
+    return row as { public_token: string; expiry_date: string | null; sent_at: string | null }
+  })()
+
   const appliedAt = format(new Date(app.applied_at), 'MMM d, yyyy')
   const lastUpdatedAt = app.last_status_changed_at
     ? format(new Date(app.last_status_changed_at), 'MMM d, yyyy')
@@ -169,6 +190,30 @@ export default async function StatusPage({ params }: PageProps) {
               decisionComplete={decisionComplete}
             />
           </div>
+        )}
+
+        {pendingOffer && (
+          <Link
+            href={`/offer/${pendingOffer.public_token}`}
+            className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 transition-colors hover:border-emerald-300 hover:bg-emerald-100"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-700 shadow-sm">
+                <FileText className="h-5 w-5" aria-hidden />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-900">You have an offer to review</p>
+                {pendingOffer.expiry_date && (
+                  <p className="mt-0.5 text-xs text-emerald-800">
+                    Respond by {format(new Date(pendingOffer.expiry_date), 'MMM d, yyyy')}
+                  </p>
+                )}
+              </div>
+            </div>
+            <span className="text-sm font-medium text-emerald-700" aria-hidden>
+              View offer →
+            </span>
+          </Link>
         )}
 
         <div
