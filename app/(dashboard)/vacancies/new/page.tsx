@@ -1,22 +1,18 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
-import { VacancyForm } from '@/components/vacancies/vacancy-form'
-import { Button } from '@/components/ui/button'
-import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
 import { getVacancyStatuses } from '@/lib/cache/lookups'
+import { VacancyCreateWizard } from '@/components/vacancies/wizard/vacancy-create-wizard'
 
-interface SectorRow {
-  id: string
-  name: string
-  code: string
-  is_active: boolean
-  sort_order: number
-  created_at: string
-}
-
+/**
+ * Wave 2.7 vacancy creation flow — replaced the single-page
+ * VacancyForm with the stepped wizard per
+ * `redesign/Create Vacancy Steps.dc.html`.
+ *
+ * Server component is now a thin host: fetches the sector + status
+ * lookups and renders the client `<VacancyCreateWizard>`. All form
+ * state lives in the wizard.
+ */
 interface VacancyStatusRow {
   id: string
   name: string
@@ -28,13 +24,8 @@ interface VacancyStatusRow {
 export default async function NewVacancyPage() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/auth/login')
-  }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -42,46 +33,23 @@ export default async function NewVacancyPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.organization_id) {
-    redirect('/dashboard')
-  }
+  if (!profile?.organization_id) redirect('/dashboard')
 
-  const [{ data: sectorsRaw }, customFieldGroups, statusOptionsRaw] = await Promise.all([
+  const [{ data: sectorsRaw }, statusOptionsRaw] = await Promise.all([
     supabase
       .from('sectors')
-      .select('id, name, code, is_active, sort_order, created_at')
+      .select('id, name')
       .eq('is_active', true)
       .order('sort_order', { ascending: true }),
-
-    getCustomFieldSchema('vacancy'),
     getVacancyStatuses(),
   ])
 
-  const sectors = (sectorsRaw || []) as SectorRow[]
+  const sectors = (sectorsRaw || []) as { id: string; name: string }[]
   const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/vacancies" aria-label="Back to vacancies">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Create vacancy</h1>
-          <p className="text-muted-foreground">
-            Add a new job posting to attract candidates.
-          </p>
-        </div>
-      </div>
-
-      <VacancyForm
-        sectors={sectors}
-        statusOptions={statusOptions}
-        customFieldGroups={customFieldGroups}
-      />
+    <div className="mx-auto max-w-[1360px] p-4 lg:p-6">
+      <VacancyCreateWizard sectors={sectors} statusOptions={statusOptions} />
     </div>
   )
 }
