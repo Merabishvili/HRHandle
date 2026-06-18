@@ -207,9 +207,11 @@ export function ApplicationEvaluation({
             type="button"
             className="flex-1 flex items-center gap-3 text-left min-w-0"
             onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
           >
             <ChevronRight
               className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+              aria-hidden
             />
             <div className="min-w-0 space-y-0.5">
               <Link
@@ -312,8 +314,9 @@ export function ApplicationEvaluation({
               className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
               onClick={() => setConfirmDelete(true)}
               disabled={isPending}
+              aria-label={`Remove application from ${vacancyTitle}`}
             >
-              {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" aria-hidden />}
             </Button>
           </div>
         </div>

@@ -217,8 +217,13 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
                 <span className="flex-1 truncate text-sm text-gray-700">{cvFile.name}</span>
                 <span className="text-xs text-gray-400">{(cvFile.size / 1024).toFixed(0)} KB</span>
                 {parseState !== 'parsing' && (
-                  <button type="button" onClick={handleRemoveFile} className="text-gray-400 hover:text-red-500 transition-colors">
-                    <X className="h-4 w-4" />
+                  <button
+                    type="button"
+                    onClick={handleRemoveFile}
+                    aria-label="Remove uploaded CV"
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <X className="h-4 w-4" aria-hidden />
                   </button>
                 )}
               </div>

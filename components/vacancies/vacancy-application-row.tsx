@@ -202,10 +202,12 @@ export function VacancyApplicationRow({
               type="button"
               onClick={() => setExpanded((v) => !v)}
               className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
-              title={expanded ? 'Collapse' : 'Assessment & Questionary'}
+              aria-label={expanded ? 'Collapse assessment' : 'Expand assessment'}
+              aria-expanded={expanded}
             >
               <ChevronRight
                 className={`h-4 w-4 transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+                aria-hidden
               />
             </button>
             <Link href={`/candidates/${candidateId}`} className="flex items-center gap-3 min-w-0">
