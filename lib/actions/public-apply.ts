@@ -37,7 +37,11 @@ function toDateString(date: string | null): string | null {
 }
 
 export type PublicApplyResult =
-  | { success: true }
+  // statusToken is optional because two success paths don't surface a
+  // tracker link: the silent honeypot drop (bot — no application created)
+  // and any path where we don't want to expose the existing application
+  // to a re-submitter.
+  | { success: true; statusToken?: string }
   | { success: false; error: string }
 
 export async function submitPublicApplication(
@@ -420,5 +424,5 @@ export async function submitPublicApplication(
     })
   )
 
-  return { success: true }
+  return { success: true, statusToken: newApp.public_token as string }
 }

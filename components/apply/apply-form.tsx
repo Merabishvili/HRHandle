@@ -23,6 +23,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
   const turnstileRef = useRef<TurnstileInstance>(null)
 
   const [submitted, setSubmitted] = useState(false)
+  const [statusToken, setStatusToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
@@ -154,6 +155,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
       return
     }
 
+    setStatusToken(result.statusToken ?? null)
     setSubmitted(true)
     setIsLoading(false)
   }
@@ -167,6 +169,15 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
           We&apos;ve sent a confirmation to <strong>{email}</strong>.
           We will review your details and be in touch.
         </p>
+        {statusToken && (
+          <a
+            href={`/status/${statusToken}`}
+            className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+          >
+            Track your application
+            <span aria-hidden>→</span>
+          </a>
+        )}
       </div>
     )
   }
