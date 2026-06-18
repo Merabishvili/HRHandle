@@ -462,7 +462,7 @@ export default async function CandidateDetailPage({
                 return {
                   id: app.id,
                   vacancyId: app.vacancy_id,
-                  vacancyTitle: vacancy?.title ?? 'Unknown Vacancy',
+                  vacancyTitle: vacancy?.title ?? 'Unknown vacancy',
                   vacancyDepartment: vacancy?.department ?? null,
                   appliedAt: app.applied_at,
                   appStatus: appStatus ?? null,
@@ -482,10 +482,10 @@ export default async function CandidateDetailPage({
           {/* 3. Education */}
           <EducationSection candidateId={candidate.id} initialEntries={educationEntries} />
 
-          {/* 4. Additional Information (custom fields, if any) */}
+          {/* 4. Additional information (custom fields, if any) */}
           {customFieldGroups.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5">
-              <p className="mb-3 text-[15px] font-bold text-foreground">Additional Information</p>
+              <p className="mb-3 text-[15px] font-bold text-foreground">Additional information</p>
               <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
             </div>
           )}
@@ -534,7 +534,7 @@ export default async function CandidateDetailPage({
                     <div key={iv.id} className="rounded-lg bg-muted/50 px-3 py-2.5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <p className="text-[13px] font-medium capitalize text-foreground">{iv.type} Interview</p>
+                          <p className="text-[13px] font-medium text-foreground"><span className="capitalize">{iv.type}</span> interview</p>
                           <p className="mt-0.5 text-[11.5px] text-muted-foreground">
                             {format(new Date(iv.scheduled_at), 'MMM d, yyyy · h:mm a')}
                           </p>
