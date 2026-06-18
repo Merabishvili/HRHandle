@@ -273,6 +273,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
             </label>
             <input
               type="text"
+              autoComplete="given-name"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="John"
@@ -287,6 +288,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
             </label>
             <input
               type="text"
+              autoComplete="family-name"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Smith"
@@ -303,6 +305,8 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
           </label>
           <input
             type="email"
+            autoComplete="email"
+            inputMode="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="john@example.com"
@@ -317,6 +321,8 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
             <label className="mb-1.5 block text-sm font-medium text-gray-700">Phone</label>
             <input
               type="tel"
+              autoComplete="tel"
+              inputMode="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+1 555 123 4567"
@@ -329,6 +335,8 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
             <label className="mb-1.5 block text-sm font-medium text-gray-700">LinkedIn URL</label>
             <input
               type="url"
+              autoComplete="url"
+              inputMode="url"
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
               placeholder="https://linkedin.com/in/..."
