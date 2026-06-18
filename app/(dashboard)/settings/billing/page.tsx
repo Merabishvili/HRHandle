@@ -180,7 +180,7 @@ export default async function BillingSettingsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Current Plan</CardTitle>
+              <CardTitle>Current plan</CardTitle>
               <CardDescription>Your active subscription details</CardDescription>
             </div>
 
@@ -210,14 +210,14 @@ export default async function BillingSettingsPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg bg-muted/50 p-4">
-              <p className="text-sm text-muted-foreground">Vacancies Used</p>
+              <p className="text-sm text-muted-foreground">Vacancies used</p>
               <p className="text-2xl font-bold text-foreground">
                 {vacancyCount || 0} / {typedSubscription.vacancy_limit}
               </p>
             </div>
 
             <div className="rounded-lg bg-muted/50 p-4">
-              <p className="text-sm text-muted-foreground">Candidates Used</p>
+              <p className="text-sm text-muted-foreground">Candidates used</p>
               <p className="text-2xl font-bold text-foreground">
                 {candidateCount || 0} / {typedSubscription.candidate_limit}
               </p>
@@ -231,7 +231,7 @@ export default async function BillingSettingsPage() {
             </div>
 
             <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">Payment Method</p>
+              <p className="text-sm text-muted-foreground">Payment method</p>
               <p className="font-medium text-foreground">
                 {typedSubscription.payment_method_linked ? 'Linked' : 'Not linked'}
               </p>
@@ -275,7 +275,7 @@ export default async function BillingSettingsPage() {
                 </p>
               </div>
 
-              <Button>Upgrade Now</Button>
+              <Button>Upgrade now</Button>
             </div>
           </CardContent>
         </Card>

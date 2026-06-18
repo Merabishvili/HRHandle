@@ -120,7 +120,7 @@ export function InterviewActions({
           className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <h3 className="mb-4 text-base font-semibold text-foreground">Reschedule Interview</h3>
+          <h3 className="mb-4 text-base font-semibold text-foreground">Reschedule interview</h3>
 
           {rescheduleError && (
             <p className="mb-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">{rescheduleError}</p>

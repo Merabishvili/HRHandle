@@ -72,7 +72,7 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-foreground">Apply Link</h3>
+            <h3 className="font-semibold text-foreground">Apply link</h3>
             <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
           </div>
 

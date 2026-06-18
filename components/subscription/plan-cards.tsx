@@ -25,7 +25,7 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Available Plans</h2>
+        <h2 className="text-xl font-semibold text-foreground">Available plans</h2>
 
         <div className="inline-flex items-center rounded-full border border-border bg-muted p-1">
           <button

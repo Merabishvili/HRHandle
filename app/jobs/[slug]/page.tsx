@@ -90,7 +90,7 @@ export default async function PublicJobsPage({ params }: PageProps) {
             </div>
           )}
           <h1 className="text-2xl font-bold text-gray-900">{org.name}</h1>
-          <p className="mt-1 text-sm text-gray-500">Open Positions</p>
+          <p className="mt-1 text-sm text-gray-500">Open positions</p>
         </div>
 
         {/* Vacancy list */}

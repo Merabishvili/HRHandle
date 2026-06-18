@@ -125,7 +125,7 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
 
       {/* Logo upload */}
       <div className="space-y-3">
-        <Label>Organization Logo</Label>
+        <Label>Organization logo</Label>
         <div className="flex items-center gap-4">
           {/* Preview */}
           <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-border bg-muted overflow-hidden">
@@ -181,7 +181,7 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
 
       {/* Name */}
       <div className="space-y-2">
-        <Label htmlFor="orgName">Organization Name</Label>
+        <Label htmlFor="orgName">Organization name</Label>
         <Input
           id="orgName"
           value={name}

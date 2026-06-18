@@ -245,7 +245,7 @@ export function InterviewForm({
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Interview Details</CardTitle>
+          <CardTitle>Interview details</CardTitle>
           <CardDescription>Who is being interviewed and for which vacancy?</CardDescription>
         </CardHeader>
 
@@ -364,7 +364,7 @@ export function InterviewForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="type">Interview Type</Label>
+              <Label htmlFor="type">Interview type</Label>
               <Select value={type} onValueChange={handleTypeChange} disabled={isLoading}>
                 <SelectTrigger id="type"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -380,7 +380,7 @@ export function InterviewForm({
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Meeting Link</CardTitle>
+          <CardTitle>Meeting link</CardTitle>
           <CardDescription>Add a video call link or auto-generate one.</CardDescription>
         </CardHeader>
 

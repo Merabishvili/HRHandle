@@ -239,7 +239,7 @@ export function VacancyForm({
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
+          <CardTitle>Basic information</CardTitle>
           <CardDescription>The main details about this vacancy.</CardDescription>
         </CardHeader>
 
@@ -332,7 +332,7 @@ export function VacancyForm({
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="employment_type">Employment Type</Label>
+              <Label htmlFor="employment_type">Employment type</Label>
               <Select
                 value={formData.employment_type || 'full_time'}
                 onValueChange={(value: string) =>
@@ -354,7 +354,7 @@ export function VacancyForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="openings_count">Openings Count</Label>
+              <Label htmlFor="openings_count">Openings count</Label>
               <Input
                 id="openings_count"
                 type="number"
@@ -371,7 +371,7 @@ export function VacancyForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="hiring_manager_name">Hiring Manager</Label>
+              <Label htmlFor="hiring_manager_name">Hiring manager</Label>
               <Input
                 id="hiring_manager_name"
                 placeholder="e.g. Nino Beridze"
@@ -407,7 +407,7 @@ export function VacancyForm({
             </div>
 
             <div id="field-end_date" className="space-y-2">
-              <Label>End Date</Label>
+              <Label>End date</Label>
               <DatePicker
                 value={formData.end_date ?? null}
                 onChange={(v) => setFormData({ ...formData, end_date: v })}
@@ -421,7 +421,7 @@ export function VacancyForm({
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="salary_min">Minimum Salary</Label>
+              <Label htmlFor="salary_min">Minimum salary</Label>
               <Input
                 id="salary_min"
                 type="number"
@@ -438,7 +438,7 @@ export function VacancyForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="salary_max">Maximum Salary</Label>
+              <Label htmlFor="salary_max">Maximum salary</Label>
               <Input
                 id="salary_max"
                 type="number"
@@ -480,7 +480,7 @@ export function VacancyForm({
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Vacancy Details</CardTitle>
+          <CardTitle>Vacancy details</CardTitle>
           <CardDescription>Shown on the public jobs page and included when sharing on LinkedIn.</CardDescription>
         </CardHeader>
 
@@ -596,7 +596,7 @@ export function VacancyForm({
       {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Additional Information</CardTitle>
+            <CardTitle>Additional information</CardTitle>
             <CardDescription>Custom fields defined for vacancies.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

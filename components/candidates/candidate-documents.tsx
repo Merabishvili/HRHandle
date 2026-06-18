@@ -121,7 +121,7 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="cv">CV / Resume</SelectItem>
-              <SelectItem value="cover_letter">Cover Letter</SelectItem>
+              <SelectItem value="cover_letter">Cover letter</SelectItem>
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>

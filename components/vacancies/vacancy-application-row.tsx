@@ -323,7 +323,7 @@ export function VacancyApplicationRow({
                 ))}
 
                 <div className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">
-                  <span className="text-sm font-medium">Overall Score</span>
+                  <span className="text-sm font-medium">Overall score</span>
                   {calculatedScore !== null ? (
                     <Badge variant="secondary" className="font-semibold">{calculatedScore}%</Badge>
                   ) : (

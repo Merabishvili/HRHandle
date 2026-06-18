@@ -332,7 +332,7 @@ export default async function CandidatesPage({
                   <TableRow>
                     <TableHead>Candidate</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Linked Vacancy</TableHead>
+                    <TableHead>Linked vacancy</TableHead>
                     {activeColumns.map((col) => (
                       <TableHead key={col}>{optColMap.get(col) ?? col}</TableHead>
                     ))}

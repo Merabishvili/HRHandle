@@ -62,7 +62,7 @@ export function ProfileForm({ profile, email }: ProfileFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="fullName">Full Name</Label>
+        <Label htmlFor="fullName">Full name</Label>
         <Input
           id="fullName"
           value={fullName}

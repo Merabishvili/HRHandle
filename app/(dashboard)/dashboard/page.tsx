@@ -320,7 +320,7 @@ export default async function DashboardPage() {
         <Card className="border-border">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Recent Candidates</CardTitle>
+              <CardTitle>Recent candidates</CardTitle>
               <CardDescription>Latest candidates added to the system</CardDescription>
             </div>
 
@@ -384,7 +384,7 @@ export default async function DashboardPage() {
         <Card className="border-border">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Recent Vacancies</CardTitle>
+              <CardTitle>Recent vacancies</CardTitle>
               <CardDescription>Your latest job postings</CardDescription>
             </div>
 
@@ -448,7 +448,7 @@ export default async function DashboardPage() {
         <Card className="border-border lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Upcoming Interviews</CardTitle>
+              <CardTitle>Upcoming interviews</CardTitle>
               <CardDescription>Scheduled interviews for the coming days</CardDescription>
             </div>
 

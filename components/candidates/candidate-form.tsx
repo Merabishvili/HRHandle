@@ -392,10 +392,10 @@ export function CandidateForm({
         </Card>
       )}
 
-      {/* Personal Information */}
+      {/* Personal information */}
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Personal Information</CardTitle>
+          <CardTitle>Personal information</CardTitle>
           <CardDescription>Basic candidate profile information.</CardDescription>
         </CardHeader>
 
@@ -478,7 +478,7 @@ export function CandidateForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="salary_expectation">Salary Expectation</Label>
+              <Label htmlFor="salary_expectation">Salary expectation</Label>
               <Input
                 id="salary_expectation"
                 placeholder="e.g. $80,000 – $100,000"
@@ -489,7 +489,7 @@ export function CandidateForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notice_period">Notice Period</Label>
+              <Label htmlFor="notice_period">Notice period</Label>
               <Input
                 id="notice_period"
                 placeholder="e.g. 1 month"
@@ -699,7 +699,7 @@ export function CandidateForm({
       {/* Recruitment Details */}
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Recruitment Details</CardTitle>
+          <CardTitle>Recruitment details</CardTitle>
           <CardDescription>Source and initial vacancy assignment.</CardDescription>
         </CardHeader>
 
@@ -729,7 +729,7 @@ export function CandidateForm({
 
             {!isEditing && (
               <div className="space-y-2">
-                <Label htmlFor="initial_vacancy_id">Initial Vacancy</Label>
+                <Label htmlFor="initial_vacancy_id">Initial vacancy</Label>
                 <SearchableSelect
                   id="initial_vacancy_id"
                   value={selectedVacancyId || 'none'}
@@ -848,7 +848,7 @@ export function CandidateForm({
       {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Additional Information</CardTitle>
+            <CardTitle>Additional information</CardTitle>
             <CardDescription>Custom fields defined for candidates.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

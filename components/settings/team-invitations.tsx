@@ -109,7 +109,7 @@ export function TeamInvitations({
 
       {/* Current team members */}
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">Team Members</h3>
+        <h3 className="text-sm font-medium text-foreground">Team members</h3>
         <ul className="divide-y divide-border rounded-lg border border-border">
           {teamMembers.map((member) => (
             <li key={member.id} className="flex items-center justify-between px-4 py-3">
@@ -185,7 +185,7 @@ export function TeamInvitations({
       {/* Pending invitations */}
       {invitations.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-foreground">Pending Invitations</h3>
+          <h3 className="text-sm font-medium text-foreground">Pending invitations</h3>
           <ul className="divide-y divide-border rounded-lg border border-border">
             {invitations.map((inv) => (
               <li key={inv.id} className="flex items-center justify-between px-4 py-3">

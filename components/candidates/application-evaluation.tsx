@@ -383,7 +383,7 @@ export function ApplicationEvaluation({
             ))}
 
             <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
-              <span className="text-sm font-medium">Overall Score</span>
+              <span className="text-sm font-medium">Overall score</span>
               {calculatedScore !== null ? (
                 <Badge variant="secondary" className="text-sm font-semibold">
                   {calculatedScore}%
