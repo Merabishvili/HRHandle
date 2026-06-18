@@ -76,27 +76,33 @@ export default async function PublicJobsPage({ params }: PageProps) {
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="mx-auto max-w-2xl space-y-6">
 
-        {/* Header */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm text-center">
-          {org.logo_url ? (
-            <img
-              src={org.logo_url}
-              alt={org.name}
-              className="mx-auto mb-4 h-14 w-14 rounded-lg object-contain border border-gray-100"
-            />
-          ) : (
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-xl font-bold text-gray-500">
-              {org.name[0]}
-            </div>
-          )}
-          <h1 className="text-2xl font-bold text-gray-900">{org.name}</h1>
-          <p className="mt-1 text-sm text-gray-500">Open positions</p>
+        {/* Header — 8px brand-blue bar at top, then logo / org name / role count
+            (Wave 3.2 spec — visual addition only, no logic change) */}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="h-2 bg-blue-600" aria-hidden />
+          <div className="p-8 text-center">
+            {org.logo_url ? (
+              <img
+                src={org.logo_url}
+                alt={org.name}
+                className="mx-auto mb-4 h-14 w-14 rounded-lg object-contain border border-gray-100"
+              />
+            ) : (
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-xl font-bold text-gray-500">
+                {org.name[0]}
+              </div>
+            )}
+            <h1 className="text-2xl font-bold text-gray-900">{org.name}</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Open positions · {vacancies.length} {vacancies.length === 1 ? 'role' : 'roles'}
+            </p>
+          </div>
         </div>
 
         {/* Vacancy list */}
         {vacancies.length === 0 ? (
           <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-gray-500">No open positions at the moment. Check back soon.</p>
+            <p className="text-gray-500">No open positions right now. Check back soon.</p>
           </div>
         ) : (
           <div className="space-y-3">

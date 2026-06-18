@@ -375,7 +375,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
         <button
           type="submit"
           disabled={isLoading || parseState === 'parsing' || !captchaToken}
-          className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+          className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>
@@ -383,7 +383,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
               Submitting…
             </>
           ) : (
-            'Apply Now'
+            'Apply now'
           )}
         </button>
 
