@@ -58,8 +58,8 @@ interface InterviewFormProps {
 }
 
 const interviewTypes: { value: InterviewType; label: string }[] = [
-  { value: 'video', label: 'Video Call' },
-  { value: 'phone', label: 'Phone Call' },
+  { value: 'video', label: 'Video call' },
+  { value: 'phone', label: 'Phone call' },
   { value: 'onsite', label: 'On-site' },
 ]
 

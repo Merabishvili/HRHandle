@@ -21,16 +21,16 @@ import type { RejectionReason } from '@/lib/actions/rejection-reasons'
 
 const TEMPLATE_META: Partial<Record<TemplateType, { label: string; description: string; variables: string[]; previewHeading?: string }>> = {
   application_received: {
-    label: 'Application Received',
+    label: 'Application received',
     description: 'Sent to a candidate after they apply via the public apply link.',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}'],
-    previewHeading: 'Thanks for Applying!',
+    previewHeading: 'Thanks for applying!',
   },
   interview_invitation: {
-    label: 'Interview Invitation',
+    label: 'Interview invitation',
     description: 'Sent to a candidate when an interview is scheduled with "Send email" checked.',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{interview_date}}', '{{interview_time}}', '{{meeting_link}}'],
-    previewHeading: 'Interview Invitation',
+    previewHeading: 'Interview invitation',
   },
   status_change_screening: {
     label: 'Status: Under review',
@@ -243,8 +243,8 @@ export function EmailTemplatesManager({ initialTemplates, initialRejectionTempla
   const [activeTab, setActiveTab] = useState<ActiveTab>('application_received')
 
   const tabs: { id: ActiveTab; label: string }[] = [
-    { id: 'application_received', label: 'Application Received' },
-    { id: 'interview_invitation', label: 'Interview Invitation' },
+    { id: 'application_received', label: 'Application received' },
+    { id: 'interview_invitation', label: 'Interview invitation' },
     { id: 'rejection', label: 'Rejection' },
     { id: 'status_change_screening', label: 'Status: Under review' },
     { id: 'status_change_interview', label: 'Status: Interview' },

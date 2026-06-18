@@ -33,7 +33,7 @@ interface CandidatesToolbarProps {
 const FIXED_COLUMNS = [
   { label: 'Candidate' },
   { label: 'Status' },
-  { label: 'Linked Vacancy' },
+  { label: 'Linked vacancy' },
 ]
 
 export function CandidatesToolbar({

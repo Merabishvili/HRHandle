@@ -41,7 +41,7 @@ import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions
 
 const DOCUMENT_TYPE_OPTIONS = [
   { value: 'cv', label: 'CV / Resume' },
-  { value: 'cover_letter', label: 'Cover Letter' },
+  { value: 'cover_letter', label: 'Cover letter' },
   { value: 'other', label: 'Other' },
 ]
 
