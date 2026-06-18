@@ -7,9 +7,61 @@ import { ApplicationSchema } from '@/lib/validations/application'
 import { writeAuditLog } from '@/lib/audit-log'
 import { buildCandidateDeleteAuditDetails } from '@/lib/candidate-delete-cascade'
 
+/**
+ * Org-scoped lookup for an existing candidate with the same email.
+ *
+ * Drives the duplicate-detection banner in the Wave 2.7 Add candidate
+ * wizard (Step 3 per Create Candidate Steps.dc.html). Case-insensitive
+ * match; trims whitespace. Returns null on empty/invalid input.
+ */
+export async function findCandidateByEmail(email: string): Promise<
+  ActionResult<{
+    candidateId: string
+    candidateName: string
+  } | null>
+> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const trimmed = email.trim().toLowerCase()
+  if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    return { success: true, data: null }
+  }
+
+  const { data, error } = await ctx.supabase
+    .from('candidates')
+    .select('id, first_name, last_name')
+    .eq('organization_id', ctx.orgId)
+    .ilike('email', trimmed)
+    .is('deleted_at', null)
+    .limit(1)
+    .maybeSingle()
+
+  if (error) return { success: false, error: 'Failed to check existing candidates' }
+  if (!data) return { success: true, data: null }
+
+  return {
+    success: true,
+    data: {
+      candidateId: data.id as string,
+      candidateName: `${data.first_name} ${data.last_name}`.trim() || 'Existing candidate',
+    },
+  }
+}
+
 export async function createCandidate(
   input: CandidateInput,
-  linkedVacancyId?: string | null
+  linkedVacancyId?: string | null,
+  /**
+   * Wave 2.7 — Starting stage override for the Add candidate wizard. When
+   * the recruiter sources a warm candidate, they can drop them straight
+   * into screening / interview etc. instead of the default `applied`.
+   * Passing a status id here makes the linked-vacancy application be
+   * inserted at that stage from the start, so the audit/webhook/auto-
+   * email machinery (which fires on transitions) doesn't spuriously
+   * record an "applied → screening" move that never happened.
+   */
+  startingStatusId?: string | null
 ): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -46,11 +98,26 @@ export async function createCandidate(
       .single()
 
     if (vacancyCheck) {
-      const { data: appliedStatus } = await ctx.supabase
-        .from('application_statuses')
-        .select('id')
-        .eq('code', 'applied')
-        .single()
+      // If the caller passed an explicit starting status, use it after
+      // verifying it belongs to the application_statuses table. Otherwise
+      // fall back to the historical default of `applied`.
+      let statusIdToUse: string | null = null
+      if (startingStatusId) {
+        const { data: stagedRow } = await ctx.supabase
+          .from('application_statuses')
+          .select('id')
+          .eq('id', startingStatusId)
+          .single()
+        statusIdToUse = stagedRow?.id ?? null
+      }
+      if (!statusIdToUse) {
+        const { data: appliedStatus } = await ctx.supabase
+          .from('application_statuses')
+          .select('id')
+          .eq('code', 'applied')
+          .single()
+        statusIdToUse = appliedStatus?.id ?? null
+      }
 
       const appParsed = ApplicationSchema.safeParse({
         candidate_id: data.id,
@@ -65,7 +132,7 @@ export async function createCandidate(
           ...appParsed.data,
           organization_id: ctx.orgId,
           created_by: ctx.userId,
-          status_id: appliedStatus?.id ?? null,
+          status_id: statusIdToUse,
           applied_at: new Date().toISOString(),
           // Candidate-facing status page token (G-016) — same as other insert paths.
           public_token: crypto.randomUUID().replace(/-/g, ''),

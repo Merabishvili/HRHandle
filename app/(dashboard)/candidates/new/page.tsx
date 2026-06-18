@@ -1,12 +1,17 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { CandidateForm } from '@/components/candidates/candidate-form'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
-import { getCandidateStatuses, getApplicationStatuses } from '@/lib/cache/lookups'
+import { CandidateCreateWizard } from '@/components/candidates/wizard/candidate-create-wizard'
+import { getApplicationStatuses } from '@/lib/cache/lookups'
 
+/**
+ * Wave 2.7 — wizard host for /candidates/new per Create Candidate
+ * Steps.dc.html. Server component fetches the data the wizard needs
+ * (open vacancies + non-terminal application stages for the starting-
+ * stage picker), and renders the client-side `CandidateCreateWizard`.
+ *
+ * The previous single-page form (`CandidateForm`) lives on at
+ * /candidates/[id]/edit until the edit flow is migrated.
+ */
 export default async function NewCandidatePage({
   searchParams,
 }: {
@@ -35,49 +40,34 @@ export default async function NewCandidatePage({
 
   const organizationId = profile.organization_id
 
-  const [
-    { data: vacancies },
-    candidateStatusesAll,
-    applicationStatusesAll,
-    customFieldGroups,
-  ] = await Promise.all([
+  // Pull open vacancies (so the wizard's "Initial vacancy" picker shows
+  // only roles a recruiter can sensibly drop a candidate into) plus the
+  // full application-status list. We filter the stages to non-terminal
+  // codes server-side so the wizard never has to deal with hired /
+  // rejected / withdrawn — those aren't valid starting stages.
+  const [{ data: vacancies }, applicationStatusesAll] = await Promise.all([
     supabase
       .from('vacancies')
-      .select('id, title')
+      .select('id, title, application_statuses:status_id(code)')
       .eq('organization_id', organizationId)
+      .is('deleted_at', null)
       .order('title'),
-
-    getCandidateStatuses(),
     getApplicationStatuses(),
-    getCustomFieldSchema('candidate'),
   ])
 
-  const candidateStatuses = (candidateStatusesAll || []).filter((s) => s.is_active)
-  const applicationStatuses = (applicationStatusesAll || []).filter((s) => s.is_active)
-
-  const defaultApplicationStatus = applicationStatuses.find((s) => s.code === 'new') || null
+  // Non-terminal stages for the starting-stage picker. The order is
+  // already enforced by sort_order in the lookup cache.
+  const TERMINAL = new Set(['hired', 'rejected', 'withdrawn'])
+  const startingStages = (applicationStatusesAll || [])
+    .filter((s) => s.is_active && !TERMINAL.has(s.code))
+    .map((s) => ({ id: s.id, code: s.code, name: s.name }))
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/candidates" aria-label="Back to candidates">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Add candidate</h1>
-          <p className="text-muted-foreground">Add a new candidate to your pipeline.</p>
-        </div>
-      </div>
-
-      <CandidateForm
-        vacancies={vacancies || []}
-        defaultVacancyId={defaultVacancyId}
-        candidateStatuses={candidateStatuses || []}
-        defaultApplicationStatusId={defaultApplicationStatus?.id || null}
-        customFieldGroups={customFieldGroups}
+    <div className="mx-auto max-w-5xl">
+      <CandidateCreateWizard
+        vacancies={(vacancies || []).map((v) => ({ id: v.id, title: v.title }))}
+        defaultVacancyId={defaultVacancyId ?? null}
+        startingStages={startingStages}
       />
     </div>
   )
