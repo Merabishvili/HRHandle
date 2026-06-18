@@ -1,39 +1,38 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Upload, BarChart3, Briefcase, Users, Sparkles, ArrowRight } from 'lucide-react'
+import { Plus, Upload, BarChart3, Briefcase, Users, Sparkles } from 'lucide-react'
+
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { getApplicationStatuses, getVacancyStatuses } from '@/lib/cache/lookups'
-import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import type { ApplicationStatus } from '@/lib/types/application'
-import { cn } from '@/lib/utils'
+import { CrossVacancyBoard, type CrossVacancyApplication } from '@/components/pipeline/cross-vacancy-board'
+import type { RoleOption } from '@/components/pipeline/role-filter-dropdown'
 
 /**
- * Top-level /pipeline route — Wave 2.1 scaffolding.
+ * Top-level `/pipeline` route — Wave 2.1.
  *
- * The full global Pipeline (cross-vacancy kanban + role chips + Review mode)
- * is Wave 2.1's big-ticket item and is not yet built. Until it lands, this
- * route serves three scenarios:
+ * Two scenarios:
  *
- *   1. Recruiter has zero non-archived vacancies → render the welcome card
- *      from `redesign/Pipeline Empty State.dc.html` (locked per Q-S01-e).
- *      One primary CTA ("Create your first vacancy"), one secondary
- *      ("Import candidates" — links to the CSV import wizard), plus a
- *      3-step orientation strip.
+ *   1. Org has zero non-archived vacancies → render the welcome card from
+ *      `redesign/Pipeline Empty State.dc.html` (locked per Q-S01-e). One
+ *      primary CTA ("Create your first vacancy"), one secondary ("Import
+ *      candidates"), plus a 3-step orientation strip.
  *
- *   2. Recruiter has at least one vacancy → render a Pipeline OVERVIEW —
- *      a vacancy-keyed table where each row shows the title + a compact
- *      per-stage count strip + a "View pipeline" link to the existing
- *      `/vacancies/[id]/pipeline` board. This is a proper destination
- *      that explains the IA ("here are your role pipelines") instead of
- *      silently redirecting away (the previous behaviour created
- *      breadcrumb dissonance — the user clicked "Pipeline" in the
- *      sidebar but landed on a page that said "HRHandle › Vacancies").
+ *   2. Org has at least one vacancy → render the cross-vacancy kanban
+ *      (`CrossVacancyBoard`) with role filter dropdown, terminal-stage
+ *      rail, and Review mode entry. Cards span every active vacancy
+ *      grouped by global application status.
  *
- *   3. The real cross-vacancy kanban (Wave 2.1 full) replaces this
- *      overview when it's built — same route, same nav entry, just a
- *      richer rendering inside.
+ * The board itself is a client component because of DnD + Review-mode
+ * keyboard state; this server component is the data-fetch boundary.
  */
+const TERMINAL_CODES: ReadonlySet<ApplicationStatus['code']> = new Set([
+  'hired',
+  'rejected',
+  'withdrawn',
+])
+
 export default async function PipelinePage() {
   const supabase = await createClient()
 
@@ -52,30 +51,36 @@ export default async function PipelinePage() {
 
   const orgId = profile.organization_id
 
-  const [vacancyStatusesRaw, appStatusesRaw, { data: vacanciesRaw }] = await Promise.all([
+  // Only "open" vacancies belong on the cross-vacancy board — on-hold /
+  // closed / draft roles aren't where the working surface lives. This
+  // matches what the per-vacancy `/vacancies/[id]/pipeline` route renders.
+  const [vacancyStatusesRaw, appStatusesRaw] = await Promise.all([
     getVacancyStatuses(),
     getApplicationStatuses(),
-    supabase
-      .from('vacancies')
-      .select('id, title, department, location, status_id, application_form_token')
-      .eq('organization_id', orgId)
-      .is('archived_at', null)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
   ])
 
-  const vacancyStatuses = (vacancyStatusesRaw || []) as { id: string; code: string; name: string }[]
-  const appStatuses = (appStatusesRaw || []) as ApplicationStatus[]
+  const vacancyStatuses = (vacancyStatusesRaw || []) as { id: string; code: string }[]
+  const openVacancyStatusId = vacancyStatuses.find((s) => s.code === 'open')?.id ?? null
 
-  interface VacancyRow {
+  let vacanciesQuery = supabase
+    .from('vacancies')
+    .select('id, title, department, location')
+    .eq('organization_id', orgId)
+    .is('archived_at', null)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+
+  if (openVacancyStatusId) {
+    vacanciesQuery = vacanciesQuery.eq('status_id', openVacancyStatusId)
+  }
+
+  const { data: vacanciesRaw } = await vacanciesQuery
+  const vacancies = (vacanciesRaw ?? []) as {
     id: string
     title: string
     department: string | null
     location: string | null
-    status_id: string | null
-    application_form_token: string | null
-  }
-  const vacancies = (vacanciesRaw ?? []) as VacancyRow[]
+  }[]
 
   // 0 vacancies — render the welcome card per Q-S01-e
   if (vacancies.length === 0) {
@@ -133,47 +138,107 @@ export default async function PipelinePage() {
     )
   }
 
-  // 1+ vacancies — fetch live application counts grouped by (vacancy, status)
+  // 1+ vacancies — fetch the kanban data set.
   const vacancyIds = vacancies.map((v) => v.id)
-  const { data: applicationsRaw } = await supabase
-    .from('applications')
-    .select('vacancy_id, status_id')
-    .eq('organization_id', orgId)
-    .in('vacancy_id', vacancyIds)
-    .is('deleted_at', null)
+  const appStatuses = (appStatusesRaw || []).filter((s) => s.is_active) as ApplicationStatus[]
+  const sortedStatuses = [...appStatuses].sort((a, b) => a.sort_order - b.sort_order)
 
-  const apps = (applicationsRaw ?? []) as { vacancy_id: string; status_id: string | null }[]
+  const [
+    { data: applicationsRaw },
+    { data: rejectionReasonsRaw },
+    { data: rejectionTemplatesRaw },
+  ] = await Promise.all([
+    supabase
+      .from('applications')
+      .select('id, candidate_id, vacancy_id, status_id, applied_at, last_status_changed_at')
+      .eq('organization_id', orgId)
+      .in('vacancy_id', vacancyIds)
+      .is('deleted_at', null)
+      .order('applied_at', { ascending: false }),
 
-  // counts[vacancyId][statusId] = N
-  const counts = new Map<string, Map<string, number>>()
-  for (const v of vacancies) counts.set(v.id, new Map())
-  for (const a of apps) {
-    if (!a.status_id) continue
-    const inner = counts.get(a.vacancy_id)
-    if (!inner) continue
-    inner.set(a.status_id, (inner.get(a.status_id) ?? 0) + 1)
+    supabase
+      .from('rejection_reasons')
+      .select('id, name')
+      .eq('organization_id', orgId)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+
+    supabase
+      .from('rejection_templates')
+      .select('id, name, subject, body, reason_id')
+      .eq('organization_id', orgId)
+      .order('sort_order', { ascending: true }),
+  ])
+
+  interface AppRow {
+    id: string
+    candidate_id: string
+    vacancy_id: string
+    status_id: string | null
+    applied_at: string
+    last_status_changed_at: string | null
+  }
+  const appRows = (applicationsRaw ?? []) as AppRow[]
+
+  // Fetch candidates separately (the nested join is unreliable for null
+  // and deleted candidate cases).
+  const candidateIds = [...new Set(appRows.map((a) => a.candidate_id))]
+  const candidateMap = new Map<
+    string,
+    { id: string; first_name: string; last_name: string; current_position: string | null; current_company: string | null }
+  >()
+  if (candidateIds.length > 0) {
+    const { data: candidatesRaw } = await supabase
+      .from('candidates')
+      .select('id, first_name, last_name, current_position, current_company')
+      .in('id', candidateIds)
+      .is('deleted_at', null)
+    for (const c of candidatesRaw ?? []) candidateMap.set(c.id, c)
   }
 
-  // Non-terminal stages drive the inline funnel. Terminal stages (rejected /
-  // withdrawn / hired) sum into a small tail count.
-  const TERMINAL_CODES = new Set(['rejected', 'withdrawn', 'hired'])
-  const funnelStages = appStatuses
-    .filter((s) => s.is_active && !TERMINAL_CODES.has(s.code))
-    .sort((a, b) => a.sort_order - b.sort_order)
-  const terminalIds = new Set(
-    appStatuses.filter((s) => TERMINAL_CODES.has(s.code)).map((s) => s.id),
-  )
-  const hiredId = appStatuses.find((s) => s.code === 'hired')?.id ?? null
+  const vacancyMap = new Map(vacancies.map((v) => [v.id, v]))
+  const firstStatusId = sortedStatuses[0]?.id ?? null
 
-  const vacancyStatusMap = new Map(vacancyStatuses.map((s) => [s.id, s]))
+  const applications: CrossVacancyApplication[] = appRows
+    .map((a) => {
+      const candidate = candidateMap.get(a.candidate_id)
+      const vacancy = vacancyMap.get(a.vacancy_id)
+      if (!candidate || !vacancy) return null
+      return {
+        id: a.id,
+        candidate_id: a.candidate_id,
+        status_id: a.status_id ?? firstStatusId,
+        first_name: candidate.first_name,
+        last_name: candidate.last_name,
+        current_position: candidate.current_position,
+        current_company: candidate.current_company,
+        last_status_changed_at: a.last_status_changed_at,
+        applied_at: a.applied_at,
+        vacancy_id: a.vacancy_id,
+        vacancy_title: vacancy.title,
+      } satisfies CrossVacancyApplication
+    })
+    .filter((a): a is CrossVacancyApplication => a !== null)
+
+  // Active-count per vacancy for the role filter dropdown — "active" =
+  // non-terminal applications. Recruiter sees which roles are alive.
+  const roleOptions: RoleOption[] = vacancies.map((v) => {
+    const activeCount = applications.filter((a) => {
+      if (a.vacancy_id !== v.id) return false
+      const status = sortedStatuses.find((s) => s.id === a.status_id)
+      return !!status && !TERMINAL_CODES.has(status.code)
+    }).length
+    return { id: v.id, title: v.title, activeCount }
+  })
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Pipeline</h1>
           <p className="text-muted-foreground">
-            Every active role and where its candidates sit. Open a row for the full board.
+            {vacancies.length} active {vacancies.length === 1 ? 'role' : 'roles'} ·{' '}
+            {applications.length} candidate{applications.length === 1 ? '' : 's'}
           </p>
         </div>
         <Button asChild>
@@ -184,92 +249,13 @@ export default async function PipelinePage() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="hidden grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-border px-5 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
-          <span>Role</span>
-          <span>Stage counts</span>
-          <span className="sr-only">Open</span>
-        </div>
-        <ul className="divide-y divide-border">
-          {vacancies.map((v) => {
-            const inner = counts.get(v.id) ?? new Map()
-            const total = Array.from(inner.values()).reduce((s, n) => s + n, 0)
-            const hiredCount = hiredId ? inner.get(hiredId) ?? 0 : 0
-            const terminalCount = Array.from(inner.entries())
-              .filter(([id]) => terminalIds.has(id))
-              .reduce((s, [, n]) => s + n, 0)
-            const activeCount = total - terminalCount
-            const status = v.status_id ? vacancyStatusMap.get(v.status_id) : null
-
-            return (
-              <li
-                key={v.id}
-                className="grid grid-cols-1 items-center gap-3 px-5 py-4 sm:grid-cols-[1fr_auto_auto] sm:gap-4"
-              >
-                <div className="min-w-0">
-                  <Link
-                    href={`/vacancies/${v.id}/pipeline`}
-                    className="text-[15px] font-semibold text-foreground hover:underline"
-                  >
-                    {v.title}
-                  </Link>
-                  <div className="mt-0.5 text-xs text-muted-foreground">
-                    {/* Vacancy status is suppressed when it's the default 'open' —
-                        every row in this list is non-archived, so labeling them
-                        all "Open" is noise that collides with the "Open" button. */}
-                    {(!status || status.code !== 'open') && (
-                      <span>{status?.name ?? 'Draft'} · </span>
-                    )}
-                    {v.department && <>{v.department} · </>}
-                    {v.location && <>{v.location} · </>}
-                    {activeCount} active
-                    {hiredCount > 0 && <> · {hiredCount} hired</>}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {funnelStages.map((s) => {
-                    const c = inner.get(s.id) ?? 0
-                    return (
-                      <span
-                        key={s.id}
-                        className={cn(
-                          'rounded-md px-2 py-0.5 text-xs font-medium tabular-nums',
-                          c > 0 ? APPLICATION_STATUS_COLORS[s.code] : 'bg-muted text-muted-foreground/60',
-                        )}
-                      >
-                        {s.name} {c}
-                      </span>
-                    )
-                  })}
-                  {hiredCount > 0 && (
-                    <span
-                      className={cn(
-                        'rounded-md px-2 py-0.5 text-xs font-medium tabular-nums',
-                        APPLICATION_STATUS_COLORS['hired'],
-                      )}
-                    >
-                      Hired {hiredCount}
-                    </span>
-                  )}
-                </div>
-
-                <Button asChild variant="outline" size="sm" className="gap-1.5">
-                  <Link href={`/vacancies/${v.id}/pipeline`}>
-                    Open
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        A cross-vacancy kanban view is on the roadmap. Until then, open any
-        role above to work its pipeline.
-      </p>
+      <CrossVacancyBoard
+        statuses={sortedStatuses}
+        roles={roleOptions}
+        initialApplications={applications}
+        rejectionReasons={rejectionReasonsRaw ?? []}
+        rejectionTemplates={rejectionTemplatesRaw ?? []}
+      />
     </div>
   )
 }

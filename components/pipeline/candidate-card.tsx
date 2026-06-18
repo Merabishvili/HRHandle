@@ -16,6 +16,11 @@ interface CandidateCardProps {
   currentCompany: string | null
   lastStatusChangedAt: string | null
   appliedAt: string
+  /** Cross-vacancy boards (Wave 2.1) render the role title as a small pill at
+   * the top of the card so the recruiter can tell which vacancy a candidate
+   * belongs to at a glance. The per-vacancy board doesn't need it (all cards
+   * are for the same role) and just omits the prop. */
+  vacancyTitle?: string | null
 }
 
 export function CandidateCard({
@@ -27,6 +32,7 @@ export function CandidateCard({
   currentCompany,
   lastStatusChangedAt,
   appliedAt,
+  vacancyTitle,
 }: CandidateCardProps) {
   const {
     attributes,
@@ -61,6 +67,13 @@ export function CandidateCard({
             </button>
 
             <div className="flex-1 min-w-0">
+              {vacancyTitle && (
+                <p className="mb-1.5 inline-flex max-w-full items-center gap-1 truncate rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <Briefcase className="h-2.5 w-2.5 shrink-0" aria-hidden />
+                  <span className="truncate">{vacancyTitle}</span>
+                </p>
+              )}
+
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                   {initials}

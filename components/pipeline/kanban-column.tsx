@@ -16,6 +16,10 @@ interface PipelineApplication {
   current_company: string | null
   last_status_changed_at: string | null
   applied_at: string
+  /** Optional — only set on the cross-vacancy board (Wave 2.1) so the card
+   * can show which role the candidate is applying for. The per-vacancy
+   * board omits it. */
+  vacancy_title?: string | null
 }
 
 interface KanbanColumnProps {
@@ -67,6 +71,7 @@ export function KanbanColumn({ status, applications, isOver }: KanbanColumnProps
               currentCompany={app.current_company}
               lastStatusChangedAt={app.last_status_changed_at}
               appliedAt={app.applied_at}
+              vacancyTitle={app.vacancy_title}
             />
           ))}
         </SortableContext>
