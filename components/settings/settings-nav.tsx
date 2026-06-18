@@ -97,7 +97,10 @@ export function SettingsNav({ role }: SettingsNavProps) {
   })).filter((section) => section.items.length > 0)
 
   return (
-    <nav className="w-52 shrink-0">
+    // Sidebar chrome per Settings.dc.html — slight bg tint + right border so
+    // the nav reads as a discrete left rail, and width 232px to match the
+    // design's left-rail spec. Tier 2 of fidelity-audit.md.
+    <nav className="w-[232px] shrink-0 self-stretch border-r border-[oklch(0.92_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-3.5">
       <ul className="space-y-5">
         {visibleSections.map((section) => (
           <li key={section.label}>

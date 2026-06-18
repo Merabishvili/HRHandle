@@ -419,6 +419,11 @@ export async function getOfferByToken(token: string): Promise<
     start_date: string | null
     expiry_date: string | null
     sent_at: string | null
+    /** When the candidate accepted / declined (Public Offer.dc.html §2 — used
+     * by the accepted-state footer to render "Accepted {date}"). Null while
+     * the offer is still in `sent` or for terminal states without a candidate
+     * response (`expired`, `withdrawn`). */
+    responded_at: string | null
     candidate_first_name: string
     organization_name: string
   }>
@@ -433,7 +438,7 @@ export async function getOfferByToken(token: string): Promise<
     .select(
       `id, status, role_title, body, recruiter_message,
        compensation_amount, compensation_currency, compensation_period,
-       start_date, expiry_date, sent_at, deleted_at, application_id,
+       start_date, expiry_date, sent_at, responded_at, deleted_at, application_id,
        applications ( candidate_id, deleted_at, vacancies ( deleted_at ) ),
        organizations ( name, deleted_at )`,
     )
@@ -504,6 +509,7 @@ export async function getOfferByToken(token: string): Promise<
       start_date: (data.start_date as string | null) ?? null,
       expiry_date: (data.expiry_date as string | null) ?? null,
       sent_at: (data.sent_at as string | null) ?? null,
+      responded_at: (data.responded_at as string | null) ?? null,
       candidate_first_name: candidate.first_name as string,
       organization_name: orgJoin.name as string,
     },

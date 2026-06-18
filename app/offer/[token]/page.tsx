@@ -51,7 +51,13 @@ export default async function OfferPage({ params }: PageProps) {
         </h1>
       </header>
 
-      <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        {/* 6px brand-blue bar at the top of the offer card per
+            Public Offer.dc.html — light brand polish on the candidate's
+            decision moment. Tier 2 of fidelity-audit.md. */}
+        <div className="h-1.5 bg-[oklch(0.55_0.18_250)]" aria-hidden />
+
+        <div className="space-y-6 p-6 sm:p-8">
         {/* Summary tile */}
         <dl className="space-y-3 text-sm">
           <Row icon={Briefcase} label="Role">
@@ -72,30 +78,48 @@ export default async function OfferPage({ params }: PageProps) {
               </span>
             </Row>
           )}
-          {offer.expiry_date && isRespondable && (
-            <Row icon={Clock} label="Respond by">
-              <span className="text-gray-700">
-                {format(new Date(offer.expiry_date), 'MMMM d, yyyy')}
-              </span>
-              {(() => {
-                const countdown = offerCountdown(offer.expiry_date)
-                if (!countdown) return null
-                return (
-                  <span
+          {offer.expiry_date && isRespondable && (() => {
+            const countdown = offerCountdown(offer.expiry_date)
+            // Per Public Offer.dc.html — when the countdown reads
+            // `soon` (2–7 days) or `urgent` (≤1 day) the whole Respond by
+            // row goes amber: icon, value, the inline countdown text — all
+            // one colour family. Anything further out stays neutral so it
+            // doesn't false-alarm. Tier 2 of fidelity-audit.md.
+            const isAmber =
+              countdown?.urgency === 'soon' || countdown?.urgency === 'urgent'
+            const dateLabel = format(new Date(offer.expiry_date), 'MMMM d, yyyy')
+            return (
+              <div className="flex items-start gap-3">
+                <Clock
+                  className={cn(
+                    'mt-0.5 h-4 w-4 shrink-0',
+                    isAmber ? 'text-[oklch(0.55_0.12_70)]' : 'text-gray-400',
+                  )}
+                  aria-hidden
+                />
+                <div className="flex-1">
+                  <dt className="sr-only">Respond by</dt>
+                  <dd
                     className={cn(
-                      'ml-2 inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium',
-                      countdown.urgency === 'urgent' && 'bg-red-50 text-red-700',
-                      countdown.urgency === 'soon' && 'bg-amber-50 text-amber-800',
-                      countdown.urgency === 'normal' && 'bg-gray-100 text-gray-700',
+                      'font-semibold',
+                      isAmber ? 'text-[oklch(0.45_0.12_60)]' : 'text-gray-700',
                     )}
-                    aria-label={`${countdown.label} to respond`}
+                    aria-label={
+                      countdown ? `Respond by ${dateLabel} — ${countdown.label}` : undefined
+                    }
                   >
-                    {countdown.label}
-                  </span>
-                )
-              })()}
-            </Row>
-          )}
+                    {dateLabel}
+                    {countdown && (
+                      <>
+                        <span className="mx-1.5 opacity-60">·</span>
+                        {countdown.label}
+                      </>
+                    )}
+                  </dd>
+                </div>
+              </div>
+            )
+          })()}
         </dl>
 
         <hr className="border-gray-200" />
@@ -127,7 +151,12 @@ export default async function OfferPage({ params }: PageProps) {
         <hr className="border-gray-200" />
 
         {/* Status + action area */}
-        <StatusArea status={offer.status} token={token} />
+        <StatusArea
+          status={offer.status}
+          token={token}
+          respondedAt={offer.responded_at ?? null}
+        />
+        </div>
       </section>
 
       <footer className="mt-6 space-y-1 text-center text-xs text-gray-500">
@@ -163,7 +192,15 @@ function Row({
   )
 }
 
-function StatusArea({ status, token }: { status: string; token: string }) {
+function StatusArea({
+  status,
+  token,
+  respondedAt,
+}: {
+  status: string
+  token: string
+  respondedAt: string | null
+}) {
   if (status === 'sent') {
     return (
       <div className="space-y-3">
@@ -178,10 +215,20 @@ function StatusArea({ status, token }: { status: string; token: string }) {
   if (status === 'accepted') {
     return (
       <div className="rounded-xl bg-emerald-50 p-4">
-        <p className="text-sm font-semibold text-emerald-900">You accepted this offer.</p>
+        {/* "🎉" + "Accepted {date}" footer per Public Offer.dc.html §2 —
+            warm the acceptance state slightly without losing the existing
+            green-tile pattern. Tier 2 of fidelity-audit.md. */}
+        <p className="text-sm font-semibold text-emerald-900">
+          You accepted this offer <span aria-hidden>🎉</span>
+        </p>
         <p className="mt-1 text-sm text-emerald-800">
           The recruiter has been notified and will be in touch with the next steps.
         </p>
+        {respondedAt && (
+          <p className="mt-3 text-xs text-emerald-700/80">
+            Accepted {format(new Date(respondedAt), 'MMMM d, yyyy')}
+          </p>
+        )}
       </div>
     )
   }

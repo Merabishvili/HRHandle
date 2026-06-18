@@ -184,7 +184,10 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            {/* "Go back" per Public Offer.dc.html — softer copy than the
+                default "Cancel", makes the decision moment less stark on a
+                destructive irreversible action. Tier 2 of fidelity-audit.md. */}
+            <AlertDialogCancel disabled={isPending}>Go back</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeclineConfirm}
               disabled={isPending}

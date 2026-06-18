@@ -384,12 +384,14 @@ All four 🔴 brand-colour fixes landed in a single commit — see [Changelog](#
 3. ~~Wave 1.2 Settings active-nav colour — change `bg-accent` (green) → pale brand-blue `oklch(0.93 0.05 250)`.~~ ✅
 4. ~~Wave 3.2 logo-placeholder colours on `/jobs/[slug]` + apply-page job-header card — change `bg-gray-100` → brand-blue tint + text.~~ ✅
 
-### Tier 2 — same surface, easy follow-on (🔴 / 🟡 visible but smaller)
+### Tier 2 — ✅ shipped 2026-06-18
 
-5. **Wave 3.3 6px brand bar** at top of the offer card — single `<div>`, ~5 minutes.
-6. **Wave 3.3 inline countdown layout** in the "Respond by" row — currently a separate pill chip after the date; design wants the date + countdown rendered inline in amber when countdown is `soon` / `urgent`.
-7. **Wave 3.3 confirm-decline "Cancel" → "Go back"** + the "🎉" emoji on the accepted state title + the "Accepted {date}" footer.
-8. **Wave 1.2 sidebar chrome** — add the subtle `oklch(0.985 0.002 247)` background tint + right border separator.
+All four 🟡 follow-on fixes landed in a single commit — see [Changelog](#changelog).
+
+5. ~~Wave 3.3 6px brand bar at top of the offer card.~~ ✅
+6. ~~Wave 3.3 inline countdown layout in the "Respond by" row (amber when soon / urgent).~~ ✅
+7. ~~Wave 3.3 confirm-decline "Cancel" → "Go back" + "🎉" emoji on accepted state + "Accepted {date}" footer.~~ ✅
+8. ~~Wave 1.2 sidebar chrome — bg tint + right border separator + width 232px.~~ ✅
 
 ### Tier 3 — moderate work, real polish wins (🟡)
 
@@ -425,6 +427,15 @@ the fixed row, move it to the changelog at the bottom (when there is one).
 ---
 
 ## Changelog
+
+### 2026-06-18 · Tier 2 — 🟡 same-surface follow-ons
+
+- **Wave 3.3** [`app/offer/[token]/page.tsx`](../../app/offer/[token]/page.tsx) — Added 6px brand-blue bar at the top of the offer card (`h-1.5 bg-[oklch(0.55_0.18_250)]` inside `overflow-hidden rounded-2xl`). Required wrapping the content in an inner div to keep the bar flush with the rounded corners.
+- **Wave 3.3** [`app/offer/[token]/page.tsx`](../../app/offer/[token]/page.tsx) — Respond-by row now reads amber inline when countdown urgency is `soon` (2–7d) or `urgent` (≤1d): clock icon, label, and value all flip to the same amber family (`oklch(0.55 0.12 70)` / `oklch(0.45 0.12 60)`). Dropped the separate pill-chip presentation; the countdown reads inline as "{date} · 5 days left".
+- **Wave 3.3** [`components/offers/offer-respond-form.tsx`](../../components/offers/offer-respond-form.tsx) — Decline-confirm modal Cancel copy: "Cancel" → "Go back".
+- **Wave 3.3** [`app/offer/[token]/page.tsx`](../../app/offer/[token]/page.tsx) — Accepted state: title now ends with `🎉` (per design), added "Accepted {date}" footer when `responded_at` is known.
+- **Wave 3.3** [`lib/actions/offers.ts`](../../lib/actions/offers.ts) — Threaded `responded_at` through `getOfferByToken` so the accepted-state footer has the date to render. Type widened + SELECT updated + return object includes it.
+- **Wave 1.2** [`components/settings/settings-nav.tsx`](../../components/settings/settings-nav.tsx) — Sidebar chrome: added `bg-[oklch(0.985_0.002_247)]` tint + `border-r border-[oklch(0.92_0.01_250)]`, widened from `w-52` (208px) to `w-[232px]`, padding `px-3 py-3.5`.
 
 ### 2026-06-18 · Tier 1 brand-colour fixes shipped
 
