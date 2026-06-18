@@ -258,21 +258,21 @@ export default async function DashboardPage() {
 
   const stats = [
     {
-      title: 'Total Vacancies',
+      title: 'Total vacancies',
       value: totalVacancies || 0,
       icon: Briefcase,
       change: `${activeVacancies} open`,
       href: '/vacancies',
     },
     {
-      title: 'Total Candidates',
+      title: 'Total candidates',
       value: totalCandidates || 0,
       icon: Users,
       change: `${activeCandidates} active`,
       href: '/candidates',
     },
     {
-      title: 'Active Candidates',
+      title: 'Active candidates',
       value: activeApplications || 0,
       icon: Calendar,
       change: 'Across all vacancies',
@@ -293,7 +293,7 @@ export default async function DashboardPage() {
         <Button asChild>
           <Link href="/vacancies/new">
             <Plus className="mr-2 h-4 w-4" />
-            New Vacancy
+            New vacancy
           </Link>
         </Button>
       </div>
