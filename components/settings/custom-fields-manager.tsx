@@ -37,8 +37,8 @@ interface Props {
 }
 
 const FIELD_TYPE_LABELS: Record<FieldType, string> = {
-  text: 'Short Text (100 chars)',
-  long_text: 'Long Text (5000 chars)',
+  text: 'Short text (100 chars)',
+  long_text: 'Long text (5000 chars)',
   date: 'Date',
   number: 'Number',
   dropdown: 'Dropdown',
@@ -328,7 +328,7 @@ function EntitySection({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium">{field.name}</span>
-                          <Badge variant="secondary" className="text-xs capitalize">
+                          <Badge variant="secondary" className="text-xs">
                             {FIELD_TYPE_LABELS[field.field_type as FieldType]}
                           </Badge>
                           {field.is_required && (

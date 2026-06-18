@@ -218,7 +218,7 @@ export default async function PipelinePage() {
                         every row in this list is non-archived, so labeling them
                         all "Open" is noise that collides with the "Open" button. */}
                     {(!status || status.code !== 'open') && (
-                      <span className="capitalize">{status?.name ?? 'Draft'} · </span>
+                      <span>{status?.name ?? 'Draft'} · </span>
                     )}
                     {v.department && <>{v.department} · </>}
                     {v.location && <>{v.location} · </>}

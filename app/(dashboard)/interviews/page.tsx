@@ -51,11 +51,11 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 function getDisplayStatus(interview: InterviewRow): string {
-  if (interview.status === 'cancelled') return 'cancelled'
-  if (interview.status === 'no_show') return 'no show'
-  if (interview.status === 'completed') return 'completed'
+  if (interview.status === 'cancelled') return 'Cancelled'
+  if (interview.status === 'no_show') return 'No show'
+  if (interview.status === 'completed') return 'Completed'
   // status === 'scheduled' — derive upcoming vs past
-  return isPast(new Date(interview.scheduled_at)) ? 'past' : 'upcoming'
+  return isPast(new Date(interview.scheduled_at)) ? 'Past' : 'Upcoming'
 }
 
 function getDisplayStatusKey(interview: InterviewRow): string {
@@ -244,7 +244,7 @@ export default async function InterviewsPage({
                   <div className="flex flex-col items-end gap-1.5">
                     <Badge
                       variant="secondary"
-                      className={`capitalize text-xs ${STATUS_COLORS[displayStatusKey] ?? ''}`}
+                      className={`text-xs ${STATUS_COLORS[displayStatusKey] ?? ''}`}
                     >
                       {displayStatusLabel}
                     </Badge>

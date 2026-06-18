@@ -141,8 +141,11 @@ export function DashboardSidebar({
               subscription.status !== 'active' && (
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-xs text-sidebar-foreground/60">Status</span>
-                  <span className="text-xs font-medium capitalize text-sidebar-foreground">
-                    {subscription.status.replace('_', ' ')}
+                  <span className="text-xs font-medium text-sidebar-foreground">
+                    {(() => {
+                      const s = subscription.status.replace('_', ' ')
+                      return s.charAt(0).toUpperCase() + s.slice(1)
+                    })()}
                   </span>
                 </div>
               )}

@@ -191,8 +191,8 @@ export function TeamInvitations({
               <li key={inv.id} className="flex items-center justify-between px-4 py-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">{inv.email}</p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {inv.role} · expires{' '}
+                  <p className="text-xs text-muted-foreground">
+                    <span className="capitalize">{inv.role}</span> · expires{' '}
                     {formatDistanceToNow(new Date(inv.expires_at), { addSuffix: true })}
                   </p>
                 </div>
