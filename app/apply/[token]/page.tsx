@@ -121,7 +121,9 @@ export default async function ApplyPage({ params }: PageProps) {
                 className="h-12 w-12 rounded-lg object-contain border border-gray-100"
               />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-lg font-bold text-gray-500">
+              // Pale brand-blue tint per Public Pages.dc.html — job header
+              // card on the apply page. Tier 1 of fidelity-audit.md.
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[oklch(0.93_0.05_250)] text-lg font-bold text-[oklch(0.42_0.16_250)]">
                 {org?.name?.[0] || '?'}
               </div>
             )}

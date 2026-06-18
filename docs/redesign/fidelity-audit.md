@@ -375,12 +375,14 @@ needs a forward Wave build, not a retroactive patch.
 Ordered by **visible candidate impact** × **fix-effort ratio** — what
 will move the needle most per hour of work.
 
-### Tier 1 — fix immediately (🔴 wrong-colour on brand moments)
+### Tier 1 — ✅ shipped 2026-06-18
 
-1. **Wave 3.3 Accept-offer button colour** — change `bg-emerald-600` → brand-blue. ~10 minutes. Highest-stakes single fix in the audit: candidate's "I'm taking the job" moment currently renders in the wrong brand colour.
-2. **Wave 3.3 Accept-confirm dialog button colour** — same change in the modal action.
-3. **Wave 1.2 Settings active-nav colour** — change `bg-accent` (green) → pale brand-blue `oklch(0.93 0.05 250)` per design. Affects every signed-in user navigating settings. ~15 minutes.
-4. **Wave 3.2 logo-placeholder colours** on `/jobs/[slug]` + apply-page job-header card — change `bg-gray-100` → brand-blue tint + text. ~15 minutes.
+All four 🔴 brand-colour fixes landed in a single commit — see [Changelog](#changelog).
+
+1. ~~Wave 3.3 Accept-offer button colour — change `bg-emerald-600` → brand-blue.~~ ✅
+2. ~~Wave 3.3 Accept-confirm dialog button colour — same change in the modal action.~~ ✅
+3. ~~Wave 1.2 Settings active-nav colour — change `bg-accent` (green) → pale brand-blue `oklch(0.93 0.05 250)`.~~ ✅
+4. ~~Wave 3.2 logo-placeholder colours on `/jobs/[slug]` + apply-page job-header card — change `bg-gray-100` → brand-blue tint + text.~~ ✅
 
 ### Tier 2 — same surface, easy follow-on (🔴 / 🟡 visible but smaller)
 
@@ -424,5 +426,12 @@ the fixed row, move it to the changelog at the bottom (when there is one).
 
 ## Changelog
 
-_Empty so far — entries added as remediations land._
+### 2026-06-18 · Tier 1 brand-colour fixes shipped
+
+All four 🔴 Tier 1 items landed in one commit:
+
+- **Wave 3.3** [`components/offers/offer-respond-form.tsx`](../../components/offers/offer-respond-form.tsx) — Accept-offer button (trigger + dialog action): `bg-emerald-600` → `bg-[oklch(0.55_0.18_250)]` (brand-blue per `Public Offer.dc.html`).
+- **Wave 1.2** [`components/settings/settings-nav.tsx`](../../components/settings/settings-nav.tsx) — Active-nav item: `bg-accent text-foreground font-medium` → `bg-[oklch(0.93_0.05_250)] text-[oklch(0.25_0.14_250)] font-semibold` (per `Settings.dc.html` `.navon`).
+- **Wave 3.2** [`app/jobs/[slug]/page.tsx`](../../app/jobs/[slug]/page.tsx) — Org logo placeholder: `bg-gray-100 text-gray-500 rounded-lg` → `bg-[oklch(0.93_0.05_250)] text-[oklch(0.42_0.16_250)] rounded-xl` (per `Public Pages.dc.html`).
+- **Wave 3.2** [`app/apply/[token]/page.tsx`](../../app/apply/[token]/page.tsx) — Same swap on the apply-page job-header card logo placeholder.
 

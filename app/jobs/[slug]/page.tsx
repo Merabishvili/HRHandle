@@ -88,7 +88,10 @@ export default async function PublicJobsPage({ params }: PageProps) {
                 className="mx-auto mb-4 h-14 w-14 rounded-lg object-contain border border-gray-100"
               />
             ) : (
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-xl font-bold text-gray-500">
+              // Pale brand-blue tint per Public Pages.dc.html — the org's
+              // careers page should read as their company's surface, not a
+              // generic gray placeholder. Tier 1 of fidelity-audit.md.
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[oklch(0.93_0.05_250)] text-xl font-bold text-[oklch(0.42_0.16_250)]">
                 {org.name[0]}
               </div>
             )}

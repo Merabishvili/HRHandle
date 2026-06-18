@@ -83,7 +83,10 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
             setAcceptOpen(true)
           }}
           disabled={isPending}
-          className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
+          // Brand-blue per Public Offer.dc.html — accepting a job offer is a
+          // brand moment, not a destructive/safety one (the design notes amber
+          // would read alarming). Tier 1 of fidelity-audit.md.
+          className="flex-1 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
         >
           <Check className="mr-2 h-4 w-4" aria-hidden />
           Accept offer
@@ -126,7 +129,7 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
             <AlertDialogAction
               onClick={handleAcceptConfirm}
               disabled={isPending}
-              className="bg-emerald-600 text-white hover:bg-emerald-700"
+              className="bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
             >
               {isPending ? (
                 <>

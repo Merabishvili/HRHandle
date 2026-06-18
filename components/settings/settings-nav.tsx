@@ -114,8 +114,11 @@ export function SettingsNav({ role }: SettingsNavProps) {
                       href={item.href}
                       className={cn(
                         'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
+                        // Pale brand-blue tint per Settings.dc.html `.navon` —
+                        // theme `bg-accent` was rendering green in the user's
+                        // screenshot. Tier 1 of fidelity-audit.md.
                         isActive
-                          ? 'bg-accent text-foreground font-medium'
+                          ? 'bg-[oklch(0.93_0.05_250)] text-[oklch(0.25_0.14_250)] font-semibold'
                           : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                       )}
                     >
