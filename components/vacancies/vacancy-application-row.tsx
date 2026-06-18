@@ -222,16 +222,19 @@ export function VacancyApplicationRow({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Score badge */}
+            {/* Score badge — same rule as candidate-profile row: suppress the
+                pending-assessment chip for terminal states so it doesn't
+                contradict the status pill ("Hired" + "Incomplete" reads wrong). */}
             {calculatedScore !== null ? (
               <Badge variant="secondary" className="bg-green-100 text-green-800">
                 <CheckCircle2 className="mr-1 h-3 w-3" />
                 {calculatedScore}%
               </Badge>
-            ) : questions.some((q) => q.type === 'score') ? (
+            ) : questions.some((q) => q.type === 'score') &&
+              !['hired', 'rejected', 'withdrawn'].includes(currentStatus?.code ?? '') ? (
               <Badge variant="secondary" className="bg-amber-100 text-amber-800">
                 <Clock className="mr-1 h-3 w-3" />
-                Incomplete
+                Not assessed
               </Badge>
             ) : null}
 

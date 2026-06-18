@@ -232,10 +232,18 @@ export function ApplicationEvaluation({
                 {calculatedScore}%
               </Badge>
             ) : (
-              <Badge variant="secondary" className="bg-amber-100 text-amber-800">
-                <Clock className="mr-1 h-3 w-3" />
-                Incomplete
-              </Badge>
+              // Suppress the assessment-pending badge for terminal app states
+              // — by the time the candidate is hired / rejected / withdrawn,
+              // whether a scorecard was filled is moot and the badge just
+              // contradicts the status pill ("Hired" + "Incomplete" reads
+              // wrong). Keep showing it for active states where the score
+              // would actually inform the next move.
+              !['hired', 'rejected', 'withdrawn'].includes(appStatus?.code ?? '') && (
+                <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                  <Clock className="mr-1 h-3 w-3" />
+                  Not assessed
+                </Badge>
+              )
             )}
             <span className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(appliedAt), { addSuffix: true })}
