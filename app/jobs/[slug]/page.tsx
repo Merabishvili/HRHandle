@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps) {
   const org = await resolveOrg(slug)
   if (!org) return { title: 'Jobs' }
   return {
-    title: `Open Positions — ${org.name}`,
+    title: `Open positions — ${org.name}`,
     description: `Browse open positions at ${org.name} and apply online.`,
   }
 }
