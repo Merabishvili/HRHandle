@@ -472,7 +472,7 @@ export default async function VacancyDetailPage({
               value="application-form"
               className="-mb-px rounded-none !border-x-0 !border-t-0 border-b-2 border-transparent !bg-transparent px-4 py-2.5 text-sm font-normal text-muted-foreground !shadow-none data-[state=active]:border-b-primary data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:!shadow-none"
             >
-              Apply Link
+              Apply link
             </TabsTrigger>
             <TabsTrigger
               value="interview-questions"
@@ -587,12 +587,12 @@ export default async function VacancyDetailPage({
                     </div>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Start Date</span>
+                    <span className="text-sm text-muted-foreground">Start date</span>
                     <span className="text-sm font-medium">{new Date(vacancy.start_date).toLocaleDateString()}</span>
                   </div>
                   {vacancy.end_date && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">End Date</span>
+                      <span className="text-sm text-muted-foreground">End date</span>
                       <span className="text-sm font-medium">{new Date(vacancy.end_date).toLocaleDateString()}</span>
                     </div>
                   )}
@@ -607,7 +607,7 @@ export default async function VacancyDetailPage({
 
               {vacancy.description && (
                 <Card className="border-border">
-                  <CardHeader><CardTitle className="text-base">Job Description</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-base">Job description</CardTitle></CardHeader>
                   <CardContent>
                     <div className="whitespace-pre-wrap text-sm text-muted-foreground">{vacancy.description}</div>
                   </CardContent>
@@ -623,7 +623,7 @@ export default async function VacancyDetailPage({
               )}
               {vacancyCustomFieldGroups.length > 0 && (
                 <Card className="border-border">
-                  <CardHeader><CardTitle className="text-base">Additional Information</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-base">Additional information</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <CustomFieldsDisplay
                       groups={vacancyCustomFieldGroups}
@@ -669,7 +669,7 @@ export default async function VacancyDetailPage({
             {/* Right: Score criteria (Evaluation) */}
             <Card className="border-border">
               <CardHeader>
-                <CardTitle>Evaluation Criteria</CardTitle>
+                <CardTitle>Evaluation criteria</CardTitle>
                 <p className="text-sm text-muted-foreground">Score-based criteria (1–10) for candidate assessment</p>
               </CardHeader>
               <CardContent>
