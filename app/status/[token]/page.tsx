@@ -5,6 +5,7 @@ import { Building2, Briefcase, MapPin, Calendar, FileText } from 'lucide-react'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { statusCodeToBucket } from '@/lib/application-status-bucket'
+import { isOfferExpired } from '@/lib/offers/expiry'
 import { StatusStepper } from '@/components/status/status-stepper'
 import { WithdrawButton } from '@/components/status/withdraw-button'
 import type { ApplicationStatus } from '@/lib/types/application'
@@ -122,10 +123,13 @@ export default async function StatusPage({ params }: PageProps) {
     .order('sent_at', { ascending: false })
     .limit(1)
 
+  // isOfferExpired does YMD-level comparison rather than Date arithmetic
+  // so the boundary ("expires 2026-06-30 → still valid up to 2026-07-01")
+  // matches what we tell candidates in the email, regardless of timezone.
   const pendingOffer = (() => {
     const row = offersRaw?.[0]
     if (!row || !row.public_token) return null
-    if (row.expiry_date && new Date(row.expiry_date) < new Date()) return null
+    if (isOfferExpired(row.expiry_date)) return null
     return row as { public_token: string; expiry_date: string | null; sent_at: string | null }
   })()
 
