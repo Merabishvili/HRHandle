@@ -197,6 +197,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
             <Input
               id="fullName"
               type="text"
+              autoComplete="name"
               placeholder="John Doe"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
@@ -226,6 +227,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
               <Input
                 id="companyName"
                 type="text"
+                autoComplete="organization"
                 placeholder="Acme Inc."
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
@@ -253,6 +255,8 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
+                inputMode="email"
                 placeholder="you@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -267,6 +271,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
             <Input
               id="password"
               type="password"
+              autoComplete="new-password"
               placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

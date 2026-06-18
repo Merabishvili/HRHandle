@@ -88,6 +88,8 @@ export default function ForgotPasswordPage() {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
+                  inputMode="email"
                   placeholder="you@company.com"
                   value={email}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
