@@ -513,7 +513,7 @@ export function CandidateForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="linkedin_profile_url">LinkedIn Profile</Label>
+              <Label htmlFor="linkedin_profile_url">LinkedIn profile</Label>
               <div className="flex gap-2">
                 <Input
                   id="linkedin_profile_url"
