@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps) {
     .is('deleted_at', null)
     .single()
 
-  if (!vacancy) return { title: 'Position Not Found' }
+  if (!vacancy) return { title: 'Position not found' }
 
   type MetaOrgJoin = { name: string } | { name: string }[] | null
   const metaOrg = vacancy.organizations as MetaOrgJoin
@@ -140,7 +140,7 @@ export default async function ApplyPage({ params }: PageProps) {
 
           {vacancy.description && (
             <div className="mb-4">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">About the Job</h2>
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">About the job</h2>
               <div className="whitespace-pre-wrap text-sm text-gray-700">{vacancy.description}</div>
             </div>
           )}

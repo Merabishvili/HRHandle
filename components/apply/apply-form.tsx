@@ -162,7 +162,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-sm text-center">
         <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-        <h2 className="mt-4 text-xl font-bold text-gray-900">Thanks for Applying!</h2>
+        <h2 className="mt-4 text-xl font-bold text-gray-900">Thanks for applying!</h2>
         <p className="mt-2 text-sm text-gray-600">
           We&apos;ve sent a confirmation to <strong>{email}</strong>.
           We will review your details and be in touch.
@@ -173,7 +173,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-      <h2 className="mb-6 text-lg font-bold text-gray-900">Apply for this Position</h2>
+      <h2 className="mb-6 text-lg font-bold text-gray-900">Apply for this position</h2>
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         {/* Honeypot */}
@@ -258,7 +258,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              First Name <span className="text-red-500">*</span>
+              First name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -272,7 +272,7 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Last Name <span className="text-red-500">*</span>
+              Last name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
