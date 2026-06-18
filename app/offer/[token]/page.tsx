@@ -4,7 +4,9 @@ import { Building2, Briefcase, Calendar, Clock } from 'lucide-react'
 
 import { getOfferByToken } from '@/lib/actions/offers'
 import { COMPENSATION_PERIOD_LABELS, type CompensationPeriod } from '@/lib/offers/state'
+import { offerCountdown } from '@/lib/offers/expiry'
 import { OfferRespondForm } from '@/components/offers/offer-respond-form'
+import { cn } from '@/lib/utils'
 
 interface PageProps {
   params: Promise<{ token: string }>
@@ -75,6 +77,23 @@ export default async function OfferPage({ params }: PageProps) {
               <span className="text-gray-700">
                 {format(new Date(offer.expiry_date), 'MMMM d, yyyy')}
               </span>
+              {(() => {
+                const countdown = offerCountdown(offer.expiry_date)
+                if (!countdown) return null
+                return (
+                  <span
+                    className={cn(
+                      'ml-2 inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium',
+                      countdown.urgency === 'urgent' && 'bg-red-50 text-red-700',
+                      countdown.urgency === 'soon' && 'bg-amber-50 text-amber-800',
+                      countdown.urgency === 'normal' && 'bg-gray-100 text-gray-700',
+                    )}
+                    aria-label={`${countdown.label} to respond`}
+                  >
+                    {countdown.label}
+                  </span>
+                )
+              })()}
             </Row>
           )}
         </dl>
