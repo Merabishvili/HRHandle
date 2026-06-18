@@ -31,7 +31,7 @@ interface CandidateDocumentsProps {
 
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   cv: 'CV / Resume',
-  cover_letter: 'Cover Letter',
+  cover_letter: 'Cover letter',
   other: 'Other',
 }
 
