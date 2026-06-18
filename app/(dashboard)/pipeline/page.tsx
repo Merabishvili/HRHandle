@@ -214,10 +214,15 @@ export default async function PipelinePage() {
                     {v.title}
                   </Link>
                   <div className="mt-0.5 text-xs text-muted-foreground">
-                    <span className="capitalize">{status?.name ?? 'Draft'}</span>
-                    {v.department && <> · {v.department}</>}
-                    {v.location && <> · {v.location}</>}
-                    <> · {activeCount} active</>
+                    {/* Vacancy status is suppressed when it's the default 'open' —
+                        every row in this list is non-archived, so labeling them
+                        all "Open" is noise that collides with the "Open" button. */}
+                    {(!status || status.code !== 'open') && (
+                      <span className="capitalize">{status?.name ?? 'Draft'} · </span>
+                    )}
+                    {v.department && <>{v.department} · </>}
+                    {v.location && <>{v.location} · </>}
+                    {activeCount} active
                     {hiredCount > 0 && <> · {hiredCount} hired</>}
                   </div>
                 </div>
