@@ -6,32 +6,44 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { getApplicationStatuses, getVacancyStatuses } from '@/lib/cache/lookups'
 import type { ApplicationStatus } from '@/lib/types/application'
-import { CrossVacancyBoard, type CrossVacancyApplication } from '@/components/pipeline/cross-vacancy-board'
+import {
+  CrossVacancyBoard,
+  type CrossVacancyApplication,
+} from '@/components/pipeline/cross-vacancy-board'
 import type { RoleOption } from '@/components/pipeline/role-filter-dropdown'
 
 /**
- * Top-level `/pipeline` route — Wave 2.1.
+ * Top-level `/pipeline` route — Wave 2.1 Version B.
  *
  * Two scenarios:
  *
  *   1. Org has zero non-archived vacancies → render the welcome card from
- *      `redesign/Pipeline Empty State.dc.html` (locked per Q-S01-e). One
- *      primary CTA ("Create your first vacancy"), one secondary ("Import
- *      candidates"), plus a 3-step orientation strip.
+ *      `redesign/Pipeline Empty State.dc.html` (locked per Q-S01-e).
  *
- *   2. Org has at least one vacancy → render the cross-vacancy kanban
- *      (`CrossVacancyBoard`) with role filter dropdown, terminal-stage
- *      rail, and Review mode entry. Cards span every active vacancy
- *      grouped by global application status.
- *
- * The board itself is a client component because of DnD + Review-mode
- * keyboard state; this server component is the data-fetch boundary.
+ *   2. Org has at least one vacancy → render the colour-coded cross-vacancy
+ *      kanban (`CrossVacancyBoard`) with Board/List toggle, density toggle,
+ *      role filter, terminal rail, bulk bar, and Review mode entry. The
+ *      board owns its own header now (matches `Pipeline Versions.dc.html`).
  */
 const TERMINAL_CODES: ReadonlySet<ApplicationStatus['code']> = new Set([
   'hired',
   'rejected',
   'withdrawn',
 ])
+
+/** Map the raw values stored in candidates.source to a short label that
+ * fits the card design ("1d · LinkedIn", "2d · Apply link"). */
+function shortSourceLabel(raw: string | null): string | null {
+  if (!raw) return null
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  if (/^public apply/i.test(trimmed)) return 'Apply link'
+  if (/^company website/i.test(trimmed)) return 'Website'
+  if (/^job board/i.test(trimmed)) return 'Job board'
+  if (/^csv import/i.test(trimmed)) return 'CSV'
+  if (/^manual/i.test(trimmed)) return 'Manual'
+  return trimmed
+}
 
 export default async function PipelinePage() {
   const supabase = await createClient()
@@ -51,9 +63,6 @@ export default async function PipelinePage() {
 
   const orgId = profile.organization_id
 
-  // Only "open" vacancies belong on the cross-vacancy board — on-hold /
-  // closed / draft roles aren't where the working surface lives. This
-  // matches what the per-vacancy `/vacancies/[id]/pipeline` route renders.
   const [vacancyStatusesRaw, appStatusesRaw] = await Promise.all([
     getVacancyStatuses(),
     getApplicationStatuses(),
@@ -82,7 +91,6 @@ export default async function PipelinePage() {
     location: string | null
   }[]
 
-  // 0 vacancies — render the welcome card per Q-S01-e
   if (vacancies.length === 0) {
     return (
       <div className="relative -mx-4 -my-4 flex min-h-[calc(100vh-3.5rem)] items-center justify-center overflow-hidden lg:-mx-8 lg:-my-8">
@@ -138,7 +146,6 @@ export default async function PipelinePage() {
     )
   }
 
-  // 1+ vacancies — fetch the kanban data set.
   const vacancyIds = vacancies.map((v) => v.id)
   const appStatuses = (appStatusesRaw || []).filter((s) => s.is_active) as ApplicationStatus[]
   const sortedStatuses = [...appStatuses].sort((a, b) => a.sort_order - b.sort_order)
@@ -179,22 +186,34 @@ export default async function PipelinePage() {
     last_status_changed_at: string | null
   }
   const appRows = (applicationsRaw ?? []) as AppRow[]
-
-  // Fetch candidates separately (the nested join is unreliable for null
-  // and deleted candidate cases).
   const candidateIds = [...new Set(appRows.map((a) => a.candidate_id))]
-  const candidateMap = new Map<
-    string,
-    { id: string; first_name: string; last_name: string; current_position: string | null; current_company: string | null }
-  >()
-  if (candidateIds.length > 0) {
-    const { data: candidatesRaw } = await supabase
-      .from('candidates')
-      .select('id, first_name, last_name, current_position, current_company')
-      .in('id', candidateIds)
-      .is('deleted_at', null)
-    for (const c of candidatesRaw ?? []) candidateMap.set(c.id, c)
-  }
+
+  const [candidateMap, fitScoreMap] = await Promise.all([
+    (async () => {
+      if (candidateIds.length === 0) return new Map<string, CandidateRow>()
+      const { data } = await supabase
+        .from('candidates')
+        .select('id, first_name, last_name, current_position, current_company, source')
+        .in('id', candidateIds)
+        .is('deleted_at', null)
+      const m = new Map<string, CandidateRow>()
+      for (const c of (data ?? []) as CandidateRow[]) m.set(c.id, c)
+      return m
+    })(),
+    (async () => {
+      const m = new Map<string, number>()
+      const ids = appRows.map((a) => a.id)
+      if (ids.length === 0) return m
+      const { data } = await supabase
+        .from('candidate_evaluations')
+        .select('application_id, score')
+        .in('application_id', ids)
+      for (const row of (data ?? []) as { application_id: string; score: number | null }[]) {
+        if (typeof row.score === 'number') m.set(row.application_id, row.score)
+      }
+      return m
+    })(),
+  ])
 
   const vacancyMap = new Map(vacancies.map((v) => [v.id, v]))
   const firstStatusId = sortedStatuses[0]?.id ?? null
@@ -204,6 +223,10 @@ export default async function PipelinePage() {
       const candidate = candidateMap.get(a.candidate_id)
       const vacancy = vacancyMap.get(a.vacancy_id)
       if (!candidate || !vacancy) return null
+      // Convert the 0-100 internal scorecard percentage to the 0-10 design
+      // pill format (e.g. 84 → 8.4). Null when no evaluation exists yet.
+      const rawScore = fitScoreMap.get(a.id)
+      const fitScore = typeof rawScore === 'number' ? Math.round(rawScore) / 10 : null
       return {
         id: a.id,
         candidate_id: a.candidate_id,
@@ -216,12 +239,12 @@ export default async function PipelinePage() {
         applied_at: a.applied_at,
         vacancy_id: a.vacancy_id,
         vacancy_title: vacancy.title,
+        source: shortSourceLabel(candidate.source),
+        fit_score: fitScore,
       } satisfies CrossVacancyApplication
     })
     .filter((a): a is CrossVacancyApplication => a !== null)
 
-  // Active-count per vacancy for the role filter dropdown — "active" =
-  // non-terminal applications. Recruiter sees which roles are alive.
   const roleOptions: RoleOption[] = vacancies.map((v) => {
     const activeCount = applications.filter((a) => {
       if (a.vacancy_id !== v.id) return false
@@ -232,23 +255,7 @@ export default async function PipelinePage() {
   })
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Pipeline</h1>
-          <p className="text-muted-foreground">
-            {vacancies.length} active {vacancies.length === 1 ? 'role' : 'roles'} ·{' '}
-            {applications.length} candidate{applications.length === 1 ? '' : 's'}
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/vacancies/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New vacancy
-          </Link>
-        </Button>
-      </div>
-
+    <div className="flex flex-col gap-4 pb-24">
       <CrossVacancyBoard
         statuses={sortedStatuses}
         roles={roleOptions}
@@ -258,4 +265,13 @@ export default async function PipelinePage() {
       />
     </div>
   )
+}
+
+interface CandidateRow {
+  id: string
+  first_name: string
+  last_name: string
+  current_position: string | null
+  current_company: string | null
+  source: string | null
 }
