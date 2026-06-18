@@ -141,7 +141,10 @@ export default async function OfferPage({ params }: PageProps) {
               <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 A note from the recruiter
               </h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
+              {/* Italic body per Public Offer.dc.html §1 — recruiter notes
+                  read as personal voice, distinct from the formal offer
+                  body. Tier 3 of fidelity-audit.md. */}
+              <p className="mt-2 whitespace-pre-wrap text-sm italic leading-relaxed text-gray-700">
                 {offer.recruiter_message}
               </p>
             </div>
@@ -181,13 +184,14 @@ function Row({
   label: string
   children: React.ReactNode
 }) {
+  // Visible labels per Public Offer.dc.html — fixed 110px left column for the
+  // label, value flows after it. The previous sr-only treatment hid the
+  // labels from sighted users entirely. Tier 3 of fidelity-audit.md.
   return (
     <div className="flex items-start gap-3">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden />
-      <div className="flex-1">
-        <dt className="sr-only">{label}</dt>
-        <dd>{children}</dd>
-      </div>
+      <dt className="w-[110px] shrink-0 text-sm text-gray-500">{label}</dt>
+      <dd className="flex-1 text-sm">{children}</dd>
     </div>
   )
 }

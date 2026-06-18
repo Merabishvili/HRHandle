@@ -311,19 +311,23 @@ I still didn't build, listed below for completeness.
 | Text colour | `oklch(0.42 0.16 250)` (brand-blue) | depends on theme | 🟡 |
 | Padding | `7px 13px` | default button padding | 🟢 |
 
-### Per-feature calm-tag adoption (the headline gap)
+### Per-feature calm-tag adoption (CORRECTED 2026-06-18)
 
 Design rule: every AI surface uses `AiDraftTag` with the per-feature label from the §3 table.
 
+**Audit-doc correction:** the first pass of this section said only 2 of 6 components used `AiDraftTag` — that was based on a `grep -rn` that matched the import but not the JSX rendering. On re-verification all six **do** render `<AiDraftTag>` with the correct label. Leaving the corrected table below for completeness.
+
 | Feature | Design label | Current component | Uses AiDraftTag? | Severity |
 |---|---|---|---|---|
-| CV parse (Add candidate flow) | "AI-filled · review" | Auto-fill in `apply-form.tsx` + `candidate-form.tsx` | ❌ No — parse fills fields silently, no provenance shown | 🟡 |
-| JD generation | "AI draft" | `components/vacancies/ai-jd-suggest.tsx` | ❌ No — has own UI | 🟡 |
-| Bias / inclusive-language check | "AI suggestion" | `components/vacancies/ai-bias-check.tsx` | ❌ No | 🟡 |
-| Candidate summary | "AI draft" | `components/candidates/ai-summary-panel.tsx` | ✅ Yes — `<AiDraftTag label="AI draft" />` | 🟢 ✓ |
-| Scorecard from notes | "AI draft" | `components/candidates/ai-notes-extractor.tsx` | ✅ Yes | 🟢 ✓ |
-| AI interview questions | (not explicitly in the §3 table — implied "AI draft") | `components/vacancies/ai-interview-questions.tsx` | ❌ No | 🟡 |
-| AI assessment suggester | (not in §3 table — implied "AI suggestion") | `components/vacancies/ai-assessment-suggester.tsx` | ❌ No | 🟡 |
+| CV parse (Add candidate flow) | "AI-filled · review" | Auto-fill in `apply-form.tsx` + `candidate-form.tsx` | ❌ No — parse fills fields silently, no provenance shown (no dedicated component to attach it to; would need an inline pill above the prefilled fields) | 🟡 |
+| JD generation | "AI draft" | [`components/vacancies/ai-jd-suggest.tsx`](../../components/vacancies/ai-jd-suggest.tsx) | ✅ Yes — `<AiDraftTag label="AI draft" />` | 🟢 ✓ |
+| Bias / inclusive-language check | "AI suggestion" | [`components/vacancies/ai-bias-check.tsx`](../../components/vacancies/ai-bias-check.tsx) | ✅ Yes — `<AiDraftTag label="AI suggestion" />` | 🟢 ✓ |
+| Candidate summary | "AI draft" | [`components/candidates/ai-summary-panel.tsx`](../../components/candidates/ai-summary-panel.tsx) | ✅ Yes | 🟢 ✓ |
+| Scorecard from notes | "AI draft" | [`components/candidates/ai-notes-extractor.tsx`](../../components/candidates/ai-notes-extractor.tsx) | ✅ Yes | 🟢 ✓ |
+| AI interview questions | (implied "AI draft") | [`components/vacancies/ai-interview-questions.tsx`](../../components/vacancies/ai-interview-questions.tsx) | ✅ Yes — `<AiDraftTag label="AI draft" />` | 🟢 ✓ |
+| AI assessment suggester | (implied "AI suggestion") | [`components/vacancies/ai-assessment-suggester.tsx`](../../components/vacancies/ai-assessment-suggester.tsx) | ✅ Yes — `<AiDraftTag label="AI suggestion" />` | 🟢 ✓ |
+
+The remaining 🟡 is CV parse: form fields fill silently with no provenance affordance. Fixable by rendering a small inline `<AiDraftTag label="AI-filled · review" />` above the first prefilled section after parse completes; deferred from this Tier 3 pass.
 
 ### Terminology rules (§4 of the design)
 
@@ -393,12 +397,12 @@ All four 🟡 follow-on fixes landed in a single commit — see [Changelog](#cha
 7. ~~Wave 3.3 confirm-decline "Cancel" → "Go back" + "🎉" emoji on accepted state + "Accepted {date}" footer.~~ ✅
 8. ~~Wave 1.2 sidebar chrome — bg tint + right border separator + width 232px.~~ ✅
 
-### Tier 3 — moderate work, real polish wins (🟡)
+### Tier 3 — ✅ shipped 2026-06-18 (with one item already done)
 
-9. **Wave 1.6 wire `AiDraftTag` into the remaining 4 AI components** (ai-jd-suggest, ai-bias-check, ai-interview-questions, ai-assessment-suggester). Each is a small targeted edit — header gets the tag.
-10. **Wave 3.2 CV-upload styling** — dashed brand-blue border on the apply form upload zone.
-11. **Wave 3.2 split the apply page** into two cards (job header + form) instead of one big card.
-12. **Wave 3.3 Recruiter-note italic styling** + visible-label rows on the offer summary.
+9. ~~Wave 1.6 wire `AiDraftTag` into the remaining 4 AI components.~~ **CORRECTED:** my audit was wrong; all 6 components already use `AiDraftTag` with the correct per-feature labels. See the [corrected adoption table](#per-feature-calm-tag-adoption-corrected-2026-06-18). Only remaining 🟡 is CV parse provenance, deferred.
+10. ~~Wave 3.2 CV-upload styling — dashed brand-blue border on the apply form upload zone.~~ ✅
+11. ~~Wave 3.2 split the apply page into two cards.~~ **Already done** — apply-page header card and form card are separate today; my audit conflated the form's inline sections with "one big card".
+12. ~~Wave 3.3 Recruiter-note italic styling + visible-label rows on the offer summary.~~ ✅
 
 ### Tier 4 — defer to the forward wave that owns the surface (the wave will rewrite the visual anyway)
 
@@ -427,6 +431,14 @@ the fixed row, move it to the changelog at the bottom (when there is one).
 ---
 
 ## Changelog
+
+### 2026-06-18 · Tier 3 — moderate polish wins + audit corrections
+
+- **Wave 3.3 #12** [`app/offer/[token]/page.tsx`](../../app/offer/[token]/page.tsx) — Summary tile rows now show **visible labels** (Role / Employer / Compensation / Start date) in a 110px fixed-width left column per `Public Offer.dc.html`. Previously the labels were `sr-only` and hidden from sighted users.
+- **Wave 3.3 #12** [`app/offer/[token]/page.tsx`](../../app/offer/[token]/page.tsx) — Recruiter note paragraph styled `italic` per design — the personal-voice section now reads as distinct from the formal offer body.
+- **Wave 3.2 #10** [`components/apply/apply-form.tsx`](../../components/apply/apply-form.tsx) — CV upload button restyled per `Public Pages.dc.html`: `1.5px` dashed `oklch(0.8 0.04 250)` border, `oklch(0.985 0.012 250)` pale brand-blue background, `oklch(0.45 0.16 250)` brand-blue text + icon, `rounded-[10px]`. Copy shortened from "Upload PDF or Word document (max 10 MB)" to "Upload PDF or Word (max 10 MB)" to match.
+- **Wave 1.6 #9 audit correction** — re-verified all 6 AI components actually render `<AiDraftTag>` with the design's per-feature label (`ai-jd-suggest` "AI draft", `ai-bias-check` "AI suggestion", `ai-interview-questions` "AI draft", `ai-assessment-suggester` "AI suggestion", `ai-summary-panel` "AI draft", `ai-notes-extractor` "AI draft"). My first-pass grep matched the import line but not the JSX rendering. Audit doc updated.
+- **Wave 3.2 #11 audit correction** — apply-page card split is already two cards (job header card + apply form card with internal sections, matching the design). No code change needed.
 
 ### 2026-06-18 · Tier 2 — 🟡 same-surface follow-ons
 

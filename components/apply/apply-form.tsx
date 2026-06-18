@@ -253,10 +253,15 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors disabled:opacity-50"
+              // Brand-blue dashed drop zone per Public Pages.dc.html — pale
+              // brand-blue tint background, slightly stronger brand-blue
+              // dashed border, brand-blue text + icon. Reads as "this is a
+              // CV upload" rather than as a generic gray button. Tier 3 of
+              // fidelity-audit.md.
+              className="flex w-full items-center justify-center gap-2 rounded-[10px] border-[1.5px] border-dashed border-[oklch(0.8_0.04_250)] bg-[oklch(0.985_0.012_250)] px-4 py-4 text-sm font-medium text-[oklch(0.45_0.16_250)] transition-colors hover:bg-[oklch(0.96_0.025_250)] disabled:opacity-50"
             >
-              <Upload className="h-4 w-4" />
-              Upload PDF or Word document (max 10 MB)
+              <Upload className="h-4 w-4" aria-hidden />
+              Upload PDF or Word (max 10 MB)
             </button>
           )}
 
