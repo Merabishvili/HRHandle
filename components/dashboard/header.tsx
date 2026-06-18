@@ -119,11 +119,15 @@ export function DashboardHeader({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Button
+                variant="ghost"
+                className="relative h-9 w-9 rounded-full"
+                aria-label={`Account menu for ${profile.full_name || user.email || 'user'}`}
+              >
                 <Avatar className="h-9 w-9">
                   <AvatarImage
                     src={profile.avatar_url || undefined}
-                    alt={profile.full_name || 'User'}
+                    alt=""
                   />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                     {initials}
