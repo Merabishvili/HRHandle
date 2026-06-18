@@ -483,9 +483,16 @@ When all waves ship, the redesign is complete. Until then, this corpus + roadmap
 ## Implementation log — 2026-06-18 autonomous session
 
 Pushed to `staging`. 17 commits in the initial autonomous push. A follow-on
-polish session added 13 more commits (8 sentence-case sweeps, 1 capitalize-CSS
-batch fix, 2 pipeline-overview UX, 2 Wave 3.2 slice deliveries — brand-blue +
-role count + track-link).
+polish session added 18 more commits:
+- 9 sentence-case sweeps (dashboard forms, cards, candidate profile, vacancy
+  detail, public apply form, document type labels, dashboard home, public
+  jobs metadata, separator consistency)
+- 1 batch capitalize-CSS bug-fix
+- 2 pipeline-overview UX commits
+- 3 Wave 3.2 slice deliveries (brand-blue + role count, track-link wiring,
+  status-page pending-offer tile)
+- 1 application-row badge fix (Hired+Incomplete contradiction)
+- 2 doc updates
 
 Migration 044 + Migration 045 applied. Migration 046 written, not yet applied.
 
@@ -509,8 +516,10 @@ Migration 044 + Migration 045 applied. Migration 046 written, not yet applied.
 | **2.1 polish** `/pipeline` overview: full stage names + redundant-status suppression | ✅ | `fe4f1a2`, `ed8b68a` |
 | **3.2 visual slice** Public listing brand-blue bar + role count | ✅ | `f94deb1` |
 | **3.2 wiring slice** "Track your application" link on apply confirmation card | ✅ — uses `application.public_token` returned from `submitPublicApplication` | `2a7e202` |
+| **3.2 §2.3 slice** Status page pending-offer tile (deep-link into `/offer/[token]` when there's a `sent`, non-expired offer on the application) | ✅ | `8080002` |
 | **Capitalize CSS audit** 5 multi-word-mangling spots (sidebar status, pipeline status name, interviews badge, team invitations meta, FIELD_TYPE_LABELS) | ✅ | `aebd11e` |
-| **Sentence-case sweep** 60+ string fixes across dashboard forms, cards, candidate profile, vacancy detail, public apply form | ✅ | `b1577e8`, `154861d`, `9c294e0`, `0365995`, `d106872`, `50a2946`, `e42efb3` |
+| **App row "Incomplete" badge** Relabel to "Not assessed" and suppress on terminal app states (hired/rejected/withdrawn) — was contradicting the status pill | ✅ | `17cefa8` |
+| **Sentence-case sweep** 60+ string fixes across dashboard forms, cards, candidate profile, vacancy detail, public apply form, document type labels | ✅ | `b1577e8`, `154861d`, `9c294e0`, `0365995`, `d106872`, `50a2946`, `e42efb3`, `0239fd5` |
 
 ### Still pending (biggest tickets first)
 
