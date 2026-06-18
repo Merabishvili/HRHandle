@@ -230,7 +230,23 @@ treatment, the sidebar chrome, and the brand-blue primary action colour.
 **Design file:** [`redesign/Pipeline Empty State.dc.html`](../../redesign/Pipeline Empty State.dc.html)
 **Code:** the welcome card branch in [`app/(dashboard)/pipeline/page.tsx`](../../app/(dashboard)/pipeline/page.tsx)
 
-_Audit in progress — placeholder._
+**Structural verdict:** the .dc.html for this surface is a text-only spec
+(not a full visual mockup) — the founder authored it as prose locking the
+design intent rather than rendering a pixel-accurate mock. My
+implementation matches the spec near-perfectly. Two tiny gaps.
+
+| Element | Design spec | Current | Severity |
+|---|---|---|---|
+| Centered welcome card | ✓ | ✓ | 🟢 ✓ |
+| 72px rounded icon | 72×72 (`bg-primary/10`) | `h-[72px] w-[72px] rounded-2xl bg-primary/10` ✓ | 🟢 ✓ |
+| Icon glyph | "bar-chart / pipeline glyph" | `BarChart3` lucide icon | 🟢 ✓ |
+| Icon colour | "soft blue" | `text-primary` (theme primary) | 🟢 ✓ |
+| H2 greeting | "Welcome to HRHandle 🌟" — emoji explicitly permitted | "Welcome to HRHandle ✨" using `Sparkles` lucide icon with amber-500 — deviates from spec's explicit emoji | 🟡 |
+| Sub-copy | Exact wording: "This is your pipeline — every candidate across every role, in one place. To get started, create your first vacancy and your board comes to life." | Same wording | 🟢 ✓ |
+| Primary CTA | "+ Create your first vacancy" brand-blue | `<Button size="lg">` with `Plus` icon + "Create your first vacancy" | 🟢 ✓ |
+| Secondary CTA | "Import candidates" outline | `variant="outline" size="lg"` with `Upload` icon + "Import candidates" | 🟢 ✓ |
+| 3-step orientation strip | (1) Create a vacancy / (2) Add candidates / (3) Work the pipeline with exact body copy | Same items, exact body copy | 🟢 ✓ |
+| Ghost-board fade behind welcome card | Faint kanban behind a fade ("the earlier recommendation was a redirect; locked design is this welcome card with a faint ghost board") | Not present — clean white background only | 🟡 |
 
 ---
 
@@ -239,29 +255,174 @@ _Audit in progress — placeholder._
 **Design file:** [`redesign/Pipeline Versions.dc.html`](../../redesign/Pipeline Versions.dc.html)
 **Code:** [`app/(dashboard)/pipeline/page.tsx`](../../app/(dashboard)/pipeline/page.tsx) + `components/pipeline/**`
 
-_Audit in progress — placeholder. Wave 2.1 just shipped a fidelity pass
-against this design (commit `7ff2e1a`); this section verifies nothing
-slipped through._
+**Structural verdict:** the freshly-shipped fidelity pass (`7ff2e1a`) lands
+Version B (colour-coded) properly. Tinted columns, coloured card spines,
+amber stale state, granular time microcopy, density toggle, Board/List
+toggle, bulk bar, terminal rail — all there. A few small Version C details
+I still didn't build, listed below for completeness.
+
+| Element | Design | Current | Severity |
+|---|---|---|---|
+| Outer rounded card wrapper | `border-radius: 14px` + `border 1px oklch(0.88 0.01 250)` + shadow `0 1px 3px oklch(0 0 0 / 0.08)` | `rounded-2xl border border-border shadow-sm` — close | 🟢 ✓ |
+| Tinted column backgrounds | Per-stage `oklch` tints from the design | Per-stage tints from `lib/pipeline/stage-style.ts` reading the exact same oklch values | 🟢 ✓ |
+| Card colour spine | 3px left-border in stage hue, switches to amber `oklch(0.7 0.15 70)` when stale | 3px left-border via `borderLeft: 3px solid ${spine}` with same `STALE_SPINE` constant | 🟢 ✓ |
+| Stale threshold | "5d · stale" example shown | `STALE_DAYS = 5` in stage-style.ts | 🟢 ✓ |
+| Granular time microcopy | "16h", "1d", "2d", "5d · stale" | `timeInStage()` helper returns matching labels | 🟢 ✓ |
+| Filled brand-blue Review button | `oklch(0.55 0.18 250)` bg with white text | `bg-primary` Tailwind theme primary — likely close, depends on theme oklch | 🟢 |
+| Board / List toggle | Segmented dark-active toggle in header chrome | `ViewModeToggle` component — match | 🟢 ✓ |
+| Density toggle (Comfortable vs Compact) | Implicit — design says "offer density as a toggle" in the take section | `DensityToggle` with Comfortable / Compact labels | 🟢 ✓ |
+| Fit score pill on Compact cards | 30×22 rounded rect, green for ≥7 / amber for ≥5 / gray for null | `fitScoreStyle()` in cross-vacancy-card.tsx with same thresholds | 🟢 ✓ |
+| Compact mode `Sort: fit ▾` dropdown | Version C header shows a "Sort: fit ▾" trigger between Board/List toggle and Review button | Not present | 🟡 |
+| Bulk bar | Multi-select model "all three keep the exact same toggle, review entry and **bulk model**" | `BulkBar` component with Move-to + Reject + Clear | 🟢 ✓ |
+| Inner column header pill | Stage-colour pill (`pillBg` + `pillText`) with stage name + count beside it | `TintedKanbanColumn` header — match | 🟢 ✓ |
+| Avatar tint per candidate | Design varies hues between candidates (warm/cool) for scan-ability | `avatarStyle(seed)` deterministically picks from 5 hues | 🟢 ✓ |
+| Source line on card | "1d · LinkedIn", "2d · Apply link" | `timeLabel = ${time.label} · ${data.source}` | 🟢 ✓ |
+| Outer panel width | `1320px` fixed in design | Fluid (`overflow-x-auto`) — mine adapts to viewport, design is fixed; design choice not strict layout | 🟢 |
+| Page background behind the card | The design site uses `oklch(0.94 0.008 250)` body background | Default dashboard bg | 🟢 |
 
 ---
 
 ## Wave 1.6 · AI calm tag + AI features
 
 **Design file:** [`redesign/AI and Terminology System.dc.html`](../../redesign/AI and Terminology System.dc.html)
-**Code:** [`components/ui/ai-draft-tag.tsx`](../../components/ui/ai-draft-tag.tsx), [`components/ui/ai-draft-panel.tsx`](../../components/ui/ai-draft-panel.tsx), the five AI feature panels
+**Code:** [`components/ui/ai-draft-tag.tsx`](../../components/ui/ai-draft-tag.tsx), [`components/ui/ai-draft-panel.tsx`](../../components/ui/ai-draft-panel.tsx), the AI feature components in `components/candidates/ai-*` and `components/vacancies/ai-*`
 
-_Audit in progress — placeholder._
+**Structural verdict:** the calm-blue `AiDraftTag` component matches the design's `.aitag` styling closely and the four-step `invoke → draft → review → confirm` pattern is encoded in `AiDraftPanel`. The headline gap: only **2 of the 6** AI feature components actually use `AiDraftTag` today. The design rule is explicit — _"every one uses the same calm tag"_ — so the 4 unwired features are still shipping without the calm-blue provenance affordance.
+
+### Calm-tag styling
+
+| Element | Design `.aitag` | Current `AiDraftTag` | Severity |
+|---|---|---|---|
+| Background | `oklch(0.96 0.03 250)` | `bg-primary/5` | 🟢 (close hue via theme) |
+| Border | `1px solid oklch(0.88 0.05 250)` | `border border-primary/20` | 🟢 |
+| Text colour | `oklch(0.45 0.16 250)` (brand-blue) | `text-primary` | 🟢 |
+| Border-radius | 6px | `rounded-md` = 6px | 🟢 ✓ |
+| Padding | `2px 8px` | `px-2 py-0.5` ≈ `8px 2px` | 🟢 ✓ |
+| Font-size | `10.5px` | `text-[11px]` | 🟢 |
+| Font-weight | 600 | `font-medium` = 500 | 🟢 |
+| Icon | Sparkle SVG inline | `Sparkles` lucide icon | 🟢 ✓ |
+
+### Calm-button styling (`.aibtn` invoke step)
+
+| Element | Design `.aibtn` | Current | Severity |
+|---|---|---|---|
+| Background | `oklch(0.98 0.03 250)` — very pale brand-blue | `AiDraftPanel` invoke button uses `<Button>` theme variant, no dedicated `aibtn` style | 🟡 |
+| Border | `1px solid oklch(0.86 0.06 250)` | n/a | 🟡 |
+| Text colour | `oklch(0.42 0.16 250)` (brand-blue) | depends on theme | 🟡 |
+| Padding | `7px 13px` | default button padding | 🟢 |
+
+### Per-feature calm-tag adoption (the headline gap)
+
+Design rule: every AI surface uses `AiDraftTag` with the per-feature label from the §3 table.
+
+| Feature | Design label | Current component | Uses AiDraftTag? | Severity |
+|---|---|---|---|---|
+| CV parse (Add candidate flow) | "AI-filled · review" | Auto-fill in `apply-form.tsx` + `candidate-form.tsx` | ❌ No — parse fills fields silently, no provenance shown | 🟡 |
+| JD generation | "AI draft" | `components/vacancies/ai-jd-suggest.tsx` | ❌ No — has own UI | 🟡 |
+| Bias / inclusive-language check | "AI suggestion" | `components/vacancies/ai-bias-check.tsx` | ❌ No | 🟡 |
+| Candidate summary | "AI draft" | `components/candidates/ai-summary-panel.tsx` | ✅ Yes — `<AiDraftTag label="AI draft" />` | 🟢 ✓ |
+| Scorecard from notes | "AI draft" | `components/candidates/ai-notes-extractor.tsx` | ✅ Yes | 🟢 ✓ |
+| AI interview questions | (not explicitly in the §3 table — implied "AI draft") | `components/vacancies/ai-interview-questions.tsx` | ❌ No | 🟡 |
+| AI assessment suggester | (not in §3 table — implied "AI suggestion") | `components/vacancies/ai-assessment-suggester.tsx` | ❌ No | 🟡 |
+
+### Terminology rules (§4 of the design)
+
+| Rule | Status across the codebase |
+|---|---|
+| Sentence case everywhere — no Title Case | ✅ swept multiple times this session — clean across dashboard, public pages, settings |
+| Second person ("Your pipeline", "Review before saving") | 🟢 mostly — most copy is already second-person; some sub-pages still use product-name framings |
+| Plain CTA verbs (Add candidate, Create vacancy, Advance, Schedule) | ✅ matches across the app |
+| No emoji in product UI | 🟡 mostly — `Sparkles` icons are not emoji and explicitly OK; one exception is the `✨` icon I used inside the pipeline empty-state h2 next to "Welcome to HRHandle" (the empty-state spec explicitly permits 🌟 emoji here, so technically allowed by exception) |
+| Warm empty states ("No candidates yet" + a direct action) | ✅ pipeline empty state matches; other empty states ("No applicants yet", "No interviews scheduled", "No matches.") follow the pattern |
+| Badges 8px radius, consistent stage palette | 🟡 stage palette lands cleanly in Wave 2.1 (`stage-style.ts`); badges across the app use a mix of `rounded-md` (6px), `rounded-lg` (8px), `rounded-full` — not consistent |
+
+### Naming decisions (§4 left column)
+
+| Concept | Design rule | Current status |
+|---|---|---|
+| Vacancy vs Job | Keep "Vacancy" consistently | ✅ "vacancy" used app-wide |
+| Status | Derived from stage; words: Active / Hired / Archived | 🟡 partial — `CandidateStatusSelect` dropped in Wave 1.1, but vacancy `status_id` is still a manual field |
+| Stage | Applied · Screening · Interview · Offer · Hired (custom allowed, typed) | ✅ matches |
+| "Incomplete" | RETIRE — say what's missing ("No CV", "Needs review") | 🟢 swapped to "Not assessed" earlier — closer to design than "Incomplete" but design specifically suggests "Needs review" |
+| Scorecard / Screening questions / Fit score | Separate concepts, named distinctly | 🟡 partially — codebase mixes `vacancy_questions` (scorecard prompts) with the design's "screening questions" concept; Wave 2.5 cleanup pending |
+| "Trial · Trial" duplicate | Fix to single "Trial · N days left" pill | ✅ shipped in Wave 1.3 |
 
 ---
 
 ## Unchanged surfaces
 
 These surfaces have design files but I didn't touch the implementation in
-this corpus. Audit anyway — to see what should be remediated as a forward
-ship instead of as a retroactive fix.
+this corpus. They're listed here so they don't fall off the radar — each
+needs a forward Wave build, not a retroactive patch.
 
-- `redesign/Vacancies.dc.html` vs `app/(dashboard)/vacancies/page.tsx`
-- `redesign/Interview Scheduling.dc.html` vs `app/(dashboard)/interviews/**`
-- `redesign/Reports and Interviews.dc.html` vs `app/(dashboard)/reports/**`
+| Design file | Current implementation | Status |
+|---|---|---|
+| `redesign/Vacancies.dc.html` (3 designs: enhanced table, card grid, vacancy detail) | `app/(dashboard)/vacancies/page.tsx` (current table) + `app/(dashboard)/vacancies/[id]/page.tsx` | Wave 2.4 in roadmap. Sentence-case sweep + Title-Case fix already applied; visual rebuild pending. Design proposes a card-grid view + per-row mini-funnel that don't exist today. |
+| `redesign/Interview Scheduling.dc.html` (2 designs: candidate-launched, standalone) | `app/(dashboard)/interviews/new/page.tsx` | No Wave assigned (was Wave 1.7, dropped after the audit found the existing form already supports both pre-fill paths). Form structure passes audit; visual treatment unchanged. |
+| `redesign/Reports and Interviews.dc.html` (3 sections: Pipeline / Time to hire & Sources / Interviews) | `app/(dashboard)/reports/**` + `app/(dashboard)/interviews/page.tsx` | Reports were rebuilt for G-029 (pre-redesign); design proposes lighter cosmetic polish. Interviews list got sentence-case fixes earlier this session. Full Wave not assigned. |
+| `redesign/Candidate Profile A Refined.dc.html` | `app/(dashboard)/candidates/[id]/page.tsx` | Wave 2.3 in roadmap. Not rebuilt. Partial polish via sentence-case + Hired+Incomplete badge fix. |
+| `redesign/Vacancy Detail.dc.html` | `app/(dashboard)/vacancies/[id]/page.tsx` | Wave 2.4 in roadmap. Not rebuilt. Partial polish via sentence-case. |
+| `redesign/Create Vacancy Steps.dc.html` | `app/(dashboard)/vacancies/new/page.tsx` | Wave 2.7 in roadmap. Not rebuilt. |
+| `redesign/Create Candidate Steps.dc.html` | `app/(dashboard)/candidates/new/page.tsx` | Wave 2.7 in roadmap. Not rebuilt. |
+| `redesign/Custom Stages.dc.html` | No UI yet | Wave 2.6 — Migration 046 applied (`pipeline_stages` table), but the stage-manager UI is unbuilt. |
+| `redesign/Landing and Guide.dc.html` | `app/page.tsx`, `app/guide/**` | Wave 3.4 in roadmap. Not rebuilt. |
+| `redesign/AI Fit Analysis.dc.html` | No UI yet | Wave 3.1 blocked on Phase 0.8 legal consult. |
 
-_Audit in progress — placeholder._
+---
+
+## Remediation priorities
+
+Ordered by **visible candidate impact** × **fix-effort ratio** — what
+will move the needle most per hour of work.
+
+### Tier 1 — fix immediately (🔴 wrong-colour on brand moments)
+
+1. **Wave 3.3 Accept-offer button colour** — change `bg-emerald-600` → brand-blue. ~10 minutes. Highest-stakes single fix in the audit: candidate's "I'm taking the job" moment currently renders in the wrong brand colour.
+2. **Wave 3.3 Accept-confirm dialog button colour** — same change in the modal action.
+3. **Wave 1.2 Settings active-nav colour** — change `bg-accent` (green) → pale brand-blue `oklch(0.93 0.05 250)` per design. Affects every signed-in user navigating settings. ~15 minutes.
+4. **Wave 3.2 logo-placeholder colours** on `/jobs/[slug]` + apply-page job-header card — change `bg-gray-100` → brand-blue tint + text. ~15 minutes.
+
+### Tier 2 — same surface, easy follow-on (🔴 / 🟡 visible but smaller)
+
+5. **Wave 3.3 6px brand bar** at top of the offer card — single `<div>`, ~5 minutes.
+6. **Wave 3.3 inline countdown layout** in the "Respond by" row — currently a separate pill chip after the date; design wants the date + countdown rendered inline in amber when countdown is `soon` / `urgent`.
+7. **Wave 3.3 confirm-decline "Cancel" → "Go back"** + the "🎉" emoji on the accepted state title + the "Accepted {date}" footer.
+8. **Wave 1.2 sidebar chrome** — add the subtle `oklch(0.985 0.002 247)` background tint + right border separator.
+
+### Tier 3 — moderate work, real polish wins (🟡)
+
+9. **Wave 1.6 wire `AiDraftTag` into the remaining 4 AI components** (ai-jd-suggest, ai-bias-check, ai-interview-questions, ai-assessment-suggester). Each is a small targeted edit — header gets the tag.
+10. **Wave 3.2 CV-upload styling** — dashed brand-blue border on the apply form upload zone.
+11. **Wave 3.2 split the apply page** into two cards (job header + form) instead of one big card.
+12. **Wave 3.3 Recruiter-note italic styling** + visible-label rows on the offer summary.
+
+### Tier 4 — defer to the forward wave that owns the surface (the wave will rewrite the visual anyway)
+
+- `Candidate Profile A Refined.dc.html` gaps → Wave 2.3 rebuild
+- `Vacancy Detail.dc.html` gaps → Wave 2.4 rebuild
+- `Create Vacancy / Candidate Steps.dc.html` → Wave 2.7
+- `Custom Stages.dc.html` UI → Wave 2.6 stage-manager
+- `Vacancies.dc.html` card-grid view → Wave 2.4 (or its own slice)
+- `Landing and Guide.dc.html` → Wave 3.4
+- `AI Fit Analysis.dc.html` → Wave 3.1 (blocked on legal consult)
+
+---
+
+## Process change (committed to going forward)
+
+Before every wave build:
+
+1. Open the matching `.dc.html` end-to-end.
+2. Write a short "design specifies X / current code does Y / gap is Z"
+   delta as the first thing in the session.
+3. Code to that delta.
+
+This audit document is updated when a remediation lands — strike through
+the fixed row, move it to the changelog at the bottom (when there is one).
+
+---
+
+## Changelog
+
+_Empty so far — entries added as remediations land._
+
