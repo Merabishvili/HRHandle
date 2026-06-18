@@ -1,29 +1,53 @@
 import { notFound, redirect } from 'next/navigation'
+import { formatDistanceToNow } from 'date-fns'
+
 import { createClient } from '@/lib/supabase/server'
-import { getCandidateStatuses, getApplicationStatuses, getVacancyStatuses } from '@/lib/cache/lookups'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft, Pencil, CalendarPlus, Calendar, Video, ExternalLink } from 'lucide-react'
-import { StatusPill } from '@/components/ui/status-pill'
-import { SummaryStrip } from '@/components/candidates/summary-strip'
-import { ContactCard } from '@/components/candidates/contact-card'
-import { MetadataFooter } from '@/components/candidates/metadata-footer'
-import { CandidateDocuments } from '@/components/candidates/candidate-documents'
-import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
-import { DeleteCandidateButton } from '@/components/candidates/delete-candidate-button'
-import { CandidateApplicationsList } from '@/components/candidates/candidate-applications-list'
-import { ExperienceSection } from '@/components/candidates/experience-section'
-import { EducationSection } from '@/components/candidates/education-section'
-import { ActivityFeed } from '@/components/candidates/activity-feed'
-import { AiSummaryPanel } from '@/components/candidates/ai-summary-panel'
-import { AiNotesExtractor } from '@/components/candidates/ai-notes-extractor'
-import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
-import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
-import { format } from 'date-fns'
+import {
+  getCandidateStatuses,
+  getApplicationStatuses,
+} from '@/lib/cache/lookups'
+import type { ApplicationStatus } from '@/lib/types/application'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 import type { ActivityItem } from '@/components/candidates/activity-feed'
+import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { CandidateProfileShell } from '@/components/candidates/profile/profile-shell'
+import type { HistoryRow } from '@/components/candidates/profile/application-history'
+import type { RepeatApplicantSummary } from '@/components/candidates/profile/repeat-applicant-banner'
+import type { StageContextualBlockProps } from '@/components/candidates/profile/stage-contextual-block'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+/**
+ * Wave 2.3 candidate profile — rebuild per
+ * `redesign/Candidate Profile A Refined.dc.html`. Headline additions over
+ * the previous version:
+ *
+ *   1. Single outer card wrapping the whole working surface.
+ *   2. Repeat-applicant banner (amber tile) when the candidate has prior
+ *      closed applications. Surfaces a one-line summary + most-recent
+ *      rejection reason without expanding history.
+ *   3. Active vs closed split: live applications populate the
+ *      ActiveApplicationSelector (single pill at the top of the body);
+ *      closed ones live in the collapsible ApplicationHistory panel.
+ *   4. Stage-contextual block: the same slot under the selector changes
+ *      based on the selected application's current stage (Screening gate
+ *      with knockout-data tiles → Interview state with scheduled
+ *      interview + scorecard CTA → Offer state with build-offer CTA).
+ *   5. Right rail: dedicated ACTIONS section (primary "Advance to {next}"
+ *      + Schedule / Email / Reject), DETAILS section (consolidated
+ *      key-value layout for salary, notice, location, timezone,
+ *      languages, source, added), then CONTACT and custom fields below.
+ *
+ * Server component — data fetch only. All interactive state (selected
+ * application, history-open) lives in `CandidateProfileShell`.
+ *
+ * Known gaps (tech-debt.md §2):
+ *  - Screening recommendation + reason aren't persisted yet (Wave 2.5
+ *    `candidate_evaluations.recommendation` + `reason` columns pending).
+ *    For now the recommendation drives only the status transition.
+ *  - "Build offer" CTA on the Offer-state block routes to the existing
+ *    offer flow; design specifies an inline form to be added later.
+ *  - Merge candidates dropdown item is rendered but disabled — the flow
+ *    is a known unbuilt spec (audit `A-3`).
+ */
 
 interface CandidateRow {
   id: string
@@ -45,61 +69,24 @@ interface CandidateRow {
   deleted_at: string | null
 }
 
-import type {
-  CandidateStatusOption,
-  ApplicationStatusOption as AppStatusRow,
-} from '@/lib/types/database'
-
 interface ApplicationRow {
   id: string
-  candidate_id: string
   vacancy_id: string
   status_id: string | null
   applied_at: string
   updated_at: string
-  created_by: string | null
-  public_token: string | null
-}
-
-interface OfferRowForList {
-  id: string
-  application_id: string
-  status: 'draft' | 'sent' | 'accepted' | 'declined' | 'expired' | 'withdrawn'
-  role_title: string
-  compensation_amount: number | null
-  compensation_currency: string | null
-  compensation_period: 'annual' | 'monthly' | 'hourly' | 'project' | 'other' | null
-  start_date: string | null
-  expiry_date: string | null
-  body: string
-  recruiter_message: string | null
-  public_token: string | null
-  sent_at: string | null
-  responded_at: string | null
-  decline_reason: string | null
-}
-
-interface VacancyOption {
-  id: string
-  title: string
-  department: string | null
-  location: string | null
+  last_status_changed_at: string | null
 }
 
 interface InterviewRow {
   id: string
-  candidate_id: string
-  vacancy_id: string
   application_id: string | null
-  interviewer_id: string | null
   scheduled_at: string
   duration_minutes: number
   type: 'phone' | 'video' | 'onsite'
   status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
   google_meet_link: string | null
   meeting_link: string | null
-  created_at: string
-  profiles: { full_name: string | null }[] | null
 }
 
 interface DocumentRow {
@@ -123,7 +110,11 @@ interface RawActivityRow {
   created_at: string
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const TERMINAL_CODES: ReadonlySet<ApplicationStatus['code']> = new Set([
+  'hired',
+  'rejected',
+  'withdrawn',
+])
 
 function initials(first: string, last: string) {
   return `${first[0] ?? ''}${last[0] ?? ''}`.toUpperCase()
@@ -139,8 +130,6 @@ function computeYearsExp(entries: CandidateExperience[]): number | null {
   if (!earliest) return null
   return Math.max(0, Math.floor((Date.now() - earliest.getTime()) / (1000 * 60 * 60 * 24 * 365)))
 }
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function CandidateDetailPage({
   params,
@@ -165,7 +154,7 @@ export default async function CandidateDetailPage({
 
   const [
     { data: candidateRaw },
-    candidateStatusesRaw,
+    _candidateStatusesRaw,
     appStatusesRaw,
     { data: rejectionReasonsRaw },
     { data: rejectionTemplatesRaw },
@@ -202,17 +191,15 @@ export default async function CandidateDetailPage({
   const candidate = candidateRaw as CandidateRow | null
   if (!candidate) notFound()
 
-  const candidateStatuses = (candidateStatusesRaw || []) as CandidateStatusOption[]
-  const currentStatus = candidate.general_status_id
-    ? candidateStatuses.find((s) => s.id === candidate.general_status_id) ?? null
-    : null
+  const appStatuses = (appStatusesRaw || []) as ApplicationStatus[]
+  const sortedActiveStages = [...appStatuses]
+    .filter((s) => s.is_active && !TERMINAL_CODES.has(s.code))
+    .sort((a, b) => a.sort_order - b.sort_order)
+  const rejectedStatusId = appStatuses.find((s) => s.code === 'rejected')?.id ?? null
 
-  const appStatusMap = new Map(((appStatusesRaw || []) as AppStatusRow[]).map((s) => [s.id, s]))
-
-  // Applications + vacancies
   const { data: applicationsRaw } = await supabase
     .from('applications')
-    .select('id, candidate_id, vacancy_id, status_id, applied_at, updated_at, created_by, public_token')
+    .select('id, vacancy_id, status_id, applied_at, updated_at, last_status_changed_at')
     .eq('organization_id', organizationId)
     .eq('candidate_id', id)
     .is('deleted_at', null)
@@ -221,110 +208,132 @@ export default async function CandidateDetailPage({
   const applications = (applicationsRaw || []) as ApplicationRow[]
 
   const vacancyIds = [...new Set(applications.map((a) => a.vacancy_id))]
-  const vacancyMap = new Map<string, VacancyOption>()
+  const vacancyMap = new Map<string, { id: string; title: string }>()
   if (vacancyIds.length > 0) {
     const { data: vacanciesRaw } = await supabase
       .from('vacancies')
-      .select('id, title, department, location')
+      .select('id, title')
       .in('id', vacancyIds)
-    for (const v of (vacanciesRaw || []) as VacancyOption[]) vacancyMap.set(v.id, v)
-  }
-
-  // Evaluation questions + answers
-  const questionsByVacancy = new Map<string, { id: string; label: string; type: 'text' | 'score' }[]>()
-  if (vacancyIds.length > 0) {
-    const { data: qRaw } = await supabase
-      .from('vacancy_questions')
-      .select('id, label, type, sort_order, vacancy_id')
-      .in('vacancy_id', vacancyIds)
-      .order('sort_order', { ascending: true })
-    for (const q of (qRaw || []) as { id: string; label: string; type: 'text' | 'score'; sort_order: number; vacancy_id: string }[]) {
-      const arr = questionsByVacancy.get(q.vacancy_id) ?? []
-      arr.push({ id: q.id, label: q.label, type: q.type })
-      questionsByVacancy.set(q.vacancy_id, arr)
+    for (const v of (vacanciesRaw || []) as { id: string; title: string }[]) {
+      vacancyMap.set(v.id, v)
     }
   }
 
-  const evaluationsByApp = new Map<string, { id: string; score: number | null; answers: { question_id: string; text_value: string | null; score_value: number | null }[] }>()
-  const appIds = applications.map((a) => a.id)
-  if (appIds.length > 0) {
-    const { data: evalsRaw } = await supabase.from('candidate_evaluations').select('id, application_id, score').in('application_id', appIds)
-    const evals = (evalsRaw || []) as { id: string; application_id: string; score: number | null }[]
-    if (evals.length > 0) {
-      const { data: answersRaw } = await supabase
-        .from('candidate_evaluation_answers')
-        .select('evaluation_id, question_id, text_value, score_value')
-        .in('evaluation_id', evals.map((e) => e.id))
-      const answersByEval = new Map<string, { question_id: string; text_value: string | null; score_value: number | null }[]>()
-      for (const a of (answersRaw || []) as { evaluation_id: string; question_id: string; text_value: string | null; score_value: number | null }[]) {
-        const arr = answersByEval.get(a.evaluation_id) ?? []
-        arr.push({ question_id: a.question_id, text_value: a.text_value, score_value: a.score_value })
-        answersByEval.set(a.evaluation_id, arr)
+  const statusById = new Map(appStatuses.map((s) => [s.id, s]))
+
+  // Partition into active (selector + contextual block) vs closed (history)
+  const activeApplications = applications.flatMap((a) => {
+    const stage = a.status_id ? statusById.get(a.status_id) : null
+    if (!stage || TERMINAL_CODES.has(stage.code)) return []
+    const vacancy = vacancyMap.get(a.vacancy_id)
+    if (!vacancy) return []
+    return [{
+      id: a.id,
+      vacancyId: a.vacancy_id,
+      vacancyTitle: vacancy.title,
+      stage: { id: stage.id, code: stage.code, name: stage.name },
+    }]
+  })
+
+  // History rows — pull rejection reason name where applicable.
+  // Plus the furthest-reached-stage is approximated by the current stage
+  // (which is the closed stage). A proper reached-stage would need an
+  // audit-log lookup; tech-debt for now.
+  const closedApps = applications
+    .map((a) => {
+      const status = a.status_id ? statusById.get(a.status_id) : null
+      if (!status || !TERMINAL_CODES.has(status.code)) return null
+      const vacancy = vacancyMap.get(a.vacancy_id)
+      if (!vacancy) return null
+      return { app: a, status, vacancy }
+    })
+    .filter((x): x is { app: ApplicationRow; status: ApplicationStatus; vacancy: { id: string; title: string } } => x !== null)
+
+  // Per-application reason — looked up from the most recent rejection
+  // record. We do a single batch fetch then map.
+  const rejectionReasonMap = new Map<string, string>()
+  if (closedApps.length > 0) {
+    const closedIds = closedApps.map((c) => c.app.id)
+    const { data: rejectionRowsRaw } = await supabase
+      .from('application_rejections')
+      .select('application_id, rejection_reason_id')
+      .in('application_id', closedIds)
+    const rejectionRows = (rejectionRowsRaw ?? []) as {
+      application_id: string
+      rejection_reason_id: string | null
+    }[]
+    const reasonNameById = new Map(
+      ((rejectionReasonsRaw ?? []) as { id: string; name: string }[]).map((r) => [r.id, r.name]),
+    )
+    for (const r of rejectionRows) {
+      if (r.rejection_reason_id) {
+        const name = reasonNameById.get(r.rejection_reason_id)
+        if (name) rejectionReasonMap.set(r.application_id, name)
       }
-      for (const e of evals) {
-        if (e.application_id) {
-          evaluationsByApp.set(e.application_id, { id: e.id, score: e.score, answers: answersByEval.get(e.id) ?? [] })
+    }
+  }
+
+  const closedHistoryRows: HistoryRow[] = closedApps.map(({ app, status, vacancy }) => ({
+    applicationId: app.id,
+    vacancyTitle: vacancy.title,
+    outcome: status.code as 'rejected' | 'withdrawn' | 'hired',
+    reasonName: rejectionReasonMap.get(app.id) ?? null,
+    closedAt: app.last_status_changed_at ?? app.updated_at,
+    // Reached-stage approximation — not great, but acceptable until an
+    // audit-log query gives us the actual stage history.
+    reachedStageName: status.name,
+  }))
+
+  // Repeat-applicant summary
+  const rejectedCount = closedHistoryRows.filter((r) => r.outcome === 'rejected').length
+  const withdrawnCount = closedHistoryRows.filter((r) => r.outcome === 'withdrawn').length
+  const mostRecentClosed = closedHistoryRows[0] ?? null
+  const repeatSummary: RepeatApplicantSummary = {
+    totalClosed: closedHistoryRows.length,
+    rejectedCount,
+    withdrawnCount,
+    mostRecent: mostRecentClosed && (mostRecentClosed.outcome === 'rejected' || mostRecentClosed.outcome === 'withdrawn')
+      ? {
+          vacancyTitle: mostRecentClosed.vacancyTitle,
+          outcome: mostRecentClosed.outcome,
+          closedAtRelative: formatDistanceToNow(new Date(mostRecentClosed.closedAt), {
+            addSuffix: true,
+          }),
+          reasonName: mostRecentClosed.reasonName,
         }
-      }
-    }
+      : null,
   }
 
-  // Offers for these applications (G-018). Fetched here so the OfferPanel
-  // can render the active offer + history without an extra round-trip.
-  const offersByApplication = new Map<string, OfferRowForList[]>()
-  if (appIds.length > 0) {
-    const { data: offersRaw } = await supabase
-      .from('offers')
-      .select(
-        `id, application_id, status, role_title,
-         compensation_amount, compensation_currency, compensation_period,
-         start_date, expiry_date, body, recruiter_message, public_token,
-         sent_at, responded_at, decline_reason`,
-      )
-      .in('application_id', appIds)
+  // Upcoming interview per active application
+  const upcomingInterviewByApplication = new Map<
+    string,
+    StageContextualBlockProps['upcomingInterview']
+  >()
+  if (activeApplications.length > 0) {
+    const { data: interviewsRaw } = await supabase
+      .from('interviews')
+      .select('id, application_id, scheduled_at, duration_minutes, type, status, google_meet_link, meeting_link')
       .eq('organization_id', organizationId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false })
-    for (const row of (offersRaw || []) as OfferRowForList[]) {
-      const arr = offersByApplication.get(row.application_id) ?? []
-      arr.push(row)
-      offersByApplication.set(row.application_id, arr)
+      .eq('candidate_id', id)
+      .eq('status', 'scheduled')
+      .order('scheduled_at', { ascending: true })
+    const interviews = (interviewsRaw || []) as InterviewRow[]
+    const now = new Date()
+    for (const interview of interviews) {
+      if (!interview.application_id) continue
+      if (new Date(interview.scheduled_at) < now) continue
+      // First upcoming per application wins (we sorted ascending)
+      if (upcomingInterviewByApplication.has(interview.application_id)) continue
+      upcomingInterviewByApplication.set(interview.application_id, {
+        id: interview.id,
+        type: interview.type,
+        scheduledAt: interview.scheduled_at,
+        durationMinutes: interview.duration_minutes,
+        meetingLink: interview.google_meet_link || interview.meeting_link,
+      })
     }
   }
 
-  // Active application count
-  const activeAppStatusIds = new Set(((appStatusesRaw || []) as AppStatusRow[]).filter((s) => ['applied', 'screening', 'interview', 'offer'].includes(s.code)).map((s) => s.id))
-  const activeApplicationCount = applications.filter((a) => a.status_id && activeAppStatusIds.has(a.status_id)).length
-
-  // Open vacancies not already applied
-  const appliedVacancyIds = new Set(applications.map((a) => a.vacancy_id))
-  interface OpenVacancy { id: string; title: string; department: string | null }
-  let openVacancies: OpenVacancy[] = []
-  {
-    const vacancyStatusesRaw = await getVacancyStatuses()
-    const openStatusIds = vacancyStatusesRaw.filter((s) => s.code === 'open' || s.code === 'on_hold').map((s) => s.id)
-    if (openStatusIds.length > 0) {
-      const { data: raw } = await supabase
-        .from('vacancies')
-        .select('id, title, department')
-        .eq('organization_id', organizationId)
-        .in('status_id', openStatusIds)
-        .is('deleted_at', null)
-        .order('title', { ascending: true })
-      openVacancies = ((raw || []) as OpenVacancy[]).filter((v) => !appliedVacancyIds.has(v.id))
-    }
-  }
-
-  // Interviews
-  const { data: interviewsRaw } = await supabase
-    .from('interviews')
-    .select('id, candidate_id, vacancy_id, application_id, interviewer_id, scheduled_at, duration_minutes, type, status, google_meet_link, meeting_link, created_at, profiles(full_name)')
-    .eq('organization_id', organizationId)
-    .eq('candidate_id', id)
-    .order('scheduled_at', { ascending: false })
-  const interviews = (interviewsRaw || []) as InterviewRow[]
-
-  // Experience + Education + Documents + Custom fields
   const [
     { data: experienceRaw },
     { data: educationRaw },
@@ -340,10 +349,9 @@ export default async function CandidateDetailPage({
   ])
 
   const experienceEntries = (experienceRaw || []) as CandidateExperience[]
-  const educationEntries  = (educationRaw  || []) as CandidateEducation[]
-  const documents         = (documentsRaw  || []) as DocumentRow[]
+  const educationEntries = (educationRaw || []) as CandidateEducation[]
+  const documents = (documentsRaw || []) as DocumentRow[]
 
-  // Unified activity feed
   const { data: activityRaw } = await supabase
     .from('candidate_activity')
     .select('id, candidate_id, organization_id, kind, headline, body, meta, actor_name, created_at')
@@ -361,221 +369,81 @@ export default async function CandidateDetailPage({
     created_at: r.created_at,
   }))
 
-  // Derived values
-  const fullName      = `${candidate.first_name} ${candidate.last_name}`.trim()
-  const avatarInitials = initials(candidate.first_name, candidate.last_name)
-  const yearsExp       = computeYearsExp(experienceEntries)
-  const headlineExp    = experienceEntries[0]
+  const yearsExp = computeYearsExp(experienceEntries)
+  const headlineExp = experienceEntries[0]
     ? `${experienceEntries[0].title} at ${experienceEntries[0].company}`
     : null
 
+  // Headline subtitle: "role at company · location · 12y · EN · KA · DE · RU"
+  const subtitleParts = [
+    headlineExp,
+    candidate.location,
+    yearsExp ? `${yearsExp}y` : null,
+    ...candidate.languages,
+  ].filter(Boolean) as string[]
+  const headlineSubtitle = subtitleParts.length > 0 ? subtitleParts.join(' · ') : null
+
+  // Custom-field rail items — flatten short-typed fields for the dense rail.
+  // Long_text fields are deliberately excluded — they belong in the
+  // "Additional information" card under the contextual block, not in the
+  // dense rail.
+  const railCustomFields: { label: string; value: string | null }[] = []
+  for (const group of customFieldGroups) {
+    for (const field of group.fields) {
+      if (field.field_type === 'long_text') continue
+      const valueRow = customFieldValues.find((v) => v.field_id === field.id)
+      let value: string | null = null
+      if (valueRow) {
+        if (valueRow.value_text) value = valueRow.value_text
+        else if (valueRow.value_option) value = valueRow.value_option
+        else if (valueRow.value_number !== null && valueRow.value_number !== undefined) {
+          value = String(valueRow.value_number)
+        } else if (valueRow.value_boolean === true) value = 'Yes'
+        else if (valueRow.value_boolean === false) value = 'No'
+      }
+      railCustomFields.push({ label: field.name, value })
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-[1200px]">
-
-      {/* ── Page Header ──────────────────────────────────────────────────────── */}
-      <div className="mb-5 flex items-start justify-between gap-3">
-        {/* Left cluster */}
-        <div className="flex items-start gap-3.5">
-          {/* Back button */}
-          <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 rounded-md" asChild>
-            <Link href="/candidates" aria-label="Back to candidates">
-              <ChevronLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-
-          {/* Avatar */}
-          <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-[oklch(0.55_0.18_250/0.1)]">
-            <span className="text-[17px] font-semibold text-[oklch(0.55_0.18_250)]">{avatarInitials}</span>
-          </div>
-
-          {/* Name + status + headline */}
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em] text-foreground">{fullName}</h1>
-              {currentStatus && (
-                <StatusPill code={currentStatus.code} label={currentStatus.name} />
-              )}
-            </div>
-            {headlineExp && (
-              <p className="mt-1 text-[13px] text-muted-foreground">{headlineExp}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Right cluster */}
-        <div className="flex shrink-0 items-center gap-2">
-          <AddApplicationDialog
-            candidateId={id}
-            availableVacancies={openVacancies}
-            activeApplicationCount={activeApplicationCount}
-          />
-          <Button asChild variant="outline" size="sm" className="h-9 gap-1.5">
-            <Link href={`/candidates/${id}/edit`}>
-              <Pencil className="h-3.5 w-3.5" />
-              Edit
-            </Link>
-          </Button>
-          <DeleteCandidateButton candidateId={id} candidateName={fullName} />
-        </div>
-      </div>
-
-      {/* ── Summary Strip ────────────────────────────────────────────────────── */}
-      <SummaryStrip
-        location={candidate.location}
-        timezone={candidate.timezone}
-        languages={candidate.languages ?? []}
-        salaryExpectation={candidate.salary_expectation}
-        noticePeriod={candidate.notice_period}
-        yearsExperience={yearsExp}
-      />
-
-      {/* ── Two-column grid ──────────────────────────────────────────────────── */}
-      <div className="grid items-start gap-5" style={{ gridTemplateColumns: '1fr 400px' }}>
-
-        {/* ── LEFT COLUMN ──────────────────────────────────────────────────── */}
-        <div className="space-y-4">
-
-          {/* 0. AI summary (assistant, explicit-click only) */}
-          <AiSummaryPanel candidateId={id} />
-
-          {/* 1. Applied Vacancies */}
-          <div className="rounded-xl border border-border bg-card p-5">
-            <div className="mb-4 flex items-baseline gap-2">
-              <span className="text-[15px] font-bold text-foreground">Applied vacancies</span>
-              {applications.length > 0 && (
-                <>
-                  <span className="text-[12px] text-muted-foreground">·</span>
-                  <span className="text-[12px] text-muted-foreground">{activeApplicationCount} of {applications.length} active</span>
-                </>
-              )}
-            </div>
-            <CandidateApplicationsList
-              key={applications.map((a) => a.id).join(',')}
-              candidateId={id}
-              candidateName={fullName}
-              allStatuses={(appStatusesRaw || []) as AppStatusRow[]}
-              rejectionReasons={rejectionReasonsRaw ?? []}
-              rejectionTemplates={rejectionTemplatesRaw ?? []}
-              initialApplications={applications.map((app) => {
-                const vacancy  = vacancyMap.get(app.vacancy_id) ?? null
-                const appStatus = app.status_id ? appStatusMap.get(app.status_id) ?? null : null
-                return {
-                  id: app.id,
-                  vacancyId: app.vacancy_id,
-                  vacancyTitle: vacancy?.title ?? 'Unknown vacancy',
-                  vacancyDepartment: vacancy?.department ?? null,
-                  appliedAt: app.applied_at,
-                  appStatus: appStatus ?? null,
-                  questions: questionsByVacancy.get(app.vacancy_id) ?? [],
-                  existingEvaluation: evaluationsByApp.get(app.id) ?? null,
-                  publicToken: app.public_token,
-                  offers: offersByApplication.get(app.id) ?? [],
-                  canManageOffers: profile.role === 'owner' || profile.role === 'admin',
-                }
-              })}
-            />
-          </div>
-
-          {/* 2. Experience (timeline) */}
-          <ExperienceSection candidateId={candidate.id} initialEntries={experienceEntries} />
-
-          {/* 3. Education */}
-          <EducationSection candidateId={candidate.id} initialEntries={educationEntries} />
-
-          {/* 4. Additional information (custom fields, if any) */}
-          {customFieldGroups.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-5">
-              <p className="mb-3 text-[15px] font-bold text-foreground">Additional information</p>
-              <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
-            </div>
-          )}
-
-          {/* 5. Activity */}
-          <ActivityFeed
-            candidateId={candidate.id}
-            currentUserId={user.id}
-            currentUserName={profile.full_name ?? null}
-            initialItems={activityItems}
-          />
-        </div>
-
-        {/* ── RIGHT RAIL (sticky) ───────────────────────────────────────────── */}
-        <div className="sticky top-6 space-y-4">
-
-          {/* AI: structure interview notes (collapsible, explicit-click only) */}
-          <AiNotesExtractor candidateId={id} />
-
-          {/* Contact */}
-          <ContactCard
-            email={candidate.email}
-            phone={candidate.phone}
-            linkedinUrl={candidate.linkedin_profile_url}
-          />
-
-          {/* Documents */}
-          <CandidateDocuments candidateId={candidate.id} initialDocuments={documents} />
-
-          {/* Interviews */}
-          <div className="rounded-xl border border-border bg-card p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-[14px] font-bold text-foreground">Interviews</h3>
-              <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" asChild>
-                <Link href={`/interviews/new?candidate=${id}`}>
-                  <CalendarPlus className="h-3.5 w-3.5" />
-                  Schedule
-                </Link>
-              </Button>
-            </div>
-            {interviews.length > 0 ? (
-              <div className="space-y-2">
-                {interviews.slice(0, 3).map((iv) => {
-                  const meetLink = iv.google_meet_link || iv.meeting_link
-                  return (
-                    <div key={iv.id} className="rounded-lg bg-muted/50 px-3 py-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[13px] font-medium text-foreground"><span className="capitalize">{iv.type}</span> interview</p>
-                          <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-                            {format(new Date(iv.scheduled_at), 'MMM d, yyyy · h:mm a')}
-                          </p>
-                        </div>
-                        {meetLink && (
-                          <a
-                            href={meetLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20"
-                          >
-                            <Video className="h-3 w-3" />
-                            Join
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-                {interviews.length > 3 && (
-                  <p className="text-center text-xs text-muted-foreground">+{interviews.length - 3} more</p>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 py-6 text-muted-foreground">
-                <Calendar className="h-7 w-7 opacity-40" />
-                <p className="text-[12.5px]">No interviews scheduled</p>
-              </div>
-            )}
-          </div>
-
-          {/* Metadata */}
-          <MetadataFooter
-            source={candidate.source}
-            createdAt={candidate.created_at}
-            updatedAt={candidate.updated_at}
-            candidateId={candidate.id}
-          />
-        </div>
-      </div>
-    </div>
+    <CandidateProfileShell
+      candidate={{
+        id: candidate.id,
+        fullName: `${candidate.first_name} ${candidate.last_name}`.trim(),
+        initials: initials(candidate.first_name, candidate.last_name),
+        headlineSubtitle,
+        location: candidate.location,
+        timezone: candidate.timezone,
+        languages: candidate.languages ?? [],
+        yearsExperience: yearsExp,
+        salaryExpectation: candidate.salary_expectation,
+        noticePeriod: candidate.notice_period,
+        source: candidate.source,
+        addedAt: candidate.created_at,
+        email: candidate.email,
+        phone: candidate.phone,
+        linkedinUrl: candidate.linkedin_profile_url,
+        createdAt: candidate.created_at,
+        updatedAt: candidate.updated_at,
+      }}
+      organizationId={organizationId}
+      currentUserId={user.id}
+      currentUserName={profile.full_name ?? null}
+      activeApplications={activeApplications}
+      closedHistoryRows={closedHistoryRows}
+      repeatSummary={repeatSummary}
+      activeStages={sortedActiveStages.map((s) => ({ id: s.id, code: s.code, name: s.name }))}
+      upcomingInterviewByApplication={upcomingInterviewByApplication}
+      rejectionReasons={rejectionReasonsRaw ?? []}
+      rejectionTemplates={rejectionTemplatesRaw ?? []}
+      rejectedStatusId={rejectedStatusId}
+      experienceEntries={experienceEntries}
+      educationEntries={educationEntries}
+      activityItems={activityItems}
+      documents={documents}
+      customFieldGroups={customFieldGroups}
+      customFieldValues={customFieldValues}
+      railCustomFields={railCustomFields}
+    />
   )
 }
