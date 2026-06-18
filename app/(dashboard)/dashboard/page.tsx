@@ -415,7 +415,7 @@ export default async function DashboardPage() {
                       <div>
                         <p className="text-sm font-medium text-foreground">{vacancy.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {vacancy.department || 'No department'} • {vacancy.location || 'Remote'}
+                          {vacancy.department || 'No department'} · {vacancy.location || 'Remote'}
                         </p>
                       </div>
 
