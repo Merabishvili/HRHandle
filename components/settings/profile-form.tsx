@@ -65,6 +65,7 @@ export function ProfileForm({ profile, email }: ProfileFormProps) {
         <Label htmlFor="fullName">Full name</Label>
         <Input
           id="fullName"
+          autoComplete="name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           placeholder="Your full name"
@@ -77,6 +78,8 @@ export function ProfileForm({ profile, email }: ProfileFormProps) {
         <Input
           id="phone"
           type="tel"
+          autoComplete="tel"
+          inputMode="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="+995 5XX XX XX XX"
