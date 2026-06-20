@@ -202,10 +202,12 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
 
   if (vacancyError || !newVacancy) return { success: false, error: 'Failed to duplicate vacancy' }
 
-  // Copy assessment questions
+  // Copy assessment questions — including the Wave 2.5 must_have flag so
+  // duplicated roles inherit the original's hard-requirement attributes
+  // and recruiters don't have to re-toggle them.
   const { data: questions } = await ctx.supabase
     .from('vacancy_questions')
-    .select('label, type, sort_order')
+    .select('label, type, sort_order, must_have')
     .eq('vacancy_id', id)
     .eq('organization_id', ctx.orgId)
     .order('sort_order', { ascending: true })
@@ -218,6 +220,7 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
         label: q.label,
         type: q.type,
         sort_order: q.sort_order,
+        must_have: q.must_have ?? false,
       }))
     )
   }

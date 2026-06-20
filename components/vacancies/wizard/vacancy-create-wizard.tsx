@@ -7,6 +7,7 @@ import { ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { createVacancy } from '@/lib/actions/vacancies'
+import { bulkCreateVacancyQuestions } from '@/lib/actions/evaluations'
 import { WizardShell } from './wizard-shell'
 import { StepBasics, type BasicsState } from './step-basics'
 import { StepDatesComp, type DatesCompState } from './step-dates-comp'
@@ -147,6 +148,23 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
       if (!result.success) {
         toast.error(result.error)
         return
+      }
+
+      // Wave 2.5 — persist scorecard attributes captured in Step 4. We
+      // only push the attribute list (mapped to score-type questions);
+      // screening questions stay client-only until their schema lands
+      // (Wave 2.5 Slice 2 — tech-debt.md §2).
+      if (scorecard.attributes.length > 0) {
+        const attrEntries = scorecard.attributes
+          .filter((a) => a.label.trim().length > 0)
+          .map((a) => ({
+            label: a.label,
+            type: 'score' as const,
+            mustHave: a.mustHave,
+          }))
+        if (attrEntries.length > 0) {
+          await bulkCreateVacancyQuestions(result.data.id, attrEntries)
+        }
       }
 
       toast.success(publish ? 'Vacancy published.' : 'Vacancy saved as draft.')

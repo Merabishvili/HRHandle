@@ -57,6 +57,23 @@ Migration 046 introduced [`pipeline_stages`](../../scripts/046_pipeline_stages.s
 
 **Files touched on integration:** any place that calls `sendEmail()` for a recruiter — currently scattered in `lib/actions/applications.ts`, `lib/actions/interviews.ts`, etc.
 
+### 🟡 Wave 2.5 Slice 2 — screening questions schema
+
+Slice 1 (must-have flag on scorecard attributes) shipped on 2026-06-20 — see [Changelog](#changelog--paid-down). What's still outstanding from Wave 2.5:
+
+The vacancy create wizard's Step 4 captures **two** lists: scorecard attributes (now persisted) and **screening questions** (still client-only). Screening questions need a new table to land:
+
+- New table `vacancy_screening_questions` (id, org_id, vacancy_id, label, answer_type, is_knockout, knockout_answer, sort_order, timestamps).
+- New table `application_screening_answers` (id, org_id, application_id, question_id, answer_value, timestamps).
+- Wire the wizard's `screeningQuestions` array through a `bulkCreateScreeningQuestions` server action.
+- Render the questions on the public apply form ([`/apply/[token]`](../../app/apply/[token]/page.tsx)) and persist candidate answers.
+- Knockout logic: when a candidate's answer matches `knockout_answer`, auto-flag at screening (likely a `flagged_at_screening` column on `applications`, or surface in the application detail).
+- Bias-check the questions against the JD (could reuse the existing inclusive-language helper).
+
+The current wizard comment in [`step-scorecard.tsx`](../../components/vacancies/wizard/step-scorecard.tsx) already calls out the gap: "the full knockout-types enum (`yes_no_knockout`, `number`, `short_text`, `select`) ships with Wave 2.5 Slice 2 — tech-debt.md §2".
+
+**Estimated effort:** L — schema + apply form rewrite + tests.
+
 ### 🟡 `<AiDraftPanel />` shell — built but underused
 
 The shell was built in Wave 1.6 to be the standard 4-state container (`idle / generating / ready / error`) for AI features. Each existing AI component has its own state machine that pre-dates the shell.
@@ -229,4 +246,4 @@ Effort: trivial.
 
 ## Changelog — paid down
 
-_Empty so far. Add entries with date + commit hash when items here get resolved._
+- **2026-06-20 — Wave 2.5 Slice 1 (scorecard attribute must-have flag).** Migration [`047_vacancy_questions_must_have.sql`](../../scripts/047_vacancy_questions_must_have.sql) added `vacancy_questions.must_have BOOLEAN NOT NULL DEFAULT false`. New `bulkCreateVacancyQuestions` and `toggleVacancyQuestionMustHave` server actions in [`lib/actions/evaluations.ts`](../../lib/actions/evaluations.ts). The vacancy create wizard's Step 4 attributes now persist with their star flags; the vacancy detail Scorecard tab renders + edits the star inline. Slice 2 (screening questions) remains as a separate tech-debt entry above.

@@ -2,11 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { normalizeVacancyQuestionEntries } from '@/lib/vacancy-questions/normalize'
 
 export async function addVacancyQuestion(
   vacancyId: string,
   label: string,
-  type: 'text' | 'score'
+  type: 'text' | 'score',
+  mustHave: boolean = false,
 ): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -53,6 +55,10 @@ export async function addVacancyQuestion(
       label: trimmedLabel,
       type,
       sort_order: nextSortOrder,
+      // must_have only meaningful for score-type attributes. Text-type
+      // open questions stay false regardless of what the caller passed
+      // so the UI never shows a star on an open-question card.
+      must_have: type === 'score' && mustHave,
     })
     .select('id')
     .single()
@@ -61,6 +67,115 @@ export async function addVacancyQuestion(
 
   revalidatePath(`/vacancies/${vacancyId}`)
   return { success: true, data: { id: data.id } }
+}
+
+/**
+ * Wave 2.5 — bulk insert scorecard attributes from the create-vacancy
+ * wizard's Step 4. Skips entries with blank labels and stamps sort_order
+ * sequentially from whatever already exists on the vacancy, so re-running
+ * after a partial save doesn't reorder previously-added rows. Returns
+ * `{ inserted }` so the wizard can surface "Added N attributes" toasts.
+ */
+export async function bulkCreateVacancyQuestions(
+  vacancyId: string,
+  entries: { label: string; type: 'text' | 'score'; mustHave?: boolean }[],
+): Promise<ActionResult<{ inserted: number }>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { data: profile } = await ctx.supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', ctx.userId)
+    .single()
+
+  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+    return { success: false, error: 'Not authorized' }
+  }
+
+  const { data: vacancyCheck } = await ctx.supabase
+    .from('vacancies')
+    .select('id')
+    .eq('id', vacancyId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .single()
+
+  if (!vacancyCheck) return { success: false, error: 'Vacancy not found' }
+
+  const normalized = normalizeVacancyQuestionEntries(entries)
+  if (normalized.length === 0) return { success: true, data: { inserted: 0 } }
+
+  const { data: existing } = await ctx.supabase
+    .from('vacancy_questions')
+    .select('sort_order')
+    .eq('vacancy_id', vacancyId)
+    .eq('organization_id', ctx.orgId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+
+  const startSort = (existing?.[0]?.sort_order ?? -1) + 1
+
+  const rows = normalized.map((e, idx) => ({
+    vacancy_id: vacancyId,
+    organization_id: ctx.orgId,
+    label: e.label,
+    type: e.type,
+    sort_order: startSort + idx,
+    must_have: e.mustHave,
+  }))
+
+  const { error } = await ctx.supabase.from('vacancy_questions').insert(rows)
+  if (error) return { success: false, error: 'Failed to save scorecard attributes' }
+
+  revalidatePath(`/vacancies/${vacancyId}`)
+  return { success: true, data: { inserted: rows.length } }
+}
+
+/**
+ * Wave 2.5 — toggle the must-have flag on a single scorecard attribute.
+ * Type-text questions never carry a must_have semantic, so callers
+ * targeting one get a noop-success response.
+ */
+export async function toggleVacancyQuestionMustHave(
+  questionId: string,
+  vacancyId: string,
+  mustHave: boolean,
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { data: profile } = await ctx.supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', ctx.userId)
+    .single()
+
+  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+    return { success: false, error: 'Not authorized' }
+  }
+
+  const { data: existing } = await ctx.supabase
+    .from('vacancy_questions')
+    .select('id, type')
+    .eq('id', questionId)
+    .eq('vacancy_id', vacancyId)
+    .eq('organization_id', ctx.orgId)
+    .single()
+
+  if (!existing) return { success: false, error: 'Question not found' }
+  if (existing.type !== 'score') return { success: true, data: undefined }
+
+  const { error } = await ctx.supabase
+    .from('vacancy_questions')
+    .update({ must_have: mustHave })
+    .eq('id', questionId)
+    .eq('organization_id', ctx.orgId)
+
+  if (error) return { success: false, error: 'Failed to update attribute' }
+
+  revalidatePath(`/vacancies/${vacancyId}`)
+  return { success: true, data: undefined }
 }
 
 export async function removeVacancyQuestion(

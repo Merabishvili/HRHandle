@@ -232,13 +232,19 @@ export default async function VacancyDetailPage({
 
     supabase
       .from('vacancy_questions')
-      .select('id, label, type, sort_order')
+      .select('id, label, type, sort_order, must_have')
       .eq('vacancy_id', id)
       .order('sort_order', { ascending: true }),
   ])
 
   const allApplications = (applicationsRaw || []) as ApplicationRow[]
-  const questions = (questionsRaw || []) as { id: string; label: string; type: 'text' | 'score'; sort_order: number }[]
+  const questions = (questionsRaw || []) as {
+    id: string
+    label: string
+    type: 'text' | 'score'
+    sort_order: number
+    must_have?: boolean
+  }[]
   const canEditQuestions = profile?.role === 'owner' || profile?.role === 'admin'
 
   // Candidate basics for the attention rows
