@@ -4,8 +4,10 @@ import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
 import { DeleteVacancyButton } from '@/components/vacancies/delete-vacancy-button'
-import { getStageStyle } from '@/lib/pipeline/stage-style'
-import type { ApplicationStatus } from '@/lib/types/application'
+import {
+  PipelineStagesManager,
+  type PipelineStageRow,
+} from '@/components/vacancies/pipeline-stages-manager'
 
 interface SettingsTabProps {
   vacancyId: string
@@ -21,10 +23,12 @@ interface SettingsTabProps {
     current: { id: string; name: string; code: 'draft' | 'open' | 'on_hold' | 'closed' | 'archived' }
     available: { id: string; name: string; code: 'draft' | 'open' | 'on_hold' | 'closed' | 'archived' }[]
   }
-  /** Stage palette preview — the ordered set of stages applications can
-   * sit in for this org today. Wave 2.6 adds per-vacancy customization;
-   * for now this is read-only and stamped from the global table. */
-  stages: { id: string; name: string; code: ApplicationStatus['code'] }[]
+  /** Per-vacancy `pipeline_stages` rows in sort order. Wave 2.6 Slice 3
+   * makes these editable via PipelineStagesManager. */
+  stages: PipelineStageRow[]
+  /** Whether the current user can manage this vacancy's stages. Mirrors
+   * the org-admin role gate enforced by the server actions. */
+  canEditStages: boolean
 }
 
 /**
@@ -41,6 +45,7 @@ export function SettingsTab({
   roleDetails,
   status,
   stages,
+  canEditStages,
 }: SettingsTabProps) {
   return (
     <div className="grid gap-4 bg-[oklch(0.985_0.002_247)] p-5 sm:p-6 lg:grid-cols-2">
@@ -91,29 +96,11 @@ export function SettingsTab({
           aria-label="Pipeline stages"
         >
           <h2 className="mb-3 text-[15px] font-bold text-foreground">Pipeline stages</h2>
-          <div className="flex flex-wrap gap-1.5">
-            {stages.map((stage) => {
-              const style = getStageStyle(stage.code)
-              return (
-                <span
-                  key={stage.id}
-                  className="rounded-md px-2.5 py-1 text-[12px] font-semibold"
-                  style={{ background: style.pillBg, color: style.pillText }}
-                >
-                  {stage.name}
-                </span>
-              )
-            })}
-            <span
-              className="rounded-md border border-dashed border-[oklch(0.85_0.01_250)] px-2.5 py-1 text-[12px] font-semibold text-muted-foreground"
-              title="Per-vacancy custom stages ship in Wave 2.6"
-            >
-              + Add stage <span className="ml-1 rounded bg-muted px-1 text-[9px] font-bold uppercase">soon</span>
-            </span>
-          </div>
-          <p className="mt-2.5 text-[12px] text-muted-foreground">
-            Customize per role — extra rounds, assessment, etc.
-          </p>
+          <PipelineStagesManager
+            vacancyId={vacancyId}
+            initialStages={stages}
+            canEdit={canEditStages}
+          />
         </section>
       </div>
 

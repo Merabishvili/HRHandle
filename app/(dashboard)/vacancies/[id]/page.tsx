@@ -223,6 +223,7 @@ export default async function VacancyDetailPage({
     { data: applicationsRaw },
     { data: questionsRaw },
     { data: screeningQuestionsRaw },
+    { data: pipelineStagesRaw },
   ] = await Promise.all([
     supabase
       .from('applications')
@@ -241,6 +242,15 @@ export default async function VacancyDetailPage({
     supabase
       .from('vacancy_screening_questions')
       .select('id, label, answer_type, is_knockout, knockout_answer, sort_order')
+      .eq('vacancy_id', id)
+      .order('sort_order', { ascending: true }),
+
+    // Wave 2.6 Slice 3 — per-vacancy pipeline stages drive the
+    // SettingsTab manager. Order matches what the recruiter sees on
+    // the per-vacancy kanban.
+    supabase
+      .from('pipeline_stages')
+      .select('id, name, type, is_terminal, sort_order')
       .eq('vacancy_id', id)
       .order('sort_order', { ascending: true }),
   ])
@@ -521,7 +531,16 @@ export default async function VacancyDetailPage({
                   : vacancyStatuses[0]!,
                 available: vacancyStatuses,
               }}
-              stages={funnel.map((f) => ({ id: f.statusId, name: f.name, code: f.code }))}
+              stages={
+                (pipelineStagesRaw ?? []) as {
+                  id: string
+                  name: string
+                  type: 'standard' | 'review' | 'interview' | 'offer'
+                  is_terminal: boolean
+                  sort_order: number
+                }[]
+              }
+              canEditStages={canEditQuestions}
             />
           </TabsContent>
         </Tabs>
