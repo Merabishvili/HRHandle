@@ -13,10 +13,10 @@ export interface ScorecardAttribute {
 
 export interface ScorecardScreeningQuestion {
   label: string
-  /** Knockout questions auto-flag the application at screening. The full
-   * knockout-types enum (`yes_no_knockout`, `number`, `short_text`,
-   * `select`) ships with Wave 2.5; the wizard captures only the label
-   * and a knockout flag for now (tech-debt.md §2). */
+  /** Knockout questions auto-flag the application at screening. Slice 2a
+   * persists these as `yes_no` rows on `vacancy_screening_questions`;
+   * Slice 2b extends the wizard to capture the other answer types and
+   * wires the public apply form to read + write answers. */
   knockout: boolean
 }
 
@@ -40,11 +40,10 @@ interface StepScorecardProps {
  *   - Screening questions: asked on the apply form; knockout answers
  *     auto-flag.
  *
- * Both lists are captured client-side only — Wave 2.5 introduces the
- * schema (vacancy_questions.must_have, screening_answer_type) needed to
- * persist these. The wizard ships without writing them so a clean
- * draft / publish flow still works; users can edit on the vacancy
- * Scorecard tab once the schema lands.
+ * Wave 2.5 Slice 1 + 2a wires both lists to persistence —
+ * `vacancy_questions.must_have` for the attribute stars and the new
+ * `vacancy_screening_questions` table for the screening list. The
+ * candidate-facing apply form integration ships with Slice 2b.
  */
 export function StepScorecard({ value, onChange }: StepScorecardProps) {
   const [newAttribute, setNewAttribute] = useState('')

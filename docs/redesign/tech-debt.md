@@ -22,9 +22,9 @@
 
 ## 1 · Schema cutover pending
 
-### 🔴 Migration 047 — drop `applications.status_id` → add `applications.pipeline_stage_id`
+### 🔴 Migration 049 — drop `applications.status_id` → add `applications.pipeline_stage_id`
 
-Migration 046 introduced [`pipeline_stages`](../../scripts/046_pipeline_stages.sql) but no caller uses it yet. The whole app reads `applications.status_id` against the global `application_statuses` table (the legacy 7-status set).
+Migration 046 introduced [`pipeline_stages`](../../scripts/046_pipeline_stages.sql) but no caller uses it yet. The whole app reads `applications.status_id` against the global `application_statuses` table (the legacy 7-status set). (Migrations 047 and 048 went to the Wave 2.5 must-have flag and screening-questions schema respectively; the pipeline-stage cutover takes the next slot.)
 
 **What blocks:**
 - Per-vacancy custom stages (Wave 2.6 proper).
@@ -32,7 +32,7 @@ Migration 046 introduced [`pipeline_stages`](../../scripts/046_pipeline_stages.s
 - "Custom Stages.dc.html" UI can't ship.
 
 **What needs to happen:**
-1. Write Migration 047: `applications.pipeline_stage_id UUID REFERENCES pipeline_stages(id)`, drop `status_id`.
+1. Write Migration 049: `applications.pipeline_stage_id UUID REFERENCES pipeline_stages(id)`, drop `status_id`.
 2. Update ~20 callsites (any file touching `application_statuses` lookups, status updates, status filters). High-traffic: [`lib/actions/applications.ts`](../../lib/actions/applications.ts), [`components/pipeline/kanban-board.tsx`](../../components/pipeline/kanban-board.tsx), [`components/pipeline/cross-vacancy-board.tsx`](../../components/pipeline/cross-vacancy-board.tsx), [`app/(dashboard)/pipeline/page.tsx`](../../app/(dashboard)/pipeline/page.tsx), [`app/(dashboard)/vacancies/[id]/pipeline/page.tsx`](../../app/(dashboard)/vacancies/[id]/pipeline/page.tsx), `lib/cache/lookups.ts`.
 3. Wire `seed_default_pipeline_stages(vacancy_id)` into `createVacancy` so new vacancies get the default 7-stage set on insert.
 4. Build the Pipeline Stages manager UI for the Vacancy Detail "Settings" tab (per [`Custom Stages.dc.html`](../../redesign/Custom Stages.dc.html)).
@@ -57,22 +57,17 @@ Migration 046 introduced [`pipeline_stages`](../../scripts/046_pipeline_stages.s
 
 **Files touched on integration:** any place that calls `sendEmail()` for a recruiter — currently scattered in `lib/actions/applications.ts`, `lib/actions/interviews.ts`, etc.
 
-### 🟡 Wave 2.5 Slice 2 — screening questions schema
+### 🟡 Wave 2.5 Slice 2b — apply-form integration for screening questions
 
-Slice 1 (must-have flag on scorecard attributes) shipped on 2026-06-20 — see [Changelog](#changelog--paid-down). What's still outstanding from Wave 2.5:
+Slice 1 (scorecard attribute must-have flag) and Slice 2a (screening questions schema + recruiter UI) shipped — see [Changelog](#changelog--paid-down). What's still outstanding from Wave 2.5 is the candidate-facing half:
 
-The vacancy create wizard's Step 4 captures **two** lists: scorecard attributes (now persisted) and **screening questions** (still client-only). Screening questions need a new table to land:
-
-- New table `vacancy_screening_questions` (id, org_id, vacancy_id, label, answer_type, is_knockout, knockout_answer, sort_order, timestamps).
-- New table `application_screening_answers` (id, org_id, application_id, question_id, answer_value, timestamps).
-- Wire the wizard's `screeningQuestions` array through a `bulkCreateScreeningQuestions` server action.
-- Render the questions on the public apply form ([`/apply/[token]`](../../app/apply/[token]/page.tsx)) and persist candidate answers.
-- Knockout logic: when a candidate's answer matches `knockout_answer`, auto-flag at screening (likely a `flagged_at_screening` column on `applications`, or surface in the application detail).
+- Render the questions on the public apply form ([`/apply/[token]`](../../app/apply/[token]/page.tsx)). Layout per [`Public Pages.dc.html`](../../redesign/Public Pages.dc.html) §2: a new section between "About you" and the CV upload, one input per question, brand-blue primary submit.
+- Wire the apply form's submit to persist `application_screening_answers` (one row per question per application), pre-computing `is_knockout_flag` against `vacancy_screening_questions.knockout_answer` so the screening tab doesn't have to re-derive on every render.
+- Surface the knockout flag on the application detail / Screening view — the design says **let the candidate submit; we flag internally**, so the apply-form UX must remain identical regardless of answer.
+- Extend the wizard's Step 4 + the vacancy-detail card to capture `answer_type` other than `yes_no` (currently hard-coded; Slice 2a only ships `yes_no`).
 - Bias-check the questions against the JD (could reuse the existing inclusive-language helper).
 
-The current wizard comment in [`step-scorecard.tsx`](../../components/vacancies/wizard/step-scorecard.tsx) already calls out the gap: "the full knockout-types enum (`yes_no_knockout`, `number`, `short_text`, `select`) ships with Wave 2.5 Slice 2 — tech-debt.md §2".
-
-**Estimated effort:** L — schema + apply form rewrite + tests.
+**Estimated effort:** M — apply form rewrite + screening-tab surface + tests. No further schema changes needed (Slice 2a's `application_screening_answers` table already exists with the right shape).
 
 ### 🟡 `<AiDraftPanel />` shell — built but underused
 
@@ -247,3 +242,4 @@ Effort: trivial.
 ## Changelog — paid down
 
 - **2026-06-20 — Wave 2.5 Slice 1 (scorecard attribute must-have flag).** Migration [`047_vacancy_questions_must_have.sql`](../../scripts/047_vacancy_questions_must_have.sql) added `vacancy_questions.must_have BOOLEAN NOT NULL DEFAULT false`. New `bulkCreateVacancyQuestions` and `toggleVacancyQuestionMustHave` server actions in [`lib/actions/evaluations.ts`](../../lib/actions/evaluations.ts). The vacancy create wizard's Step 4 attributes now persist with their star flags; the vacancy detail Scorecard tab renders + edits the star inline. Slice 2 (screening questions) remains as a separate tech-debt entry above.
+- **2026-06-20 — Wave 2.5 Slice 2a (screening questions schema + recruiter UI).** Migration [`048_vacancy_screening_questions.sql`](../../scripts/048_vacancy_screening_questions.sql) added two tables: `vacancy_screening_questions` (label + answer_type + is_knockout + knockout_answer + sort_order) and `application_screening_answers` (pre-computed `is_knockout_flag` per application × question). New actions in [`lib/actions/screening-questions.ts`](../../lib/actions/screening-questions.ts) (`bulkCreateScreeningQuestions`, `listScreeningQuestionsForVacancy`, `deleteScreeningQuestion`). The vacancy create wizard's Step 4 now persists screening questions as `yes_no` rows; the vacancy detail Scorecard tab grew a new "Screening questions" card with add/remove/knockout-toggle. Slice 2b (apply form integration + answers writer) tracked separately above.

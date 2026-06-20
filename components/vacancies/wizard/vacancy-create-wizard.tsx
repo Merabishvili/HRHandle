@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { createVacancy } from '@/lib/actions/vacancies'
 import { bulkCreateVacancyQuestions } from '@/lib/actions/evaluations'
+import { bulkCreateScreeningQuestions } from '@/lib/actions/screening-questions'
 import { WizardShell } from './wizard-shell'
 import { StepBasics, type BasicsState } from './step-basics'
 import { StepDatesComp, type DatesCompState } from './step-dates-comp'
@@ -150,10 +151,8 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
         return
       }
 
-      // Wave 2.5 — persist scorecard attributes captured in Step 4. We
-      // only push the attribute list (mapped to score-type questions);
-      // screening questions stay client-only until their schema lands
-      // (Wave 2.5 Slice 2 — tech-debt.md §2).
+      // Wave 2.5 Slice 1 — persist scorecard attributes captured in
+      // Step 4 as score-type vacancy_questions with their must_have flags.
       if (scorecard.attributes.length > 0) {
         const attrEntries = scorecard.attributes
           .filter((a) => a.label.trim().length > 0)
@@ -164,6 +163,20 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
           }))
         if (attrEntries.length > 0) {
           await bulkCreateVacancyQuestions(result.data.id, attrEntries)
+        }
+      }
+
+      // Wave 2.5 Slice 2a — persist the screening questions captured in
+      // Step 4 as `yes_no` rows on vacancy_screening_questions. The apply
+      // form integration (Slice 2b) renders them and writes
+      // application_screening_answers — until then these are recruiter-
+      // visible only, on the vacancy detail's Scorecard tab.
+      if (scorecard.screeningQuestions.length > 0) {
+        const screeningEntries = scorecard.screeningQuestions
+          .filter((q) => q.label.trim().length > 0)
+          .map((q) => ({ label: q.label, knockout: q.knockout }))
+        if (screeningEntries.length > 0) {
+          await bulkCreateScreeningQuestions(result.data.id, screeningEntries)
         }
       }
 

@@ -8,6 +8,7 @@ import {
 } from '@/lib/cache/lookups'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
+import { ScreeningQuestionsCard } from '@/components/vacancies/screening-questions-card'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
@@ -221,6 +222,7 @@ export default async function VacancyDetailPage({
   const [
     { data: applicationsRaw },
     { data: questionsRaw },
+    { data: screeningQuestionsRaw },
   ] = await Promise.all([
     supabase
       .from('applications')
@@ -235,6 +237,12 @@ export default async function VacancyDetailPage({
       .select('id, label, type, sort_order, must_have')
       .eq('vacancy_id', id)
       .order('sort_order', { ascending: true }),
+
+    supabase
+      .from('vacancy_screening_questions')
+      .select('id, label, answer_type, is_knockout, knockout_answer, sort_order')
+      .eq('vacancy_id', id)
+      .order('sort_order', { ascending: true }),
   ])
 
   const allApplications = (applicationsRaw || []) as ApplicationRow[]
@@ -244,6 +252,14 @@ export default async function VacancyDetailPage({
     type: 'text' | 'score'
     sort_order: number
     must_have?: boolean
+  }[]
+  const screeningQuestions = (screeningQuestionsRaw || []) as {
+    id: string
+    label: string
+    answer_type: 'yes_no' | 'short_text' | 'number' | 'select'
+    is_knockout: boolean
+    knockout_answer: string | null
+    sort_order: number
   }[]
   const canEditQuestions = profile?.role === 'owner' || profile?.role === 'admin'
 
@@ -464,17 +480,18 @@ export default async function VacancyDetailPage({
                 />
               </section>
 
+              <ScreeningQuestionsCard
+                vacancyId={vacancy.id}
+                initialQuestions={screeningQuestions}
+                canEdit={canEditQuestions}
+              />
+
               {vacancyCustomFieldGroups.length > 0 && (
                 <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Additional information">
                   <h2 className="mb-3 text-[15px] font-bold text-foreground">Additional information</h2>
                   <CustomFieldsDisplay groups={vacancyCustomFieldGroups} values={vacancyCustomFieldValues} />
                 </section>
               )}
-
-              <p className="text-[11.5px] text-muted-foreground">
-                Screening questions on the public apply form ship with Wave 2.5 — same attributes, asked
-                of candidates at apply-time, with knockout flags wired into the candidate profile.
-              </p>
             </div>
           </TabsContent>
 
