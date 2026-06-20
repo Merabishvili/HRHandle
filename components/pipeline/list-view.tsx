@@ -12,7 +12,6 @@ import type { CrossVacancyCardData } from './cross-vacancy-card'
 interface ListViewProps {
   cards: CrossVacancyCardData[]
   statuses: ApplicationStatus[]
-  selectMode: boolean
   selectedIds: Set<string>
   onToggleSelect: (id: string, next: boolean) => void
   onToggleAll: (allSelected: boolean) => void
@@ -32,7 +31,6 @@ interface ListViewProps {
 export function ListView({
   cards,
   statuses,
-  selectMode,
   selectedIds,
   onToggleSelect,
   onToggleAll,
@@ -54,15 +52,13 @@ export function ListView({
       <table className="min-w-full divide-y divide-border text-sm">
         <thead className="bg-muted/40 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
           <tr>
-            {selectMode && (
-              <th className="w-10 px-3 py-2.5">
-                <Checkbox
-                  checked={allSelected}
-                  onCheckedChange={(v) => onToggleAll(v === true)}
-                  aria-label="Select all candidates"
-                />
-              </th>
-            )}
+            <th className="w-10 px-3 py-2.5">
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={(v) => onToggleAll(v === true)}
+                aria-label="Select all candidates"
+              />
+            </th>
             <th className="px-3 py-2.5">Candidate</th>
             <th className="px-3 py-2.5">Role</th>
             <th className="px-3 py-2.5">Stage</th>
@@ -86,17 +82,15 @@ export function ListView({
                   selected && 'bg-primary/5',
                 )}
               >
-                {selectMode && (
-                  <td className="px-3 py-2">
-                    <Checkbox
-                      checked={selected}
-                      onCheckedChange={(v) =>
-                        onToggleSelect(card.applicationId, v === true)
-                      }
-                      aria-label={`Select ${card.firstName} ${card.lastName}`}
-                    />
-                  </td>
-                )}
+                <td className="px-3 py-2">
+                  <Checkbox
+                    checked={selected}
+                    onCheckedChange={(v) =>
+                      onToggleSelect(card.applicationId, v === true)
+                    }
+                    aria-label={`Select ${card.firstName} ${card.lastName}`}
+                  />
+                </td>
                 <td className="px-3 py-2">
                   <Link
                     href={`/candidates/${card.candidateId}`}

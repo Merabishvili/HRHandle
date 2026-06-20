@@ -12,7 +12,7 @@ import {
   type DragOverEvent,
 } from '@dnd-kit/core'
 import { toast } from 'sonner'
-import { Zap, LayoutGrid, List as ListIcon, Rows, Square, CheckSquare } from 'lucide-react'
+import { Zap, LayoutGrid, List as ListIcon, Rows } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -101,7 +101,6 @@ export function CrossVacancyBoard({
   const [reviewing, setReviewing] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('board')
   const [density, setDensity] = useState<CardDensity>('comfortable')
-  const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const sensors = useSensors(
@@ -371,7 +370,6 @@ export function CrossVacancyBoard({
       toast.success(`Moved ${ids.length} ${ids.length === 1 ? 'candidate' : 'candidates'}.`)
     }
     setSelectedIds(new Set())
-    setSelectMode(false)
   }
 
   const handleBulkReject = async () => {
@@ -403,26 +401,6 @@ export function CrossVacancyBoard({
             {viewMode === 'board' && (
               <DensityToggle density={density} onChange={setDensity} />
             )}
-
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn('gap-1.5 text-xs', selectMode && 'border-primary text-primary')}
-              onClick={() => {
-                setSelectMode((v) => {
-                  if (v) setSelectedIds(new Set())
-                  return !v
-                })
-              }}
-              aria-pressed={selectMode}
-            >
-              {selectMode ? (
-                <CheckSquare className="h-3.5 w-3.5" aria-hidden />
-              ) : (
-                <Square className="h-3.5 w-3.5" aria-hidden />
-              )}
-              Select
-            </Button>
 
             <RoleFilterDropdown options={roles} value={roleFilter} onChange={setRoleFilter} />
 
@@ -459,7 +437,6 @@ export function CrossVacancyBoard({
                   cards={cardsByStageCode.get(status.code) ?? []}
                   isOver={overId === status.id}
                   density={density}
-                  selectMode={selectMode}
                   selectedIds={selectedIds}
                   onToggleSelect={handleToggleSelect}
                 />
@@ -491,7 +468,6 @@ export function CrossVacancyBoard({
                     density={density}
                     selected={false}
                     onToggleSelect={() => {}}
-                    selectMode={false}
                   />
                 </div>
               )}
@@ -502,7 +478,6 @@ export function CrossVacancyBoard({
             <ListView
               cards={cardData}
               statuses={statuses}
-              selectMode={selectMode}
               selectedIds={selectedIds}
               onToggleSelect={handleToggleSelect}
               onToggleAll={handleToggleAll}
@@ -519,7 +494,6 @@ export function CrossVacancyBoard({
           onReject={handleBulkReject}
           onClear={() => {
             setSelectedIds(new Set())
-            setSelectMode(false)
           }}
         />
       )}

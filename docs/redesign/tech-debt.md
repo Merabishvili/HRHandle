@@ -26,6 +26,14 @@
 
 All five slices landed end-to-end. See the changelog below for what each one covered.
 
+### 🟢 Candidate "inactive when all apps closed" trigger dropped by Migration 051
+
+Migration 022's `trg_sync_candidate_status` flipped a candidate's `general_status_id` to `inactive` when every one of their applications was in a closed bucket (rejected / withdrawn / hired). The trigger keyed off `applications.status_id`, so Migration 051 had to drop it.
+
+The hired/active transitions on individual apps are handled in app code today (`updateApplicationStatus` + `rejectApplication` + `offers.ts` accept-hire). The "all closed → inactive" sweep was not duplicated. Result: a candidate with only closed apps stays at `active` instead of falling to `inactive` on the Candidates index filter.
+
+**To pay back:** recreate the trigger keyed on `applications.pipeline_stage_id`, using `pipeline_stages.is_terminal` as the closed check (no JOIN through `application_statuses` needed). One-file migration.
+
 ---
 
 ## 2 · Forward-compat surfaces partially wired

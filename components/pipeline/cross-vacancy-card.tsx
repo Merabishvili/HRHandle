@@ -39,9 +39,6 @@ interface CrossVacancyCardProps {
   density: CardDensity
   selected: boolean
   onToggleSelect: (id: string, next: boolean) => void
-  /** Show the selection checkbox. The bulk bar controls this — checkboxes
-   * appear only when bulk-select mode is active. */
-  selectMode: boolean
 }
 
 /** Avatar background hue, deterministic per first letter. The design
@@ -88,7 +85,6 @@ export function CrossVacancyCard({
   density,
   selected,
   onToggleSelect,
-  selectMode,
 }: CrossVacancyCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: data.applicationId })
@@ -123,13 +119,11 @@ export function CrossVacancyCard({
           )}
           style={{ borderLeft: `3px solid ${spine}` }}
         >
-          {selectMode && (
-            <Checkbox
-              checked={selected}
-              onCheckedChange={(v) => onToggleSelect(data.applicationId, v === true)}
-              aria-label={`Select ${data.firstName} ${data.lastName}`}
-            />
-          )}
+          <Checkbox
+            checked={selected}
+            onCheckedChange={(v) => onToggleSelect(data.applicationId, v === true)}
+            aria-label={`Select ${data.firstName} ${data.lastName}`}
+          />
           <button
             type="button"
             {...attributes}
@@ -185,14 +179,12 @@ export function CrossVacancyCard({
         </div>
 
         <div className="flex items-start gap-2">
-          {selectMode && (
-            <Checkbox
-              checked={selected}
-              onCheckedChange={(v) => onToggleSelect(data.applicationId, v === true)}
-              aria-label={`Select ${data.firstName} ${data.lastName}`}
-              className="mt-1"
-            />
-          )}
+          <Checkbox
+            checked={selected}
+            onCheckedChange={(v) => onToggleSelect(data.applicationId, v === true)}
+            aria-label={`Select ${data.firstName} ${data.lastName}`}
+            className="mt-1"
+          />
           <button
             type="button"
             {...attributes}

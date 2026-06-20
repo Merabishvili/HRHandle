@@ -13,7 +13,6 @@ interface TintedKanbanColumnProps {
   cards: CrossVacancyCardData[]
   isOver: boolean
   density: CardDensity
-  selectMode: boolean
   selectedIds: Set<string>
   onToggleSelect: (id: string, next: boolean) => void
 }
@@ -32,7 +31,6 @@ export function TintedKanbanColumn({
   cards,
   isOver,
   density,
-  selectMode,
   selectedIds,
   onToggleSelect,
 }: TintedKanbanColumnProps) {
@@ -78,16 +76,9 @@ export function TintedKanbanColumn({
               density={density}
               selected={selectedIds.has(card.applicationId)}
               onToggleSelect={onToggleSelect}
-              selectMode={selectMode}
             />
           ))}
         </SortableContext>
-
-        {cards.length === 0 && (
-          <p className="flex flex-1 items-center justify-center py-6 text-[11.5px] text-muted-foreground/60">
-            Drop here
-          </p>
-        )}
       </div>
     </div>
   )

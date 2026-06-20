@@ -92,12 +92,6 @@ export function KanbanColumn({ column, applications, isOver }: KanbanColumnProps
             />
           ))}
         </SortableContext>
-
-        {applications.length === 0 && (
-          <p className="flex flex-1 items-center justify-center text-xs text-muted-foreground/50">
-            Drop here
-          </p>
-        )}
       </div>
     </div>
   )
