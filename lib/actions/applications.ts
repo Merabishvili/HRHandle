@@ -23,6 +23,7 @@ import {
   resolvePipelineStageId,
   type LegacyStatusCode,
 } from '@/lib/pipeline-stages/resolve'
+import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 
 /**
  * A-003: PostgREST's relation embedding sometimes returns a single row as an
@@ -342,6 +343,77 @@ export async function updateApplicationStatus(
   return { success: true, data: undefined }
 }
 
+/**
+ * Wave 2.6 Slice 2b — move an application onto a specific per-vacancy
+ * pipeline_stages row. The recruiter's per-vacancy board calls this on
+ * every drop so the app's `pipeline_stage_id` ends up at the EXACT stage
+ * they dropped on (preserves custom-stage names like "Sourced",
+ * "Closed - not a fit"), while the legacy `status_id` is mirrored to the
+ * canonical bucket via the shared mapper.
+ *
+ * Internally this delegates to `updateApplicationStatus` to reuse the
+ * audit log + candidate-status sync + webhook + opt-in auto-email
+ * machinery (all keyed off the canonical code). After that succeeds we
+ * overwrite `pipeline_stage_id` with the recruiter's specific choice
+ * (updateApplicationStatus' bucket-mapped pipeline_stage_id would
+ * otherwise collapse to the default per-vacancy stage with that code).
+ */
+export async function updateApplicationPipelineStage(
+  applicationId: string,
+  newPipelineStageId: string,
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  // Resolve the target stage so we know which canonical bucket it
+  // belongs to. RLS scopes the row to the caller's org.
+  const { data: stageRow } = await ctx.supabase
+    .from('pipeline_stages')
+    .select('id, name, type, is_terminal')
+    .eq('id', newPipelineStageId)
+    .eq('organization_id', ctx.orgId)
+    .single()
+
+  if (!stageRow) return { success: false, error: 'Pipeline stage not found' }
+
+  const canonicalCode = mapPipelineStageToBucket({
+    type: stageRow.type as 'standard' | 'review' | 'interview' | 'offer',
+    name: stageRow.name as string,
+    is_terminal: stageRow.is_terminal as boolean,
+  })
+
+  // Look up the canonical application_statuses.id for the mapped code.
+  const { data: canonicalStatus } = await ctx.supabase
+    .from('application_statuses')
+    .select('id')
+    .eq('code', canonicalCode)
+    .single()
+
+  if (!canonicalStatus) return { success: false, error: 'Status configuration missing' }
+
+  // Fire the canonical-status update (audit / email / webhook / candidate
+  // status sync all hang off this). It also writes a bucket-mapped
+  // `pipeline_stage_id` — we overwrite that next so the app lands on the
+  // SPECIFIC stage the recruiter chose, not the canonical default.
+  const result = await updateApplicationStatus(applicationId, canonicalStatus.id)
+  if (!result.success) return result
+
+  const { error: stageErr } = await ctx.supabase
+    .from('applications')
+    .update({ pipeline_stage_id: newPipelineStageId })
+    .eq('id', applicationId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+
+  if (stageErr) {
+    console.error('[applications] pipeline_stage_id override failed:', stageErr.message)
+    return { success: false, error: 'Failed to set pipeline stage' }
+  }
+
+  revalidatePath('/vacancies/[id]/pipeline', 'page')
+  return { success: true, data: undefined }
+}
+
 export async function createApplication(input: {
   candidateId: string
   vacancyId: string
@@ -638,6 +710,15 @@ export async function rejectApplication(input: {
   sendEmail: boolean
   customSubject?: string | null
   customBody?: string | null
+  /**
+   * Wave 2.6 Slice 2b — specific per-vacancy `pipeline_stages.id` the
+   * recruiter dropped onto (e.g. a custom "Closed - not a fit" stage).
+   * When set, this overrides the bucket-mapped default so the app
+   * lands on the recruiter's exact stage choice. When null, the legacy
+   * status's per-vacancy default stage (resolved via `resolvePipelineStageId`)
+   * is used.
+   */
+  targetPipelineStageId?: string | null
 }): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -655,17 +736,20 @@ export async function rejectApplication(input: {
   // Wave 2.6 Slice 1 — resolve the per-vacancy 'Rejected' stage. We
   // look up the legacy status's code so this works for any rejection
   // status_id the caller passes, not just the default 'rejected'.
+  // Slice 2b adds the override: if the caller passed a specific
+  // pipeline_stage_id (drop on a custom rejection stage), trust it.
   const { data: targetStatusRow } = await ctx.supabase
     .from('application_statuses')
     .select('code')
     .eq('id', input.statusId)
     .single()
   const targetCode = (targetStatusRow?.code as LegacyStatusCode | undefined) ?? 'rejected'
-  const targetPipelineStageId = await resolvePipelineStageId(
+  const defaultPipelineStageId = await resolvePipelineStageId(
     ctx.supabase,
     application.vacancy_id,
     targetCode,
   )
+  const targetPipelineStageId = input.targetPipelineStageId ?? defaultPipelineStageId
 
   const rejectPayload: Record<string, unknown> = {
     status_id: input.statusId,

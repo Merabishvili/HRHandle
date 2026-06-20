@@ -12,16 +12,18 @@ import {
   type DragOverEvent,
 } from '@dnd-kit/core'
 import { toast } from 'sonner'
-import { KanbanColumn } from './kanban-column'
+import { KanbanColumn, type PipelineColumn } from './kanban-column'
 import { CandidateCard } from './candidate-card'
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from './rejection-dialog'
-import { updateApplicationStatus } from '@/lib/actions/applications'
-import type { ApplicationStatus } from '@/lib/types/application'
+import { updateApplicationPipelineStage } from '@/lib/actions/applications'
+import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 
 interface PipelineApplication {
   id: string
   candidate_id: string
-  status_id: string | null
+  /** Wave 2.6 Slice 2b — the per-vacancy stage this app sits in.
+   * The board no longer reads the legacy `status_id` for placement. */
+  pipeline_stage_id: string | null
   first_name: string
   last_name: string
   current_position: string | null
@@ -31,23 +33,37 @@ interface PipelineApplication {
 }
 
 interface KanbanBoardProps {
-  statuses: ApplicationStatus[]
+  /** Ordered list of the vacancy's pipeline_stages rows. Drives the
+   * column layout. */
+  columns: PipelineColumn[]
   initialApplications: PipelineApplication[]
   rejectionReasons: RejectionReason[]
   rejectionTemplates: RejectionTemplate[]
+  /** Canonical `application_statuses.id` for code='rejected'. Required for
+   * the rejection-dialog handoff — that action still keys off the legacy
+   * status_id even though the board lives on pipeline_stage_id. The
+   * parent server component resolves it once and threads it through. */
+  rejectedStatusId: string | null
 }
 
 interface PendingRejection {
   applicationId: string
+  /** Canonical `application_statuses.id` (always rejected). */
   statusId: string
+  /** The specific per-vacancy `pipeline_stages.id` the recruiter dropped
+   * onto. May be a custom "Closed - not a fit" stage rather than the
+   * default "Rejected" — `rejectApplication`'s new `targetPipelineStageId`
+   * param preserves the recruiter's choice. */
+  targetPipelineStageId: string
   candidateName: string
 }
 
 export function KanbanBoard({
-  statuses,
+  columns,
   initialApplications,
   rejectionReasons,
   rejectionTemplates,
+  rejectedStatusId,
 }: KanbanBoardProps) {
   const [applications, setApplications] = useState(initialApplications)
   const [activeApp, setActiveApp] = useState<PipelineApplication | null>(null)
@@ -61,9 +77,9 @@ export function KanbanBoard({
   const getColumnId = useCallback(
     (appId: string) => {
       const app = applications.find((a) => a.id === appId)
-      return app?.status_id ?? statuses[0]?.id ?? null
+      return app?.pipeline_stage_id ?? columns[0]?.id ?? null
     },
-    [applications, statuses]
+    [applications, columns]
   )
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -74,7 +90,7 @@ export function KanbanBoard({
   const handleDragOver = (event: DragOverEvent) => {
     const { over } = event
     if (!over) { setOverId(null); return }
-    const isColumn = statuses.some((s) => s.id === over.id)
+    const isColumn = columns.some((c) => c.id === over.id)
     setOverId(isColumn ? String(over.id) : getColumnId(String(over.id)))
   }
 
@@ -86,52 +102,70 @@ export function KanbanBoard({
     if (!over) return
 
     const activeId = String(active.id)
-    const overId = String(over.id)
+    const overIdStr = String(over.id)
 
-    const isColumn = statuses.some((s) => s.id === overId)
-    const targetColumnId = isColumn ? overId : getColumnId(overId)
+    const isColumn = columns.some((c) => c.id === overIdStr)
+    const targetColumnId = isColumn ? overIdStr : getColumnId(overIdStr)
 
     if (!targetColumnId) return
 
     const app = applications.find((a) => a.id === activeId)
     if (!app) return
-    if (app.status_id === targetColumnId) return
+    if (app.pipeline_stage_id === targetColumnId) return
 
-    const targetStatus = statuses.find((s) => s.id === targetColumnId)
+    const targetColumn = columns.find((c) => c.id === targetColumnId)
+    if (!targetColumn) return
 
-    // Intercept drops onto the 'rejected' column
-    if (targetStatus?.code === 'rejected') {
+    // Bucket-map the target column to a canonical code so we know whether
+    // this is a rejection drop (which needs the reason/template dialog
+    // before the action runs).
+    const targetCanonicalCode = mapPipelineStageToBucket({
+      type: targetColumn.type,
+      name: targetColumn.name,
+      is_terminal: targetColumn.is_terminal,
+    })
+
+    if (targetCanonicalCode === 'rejected' && rejectedStatusId) {
       setPendingRejection({
         applicationId: activeId,
-        statusId: targetColumnId,
+        statusId: rejectedStatusId,
+        targetPipelineStageId: targetColumnId,
         candidateName: `${app.first_name} ${app.last_name}`.trim(),
       })
       return
     }
 
-    // Optimistic update for non-rejection moves
+    // Optimistic update for non-rejection moves.
     setApplications((prev) =>
       prev.map((a) =>
         a.id === activeId
-          ? { ...a, status_id: targetColumnId, last_status_changed_at: new Date().toISOString() }
+          ? {
+              ...a,
+              pipeline_stage_id: targetColumnId,
+              last_status_changed_at: new Date().toISOString(),
+            }
           : a
       )
     )
 
-    const result = await updateApplicationStatus(activeId, targetColumnId)
+    const result = await updateApplicationPipelineStage(activeId, targetColumnId)
     if (!result.success) {
       setApplications(initialApplications)
-      toast.error('Failed to update status. Please try again.')
+      toast.error('Failed to update stage. Please try again.')
     }
   }
 
   const handleRejectionSuccess = () => {
     if (!pendingRejection) return
-    // Move card to rejected column
+    // Move card to the recruiter's chosen rejection column.
     setApplications((prev) =>
       prev.map((a) =>
         a.id === pendingRejection.applicationId
-          ? { ...a, status_id: pendingRejection.statusId, last_status_changed_at: new Date().toISOString() }
+          ? {
+              ...a,
+              pipeline_stage_id: pendingRejection.targetPipelineStageId,
+              last_status_changed_at: new Date().toISOString(),
+            }
           : a
       )
     )
@@ -142,8 +176,8 @@ export function KanbanBoard({
     setPendingRejection(null)
   }
 
-  const getAppsForColumn = (statusId: string) =>
-    applications.filter((a) => a.status_id === statusId)
+  const getAppsForColumn = (columnId: string) =>
+    applications.filter((a) => a.pipeline_stage_id === columnId)
 
   return (
     <>
@@ -154,12 +188,12 @@ export function KanbanBoard({
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-4 overflow-x-auto pb-4 min-h-[500px]">
-          {statuses.map((status) => (
+          {columns.map((column) => (
             <KanbanColumn
-              key={status.id}
-              status={status}
-              applications={getAppsForColumn(status.id)}
-              isOver={overId === status.id}
+              key={column.id}
+              column={column}
+              applications={getAppsForColumn(column.id)}
+              isOver={overId === column.id}
             />
           ))}
         </div>
@@ -187,6 +221,7 @@ export function KanbanBoard({
           open={!!pendingRejection}
           applicationId={pendingRejection.applicationId}
           statusId={pendingRejection.statusId}
+          targetPipelineStageId={pendingRejection.targetPipelineStageId}
           candidateName={pendingRejection.candidateName}
           reasons={rejectionReasons}
           templates={rejectionTemplates}

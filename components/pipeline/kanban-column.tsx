@@ -3,8 +3,8 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CandidateCard } from './candidate-card'
-import type { ApplicationStatus } from '@/lib/types/application'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
+import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { cn } from '@/lib/utils'
 
 interface PipelineApplication {
@@ -22,14 +22,31 @@ interface PipelineApplication {
   vacancy_title?: string | null
 }
 
+/** Wave 2.6 Slice 2b — column descriptor. The per-vacancy board passes
+ * `pipeline_stages` rows here; the badge tint is picked by bucket-mapping
+ * the row's type/name/is_terminal to one of the canonical palette colors. */
+export interface PipelineColumn {
+  id: string
+  name: string
+  type: 'standard' | 'review' | 'interview' | 'offer'
+  is_terminal: boolean
+  sort_order: number
+}
+
 interface KanbanColumnProps {
-  status: ApplicationStatus
+  column: PipelineColumn
   applications: PipelineApplication[]
   isOver: boolean
 }
 
-export function KanbanColumn({ status, applications, isOver }: KanbanColumnProps) {
-  const { setNodeRef } = useDroppable({ id: status.id })
+export function KanbanColumn({ column, applications, isOver }: KanbanColumnProps) {
+  const { setNodeRef } = useDroppable({ id: column.id })
+
+  const canonicalCode = mapPipelineStageToBucket({
+    type: column.type,
+    name: column.name,
+    is_terminal: column.is_terminal,
+  })
 
   return (
     <div className="flex w-64 shrink-0 flex-col">
@@ -38,10 +55,10 @@ export function KanbanColumn({ status, applications, isOver }: KanbanColumnProps
           <span
             className={cn(
               'rounded-full px-2.5 py-0.5 text-xs font-medium',
-              APPLICATION_STATUS_COLORS[status.code]
+              APPLICATION_STATUS_COLORS[canonicalCode]
             )}
           >
-            {status.name}
+            {column.name}
           </span>
           <span className="text-xs text-muted-foreground">{applications.length}</span>
         </div>

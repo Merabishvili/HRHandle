@@ -32,6 +32,12 @@ interface Props {
   open: boolean
   applicationId: string
   statusId: string
+  /** Wave 2.6 Slice 2b — per-vacancy `pipeline_stages.id` the recruiter
+   * dropped onto (e.g. a custom "Closed - not a fit"). Threaded into
+   * `rejectApplication.targetPipelineStageId` so the application lands
+   * on that specific stage instead of the bucket-mapped default. Omit
+   * (or pass null) on legacy callers. */
+  targetPipelineStageId?: string | null
   candidateName: string
   reasons: RejectionReason[]
   templates: RejectionTemplate[]
@@ -45,6 +51,7 @@ export function RejectionDialog({
   open,
   applicationId,
   statusId,
+  targetPipelineStageId,
   candidateName,
   reasons,
   templates,
@@ -90,6 +97,7 @@ export function RejectionDialog({
         rejectionReasonId: reasonId || null,
         templateId: sendEmail && templateId !== NO_TEMPLATE ? templateId : null,
         sendEmail,
+        targetPipelineStageId: targetPipelineStageId ?? null,
       })
       if (!result.success) { setError(result.error); return }
       onSuccess()

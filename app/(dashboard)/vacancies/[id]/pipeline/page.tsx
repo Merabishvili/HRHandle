@@ -4,12 +4,14 @@ import { ArrowLeft, LayoutGrid } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { KanbanBoard } from '@/components/pipeline/kanban-board'
-import type { ApplicationStatus } from '@/lib/types/application'
+import type { PipelineColumn } from '@/components/pipeline/kanban-column'
 import { getApplicationStatuses } from '@/lib/cache/lookups'
+import type { ApplicationStatus } from '@/lib/types/application'
 
 interface PipelineApplicationRow {
   id: string
   candidate_id: string
+  pipeline_stage_id: string | null
   status_id: string | null
   applied_at: string
   last_status_changed_at: string | null
@@ -23,6 +25,18 @@ interface PipelineCandidateRow {
   current_company: string | null
 }
 
+/**
+ * Per-vacancy pipeline view. Wave 2.6 Slice 2b cut this over to read
+ * `pipeline_stages` directly instead of the canonical 7-stage global
+ * `application_statuses`. The board now shows each vacancy's own
+ * custom stages (cap-10) with their real names, and drops route through
+ * the new `updateApplicationPipelineStage` action which preserves the
+ * specific stage id (no more bucket collapse on the per-vacancy board).
+ *
+ * Rejection still hands off via `rejectApplication` (canonical status_id +
+ * the dropped pipeline_stage_id override) so the existing audit/email/
+ * webhook path keeps working for both legacy and custom rejection stages.
+ */
 export default async function VacancyPipelinePage({
   params,
 }: {
@@ -45,7 +59,8 @@ export default async function VacancyPipelinePage({
 
   const [
     { data: vacancy },
-    statusesRaw,
+    { data: stagesRaw },
+    appStatusesAll,
     { data: applicationsRaw },
     { data: rejectionReasonsRaw },
     { data: rejectionTemplatesRaw },
@@ -59,11 +74,18 @@ export default async function VacancyPipelinePage({
       .is('deleted_at', null)
       .single(),
 
+    supabase
+      .from('pipeline_stages')
+      .select('id, name, type, is_terminal, sort_order')
+      .eq('vacancy_id', id)
+      .eq('organization_id', organizationId)
+      .order('sort_order', { ascending: true }),
+
     getApplicationStatuses(),
 
     supabase
       .from('applications')
-      .select('id, candidate_id, status_id, applied_at, last_status_changed_at')
+      .select('id, candidate_id, pipeline_stage_id, status_id, applied_at, last_status_changed_at')
       .eq('vacancy_id', id)
       .eq('organization_id', organizationId)
       .is('deleted_at', null)
@@ -85,12 +107,12 @@ export default async function VacancyPipelinePage({
 
   if (!vacancy) notFound()
 
-  const statuses = (statusesRaw || []).filter((s) => s.is_active) as ApplicationStatus[]
+  const columns = (stagesRaw ?? []) as PipelineColumn[]
   const applicationsData = (applicationsRaw || []) as PipelineApplicationRow[]
 
   // Fetch candidates separately to avoid unreliable nested joins
   const candidateIds = [...new Set(applicationsData.map((a) => a.candidate_id))]
-  let candidateMap = new Map<string, PipelineCandidateRow>()
+  const candidateMap = new Map<string, PipelineCandidateRow>()
   if (candidateIds.length > 0) {
     const { data: candidatesRaw } = await supabase
       .from('candidates')
@@ -102,14 +124,23 @@ export default async function VacancyPipelinePage({
     }
   }
 
-  const firstStatusId = statuses[0]?.id ?? null
+  // The rejection dialog still keys off canonical status_id, so resolve
+  // it once and thread it down.
+  const rejectedStatusId =
+    (appStatusesAll || []).find((s: ApplicationStatus) => s.code === 'rejected')?.id ?? null
+
+  // Map status_id → pipeline_stage_id for any application that's
+  // missing one (defensive — Migration 049's backfill should have
+  // populated every row, but a partial run shouldn't leave the card
+  // invisible). We bucket back through the columns we already loaded.
+  const firstColumnId = columns[0]?.id ?? null
 
   const applications = applicationsData.map((app) => {
     const candidate = candidateMap.get(app.candidate_id)
     return {
       id: app.id,
       candidate_id: app.candidate_id,
-      status_id: app.status_id ?? firstStatusId,
+      pipeline_stage_id: app.pipeline_stage_id ?? firstColumnId,
       first_name: candidate?.first_name ?? '?',
       last_name: candidate?.last_name ?? '',
       current_position: candidate?.current_position ?? null,
@@ -157,10 +188,11 @@ export default async function VacancyPipelinePage({
         </div>
       ) : (
         <KanbanBoard
-          statuses={statuses}
+          columns={columns}
           initialApplications={applications}
           rejectionReasons={rejectionReasonsRaw ?? []}
           rejectionTemplates={rejectionTemplatesRaw ?? []}
+          rejectedStatusId={rejectedStatusId}
         />
       )}
     </div>
