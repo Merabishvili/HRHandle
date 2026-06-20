@@ -1,12 +1,65 @@
 # HRHandle Redesign — Revised Roadmap
 
-> **Status:** Locked 2026-06-16. All 14 audit open questions answered. Authored 2026-06-15.
+> **Status:** Plan locked 2026-06-16. **Progress callout below refreshed 2026-06-20.** Original 14 audit open questions all answered. Authored 2026-06-15.
 >
 > **Source:** Takes [`redesign/ROADMAP.md`](../../redesign/ROADMAP.md) as input. Applies KEEP / REVISE / DROP / ADD verdicts informed by [`audit.md`](audit.md).
 >
 > **Scope:** Standalone. Does not interleave with [`docs/1-product/roadmap.md`](../1-product/roadmap.md) Phase 9 (tech debt) / Phase 10 (billing). Coordination notes flag overlaps; you decide later how to sequence the merged execution.
 >
-> **Reading order:** This file → flow-by-flow docs in [`flows/`](flows/) (S01 written, S04+ in progress) → [`ai-fit-analysis.md`](ai-fit-analysis.md) for the S11 spec.
+> **Reading order:** Progress callout below → rest of this file (the locked plan) → flow-by-flow docs in [`flows/`](flows/) → [`ai-fit-analysis.md`](ai-fit-analysis.md) for the S11 spec.
+
+---
+
+## Progress to date — 2026-06-20
+
+The rest of this document is the **planned** sequence locked 2026-06-16. This callout summarises what's actually shipped on `staging` since then, so the locked plan can be read with current state in mind.
+
+### ✅ Shipped (verified on `staging` branch)
+
+| Wave | What | Commit | Notes |
+|---|---|---|---|
+| 2.1 + 2.2 | Cross-vacancy kanban + Review mode + Board/List/bulk-bar fidelity | `f230f4e`, `7ff2e1a` | Wave 2.2 (Review mode) folded into 2.1 Slice 1 |
+| 2.3 Slice 1 | Candidate profile rebuild | `5c32cb8` | Active-app selector + stage-contextual block + repeat-applicant banner all shipped. Merge flow (A-3) still pending. |
+| 2.4 Slice 1 | Vacancy detail rebuild — 5-tab restructure | `4a7a723` | "Candidates tab" decision resolved via Option (b): Overview surfaces the attention list; the full applicant list lives at `/vacancies/[id]/pipeline`. |
+| 2.5 Slice 1 | Scorecard attribute `must_have` flag | `c7dc051` | Migration 047. Wizard Step 4 persists the star; vacancy detail Scorecard tab edits inline. |
+| 2.5 Slice 2a | Screening questions schema + recruiter UI | `656e1f4` | Migration 048 (`vacancy_screening_questions` + `application_screening_answers`). Wizard persists `yes_no` rows; recruiter card on Scorecard tab. |
+| 2.5 Slice 2b | Apply-form integration + knockout flag surface | `380ef48` | End-to-end. Questions render on `/apply/[token]`; answers persist with pre-computed `is_knockout_flag`; candidate profile's Screening gate shows a "Screening flags" callout. |
+| 2.7 Slice 1 | Vacancy creation wizard | `3ed7849` | **Divergence from locked plan:** shipped as a 5-step wizard, not the "single-scroll with `Advanced` toggle" the roadmap §2.7 called for. The wizard chrome reads cleaner against the rebuilt detail page; explicit decision to reverse the 2026-06-16 lock. |
+| 2.7 Slice 2 | Candidate creation wizard | `d0a5367` | Same wizard pattern. Adds NEW Starting-stage picker + duplicate-email merge banner; removes General Status dropdown from the create flow (not yet from profile header — see ⏸ section). |
+| 3.2 (partial) | Public pages polish | `f94deb1`, `2a7e202`, `8080002`, plus 2.5 2b | Brand-blue header, role count, "Track your application" link on confirmation, status-page pending-offer tile, screening questions on apply form. |
+| 3.3 Slice 1 | Offer countdown + confirm-decline modal | `5811894` | The two real additions called out in roadmap §3.3. |
+| Fidelity | Tier 1 / 2 / 3 brand-colour + sentence-case + sidebar fixes | `5bd8e00`, `5874c94`, `43a31d9` | Cross-cutting polish (cleared a large portion of audit items). |
+| Phase 0.9 | Pipeline empty state spec | `redesign/Pipeline Empty State.dc.html` | Design saved. |
+
+### 🟡 In progress / partial
+
+| Wave | What | Status |
+|---|---|---|
+| 1.5 | Terminology pass | Sentence-case sweep + "incomplete" sweep done; multi-page UI string review still ongoing. |
+| 1.6 | AI reframe / `<AiDraftTag />` | Component built; per-feature adoption tracked in [`tech-debt.md` §2](tech-debt.md#2-forward-compat-surfaces-partially-wired). |
+| 3.2 | Public pages polish | Apply-form screening + status-page polish shipped; light branding (logo + brand bar) outstanding. |
+| Phase 0.5 | Stages schema spike | Migration 046 shipped the `pipeline_stages` table but no caller uses it yet — the cutover (Migration 049) is the 🔴 blocking item in [`tech-debt.md` §1](tech-debt.md#1-schema-cutover-pending). |
+
+### ⏸ Blocked / pending
+
+| Wave | What | Why |
+|---|---|---|
+| 1.1 | Derived status + remove General Status field from profile | The create-flow dropdown is gone (wizard removed it). The candidate **profile** header still carries it. Phase 0.1 trigger fix + UI removal still owed. Effort `S`. |
+| 2.6 | Per-vacancy custom stages | 🔴 Schema scaffold exists (Migration 046); cutover from `applications.status_id` → `applications.pipeline_stage_id` blocked behind Migration 049 + ~20 callsite updates + the stage-manager UI. See [`tech-debt.md` §1](tech-debt.md#1-schema-cutover-pending). |
+| 3.1 | AI Fit Analysis | Phase 0.8 legal consult booking pending. See [`ai-fit-analysis.md`](ai-fit-analysis.md). |
+| A-1 | Today/Inbox screen | Audit §2.1 contradiction "Today vs Reports" still unresolved in build. |
+| A-3 | Merge candidates flow | Listed in profile `⋯` menu but the dialog + server action don't exist. |
+| A-7 / A-8 | Settings → Notifications + Security sub-page bodies | Sub-pages are present in the sidebar but the contents are placeholders. |
+| Wave 2.5 cleanup | Wizard UI for non-`yes_no` screening answer types | Schema + apply form already support all 4 types; only the wizard UI is capped at `yes_no`. Tracked as 🟢 cleanup. |
+
+### 🚦 Recommended next slice
+
+The cleanest next wave is **Wave 2.6 — Per-vacancy custom stages** (the [`tech-debt.md` §1](tech-debt.md#1-schema-cutover-pending) 🔴 item). It unblocks the cross-vacancy board's column model, the Custom Stages design file, and the per-vacancy stage manager on the Settings tab. Effort `L` (multi-PR), schema already scaffolded in Migration 046; the work is Migration 049 + ~20 callsite updates + the stage-manager UI.
+
+**Alternatives if 2.6 is too large for the window:**
+- **Wave 1.1 — Derived status** (`S`): retire the General Status dropdown from the profile header so the wizard's "Removed" callout becomes a system truth, not just a wizard-side claim.
+- **Wave A-1 — Today/Inbox screen** (`M` design + `L` build): unblocks the audit §2.1 contradiction.
+- **Wave 3.3 polish** (`S`): wire `offers.decline_reason` (column exists, unused).
 
 ---
 
