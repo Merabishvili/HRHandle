@@ -33,7 +33,7 @@ export interface AssessmentSuggesterInput {
 }
 
 export interface AssessmentSuggestions {
-  /** 1-10 score criteria. Short, focused skill labels. */
+  /** 1-5 score criteria. Short, focused skill labels. */
   skills: string[]
   /** Open-ended evaluation prompts. Full questions, one sentence each. */
   prompts: string[]
@@ -47,7 +47,7 @@ export type AssessmentSuggesterResult =
     }
 
 const RULES = `Strict rules:
-- Generate 4-6 SKILL labels (score-type evaluation criteria scored 1-10) and 3-5 PROMPT questions (text-type open-ended evaluation prompts).
+- Generate 4-6 SKILL labels (score-type evaluation criteria scored 1-5) and 3-5 PROMPT questions (text-type open-ended evaluation prompts).
 - SKILL labels are short focused names of a skill, competency, or knowledge area. They should be specific to the role's domain when the description gives enough signal. Examples: "PostgreSQL tuning", "Distributed-system design", "Mentoring engineers", "Customer-conversation skills". Keep each skill label under 60 characters.
 - PROMPT questions are open-ended evaluation questions the recruiter asks the candidate to write or talk through. They should probe depth, not surface facts. Examples: "Describe a backend system you owned end-to-end and the trade-offs you made.", "Tell us about a time you had to lead a project through significant scope changes." Keep each prompt under 200 characters.
 - Tone is neutral and respectful. NEVER ask about protected characteristics (age, gender, race, ethnicity, religion, national origin, family or marital status, pregnancy, sexual orientation, disability, or political views).
@@ -89,7 +89,7 @@ function buildPrompt(input: AssessmentSuggesterInput): string {
 
   return [
     'You are a recruiting copilot helping a recruiter design an assessment for a specific role.',
-    'Suggest two kinds of evaluation items: short SKILL labels (scored 1-10 after the interview) and open-ended PROMPT questions (the candidate writes or speaks an answer).',
+    'Suggest two kinds of evaluation items: short SKILL labels (scored 1-5 after the interview) and open-ended PROMPT questions (the candidate writes or speaks an answer).',
     '',
     RULES,
     '',

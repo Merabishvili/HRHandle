@@ -388,9 +388,9 @@ function useStepDefs(entryMode: EntryMode | null) {
   const tagForPath = entryMode === 'cv' ? 'AI prefill' : entryMode === 'manual' ? 'Manual' : undefined
   return [
     { id: 'path' as const, number: 1, label: 'Choose path', tag: tagForPath },
-    { id: 'personal' as const, number: 2, label: 'Personal info' },
+    { id: 'personal' as const, number: 2, label: 'Personal' },
     { id: 'background' as const, number: 3, label: 'Experience & education' },
-    { id: 'application' as const, number: 4, label: 'Application', tag: 'NEW · starting stage' },
+    { id: 'application' as const, number: 4, label: 'Application & source', tag: 'NEW · starting stage' },
     { id: 'notes' as const, number: 5, label: 'Notes', tag: 'Optional' },
   ]
 }

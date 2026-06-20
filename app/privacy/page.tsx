@@ -323,7 +323,7 @@ export default function PrivacyPage() {
               <li>
                 <strong>Assessment suggester</strong> — when a recruiter clicks
                 &quot;Generate suggestions&quot; on a vacancy&apos;s Assessment tab,
-                the AI proposes evaluation criteria (skill labels scored 1–10) and
+                the AI proposes evaluation criteria (skill labels scored 1–5) and
                 open-ended prompts based on the vacancy&apos;s text. Only the vacancy
                 text is sent to the AI for this feature; no candidate data is
                 involved. Each suggestion is added to the vacancy only when the

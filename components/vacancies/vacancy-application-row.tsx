@@ -84,7 +84,7 @@ function calcScore(
   if (scoreQs.length === 0) return null
   if (scoreQs.some((q) => !answers[q.id]?.score)) return null
   const sum = scoreQs.reduce((acc, q) => acc + (answers[q.id]?.score ?? 0), 0)
-  return Math.round((sum / (scoreQs.length * 10)) * 100)
+  return Math.round((sum / (scoreQs.length * 5)) * 100)
 }
 
 export function VacancyApplicationRow({
@@ -303,7 +303,7 @@ export function VacancyApplicationRow({
                       />
                     ) : (
                       <div className="flex gap-1 flex-wrap">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                        {[1, 2, 3, 4, 5].map((n) => (
                           <button
                             key={n}
                             type="button"

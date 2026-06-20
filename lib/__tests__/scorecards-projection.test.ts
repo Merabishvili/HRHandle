@@ -24,12 +24,12 @@ describe('projectScorecard', () => {
 
   it('renders a single score answer with the percentage computed', () => {
     const answers: ScorecardAnswer[] = [
-      { question_id: 'q1', text_value: null, score_value: 8 },
+      { question_id: 'q1', text_value: null, score_value: 4 },
     ]
     const view = projectScorecard({ overallScore: 80, questions: [Q1], answers })
     expect(view.overallScore).toBe(80)
     expect(view.items).toEqual([
-      { kind: 'score', questionId: 'q1', label: 'Communication', score: 8, max: 10, percentage: 80 },
+      { kind: 'score', questionId: 'q1', label: 'Communication', score: 4, max: 5, percentage: 80 },
     ])
   })
 
@@ -52,15 +52,15 @@ describe('projectScorecard', () => {
     const answers: ScorecardAnswer[] = [
       { question_id: 'q3', text_value: '   ', score_value: null }, // empty after trim
       { question_id: 'q1', text_value: null, score_value: null },  // no score
-      { question_id: 'q2', text_value: null, score_value: 9 },     // kept
+      { question_id: 'q2', text_value: null, score_value: 4 },     // kept (4/5 = 80%)
     ]
     const view = projectScorecard({
-      overallScore: 90,
+      overallScore: 80,
       questions: [Q1, Q2, Q3],
       answers,
     })
     expect(view.items).toEqual([
-      { kind: 'score', questionId: 'q2', label: 'Technical depth', score: 9, max: 10, percentage: 90 },
+      { kind: 'score', questionId: 'q2', label: 'Technical depth', score: 4, max: 5, percentage: 80 },
     ])
   })
 
@@ -88,16 +88,16 @@ describe('projectScorecard', () => {
     expect(view.items.map((i) => i.questionId)).toEqual(['q1', 'q2', 'q3', 'q4'])
   })
 
-  it('clamps out-of-range scores to [0, 10]', () => {
+  it('clamps out-of-range scores to [0, 5]', () => {
     const answers: ScorecardAnswer[] = [
-      { question_id: 'q1', text_value: null, score_value: 20 }, // clamped to 10
+      { question_id: 'q1', text_value: null, score_value: 20 }, // clamped to 5
       { question_id: 'q2', text_value: null, score_value: -3 }, // clamped to 0
     ]
     const view = projectScorecard({ overallScore: null, questions: [Q1, Q2], answers })
     const s1 = view.items[0]
     const s2 = view.items[1]
     if (!s1 || !s2 || s1.kind !== 'score' || s2.kind !== 'score') throw new Error('expected score items')
-    expect(s1.score).toBe(10)
+    expect(s1.score).toBe(5)
     expect(s1.percentage).toBe(100)
     expect(s2.score).toBe(0)
     expect(s2.percentage).toBe(0)

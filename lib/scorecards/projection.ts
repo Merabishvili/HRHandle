@@ -40,7 +40,9 @@ export interface ScorecardView {
   items: ScorecardItem[]
 }
 
-const SCORE_MAX = 10
+// Wave 2.5 fidelity fix (Migration 050) — per-attribute scale is 1–5
+// per the redesigned Vacancy Detail Scorecard tab. Was 1–10 pre-redesign.
+const SCORE_MAX = 5
 
 /** Build the view the public page renders. Filters out unanswered questions
  * (empty strings + null scores) and any answer whose question we no longer

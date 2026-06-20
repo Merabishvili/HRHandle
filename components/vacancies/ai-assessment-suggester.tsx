@@ -145,7 +145,7 @@ export function AiAssessmentSuggester({
       <p className="mb-3 text-xs text-muted-foreground">
         Suggestions are advisory — review each one before adding it. Nothing is saved
         to this vacancy unless you click <strong>Add</strong> on a specific item.
-        Skills become scored criteria (1–10); prompts become open-ended questions.
+        Skills become scored criteria (1–5); prompts become open-ended questions.
       </p>
 
       {canEdit && (
@@ -200,7 +200,7 @@ export function AiAssessmentSuggester({
           </div>
 
           <SuggestionSection
-            title="Evaluation criteria (scored 1–10)"
+            title="Evaluation criteria (scored 1–5)"
             hint="Add to Evaluation Criteria"
             items={panel.suggestions.skills}
             kind="skill"

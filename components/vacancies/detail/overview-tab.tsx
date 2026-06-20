@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { format, formatDistanceToNow } from 'date-fns'
-import { AlertTriangle, ArrowRight, Copy, Plus } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Copy } from 'lucide-react'
 
 import { getStageStyle } from '@/lib/pipeline/stage-style'
 import type { ApplicationStatus } from '@/lib/types/application'
@@ -222,18 +222,6 @@ export function OverviewTab({
               name="You"
               jobTitle="Recruiter"
             />
-            <li>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[oklch(0.55_0.18_250)] transition-colors hover:underline"
-                disabled
-                title="Adding teammates to a single vacancy is on the roadmap"
-              >
-                <Plus className="h-3 w-3" aria-hidden />
-                Add teammate
-                <span className="ml-1 rounded bg-muted px-1 text-[9px] font-bold uppercase text-muted-foreground">soon</span>
-              </button>
-            </li>
           </ul>
         </section>
 
