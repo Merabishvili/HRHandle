@@ -22,7 +22,6 @@ export const CandidateSchema = z.object({
   salary_expectation: z.string().max(200).nullable().optional(),
   notice_period:      z.string().max(100).nullable().optional(),
   source:             z.string().max(100).nullable().optional(),
-  general_status_id:  z.string().uuid().nullable().optional(),
   linked_vacancy_ids: z.array(z.string().uuid()).optional(),
 })
 

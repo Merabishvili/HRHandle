@@ -1,48 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { updateCandidateStatus } from '@/lib/actions/candidates'
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { DeleteCandidateDialog } from '@/components/candidates/delete-candidate-dialog'
-
-interface CandidateGeneralStatusOption {
-  id: string
-  name: string
-  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
-}
 
 interface CandidateStatusActionsProps {
   candidateId: string
   candidateName: string
-  currentStatusId: string | null
-  statusOptions: CandidateGeneralStatusOption[]
 }
 
+/**
+ * Wave 1.1 — General Status is no longer user-editable; the "Move to
+ * Active / Hired / Archived" items are gone. Candidate status is now
+ * derived from the application stage(s) and synced by the app-level
+ * code on stage transitions. This component now hosts just the Delete
+ * affordance on the candidates-index row ⋮ menu.
+ */
 export function CandidateStatusActions({
   candidateId,
   candidateName,
-  currentStatusId,
-  statusOptions,
 }: CandidateStatusActionsProps) {
-  const router = useRouter()
   const [deleteOpen, setDeleteOpen] = useState(false)
-
-  const handleStatusChange = async (generalStatusId: string) => {
-    await updateCandidateStatus(candidateId, generalStatusId)
-    router.refresh()
-  }
 
   return (
     <>
-      <DropdownMenuSeparator />
-      {statusOptions
-        .filter((status) => status.id !== currentStatusId)
-        .map((status) => (
-          <DropdownMenuItem key={status.id} onClick={() => handleStatusChange(status.id)}>
-            Move to {status.name}
-          </DropdownMenuItem>
-        ))}
       <DropdownMenuSeparator />
       <DropdownMenuItem
         // The dropdown menu would otherwise close before the dialog mounts,

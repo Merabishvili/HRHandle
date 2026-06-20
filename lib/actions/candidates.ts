@@ -78,6 +78,19 @@ export async function createCandidate(
 
   const { linked_vacancy_ids: _, ...candidateData } = parsed.data
 
+  // Wave 1.1 — general_status is no longer user-editable; the form
+  // doesn't supply it. Stamp 'active' server-side so the cached value
+  // exists for the read-only badge / filter / sort surfaces on the
+  // candidates index. Subsequent transitions (→ hired on offer accept,
+  // → active on rejection of the last hired app) are driven by the
+  // app-level code in updateApplicationStatus / rejectApplication /
+  // offers.ts.
+  const { data: activeCandidateStatus } = await ctx.supabase
+    .from('candidate_statuses')
+    .select('id')
+    .eq('code', 'active')
+    .single()
+
   const { data, error } = await ctx.supabase
     .from('candidates')
     .insert({
@@ -85,6 +98,7 @@ export async function createCandidate(
       email: candidateData.email || null,
       linkedin_profile_url: candidateData.linkedin_profile_url || null,
       organization_id: ctx.orgId,
+      general_status_id: activeCandidateStatus?.id ?? null,
       created_by: ctx.userId,
     })
     .select('id')
@@ -178,27 +192,6 @@ export async function updateCandidate(
     .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update candidate' }
-
-  revalidatePath('/candidates')
-  revalidatePath(`/candidates/${id}`)
-  return { success: true, data: undefined }
-}
-
-export async function updateCandidateStatus(
-  id: string,
-  generalStatusId: string
-): Promise<ActionResult<void>> {
-  const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
-
-  const { error } = await ctx.supabase
-    .from('candidates')
-    .update({ general_status_id: generalStatusId })
-    .eq('id', id)
-    .eq('organization_id', ctx.orgId)
-    .is('deleted_at', null)
-
-  if (error) return { success: false, error: 'Failed to update status' }
 
   revalidatePath('/candidates')
   revalidatePath(`/candidates/${id}`)

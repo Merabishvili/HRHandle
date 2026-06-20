@@ -34,7 +34,6 @@ import type {
   Candidate,
   CandidateFormData,
   Vacancy,
-  CandidateGeneralStatus,
   ApplicationStatus,
 } from '@/lib/types'
 import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
@@ -55,7 +54,6 @@ interface CandidateFormProps {
   candidate?: Candidate
   vacancies: Pick<Vacancy, 'id' | 'title'>[]
   defaultVacancyId?: string
-  candidateStatuses: CandidateGeneralStatus[]
   defaultApplicationStatusId?: string | null
   initialApplicationStatuses?: ApplicationStatus[]
   customFieldGroups?: CustomFieldGroupWithFields[]
@@ -76,7 +74,6 @@ export function CandidateForm({
   candidate,
   vacancies,
   defaultVacancyId,
-  candidateStatuses,
   customFieldGroups = [],
   customFieldValues = [],
   extraSections,
@@ -122,8 +119,6 @@ export function CandidateForm({
     salary_expectation: (candidate as {salary_expectation?: string | null})?.salary_expectation ?? null,
     notice_period: (candidate as {notice_period?: string | null})?.notice_period ?? null,
     source: candidate?.source || '',
-    general_status_id: candidate?.general_status_id ||
-      candidateStatuses.find((s) => s.code === 'active')?.id || null,
     linked_vacancy_ids: [],
   })
 
@@ -232,7 +227,6 @@ export function CandidateForm({
       salary_expectation: (formData as {salary_expectation?: string | null}).salary_expectation || null,
       notice_period: (formData as {notice_period?: string | null}).notice_period || null,
       source: formData.source || null,
-      general_status_id: formData.general_status_id || null,
     }
 
     const result = isEditing

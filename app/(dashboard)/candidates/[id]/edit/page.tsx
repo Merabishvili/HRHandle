@@ -8,7 +8,6 @@ import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
-import { getCandidateStatuses } from '@/lib/cache/lookups'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 
 interface PageParams {
@@ -65,8 +64,6 @@ interface VacancyRow {
     name: string
   }[] | null
 }
-
-import type { CandidateStatusOption as CandidateStatusRow } from '@/lib/types/database'
 
 
 export default async function EditCandidatePage({
@@ -129,8 +126,6 @@ export default async function EditCandidatePage({
   if (!candidate) {
     notFound()
   }
-
-  const candidateStatuses = (await getCandidateStatuses()) as CandidateStatusRow[]
 
 const { data: vacanciesRaw } = await supabase
   .from('vacancies')
@@ -203,7 +198,6 @@ const { data: vacanciesRaw } = await supabase
       <CandidateForm
         candidate={candidate}
         vacancies={vacancies}
-        candidateStatuses={candidateStatuses}
         customFieldGroups={customFieldGroups}
         customFieldValues={customFieldValues}
         extraSections={
