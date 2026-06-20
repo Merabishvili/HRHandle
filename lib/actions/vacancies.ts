@@ -33,6 +33,22 @@ export async function createVacancy(input: VacancyInput): Promise<ActionResult<{
 
   if (error) return { success: false, error: 'Failed to create vacancy' }
 
+  // Wave 2.6 Slice 1 — seed the per-vacancy default pipeline_stages set
+  // (Applied / Screening / Interview / Offer / Hired / Rejected /
+  // Withdrawn). Best-effort: failures are logged but don't fail the
+  // vacancy insert, because Slice 1 still has the legacy status_id path
+  // working underneath. Slice 2's read cutover relies on these rows
+  // existing, so the helper falls back to the legacy join only when this
+  // seed is missing.
+  const { error: seedErr } = await ctx.supabase.rpc('seed_default_pipeline_stages', {
+    p_vacancy_id: data.id,
+    p_org_id: ctx.orgId,
+    p_created_by: ctx.userId,
+  })
+  if (seedErr) {
+    console.error('[vacancies] seed_default_pipeline_stages failed:', seedErr.message)
+  }
+
   revalidatePath('/vacancies')
   return { success: true, data: { id: data.id } }
 }
@@ -201,6 +217,37 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
     .single()
 
   if (vacancyError || !newVacancy) return { success: false, error: 'Failed to duplicate vacancy' }
+
+  // Wave 2.6 Slice 1 — copy the source vacancy's pipeline_stages onto
+  // the duplicate so any custom stages the recruiter set up are carried
+  // forward. If the source has none (shouldn't happen after Migration
+  // 049's backfill) fall back to the seeder so the duplicate at least
+  // has the default 7-stage set.
+  const { data: srcStages } = await ctx.supabase
+    .from('pipeline_stages')
+    .select('name, type, sort_order, is_terminal')
+    .eq('vacancy_id', id)
+    .order('sort_order', { ascending: true })
+
+  if (srcStages && srcStages.length > 0) {
+    await ctx.supabase.from('pipeline_stages').insert(
+      srcStages.map((s) => ({
+        vacancy_id: newVacancy.id,
+        organization_id: ctx.orgId,
+        name: s.name,
+        type: s.type,
+        sort_order: s.sort_order,
+        is_terminal: s.is_terminal,
+        created_by: ctx.userId,
+      })),
+    )
+  } else {
+    await ctx.supabase.rpc('seed_default_pipeline_stages', {
+      p_vacancy_id: newVacancy.id,
+      p_org_id: ctx.orgId,
+      p_created_by: ctx.userId,
+    })
+  }
 
   // Copy assessment questions — including the Wave 2.5 must_have flag so
   // duplicated roles inherit the original's hard-requirement attributes

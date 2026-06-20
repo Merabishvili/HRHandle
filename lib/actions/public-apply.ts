@@ -8,6 +8,7 @@ import { applicationReceivedCtx } from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { verifyCaptcha } from '@/lib/turnstile'
 import { computeIsKnockoutFlag } from '@/lib/screening-questions/compute-flag'
+import { resolvePipelineStageId } from '@/lib/pipeline-stages/resolve'
 import { headers } from 'next/headers'
 
 const MAX_SUBMISSIONS_PER_IP_PER_HOUR = 5
@@ -248,6 +249,13 @@ export async function submitPublicApplication(
   // ── 12. Create application ─────────────────────────────────────────────────
   // public_token is the candidate-facing status page key (G-016). Generated
   // here at INSERT time so the link goes into the confirmation email below.
+  // Wave 2.6 Slice 1 — mirror the legacy status_id write onto
+  // pipeline_stage_id by resolving the vacancy's 'Applied' stage.
+  const pipelineStageId = await resolvePipelineStageId(
+    supabase,
+    vacancy.id as string,
+    'applied',
+  )
   const publicToken = crypto.randomUUID().replace(/-/g, '')
   const { data: newApp, error: appError } = await supabase
     .from('applications')
@@ -256,6 +264,7 @@ export async function submitPublicApplication(
       candidate_id: candidateId,
       vacancy_id: vacancy.id,
       status_id: appliedStatus?.id || null,
+      pipeline_stage_id: pipelineStageId,
       ip_address: ipRaw !== 'unknown' ? ipRaw : null,
       source_type: 'public_form',
       public_token: publicToken,

@@ -6,6 +6,10 @@ import { CandidateSchema, type CandidateInput } from '@/lib/validations/candidat
 import { ApplicationSchema } from '@/lib/validations/application'
 import { writeAuditLog } from '@/lib/audit-log'
 import { buildCandidateDeleteAuditDetails } from '@/lib/candidate-delete-cascade'
+import {
+  resolvePipelineStageId,
+  type LegacyStatusCode,
+} from '@/lib/pipeline-stages/resolve'
 
 /**
  * Org-scoped lookup for an existing candidate with the same email.
@@ -102,13 +106,15 @@ export async function createCandidate(
       // verifying it belongs to the application_statuses table. Otherwise
       // fall back to the historical default of `applied`.
       let statusIdToUse: string | null = null
+      let statusCodeForStage: LegacyStatusCode = 'applied'
       if (startingStatusId) {
         const { data: stagedRow } = await ctx.supabase
           .from('application_statuses')
-          .select('id')
+          .select('id, code')
           .eq('id', startingStatusId)
           .single()
         statusIdToUse = stagedRow?.id ?? null
+        if (stagedRow?.code) statusCodeForStage = stagedRow.code as LegacyStatusCode
       }
       if (!statusIdToUse) {
         const { data: appliedStatus } = await ctx.supabase
@@ -118,6 +124,15 @@ export async function createCandidate(
           .single()
         statusIdToUse = appliedStatus?.id ?? null
       }
+
+      // Wave 2.6 Slice 1 — also resolve the per-vacancy pipeline_stages
+      // row that matches the legacy code, so writes populate both
+      // columns during the transition.
+      const pipelineStageId = await resolvePipelineStageId(
+        ctx.supabase,
+        linkedVacancyId,
+        statusCodeForStage,
+      )
 
       const appParsed = ApplicationSchema.safeParse({
         candidate_id: data.id,
@@ -133,6 +148,7 @@ export async function createCandidate(
           organization_id: ctx.orgId,
           created_by: ctx.userId,
           status_id: statusIdToUse,
+          pipeline_stage_id: pipelineStageId,
           applied_at: new Date().toISOString(),
           // Candidate-facing status page token (G-016) — same as other insert paths.
           public_token: crypto.randomUUID().replace(/-/g, ''),

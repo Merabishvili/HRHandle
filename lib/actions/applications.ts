@@ -19,6 +19,10 @@ import {
   ACTIVE_APPLICATION_STATUS_CODES,
   CANDIDATE_STATUS,
 } from '@/lib/types/constants'
+import {
+  resolvePipelineStageId,
+  type LegacyStatusCode,
+} from '@/lib/pipeline-stages/resolve'
 
 /**
  * A-003: PostgREST's relation embedding sometimes returns a single row as an
@@ -41,10 +45,11 @@ export async function updateApplicationStatus(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   // Fetch application to get candidate_id + previous status code + sort_order for audit log
-  // and the auto-email forward-direction gate.
+  // and the auto-email forward-direction gate. Wave 2.6 Slice 1: also
+  // pull vacancy_id so we can resolve the per-vacancy pipeline_stages row.
   const { data: application } = await ctx.supabase
     .from('applications')
-    .select('id, candidate_id, status_id, application_statuses ( code, sort_order )')
+    .select('id, candidate_id, vacancy_id, status_id, application_statuses ( code, sort_order )')
     .eq('id', applicationId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
@@ -61,24 +66,45 @@ export async function updateApplicationStatus(
   const beforeCode = beforeRow?.code
   const beforeSortOrder = beforeRow?.sort_order ?? null
 
+  // Look up the new status's code so we can resolve the matching
+  // pipeline_stages row by name in this vacancy. (Pulled before the
+  // update so we can write both columns atomically.)
+  const { data: newStatusRow } = await ctx.supabase
+    .from('application_statuses')
+    .select('code, sort_order')
+    .eq('id', newStatusId)
+    .single()
+
+  const newCode = (newStatusRow?.code as LegacyStatusCode | undefined) ?? null
+  const newPipelineStageId = newCode
+    ? await resolvePipelineStageId(
+        ctx.supabase,
+        application.vacancy_id as string,
+        newCode,
+      )
+    : null
+
+  const updatePayload: Record<string, unknown> = {
+    status_id: newStatusId,
+    last_status_changed_at: new Date().toISOString(),
+  }
+  if (newPipelineStageId) {
+    updatePayload.pipeline_stage_id = newPipelineStageId
+  }
+
   const { error } = await ctx.supabase
     .from('applications')
-    .update({
-      status_id: newStatusId,
-      last_status_changed_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', applicationId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to update application status' }
 
-  // Sync candidate general_status based on application pipeline stage
-  const { data: newStatus } = await ctx.supabase
-    .from('application_statuses')
-    .select('code, sort_order')
-    .eq('id', newStatusId)
-    .single()
+  // Reuse the lookup we already did above so the rest of the function
+  // (audit log + candidate-status sync + webhooks + auto-email) sees
+  // the same status row.
+  const newStatus = newStatusRow
 
   void writeAuditLog({
     orgId: ctx.orgId,
@@ -377,6 +403,14 @@ export async function createApplication(input: {
   const appliedStatus = (activeStatusesRaw || []).find((s) => s.code === APPLICATION_STATUS.APPLIED)
   if (!appliedStatus) return { success: false, error: 'Application status configuration missing.' }
 
+  // Wave 2.6 Slice 1 — mirror the legacy status_id write onto
+  // pipeline_stage_id by resolving the per-vacancy "Applied" stage.
+  const pipelineStageId = await resolvePipelineStageId(
+    ctx.supabase,
+    input.vacancyId,
+    'applied',
+  )
+
   // public_token is the candidate-facing status page key (G-016) — generated
   // for every new application, including recruiter-added ones, so the link
   // exists if the recruiter chooses to share it.
@@ -388,6 +422,7 @@ export async function createApplication(input: {
       vacancy_id: input.vacancyId,
       organization_id: ctx.orgId,
       status_id: appliedStatus.id,
+      pipeline_stage_id: pipelineStageId,
       applied_at: new Date().toISOString(),
       public_token: publicToken,
       source_type: 'manual',
@@ -465,14 +500,26 @@ export async function withdrawApplicationByToken(
     return { success: false, error: 'Status configuration missing' }
   }
 
+  // Wave 2.6 Slice 1 — also resolve the per-vacancy 'Withdrawn' stage.
+  const withdrawnPipelineStageId = await resolvePipelineStageId(
+    admin,
+    app.vacancy_id as string,
+    'withdrawn',
+  )
+
   const now = new Date().toISOString()
+
+  const withdrawPayload: Record<string, unknown> = {
+    status_id: withdrawnStatus.id,
+    last_status_changed_at: now,
+  }
+  if (withdrawnPipelineStageId) {
+    withdrawPayload.pipeline_stage_id = withdrawnPipelineStageId
+  }
 
   const { error: updateErr } = await admin
     .from('applications')
-    .update({
-      status_id: withdrawnStatus.id,
-      last_status_changed_at: now,
-    })
+    .update(withdrawPayload)
     .eq('id', app.id as string)
     .eq('organization_id', app.organization_id as string)
   if (updateErr) {
@@ -605,14 +652,34 @@ export async function rejectApplication(input: {
 
   if (!application) return { success: false, error: 'Application not found' }
 
+  // Wave 2.6 Slice 1 — resolve the per-vacancy 'Rejected' stage. We
+  // look up the legacy status's code so this works for any rejection
+  // status_id the caller passes, not just the default 'rejected'.
+  const { data: targetStatusRow } = await ctx.supabase
+    .from('application_statuses')
+    .select('code')
+    .eq('id', input.statusId)
+    .single()
+  const targetCode = (targetStatusRow?.code as LegacyStatusCode | undefined) ?? 'rejected'
+  const targetPipelineStageId = await resolvePipelineStageId(
+    ctx.supabase,
+    application.vacancy_id,
+    targetCode,
+  )
+
+  const rejectPayload: Record<string, unknown> = {
+    status_id: input.statusId,
+    rejection_reason_id: input.rejectionReasonId ?? null,
+    rejection_template_id: input.templateId ?? null,
+    last_status_changed_at: new Date().toISOString(),
+  }
+  if (targetPipelineStageId) {
+    rejectPayload.pipeline_stage_id = targetPipelineStageId
+  }
+
   const { error: updateError } = await ctx.supabase
     .from('applications')
-    .update({
-      status_id: input.statusId,
-      rejection_reason_id: input.rejectionReasonId ?? null,
-      rejection_template_id: input.templateId ?? null,
-      last_status_changed_at: new Date().toISOString(),
-    })
+    .update(rejectPayload)
     .eq('id', input.applicationId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)

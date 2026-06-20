@@ -22,23 +22,22 @@
 
 ## 1 · Schema cutover pending
 
-### 🔴 Migration 049 — drop `applications.status_id` → add `applications.pipeline_stage_id`
+### 🟡 Wave 2.6 Slice 2+ — pipeline-stages read cutover + Stage Manager UI
 
-Migration 046 introduced [`pipeline_stages`](../../scripts/046_pipeline_stages.sql) but no caller uses it yet. The whole app reads `applications.status_id` against the global `application_statuses` table (the legacy 7-status set). (Migrations 047 and 048 went to the Wave 2.5 must-have flag and screening-questions schema respectively; the pipeline-stage cutover takes the next slot.)
+Slice 1 shipped (see [Changelog](#changelog--paid-down)) — Migration 049 added `applications.pipeline_stage_id`, backfilled it from the legacy `status_id`, and every application writer now sets both columns. **Reads still go through `status_id`** so behaviour is unchanged; Slice 1 is the foundation.
 
-**What blocks:**
-- Per-vacancy custom stages (Wave 2.6 proper).
-- The cross-vacancy board's column model collapses if a vacancy uses non-standard stages.
-- "Custom Stages.dc.html" UI can't ship.
+What's left across Slices 2–4:
 
-**What needs to happen:**
-1. Write Migration 049: `applications.pipeline_stage_id UUID REFERENCES pipeline_stages(id)`, drop `status_id`.
-2. Update ~20 callsites (any file touching `application_statuses` lookups, status updates, status filters). High-traffic: [`lib/actions/applications.ts`](../../lib/actions/applications.ts), [`components/pipeline/kanban-board.tsx`](../../components/pipeline/kanban-board.tsx), [`components/pipeline/cross-vacancy-board.tsx`](../../components/pipeline/cross-vacancy-board.tsx), [`app/(dashboard)/pipeline/page.tsx`](../../app/(dashboard)/pipeline/page.tsx), [`app/(dashboard)/vacancies/[id]/pipeline/page.tsx`](../../app/(dashboard)/vacancies/[id]/pipeline/page.tsx), `lib/cache/lookups.ts`.
-3. Wire `seed_default_pipeline_stages(vacancy_id)` into `createVacancy` so new vacancies get the default 7-stage set on insert.
-4. Build the Pipeline Stages manager UI for the Vacancy Detail "Settings" tab (per [`Custom Stages.dc.html`](../../redesign/Custom Stages.dc.html)).
-5. Bucket-mapper for the cross-vacancy board (per-vacancy custom stages collapse back to Applied / Screening / Interview / Offer / terminal so the kanban keeps its unified column model).
+**Slice 2 — Read-side cutover** (medium):
+- Update ~20 read callsites to prefer `pipeline_stage_id` (falling back to `status_id` for any rows the backfill missed). High-traffic: [`lib/actions/applications.ts`](../../lib/actions/applications.ts), [`components/pipeline/kanban-board.tsx`](../../components/pipeline/kanban-board.tsx), [`components/pipeline/cross-vacancy-board.tsx`](../../components/pipeline/cross-vacancy-board.tsx), [`app/(dashboard)/pipeline/page.tsx`](../../app/(dashboard)/pipeline/page.tsx), [`app/(dashboard)/vacancies/[id]/pipeline/page.tsx`](../../app/(dashboard)/vacancies/[id]/pipeline/page.tsx), `lib/cache/lookups.ts`.
+- Bucket-mapper for the cross-vacancy board (per-vacancy custom stages collapse back to Applied / Screening / Interview / Offer / terminal so the kanban keeps its unified column model).
 
-**Estimated effort:** L — multi-PR over 2–3 weeks.
+**Slice 3 — Stage Manager UI** (medium):
+- Build the Pipeline Stages manager UI for the Vacancy Detail "Settings" tab (per [`Custom Stages.dc.html`](../../redesign/Custom Stages.dc.html)) — drag-reorder, rename, type picker, terminal toggle, cap-10 enforcement (already in DB trigger).
+
+**Slice 4 — Migration 050** (small): drop `applications.status_id` once reads + writes have stabilised on `pipeline_stage_id` for one release.
+
+**Estimated effort:** ~M per slice, multi-PR over 2–3 weeks total. Slice 1's foundation drops the per-slice risk because the dataset is already consistent.
 
 ---
 
@@ -242,4 +241,5 @@ Effort: trivial.
 
 - **2026-06-20 — Wave 2.5 Slice 1 (scorecard attribute must-have flag).** Migration [`047_vacancy_questions_must_have.sql`](../../scripts/047_vacancy_questions_must_have.sql) added `vacancy_questions.must_have BOOLEAN NOT NULL DEFAULT false`. New `bulkCreateVacancyQuestions` and `toggleVacancyQuestionMustHave` server actions in [`lib/actions/evaluations.ts`](../../lib/actions/evaluations.ts). The vacancy create wizard's Step 4 attributes now persist with their star flags; the vacancy detail Scorecard tab renders + edits the star inline. Slice 2 (screening questions) remains as a separate tech-debt entry above.
 - **2026-06-20 — Wave 2.5 Slice 2a (screening questions schema + recruiter UI).** Migration [`048_vacancy_screening_questions.sql`](../../scripts/048_vacancy_screening_questions.sql) added two tables: `vacancy_screening_questions` (label + answer_type + is_knockout + knockout_answer + sort_order) and `application_screening_answers` (pre-computed `is_knockout_flag` per application × question). New actions in [`lib/actions/screening-questions.ts`](../../lib/actions/screening-questions.ts) (`bulkCreateScreeningQuestions`, `listScreeningQuestionsForVacancy`, `deleteScreeningQuestion`). The vacancy create wizard's Step 4 now persists screening questions as `yes_no` rows; the vacancy detail Scorecard tab grew a new "Screening questions" card with add/remove/knockout-toggle. Slice 2b (apply form integration + answers writer) tracked separately above.
+- **2026-06-20 — Wave 2.6 Slice 1 (pipeline_stage_id foundation).** Migration [`049_applications_pipeline_stage_id.sql`](../../scripts/049_applications_pipeline_stage_id.sql) added `applications.pipeline_stage_id UUID REFERENCES pipeline_stages(id)` (nullable for now), seeded `pipeline_stages` for every vacancy that didn't have them, and backfilled `pipeline_stage_id` from the legacy `status_id` → `application_statuses.code` → `pipeline_stages.name` mapping. New pure helper [`lib/pipeline-stages/resolve.ts`](../../lib/pipeline-stages/resolve.ts) (with 9 vitest cases) maps a legacy code to the matching per-vacancy stage. Every application writer now sets both columns: [`createCandidate`](../../lib/actions/candidates.ts) (linked-vacancy path), [`createApplication`](../../lib/actions/applications.ts), [`updateApplicationStatus`](../../lib/actions/applications.ts), [`rejectApplication`](../../lib/actions/applications.ts), [`withdrawApplicationByToken`](../../lib/actions/applications.ts), [`submitPublicApplication`](../../lib/actions/public-apply.ts). [`createVacancy`](../../lib/actions/vacancies.ts) now calls `seed_default_pipeline_stages()` after insert; [`duplicateVacancy`](../../lib/actions/vacancies.ts) copies the source's stages instead. Reads still go through `status_id` — Slice 2 flips them.
 - **2026-06-20 — Wave 2.5 Slice 2b (apply-form integration + knockout flag surface).** The public apply form ([`/apply/[token]`](../../app/apply/[token]/page.tsx)) now renders the vacancy's screening questions between personal details and the GDPR notice; `yes_no` answers are rendered as a brand-blue Yes/No pill pair, the other answer types as text/number/select inputs. The form posts `screening_answers_json`; [`submitPublicApplication`](../../lib/actions/public-apply.ts) persists `application_screening_answers` with `is_knockout_flag` pre-computed via the new [`computeIsKnockoutFlag`](../../lib/screening-questions/compute-flag.ts) helper (case-insensitive, trimmed match against `knockout_answer`). The candidate profile's Screening-stage block now shows a "Screening flags" callout listing each flagged question with the candidate's answer + expected answer, so the recruiter sees the gate signal before deciding whether to advance. Per the design, candidates are never told their answer triggered a flag.
