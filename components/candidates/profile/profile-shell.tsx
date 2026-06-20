@@ -88,6 +88,10 @@ interface ProfileShellProps {
     string,
     StageContextualBlockProps['upcomingInterview']
   >
+  /** Wave 2.5 Slice 2b — Map of applicationId → knockout-flagged
+   * screening answers. Empty list when the candidate cleared every
+   * question; missing entry when the vacancy had no screening questions. */
+  screeningFlagsByApplication: Map<string, StageContextualBlockProps['screeningFlags']>
   rejectionReasons: RejectionReason[]
   rejectionTemplates: RejectionTemplate[]
   /** The 'rejected' status id from application_statuses — needed by the
@@ -150,6 +154,7 @@ export function CandidateProfileShell({
   repeatSummary,
   activeStages,
   upcomingInterviewByApplication,
+  screeningFlagsByApplication,
   rejectionReasons,
   rejectionTemplates,
   rejectedStatusId,
@@ -337,6 +342,7 @@ export function CandidateProfileShell({
                 upcomingInterview={
                   upcomingInterviewByApplication.get(selectedApp.id) ?? null
                 }
+                screeningFlags={screeningFlagsByApplication.get(selectedApp.id) ?? []}
               />
             )}
 

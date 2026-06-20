@@ -57,17 +57,16 @@ Migration 046 introduced [`pipeline_stages`](../../scripts/046_pipeline_stages.s
 
 **Files touched on integration:** any place that calls `sendEmail()` for a recruiter — currently scattered in `lib/actions/applications.ts`, `lib/actions/interviews.ts`, etc.
 
-### 🟡 Wave 2.5 Slice 2b — apply-form integration for screening questions
+### 🟢 Wave 2.5 future — non-yes/no answer types in the wizard
 
-Slice 1 (scorecard attribute must-have flag) and Slice 2a (screening questions schema + recruiter UI) shipped — see [Changelog](#changelog--paid-down). What's still outstanding from Wave 2.5 is the candidate-facing half:
+Slices 1, 2a and 2b shipped (see [Changelog](#changelog--paid-down)). The schema and apply-form both support `yes_no`, `short_text`, `number`, `select`, but the **wizard UI** only captures `yes_no`. Recruiters who want to use the other types have to add them via the vacancy-detail card after publish.
 
-- Render the questions on the public apply form ([`/apply/[token]`](../../app/apply/[token]/page.tsx)). Layout per [`Public Pages.dc.html`](../../redesign/Public Pages.dc.html) §2: a new section between "About you" and the CV upload, one input per question, brand-blue primary submit.
-- Wire the apply form's submit to persist `application_screening_answers` (one row per question per application), pre-computing `is_knockout_flag` against `vacancy_screening_questions.knockout_answer` so the screening tab doesn't have to re-derive on every render.
-- Surface the knockout flag on the application detail / Screening view — the design says **let the candidate submit; we flag internally**, so the apply-form UX must remain identical regardless of answer.
-- Extend the wizard's Step 4 + the vacancy-detail card to capture `answer_type` other than `yes_no` (currently hard-coded; Slice 2a only ships `yes_no`).
-- Bias-check the questions against the JD (could reuse the existing inclusive-language helper).
+What's left:
+- Extend the wizard's Step 4 screening-question UI to pick an `answer_type` per row, and for `select` to capture the options list.
+- Mirror the same in the recruiter card on the Scorecard tab (currently also `yes_no`-only).
+- Bias-check the question labels against the JD (could reuse the existing inclusive-language helper) — nice-to-have, not required.
 
-**Estimated effort:** M — apply form rewrite + screening-tab surface + tests. No further schema changes needed (Slice 2a's `application_screening_answers` table already exists with the right shape).
+**Estimated effort:** S — wizard UI extension only; no schema or apply-form changes.
 
 ### 🟡 `<AiDraftPanel />` shell — built but underused
 
@@ -243,3 +242,4 @@ Effort: trivial.
 
 - **2026-06-20 — Wave 2.5 Slice 1 (scorecard attribute must-have flag).** Migration [`047_vacancy_questions_must_have.sql`](../../scripts/047_vacancy_questions_must_have.sql) added `vacancy_questions.must_have BOOLEAN NOT NULL DEFAULT false`. New `bulkCreateVacancyQuestions` and `toggleVacancyQuestionMustHave` server actions in [`lib/actions/evaluations.ts`](../../lib/actions/evaluations.ts). The vacancy create wizard's Step 4 attributes now persist with their star flags; the vacancy detail Scorecard tab renders + edits the star inline. Slice 2 (screening questions) remains as a separate tech-debt entry above.
 - **2026-06-20 — Wave 2.5 Slice 2a (screening questions schema + recruiter UI).** Migration [`048_vacancy_screening_questions.sql`](../../scripts/048_vacancy_screening_questions.sql) added two tables: `vacancy_screening_questions` (label + answer_type + is_knockout + knockout_answer + sort_order) and `application_screening_answers` (pre-computed `is_knockout_flag` per application × question). New actions in [`lib/actions/screening-questions.ts`](../../lib/actions/screening-questions.ts) (`bulkCreateScreeningQuestions`, `listScreeningQuestionsForVacancy`, `deleteScreeningQuestion`). The vacancy create wizard's Step 4 now persists screening questions as `yes_no` rows; the vacancy detail Scorecard tab grew a new "Screening questions" card with add/remove/knockout-toggle. Slice 2b (apply form integration + answers writer) tracked separately above.
+- **2026-06-20 — Wave 2.5 Slice 2b (apply-form integration + knockout flag surface).** The public apply form ([`/apply/[token]`](../../app/apply/[token]/page.tsx)) now renders the vacancy's screening questions between personal details and the GDPR notice; `yes_no` answers are rendered as a brand-blue Yes/No pill pair, the other answer types as text/number/select inputs. The form posts `screening_answers_json`; [`submitPublicApplication`](../../lib/actions/public-apply.ts) persists `application_screening_answers` with `is_knockout_flag` pre-computed via the new [`computeIsKnockoutFlag`](../../lib/screening-questions/compute-flag.ts) helper (case-insensitive, trimmed match against `knockout_answer`). The candidate profile's Screening-stage block now shows a "Screening flags" callout listing each flagged question with the candidate's answer + expected answer, so the recruiter sees the gate signal before deciding whether to advance. Per the design, candidates are never told their answer triggered a flag.

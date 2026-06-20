@@ -11,14 +11,29 @@ const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx']
 
 type ParseState = 'idle' | 'parsing' | 'done' | 'failed'
 
+export interface ApplyScreeningQuestion {
+  id: string
+  label: string
+  answer_type: 'yes_no' | 'short_text' | 'number' | 'select'
+  is_knockout: boolean
+  knockout_answer: string | null
+  options: string[] | null
+}
+
 interface ApplyFormProps {
   token: string
   /** Name of the recruiting organization — the data controller. Threaded into
    * the GDPR Article 13 notice so candidates know who their data goes to. */
   companyName: string
+  /** Wave 2.5 Slice 2b — recruiter-defined screening questions for this
+   * vacancy. Rendered between personal details and the GDPR notice. The
+   * design says **knockout answers flag the application internally**, so
+   * the apply UX is identical regardless of answer — no warning, no
+   * blocking. */
+  screeningQuestions?: ApplyScreeningQuestion[]
 }
 
-export function ApplyForm({ token, companyName }: ApplyFormProps) {
+export function ApplyForm({ token, companyName, screeningQuestions = [] }: ApplyFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
 
@@ -40,6 +55,11 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [linkedinUrl, setLinkedinUrl] = useState('')
+
+  // Wave 2.5 Slice 2b — screening question answers. Keyed by question id;
+  // values are the raw string the candidate selected/typed. yes_no rows
+  // store 'yes' or 'no'; the other answer types pass through their text.
+  const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string>>({})
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -125,6 +145,19 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
       return
     }
 
+    // Wave 2.5 Slice 2b — every visible screening question must have an
+    // answer before submit. Per the design we still let the candidate
+    // submit if their answer is a knockout — we just flag internally —
+    // but a totally blank answer means the form is incomplete, which is
+    // a UX failure rather than a knockout.
+    for (const q of screeningQuestions) {
+      const answer = (screeningAnswers[q.id] ?? '').trim()
+      if (!answer) {
+        setError('Please answer all questions before submitting.')
+        return
+      }
+    }
+
     if (!captchaToken) {
       setError('Security check not complete. Please wait a moment and try again.')
       return
@@ -143,6 +176,15 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
     fd.append('website', '') // Honeypot
     fd.append('experience_json', JSON.stringify(parsed?.experience ?? []))
     fd.append('education_json', JSON.stringify(parsed?.education ?? []))
+    fd.append(
+      'screening_answers_json',
+      JSON.stringify(
+        screeningQuestions.map((q) => ({
+          question_id: q.id,
+          answer_value: (screeningAnswers[q.id] ?? '').trim(),
+        })),
+      ),
+    )
     fd.append('cf_turnstile_token', captchaToken)
 
     const result = await submitPublicApplication(fd)
@@ -356,6 +398,90 @@ export function ApplyForm({ token, companyName }: ApplyFormProps) {
             />
           </div>
         </div>
+
+        {/* ── Screening questions (Wave 2.5 Slice 2b) ───────────────────────── */}
+        {screeningQuestions.length > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white p-4">
+            <h3 className="mb-1 text-sm font-bold text-gray-900">A few quick questions</h3>
+            <p className="mb-4 text-xs text-gray-500">
+              These help the team focus on candidates who fit the role.
+            </p>
+            <div className="space-y-4">
+              {screeningQuestions.map((q) => (
+                <div key={q.id}>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    {q.label} <span className="text-red-500">*</span>
+                  </label>
+                  {q.answer_type === 'yes_no' ? (
+                    <div className="flex gap-2">
+                      {(['yes', 'no'] as const).map((opt) => {
+                        const checked = screeningAnswers[q.id] === opt
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() =>
+                              setScreeningAnswers((prev) => ({ ...prev, [q.id]: opt }))
+                            }
+                            aria-pressed={checked}
+                            disabled={isLoading}
+                            className={
+                              checked
+                                ? 'flex-1 rounded-lg border-[1.5px] border-blue-600 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition-colors'
+                                : 'flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
+                            }
+                          >
+                            {opt === 'yes' ? 'Yes' : 'No'}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : q.answer_type === 'number' ? (
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={screeningAnswers[q.id] ?? ''}
+                      onChange={(e) =>
+                        setScreeningAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+                      }
+                      disabled={isLoading}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+                    />
+                  ) : q.answer_type === 'select' && q.options && q.options.length > 0 ? (
+                    <select
+                      value={screeningAnswers[q.id] ?? ''}
+                      onChange={(e) =>
+                        setScreeningAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+                      }
+                      disabled={isLoading}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+                    >
+                      <option value="" disabled>
+                        Select an option
+                      </option>
+                      {q.options.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={screeningAnswers[q.id] ?? ''}
+                      onChange={(e) =>
+                        setScreeningAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+                      }
+                      maxLength={500}
+                      disabled={isLoading}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/*
           GDPR Article 13 notice — disclosed at the point of collection.

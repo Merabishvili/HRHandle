@@ -63,6 +63,26 @@ export default async function ApplyPage({ params }: PageProps) {
   const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
   const isClosed = vacancy.archived_at || statusCode !== 'open'
 
+  // Wave 2.5 Slice 2b — fetch the vacancy's screening questions so the
+  // form can render them. Token in the URL is the credential; we use the
+  // admin client (same pattern as the vacancy lookup above) to bypass
+  // RLS on the unauthenticated apply page.
+  const { data: screeningQuestionsRaw } = await supabase
+    .from('vacancy_screening_questions')
+    .select('id, label, answer_type, is_knockout, knockout_answer, options, sort_order')
+    .eq('vacancy_id', vacancy.id)
+    .order('sort_order', { ascending: true })
+
+  const screeningQuestions = (screeningQuestionsRaw || []) as {
+    id: string
+    label: string
+    answer_type: 'yes_no' | 'short_text' | 'number' | 'select'
+    is_knockout: boolean
+    knockout_answer: string | null
+    options: string[] | null
+    sort_order: number
+  }[]
+
   const orgJoin = vacancy.organizations as OrgJoin
   const org = (Array.isArray(orgJoin) ? orgJoin[0] : orgJoin) || null
   const publicJobsSlug = org?.public_page_slug as string | null
@@ -169,7 +189,11 @@ export default async function ApplyPage({ params }: PageProps) {
             <p className="mt-1 text-sm text-gray-500">The role may have been filled or closed. Thank you for your interest.</p>
           </div>
         ) : (
-          <ApplyForm token={token} companyName={org?.name || 'this company'} />
+          <ApplyForm
+            token={token}
+            companyName={org?.name || 'this company'}
+            screeningQuestions={screeningQuestions}
+          />
         )}
 
         {publicJobsSlug && (

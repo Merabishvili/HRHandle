@@ -334,6 +334,47 @@ export default async function CandidateDetailPage({
     }
   }
 
+  // Wave 2.5 Slice 2b — knockout-flagged screening answers per active
+  // application. Surfaces on the Screening-stage block so the recruiter
+  // sees which questions the candidate fell short on before they decide
+  // whether to advance to interview.
+  const screeningFlagsByApplication = new Map<
+    string,
+    { questionLabel: string; answerValue: string | null; expectedAnswer: string | null }[]
+  >()
+  if (activeApplications.length > 0) {
+    const activeAppIds = activeApplications.map((a) => a.id)
+    const { data: flaggedRaw } = await supabase
+      .from('application_screening_answers')
+      .select(
+        'application_id, answer_value, vacancy_screening_questions ( label, knockout_answer )',
+      )
+      .eq('organization_id', organizationId)
+      .eq('is_knockout_flag', true)
+      .in('application_id', activeAppIds)
+
+    type ScreeningJoin = {
+      application_id: string
+      answer_value: string | null
+      vacancy_screening_questions:
+        | { label: string; knockout_answer: string | null }
+        | { label: string; knockout_answer: string | null }[]
+        | null
+    }
+    for (const row of (flaggedRaw ?? []) as ScreeningJoin[]) {
+      const qJoin = row.vacancy_screening_questions
+      const q = Array.isArray(qJoin) ? qJoin[0] : qJoin
+      if (!q) continue
+      const existing = screeningFlagsByApplication.get(row.application_id) ?? []
+      existing.push({
+        questionLabel: q.label,
+        answerValue: row.answer_value ?? null,
+        expectedAnswer: q.knockout_answer ?? null,
+      })
+      screeningFlagsByApplication.set(row.application_id, existing)
+    }
+  }
+
   const [
     { data: experienceRaw },
     { data: educationRaw },
@@ -434,6 +475,7 @@ export default async function CandidateDetailPage({
       repeatSummary={repeatSummary}
       activeStages={sortedActiveStages.map((s) => ({ id: s.id, code: s.code, name: s.name }))}
       upcomingInterviewByApplication={upcomingInterviewByApplication}
+      screeningFlagsByApplication={screeningFlagsByApplication}
       rejectionReasons={rejectionReasonsRaw ?? []}
       rejectionTemplates={rejectionTemplatesRaw ?? []}
       rejectedStatusId={rejectedStatusId}

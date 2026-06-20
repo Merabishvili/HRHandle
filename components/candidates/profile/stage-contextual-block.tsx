@@ -14,6 +14,7 @@ import {
   Calendar,
   ExternalLink,
   Sparkles,
+  AlertTriangle,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -30,9 +31,11 @@ export interface StageContextualBlockProps {
   /** Ordered list of non-terminal stages — used by the tracker. */
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentStage: { code: ApplicationStatus['code']; name: string; id: string }
-  /** Candidate-derived data shown on the Screening gate tiles. The
-   * design's "knockout checks" are stand-ins until Wave 2.5 wires real
-   * screening-answer-type matching. */
+  /** Candidate-derived data shown on the Screening gate tiles (salary
+   * expectation, notice period, location). Real screening-question
+   * knockouts arrive via `screeningFlags` below; these three tiles are
+   * candidate-profile-level data the recruiter always wants in front of
+   * them when making the gate decision. */
   candidate: {
     salaryExpectation: string | null
     noticePeriod: string | null
@@ -47,6 +50,15 @@ export interface StageContextualBlockProps {
     durationMinutes: number
     meetingLink: string | null
   } | null
+  /** Wave 2.5 Slice 2b — knockout-flagged screening answers on this
+   * application. Rendered as a small "Screening flags" callout on the
+   * Screening stage so the recruiter sees which questions the candidate
+   * fell short on before they decide whether to advance. */
+  screeningFlags: {
+    questionLabel: string
+    answerValue: string | null
+    expectedAnswer: string | null
+  }[]
 }
 
 /**
@@ -74,6 +86,7 @@ export function StageContextualBlock({
   currentStage,
   candidate,
   upcomingInterview,
+  screeningFlags,
 }: StageContextualBlockProps) {
   switch (currentStage.code) {
     case 'screening':
@@ -83,6 +96,7 @@ export function StageContextualBlock({
           stages={stages}
           currentCode={currentStage.code}
           candidate={candidate}
+          screeningFlags={screeningFlags}
         />
       )
     case 'interview':
@@ -119,11 +133,13 @@ function ScreeningGate({
   stages,
   currentCode,
   candidate,
+  screeningFlags,
 }: {
   applicationId: string
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   candidate: StageContextualBlockProps['candidate']
+  screeningFlags: StageContextualBlockProps['screeningFlags']
 }) {
   const router = useRouter()
   const [decision, setDecision] = useState<'yes' | 'no' | null>(null)
@@ -171,6 +187,41 @@ function ScreeningGate({
         <GateCard icon={Clock} label="Notice period" value={candidate.noticePeriod ?? '—'} />
         <GateCard icon={MapPin} label="Location" value={candidate.location ?? '—'} />
       </div>
+
+      {screeningFlags.length > 0 && (
+        <div
+          className="rounded-[10px] border px-3 py-2.5"
+          style={{
+            borderColor: 'oklch(0.86 0.07 70)',
+            background: 'oklch(0.985 0.03 70)',
+          }}
+        >
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <AlertTriangle
+              className="h-3.5 w-3.5"
+              style={{ color: 'oklch(0.5 0.12 60)' }}
+              aria-hidden
+            />
+            <p
+              className="text-[12px] font-bold"
+              style={{ color: 'oklch(0.4 0.08 55)' }}
+            >
+              Screening flags ({screeningFlags.length})
+            </p>
+          </div>
+          <ul className="space-y-1.5">
+            {screeningFlags.map((flag, idx) => (
+              <li key={idx} className="text-[12px] text-foreground/85">
+                <span className="font-semibold">{flag.questionLabel}:</span>{' '}
+                <span className="text-foreground/70">{flag.answerValue || '—'}</span>
+                {flag.expectedAnswer && (
+                  <span className="text-muted-foreground"> (expected: {flag.expectedAnswer})</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="border-t border-[oklch(0.94_0.01_250)] pt-3.5">
         <p className="mb-1.5 text-[12px] font-semibold text-foreground">

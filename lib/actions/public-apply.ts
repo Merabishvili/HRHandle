@@ -7,6 +7,7 @@ import { dispatchWebhookNotification } from '@/lib/notifications/webhook-dispatc
 import { applicationReceivedCtx } from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { verifyCaptcha } from '@/lib/turnstile'
+import { computeIsKnockoutFlag } from '@/lib/screening-questions/compute-flag'
 import { headers } from 'next/headers'
 
 const MAX_SUBMISSIONS_PER_IP_PER_HOUR = 5
@@ -83,6 +84,10 @@ export async function submitPublicApplication(
   const cvFile = formData.get('cv') as File | null
   const experienceJson = (formData.get('experience_json') as string | null) || '[]'
   const educationJson = (formData.get('education_json') as string | null) || '[]'
+  // Wave 2.5 Slice 2b — recruiter-defined screening questions. The form
+  // posts an array of { question_id, answer_value } objects.
+  const screeningAnswersJson =
+    (formData.get('screening_answers_json') as string | null) || '[]'
 
   // ── 3. Basic validation ────────────────────────────────────────────────────
   if (!token) return { success: false, error: 'Invalid form link.' }
@@ -330,6 +335,70 @@ export async function submitPublicApplication(
     } catch (err) {
       console.error('[public-apply] education parse error:', err)
     }
+  }
+
+  // ── 14. Persist screening answers (best-effort, non-fatal) ─────────────────
+  // Match each submitted answer to a question in the same vacancy and
+  // pre-compute the knockout flag using the shared helper. Rows whose
+  // question_id doesn't belong to this vacancy are dropped silently — the
+  // form should never send unknown ids, but if the questions were edited
+  // between the page render and submit we'd rather drop the answer than
+  // attach it to the wrong question.
+  try {
+    const ScreeningAnswerItem = z.object({
+      question_id: z.string().uuid(),
+      answer_value: z.string().max(500),
+    })
+    const parsed = z.array(ScreeningAnswerItem).safeParse(JSON.parse(screeningAnswersJson))
+    if (parsed.success && parsed.data.length > 0) {
+      const submittedIds = parsed.data.map((a) => a.question_id)
+      const { data: matchedQuestions } = await supabase
+        .from('vacancy_screening_questions')
+        .select('id, is_knockout, knockout_answer')
+        .eq('vacancy_id', vacancy.id)
+        .in('id', submittedIds)
+
+      const questionById = new Map(
+        (matchedQuestions ?? []).map((q) => [q.id as string, q]),
+      )
+
+      const rows = parsed.data
+        .map((a) => {
+          const q = questionById.get(a.question_id)
+          if (!q) return null
+          const answerValue = a.answer_value.trim() || null
+          return {
+            organization_id: orgId,
+            application_id: newApp.id as string,
+            question_id: q.id as string,
+            answer_value: answerValue,
+            is_knockout_flag: computeIsKnockoutFlag(
+              {
+                is_knockout: q.is_knockout as boolean,
+                knockout_answer: (q.knockout_answer as string | null) ?? null,
+              },
+              answerValue,
+            ),
+          }
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null)
+
+      if (rows.length > 0) {
+        const { error: answersErr } = await supabase
+          .from('application_screening_answers')
+          .insert(rows)
+        if (answersErr) {
+          console.error('[public-apply] screening answers insert failed:', answersErr)
+        }
+      }
+    } else if (!parsed.success) {
+      console.warn(
+        '[public-apply] screening_answers JSON failed validation:',
+        parsed.error.issues[0]?.message,
+      )
+    }
+  } catch (err) {
+    console.error('[public-apply] screening answers block error:', err)
   }
 
   // ── 15. Upload CV (optional) ───────────────────────────────────────────────
