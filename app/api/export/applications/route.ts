@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
   const { data: applications } = await supabase
     .from('applications')
-    .select('candidate_id, status_id, applied_at, source_type, application_statuses(name)')
+    .select('candidate_id, applied_at, source_type, pipeline_stages(name)')
     .eq('organization_id', profile.organization_id)
     .eq('vacancy_id', vacancyId)
     .is('deleted_at', null)
@@ -71,14 +71,14 @@ export async function GET(request: NextRequest) {
 
   const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'LinkedIn', 'Application Status', 'Source', 'Applied At']
 
-  type AppStatusJoin = { name: string } | { name: string }[] | null
+  type StageJoin = { name: string } | { name: string }[] | null
 
   const csv = [
     headers.join(','),
     ...rows.map((r) => {
       const c = candidateMap.get(r.candidate_id)
-      const statusJoin = r.application_statuses as AppStatusJoin
-      const statusName = Array.isArray(statusJoin) ? statusJoin[0]?.name : statusJoin?.name
+      const stageJoin = r.pipeline_stages as StageJoin
+      const statusName = Array.isArray(stageJoin) ? stageJoin[0]?.name : stageJoin?.name
       return [
         csvEscape(c?.first_name || ''),
         csvEscape(c?.last_name || ''),

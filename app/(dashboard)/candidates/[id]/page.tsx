@@ -7,6 +7,7 @@ import {
   getApplicationStatuses,
 } from '@/lib/cache/lookups'
 import type { ApplicationStatus } from '@/lib/types/application'
+import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 import type { ActivityItem } from '@/components/candidates/activity-feed'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
@@ -69,13 +70,21 @@ interface CandidateRow {
   deleted_at: string | null
 }
 
+interface PipelineStageJoinRow {
+  id: string
+  name: string
+  type: 'standard' | 'review' | 'interview' | 'offer'
+  is_terminal: boolean
+}
+
 interface ApplicationRow {
   id: string
   vacancy_id: string
-  status_id: string | null
+  pipeline_stage_id: string | null
   applied_at: string
   updated_at: string
   last_status_changed_at: string | null
+  pipeline_stages: PipelineStageJoinRow | PipelineStageJoinRow[] | null
 }
 
 interface InterviewRow {
@@ -199,7 +208,10 @@ export default async function CandidateDetailPage({
 
   const { data: applicationsRaw } = await supabase
     .from('applications')
-    .select('id, vacancy_id, status_id, applied_at, updated_at, last_status_changed_at')
+    .select(
+      `id, vacancy_id, pipeline_stage_id, applied_at, updated_at, last_status_changed_at,
+       pipeline_stages ( id, name, type, is_terminal )`,
+    )
     .eq('organization_id', organizationId)
     .eq('candidate_id', id)
     .is('deleted_at', null)
@@ -219,11 +231,26 @@ export default async function CandidateDetailPage({
     }
   }
 
-  const statusById = new Map(appStatuses.map((s) => [s.id, s]))
+  // Wave 2.6 Slice 2c — Resolve each application's stage from the
+  // per-vacancy `pipeline_stages` row joined on the application, then
+  // bucket-map to the canonical code for outcome / terminal checks.
+  // The display name uses the recruiter's custom stage name (e.g.
+  // "HR Interview" / "Sourced") rather than the canonical bucket.
+  function resolveStage(a: ApplicationRow) {
+    const join = a.pipeline_stages
+    const row = Array.isArray(join) ? join[0] : join
+    if (!row) return null
+    const canonical = mapPipelineStageToBucket({
+      type: row.type,
+      name: row.name,
+      is_terminal: row.is_terminal,
+    })
+    return { id: row.id, name: row.name, code: canonical as ApplicationStatus['code'] }
+  }
 
   // Partition into active (selector + contextual block) vs closed (history)
   const activeApplications = applications.flatMap((a) => {
-    const stage = a.status_id ? statusById.get(a.status_id) : null
+    const stage = resolveStage(a)
     if (!stage || TERMINAL_CODES.has(stage.code)) return []
     const vacancy = vacancyMap.get(a.vacancy_id)
     if (!vacancy) return []
@@ -231,7 +258,7 @@ export default async function CandidateDetailPage({
       id: a.id,
       vacancyId: a.vacancy_id,
       vacancyTitle: vacancy.title,
-      stage: { id: stage.id, code: stage.code, name: stage.name },
+      stage,
     }]
   })
 
@@ -241,13 +268,19 @@ export default async function CandidateDetailPage({
   // audit-log lookup; tech-debt for now.
   const closedApps = applications
     .map((a) => {
-      const status = a.status_id ? statusById.get(a.status_id) : null
+      const status = resolveStage(a)
       if (!status || !TERMINAL_CODES.has(status.code)) return null
       const vacancy = vacancyMap.get(a.vacancy_id)
       if (!vacancy) return null
       return { app: a, status, vacancy }
     })
-    .filter((x): x is { app: ApplicationRow; status: ApplicationStatus; vacancy: { id: string; title: string } } => x !== null)
+    .filter(
+      (x): x is {
+        app: ApplicationRow
+        status: { id: string; name: string; code: ApplicationStatus['code'] }
+        vacancy: { id: string; title: string }
+      } => x !== null,
+    )
 
   // Per-application reason — looked up from the most recent rejection
   // record. We do a single batch fetch then map.

@@ -12,7 +12,6 @@ interface PipelineApplicationRow {
   id: string
   candidate_id: string
   pipeline_stage_id: string | null
-  status_id: string | null
   applied_at: string
   last_status_changed_at: string | null
 }
@@ -85,7 +84,7 @@ export default async function VacancyPipelinePage({
 
     supabase
       .from('applications')
-      .select('id, candidate_id, pipeline_stage_id, status_id, applied_at, last_status_changed_at')
+      .select('id, candidate_id, pipeline_stage_id, applied_at, last_status_changed_at')
       .eq('vacancy_id', id)
       .eq('organization_id', organizationId)
       .is('deleted_at', null)

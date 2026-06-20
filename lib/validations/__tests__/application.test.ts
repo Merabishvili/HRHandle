@@ -17,17 +17,17 @@ describe('ApplicationSchema', () => {
     const result = ApplicationSchema.safeParse({
       candidate_id: VALID_UUID,
       vacancy_id: VALID_UUID_2,
-      status_id: VALID_UUID,
+      pipeline_stage_id: VALID_UUID,
       notes: 'Strong candidate',
     })
     expect(result.success).toBe(true)
   })
 
-  it('allows null status_id', () => {
+  it('allows null pipeline_stage_id', () => {
     const result = ApplicationSchema.safeParse({
       candidate_id: VALID_UUID,
       vacancy_id: VALID_UUID_2,
-      status_id: null,
+      pipeline_stage_id: null,
     })
     expect(result.success).toBe(true)
   })
@@ -63,11 +63,11 @@ describe('ApplicationSchema', () => {
     }
   })
 
-  it('rejects a non-UUID status_id', () => {
+  it('rejects a non-UUID pipeline_stage_id', () => {
     const result = ApplicationSchema.safeParse({
       candidate_id: VALID_UUID,
       vacancy_id: VALID_UUID_2,
-      status_id: 'not-a-uuid',
+      pipeline_stage_id: 'not-a-uuid',
     })
     expect(result.success).toBe(false)
   })

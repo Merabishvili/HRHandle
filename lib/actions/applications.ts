@@ -85,8 +85,10 @@ export async function updateApplicationStatus(
       )
     : null
 
+  // Wave 2.6 Slice 4 — applications.status_id is gone; we only write
+  // pipeline_stage_id. The newStatusId arg still drives audit/email/
+  // webhook because we resolve it to a canonical code below.
   const updatePayload: Record<string, unknown> = {
-    status_id: newStatusId,
     last_status_changed_at: new Date().toISOString(),
   }
   if (newPipelineStageId) {
@@ -471,12 +473,8 @@ export async function createApplication(input: {
 
   if (existing) return { success: false, error: 'This candidate is already being considered for this vacancy.' }
 
-  // Get the "applied" status id
-  const appliedStatus = (activeStatusesRaw || []).find((s) => s.code === APPLICATION_STATUS.APPLIED)
-  if (!appliedStatus) return { success: false, error: 'Application status configuration missing.' }
-
-  // Wave 2.6 Slice 1 — mirror the legacy status_id write onto
-  // pipeline_stage_id by resolving the per-vacancy "Applied" stage.
+  // Wave 2.6 Slice 4 — applications.status_id is gone. We only resolve
+  // the per-vacancy "Applied" pipeline_stages row and set pipeline_stage_id.
   const pipelineStageId = await resolvePipelineStageId(
     ctx.supabase,
     input.vacancyId,
@@ -493,7 +491,6 @@ export async function createApplication(input: {
       candidate_id: input.candidateId,
       vacancy_id: input.vacancyId,
       organization_id: ctx.orgId,
-      status_id: appliedStatus.id,
       pipeline_stage_id: pipelineStageId,
       applied_at: new Date().toISOString(),
       public_token: publicToken,
@@ -562,17 +559,8 @@ export async function withdrawApplicationByToken(
     }
   }
 
-  // Resolve the withdrawn status id.
-  const { data: withdrawnStatus } = await admin
-    .from('application_statuses')
-    .select('id')
-    .eq('code', APPLICATION_STATUS.WITHDRAWN)
-    .single()
-  if (!withdrawnStatus) {
-    return { success: false, error: 'Status configuration missing' }
-  }
-
-  // Wave 2.6 Slice 1 — also resolve the per-vacancy 'Withdrawn' stage.
+  // Wave 2.6 Slice 4 — resolve the per-vacancy 'Withdrawn' stage; that's
+  // the only column we set now (status_id is gone).
   const withdrawnPipelineStageId = await resolvePipelineStageId(
     admin,
     app.vacancy_id as string,
@@ -582,7 +570,6 @@ export async function withdrawApplicationByToken(
   const now = new Date().toISOString()
 
   const withdrawPayload: Record<string, unknown> = {
-    status_id: withdrawnStatus.id,
     last_status_changed_at: now,
   }
   if (withdrawnPipelineStageId) {
@@ -751,8 +738,8 @@ export async function rejectApplication(input: {
   )
   const targetPipelineStageId = input.targetPipelineStageId ?? defaultPipelineStageId
 
+  // Wave 2.6 Slice 4 — status_id is gone; only pipeline_stage_id is set.
   const rejectPayload: Record<string, unknown> = {
-    status_id: input.statusId,
     rejection_reason_id: input.rejectionReasonId ?? null,
     rejection_template_id: input.templateId ?? null,
     last_status_changed_at: new Date().toISOString(),
@@ -1019,35 +1006,40 @@ export async function moveApplicationsBatch(input: {
 
   const uniqueIds = Array.from(new Set(input.applicationIds))
 
-  // Skip rows that are already at the target status so we don't generate
-  // a no-op audit row + (with opt-in) a duplicate auto-email. One small
-  // lookup is faster than a per-row no-op write.
+  // Wave 2.6 Slice 4 — skip detection moved from status_id to the
+  // bucket-mapped per-vacancy stage. We compare each app's current
+  // canonical bucket against the target status's code; matching rows
+  // are no-ops we skip to avoid generating duplicate audit/email noise.
   const { data: currentStates } = await ctx.supabase
     .from('applications')
-    .select('id, status_id')
+    .select('id, pipeline_stage_id, pipeline_stages ( type, name, is_terminal )')
     .in('id', uniqueIds)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
-  const statusById = new Map(
-    ((currentStates ?? []) as { id: string; status_id: string | null }[]).map((r) => [
-      r.id,
-      r.status_id,
-    ]),
-  )
+
+  type StageJoin =
+    | { type: 'standard' | 'review' | 'interview' | 'offer'; name: string; is_terminal: boolean }
+    | { type: 'standard' | 'review' | 'interview' | 'offer'; name: string; is_terminal: boolean }[]
+    | null
+  const currentCodeById = new Map<string, string | null>()
+  for (const r of (currentStates ?? []) as { id: string; pipeline_stages: StageJoin }[]) {
+    const join = r.pipeline_stages
+    const row = Array.isArray(join) ? join[0] : join
+    currentCodeById.set(r.id, row ? mapPipelineStageToBucket(row) : null)
+  }
 
   let moved = 0
   let skipped = 0
   const failures: { id: string; error: string }[] = []
 
   for (const applicationId of uniqueIds) {
-    const existingStatusId = statusById.get(applicationId)
-    if (existingStatusId === input.targetStatusId) {
-      skipped++
-      continue
-    }
-    if (existingStatusId === undefined) {
+    if (!currentCodeById.has(applicationId)) {
       // Row didn't come back in the lookup — already deleted, or RLS hid it.
       failures.push({ id: applicationId, error: 'Application not found' })
+      continue
+    }
+    if (currentCodeById.get(applicationId) === targetStatus.code) {
+      skipped++
       continue
     }
     const result = await updateApplicationStatus(applicationId, input.targetStatusId)

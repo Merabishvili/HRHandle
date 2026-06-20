@@ -4,6 +4,28 @@ import { buildFunnel, type ApplicationRecord, type StatusChangeRecord, type Stat
 import { byVacancy, summarize, type TimeToHireSample, type TimeToHireStats, type PerVacancyBreakdown } from './time-to-hire'
 import { buildSourceSummary, type SourceSummaryRow } from './source-summary'
 import { periodToRange, type Period } from './period'
+import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
+
+type PipelineStageJoin = {
+  type: 'standard' | 'review' | 'interview' | 'offer'
+  name: string
+  is_terminal: boolean
+} | {
+  type: 'standard' | 'review' | 'interview' | 'offer'
+  name: string
+  is_terminal: boolean
+}[] | null
+
+function unwrapStage(join: PipelineStageJoin) {
+  if (!join) return null
+  return Array.isArray(join) ? join[0] ?? null : join
+}
+
+function stageBucket(join: PipelineStageJoin): StatusCode {
+  const row = unwrapStage(join)
+  if (!row) return 'applied'
+  return mapPipelineStageToBucket(row) as StatusCode
+}
 
 interface AuthCtx {
   supabase: Awaited<ReturnType<typeof getAuthContext>> extends infer T
@@ -20,19 +42,6 @@ async function authed(): Promise<AuthCtx | null> {
   return { supabase: ctx.supabase, orgId: ctx.orgId }
 }
 
-interface StatusLookup {
-  byId: Map<string, StatusCode>
-}
-
-async function loadStatusLookup(ctx: AuthCtx): Promise<StatusLookup> {
-  const { data } = await ctx.supabase.from('application_statuses').select('id, code')
-  const byId = new Map<string, StatusCode>()
-  for (const row of data ?? []) {
-    byId.set(row.id as string, row.code as StatusCode)
-  }
-  return { byId }
-}
-
 export interface PipelineReport {
   funnel: FunnelCounts
 }
@@ -42,11 +51,10 @@ export async function getPipelineReport(period: Period): Promise<PipelineReport 
   if (!ctx) return null
 
   const { start, end } = periodToRange(period)
-  const statuses = await loadStatusLookup(ctx)
 
   let appsQuery = ctx.supabase
     .from('applications')
-    .select('id, status_id, applied_at')
+    .select('id, applied_at, pipeline_stages ( type, name, is_terminal )')
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .lte('applied_at', end.toISOString())
@@ -55,7 +63,7 @@ export async function getPipelineReport(period: Period): Promise<PipelineReport 
   const { data: appsRaw } = await appsQuery
   const apps: ApplicationRecord[] = (appsRaw ?? []).map((row) => ({
     id: row.id as string,
-    current_status: statuses.byId.get(row.status_id as string) ?? 'applied',
+    current_status: stageBucket(row.pipeline_stages as PipelineStageJoin),
   }))
 
   if (apps.length === 0) {
@@ -93,25 +101,24 @@ export async function getTimeToHireReport(period: Period): Promise<TimeToHireRep
   if (!ctx) return null
 
   const { start, end } = periodToRange(period)
-  const statuses = await loadStatusLookup(ctx)
 
-  const hiredStatusId = [...statuses.byId.entries()].find(([, code]) => code === 'hired')?.[0]
-  if (!hiredStatusId) {
-    return { stats: summarize([]), byVacancy: [], samples: [] }
-  }
-
-  // Currently-hired applications in the org, applied within the period
+  // Wave 2.6 Slice 2c — the in-DB filter on "current stage = hired"
+  // moves to an in-app filter via the bucket-mapper. The row count is
+  // bounded by `applied_at` so the in-app pass is cheap.
   let appsQuery = ctx.supabase
     .from('applications')
-    .select('id, applied_at, vacancy_id, vacancies(title)')
+    .select(
+      'id, applied_at, vacancy_id, vacancies(title), pipeline_stages ( type, name, is_terminal )',
+    )
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
-    .eq('status_id', hiredStatusId)
     .lte('applied_at', end.toISOString())
   if (start) appsQuery = appsQuery.gte('applied_at', start.toISOString())
 
-  const { data: hiredApps } = await appsQuery
-  const apps = hiredApps ?? []
+  const { data: hiredAppsRaw } = await appsQuery
+  const apps = (hiredAppsRaw ?? []).filter(
+    (a) => stageBucket(a.pipeline_stages as PipelineStageJoin) === 'hired',
+  )
   if (apps.length === 0) {
     return { stats: summarize([]), byVacancy: [], samples: [] }
   }
@@ -166,11 +173,10 @@ export async function getSourceReport(period: Period): Promise<SourceReport | nu
   if (!ctx) return null
 
   const { start, end } = periodToRange(period)
-  const statuses = await loadStatusLookup(ctx)
 
   let appsQuery = ctx.supabase
     .from('applications')
-    .select('id, status_id, source_type, applied_at')
+    .select('id, source_type, applied_at, pipeline_stages ( type, name, is_terminal )')
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .lte('applied_at', end.toISOString())
@@ -203,7 +209,7 @@ export async function getSourceReport(period: Period): Promise<SourceReport | nu
   const rows = apps.map((app) => ({
     sourceType: (app.source_type as string | null) ?? null,
     hired:
-      statuses.byId.get(app.status_id as string) === 'hired' ||
+      stageBucket(app.pipeline_stages as PipelineStageJoin) === 'hired' ||
       everHired.has(app.id as string),
   }))
   const summary = buildSourceSummary(rows)

@@ -239,18 +239,11 @@ export async function submitPublicApplication(
     isNewCandidate = true
   }
 
-  // ── 11. Find "applied" application status ──────────────────────────────────
-  const { data: appliedStatus } = await supabase
-    .from('application_statuses')
-    .select('id')
-    .eq('code', 'applied')
-    .single()
-
-  // ── 12. Create application ─────────────────────────────────────────────────
+  // ── 11. Create application ─────────────────────────────────────────────────
   // public_token is the candidate-facing status page key (G-016). Generated
   // here at INSERT time so the link goes into the confirmation email below.
-  // Wave 2.6 Slice 1 — mirror the legacy status_id write onto
-  // pipeline_stage_id by resolving the vacancy's 'Applied' stage.
+  // Wave 2.6 Slice 4 — only pipeline_stage_id is set now (status_id is gone);
+  // resolve the vacancy's per-vacancy "Applied" stage via the shared helper.
   const pipelineStageId = await resolvePipelineStageId(
     supabase,
     vacancy.id as string,
@@ -263,7 +256,6 @@ export async function submitPublicApplication(
       organization_id: orgId,
       candidate_id: candidateId,
       vacancy_id: vacancy.id,
-      status_id: appliedStatus?.id || null,
       pipeline_stage_id: pipelineStageId,
       ip_address: ipRaw !== 'unknown' ? ipRaw : null,
       source_type: 'public_form',

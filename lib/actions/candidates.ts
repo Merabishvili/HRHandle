@@ -102,32 +102,22 @@ export async function createCandidate(
       .single()
 
     if (vacancyCheck) {
-      // If the caller passed an explicit starting status, use it after
-      // verifying it belongs to the application_statuses table. Otherwise
-      // fall back to the historical default of `applied`.
-      let statusIdToUse: string | null = null
+      // Wave 2.6 Slice 4 — applications.status_id is gone. We now only
+      // resolve the per-vacancy pipeline_stages row for the chosen
+      // starting bucket and set pipeline_stage_id on the insert. The
+      // wizard's starting-stage picker still passes a canonical
+      // application_statuses.id so we look up its code to drive the
+      // bucket resolution.
       let statusCodeForStage: LegacyStatusCode = 'applied'
       if (startingStatusId) {
         const { data: stagedRow } = await ctx.supabase
           .from('application_statuses')
-          .select('id, code')
+          .select('code')
           .eq('id', startingStatusId)
           .single()
-        statusIdToUse = stagedRow?.id ?? null
         if (stagedRow?.code) statusCodeForStage = stagedRow.code as LegacyStatusCode
       }
-      if (!statusIdToUse) {
-        const { data: appliedStatus } = await ctx.supabase
-          .from('application_statuses')
-          .select('id')
-          .eq('code', 'applied')
-          .single()
-        statusIdToUse = appliedStatus?.id ?? null
-      }
 
-      // Wave 2.6 Slice 1 — also resolve the per-vacancy pipeline_stages
-      // row that matches the legacy code, so writes populate both
-      // columns during the transition.
       const pipelineStageId = await resolvePipelineStageId(
         ctx.supabase,
         linkedVacancyId,
@@ -147,7 +137,6 @@ export async function createCandidate(
           ...appParsed.data,
           organization_id: ctx.orgId,
           created_by: ctx.userId,
-          status_id: statusIdToUse,
           pipeline_stage_id: pipelineStageId,
           applied_at: new Date().toISOString(),
           // Candidate-facing status page token (G-016) — same as other insert paths.

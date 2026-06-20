@@ -15,8 +15,8 @@ import {
 } from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { resolvePipelineStageId } from '@/lib/pipeline-stages/resolve'
 import { sendOfferEmail } from '@/lib/email'
-import { APPLICATION_STATUS } from '@/lib/types/constants'
 import { canEdit, canRespond, canSend, canWithdraw, type OfferStatus } from '@/lib/offers/state'
 import { isOfferExpired } from '@/lib/offers/expiry'
 
@@ -553,19 +553,24 @@ export async function acceptOfferByToken(token: string): Promise<ActionResult<vo
   // status sync + audit-log row inside updateApplicationStatus. We can't
   // call that action directly because it relies on the recruiter's session;
   // do the equivalent UPDATE directly via the admin client, then write our
-  // own audit row.
-  const { data: hiredStatus } = await admin
-    .from('application_statuses')
-    .select('id')
-    .eq('code', APPLICATION_STATUS.HIRED)
+  // own audit row. Wave 2.6 Slice 4 — pipeline_stage_id only; resolve the
+  // per-vacancy "Hired" stage from the application's vacancy.
+  const { data: hireAppRow } = await admin
+    .from('applications')
+    .select('candidate_id, vacancy_id')
+    .eq('id', offer.application_id as string)
     .single()
-  if (hiredStatus) {
+  if (hireAppRow?.vacancy_id) {
+    const hiredPipelineStageId = await resolvePipelineStageId(
+      admin,
+      hireAppRow.vacancy_id as string,
+      'hired',
+    )
+    const hireUpdate: Record<string, unknown> = { last_status_changed_at: now }
+    if (hiredPipelineStageId) hireUpdate.pipeline_stage_id = hiredPipelineStageId
     await admin
       .from('applications')
-      .update({
-        status_id: hiredStatus.id,
-        last_status_changed_at: now,
-      })
+      .update(hireUpdate)
       .eq('id', offer.application_id as string)
       .eq('organization_id', offer.organization_id as string)
 
@@ -576,19 +581,12 @@ export async function acceptOfferByToken(token: string): Promise<ActionResult<vo
       .select('id')
       .eq('code', 'hired')
       .single()
-    if (candidateHiredStatus) {
-      const { data: appRow } = await admin
-        .from('applications')
-        .select('candidate_id')
-        .eq('id', offer.application_id as string)
-        .single()
-      if (appRow?.candidate_id) {
-        await admin
-          .from('candidates')
-          .update({ general_status_id: candidateHiredStatus.id })
-          .eq('id', appRow.candidate_id)
-          .eq('organization_id', offer.organization_id as string)
-      }
+    if (candidateHiredStatus && hireAppRow.candidate_id) {
+      await admin
+        .from('candidates')
+        .update({ general_status_id: candidateHiredStatus.id })
+        .eq('id', hireAppRow.candidate_id)
+        .eq('organization_id', offer.organization_id as string)
     }
   }
 

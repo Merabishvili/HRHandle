@@ -3,7 +3,8 @@ import { z } from 'zod'
 export const ApplicationSchema = z.object({
   candidate_id: z.string().uuid('Invalid candidate'),
   vacancy_id: z.string().uuid('Invalid vacancy'),
-  status_id: z.string().uuid().nullable().optional(),
+  // Wave 2.6 Slice 4 — pipeline_stage_id replaces status_id.
+  pipeline_stage_id: z.string().uuid().nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
 })
 

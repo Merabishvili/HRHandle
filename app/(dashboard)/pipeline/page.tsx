@@ -156,14 +156,13 @@ export default async function PipelinePage() {
     { data: rejectionReasonsRaw },
     { data: rejectionTemplatesRaw },
   ] = await Promise.all([
-    // Wave 2.6 Slice 2a — pull the per-vacancy pipeline_stage_id and join
-    // its row (type + name + is_terminal) so we can bucket each app to a
-    // canonical column code. Fall back to status_id when pipeline_stage_id
-    // is NULL (covers any rows that pre-date Migration 049's backfill).
+    // Wave 2.6 Slice 4 — applications.status_id is gone; we read
+    // pipeline_stage_id + the joined pipeline_stages row, then bucket-
+    // map each app to a canonical column code.
     supabase
       .from('applications')
       .select(
-        `id, candidate_id, vacancy_id, status_id, pipeline_stage_id, applied_at, last_status_changed_at,
+        `id, candidate_id, vacancy_id, pipeline_stage_id, applied_at, last_status_changed_at,
          pipeline_stages ( type, name, is_terminal )`,
       )
       .eq('organization_id', orgId)
@@ -193,7 +192,6 @@ export default async function PipelinePage() {
     id: string
     candidate_id: string
     vacancy_id: string
-    status_id: string | null
     pipeline_stage_id: string | null
     applied_at: string
     last_status_changed_at: string | null
@@ -232,12 +230,11 @@ export default async function PipelinePage() {
   const vacancyMap = new Map(vacancies.map((v) => [v.id, v]))
   const firstStatusId = sortedStatuses[0]?.id ?? null
 
-  // Wave 2.6 Slice 2a — canonical-bucket lookup. The board renders one
-  // column per legacy application_statuses row; we resolve each app's
-  // canonical bucket code (applied / screening / interview / offer /
-  // hired / rejected / withdrawn) via the bucket-mapper, then translate
-  // that to the matching application_statuses.id so the existing board
-  // contract stays unchanged.
+  // Wave 2.6 Slice 4 — bucket each app from its pipeline_stages join to
+  // the canonical code, then look up the matching application_statuses.id
+  // so the CrossVacancyBoard contract (statuses + per-app status_id) stays
+  // intact. With status_id gone from the DB, this in-memory id is purely
+  // a column-key for the board UI; it never round-trips back to writes.
   const statusIdByCode = new Map<string, string>()
   for (const s of sortedStatuses) statusIdByCode.set(s.code, s.id)
   // Some terminal statuses (rejected / withdrawn) live outside
@@ -254,14 +251,14 @@ export default async function PipelinePage() {
       const rawScore = fitScoreMap.get(a.id)
       const fitScore = typeof rawScore === 'number' ? Math.round(rawScore) / 10 : null
 
-      // Bucket assignment: prefer pipeline_stage_id (the new model).
-      // When the join returned a row, bucket-map it to the canonical
-      // code and resolve to the matching status_id. Fall back to the
-      // raw status_id only when there's no pipeline_stages row — covers
-      // applications inserted before Slice 1 wiring + any backfill miss.
+      // Bucket assignment: read the joined pipeline_stages row, bucket-
+      // map to the canonical code, then resolve to the canonical
+      // application_statuses.id the board expects. Fall back to the
+      // first sorted column when the join is empty (defensive — every
+      // application should have a pipeline_stage_id post-Migration 049).
       const stageJoin = a.pipeline_stages
       const stageRow = Array.isArray(stageJoin) ? stageJoin[0] : stageJoin
-      let resolvedStatusId: string | null = a.status_id ?? firstStatusId
+      let resolvedStatusId: string | null = firstStatusId
       if (stageRow) {
         const code = mapPipelineStageToBucket(stageRow)
         const mappedId = statusIdByCode.get(code)
