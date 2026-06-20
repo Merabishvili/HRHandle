@@ -39,7 +39,7 @@ export function TintedKanbanColumn({
 
   return (
     <div
-      className="flex w-full min-w-[260px] shrink-0 flex-col rounded-xl border p-2.5 transition-colors"
+      className="flex min-w-[260px] flex-1 flex-col rounded-xl border p-2.5 transition-colors"
       style={{
         background: style.columnBg,
         borderColor: isOver ? style.spine : style.columnBorder,
