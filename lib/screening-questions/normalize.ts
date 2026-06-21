@@ -5,40 +5,92 @@
  *
  * Inputs from the wizard:
  *   - `label`: free text the recruiter typed.
- *   - `knockout`: boolean toggle on each row.
+ *   - `answerType`: 'yes_no' | 'short_text' | 'number' | 'select'.
+ *     Defaults to `yes_no` when omitted (compat with older callers).
+ *   - `knockout`: boolean toggle. Only meaningful for `yes_no` and
+ *     `select` — `short_text` and `number` always normalize to
+ *     informational because there's no canonical knockout-answer to
+ *     compare against.
+ *   - `options`: array of option strings, only relevant when
+ *     `answerType === 'select'`.
  *
- * Wave 2.5 Slice 2a only writes `yes_no` rows (the UI doesn't capture an
- * answer-type yet). When `knockout=true` we default `knockout_answer` to
- * `'yes'`, matching the design's "must = Yes" example — Slice 2b's
- * apply-form work can extend the wizard to other answer types without
- * needing a schema change.
- *
- * Rules:
+ * Rules (tested in lib/__tests__/screening-questions-normalize.test.ts):
  *   - Trim labels; drop entries whose trimmed label is empty.
- *   - Drop entries whose trimmed label exceeds 500 chars (same ceiling
- *     as `vacancy_questions.label`).
- *   - When `knockout=false`, `knockout_answer` is null.
+ *   - Drop entries whose trimmed label exceeds 500 chars.
+ *   - `yes_no`: when knockout, set `knockout_answer = 'yes'` (the
+ *     design's "must = Yes" example). Non-knockout → null.
+ *   - `select`: each option is trimmed; empty options dropped. Drop the
+ *     whole entry if no options remain. When knockout, the first
+ *     option becomes the expected answer (`must = ${options[0]}`).
+ *   - `short_text` / `number`: force `is_knockout = false` and
+ *     `knockout_answer = null`. No options either.
  */
+export type ScreeningAnswerType = 'yes_no' | 'short_text' | 'number' | 'select'
+
 export interface NormalizedScreeningEntry {
   label: string
-  answer_type: 'yes_no' | 'short_text' | 'number' | 'select'
+  answer_type: ScreeningAnswerType
   is_knockout: boolean
   knockout_answer: string | null
+  /** Cleaned option list for select-type entries; null for others. */
+  options: string[] | null
+}
+
+export interface ScreeningEntryInput {
+  label: string
+  answerType?: ScreeningAnswerType
+  knockout?: boolean
+  options?: string[]
 }
 
 export function normalizeScreeningQuestionEntries(
-  entries: { label: string; knockout?: boolean }[],
+  entries: ScreeningEntryInput[],
 ): NormalizedScreeningEntry[] {
-  return entries
-    .map((e) => {
-      const trimmed = e.label.trim()
-      const isKnockout = Boolean(e.knockout)
-      return {
-        label: trimmed,
-        answer_type: 'yes_no' as const,
-        is_knockout: isKnockout,
-        knockout_answer: isKnockout ? 'yes' : null,
-      }
+  const out: NormalizedScreeningEntry[] = []
+
+  for (const e of entries) {
+    const label = e.label.trim()
+    if (!label || label.length > 500) continue
+
+    const answerType: ScreeningAnswerType = e.answerType ?? 'yes_no'
+    const knockoutFlag = Boolean(e.knockout)
+
+    if (answerType === 'short_text' || answerType === 'number') {
+      out.push({
+        label,
+        answer_type: answerType,
+        is_knockout: false,
+        knockout_answer: null,
+        options: null,
+      })
+      continue
+    }
+
+    if (answerType === 'yes_no') {
+      out.push({
+        label,
+        answer_type: 'yes_no',
+        is_knockout: knockoutFlag,
+        knockout_answer: knockoutFlag ? 'yes' : null,
+        options: null,
+      })
+      continue
+    }
+
+    // select
+    const cleanedOptions = (e.options ?? [])
+      .map((o) => o.trim())
+      .filter((o) => o.length > 0 && o.length <= 200)
+    if (cleanedOptions.length === 0) continue
+
+    out.push({
+      label,
+      answer_type: 'select',
+      is_knockout: knockoutFlag,
+      knockout_answer: knockoutFlag ? cleanedOptions[0] ?? null : null,
+      options: cleanedOptions,
     })
-    .filter((e) => e.label.length > 0 && e.label.length <= 500)
+  }
+
+  return out
 }

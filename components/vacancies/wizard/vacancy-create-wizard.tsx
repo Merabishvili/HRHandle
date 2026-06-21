@@ -167,14 +167,21 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
       }
 
       // Wave 2.5 Slice 2a — persist the screening questions captured in
-      // Step 4 as `yes_no` rows on vacancy_screening_questions. The apply
-      // form integration (Slice 2b) renders them and writes
-      // application_screening_answers — until then these are recruiter-
-      // visible only, on the vacancy detail's Scorecard tab.
+      // Step 4 rows on vacancy_screening_questions. Slice 2b ships the
+      // apply form rendering + answers writer; the Wave 2.5 cleanup
+      // ships the wizard's full answer-type picker (yes_no / short_text
+      // / number / select with options). The normalizer enforces the
+      // invariants — short_text / number can't be knockouts, select
+      // needs at least one usable option.
       if (scorecard.screeningQuestions.length > 0) {
         const screeningEntries = scorecard.screeningQuestions
           .filter((q) => q.label.trim().length > 0)
-          .map((q) => ({ label: q.label, knockout: q.knockout }))
+          .map((q) => ({
+            label: q.label,
+            answerType: q.answerType,
+            knockout: q.knockout,
+            options: q.options,
+          }))
         if (screeningEntries.length > 0) {
           await bulkCreateScreeningQuestions(result.data.id, screeningEntries)
         }

@@ -17,12 +17,14 @@ describe('normalizeScreeningQuestionEntries', () => {
         answer_type: 'yes_no',
         is_knockout: true,
         knockout_answer: 'yes',
+        options: null,
       },
       {
         label: 'Notice period?',
         answer_type: 'yes_no',
         is_knockout: false,
         knockout_answer: null,
+        options: null,
       },
     ])
   })
@@ -49,11 +51,84 @@ describe('normalizeScreeningQuestionEntries', () => {
     expect(out).toEqual([])
   })
 
-  it('always defaults answer_type to yes_no in Slice 2a', () => {
+  it('defaults answer_type to yes_no when omitted', () => {
     const out = normalizeScreeningQuestionEntries([
       { label: 'A', knockout: true },
       { label: 'B', knockout: false },
     ])
     expect(out.every((e) => e.answer_type === 'yes_no')).toBe(true)
+  })
+
+  it('forces is_knockout=false for short_text type', () => {
+    const out = normalizeScreeningQuestionEntries([
+      { label: 'Tell us about you', answerType: 'short_text', knockout: true },
+    ])
+    expect(out[0]).toEqual({
+      label: 'Tell us about you',
+      answer_type: 'short_text',
+      is_knockout: false,
+      knockout_answer: null,
+      options: null,
+    })
+  })
+
+  it('forces is_knockout=false for number type', () => {
+    const out = normalizeScreeningQuestionEntries([
+      { label: 'Years of experience?', answerType: 'number', knockout: true },
+    ])
+    expect(out[0]?.is_knockout).toBe(false)
+    expect(out[0]?.knockout_answer).toBeNull()
+  })
+
+  it('cleans select options and uses the first as the knockout answer', () => {
+    const out = normalizeScreeningQuestionEntries([
+      {
+        label: 'Work authorization?',
+        answerType: 'select',
+        knockout: true,
+        options: ['  Citizen ', '', 'Permanent Resident', '   ', 'Visa needed'],
+      },
+    ])
+    expect(out[0]).toEqual({
+      label: 'Work authorization?',
+      answer_type: 'select',
+      is_knockout: true,
+      knockout_answer: 'Citizen',
+      options: ['Citizen', 'Permanent Resident', 'Visa needed'],
+    })
+  })
+
+  it('drops select entries with no usable options', () => {
+    const out = normalizeScreeningQuestionEntries([
+      { label: 'A', answerType: 'select', options: ['  ', ''] },
+      { label: 'B', answerType: 'select' },
+    ])
+    expect(out).toEqual([])
+  })
+
+  it('select non-knockout sets knockout_answer to null', () => {
+    const out = normalizeScreeningQuestionEntries([
+      {
+        label: 'Preferred shift?',
+        answerType: 'select',
+        knockout: false,
+        options: ['Morning', 'Evening', 'Night'],
+      },
+    ])
+    expect(out[0]?.is_knockout).toBe(false)
+    expect(out[0]?.knockout_answer).toBeNull()
+    expect(out[0]?.options).toEqual(['Morning', 'Evening', 'Night'])
+  })
+
+  it('drops option strings longer than 200 chars but keeps the rest', () => {
+    const longOption = 'x'.repeat(201)
+    const out = normalizeScreeningQuestionEntries([
+      {
+        label: 'Pick one',
+        answerType: 'select',
+        options: ['Short', longOption, 'Also short'],
+      },
+    ])
+    expect(out[0]?.options).toEqual(['Short', 'Also short'])
   })
 })

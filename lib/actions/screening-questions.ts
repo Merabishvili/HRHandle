@@ -27,7 +27,12 @@ export interface ScreeningQuestionRow {
  */
 export async function bulkCreateScreeningQuestions(
   vacancyId: string,
-  entries: { label: string; knockout?: boolean }[],
+  entries: {
+    label: string
+    knockout?: boolean
+    answerType?: 'yes_no' | 'short_text' | 'number' | 'select'
+    options?: string[]
+  }[],
 ): Promise<ActionResult<{ inserted: number }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -72,6 +77,7 @@ export async function bulkCreateScreeningQuestions(
     answer_type: e.answer_type,
     is_knockout: e.is_knockout,
     knockout_answer: e.knockout_answer,
+    options: e.options,
     sort_order: startSort + idx,
   }))
 

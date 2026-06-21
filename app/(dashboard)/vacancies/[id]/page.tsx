@@ -241,7 +241,7 @@ export default async function VacancyDetailPage({
 
     supabase
       .from('vacancy_screening_questions')
-      .select('id, label, answer_type, is_knockout, knockout_answer, sort_order')
+      .select('id, label, answer_type, is_knockout, knockout_answer, options, sort_order')
       .eq('vacancy_id', id)
       .order('sort_order', { ascending: true }),
 
@@ -269,6 +269,7 @@ export default async function VacancyDetailPage({
     answer_type: 'yes_no' | 'short_text' | 'number' | 'select'
     is_knockout: boolean
     knockout_answer: string | null
+    options: string[] | null
     sort_order: number
   }[]
   const canEditQuestions = profile?.role === 'owner' || profile?.role === 'admin'
