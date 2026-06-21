@@ -102,7 +102,7 @@ export default function ForgotPasswordPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
+                    Sending…
                   </>
                 ) : (
                   'Send reset link'

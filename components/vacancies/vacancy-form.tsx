@@ -641,7 +641,7 @@ export function VacancyForm({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isDuplicated ? 'Saving...' : vacancy ? 'Updating...' : 'Creating...'}
+              {isDuplicated ? 'Saving…' : vacancy ? 'Updating…' : 'Creating…'}
             </>
           ) : isDuplicated ? (
             'Save'

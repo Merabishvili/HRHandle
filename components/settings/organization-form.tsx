@@ -216,7 +216,7 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
       </div>
 
       <Button type="submit" disabled={isLoading}>
-        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save changes'}
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : 'Save changes'}
       </Button>
     </form>
   )
