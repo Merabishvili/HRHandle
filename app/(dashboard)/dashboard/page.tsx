@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getVacancyStatuses, getCandidateStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
-import { formatDistanceToNow } from 'date-fns'
+import { differenceInDays, formatDistanceToNow } from 'date-fns'
 import {
   Briefcase,
   Users,
@@ -9,6 +9,7 @@ import {
   Plus,
   ArrowRight,
   Clock,
+  AlertTriangle,
 } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -114,6 +115,8 @@ export default async function DashboardPage() {
     { data: recentCandidatesRaw },
     { data: recentVacanciesRaw },
     { data: upcomingInterviewsRaw },
+    { data: pendingOffersRaw },
+    { count: newApplicantsCount },
   ] = await Promise.all([
     supabase
       .from('vacancies')
@@ -191,6 +194,31 @@ export default async function DashboardPage() {
       .eq('status', 'scheduled')
       .order('scheduled_at', { ascending: true })
       .limit(5),
+
+    // Wave 2.11 / A-1 — cross-vacancy "needs your attention" sources.
+    // Pending offers = sent + still awaiting a response (not declined,
+    // accepted, withdrawn, or expired). The candidate row carries the
+    // first name + initials we render in the tile.
+    supabase
+      .from('offers')
+      .select(`
+        id, application_id, sent_at,
+        applications ( candidate_id, candidates ( id, first_name, last_name ) )
+      `)
+      .eq('organization_id', orgId)
+      .eq('status', 'sent')
+      .is('responded_at', null)
+      .is('deleted_at', null)
+      .order('sent_at', { ascending: true })
+      .limit(5),
+
+    // New applicants in the last 48h — for the "N new applicants" row.
+    supabase
+      .from('applications')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', orgId)
+      .is('deleted_at', null)
+      .gte('applied_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()),
   ])
 
   const vacancyStatuses = (vacancyStatusesRaw || []) as VacancyStatusRow[]
@@ -280,6 +308,112 @@ export default async function DashboardPage() {
     },
   ]
 
+  // Wave 2.11 / A-1 — cross-vacancy "Needs your attention" list. Same
+  // idiom as the Vacancy Detail Overview rail, just aggregated across
+  // every open role: pending offers awaiting reply, interviews in the
+  // next 24h, and a "N new applicants to review" prompt when new apps
+  // arrived in the last 48h. Renders inline so we don't have to extract
+  // a shared component yet.
+  type PendingOfferJoin = {
+    id: string
+    application_id: string | null
+    sent_at: string | null
+    applications:
+      | { candidate_id: string; candidates: { id: string; first_name: string; last_name: string } | { id: string; first_name: string; last_name: string }[] | null }
+      | { candidate_id: string; candidates: { id: string; first_name: string; last_name: string } | { id: string; first_name: string; last_name: string }[] | null }[]
+      | null
+  }
+  const pendingOffersRows = (pendingOffersRaw ?? []) as PendingOfferJoin[]
+  const now = new Date()
+  const next24hLimit = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+
+  interface AttentionTileRow {
+    id: string
+    initials: string
+    hue: 'cyan' | 'purple' | 'blue'
+    message: React.ReactNode
+    ctaLabel: string
+    ctaHref: string
+  }
+  const attentionItems: AttentionTileRow[] = []
+
+  for (const o of pendingOffersRows) {
+    const appJoin = Array.isArray(o.applications) ? o.applications[0] : o.applications
+    const candJoin = appJoin?.candidates
+    const cand = Array.isArray(candJoin) ? candJoin[0] : candJoin
+    if (!cand) continue
+    const daysAwaiting = o.sent_at
+      ? Math.max(0, differenceInDays(now, new Date(o.sent_at)))
+      : 0
+    attentionItems.push({
+      id: `offer-${o.id}`,
+      initials: `${cand.first_name?.[0] ?? ''}${cand.last_name?.[0] ?? ''}`.toUpperCase() || '?',
+      hue: 'cyan',
+      message: (
+        <>
+          {cand.first_name}&rsquo;s offer awaiting reply{' '}
+          <strong className="font-semibold">
+            {daysAwaiting === 0 ? 'today' : `${daysAwaiting}d`}
+          </strong>
+        </>
+      ),
+      ctaLabel: 'Follow up →',
+      ctaHref: `/candidates/${cand.id}`,
+    })
+  }
+
+  for (const i of upcomingInterviews) {
+    const scheduledAt = new Date(i.scheduled_at)
+    if (scheduledAt > next24hLimit) continue
+    const candJoin = i.candidates
+    const cand = Array.isArray(candJoin) ? candJoin[0] : candJoin
+    if (!cand) continue
+    attentionItems.push({
+      id: `interview-${i.id}`,
+      initials: `${cand.first_name?.[0] ?? ''}${cand.last_name?.[0] ?? ''}`.toUpperCase() || '?',
+      hue: 'purple',
+      message: (
+        <>
+          Interview with {cand.first_name}{' '}
+          <strong className="font-semibold">
+            {formatDistanceToNow(scheduledAt, { addSuffix: true })}
+          </strong>
+        </>
+      ),
+      ctaLabel: 'View →',
+      ctaHref: `/interviews`,
+    })
+  }
+
+  if ((newApplicantsCount ?? 0) > 0) {
+    attentionItems.push({
+      id: 'new-applicants',
+      initials: `+${newApplicantsCount}`,
+      hue: 'blue',
+      message: (
+        <>
+          <strong className="font-semibold">
+            {newApplicantsCount} new {newApplicantsCount === 1 ? 'applicant' : 'applicants'}
+          </strong>{' '}
+          to review (last 48h)
+        </>
+      ),
+      ctaLabel: 'Review →',
+      ctaHref: '/pipeline',
+    })
+  }
+
+  function attentionInitialsStyle(hue: AttentionTileRow['hue']): React.CSSProperties {
+    switch (hue) {
+      case 'cyan':
+        return { background: 'oklch(0.94 0.06 200)', color: 'oklch(0.42 0.13 200)' }
+      case 'purple':
+        return { background: 'oklch(0.93 0.06 300)', color: 'oklch(0.45 0.15 300)' }
+      case 'blue':
+        return { background: 'oklch(0.93 0.05 250)', color: 'oklch(0.42 0.16 250)' }
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -297,6 +431,56 @@ export default async function DashboardPage() {
           </Link>
         </Button>
       </div>
+
+      {/* Wave 2.11 / A-1 — Needs your attention (cross-vacancy) */}
+      <Card className="border-border">
+        <CardHeader className="flex flex-row items-center gap-2 pb-3">
+          <AlertTriangle
+            className="h-4 w-4"
+            style={{ color: 'oklch(0.5 0.12 60)' }}
+            aria-hidden
+          />
+          <CardTitle className="text-[15px] font-bold">
+            Needs your attention
+            {attentionItems.length > 0 && (
+              <span className="ml-1.5 text-muted-foreground">· {attentionItems.length}</span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {attentionItems.length === 0 ? (
+            <p className="rounded-[9px] border border-dashed border-border bg-muted/30 px-3 py-3 text-center text-[12.5px] text-muted-foreground">
+              Nothing&rsquo;s blocking you today. Open the pipeline below to drive next moves.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {attentionItems.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-[9px] border border-border bg-white px-3 py-2.5"
+                >
+                  <span
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold"
+                    style={attentionInitialsStyle(item.hue)}
+                    aria-hidden
+                  >
+                    {item.initials}
+                  </span>
+                  <span className="min-w-0 flex-1 text-[13px] text-foreground/85">
+                    {item.message}
+                  </span>
+                  <Link
+                    href={item.ctaHref}
+                    className="shrink-0 text-[12px] font-semibold text-[oklch(0.55_0.18_250)] hover:underline"
+                  >
+                    {item.ctaLabel}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
