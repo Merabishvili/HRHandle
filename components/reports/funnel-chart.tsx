@@ -1,54 +1,66 @@
-'use client'
-
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts'
-import { FUNNEL_STAGES, FUNNEL_STAGE_LABELS, type FunnelCounts, stageConversion } from '@/lib/reports/funnel'
+import {
+  FUNNEL_STAGES,
+  FUNNEL_STAGE_LABELS,
+  type FunnelCounts,
+  stageConversion,
+} from '@/lib/reports/funnel'
+import { getStageStyle } from '@/lib/pipeline/stage-style'
 
 interface FunnelChartProps {
   data: FunnelCounts
 }
 
+/**
+ * Wave 2.10 — Funnel chart per `Reports and Interviews.dc.html` §1.
+ *
+ * The previous implementation used Recharts with a single brand-blue
+ * fill — the design fix specifies the **stage palette** (Applied blue /
+ * Screening amber / Interview purple / Offer teal / Hired green), with
+ * bars width-scaled to the max count and a conversion % beside every
+ * non-entry row. CSS is enough; Recharts was overkill here.
+ *
+ * Width is calculated as `count / max(applied, 1)` so the Applied bar
+ * always sits at 100% and downstream bars shrink in proportion.
+ */
 export function FunnelChart({ data }: FunnelChartProps) {
-  const rows = FUNNEL_STAGES.map((stage, idx) => {
-    const count = data[stage]
-    const prevStage = idx === 0 ? null : FUNNEL_STAGES[idx - 1]
-    const previous = prevStage ? data[prevStage] : null
-    const conv = previous === null ? null : stageConversion(previous, count)
-    return {
-      stage,
-      label: FUNNEL_STAGE_LABELS[stage],
-      count,
-      conv: conv === null ? null : Math.round(conv * 100),
-    }
-  })
+  const maxCount = Math.max(data.applied, 1)
 
   return (
-    <div className="w-full" style={{ height: 320 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} layout="vertical" margin={{ top: 16, right: 32, left: 16, bottom: 16 }}>
-          <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
-          <XAxis type="number" tick={{ fontSize: 12 }} className="text-muted-foreground" />
-          <YAxis
-            type="category"
-            dataKey="label"
-            tick={{ fontSize: 12 }}
-            width={90}
-            className="text-muted-foreground"
-          />
-          <Tooltip
-            formatter={(value) => [value as number, 'Applications']}
-            labelFormatter={(label) => label as string}
-            contentStyle={{ borderRadius: 6, fontSize: 12 }}
-          />
-          <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
-            <LabelList
-              dataKey="count"
-              position="right"
-              className="fill-foreground"
-              style={{ fontSize: 12 }}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="flex flex-col gap-2.5">
+      {FUNNEL_STAGES.map((stage, idx) => {
+        const count = data[stage]
+        const prev = idx === 0 ? null : FUNNEL_STAGES[idx - 1] ?? null
+        const conv = prev === null ? null : stageConversion(data[prev], count)
+        const style = getStageStyle(stage)
+        // Use a tiny minimum width so zero-count bars are still visible as
+        // a sliver instead of disappearing entirely — keeps the label
+        // alignment consistent across rows.
+        const widthPct = Math.max(2, Math.round((count / maxCount) * 100))
+
+        return (
+          <div key={stage} className="flex items-center gap-3.5">
+            <span className="w-[90px] shrink-0 text-[12.5px] text-foreground/70">
+              {FUNNEL_STAGE_LABELS[stage]}
+            </span>
+            <div
+              className="flex h-[34px] items-center rounded-[7px] px-3"
+              style={{ width: `${widthPct}%`, background: style.pillBg }}
+            >
+              <span
+                className="text-[13px] font-bold tabular-nums"
+                style={{ color: style.pillText }}
+              >
+                {count}
+              </span>
+            </div>
+            {conv !== null && (
+              <span className="text-[11.5px] text-muted-foreground tabular-nums">
+                {Math.round(conv * 100)}%
+              </span>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
