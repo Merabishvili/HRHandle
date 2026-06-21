@@ -131,8 +131,11 @@ export default async function ApplyPage({ params }: PageProps) {
           </a>
         )}
 
-        {/* Header */}
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        {/* Header — 8px brand-blue bar at top matches /jobs per
+            Public Pages.dc.html §2 ("thin brand bar"). */}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="h-2 bg-blue-600" aria-hidden />
+          <div className="p-8">
           <div className="mb-6 flex items-start gap-4">
             {org?.logo_url ? (
               <img
@@ -180,6 +183,7 @@ export default async function ApplyPage({ params }: PageProps) {
               <div className="whitespace-pre-wrap text-sm text-gray-700">{vacancy.requirements}</div>
             </div>
           )}
+          </div>
         </div>
 
         {/* Application Form */}

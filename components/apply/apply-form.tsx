@@ -204,28 +204,33 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
 
   if (submitted) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-sm text-center">
-        <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-        <h2 className="mt-4 text-xl font-bold text-gray-900">Thanks for applying!</h2>
-        <p className="mt-2 text-sm text-gray-600">
-          We&apos;ve sent a confirmation to <strong>{email}</strong>.
-          We will review your details and be in touch.
-        </p>
-        {statusToken && (
-          <a
-            href={`/status/${statusToken}`}
-            className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
-          >
-            Track your application
-            <span aria-hidden>→</span>
-          </a>
-        )}
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="h-2 bg-blue-600" aria-hidden />
+        <div className="p-10 text-center">
+          <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
+          <h2 className="mt-4 text-xl font-bold text-gray-900">Thanks for applying!</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            We&apos;ve sent a confirmation to <strong>{email}</strong>.
+            We will review your details and be in touch.
+          </p>
+          {statusToken && (
+            <a
+              href={`/status/${statusToken}`}
+              className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+            >
+              Track your application
+              <span aria-hidden>→</span>
+            </a>
+          )}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="h-2 bg-blue-600" aria-hidden />
+      <div className="p-8">
       <h2 className="mb-6 text-lg font-bold text-gray-900">Apply for this position</h2>
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
@@ -551,6 +556,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
           options={{ size: 'invisible' }}
         />
       </form>
+      </div>
     </div>
   )
 }
