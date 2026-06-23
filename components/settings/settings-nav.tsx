@@ -16,6 +16,7 @@ import {
   CreditCard,
   ListChecks,
   Trash2,
+  GitBranch,
 } from 'lucide-react'
 
 interface NavItem {
@@ -63,6 +64,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Hiring workflow',
     items: [
+      { href: '/settings/pipeline-stages',   label: 'Pipeline stages',   icon: GitBranch,  adminOnly: true },
       { href: '/settings/custom-fields',     label: 'Custom fields',     icon: LayoutGrid, adminOnly: true },
       { href: '/settings/email-templates',   label: 'Email templates',   icon: Mail,       adminOnly: true },
       { href: '/settings/rejection-reasons', label: 'Rejection reasons', icon: XCircle,    adminOnly: true },
