@@ -8,8 +8,6 @@ import {
   type PipelineStageType,
 } from '@/lib/pipeline-stage-templates/types'
 
-export type { OrgPipelineStageTemplate, PipelineStageType }
-
 /**
  * A-5 — Org-level pipeline-stage templates (per Custom Stages.dc.html).
  *
@@ -17,6 +15,11 @@ export type { OrgPipelineStageTemplate, PipelineStageType }
  * `seed_default_pipeline_stages` SQL function in Migration 055 copies
  * the template onto every new vacancy. Cap-10 per org is enforced by
  * trigger.
+ *
+ * Note: type re-exports were removed because Next 16 / Turbopack
+ * disallows non-async exports from `'use server'` files. Consumers
+ * import OrgPipelineStageTemplate + PipelineStageType from
+ * `@/lib/pipeline-stage-templates/types` directly.
  */
 
 const isAdminRole = (role: string | undefined): boolean =>
