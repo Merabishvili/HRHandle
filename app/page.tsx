@@ -10,10 +10,10 @@ import {
   BarChart3,
   ArrowRight,
   Zap,
-  Shield,
-  FileText,
-  Star,
+  Sparkles,
   Share2,
+  GitBranch,
+  Star,
 } from 'lucide-react'
 import { PRICING_PLANS } from '@/lib/types/subscription'
 import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
@@ -100,6 +100,12 @@ export default async function LandingPage() {
               >
                 Pricing
               </Link>
+              <Link
+                href="/guide"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Guides
+              </Link>
             </div>
 
             <div className="flex items-center gap-3">
@@ -119,16 +125,15 @@ export default async function LandingPage() {
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
               <Zap className="h-4 w-4" />
-              Streamline your hiring process
+              The ATS built for small teams that hire carefully
             </div>
 
             <h1 className="text-balance text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl">
-              Hire smarter with <span className="text-primary">HRHandle</span>
+              Hire with structure, not spreadsheets
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground sm:text-xl">
-              The modern applicant tracking system that helps you manage vacancies,
-              evaluate candidates with structured scoring, schedule interviews, and share roles on LinkedIn — all in one place.
+              Manage every role and candidate in one pipeline, score interviews consistently, and make defensible hiring decisions — without enterprise bloat.
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -143,95 +148,134 @@ export default async function LandingPage() {
                 <Link href="#features">Learn more</Link>
               </Button>
             </div>
+
+            <p className="mt-4 text-sm text-muted-foreground">7-day free trial · no credit card to start</p>
           </div>
 
-          <dl
-            aria-label="Key metrics"
-            className="mt-20 grid grid-cols-2 gap-8 md:grid-cols-4"
-          >
-            {[
-              { label: 'Hiring Steps Automated', value: '10+' },
-              { label: 'Avg. Time-to-Hire Reduced', value: '40%' },
-              { label: 'Candidate Data in One Place', value: '100%' },
-              { label: 'Free Trial, No Card Required', value: '7 days' },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <dt className="mt-1 text-sm text-muted-foreground order-2">{stat.label}</dt>
-                <dd className="text-3xl font-bold text-foreground sm:text-4xl order-1">
-                  {stat.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          {/* Product peek — mini 4-column kanban preview */}
+          <div className="mx-auto mt-16 max-w-3xl overflow-hidden rounded-t-2xl border border-border bg-card shadow-sm">
+            <div className="flex h-8 items-center gap-2 border-b border-border bg-muted/40 px-4">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-300/80" aria-hidden />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" aria-hidden />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-300/80" aria-hidden />
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 bg-muted/30 p-4 sm:grid-cols-4">
+              <PeekColumn label="APPLIED 4" labelClass="text-primary" tint="border-l-primary">
+                <PeekCard name="John Doe" />
+                <PeekCard name="Jane Smith" />
+              </PeekColumn>
+              <PeekColumn label="SCREENING 2" labelClass="text-amber-700" tint="border-l-amber-400">
+                <PeekCard name="Alex Brown" badge="Fit 7.9" />
+              </PeekColumn>
+              <PeekColumn label="INTERVIEW 1" labelClass="text-purple-700" tint="border-l-purple-400">
+                <PeekCard name="Maria Lee" />
+              </PeekColumn>
+              <PeekColumn label="OFFER 1" labelClass="text-sky-700" tint="border-l-sky-400">
+                <PeekCard name="Sam Carter" />
+              </PeekColumn>
+            </div>
+          </div>
         </div>
+      </section>
+
+      {/* Honest proof strip — replaces vanity stats. Kept as <dl>
+          to preserve AC-007 semantic grouping. */}
+      <section className="border-y border-border bg-card px-4 py-10 sm:px-6 lg:px-8">
+        <dl
+          aria-label="Why HRHandle"
+          className="mx-auto flex max-w-5xl flex-wrap items-start justify-center gap-12 text-center sm:gap-16"
+        >
+          <div>
+            <dt className="text-2xl font-bold text-foreground sm:text-3xl">One pipeline</dt>
+            <dd className="mt-1 text-sm text-muted-foreground">every role &amp; candidate in one place</dd>
+          </div>
+          <div>
+            <dt className="text-2xl font-bold text-foreground sm:text-3xl">Score, don&apos;t guess</dt>
+            <dd className="mt-1 text-sm text-muted-foreground">consistent scorecards per role</dd>
+          </div>
+          <div>
+            <dt className="text-2xl font-bold text-foreground sm:text-3xl">
+              $20<span className="text-base font-medium text-muted-foreground">/mo</span>
+            </dt>
+            <dd className="mt-1 text-sm text-muted-foreground">individual plan · cancel anytime</dd>
+          </div>
+        </dl>
       </section>
 
       <section id="features" className="bg-card px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-16 text-center">
+          <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Everything you need to hire better
+              Everything you need, nothing you don&apos;t
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-              Powerful features designed to simplify your recruitment workflow
+              The recruiter&apos;s daily loop, designed to be fast.
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {/* Hero feature — structured evaluation as the differentiator */}
+          <div className="mx-auto mb-6 max-w-5xl overflow-hidden rounded-2xl bg-foreground p-8 sm:p-10">
+            <div className="flex flex-col items-stretch gap-8 lg:flex-row lg:items-center">
+              <div className="flex-1">
+                <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-primary-foreground/90">
+                  <Star className="h-3 w-3 fill-current" aria-hidden />
+                  The difference
+                </div>
+                <h3 className="text-2xl font-bold text-background sm:text-3xl">
+                  Structured evaluation, built in
+                </h3>
+                <p className="mt-3 text-base leading-relaxed text-background/75">
+                  Define what matters for each role once. Every interviewer scores against the same criteria, independently — so your decision rests on evidence and consensus, not the loudest voice in the room.
+                </p>
+              </div>
+              <div className="w-full max-w-sm rounded-xl bg-background p-5 lg:w-80 lg:shrink-0">
+                <p className="mb-3 text-xs font-bold text-foreground">Scorecard · avg 7.9</p>
+                <div className="space-y-2.5">
+                  <ScorecardRow label="Communication" pct={90} />
+                  <ScorecardRow label="Req. gathering" pct={80} />
+                  <ScorecardRow label="Modeling" pct={60} accent="amber" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                icon: Briefcase,
-                title: 'Vacancy Management',
+                icon: GitBranch,
+                title: 'One pipeline, all roles',
                 description:
-                  'Create job postings with rich descriptions, responsibilities, and requirements. Track status from draft to closed with full visibility.',
+                  'A board across every vacancy with a fast review mode for new applicants. Stop digging through per-job tabs.',
               },
               {
                 icon: Users,
-                title: 'Candidate Tracking',
+                title: 'Rich candidate profiles',
                 description:
-                  'Manage candidate profiles with contact details, documents, notes, and a full history of every role they have been considered for.',
+                  'CV auto-parsed into experience, education and contact. Notes, documents and full history in one view.',
               },
               {
                 icon: Calendar,
-                title: 'Interview Scheduling',
+                title: 'Interview scheduling',
                 description:
-                  'Schedule and track interviews with candidates, assign interviewers, and sync with Google Calendar automatically.',
+                  'Schedule, assign interviewers, and sync with Google, Zoom or Teams automatically.',
               },
               {
-                icon: Star,
-                title: 'Structured Evaluation',
+                icon: Sparkles,
+                title: 'AI that assists, never decides',
                 description:
-                  'Define custom scoring criteria per vacancy and evaluate candidates consistently. Auto-calculated scores give you instant, objective insights.',
+                  'Draft job descriptions, check inclusive language, parse CVs — always advisory, always your call.',
               },
               {
                 icon: Share2,
-                title: 'LinkedIn Integration',
+                title: 'Share & collect applies',
                 description:
-                  'Share vacancies directly to LinkedIn with one click, including job description, responsibilities, and requirements pre-filled.',
-              },
-              {
-                icon: FileText,
-                title: 'Documents & Notes',
-                description:
-                  'Attach CVs and files directly to candidate profiles. Add internal notes to keep your team aligned throughout the hiring process.',
+                  'A branded public careers page + one-click LinkedIn share. Applications land straight in your pipeline.',
               },
               {
                 icon: BarChart3,
-                title: 'Analytics & Reports',
+                title: 'Reports that mean something',
                 description:
-                  'Get insights into hiring activity with dashboard metrics, candidate counts per vacancy, and reporting-ready summaries.',
-              },
-              {
-                icon: Shield,
-                title: 'Team Collaboration',
-                description:
-                  'Invite team members, assign roles, and collaborate on hiring decisions in a secure, shared workspace.',
-              },
-              {
-                icon: Zap,
-                title: 'Customizable Columns',
-                description:
-                  'Tailor your vacancy and candidate list views by choosing which columns to display, saved per user for a personal workflow.',
+                  'Time-to-hire, source effectiveness and funnel conversion — powered by the same consistent scorecards.',
               },
             ].map((feature) => (
               <Card key={feature.title} className="border-border bg-background">
@@ -271,11 +315,10 @@ export default async function LandingPage() {
       <section className="bg-primary px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold text-primary-foreground sm:text-4xl">
-            Ready to transform your hiring?
+            Ready to hire with structure?
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-foreground/80">
-            Start with a 7-day free trial, link your payment method, and continue
-            with a paid plan when your trial ends.
+            Start a 7-day free trial. Set up your first role in minutes.
           </p>
           <Button size="lg" variant="secondary" className="mt-8" asChild>
             <Link href="/auth/sign-up">
@@ -297,6 +340,9 @@ export default async function LandingPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+              <Link href="/guide" className="transition-colors hover:text-foreground">
+                Guides
+              </Link>
               <Link href="/terms" className="transition-colors hover:text-foreground">
                 Terms and Conditions
               </Link>
@@ -314,6 +360,64 @@ export default async function LandingPage() {
           </div>
         </div>
       </footer>
+    </div>
+  )
+}
+
+function PeekColumn({
+  label,
+  labelClass,
+  tint,
+  children,
+}: {
+  label: string
+  labelClass: string
+  tint: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p className={`text-[10px] font-bold tracking-wide ${labelClass}`}>{label}</p>
+      <div className="space-y-1.5">
+        {Array.isArray(children)
+          ? children.map((c, i) => (
+              <div key={i} className={`rounded-md border border-border border-l-[3px] ${tint} bg-background p-2`}>
+                {c}
+              </div>
+            ))
+          : (
+              <div className={`rounded-md border border-border border-l-[3px] ${tint} bg-background p-2`}>
+                {children}
+              </div>
+            )}
+      </div>
+    </div>
+  )
+}
+
+function PeekCard({ name, badge }: { name: string; badge?: string }) {
+  return (
+    <>
+      <p className="text-[11px] font-semibold text-foreground">{name}</p>
+      {badge && (
+        <span className="mt-1 inline-flex rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
+          {badge}
+        </span>
+      )}
+    </>
+  )
+}
+
+function ScorecardRow({ label, pct, accent }: { label: string; pct: number; accent?: 'amber' }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-28 shrink-0 text-[11px] text-muted-foreground">{label}</span>
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full ${accent === 'amber' ? 'bg-amber-400' : 'bg-primary'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   )
 }
