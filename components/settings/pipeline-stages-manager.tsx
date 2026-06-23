@@ -1,25 +1,54 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import {
-  Circle,
   CheckCheck,
+  Circle,
   FileText,
+  GripVertical,
   Loader2,
   Plus,
   Sparkles,
   Trash2,
   Video,
+  Wand2,
 } from 'lucide-react'
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import {
+  applyTemplateToEmptyVacancies,
+  countEmptyVacancies,
   createOrgPipelineStageTemplate,
   deleteOrgPipelineStageTemplate,
+  reorderOrgPipelineStageTemplates,
   seedOrgPipelineStageTemplateFromDefaults,
 } from '@/lib/actions/org-pipeline-stage-templates'
 import type {
@@ -83,7 +112,30 @@ const typeMeta = (t: PipelineStageType): TypeMeta =>
 export function PipelineStagesManager({ initialStages }: Props) {
   const [stages, setStages] = useState<OrgPipelineStageTemplate[]>(initialStages)
   const [addOpen, setAddOpen] = useState(false)
+  const [applyOpen, setApplyOpen] = useState(false)
+  const [emptyVacancyCount, setEmptyVacancyCount] = useState<number | null>(null)
   const [pending, startTransition] = useTransition()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  )
+
+  // Pre-fetch the empty-vacancy count so the "apply to N vacancies"
+  // button always shows the current number.
+  useEffect(() => {
+    if (stages.length === 0) {
+      setEmptyVacancyCount(null)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const res = await countEmptyVacancies()
+      if (!cancelled && res.success) setEmptyVacancyCount(res.data)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [stages.length])
 
   const onAdded = (created: OrgPipelineStageTemplate) => {
     setStages((prev) => [...prev, created])
@@ -109,7 +161,6 @@ export function PipelineStagesManager({ initialStages }: Props) {
         toast.error(result.error)
         return
       }
-      // Optimistic insert — page revalidate will replace on next nav.
       const now = Date.now()
       setStages([
         { id: `tmp-${now}-1`, name: 'Applied',   type: 'standard',  sort_order: 1, is_terminal: false },
@@ -121,6 +172,42 @@ export function PipelineStagesManager({ initialStages }: Props) {
         { id: `tmp-${now}-7`, name: 'Withdrawn', type: 'standard',  sort_order: 7, is_terminal: true  },
       ])
       toast.success('Default stages added')
+    })
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIdx = stages.findIndex((s) => s.id === active.id)
+    const newIdx = stages.findIndex((s) => s.id === over.id)
+    if (oldIdx === -1 || newIdx === -1) return
+
+    const next = arrayMove(stages, oldIdx, newIdx)
+    setStages(next) // optimistic
+    startTransition(async () => {
+      const result = await reorderOrgPipelineStageTemplates(next.map((s) => s.id))
+      if (!result.success) {
+        toast.error(result.error)
+        setStages(stages) // revert
+      }
+    })
+  }
+
+  const handleApplyToEmpty = () => {
+    startTransition(async () => {
+      const result = await applyTemplateToEmptyVacancies()
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      const n = result.data.updated
+      toast.success(
+        n === 0
+          ? 'No empty vacancies to update'
+          : `Applied template to ${n} vacanc${n === 1 ? 'y' : 'ies'}`,
+      )
+      setEmptyVacancyCount(0)
+      setApplyOpen(false)
     })
   }
 
@@ -150,64 +237,160 @@ export function PipelineStagesManager({ initialStages }: Props) {
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-white p-4">
-          <ul className="space-y-2">
-            {stages.map((stage) => {
-              const meta = typeMeta(stage.type)
-              const Icon = meta.icon
-              return (
-                <li
-                  key={stage.id}
-                  className="flex items-center gap-3 rounded-lg border border-border/70 px-3 py-2"
-                >
-                  <span
-                    className={cn(
-                      'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold',
-                      meta.pillBg,
-                      meta.pillText,
-                    )}
-                  >
-                    <Icon className="h-3 w-3" aria-hidden />
-                    {stage.name}
-                  </span>
-                  <span className="text-xs text-muted-foreground">· {meta.label}</span>
-                  {stage.is_terminal && (
-                    <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-[10.5px] font-semibold uppercase text-muted-foreground">
-                      Terminal
-                    </span>
-                  )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="ml-auto h-7 w-7 text-muted-foreground hover:text-destructive"
-                    aria-label={`Remove ${stage.name}`}
-                    onClick={() => handleRemove(stage.id)}
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <SortableContext items={stages.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+              <ul className="space-y-2">
+                {stages.map((stage) => (
+                  <SortableStageRow
+                    key={stage.id}
+                    stage={stage}
+                    onRemove={handleRemove}
                     disabled={pending}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </li>
-              )
-            })}
-          </ul>
-          <div className="mt-3 flex items-center justify-between">
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
+          <div className="mt-3 flex items-center justify-between gap-2">
             <p className="text-[11.5px] text-muted-foreground">
-              {stages.length} of 10 stages
+              {stages.length} of 10 stages · drag to reorder
             </p>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setAddOpen(true)}
-              disabled={pending || stages.length >= 10}
-            >
-              <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden /> Add stage
-            </Button>
+            <div className="flex items-center gap-2">
+              {(emptyVacancyCount ?? 0) > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setApplyOpen(true)}
+                  disabled={pending}
+                  className="gap-1.5"
+                >
+                  <Wand2 className="h-3.5 w-3.5" aria-hidden />
+                  Apply to {emptyVacancyCount} empty{' '}
+                  {emptyVacancyCount === 1 ? 'vacancy' : 'vacancies'}
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setAddOpen(true)}
+                disabled={pending || stages.length >= 10}
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden /> Add stage
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
       <AddStageDialog open={addOpen} onOpenChange={setAddOpen} onAdded={onAdded} />
+
+      <AlertDialog open={applyOpen} onOpenChange={(v) => !pending && setApplyOpen(v)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Apply template to {emptyVacancyCount ?? 0} empty{' '}
+              {emptyVacancyCount === 1 ? 'vacancy' : 'vacancies'}?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  Vacancies with <strong>no applications</strong> will have their pipeline stages replaced by this template.
+                </p>
+                <p className="text-muted-foreground">
+                  Vacancies that already have applications (live or archived) are skipped — re-pointing stage IDs on existing applications is risky and not supported here.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                handleApplyToEmpty()
+              }}
+              disabled={pending}
+            >
+              {pending ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />
+                  Applying…
+                </>
+              ) : (
+                'Apply template'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  )
+}
+
+function SortableStageRow({
+  stage,
+  onRemove,
+  disabled,
+}: {
+  stage: OrgPipelineStageTemplate
+  onRemove: (id: string) => void
+  disabled?: boolean
+}) {
+  const meta = typeMeta(stage.type)
+  const Icon = meta.icon
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: stage.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 rounded-lg border border-border/70 bg-background px-3 py-2"
+    >
+      <button
+        type="button"
+        aria-label={`Drag ${stage.name}`}
+        className="cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" aria-hidden />
+      </button>
+      <span
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold',
+          meta.pillBg,
+          meta.pillText,
+        )}
+      >
+        <Icon className="h-3 w-3" aria-hidden />
+        {stage.name}
+      </span>
+      <span className="text-xs text-muted-foreground">· {meta.label}</span>
+      {stage.is_terminal && (
+        <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-[10.5px] font-semibold uppercase text-muted-foreground">
+          Terminal
+        </span>
+      )}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="ml-auto h-7 w-7 text-muted-foreground hover:text-destructive"
+        aria-label={`Remove ${stage.name}`}
+        onClick={() => onRemove(stage.id)}
+        disabled={disabled}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
+    </li>
   )
 }
 
