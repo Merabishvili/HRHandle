@@ -11,6 +11,7 @@ import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 import type { ActivityItem } from '@/components/candidates/activity-feed'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { getRecentMerge } from '@/lib/actions/candidate-merge'
 import { CandidateProfileShell } from '@/components/candidates/profile/profile-shell'
 import type { HistoryRow } from '@/components/candidates/profile/application-history'
 import type { RepeatApplicantSummary } from '@/components/candidates/profile/repeat-applicant-banner'
@@ -496,6 +497,12 @@ export default async function CandidateDetailPage({
     }
   }
 
+  // A-3b — fetch the most recent un-reverted merge inside the 30-day
+  // window so the profile shell can render the split-back banner. Best-
+  // effort: failures fall back to no banner.
+  const recentMergeRes = await getRecentMerge(candidate.id)
+  const recentMerge = recentMergeRes.success ? recentMergeRes.data : null
+
   return (
     <CandidateProfileShell
       candidate={{
@@ -538,6 +545,7 @@ export default async function CandidateDetailPage({
       customFieldGroups={customFieldGroups}
       customFieldValues={customFieldValues}
       railCustomFields={railCustomFields}
+      recentMerge={recentMerge}
     />
   )
 }

@@ -30,7 +30,8 @@ The rest of this document is the **planned** sequence locked 2026-06-16. This ca
 | 3.3 Slice 1 | Offer countdown + confirm-decline modal | `5811894` | The two real additions called out in roadmap §3.3. |
 | 3.4 | Landing page refresh + guide Coming-soon de-emphasis | `0e43fc3` | Hero "Hire with structure, not spreadsheets", product peek, honest proof strip, 6 focused features + dark hero feature card, new CTA copy. |
 | 1.1 | Derive status; retire General Status as user-editable | `f0c0af6` + Migration 052 (`4e1f883`) + this session's dead-read cleanup | Trigger now derives from `pipeline_stage_id`. Profile header shows "Active · N live applications" derived from `activeApplications`. |
-| A-3 | Merge candidates (Slice 1) | `313f3ec` + Migration 053 | 3-step dialog; atomic SQL function; same-vacancy collision archives loser's duplicate; old-ID redirect; A-3b (30-day split-back UI + warning banners) carved. |
+| A-3 | Merge candidates (Slice 1) | `313f3ec` + Migration 053 | 3-step dialog; atomic SQL function; same-vacancy collision archives loser's duplicate; old-ID redirect. |
+| A-3b | Merge split-back UI + offer-warning banners | Migration 056 + profile banner + dialog warning | `split_merge()` SQL function (30-day window check, marks audit row reverted, restores loser row in place); `RecentMergeBanner` on the candidate profile with confirm dialog explaining that merged-in child rows stay on the surviving record; merge dialog Step 3 surfaces dual-offer + active-offer risks pulled by `getMergeRisks`, with a required acknowledgement checkbox before the Merge button enables. |
 | A-7 | Notifications event × channel matrix | `84c249c` | 5 events × In-app/Email/Slack; Slack column auto-disabled when org has no Slack webhook; Instant vs Daily-digest radio; @mention in-app locked on. |
 | A-8a | Security page 2-column layout + MFA Enabled badge | `9a4c1c7` | A-8b (Recovery codes + Active sessions) carved as new follow-up. |
 | Fidelity | Tier 1 / 2 / 3 brand-colour + sentence-case + sidebar fixes | `5bd8e00`, `5874c94`, `43a31d9` | Cross-cutting polish (cleared a large portion of audit items). |
@@ -54,7 +55,6 @@ The rest of this document is the **planned** sequence locked 2026-06-16. This ca
 | 3.1 | AI Fit Analysis | Phase 0.8 legal consult booking pending. See [`ai-fit-analysis.md`](ai-fit-analysis.md). |
 | A-1 | Today/Inbox screen | Partially addressed via the dashboard "Needs your attention" tile (`4342842`). The original audit §2.1 Today-vs-Reports IA contradiction still needs a formal design call. |
 | A-8b | Recovery codes + Active sessions (Security) | Needs `mfa_recovery_codes` table + per-user session listing infra. Not started. |
-| A-3b | Merge split-back UI + edge-case warnings | Snapshot data already captured by Migration 053. UI deferred. |
 
 ### 🚦 Recommended next slice
 

@@ -20,6 +20,8 @@ import {
 import { DeleteCandidateButton } from '@/components/candidates/delete-candidate-button'
 import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
 import { MergeCandidatesDialog } from '@/components/candidates/merge-candidates-dialog'
+import { RecentMergeBanner } from '@/components/candidates/profile/recent-merge-banner'
+import type { RecentMergeInfo } from '@/lib/actions/candidate-merge'
 import { ContactCard } from '@/components/candidates/contact-card'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
 import { AiSummaryPanel } from '@/components/candidates/ai-summary-panel'
@@ -116,6 +118,9 @@ interface ProfileShellProps {
   /** Flat key-value list to show in the rail "Custom fields" section
    * (text-only custom field values, for the dense rail layout). */
   railCustomFields: { label: string; value: string | null }[]
+  /** A-3b — set when this candidate is the surviving record of a merge
+   * still inside the 30-day split-back window. */
+  recentMerge: RecentMergeInfo | null
 }
 
 /**
@@ -168,6 +173,7 @@ export function CandidateProfileShell({
   customFieldGroups,
   customFieldValues,
   railCustomFields,
+  recentMerge,
 }: ProfileShellProps) {
   // Default-select the active application closest to a decision (Offer >
   // Interview > Screening > Applied). When tied, take the most recently
@@ -228,6 +234,11 @@ export function CandidateProfileShell({
 
   return (
     <main className="mx-auto max-w-[1360px] p-4 lg:p-6">
+      {recentMerge && (
+        <div className="mb-3">
+          <RecentMergeBanner info={recentMerge} />
+        </div>
+      )}
       <article className="overflow-hidden rounded-xl border border-[oklch(0.88_0.01_250)] bg-white shadow-[0_1px_3px_0_oklch(0_0_0_/_0.08)]">
         {/* Header bar */}
         <header className="flex flex-wrap items-center gap-3.5 border-b border-[oklch(0.93_0.01_250)] px-5 py-4 sm:px-6">

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowRight, ChevronLeft, Loader2, Search, Shield } from 'lucide-react'
+import { AlertTriangle, ArrowRight, ChevronLeft, Loader2, Search, Shield } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -11,10 +11,12 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import {
   getCandidateMergeDetails,
+  getMergeRisks,
   mergeCandidates,
   searchMergeCandidates,
   type MergeCandidateSummary,
   type MergeFieldChoices,
+  type MergeRisks,
 } from '@/lib/actions/candidate-merge'
 import { defaultMergeChoice, type MergeChoice } from '@/lib/candidate-merge/defaults'
 
@@ -68,6 +70,8 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
   const [loser, setLoser] = useState<MergeCandidateSummary | null>(null)
   const [loserDetails, setLoserDetails] = useState<Record<string, string | null>>({})
   const [choices, setChoices] = useState<Record<string, Choice>>({})
+  const [risks, setRisks] = useState<MergeRisks | null>(null)
+  const [riskAcknowledged, setRiskAcknowledged] = useState(false)
   const [pending, startTransition] = useTransition()
 
   // Reset state every time the dialog closes
@@ -79,8 +83,28 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
       setLoser(null)
       setLoserDetails({})
       setChoices({})
+      setRisks(null)
+      setRiskAcknowledged(false)
     }
   }, [open])
+
+  // Re-fetch risks whenever the loser changes; clear when loser is null
+  useEffect(() => {
+    if (!loser) {
+      setRisks(null)
+      setRiskAcknowledged(false)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const res = await getMergeRisks(winner.id, loser.id)
+      if (cancelled) return
+      if (res.success) setRisks(res.data)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [loser, winner.id])
 
   // Debounced suggestion fetch on step 1
   useEffect(() => {
@@ -243,7 +267,15 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
             />
           )}
           {step === 3 && loser && (
-            <Step3 winner={winner} loser={loser} chosenFields={fieldChoices} rowCount={fieldRows.length} />
+            <Step3
+              winner={winner}
+              loser={loser}
+              chosenFields={fieldChoices}
+              rowCount={fieldRows.length}
+              risks={risks}
+              acknowledged={riskAcknowledged}
+              onAcknowledge={setRiskAcknowledged}
+            />
           )}
         </div>
 
@@ -277,7 +309,13 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </Button>
           ) : (
-            <Button type="button" size="sm" onClick={submit} disabled={pending} className="gap-1">
+            <Button
+              type="button"
+              size="sm"
+              onClick={submit}
+              disabled={pending || (hasRisks(risks) && !riskAcknowledged)}
+              className="gap-1"
+            >
               {pending ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
@@ -435,13 +473,20 @@ function Step3({
   loser,
   chosenFields,
   rowCount,
+  risks,
+  acknowledged,
+  onAcknowledge,
 }: {
   winner: MergeWinnerInfo
   loser: MergeCandidateSummary
   chosenFields: MergeFieldChoices
   rowCount: number
+  risks: MergeRisks | null
+  acknowledged: boolean
+  onAcknowledge: (v: boolean) => void
 }) {
   const changedCount = Object.keys(chosenFields).length
+  const showRisks = hasRisks(risks)
   return (
     <div className="space-y-4">
       <Heads winner={winner} loser={loser} />
@@ -459,14 +504,59 @@ function Step3({
           {rowCount === 0 ? 'No conflicting fields to apply.' : `${changedCount} of ${rowCount} conflicting field${rowCount === 1 ? '' : 's'} will use the duplicate's value.`}
         </li>
       </ul>
+
+      {showRisks && risks && (
+        <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-3 text-xs text-amber-900">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="font-semibold">Heads up — this merge touches active offers.</span>
+          </div>
+          <ul className="ml-5 list-disc space-y-1">
+            {risks.dualOfferVacancyTitles.map((title) => (
+              <li key={title}>
+                Both candidates have an active offer on <strong>{title}</strong> — only the surviving record will keep the offer thread; the duplicate&apos;s offer will move under it.
+              </li>
+            ))}
+            {risks.dualOfferVacancyTitles.length === 0 && risks.winnerHasOffer && risks.loserHasOffer && (
+              <li>Both candidates have active offers — review carefully before combining.</li>
+            )}
+            {risks.dualOfferVacancyTitles.length === 0 && !risks.winnerHasOffer && risks.loserHasOffer && (
+              <li>The duplicate has an active offer that will move onto this candidate.</li>
+            )}
+            {risks.dualOfferVacancyTitles.length === 0 && risks.winnerHasOffer && !risks.loserHasOffer && (
+              <li>This candidate has an active offer; combining will not remove it.</li>
+            )}
+          </ul>
+          <label className="flex items-start gap-2 pt-1">
+            <input
+              type="checkbox"
+              checked={acknowledged}
+              onChange={(e) => onAcknowledge(e.target.checked)}
+              className="mt-0.5 h-3.5 w-3.5 rounded border-amber-400"
+              aria-label="I understand the offer implications"
+            />
+            <span className="text-[12px] leading-relaxed">
+              I understand the offer implications and want to proceed.
+            </span>
+          </label>
+        </div>
+      )}
+
       <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-3 text-xs text-foreground">
         <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
         <span>
-          <strong>Reversible.</strong> A "Merged from {loser.full_name}" entry is written to the audit log; the old candidate ID will redirect here.
+          <strong>Reversible for 30 days.</strong> A &quot;Merged from {loser.full_name}&quot; entry is written to the audit log; the old candidate ID will redirect here. The merge can be split back from the surviving candidate&apos;s page.
         </span>
       </div>
     </div>
   )
+}
+
+function hasRisks(risks: MergeRisks | null): boolean {
+  if (!risks) return false
+  if (risks.dualOfferVacancyTitles.length > 0) return true
+  if (risks.winnerHasOffer || risks.loserHasOffer) return true
+  return false
 }
 
 function Heads({ winner, loser }: { winner: MergeWinnerInfo; loser: MergeCandidateSummary }) {
