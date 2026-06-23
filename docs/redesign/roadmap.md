@@ -25,9 +25,14 @@ The rest of this document is the **planned** sequence locked 2026-06-16. This ca
 | 2.5 Slice 2a | Screening questions schema + recruiter UI | `656e1f4` | Migration 048 (`vacancy_screening_questions` + `application_screening_answers`). Wizard persists `yes_no` rows; recruiter card on Scorecard tab. |
 | 2.5 Slice 2b | Apply-form integration + knockout flag surface | `380ef48` | End-to-end. Questions render on `/apply/[token]`; answers persist with pre-computed `is_knockout_flag`; candidate profile's Screening gate shows a "Screening flags" callout. |
 | 2.7 Slice 1 | Vacancy creation wizard | `3ed7849` | **Divergence from locked plan:** shipped as a 5-step wizard, not the "single-scroll with `Advanced` toggle" the roadmap §2.7 called for. The wizard chrome reads cleaner against the rebuilt detail page; explicit decision to reverse the 2026-06-16 lock. |
-| 2.7 Slice 2 | Candidate creation wizard | `d0a5367` | Same wizard pattern. Adds NEW Starting-stage picker + duplicate-email merge banner; removes General Status dropdown from the create flow (not yet from profile header — see ⏸ section). |
-| 3.2 (partial) | Public pages polish | `f94deb1`, `2a7e202`, `8080002`, plus 2.5 2b | Brand-blue header, role count, "Track your application" link on confirmation, status-page pending-offer tile, screening questions on apply form. |
+| 2.7 Slice 2 | Candidate creation wizard | `d0a5367` | Same wizard pattern. Adds NEW Starting-stage picker + duplicate-email merge banner; removes General Status dropdown from the create flow. |
+| 3.2 (partial) | Public pages polish | `f94deb1`, `2a7e202`, `8080002`, plus 2.5 2b, `25f5873` | Brand-blue header, role count, "Track your application" link on confirmation, status-page pending-offer tile, screening questions on apply form, 8px brand bar on apply page surfaces. |
 | 3.3 Slice 1 | Offer countdown + confirm-decline modal | `5811894` | The two real additions called out in roadmap §3.3. |
+| 3.4 | Landing page refresh + guide Coming-soon de-emphasis | `0e43fc3` | Hero "Hire with structure, not spreadsheets", product peek, honest proof strip, 6 focused features + dark hero feature card, new CTA copy. |
+| 1.1 | Derive status; retire General Status as user-editable | `f0c0af6` + Migration 052 (`4e1f883`) + this session's dead-read cleanup | Trigger now derives from `pipeline_stage_id`. Profile header shows "Active · N live applications" derived from `activeApplications`. |
+| A-3 | Merge candidates (Slice 1) | `313f3ec` + Migration 053 | 3-step dialog; atomic SQL function; same-vacancy collision archives loser's duplicate; old-ID redirect; A-3b (30-day split-back UI + warning banners) carved. |
+| A-7 | Notifications event × channel matrix | `84c249c` | 5 events × In-app/Email/Slack; Slack column auto-disabled when org has no Slack webhook; Instant vs Daily-digest radio; @mention in-app locked on. |
+| A-8a | Security page 2-column layout + MFA Enabled badge | `9a4c1c7` | A-8b (Recovery codes + Active sessions) carved as new follow-up. |
 | Fidelity | Tier 1 / 2 / 3 brand-colour + sentence-case + sidebar fixes | `5bd8e00`, `5874c94`, `43a31d9` | Cross-cutting polish (cleared a large portion of audit items). |
 | Phase 0.9 | Pipeline empty state spec | `redesign/Pipeline Empty State.dc.html` | Design saved. |
 
@@ -36,21 +41,20 @@ The rest of this document is the **planned** sequence locked 2026-06-16. This ca
 | Wave | What | Status |
 |---|---|---|
 | 1.5 | Terminology pass | Sentence-case sweep + "incomplete" sweep done; multi-page UI string review still ongoing. |
-| 1.6 | AI reframe / `<AiDraftTag />` | Component built; per-feature adoption tracked in [`tech-debt.md` §2](tech-debt.md#2-forward-compat-surfaces-partially-wired). |
-| 3.2 | Public pages polish | Apply-form screening + status-page polish shipped; light branding (logo + brand bar) outstanding. |
+| 1.6 / A-13 | AI reframe / `<AiDraftTag />` | Component shipped + adopted on all 6 AI surfaces (`ai-jd-suggest`, `ai-summary-panel`, `ai-notes-extractor`, `ai-interview-questions`, `ai-bias-check`, `ai-assessment-suggester`) and the CV-parse "AI-filled · review" banner on the candidate wizard. Stale "AI-generated content" copy on JD confirm dialog also retired. |
+| 3.2 | Public pages polish | Apply-form screening + status-page polish + 8px brand bar across `/apply/[token]`, `/jobs/[slug]`, `/status/[token]` all shipped. Optional logo upload on `/jobs/[slug]` already supported via `organizations.logo_url`. |
+| A-4 | Scorecard `must_have` + `recommendation` columns | `must_have` shipped in Migration 047. `recommendation` (yes/no) + `recommendation_reason` shipped in Migration 054 — **run script 054 manually**. UI binding deferred to Wave 2.3 continuation. |
 | Phase 0.5 | Stages schema spike | Migration 046 shipped the `pipeline_stages` table but no caller uses it yet — the cutover (Migration 049) is the 🔴 blocking item in [`tech-debt.md` §1](tech-debt.md#1-schema-cutover-pending). |
 
 ### ⏸ Blocked / pending
 
 | Wave | What | Why |
 |---|---|---|
-| 1.1 | Derived status + remove General Status field from profile | The create-flow dropdown is gone (wizard removed it). The candidate **profile** header still carries it. Phase 0.1 trigger fix + UI removal still owed. Effort `S`. |
 | 2.6 | Per-vacancy custom stages | 🔴 Schema scaffold exists (Migration 046); cutover from `applications.status_id` → `applications.pipeline_stage_id` blocked behind Migration 049 + ~20 callsite updates + the stage-manager UI. See [`tech-debt.md` §1](tech-debt.md#1-schema-cutover-pending). |
 | 3.1 | AI Fit Analysis | Phase 0.8 legal consult booking pending. See [`ai-fit-analysis.md`](ai-fit-analysis.md). |
-| A-1 | Today/Inbox screen | Audit §2.1 contradiction "Today vs Reports" still unresolved in build. |
-| A-3 | Merge candidates flow | Listed in profile `⋯` menu but the dialog + server action don't exist. |
-| A-7 / A-8 | Settings → Notifications + Security sub-page bodies | Sub-pages are present in the sidebar but the contents are placeholders. |
-| Wave 2.5 cleanup | Wizard UI for non-`yes_no` screening answer types | Schema + apply form already support all 4 types; only the wizard UI is capped at `yes_no`. Tracked as 🟢 cleanup. |
+| A-1 | Today/Inbox screen | Partially addressed via the dashboard "Needs your attention" tile (`4342842`). The original audit §2.1 Today-vs-Reports IA contradiction still needs a formal design call. |
+| A-8b | Recovery codes + Active sessions (Security) | Needs `mfa_recovery_codes` table + per-user session listing infra. Not started. |
+| A-3b | Merge split-back UI + edge-case warnings | Snapshot data already captured by Migration 053. UI deferred. |
 
 ### 🚦 Recommended next slice
 
