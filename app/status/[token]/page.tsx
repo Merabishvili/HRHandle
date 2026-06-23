@@ -149,7 +149,9 @@ export default async function StatusPage({ params }: PageProps) {
         </h1>
       </header>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="h-2 bg-blue-600" aria-hidden />
+        <div className="p-6 sm:p-8">
         <dl className="space-y-3 text-sm">
           <div className="flex items-start gap-3">
             <Briefcase className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden />
@@ -245,6 +247,7 @@ export default async function StatusPage({ params }: PageProps) {
             organizationName={org.name}
           />
         )}
+        </div>
       </section>
 
       <footer className="mt-6 text-center">
