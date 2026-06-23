@@ -6,6 +6,7 @@ import { FileText, Loader2, Upload, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { AiDraftTag } from '@/components/ui/ai-draft-tag'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { ParsedCVInput } from '@/lib/validations/candidate-background'
@@ -139,9 +140,7 @@ export function StepPersonal({
           <span className="flex-1 truncate text-[12.5px] text-foreground">
             <strong className="font-semibold">{cvFile.name}</strong> parsed — review fields below
           </span>
-          <span className="rounded bg-[oklch(0.93_0.05_250)] px-1.5 py-0.5 text-[10.5px] font-bold uppercase text-[oklch(0.42_0.16_250)]">
-            AI-filled · review
-          </span>
+          <AiDraftTag label="AI-filled · review" />
           <button
             type="button"
             onClick={onCvCleared}

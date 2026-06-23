@@ -158,7 +158,7 @@ export function AiJdSuggest({
     if (
       overwritesExisting &&
       !window.confirm(
-        'Replace your current text in one or more sections with the AI-generated content?',
+        'Replace your current text in one or more sections with the AI draft?',
       )
     ) {
       return
