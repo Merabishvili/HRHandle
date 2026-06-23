@@ -58,6 +58,8 @@ interface CandidateRow {
   email: string | null
   phone: string | null
   linkedin_profile_url: string | null
+  current_company: string | null
+  current_position: string | null
   location: string | null
   timezone: string | null
   languages: string[]
@@ -173,6 +175,7 @@ export default async function CandidateDetailPage({
       .select(`
         id, organization_id, first_name, last_name,
         email, phone, linkedin_profile_url,
+        current_company, current_position,
         location, timezone, languages, salary_expectation, notice_period,
         source, general_status_id, created_at, updated_at, deleted_at
       `)
@@ -198,7 +201,22 @@ export default async function CandidateDetailPage({
   ])
 
   const candidate = candidateRaw as CandidateRow | null
-  if (!candidate) notFound()
+  if (!candidate) {
+    // Merged-into redirect (A-3): an old ID for a row that was folded
+    // into another candidate should land the user on the surviving
+    // record, not 404. Only redirect inside the same org.
+    const { data: mergedRow } = await supabase
+      .from('candidates')
+      .select('merged_into_id')
+      .eq('id', id)
+      .eq('organization_id', organizationId)
+      .not('merged_into_id', 'is', null)
+      .maybeSingle()
+    if (mergedRow?.merged_into_id) {
+      redirect(`/candidates/${mergedRow.merged_into_id}`)
+    }
+    notFound()
+  }
 
   const appStatuses = (appStatusesRaw || []) as ApplicationStatus[]
   const sortedActiveStages = [...appStatuses]
@@ -497,6 +515,8 @@ export default async function CandidateDetailPage({
         email: candidate.email,
         phone: candidate.phone,
         linkedinUrl: candidate.linkedin_profile_url,
+        currentCompany: candidate.current_company,
+        currentPosition: candidate.current_position,
         createdAt: candidate.created_at,
         updatedAt: candidate.updated_at,
       }}

@@ -19,6 +19,7 @@ import {
 } from '@/components/pipeline/rejection-dialog'
 import { DeleteCandidateButton } from '@/components/candidates/delete-candidate-button'
 import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
+import { MergeCandidatesDialog } from '@/components/candidates/merge-candidates-dialog'
 import { ContactCard } from '@/components/candidates/contact-card'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
 import { AiSummaryPanel } from '@/components/candidates/ai-summary-panel'
@@ -63,6 +64,8 @@ interface ProfileShellProps {
     email: string | null
     phone: string | null
     linkedinUrl: string | null
+    currentCompany: string | null
+    currentPosition: string | null
     createdAt: string
     updatedAt: string
   }
@@ -190,6 +193,7 @@ export function CandidateProfileShell({
   const [pendingRejection, setPendingRejection] = useState<
     { applicationId: string; candidateName: string } | null
   >(null)
+  const [mergeOpen, setMergeOpen] = useState(false)
 
   const selectedApp = useMemo(
     () => activeApplications.find((a) => a.id === selectedAppId) ?? sortedActive[0] ?? null,
@@ -277,9 +281,8 @@ export function CandidateProfileShell({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem disabled>
+                <DropdownMenuItem onSelect={() => setMergeOpen(true)}>
                   Merge candidates
-                  <span className="ml-auto text-[10px] text-muted-foreground">soon</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild className="text-destructive">
@@ -434,6 +437,24 @@ export function CandidateProfileShell({
           onCancel={() => setPendingRejection(null)}
         />
       )}
+
+      <MergeCandidatesDialog
+        open={mergeOpen}
+        onOpenChange={setMergeOpen}
+        winner={{
+          id: candidate.id,
+          full_name: candidate.fullName,
+          email: candidate.email,
+          phone: candidate.phone,
+          current_company: candidate.currentCompany,
+          current_position: candidate.currentPosition,
+          linkedin_profile_url: candidate.linkedinUrl,
+          source: candidate.source,
+          location: candidate.location,
+          applications_count: activeApplications.length,
+          created_at: candidate.createdAt,
+        }}
+      />
     </main>
   )
 }
