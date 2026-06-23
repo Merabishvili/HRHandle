@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Shield, Smartphone, Trash2, KeyRound } from 'lucide-react'
+import { Check, KeyRound, Shield, Smartphone, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -46,6 +46,15 @@ export function TwoFactorSection({ factors, role, orgPolicy }: Props) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="h-5 w-5" /> Two-factor authentication
+          {enrolled && (
+            <Badge
+              variant="secondary"
+              className="ml-auto border-transparent bg-emerald-50 text-emerald-700"
+            >
+              <Check className="mr-1 h-3 w-3" aria-hidden />
+              Enabled
+            </Badge>
+          )}
         </CardTitle>
         <CardDescription>
           Add a TOTP authenticator (Google Authenticator, 1Password, Authy, etc.) to require a one-time code at sign-in.
