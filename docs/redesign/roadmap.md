@@ -385,6 +385,8 @@ Total Wave 2: ~12–16 weeks of work depending on Option A vs B for 2.6.
 
 **Effort:** `S`. **Open:** headline direction, 9→6 features collapse. Pick before build.
 
+**Status: shipped 2026-06-22.** Landing page rewritten per `redesign/Landing and Guide.dc.html` — hero "Hire with structure, not spreadsheets" with eyebrow "The ATS built for small teams that hire carefully", 4-column kanban product peek, honest proof strip (3 points: One pipeline / Score don't guess / $20/mo) replacing the 4 vanity stats, dark "Structured evaluation, built in" hero feature with mini scorecard preview, 9 cards → 6 focused (One pipeline / Rich profiles / Interview scheduling / AI assists / Share & collect / Reports), CTA band copy to "Ready to hire with structure?". Guide index at `/guide` already category-grouped + FAQ per design ("Unchanged in structure"); only tweak — `components/guide/guide-card.tsx` Coming-soon cards now render with dashed border + muted bg so they read as deferred, not broken. Nav + footer pick up a Guides link.
+
 ---
 
 ### 3.5 ❌ DROP from this redesign · Swimlanes "Overview"
@@ -401,12 +403,13 @@ These aren't in the original roadmap but should be.
 |---|---|---|---|
 | A-1 | Today/Inbox screen design (or formal "Dashboard dropped" decision) | Resolves §2.1 contradiction | M (design) + L (build) |
 | A-2 | Mobile design specs for 4 must-work-on-phone flows | See [`mobile/`](mobile/) — produced as part of this audit | Specs done; build effort folds into each flow |
-| A-3 | Merge candidates flow (spec + build) | Listed in header `⋯` but undefined | M |
+| A-3 | Merge candidates flow (spec + build) | Listed in header `⋯` but undefined | M · **shipped 2026-06-23** — 3-step dialog (Pick → Resolve → Confirm) wired to header `⋯`. Migration 053 adds `candidates.merged_into_id` + `merged_at`, a `candidate_merges` audit table, and a SECURITY-INVOKER `merge_candidates(winner_id, loser_id, field_choices)` SQL function that atomically re-points applications (with same-vacancy collision → loser's app archived), candidate_documents, candidate_notes, candidate_experience/education, candidate_evaluations + answers, interviews, custom_field_values (UNIQUE collision → winner wins), activity_log. Old IDs 302 to the winner via the candidate detail page. **Run script 053 manually.** Carved as A-3b: 30-day split-back UI; hired/dual-offer warning banners. |
 | A-4 | Scorecard `must_have` + `recommendation` columns migration | Phase 0.6 follow-through | S |
 | A-5 | Custom stages — Option B "per-org templates" implementation | Replaces 2.6 Option A | M |
 | A-6 | Global pipeline virtualization mechanism | Perf requirement for 2.1 | S |
-| A-7 | Settings → Notifications sub-page (full spec + build) | Listed as NEW with no contents | S spec + S build |
-| A-8 | Settings → Security sub-page (full spec + build) | MFA splits; spec needed | S spec + S build |
+| A-7 | Settings → Notifications sub-page (full spec + build) | Listed as NEW with no contents | S spec + S build · **shipped 2026-06-23** — event × channel matrix per `Merge Notifications Security.dc.html` (5 rows × In-app/Email/Slack), Slack column auto-disabled when org has no Slack webhook, Instant vs Daily-digest email-delivery radio, @mention in-app locked on. Schema extended additively (`in_app_events`, `slack_events`, `email_delivery`, plus `email.stage_change`); legacy rows upgrade via `normalizeNotificationPreferences`. Dispatcher wiring remains the existing follow-up. |
+| A-8a | Settings → Security 2-column layout | Compose existing password + MFA per design | S · **shipped 2026-06-23** — Password (left) + Two-factor (right) in md:grid-cols-2; added "✓ Enabled" badge to the MFA card title when a verified factor exists. Recovery codes + Active sessions carved to A-8b. |
+| A-8b | Recovery codes + Active sessions (Security) | Design rows in MFA card + standalone Sessions card need new infra | M — needs `mfa_recovery_codes` table (hashed codes, generation, regenerate-reveals-once flow) + per-user session listing (Supabase doesn't expose `auth.sessions` to end users — either service-role admin call or own tracking table); per-session "Sign out" + "Sign out everywhere"; "Set up two-factor" CTA on the disabled-MFA empty state. Not started. |
 | A-9 | Apply form on mobile (CV upload UX) | See [`mobile/apply-form.md`](mobile/apply-form.md) | S |
 | A-10 | Offer page mobile design | See [`mobile/offer-approval.md`](mobile/offer-approval.md) | S |
 | A-11 | Today's-interviews mobile surface | See [`mobile/today-interviews.md`](mobile/today-interviews.md) | M |

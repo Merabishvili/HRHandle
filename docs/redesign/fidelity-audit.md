@@ -369,7 +369,7 @@ needs a forward Wave build, not a retroactive patch.
 | `redesign/Create Vacancy Steps.dc.html` | `app/(dashboard)/vacancies/new/page.tsx` | Wave 2.7 in roadmap. Not rebuilt. |
 | `redesign/Create Candidate Steps.dc.html` | `app/(dashboard)/candidates/new/page.tsx` | Wave 2.7 in roadmap. Not rebuilt. |
 | `redesign/Custom Stages.dc.html` | No UI yet | Wave 2.6 — Migration 046 applied (`pipeline_stages` table), but the stage-manager UI is unbuilt. |
-| `redesign/Landing and Guide.dc.html` | `app/page.tsx`, `app/guide/**` | Wave 3.4 in roadmap. Not rebuilt. |
+| `redesign/Landing and Guide.dc.html` | `app/page.tsx`, `app/guide/**` | Wave 3.4 shipped 2026-06-22. Landing rebuilt to design (hero copy + product peek + honest proof strip + dark "Structured evaluation" hero feature + 9→6 cards + new CTA copy); guide index unchanged (per design's "Unchanged in structure"), only Coming-soon cards switched to dashed border per the design note. |
 | `redesign/AI Fit Analysis.dc.html` | No UI yet | Wave 3.1 blocked on Phase 0.8 legal consult. |
 
 ---
