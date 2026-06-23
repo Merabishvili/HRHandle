@@ -66,7 +66,6 @@ interface CandidateRow {
   salary_expectation: string | null
   notice_period: string | null
   source: string | null
-  general_status_id: string | null
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -177,7 +176,7 @@ export default async function CandidateDetailPage({
         email, phone, linkedin_profile_url,
         current_company, current_position,
         location, timezone, languages, salary_expectation, notice_period,
-        source, general_status_id, created_at, updated_at, deleted_at
+        source, created_at, updated_at, deleted_at
       `)
       .eq('id', id)
       .eq('organization_id', organizationId)
