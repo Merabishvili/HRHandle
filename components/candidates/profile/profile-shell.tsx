@@ -396,6 +396,27 @@ export function CandidateProfileShell({
               initialEntries={educationEntries}
             />
 
+            {/* A-12b — On mobile the right rail stacks all the way at the
+                bottom, which buries Documents and Contact below the
+                Activity feed. Per the design's mobile order
+                (`docs/redesign/mobile/candidate-profile.md`), Documents
+                and Contact belong near Experience/Education. Render
+                them inline here on lg-; the rail copies are
+                `hidden lg:block` so desktop still has one of each. */}
+            <div className="lg:hidden">
+              <CandidateDocuments
+                candidateId={candidate.id}
+                initialDocuments={documents}
+              />
+            </div>
+            <div className="lg:hidden">
+              <ContactCard
+                email={candidate.email}
+                phone={candidate.phone}
+                linkedinUrl={candidate.linkedinUrl}
+              />
+            </div>
+
             {customFieldGroups.length > 0 && (
               <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4">
                 <p className="mb-3 text-[14px] font-bold text-foreground">Additional information</p>
@@ -430,10 +451,14 @@ export function CandidateProfileShell({
 
             <AiSummaryPanel candidateId={candidate.id} />
 
-            <CandidateDocuments
-              candidateId={candidate.id}
-              initialDocuments={documents}
-            />
+            {/* A-12b — Hidden on lg- because a mobile copy renders inline
+                between EducationSection and CustomFieldsDisplay. */}
+            <div className="hidden lg:block">
+              <CandidateDocuments
+                candidateId={candidate.id}
+                initialDocuments={documents}
+              />
+            </div>
 
             <RailDetails
               items={[
@@ -447,11 +472,15 @@ export function CandidateProfileShell({
               ]}
             />
 
-            <ContactCard
-              email={candidate.email}
-              phone={candidate.phone}
-              linkedinUrl={candidate.linkedinUrl}
-            />
+            {/* A-12b — Hidden on lg- because a mobile copy renders inline
+                between EducationSection and CustomFieldsDisplay. */}
+            <div className="hidden lg:block">
+              <ContactCard
+                email={candidate.email}
+                phone={candidate.phone}
+                linkedinUrl={candidate.linkedinUrl}
+              />
+            </div>
 
             <RailCustomFields items={railCustomFields} />
 
