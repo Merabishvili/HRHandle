@@ -75,7 +75,31 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row">
+      {/* A-10 — Action bar sticks to the bottom of the viewport on
+          mobile so Accept / Decline stays in thumb-reach even when the
+          offer body is long. Renders inline on sm+. The safe-area
+          inset keeps it clear of the iOS home indicator; the white/
+          blur backdrop + top border distinguish it from the offer
+          text behind. Decline appears first per the design
+          (`Public Offer.dc.html`): trailing slot is the primary
+          action. */}
+      <div
+        className="sticky bottom-0 z-10 -mx-4 flex flex-row gap-2 border-t border-gray-200 bg-white/95 px-4 pb-3 pt-3 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:relative sm:-mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
+      >
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setError(null)
+            setDeclineOpen(true)
+          }}
+          disabled={isPending}
+          className="flex-1"
+        >
+          <X className="mr-2 h-4 w-4" aria-hidden />
+          Decline
+        </Button>
         <Button
           type="button"
           onClick={() => {
@@ -90,19 +114,6 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
         >
           <Check className="mr-2 h-4 w-4" aria-hidden />
           Accept offer
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setError(null)
-            setDeclineOpen(true)
-          }}
-          disabled={isPending}
-          className="flex-1"
-        >
-          <X className="mr-2 h-4 w-4" aria-hidden />
-          Decline
         </Button>
       </div>
 

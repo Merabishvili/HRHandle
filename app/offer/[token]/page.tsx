@@ -6,6 +6,7 @@ import { getOfferByToken } from '@/lib/actions/offers'
 import { COMPENSATION_PERIOD_LABELS, type CompensationPeriod } from '@/lib/offers/state'
 import { offerCountdown } from '@/lib/offers/expiry'
 import { OfferRespondForm } from '@/components/offers/offer-respond-form'
+import { OfferBody } from '@/components/offers/offer-body'
 import { cn } from '@/lib/utils'
 
 interface PageProps {
@@ -124,15 +125,10 @@ export default async function OfferPage({ params }: PageProps) {
 
         <hr className="border-gray-200" />
 
-        {/* Body — plain text with preserved line breaks; no markdown for v1. */}
-        <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Offer details
-          </h2>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-            {offer.body}
-          </p>
-        </div>
+        {/* Body — plain text with preserved line breaks; no markdown for v1.
+            A-10: collapsed to 6 lines on mobile with a "Show full offer"
+            toggle so Accept / Decline stay in viewport. Always full on sm+. */}
+        <OfferBody body={offer.body} />
 
         {offer.recruiter_message && (
           <>
