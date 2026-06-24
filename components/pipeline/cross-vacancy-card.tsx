@@ -9,16 +9,16 @@ import { cn } from '@/lib/utils'
 import { getStageStyle, STALE_SPINE, STALE_TEXT } from '@/lib/pipeline/stage-style'
 import { timeInStage } from '@/lib/pipeline/time-in-stage'
 
-export type CardDensity = 'comfortable' | 'compact'
-
 export interface CrossVacancyCardData {
   applicationId: string
   candidateId: string
   firstName: string
   lastName: string
   vacancyTitle: string
-  /** Existing job title from the candidate's CV — shown as the subtitle
-   * (current role, not the role they're applying for). */
+  /** Existing job title from the candidate's CV — no longer rendered on
+   * the card; the vacancy title is the subtitle per the redesign. Kept
+   * on the type so callers don't need to change shape; future card
+   * variants may surface it again. */
   currentPosition: string | null
   /** Short source label ("LinkedIn", "Apply link", "Referral", "Manual").
    * Threaded through from candidates.source; mapped server-side to the
@@ -27,16 +27,18 @@ export interface CrossVacancyCardData {
   /** Timestamp the card is "in this stage since" — applied_at for fresh
    * applications, last_status_changed_at for moved ones. */
   inStageSince: string
+  /** When the underlying application was created. Drives the "New" badge
+   * for fresh applies on the Applied column (< 24h). */
+  appliedAt: string
   /** Code of the stage the card sits in. Drives the spine color. */
   stageCode: string
-  /** 0–10 fit score from the most recent candidate_evaluation. Only
-   * rendered in compact density. Null shows as "—". */
+  /** 0–10 fit score from the most recent candidate_evaluation. Optional;
+   * surfaced when present, hidden otherwise. */
   fitScore: number | null
 }
 
 interface CrossVacancyCardProps {
   data: CrossVacancyCardData
-  density: CardDensity
   selected: boolean
   onToggleSelect: (id: string, next: boolean) => void
 }
@@ -54,35 +56,32 @@ const AVATAR_HUES = [
 
 function avatarStyle(seed: string): { background: string; color: string } {
   const code = seed.charCodeAt(0) || 0
-  // AVATAR_HUES.length is the divisor, so the index is always in range —
-  // the non-null assertion keeps TS happy without an extra runtime guard.
   const hue = AVATAR_HUES[code % AVATAR_HUES.length]!
   return { background: hue.bg, color: hue.text }
 }
 
-function fitScoreStyle(score: number | null): { className: string; label: string } {
-  if (score === null) return { className: 'bg-muted text-muted-foreground', label: '—' }
+function fitScorePill(score: number | null): { className: string; label: string } | null {
+  if (score === null) return null
   if (score >= 7) {
     return {
       className: 'bg-[oklch(0.93_0.07_155)] text-[oklch(0.38_0.14_150)]',
-      label: score.toFixed(1),
+      label: `Fit ${score.toFixed(1)}`,
     }
   }
   if (score >= 5) {
     return {
       className: 'bg-[oklch(0.95_0.08_95)] text-[oklch(0.45_0.11_80)]',
-      label: score.toFixed(1),
+      label: `Fit ${score.toFixed(1)}`,
     }
   }
   return {
     className: 'bg-[oklch(0.95_0.04_25)] text-[oklch(0.5_0.18_25)]',
-    label: score.toFixed(1),
+    label: `Fit ${score.toFixed(1)}`,
   }
 }
 
 export function CrossVacancyCard({
   data,
-  density,
   selected,
   onToggleSelect,
 }: CrossVacancyCardProps) {
@@ -101,70 +100,26 @@ export function CrossVacancyCard({
 
   const initials = `${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`.toUpperCase()
   const avatar = avatarStyle(data.firstName)
+  const fit = fitScorePill(data.fitScore)
 
-  const timeLabel = time.isStale
-    ? `${time.label} · stale`
+  // Bottom metadata line varies by stage code. Applied / Standard shows
+  // time-in-stage + source; Stale (any stage) gets the amber "stale"
+  // suffix; other stages currently use the same time-only label. Slice 2
+  // will branch Interview / Offer here to pull scheduled time and offer
+  // status from the application row.
+  const bottomLabel = time.isStale
+    ? `${time.label} in stage · stale`
     : data.source
-      ? `${time.label} · ${data.source}`
+      ? `${time.label} in stage · ${data.source}`
       : `${time.label} in stage`
 
-  if (density === 'compact') {
-    const fit = fitScoreStyle(data.fitScore)
-    return (
-      <div ref={setNodeRef} style={style}>
-        <div
-          className={cn(
-            'flex items-center gap-2 rounded-lg border bg-card px-2.5 py-2 shadow-sm transition-colors',
-            selected ? 'border-primary/60 ring-2 ring-primary/20' : 'border-border',
-          )}
-          style={{ borderLeft: `3px solid ${spine}` }}
-        >
-          <Checkbox
-            checked={selected}
-            onCheckedChange={(v) => onToggleSelect(data.applicationId, v === true)}
-            aria-label={`Select ${data.firstName} ${data.lastName}`}
-          />
-          <button
-            type="button"
-            {...attributes}
-            {...listeners}
-            aria-label="Drag candidate"
-            className="flex h-6 w-6 shrink-0 cursor-grab items-center justify-center rounded text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
-            style={{ background: avatar.background, color: avatar.color }}
-          >
-            <span className="text-[10px] font-bold">{initials}</span>
-          </button>
-          <div className="min-w-0 flex-1">
-            <Link
-              href={`/candidates/${data.candidateId}`}
-              className="block truncate text-[12.5px] font-semibold text-foreground hover:underline"
-            >
-              {data.firstName} {data.lastName}
-            </Link>
-            <p
-              className="truncate text-[11px]"
-              style={{ color: time.isStale ? STALE_TEXT : undefined }}
-            >
-              <span className="text-muted-foreground">{data.currentPosition ?? data.vacancyTitle}</span>
-              {' · '}
-              <span style={{ color: time.isStale ? STALE_TEXT : undefined }}>{time.label}{time.isStale ? ' stale' : ''}</span>
-            </p>
-          </div>
-          <span
-            className={cn(
-              'inline-flex h-[22px] w-[34px] shrink-0 items-center justify-center rounded-md text-xs font-bold tabular-nums',
-              fit.className,
-            )}
-            aria-label={`Fit score ${fit.label}`}
-          >
-            {fit.label}
-          </span>
-        </div>
-      </div>
-    )
-  }
+  // "New" badge: applies (Applied stage) created within the last 24 hours
+  // surface a small pill so the recruiter immediately spots fresh
+  // candidates without scanning timestamps.
+  const isApplied = data.stageCode === 'applied'
+  const isFresh =
+    isApplied && Date.now() - new Date(data.appliedAt).getTime() < 24 * 60 * 60 * 1000
 
-  // Comfortable layout — Version B
   return (
     <div ref={setNodeRef} style={style}>
       <div
@@ -174,10 +129,6 @@ export function CrossVacancyCard({
         )}
         style={{ borderLeft: `3px solid ${spine}` }}
       >
-        <div className="mb-1.5 inline-flex max-w-full items-center gap-1 truncate rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
-          <span className="truncate">{data.vacancyTitle}</span>
-        </div>
-
         <div className="flex items-start gap-2">
           <Checkbox
             checked={selected}
@@ -190,44 +141,60 @@ export function CrossVacancyCard({
             {...attributes}
             {...listeners}
             aria-label="Drag candidate"
-            className="flex h-7 w-7 shrink-0 cursor-grab items-center justify-center rounded-full text-[11px] font-bold active:cursor-grabbing"
+            className="flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-full text-[11px] font-bold active:cursor-grabbing"
             style={{ background: avatar.background, color: avatar.color }}
           >
             {initials}
           </button>
           <div className="min-w-0 flex-1">
-            <Link
-              href={`/candidates/${data.candidateId}`}
-              className="block truncate text-[13px] font-semibold text-foreground hover:underline"
-            >
-              {data.firstName} {data.lastName}
-            </Link>
-            {data.currentPosition && (
-              <p className="truncate text-[11.5px] text-muted-foreground">{data.currentPosition}</p>
-            )}
+            <div className="flex items-center gap-1.5">
+              <Link
+                href={`/candidates/${data.candidateId}`}
+                className="block truncate text-[13px] font-semibold text-foreground hover:underline"
+              >
+                {data.firstName} {data.lastName}
+              </Link>
+              {isFresh && (
+                <span className="shrink-0 rounded bg-[oklch(0.93_0.05_250)] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-[oklch(0.42_0.16_250)]">
+                  New
+                </span>
+              )}
+            </div>
+            <p className="truncate text-[11.5px] text-muted-foreground">{data.vacancyTitle}</p>
           </div>
         </div>
 
-        <p
-          className="mt-1.5 text-[11.5px]"
-          style={{
-            color: time.isStale ? STALE_TEXT : undefined,
-            fontWeight: time.isStale ? 600 : undefined,
-          }}
-        >
-          {time.isStale ? (
-            <>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11.5px]">
+          <span
+            className="flex items-center gap-1.5"
+            style={{
+              color: time.isStale ? STALE_TEXT : undefined,
+              fontWeight: time.isStale ? 600 : undefined,
+            }}
+          >
+            {time.isStale && (
               <span
-                className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full"
+                className="inline-block h-1.5 w-1.5 rounded-full"
                 style={{ background: STALE_SPINE }}
                 aria-hidden
               />
-              {timeLabel}
-            </>
-          ) : (
-            <span className="text-muted-foreground">{timeLabel}</span>
+            )}
+            <span className={time.isStale ? undefined : 'text-muted-foreground'}>
+              {bottomLabel}
+            </span>
+          </span>
+          {fit && (
+            <span
+              className={cn(
+                'ml-auto inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums',
+                fit.className,
+              )}
+              aria-label={`Fit score ${fit.label}`}
+            >
+              {fit.label}
+            </span>
           )}
-        </p>
+        </div>
       </div>
     </div>
   )

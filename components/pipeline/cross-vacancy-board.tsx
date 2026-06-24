@@ -12,7 +12,8 @@ import {
   type DragOverEvent,
 } from '@dnd-kit/core'
 import { toast } from 'sonner'
-import { Zap, LayoutGrid, List as ListIcon, Rows } from 'lucide-react'
+import { Plus, Zap, LayoutGrid, List as ListIcon } from 'lucide-react'
+import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -21,13 +22,12 @@ import {
   type RejectionReason,
   type RejectionTemplate,
 } from './rejection-dialog'
-import { RoleFilterDropdown, type RoleOption } from './role-filter-dropdown'
+import { RoleFilterPills, type RoleOption } from './role-filter-pills'
 import { TerminalRail } from './terminal-rail'
 import { ReviewMode } from './review-mode'
 import { TintedKanbanColumn } from './tinted-kanban-column'
 import {
   CrossVacancyCard,
-  type CardDensity,
   type CrossVacancyCardData,
 } from './cross-vacancy-card'
 import { ListView } from './list-view'
@@ -100,7 +100,6 @@ export function CrossVacancyBoard({
   const [roleFilter, setRoleFilter] = useState<string[]>([])
   const [reviewing, setReviewing] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('board')
-  const [density, setDensity] = useState<CardDensity>('comfortable')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const sensors = useSensors(
@@ -149,6 +148,7 @@ export function CrossVacancyBoard({
         currentPosition: a.current_position,
         source: a.source,
         inStageSince: a.last_status_changed_at ?? a.applied_at,
+        appliedAt: a.applied_at,
         stageCode: status?.code ?? activeStatuses[0]?.code ?? 'applied',
         fitScore: a.fit_score,
       }
@@ -391,22 +391,18 @@ export function CrossVacancyBoard({
             <h1 className="text-xl font-bold text-foreground">Pipeline</h1>
             <p className="text-xs text-muted-foreground">
               {roles.length} open {roles.length === 1 ? 'role' : 'roles'} ·{' '}
-              {filteredApplications.length} active
+              {filteredApplications.length} active{' '}
+              {filteredApplications.length === 1 ? 'candidate' : 'candidates'}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
 
-            {viewMode === 'board' && (
-              <DensityToggle density={density} onChange={setDensity} />
-            )}
-
-            <RoleFilterDropdown options={roles} value={roleFilter} onChange={setRoleFilter} />
-
             <Button
               size="sm"
-              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+              variant="outline"
+              className="gap-1.5"
               onClick={() => setReviewing(true)}
               disabled={reviewQueue.length === 0}
               aria-label="Enter Review mode"
@@ -414,13 +410,39 @@ export function CrossVacancyBoard({
               <Zap className="h-3.5 w-3.5" aria-hidden />
               Review new
               {reviewQueue.length > 0 && (
-                <span className="rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[10.5px] font-semibold">
+                <span className="rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-foreground">
                   {reviewQueue.length}
                 </span>
               )}
             </Button>
+
+            <Button
+              asChild
+              size="sm"
+              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Link href="/candidates/new">
+                <Plus className="h-3.5 w-3.5" aria-hidden />
+                Add candidate
+              </Link>
+            </Button>
           </div>
         </div>
+
+        {/* Role-filter pill tabs — Pipeline Versions.dc.html §3 */}
+        {roles.length > 0 && (
+          <div className="border-b border-border bg-card px-5 py-3">
+            <RoleFilterPills
+              options={roles}
+              value={roleFilter}
+              onChange={setRoleFilter}
+              totalActive={applications.filter((a) => {
+                const status = a.status_id ? statusById.get(a.status_id) : null
+                return status && !TERMINAL_CODES.has(status.code)
+              }).length}
+            />
+          </div>
+        )}
 
         {viewMode === 'board' ? (
           <DndContext
@@ -436,7 +458,6 @@ export function CrossVacancyBoard({
                   status={status}
                   cards={cardsByStageCode.get(status.code) ?? []}
                   isOver={overId === status.id}
-                  density={density}
                   selectedIds={selectedIds}
                   onToggleSelect={handleToggleSelect}
                 />
@@ -459,13 +480,13 @@ export function CrossVacancyBoard({
                       source: activeApp.source,
                       inStageSince:
                         activeApp.last_status_changed_at ?? activeApp.applied_at,
+                      appliedAt: activeApp.applied_at,
                       stageCode:
                         (activeApp.status_id && statusById.get(activeApp.status_id)?.code) ??
                         activeStatuses[0]?.code ??
                         'applied',
                       fitScore: activeApp.fit_score,
                     }}
-                    density={density}
                     selected={false}
                     onToggleSelect={() => {}}
                   />
@@ -568,49 +589,3 @@ function ViewModeToggle({
   )
 }
 
-function DensityToggle({
-  density,
-  onChange,
-}: {
-  density: CardDensity
-  onChange: (next: CardDensity) => void
-}) {
-  return (
-    <div
-      className="inline-flex overflow-hidden rounded-md border border-border bg-muted/30 text-xs"
-      role="group"
-      aria-label="Card density"
-    >
-      <button
-        type="button"
-        onClick={() => onChange('comfortable')}
-        aria-pressed={density === 'comfortable'}
-        className={cn(
-          'flex items-center gap-1.5 px-2.5 py-1.5 transition-colors',
-          density === 'comfortable'
-            ? 'bg-foreground text-background'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-        title="Comfortable density"
-      >
-        <Rows className="h-3.5 w-3.5" aria-hidden />
-        Comfortable
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('compact')}
-        aria-pressed={density === 'compact'}
-        className={cn(
-          'flex items-center gap-1.5 px-2.5 py-1.5 transition-colors',
-          density === 'compact'
-            ? 'bg-foreground text-background'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-        title="Compact density"
-      >
-        <ListIcon className="h-3.5 w-3.5" aria-hidden />
-        Compact
-      </button>
-    </div>
-  )
-}

@@ -3,7 +3,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 
-import { CrossVacancyCard, type CrossVacancyCardData, type CardDensity } from './cross-vacancy-card'
+import { CrossVacancyCard, type CrossVacancyCardData } from './cross-vacancy-card'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
 import { cn } from '@/lib/utils'
@@ -12,7 +12,6 @@ interface TintedKanbanColumnProps {
   status: ApplicationStatus
   cards: CrossVacancyCardData[]
   isOver: boolean
-  density: CardDensity
   selectedIds: Set<string>
   onToggleSelect: (id: string, next: boolean) => void
 }
@@ -30,7 +29,6 @@ export function TintedKanbanColumn({
   status,
   cards,
   isOver,
-  density,
   selectedIds,
   onToggleSelect,
 }: TintedKanbanColumnProps) {
@@ -73,7 +71,6 @@ export function TintedKanbanColumn({
             <CrossVacancyCard
               key={card.applicationId}
               data={card}
-              density={density}
               selected={selectedIds.has(card.applicationId)}
               onToggleSelect={onToggleSelect}
             />

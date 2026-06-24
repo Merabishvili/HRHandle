@@ -10,7 +10,7 @@ import {
   CrossVacancyBoard,
   type CrossVacancyApplication,
 } from '@/components/pipeline/cross-vacancy-board'
-import type { RoleOption } from '@/components/pipeline/role-filter-dropdown'
+import type { RoleOption } from '@/components/pipeline/role-filter-pills'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 
 /**
