@@ -426,6 +426,12 @@ export async function getOfferByToken(token: string): Promise<
     responded_at: string | null
     candidate_first_name: string
     organization_name: string
+    /** A-10c — recruiter's name + email so the public offer page can
+     * render an "Ask a question" mailto link. Both nullable: the
+     * recruiter row may have been deleted (`created_by` FK is ON
+     * DELETE SET NULL) or the profile may not have an email stored. */
+    recruiter_name: string | null
+    recruiter_email: string | null
   }>
 > {
   if (!token || token.length < 16 || token.length > 64 || !/^[a-f0-9]+$/i.test(token)) {
@@ -440,7 +446,8 @@ export async function getOfferByToken(token: string): Promise<
        compensation_amount, compensation_currency, compensation_period,
        start_date, expiry_date, sent_at, responded_at, deleted_at, application_id,
        applications ( candidate_id, deleted_at, vacancies ( deleted_at ) ),
-       organizations ( name, deleted_at )`,
+       organizations ( name, deleted_at ),
+       profiles!offers_created_by_fkey ( full_name, email )`,
     )
     .eq('public_token', token)
     .maybeSingle()
@@ -467,11 +474,17 @@ export async function getOfferByToken(token: string): Promise<
     | { name: string; deleted_at: string | null }
     | { name: string; deleted_at: string | null }[]
     | null
+  type RecruiterJoin =
+    | { full_name: string | null; email: string | null }
+    | { full_name: string | null; email: string | null }[]
+    | null
 
   const appJoinRaw = data.applications as AppJoin
   const appJoin = Array.isArray(appJoinRaw) ? appJoinRaw[0] : appJoinRaw
   const orgJoinRaw = data.organizations as OrgJoin
   const orgJoin = Array.isArray(orgJoinRaw) ? orgJoinRaw[0] : orgJoinRaw
+  const recruiterJoinRaw = (data as { profiles?: RecruiterJoin }).profiles ?? null
+  const recruiterJoin = Array.isArray(recruiterJoinRaw) ? recruiterJoinRaw[0] : recruiterJoinRaw
 
   if (!appJoin || appJoin.deleted_at) return { success: false, error: 'Offer not found' }
   if (!orgJoin || orgJoin.deleted_at) return { success: false, error: 'Offer not found' }
@@ -512,6 +525,8 @@ export async function getOfferByToken(token: string): Promise<
       responded_at: (data.responded_at as string | null) ?? null,
       candidate_first_name: candidate.first_name as string,
       organization_name: orgJoin.name as string,
+      recruiter_name: recruiterJoin?.full_name ?? null,
+      recruiter_email: recruiterJoin?.email ?? null,
     },
   }
 }

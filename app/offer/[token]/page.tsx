@@ -161,6 +161,10 @@ export default async function OfferPage({ params }: PageProps) {
           status={offer.status}
           token={token}
           respondedAt={offer.responded_at ?? null}
+          recruiterName={offer.recruiter_name}
+          recruiterEmail={offer.recruiter_email}
+          roleTitle={offer.role_title}
+          organizationName={offer.organization_name}
         />
         </div>
       </section>
@@ -203,18 +207,48 @@ function StatusArea({
   status,
   token,
   respondedAt,
+  recruiterName,
+  recruiterEmail,
+  roleTitle,
+  organizationName,
 }: {
   status: string
   token: string
   respondedAt: string | null
+  recruiterName: string | null
+  recruiterEmail: string | null
+  roleTitle: string
+  organizationName: string
 }) {
   if (status === 'sent') {
+    const mailto = recruiterEmail
+      ? `mailto:${recruiterEmail}?subject=${encodeURIComponent(
+          `Question about your offer for ${roleTitle} at ${organizationName}`,
+        )}`
+      : null
     return (
       <div className="space-y-3">
         <p className="text-sm text-gray-700">
           When you&apos;re ready, accept or decline below. You&apos;ll see a confirmation
           straight away.
         </p>
+        {/* A-10c — "Ask a question" tertiary link above the action bar
+            per `docs/redesign/mobile/offer-approval.md`. Opens the
+            device's preferred mail client with the recruiter pre-
+            addressed + a subject line. Hidden when we don't have a
+            recruiter email (created_by is null or profile.email
+            unset). */}
+        {mailto && (
+          <p className="text-center text-xs text-gray-500">
+            Not sure?{' '}
+            <a
+              href={mailto}
+              className="font-semibold text-[oklch(0.45_0.16_250)] hover:underline"
+            >
+              Ask {recruiterName || 'the recruiter'} a question
+            </a>
+          </p>
+        )}
         <OfferRespondForm token={token} />
       </div>
     )
