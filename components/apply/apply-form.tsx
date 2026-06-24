@@ -5,7 +5,7 @@ import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { submitPublicApplication } from '@/lib/actions/public-apply'
 import type { ParsedCVInput } from '@/lib/validations/candidate-background'
-import { Loader2, Upload, X, CheckCircle2, FileText, AlertCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronDown, FileText, Info, Loader2, Upload, X } from 'lucide-react'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx']
 
@@ -60,6 +60,15 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
   // values are the raw string the candidate selected/typed. yes_no rows
   // store 'yes' or 'no'; the other answer types pass through their text.
   const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string>>({})
+
+  // A-9 — Drive the sticky Apply button's disabled state + the "Add
+  // your name and email to apply" hint. We only check the three
+  // genuinely required base fields; per-screening-question validation
+  // still happens server-side at submit time.
+  const isMissingBasics =
+    firstName.trim().length === 0 ||
+    lastName.trim().length === 0 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -298,7 +307,14 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
           ) : (
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                // iOS Safari quirk: opening the file picker while a text
+                // input is focused can hang the page. Blur first.
+                if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+                  document.activeElement.blur()
+                }
+                fileInputRef.current?.click()
+              }}
               disabled={isLoading}
               // Brand-blue dashed drop zone per Public Pages.dc.html — pale
               // brand-blue tint background, slightly stronger brand-blue
@@ -497,55 +513,77 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
           processor/controller split (privacy policy §1) HRHandle cannot
           unilaterally fulfil erasure or access for candidate data.
         */}
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs leading-relaxed text-gray-600">
-          <p className="font-semibold text-gray-700">Before you apply</p>
-          <p className="mt-2">
-            By submitting this form, you&apos;re sharing your personal data with{' '}
-            <strong>{companyName}</strong> — the company recruiting for this position and
-            the data controller for your application. HRHandle operates this form on their
-            behalf as a data processor.
-          </p>
-          <p className="mt-2">
-            <strong>What we collect.</strong> The contact details and CV you submit. If you
-            uploaded a CV, the file is processed through automated extraction to pre-fill
-            the form fields; no automated hiring decision is taken. We also record the IP
-            address of the submission to prevent abuse.
-          </p>
-          <p className="mt-2">
-            <strong>How long we keep it.</strong> Your application is retained while{' '}
-            {companyName} actively considers candidates, and deleted within 30 days of{' '}
-            {companyName} closing the role or terminating their HRHandle subscription.
-          </p>
-          <p className="mt-2">
-            <strong>Your rights.</strong> You can ask to access, correct, or delete your
-            data, or restrict processing. To exercise these rights for this application,
-            contact {companyName} directly. For HRHandle&apos;s role as data processor, see
-            our{' '}
-            <a
-              href="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-gray-900"
-            >
-              Privacy Policy
-            </a>.
-          </p>
-        </div>
+        {/* GDPR Article 13 notice — collapsed by default on mobile so the
+            wall-of-text doesn't bury the Apply button. Tap to expand;
+            stays open once expanded for the rest of the session. */}
+        <details className="group rounded-lg border border-gray-200 bg-gray-50 text-xs leading-relaxed text-gray-600 [&[open]>summary>svg]:rotate-180">
+          <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-semibold text-gray-700 marker:hidden">
+            <Info className="h-3.5 w-3.5 text-gray-500" aria-hidden />
+            <span>Your data privacy</span>
+            <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform text-gray-500" aria-hidden />
+          </summary>
+          <div className="border-t border-gray-200 px-4 pb-4 pt-3">
+            <p>
+              By submitting this form, you&apos;re sharing your personal data with{' '}
+              <strong>{companyName}</strong> — the company recruiting for this position and
+              the data controller for your application. HRHandle operates this form on their
+              behalf as a data processor.
+            </p>
+            <p className="mt-2">
+              <strong>What we collect.</strong> The contact details and CV you submit. If you
+              uploaded a CV, the file is processed through automated extraction to pre-fill
+              the form fields; no automated hiring decision is taken. We also record the IP
+              address of the submission to prevent abuse.
+            </p>
+            <p className="mt-2">
+              <strong>How long we keep it.</strong> Your application is retained while{' '}
+              {companyName} actively considers candidates, and deleted within 30 days of{' '}
+              {companyName} closing the role or terminating their HRHandle subscription.
+            </p>
+            <p className="mt-2">
+              <strong>Your rights.</strong> You can ask to access, correct, or delete your
+              data, or restrict processing. To exercise these rights for this application,
+              contact {companyName} directly. For HRHandle&apos;s role as data processor, see
+              our{' '}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-gray-900"
+              >
+                Privacy Policy
+              </a>.
+            </p>
+          </div>
+        </details>
 
-        <button
-          type="submit"
-          disabled={isLoading || parseState === 'parsing' || !captchaToken}
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+        {/* Sticky CTA on mobile so the Apply button stays in thumb-reach.
+            Renders inline on sm+ (where the form fits in viewport). Safe-
+            area padding keeps it clear of the iOS home indicator. */}
+        <div
+          className="sticky bottom-0 z-10 -mx-4 border-t border-gray-200 bg-white/95 px-4 pb-3 pt-3 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:relative sm:-mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Submitting…
-            </>
-          ) : (
-            'Apply now'
+          <button
+            type="submit"
+            disabled={isLoading || parseState === 'parsing' || !captchaToken || isMissingBasics}
+            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Submitting…
+              </>
+            ) : (
+              'Apply now'
+            )}
+          </button>
+          {!isLoading && isMissingBasics && (
+            <p className="mt-1.5 text-center text-[11px] text-gray-500">
+              Add your name and email to apply
+            </p>
           )}
-        </button>
+        </div>
 
         <Turnstile
           ref={turnstileRef}
