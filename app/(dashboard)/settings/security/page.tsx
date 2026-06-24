@@ -31,7 +31,7 @@ export default async function SecuritySettingsPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile) redirect('/dashboard')
+  if (!profile) redirect('/pipeline')
 
   const isOAuthOnly = !user.identities?.some((i) => i.provider === 'email')
 

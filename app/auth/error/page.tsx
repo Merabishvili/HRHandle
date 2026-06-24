@@ -58,7 +58,7 @@ export default async function AuthErrorPage({
               )}
               {isAlreadyInOrg && (
                 <Button className="w-full" asChild>
-                  <Link href="/dashboard">Go to dashboard</Link>
+                  <Link href="/pipeline">Go to pipeline</Link>
                 </Button>
               )}
               <Button variant="outline" className="w-full" asChild>

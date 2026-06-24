@@ -21,7 +21,7 @@ export default async function ProfileSettingsPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile) redirect('/dashboard')
+  if (!profile) redirect('/pipeline')
 
   return (
     <div className="max-w-2xl space-y-6">

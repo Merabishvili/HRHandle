@@ -24,7 +24,7 @@ export default async function ImportCandidatesPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.organization_id) redirect('/dashboard')
+  if (!profile?.organization_id) redirect('/pipeline')
   if (!isOrgAdmin(profile.role as 'owner' | 'admin' | 'member')) {
     redirect('/candidates')
   }

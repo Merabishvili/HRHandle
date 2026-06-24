@@ -35,7 +35,7 @@ export async function completeCompanyOnboarding(input: {
 
   // Idempotency: if onboarding already completed (e.g. double-submit, back button,
   // or the user opened this page after their org was created via another tab),
-  // skip straight to the dashboard rather than creating a second org.
+  // skip straight to the pipeline rather than creating a second org.
   const admin = createAdminClient()
   const { data: existing } = await admin
     .from('profiles')
@@ -44,7 +44,7 @@ export async function completeCompanyOnboarding(input: {
     .maybeSingle()
 
   if (existing?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const result = await runOnboarding(user, {
@@ -56,5 +56,5 @@ export async function completeCompanyOnboarding(input: {
     return { success: false, error: result.error }
   }
 
-  redirect('/dashboard')
+  redirect('/pipeline')
 }

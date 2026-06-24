@@ -206,7 +206,7 @@ export default async function DashboardLayout({
     // may query organization_id before the onboarding write is visible to the
     // regular Supabase client. Redirecting forces a fresh request where both
     // the layout and page read the fully committed state.
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organization = profile.organizations?.[0] || null

@@ -35,7 +35,7 @@ export default async function NewCandidatePage({
     .single()
 
   if (!profile?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organizationId = profile.organization_id

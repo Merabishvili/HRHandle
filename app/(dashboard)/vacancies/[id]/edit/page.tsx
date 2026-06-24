@@ -78,7 +78,7 @@ export default async function EditVacancyPage({
     .single()
 
   if (!profile?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organizationId = profile.organization_id

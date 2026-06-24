@@ -29,5 +29,5 @@ export default async function JoinPage({
     redirect(`/auth/error?message=${encodeURIComponent(result.error)}`)
   }
 
-  redirect('/dashboard')
+  redirect('/pipeline')
 }

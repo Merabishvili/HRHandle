@@ -40,7 +40,12 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if ((pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding')) && !user) {
+  if (
+    (pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/pipeline') ||
+      pathname.startsWith('/onboarding')) &&
+    !user
+  ) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
@@ -52,6 +57,7 @@ export async function updateSession(request: NextRequest) {
   // user can actually reach the pages that resolve the redirect.
   const isDashboardPath =
     pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/pipeline') ||
     pathname.startsWith('/vacancies') ||
     pathname.startsWith('/candidates') ||
     pathname.startsWith('/interviews') ||

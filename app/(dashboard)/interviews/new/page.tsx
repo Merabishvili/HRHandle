@@ -72,7 +72,7 @@ export default async function NewInterviewPage({
     .single()
 
   if (!profile?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organizationId = profile.organization_id

@@ -60,7 +60,7 @@ export default async function PipelinePage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.organization_id) redirect('/dashboard')
+  if (!profile?.organization_id) redirect('/pipeline')
 
   const orgId = profile.organization_id
 

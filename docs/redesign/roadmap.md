@@ -49,7 +49,7 @@ The rest of this document is the **planned** sequence locked 2026-06-16. This ca
 | Wave | What | Why |
 |---|---|---|
 | 3.1 | AI Fit Analysis | Phase 0.8 legal consult booking pending. See [`ai-fit-analysis.md`](ai-fit-analysis.md). |
-| A-1 | Today/Inbox screen | Partially addressed via the dashboard "Needs your attention" tile (`4342842`). The original audit §2.1 Today-vs-Reports IA contradiction still needs a formal design call. |
+| A-1 | Today/Inbox screen | **Resolved 2026-06-24 via Option D — drop the Dashboard entirely.** Pipeline (`/pipeline`) is now the home surface; the `/dashboard` route is a server redirect to `/pipeline` (kept as a redirect so external links + browser back-history work). Sidebar nav and the header label map lose their Dashboard entries; auth login / OAuth callback / email confirm / MFA challenge / join / onboarding all default to `/pipeline`. Middleware auth + MFA gates now check `/pipeline` directly so the new home is properly protected. The dashboard's "Needs your attention" tile content is dropped — fold-into-pipeline is a follow-up if it's wanted, but the Interviews list (A-11b day buckets), Vacancies list, and Pipeline itself cover the most-asked use cases. |
 | A-6 | Global pipeline virtualization | Perf engineering deferred — only matters at >50 vacancies; current cross-vacancy board is fine for typical org sizes. |
 | A-9c | CV camera fallback on apply form | Needs `/api/parse-cv` to accept image input (OCR / vision call). Out of scope for UI work. |
 | A-11d | Pull-to-refresh on `/interviews` | Needs gesture lib or PWA hook. |

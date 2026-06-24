@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = searchParams.get('next') ?? '/pipeline'
 
   if (code) {
     const supabase = await createClient()
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Only allow relative redirects to prevent open-redirect attacks
-      const safeNext = next.startsWith('/') ? next : '/dashboard'
+      const safeNext = next.startsWith('/') ? next : '/pipeline'
       return NextResponse.redirect(`${origin}${safeNext}`)
     }
   }

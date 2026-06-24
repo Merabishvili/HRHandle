@@ -89,7 +89,7 @@ export default async function EditCandidatePage({
     .single()
 
   if (!profile?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organizationId = profile.organization_id

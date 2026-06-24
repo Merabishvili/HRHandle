@@ -101,11 +101,11 @@ export default async function BillingSettingsPage() {
   const typedProfile = profile as ProfileRow | null
 
   if (!typedProfile?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   if (typedProfile.role === 'member') {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organizationId = typedProfile.organization_id
@@ -119,7 +119,7 @@ export default async function BillingSettingsPage() {
   const typedOrganization = organization as OrganizationRow | null
 
   if (!typedOrganization) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const { data: subscription } = await supabase
@@ -147,7 +147,7 @@ export default async function BillingSettingsPage() {
   const typedSubscription = subscription as SubscriptionRow | null
 
   if (!typedSubscription) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const currentPlan =

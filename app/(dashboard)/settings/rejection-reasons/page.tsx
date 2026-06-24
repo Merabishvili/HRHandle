@@ -14,7 +14,7 @@ export default async function RejectionReasonsSettingsPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile) redirect('/dashboard')
+  if (!profile) redirect('/pipeline')
   const isAdmin = profile.role === 'owner' || profile.role === 'admin'
   if (!isAdmin) redirect('/settings/profile')
 

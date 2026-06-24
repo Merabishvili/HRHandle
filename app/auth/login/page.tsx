@@ -50,7 +50,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
 
   const rawNext = searchParams.get('next') ?? ''
-  const safeNext = rawNext.startsWith('/') ? rawNext : '/dashboard'
+  const safeNext = rawNext.startsWith('/') ? rawNext : '/pipeline'
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -88,7 +88,7 @@ function LoginForm() {
     setSessionPreference(rememberMe)
     try {
       const supabase = createClient()
-      const callbackUrl = safeNext !== '/dashboard'
+      const callbackUrl = safeNext !== '/pipeline'
         ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
         : `${window.location.origin}/auth/callback`
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -112,7 +112,7 @@ function LoginForm() {
     setSessionPreference(rememberMe)
     try {
       const supabase = createClient()
-      const callbackUrl = safeNext !== '/dashboard'
+      const callbackUrl = safeNext !== '/pipeline'
         ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
         : `${window.location.origin}/auth/callback`
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -237,7 +237,7 @@ function LoginForm() {
         <div className="mt-6 text-center text-sm">
           <span className="text-muted-foreground">{"Don't have an account?"} </span>
           <Link
-            href={safeNext !== '/dashboard' ? `/auth/sign-up?next=${encodeURIComponent(safeNext)}` : '/auth/sign-up'}
+            href={safeNext !== '/pipeline' ? `/auth/sign-up?next=${encodeURIComponent(safeNext)}` : '/auth/sign-up'}
             className="font-medium text-primary hover:underline"
           >
             Sign up

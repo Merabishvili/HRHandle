@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type') as EmailOtpType | null
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = searchParams.get('next') ?? '/pipeline'
 
   if (token_hash && type) {
     const supabase = await createClient()
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
         // Same-origin absolute URL coming from emailRedirectTo (invite flow)
         redirectTarget = next
       } else {
-        redirectTarget = `${origin}/dashboard`
+        redirectTarget = `${origin}/pipeline`
       }
       return NextResponse.redirect(redirectTarget)
     }

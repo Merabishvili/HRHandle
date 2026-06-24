@@ -17,7 +17,7 @@ export default async function SettingsLayout({
     .eq('id', user.id)
     .single()
 
-  if (!profile) redirect('/dashboard')
+  if (!profile) redirect('/pipeline')
 
   return (
     <div className="max-w-6xl">

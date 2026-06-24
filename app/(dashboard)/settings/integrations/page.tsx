@@ -21,7 +21,7 @@ export default async function IntegrationsSettingsPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile) redirect('/dashboard')
+  if (!profile) redirect('/pipeline')
 
   const linkedInIntegration = await getLinkedInIntegration()
 

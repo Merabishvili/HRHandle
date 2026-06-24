@@ -33,7 +33,7 @@ export default async function NewVacancyPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.organization_id) redirect('/dashboard')
+  if (!profile?.organization_id) redirect('/pipeline')
 
   const [{ data: sectorsRaw }, statusOptionsRaw] = await Promise.all([
     supabase

@@ -169,7 +169,7 @@ export default async function VacancyDetailPage({
     .eq('id', user.id)
     .single()
 
-  if (!profile?.organization_id) redirect('/dashboard')
+  if (!profile?.organization_id) redirect('/pipeline')
   const organizationId = profile.organization_id
 
   const [vacancyStatusesRaw, _candidateStatusesRaw, _linkedInIntegration] = await Promise.all([

@@ -54,7 +54,7 @@ export default async function VacancyPipelinePage({
     .single()
 
   const organizationId = profile?.organization_id
-  if (!organizationId) redirect('/dashboard')
+  if (!organizationId) redirect('/pipeline')
 
   const [
     { data: vacancy },

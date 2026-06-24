@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Briefcase,
-  LayoutDashboard,
   Users,
   Calendar,
   BarChart3,
@@ -27,7 +26,6 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Pipeline', href: '/pipeline', icon: KanbanSquare },
   { name: 'Vacancies', href: '/vacancies', icon: Briefcase },
   { name: 'Candidates', href: '/candidates', icon: Users },

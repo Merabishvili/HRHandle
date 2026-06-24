@@ -16,10 +16,10 @@ export default async function MfaChallengePage({ searchParams }: { searchParams:
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
   if (aal?.currentLevel === 'aal2') {
     // Already at AAL2; just send them on.
-    redirect(sp.next ?? '/dashboard')
+    redirect(sp.next ?? '/pipeline')
   }
 
-  const next = sp.next ?? '/dashboard'
+  const next = sp.next ?? '/pipeline'
 
   return (
     <div className="flex min-h-svh items-center justify-center p-4">
