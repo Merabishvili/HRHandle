@@ -60,7 +60,7 @@ export function ListView({
               />
             </th>
             <th className="px-3 py-2.5">Candidate</th>
-            <th className="px-3 py-2.5">Role</th>
+            <th className="px-3 py-2.5">Vacancy</th>
             <th className="px-3 py-2.5">Stage</th>
             <th className="px-3 py-2.5">In stage</th>
             <th className="px-3 py-2.5">Fit</th>

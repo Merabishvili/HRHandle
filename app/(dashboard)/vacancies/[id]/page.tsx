@@ -461,9 +461,9 @@ export default async function VacancyDetailPage({
                 canEdit={canEditQuestions}
               />
               <div className="grid gap-4 lg:grid-cols-2">
-                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Evaluation criteria">
-                  <h2 className="text-[15px] font-bold text-foreground">Evaluation criteria</h2>
-                  <p className="mb-3 text-[12.5px] text-muted-foreground">Score-based attributes (1–5) for candidate assessment.</p>
+                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Scorecard">
+                  <h2 className="text-[15px] font-bold text-foreground">Scorecard</h2>
+                  <p className="mb-3 text-[12.5px] text-muted-foreground">Score-based attributes (1–5) every interviewer answers.</p>
                   <VacancyQuestions
                     vacancyId={vacancy.id}
                     initialQuestions={questions.filter((q) => q.type === 'score')}

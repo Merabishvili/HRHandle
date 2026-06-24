@@ -45,9 +45,9 @@ export function RepeatApplicantBanner({
     <div className="flex flex-wrap items-center gap-3 rounded-[10px] border border-[oklch(0.86_0.07_70)] bg-[oklch(0.97_0.03_70)] px-3.5 py-2.5">
       <RotateCcw className="h-4 w-4 shrink-0 text-[oklch(0.5_0.12_60)]" aria-hidden />
       <p className="flex-1 text-[13px] text-[oklch(0.4_0.08_55)]">
-        <span className="font-semibold">Repeat applicant.</span>{' '}
+        <span className="font-semibold">Repeat candidate.</span>{' '}
         Applied to {summary.totalClosed} previous{' '}
-        {summary.totalClosed === 1 ? 'role' : 'roles'} here —{' '}
+        {summary.totalClosed === 1 ? 'vacancy' : 'vacancies'} here —{' '}
         {summary.rejectedCount} rejected, {summary.withdrawnCount} withdrawn.
         {summary.mostRecent && (
           <>

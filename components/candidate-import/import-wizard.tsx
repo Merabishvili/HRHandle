@@ -374,7 +374,7 @@ function MapStep({
           <ArrowLeft className="h-4 w-4" />
           Start over
         </Button>
-        <Button onClick={onNext}>Continue to preview</Button>
+        <Button onClick={onNext}>Preview import</Button>
       </div>
     </div>
   )

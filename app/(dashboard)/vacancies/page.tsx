@@ -268,7 +268,7 @@ export default async function VacanciesPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Position</TableHead>
+                    <TableHead>Vacancy</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Candidates</TableHead>
                     {activeColumns.map((col) => (

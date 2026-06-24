@@ -125,7 +125,7 @@ export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButton
 
           {applyUrl && (
             <div className="space-y-1.5">
-              <p className="text-sm font-medium">Step 3 — Manage applicants</p>
+              <p className="text-sm font-medium">Step 3 — Manage candidates</p>
               <div className="flex items-start gap-2">
                 <div className="flex-1 min-w-0 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs font-mono break-all">
                   {applyUrl}

@@ -113,7 +113,7 @@ export default async function LandingPage() {
                 <Link href="/auth/login">Sign in</Link>
               </Button>
               <Button asChild>
-                <Link href="/auth/sign-up">Get Started</Link>
+                <Link href="/auth/sign-up">Get started</Link>
               </Button>
             </div>
           </div>

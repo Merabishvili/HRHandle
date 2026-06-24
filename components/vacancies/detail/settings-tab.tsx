@@ -49,12 +49,12 @@ export function SettingsTab({
 }: SettingsTabProps) {
   return (
     <div className="grid gap-4 bg-[oklch(0.985_0.002_247)] p-5 sm:p-6 lg:grid-cols-2">
-      {/* Role details */}
+      {/* Vacancy details */}
       <section
         className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]"
-        aria-label="Role details"
+        aria-label="Vacancy details"
       >
-        <h2 className="mb-3.5 text-[15px] font-bold text-foreground">Role details</h2>
+        <h2 className="mb-3.5 text-[15px] font-bold text-foreground">Vacancy details</h2>
         <div className="flex flex-col gap-2.5 text-[13px]">
           <SettingsField label="Title" value={roleDetails.title} />
           <div className="flex gap-2.5">

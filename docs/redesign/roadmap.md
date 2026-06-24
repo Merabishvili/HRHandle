@@ -41,7 +41,7 @@ The rest of this document is the **planned** sequence locked 2026-06-16. This ca
 
 | Wave | What | Status |
 |---|---|---|
-| 1.5 | Terminology pass | Sentence-case sweep + "incomplete" sweep done; multi-page UI string review still ongoing. |
+| 1.5 | Terminology pass | Sentence-case sweep + "incomplete" sweep + 9-fix terminology pass (Role/Position → Vacancy; Evaluation criteria → Scorecard; Manage applicants → Manage candidates; Repeat applicant → Repeat candidate; Get Started → Get started; "Continue to dashboard" → Open dashboard; "Continue to preview" → Preview import) all done; deeper voice review left ongoing. |
 | 1.6 / A-13 | AI reframe / `<AiDraftTag />` | Component shipped + adopted on all 6 AI surfaces (`ai-jd-suggest`, `ai-summary-panel`, `ai-notes-extractor`, `ai-interview-questions`, `ai-bias-check`, `ai-assessment-suggester`) and the CV-parse "AI-filled · review" banner on the candidate wizard. Stale "AI-generated content" copy on JD confirm dialog also retired. |
 | 3.2 | Public pages polish | Apply-form screening + status-page polish + 8px brand bar across `/apply/[token]`, `/jobs/[slug]`, `/status/[token]` all shipped. Optional logo upload on `/jobs/[slug]` already supported via `organizations.logo_url`. |
 | A-4 | Scorecard `must_have` + `recommendation` columns | `must_have` shipped in Migration 047. `recommendation` (yes/no) + `recommendation_reason` shipped in Migration 054 — **run script 054 manually**. UI binding deferred to Wave 2.3 continuation. |
