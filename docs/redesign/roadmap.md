@@ -53,7 +53,7 @@ The rest of this document is the **planned** sequence locked 2026-06-16. This ca
 | A-6 | Global pipeline virtualization | Perf engineering deferred — only matters at >50 vacancies; current cross-vacancy board is fine for typical org sizes. |
 | A-9c | CV camera fallback on apply form | Needs `/api/parse-cv` to accept image input (OCR / vision call). Out of scope for UI work. |
 | A-11d | Pull-to-refresh on `/interviews` | Needs gesture lib or PWA hook. |
-| A-12d | StageContextualBlock as bottom sheet on mobile | Moderate refactor — scorecards / offer-creation forms as slide-up sheets. Carved from A-12c. |
+| A-12d (Screening) | Screening gate as mobile bottom sheet | **Shipped 2026-06-24** — `ScreeningGateResponsive` wraps the Screening stage with a compact trigger card on mobile (StageTracker + heading + one-line flag callout if any + "Open screening gate" CTA) that opens the full gate in a slide-up Sheet (`side='bottom'`, `max-h-[90vh]`, `rounded-t-2xl`). Sheet defers content mounting so `ScreeningGate` lives in exactly one place at any time — no double state. Interview / Offer / Default stages remain inline (button-only, no heavy forms). Carved to A-12e: Interview stage in a bottom sheet (would need to address scorecard navigation since it currently links out to a separate page). |
 
 ### 🚦 Recommended next slice
 
@@ -66,14 +66,14 @@ The shipping plan from the original lock is essentially complete. Outstanding wo
 **Carved follow-ups that need new infra:**
 - **A-9c** CV camera fallback — needs `/api/parse-cv` image support (LLM vision call).
 - **A-11d** Pull-to-refresh on `/interviews` — gesture lib or PWA hook.
-- **A-12d** StageContextualBlock as a mobile bottom sheet — moderate UI refactor.
+- **A-12e** Interview stage as a mobile bottom sheet — carved from A-12d after Screening shipped.
 
 **Bound tech-debt items that don't block the roadmap:**
 - **A-6** Global pipeline virtualization — only matters at >50 vacancies.
 - **A-4** UI binding for `recommendation` columns — feeds into Wave 2.3 continuation when the candidate profile gets its "Move to interview? Yes/No" card.
 - **Wave 1.5** deeper voice review — fuzzy scope; can be done opportunistically during other touches.
 
-If we wanted to ship something now without external dependencies, the realistic pick is **A-12d** (bottom-sheet StageContextualBlock) or **A-11d** (pull-to-refresh with a small custom hook).
+If we wanted to ship something now without external dependencies, the realistic pick is **A-11d** (pull-to-refresh with a small custom hook).
 
 ---
 

@@ -12,6 +12,7 @@ import {
   MapPin,
   Video,
   Calendar,
+  ChevronRight,
   ExternalLink,
   Sparkles,
   AlertTriangle,
@@ -19,6 +20,13 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { updateApplicationStatus } from '@/lib/actions/applications'
@@ -91,7 +99,7 @@ export function StageContextualBlock({
   switch (currentStage.code) {
     case 'screening':
       return (
-        <ScreeningGate
+        <ScreeningGateResponsive
           applicationId={applicationId}
           stages={stages}
           currentCode={currentStage.code}
@@ -126,6 +134,113 @@ export function StageContextualBlock({
         />
       )
   }
+}
+
+/**
+ * A-12d — Mobile bottom-sheet wrapper for the Screening gate.
+ *
+ * Per `docs/redesign/mobile/candidate-profile.md`: "Action-heavy forms
+ * benefit from the modal-like focus of a bottom sheet." The Screening
+ * gate is the heaviest form on the profile (Yes/No + required reason
+ * + screening-flags callout + three data cards + Save). On `sm+` we
+ * render it inline as before; on mobile we render a compact trigger
+ * card and open the full gate in a bottom sheet.
+ *
+ * The Sheet defers mounting its content until opened, so `ScreeningGate`
+ * mounts in exactly one place at any time — no double state. Inline
+ * and sheet versions share the same component code below.
+ */
+function ScreeningGateResponsive({
+  applicationId,
+  stages,
+  currentCode,
+  candidate,
+  screeningFlags,
+}: {
+  applicationId: string
+  stages: { code: ApplicationStatus['code']; name: string; id: string }[]
+  currentCode: ApplicationStatus['code']
+  candidate: StageContextualBlockProps['candidate']
+  screeningFlags: StageContextualBlockProps['screeningFlags']
+}) {
+  const flagCount = screeningFlags.length
+
+  return (
+    <>
+      {/* Inline on sm+ */}
+      <div className="hidden sm:block">
+        <ScreeningGate
+          applicationId={applicationId}
+          stages={stages}
+          currentCode={currentCode}
+          candidate={candidate}
+          screeningFlags={screeningFlags}
+        />
+      </div>
+
+      {/* Compact trigger on mobile; Sheet content mounts on open. */}
+      <div className="sm:hidden">
+        <Sheet>
+          <article className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4">
+            <StageTracker stages={stages} currentCode={currentCode} compact />
+            <header className="mt-3.5">
+              <h3 className="text-[15px] font-bold text-foreground">Screening decision</h3>
+              <p className="mt-0.5 text-[12px] text-muted-foreground">
+                Quick gate — is this candidate worth a full interview?
+              </p>
+            </header>
+
+            {flagCount > 0 && (
+              <div
+                className="mt-3 flex items-center gap-1.5 rounded-md border px-2.5 py-2 text-[12px]"
+                style={{
+                  borderColor: 'oklch(0.86 0.07 70)',
+                  background: 'oklch(0.985 0.03 70)',
+                  color: 'oklch(0.4 0.08 55)',
+                }}
+              >
+                <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+                <span className="font-semibold">
+                  {flagCount} screening flag{flagCount === 1 ? '' : 's'}
+                </span>
+                <span className="text-muted-foreground">— review before deciding</span>
+              </div>
+            )}
+
+            <SheetTrigger asChild>
+              <Button
+                type="button"
+                className="mt-3.5 w-full gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
+              >
+                Open screening gate
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+              </Button>
+            </SheetTrigger>
+          </article>
+
+          <SheetContent
+            side="bottom"
+            className="max-h-[90vh] overflow-y-auto rounded-t-2xl p-0"
+          >
+            <SheetHeader className="border-b border-border px-4 py-3">
+              <SheetTitle className="text-left text-base font-bold">
+                Screening decision
+              </SheetTitle>
+            </SheetHeader>
+            <div className="p-4">
+              <ScreeningGate
+                applicationId={applicationId}
+                stages={stages}
+                currentCode={currentCode}
+                candidate={candidate}
+                screeningFlags={screeningFlags}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </>
+  )
 }
 
 function ScreeningGate({
