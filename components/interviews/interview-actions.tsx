@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { MoreHorizontal, Calendar, XCircle, UserX, Loader2 } from 'lucide-react'
+import { MoreHorizontal, Calendar, XCircle, UserX, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -48,7 +48,7 @@ export function InterviewActions({
 }: InterviewActionsProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [confirmAction, setConfirmAction] = useState<'cancel' | 'no_show' | null>(null)
+  const [confirmAction, setConfirmAction] = useState<'cancel' | 'no_show' | 'complete' | null>(null)
   const [showReschedule, setShowReschedule] = useState(false)
 
   // Convert UTC ISO to local date/time for form fields
@@ -65,7 +65,7 @@ export function InterviewActions({
 
   const isPast = currentStatus !== 'cancelled' && currentStatus !== 'no_show'
 
-  const handleStatusChange = (status: 'cancelled' | 'no_show') => {
+  const handleStatusChange = (status: 'cancelled' | 'no_show' | 'completed') => {
     startTransition(async () => {
       await updateInterviewStatus(interviewId, status)
       setConfirmAction(null)
@@ -87,14 +87,24 @@ export function InterviewActions({
   }
 
   if (confirmAction) {
-    const label = confirmAction === 'cancel' ? 'Cancel' : 'No Show'
-    const status = confirmAction === 'cancel' ? 'cancelled' : 'no_show'
+    const label =
+      confirmAction === 'cancel'
+        ? 'Cancel'
+        : confirmAction === 'no_show'
+          ? 'No Show'
+          : 'Complete'
+    const status: 'cancelled' | 'no_show' | 'completed' =
+      confirmAction === 'cancel'
+        ? 'cancelled'
+        : confirmAction === 'no_show'
+          ? 'no_show'
+          : 'completed'
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground">Mark as {label}?</span>
         <Button
           size="sm"
-          variant="destructive"
+          variant={confirmAction === 'complete' ? 'default' : 'destructive'}
           disabled={isPending}
           onClick={() => handleStatusChange(status)}
           className="h-7 px-2 text-xs"
@@ -212,6 +222,12 @@ export function InterviewActions({
         <DropdownMenuItem onClick={() => setShowReschedule(true)}>
           <Calendar className="mr-2 h-4 w-4" />
           Reschedule
+        </DropdownMenuItem>
+        {/* A-11c — Mark complete is available for any scheduled interview;
+            the past-due card prompt also routes here. */}
+        <DropdownMenuItem onClick={() => setConfirmAction('complete')}>
+          <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" />
+          Mark complete
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

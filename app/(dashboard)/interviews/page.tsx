@@ -266,6 +266,15 @@ export default async function InterviewsPage({
 
             const isActionable = interview.status !== 'cancelled' && interview.status !== 'no_show' && interview.status !== 'completed'
 
+            // A-11c — Past-due hint: scheduled interview whose time has
+            // passed by >1 hour. Surface a thin reminder on the card so
+            // the recruiter remembers to mark it complete / no-show
+            // instead of letting it sit as "Past" forever.
+            const scheduledMs = new Date(interview.scheduled_at).getTime()
+            const isOverdue =
+              interview.status === 'scheduled' &&
+              Date.now() - scheduledMs > 60 * 60 * 1000
+
             return (
               <div
                 key={interview.id}
@@ -291,6 +300,11 @@ export default async function InterviewsPage({
                     <p className="mt-0.5 truncate text-xs text-muted-foreground/70">
                       Interviewer: {interviewerName}
                     </p>
+                    {isOverdue && (
+                      <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-[11px] font-medium text-yellow-800">
+                        Past due — mark complete or no-show
+                      </p>
+                    )}
                   </div>
                 </div>
 
