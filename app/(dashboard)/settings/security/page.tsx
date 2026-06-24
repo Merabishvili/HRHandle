@@ -3,21 +3,22 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChangePasswordForm } from '@/components/settings/change-password-form'
 import { TwoFactorSection } from '@/components/mfa/two-factor-section'
+import { ActiveSessionsCard } from '@/components/settings/active-sessions-card'
 import { listMyFactors } from '@/lib/actions/mfa'
+import { countMyRecoveryCodes } from '@/lib/actions/mfa-recovery-codes'
+import { listMyActiveSessions } from '@/lib/actions/active-sessions'
 
 /**
- * Personal → Security sub-page (Wave 1.2 / S07 §2.5, A-8 layout).
+ * Personal → Security sub-page (Wave 1.2 / S07 §2.5, A-8 + A-8b).
  *
  * Per-user MFA + password live here; the org-wide MFA policy stays on
- * /settings/organization per the locked Q8 split (the redesign keeps both
- * surfaces — adding a separate org-level Security sub-page for one toggle
- * card is overkill).
+ * /settings/organization per the locked Q8 split.
  *
  * Layout matches `Merge Notifications Security.dc.html` §A-8: Password
- * (left) + Two-factor (right) in a 2-column grid on md+, stacked on
- * mobile. Recovery codes + Active sessions are deferred to A-8b — they
- * need new infrastructure (recovery_codes table; service-role session
- * listing) that's out of scope for the layout pass.
+ * (left) + Two-factor + recovery codes (right) in a 2-column grid on
+ * md+; Active sessions card below. A-8b added the recovery-codes row
+ * inside the MFA card + the Active sessions card backed by Migration
+ * 058's SECURITY DEFINER wrappers around auth.sessions.
  */
 export default async function SecuritySettingsPage() {
   const supabase = await createClient()
@@ -42,6 +43,19 @@ export default async function SecuritySettingsPage() {
 
   const factorsResult = await listMyFactors()
   const factors = factorsResult.success ? factorsResult.data : []
+
+  // A-8b — recovery codes + active sessions
+  const codesResult = await countMyRecoveryCodes()
+  const recoveryCodesRemaining = codesResult.success ? codesResult.data : 0
+
+  const sessionsResult = await listMyActiveSessions()
+  const sessions = sessionsResult.success ? sessionsResult.data : []
+
+  // The JWT carries `session_id`; decode the payload (no verification —
+  // we're just reading our own claim to highlight "This device" in the
+  // sessions list).
+  const { data: { session } } = await supabase.auth.getSession()
+  const currentSessionId = readSessionIdFromJwt(session?.access_token)
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -70,8 +84,27 @@ export default async function SecuritySettingsPage() {
             require_mfa: !!org?.require_mfa,
             require_mfa_for_admins: !!org?.require_mfa_for_admins,
           }}
+          recoveryCodesRemaining={recoveryCodesRemaining}
         />
       </div>
+
+      <ActiveSessionsCard sessions={sessions} currentSessionId={currentSessionId} />
     </div>
   )
+}
+
+function readSessionIdFromJwt(token: string | undefined): string | null {
+  if (!token) return null
+  const parts = token.split('.')
+  if (parts.length < 2) return null
+  try {
+    const payload = parts[1]!
+    // base64url → base64
+    const b64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const json = Buffer.from(b64, 'base64').toString('utf8')
+    const parsed = JSON.parse(json) as { session_id?: string }
+    return typeof parsed.session_id === 'string' ? parsed.session_id : null
+  } catch {
+    return null
+  }
 }

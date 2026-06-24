@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EnrollTotpDialog } from './enroll-totp-dialog'
+import { RecoveryCodesRow } from './recovery-codes-row'
 import { unenrollFactor } from '@/lib/actions/mfa'
 import { evaluatePolicy, type OrgMfaPolicy, type OrgRole } from '@/lib/mfa/policy'
 import { hasVerifiedFactor, verifiedFactors, type FactorSummary } from '@/lib/mfa/factors'
@@ -16,9 +17,10 @@ interface Props {
   factors: FactorSummary[]
   role: OrgRole
   orgPolicy: OrgMfaPolicy
+  recoveryCodesRemaining: number
 }
 
-export function TwoFactorSection({ factors, role, orgPolicy }: Props) {
+export function TwoFactorSection({ factors, role, orgPolicy, recoveryCodesRemaining }: Props) {
   const router = useRouter()
   const [enrollOpen, setEnrollOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -110,6 +112,7 @@ export function TwoFactorSection({ factors, role, orgPolicy }: Props) {
               <KeyRound className="h-4 w-4" />
               Add another authenticator
             </Button>
+            <RecoveryCodesRow initialRemaining={recoveryCodesRemaining} />
           </div>
         ) : (
           <div className="rounded-md border border-dashed bg-card p-6 text-center">
