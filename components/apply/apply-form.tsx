@@ -70,6 +70,23 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
     lastName.trim().length === 0 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 
+  // A-9b — On mobile, cap the visible screening questions at 3 with a
+  // "Show N more" toggle so the form doesn't feel infinite. Always
+  // show every question on sm+. Auto-expand once the user has
+  // answered the first three so we don't trap unanswered required
+  // questions below the fold.
+  const SCREENING_VISIBLE_CAP = 3
+  const [screeningExpanded, setScreeningExpanded] = useState(false)
+  const firstThreeAnswered =
+    screeningQuestions.length > SCREENING_VISIBLE_CAP &&
+    screeningQuestions
+      .slice(0, SCREENING_VISIBLE_CAP)
+      .every((q) => {
+        const a = (screeningAnswers[q.id] ?? '').trim()
+        return a.length > 0
+      })
+  const effectivelyExpanded = screeningExpanded || firstThreeAnswered
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
     if (!file) return
@@ -428,8 +445,14 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
               These help the team focus on candidates who fit the role.
             </p>
             <div className="space-y-4">
-              {screeningQuestions.map((q) => (
-                <div key={q.id}>
+              {screeningQuestions.map((q, idx) => {
+                const overCap = idx >= SCREENING_VISIBLE_CAP
+                const hidden = overCap && !effectivelyExpanded
+                return (
+                  <div
+                    key={q.id}
+                    className={hidden ? 'hidden sm:block' : undefined}
+                  >
                   <label className="mb-1.5 block text-sm font-medium text-gray-700">
                     {q.label} <span className="text-red-500">*</span>
                   </label>
@@ -498,9 +521,21 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
                     />
                   )}
-                </div>
-              ))}
+                  </div>
+                )
+              })}
             </div>
+            {screeningQuestions.length > SCREENING_VISIBLE_CAP && !effectivelyExpanded && (
+              <button
+                type="button"
+                onClick={() => setScreeningExpanded(true)}
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[oklch(0.45_0.16_250)] hover:underline sm:hidden"
+              >
+                Show {screeningQuestions.length - SCREENING_VISIBLE_CAP} more
+                {screeningQuestions.length - SCREENING_VISIBLE_CAP === 1 ? ' question' : ' questions'}
+                <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            )}
           </div>
         )}
 

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ApplyForm } from '@/components/apply/apply-form'
+import { JobDescriptionBlock } from '@/components/apply/job-description-block'
 
 export const revalidate = 300 // 5 minutes
 
@@ -165,23 +166,18 @@ export default async function ApplyPage({ params }: PageProps) {
 
           {vacancy.description && (
             <div className="mb-4">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">About the job</h2>
-              <div className="whitespace-pre-wrap text-sm text-gray-700">{vacancy.description}</div>
+              <JobDescriptionBlock title="About the job" body={vacancy.description} />
             </div>
           )}
 
           {vacancy.responsibilities && (
             <div className="mb-4">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">Responsibilities</h2>
-              <div className="whitespace-pre-wrap text-sm text-gray-700">{vacancy.responsibilities}</div>
+              <JobDescriptionBlock title="Responsibilities" body={vacancy.responsibilities} />
             </div>
           )}
 
           {vacancy.requirements && (
-            <div>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">Requirements</h2>
-              <div className="whitespace-pre-wrap text-sm text-gray-700">{vacancy.requirements}</div>
-            </div>
+            <JobDescriptionBlock title="Requirements" body={vacancy.requirements} />
           )}
           </div>
         </div>
