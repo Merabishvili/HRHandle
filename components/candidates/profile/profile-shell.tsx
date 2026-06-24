@@ -368,6 +368,24 @@ export function CandidateProfileShell({
               </div>
             )}
 
+            {/* A-12 — Mobile primary action surface. The desktop right
+                rail's RailActions is buried at the bottom of the page on
+                mobile (rail stacks after the left column). Render an
+                identical RailActions inline here at the top of the
+                content on lg- so "Advance to next stage" / Schedule /
+                Email / Reject are in thumb-reach. The rail copy below is
+                still rendered on lg+ for desktop. */}
+            {selectedApp && (
+              <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-3.5 lg:hidden">
+                <RailActions
+                  applicationId={selectedApp.id}
+                  candidateId={candidate.id}
+                  nextStage={nextStage}
+                  onReject={triggerReject}
+                />
+              </div>
+            )}
+
             <ExperienceSection
               candidateId={candidate.id}
               initialEntries={experienceEntries}
@@ -395,13 +413,19 @@ export function CandidateProfileShell({
 
           {/* RIGHT RAIL */}
           <aside className="flex flex-col gap-4 border-t border-[oklch(0.92_0.01_250)] bg-white p-4 sm:px-5 lg:border-l lg:border-t-0">
+            {/* A-12 — RailActions also renders inline at the top of the
+                content on mobile (see lg:hidden block above). Hide this
+                duplicate on lg- so the user doesn't see two identical
+                Action sections. */}
             {selectedApp && (
-              <RailActions
-                applicationId={selectedApp.id}
-                candidateId={candidate.id}
-                nextStage={nextStage}
-                onReject={triggerReject}
-              />
+              <div className="hidden lg:block">
+                <RailActions
+                  applicationId={selectedApp.id}
+                  candidateId={candidate.id}
+                  nextStage={nextStage}
+                  onReject={triggerReject}
+                />
+              </div>
             )}
 
             <AiSummaryPanel candidateId={candidate.id} />
