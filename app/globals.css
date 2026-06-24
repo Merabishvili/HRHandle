@@ -142,3 +142,26 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* A-10b — Subtle pulse for time-sensitive countdown text (e.g. the
+ * Public Offer page when the urgency tier is `urgent`). Per the
+ * mobile design doc: "Pulse only on the final 2 hours; constant
+ * flashing is hostile." Our offer countdown is YMD-granular so we
+ * apply this only when `urgency === 'urgent'` (≤1 day left).
+ *
+ * Opacity-only animation so it doesn't compete with the page's
+ * brand-amber colour itself; reduced-motion users opt out entirely. */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-soft {
+    animation: none;
+  }
+}

@@ -88,6 +88,11 @@ export default async function OfferPage({ params }: PageProps) {
             // doesn't false-alarm. Tier 2 of fidelity-audit.md.
             const isAmber =
               countdown?.urgency === 'soon' || countdown?.urgency === 'urgent'
+            // A-10b — Subtle pulse on the countdown text when we're at
+            // the final-tier urgency (≤1 day). Per the mobile design,
+            // "Pulse only on the final tier; constant flashing is
+            // hostile." Reduced-motion users opt out via globals.css.
+            const isUrgent = countdown?.urgency === 'urgent'
             const dateLabel = format(new Date(offer.expiry_date), 'MMMM d, yyyy')
             return (
               <div className="flex items-start gap-3">
@@ -113,7 +118,9 @@ export default async function OfferPage({ params }: PageProps) {
                     {countdown && (
                       <>
                         <span className="mx-1.5 opacity-60">·</span>
-                        {countdown.label}
+                        <span className={isUrgent ? 'animate-pulse-soft' : undefined}>
+                          {countdown.label}
+                        </span>
                       </>
                     )}
                   </dd>
