@@ -205,7 +205,7 @@ export default async function PipelinePage() {
       if (candidateIds.length === 0) return new Map<string, CandidateRow>()
       const { data } = await supabase
         .from('candidates')
-        .select('id, first_name, last_name, current_position, current_company, source')
+        .select('id, first_name, last_name, email, current_position, current_company, source')
         .in('id', candidateIds)
         .is('deleted_at', null)
       const m = new Map<string, CandidateRow>()
@@ -271,6 +271,7 @@ export default async function PipelinePage() {
         status_id: resolvedStatusId,
         first_name: candidate.first_name,
         last_name: candidate.last_name,
+        email: candidate.email,
         current_position: candidate.current_position,
         current_company: candidate.current_company,
         last_status_changed_at: a.last_status_changed_at,
@@ -309,6 +310,7 @@ interface CandidateRow {
   id: string
   first_name: string
   last_name: string
+  email: string | null
   current_position: string | null
   current_company: string | null
   source: string | null

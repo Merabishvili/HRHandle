@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { X, ArrowRight, XCircle, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { X, ArrowRight, Calendar, Mail, XCircle, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -17,6 +19,11 @@ import { cn } from '@/lib/utils'
 interface BulkBarProps {
   selectedCount: number
   statuses: ApplicationStatus[]
+  /** Map of selected application_id → { candidateId, email | null }. Used
+   * by Schedule (route to /interviews/new with the single selected
+   * candidate) and Email (mailto: with every selected candidate's
+   * address). */
+  selected: { applicationId: string; candidateId: string; email: string | null }[]
   onMove: (statusId: string) => Promise<void> | void
   onReject: () => void
   onClear: () => void
@@ -39,16 +46,38 @@ interface BulkBarProps {
 export function BulkBar({
   selectedCount,
   statuses,
+  selected,
   onMove,
   onReject,
   onClear,
 }: BulkBarProps) {
+  const router = useRouter()
   const [moveOpen, setMoveOpen] = useState(false)
   const [pending, setPending] = useState(false)
 
   const moveableStages = statuses.filter(
     (s) => s.is_active && !['hired', 'rejected', 'withdrawn'].includes(s.code),
   )
+
+  const handleSchedule = () => {
+    if (selected.length !== 1) {
+      toast.info('Pick exactly one candidate to schedule an interview.')
+      return
+    }
+    const only = selected[0]!
+    router.push(`/interviews/new?candidate=${only.candidateId}&application=${only.applicationId}`)
+  }
+
+  const handleEmail = () => {
+    const withEmail = selected.filter((s) => s.email && s.email.trim().length > 0)
+    if (withEmail.length === 0) {
+      toast.info('None of the selected candidates have an email on file.')
+      return
+    }
+    // BCC the list so candidates don't see each other's addresses.
+    const bcc = withEmail.map((s) => s.email!).join(',')
+    window.location.href = `mailto:?bcc=${encodeURIComponent(bcc)}`
+  }
 
   const handleMove = async (statusId: string) => {
     setMoveOpen(false)
@@ -83,7 +112,7 @@ export function BulkBar({
         >
           <SelectTrigger className="h-8 gap-1.5 text-xs">
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-            <SelectValue placeholder="Move to…" />
+            <SelectValue placeholder="Move to stage" />
           </SelectTrigger>
           <SelectContent>
             {moveableStages.map((s) => (
@@ -95,7 +124,31 @@ export function BulkBar({
         </Select>
 
         <Button
-          variant="outline"
+          variant="ghost"
+          size="sm"
+          onClick={handleSchedule}
+          disabled={pending}
+          className="h-8 gap-1.5 text-xs"
+          title={selected.length === 1 ? 'Schedule an interview' : 'Pick one candidate to schedule'}
+        >
+          <Calendar className="h-3.5 w-3.5" aria-hidden />
+          Schedule
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleEmail}
+          disabled={pending}
+          className="h-8 gap-1.5 text-xs"
+          title="Open your mail client with every selected candidate BCC'd"
+        >
+          <Mail className="h-3.5 w-3.5" aria-hidden />
+          Email
+        </Button>
+
+        <Button
+          variant="ghost"
           size="sm"
           onClick={onReject}
           disabled={pending}

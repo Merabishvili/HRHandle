@@ -107,14 +107,12 @@ export function DashboardHeader({
           <HelpLink />
           <NotificationsBell />
 
-          <div className="hidden text-right md:block">
-            <p className="text-sm font-medium leading-tight text-foreground">
-              {profile.full_name || user.email?.split('@')[0] || 'User'}
-            </p>
-            <p className="text-xs leading-tight text-muted-foreground capitalize">
-              {planLabel}
-            </p>
-          </div>
+          {/* Username text removed from the header per the redesign — it
+              was clipping on narrow viewports and the avatar dropdown
+              already surfaces the full name + email + plan inside.
+              `planLabel` is kept as an sr-only read so the variable
+              stays referenced. */}
+          <span className="sr-only">{planLabel}</span>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

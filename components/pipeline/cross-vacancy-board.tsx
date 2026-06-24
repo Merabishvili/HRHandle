@@ -23,7 +23,7 @@ import {
   type RejectionTemplate,
 } from './rejection-dialog'
 import { RoleFilterPills, type RoleOption } from './role-filter-pills'
-import { TerminalRail } from './terminal-rail'
+import { FooterCounterStrip } from './footer-counter-strip'
 import { ReviewMode } from './review-mode'
 import { TintedKanbanColumn } from './tinted-kanban-column'
 import {
@@ -47,6 +47,9 @@ export interface CrossVacancyApplication {
   status_id: string | null
   first_name: string
   last_name: string
+  /** Candidate email — used by BulkBar's Email action to build a
+   * mailto:bcc=… link. Null when the candidate has no email on file. */
+  email: string | null
   current_position: string | null
   current_company: string | null
   last_status_changed_at: string | null
@@ -118,13 +121,22 @@ export function CrossVacancyBoard({
     return m
   }, [statuses])
 
+  // A-1c — Hired is promoted to a regular column (was previously in the
+  // collapsed terminal rail alongside Rejected + Withdrawn). The design
+  // shows Hired with at-a-glance cards on the right end; rejected /
+  // withdrawn collapse to a small footer counter strip below the board.
+  const columnStatuses = useMemo(
+    () => statuses.filter((s) => !['rejected', 'withdrawn'].includes(s.code)),
+    [statuses],
+  )
+
   const activeStatuses = useMemo(
     () => statuses.filter((s) => !TERMINAL_CODES.has(s.code)),
     [statuses],
   )
 
-  const terminalStatuses = useMemo(
-    () => statuses.filter((s) => TERMINAL_CODES.has(s.code)),
+  const footerStatuses = useMemo(
+    () => statuses.filter((s) => ['rejected', 'withdrawn'].includes(s.code)),
     [statuses],
   )
 
@@ -165,15 +177,15 @@ export function CrossVacancyBoard({
     return m
   }, [cardData])
 
-  const terminalCounts = useMemo(
+  const footerCounts = useMemo(
     () =>
-      terminalStatuses.map((s) => ({
+      footerStatuses.map((s) => ({
         statusId: s.id,
         code: s.code,
         name: s.name,
         count: filteredApplications.filter((a) => a.status_id === s.id).length,
       })),
-    [terminalStatuses, filteredApplications],
+    [footerStatuses, filteredApplications],
   )
 
   const reviewQueue = useMemo(
@@ -451,8 +463,8 @@ export function CrossVacancyBoard({
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
-            <div className="flex gap-3.5 overflow-x-auto bg-muted/30 p-5 pb-[max(env(safe-area-inset-bottom),16px)]">
-              {activeStatuses.map((status) => (
+            <div className="flex gap-3.5 overflow-x-auto bg-muted/30 p-5">
+              {columnStatuses.map((status) => (
                 <TintedKanbanColumn
                   key={status.id}
                   status={status}
@@ -462,9 +474,15 @@ export function CrossVacancyBoard({
                   onToggleSelect={handleToggleSelect}
                 />
               ))}
-
-              <TerminalRail terminals={terminalCounts} overStatusId={overId} />
             </div>
+
+            {/* Footer counter strip — Rejected + Withdrawn. The design
+                shifts these outcomes out of the column row entirely; we
+                surface their counts as small chips below the board so
+                the recruiter can still drop a card onto them. */}
+            {footerCounts.length > 0 && (
+              <FooterCounterStrip terminals={footerCounts} overStatusId={overId} />
+            )}
 
             <DragOverlay>
               {activeApp && (
@@ -511,6 +529,13 @@ export function CrossVacancyBoard({
         <BulkBar
           selectedCount={selectedIds.size}
           statuses={statuses}
+          selected={applications
+            .filter((a) => selectedIds.has(a.id))
+            .map((a) => ({
+              applicationId: a.id,
+              candidateId: a.candidate_id,
+              email: a.email,
+            }))}
           onMove={handleBulkMove}
           onReject={handleBulkReject}
           onClear={() => {
