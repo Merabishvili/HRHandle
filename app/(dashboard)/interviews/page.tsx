@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Calendar, Video, Phone, Building, ExternalLink } from 'lucide-react'
-import { isPast } from 'date-fns'
+import { isPast, isToday, isTomorrow, isThisWeek, format } from 'date-fns'
 import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
 import { InterviewActions } from '@/components/interviews/interview-actions'
 import { InterviewTimeDisplay } from '@/components/interviews/interview-time-display'
@@ -149,6 +149,49 @@ export default async function InterviewsPage({
     return interviews.filter((i) => i.status === statusFilter)
   })()
 
+  // A-11b — Group filtered interviews into relative-day buckets so the
+  // recruiter sees "Today · 3" at the top instead of a flat reverse-
+  // chronological list. Today is always first (and pinned at the top of
+  // the scroll); the day groups proceed chronologically forward, then
+  // past interviews appear at the bottom.
+  type Bucket = 'today' | 'tomorrow' | 'this_week' | 'later' | 'past'
+  const bucketLabels: Record<Bucket, string> = {
+    today: 'Today',
+    tomorrow: 'Tomorrow',
+    this_week: 'This week',
+    later: 'Later',
+    past: 'Past',
+  }
+  const bucketOrder: Bucket[] = ['today', 'tomorrow', 'this_week', 'later', 'past']
+
+  const bucketFor = (i: InterviewRow): Bucket => {
+    const d = new Date(i.scheduled_at)
+    if (isToday(d)) return 'today'
+    if (i.status === 'scheduled' && isPast(d)) return 'past'
+    if (isTomorrow(d)) return 'tomorrow'
+    if (isThisWeek(d, { weekStartsOn: 1 })) return 'this_week'
+    return 'later'
+  }
+
+  const grouped = new Map<Bucket, InterviewRow[]>()
+  for (const i of filtered) {
+    const b = bucketFor(i)
+    if (!grouped.has(b)) grouped.set(b, [])
+    grouped.get(b)!.push(i)
+  }
+  // Within each bucket, render chronologically ASC for today/upcoming so
+  // the next interview is at the top; DESC for past so most-recent
+  // first.
+  for (const b of bucketOrder) {
+    const list = grouped.get(b)
+    if (!list) continue
+    list.sort((a, c) => {
+      const aMs = new Date(a.scheduled_at).getTime()
+      const cMs = new Date(c.scheduled_at).getTime()
+      return b === 'past' ? cMs - aMs : aMs - cMs
+    })
+  }
+
   const filterTabs = [
     { value: 'all', label: 'All' },
     { value: 'upcoming', label: `Scheduled (${upcomingCount})` },
@@ -192,10 +235,22 @@ export default async function InterviewsPage({
       {/* Filter tabs */}
       <FilterPillTabs tabs={filterTabs} paramKey="status" activeValue={statusFilter || ''} />
 
-      {/* Interview list */}
+      {/* Interview list — A-11b: grouped by day bucket (Today / Tomorrow
+          / This week / Later / Past) with a sticky section header per
+          bucket on mobile so "what's next" stays in view as the user
+          scrolls. */}
       {filtered.length > 0 ? (
-        <div className="flex flex-col gap-2.5">
-          {filtered.map((interview) => {
+        <div className="space-y-6">
+          {bucketOrder.map((bucket) => {
+            const list = grouped.get(bucket)
+            if (!list || list.length === 0) return null
+            return (
+              <section key={bucket}>
+                <h2 className="sticky top-0 z-10 mb-2 -mx-4 border-b border-border bg-background/95 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+                  {bucketLabels[bucket]} · {list.length}
+                </h2>
+                <div className="flex flex-col gap-2.5">
+                  {list.map((interview) => {
             const Icon = getInterviewIcon(interview.type)
             const displayStatusKey = getDisplayStatusKey(interview)
             const displayStatusLabel = getDisplayStatus(interview)
@@ -277,6 +332,10 @@ export default async function InterviewsPage({
                   )}
                 </div>
               </div>
+            )
+          })}
+                </div>
+              </section>
             )
           })}
         </div>
