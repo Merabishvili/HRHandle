@@ -173,8 +173,9 @@ export default async function InterviewsPage({
         </Button>
       </div>
 
-      {/* Stats strip */}
-      <div className="grid grid-cols-4 gap-3">
+      {/* Stats strip — 2×2 on mobile so each tile keeps its label readable;
+          4-col on sm+ matches the design. A-11 Slice 1. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { label: 'Scheduled', value: upcomingCount, color: 'text-primary' },
           { label: 'Past', value: pastCount, color: 'text-yellow-600' },
@@ -213,29 +214,32 @@ export default async function InterviewsPage({
             return (
               <div
                 key={interview.id}
-                className="flex items-center justify-between rounded-lg border border-border bg-card px-5 py-4 transition-shadow hover:shadow-sm"
+                className="flex flex-col gap-3 rounded-lg border border-border bg-card px-4 py-3.5 transition-shadow hover:shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4"
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                {/* Identity block — icon + candidate + vacancy. On mobile
+                    the time + status sit below; on sm+ they're inline on
+                    the right (A-11 Slice 1). */}
+                <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary sm:h-11 sm:w-11">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <Link
                       href={`/candidates/${interview.candidate_id}`}
                       className="text-sm font-semibold text-foreground hover:underline"
                     >
                       {getCandidateFullName(candidate)}
                     </Link>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {vacancy?.title || 'Unknown vacancy'}
                     </p>
-                    <p className="text-xs text-muted-foreground/70 mt-0.5">
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground/70">
                       Interviewer: {interviewerName}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3 sm:flex-nowrap sm:justify-end sm:gap-4 sm:border-t-0 sm:pt-0">
                   <InterviewTimeDisplay
                     scheduledAt={interview.scheduled_at}
                     durationMinutes={interview.duration_minutes}
