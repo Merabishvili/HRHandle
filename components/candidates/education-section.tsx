@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Plus, Pencil, Trash2, X, Check, GraduationCap } from 'lucide-react'
+import { Loader2, Plus, Pencil, Trash2, X, Check, GraduationCap, ChevronDown } from 'lucide-react'
 
 interface EducationSectionProps {
   candidateId: string
@@ -137,6 +137,9 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
   const [editForm, setEditForm] = useState<EducationEntryInput>(BLANK)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  // A-12c — Collapse the section body on mobile by default. Mirrors
+  // ExperienceSection. Always expanded on sm+.
+  const [collapsedOnMobile, setCollapsedOnMobile] = useState(true)
 
   const handleAdd = () => {
     setError(null)
@@ -191,17 +194,31 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
     <Card className="border-border">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <GraduationCap className="h-4 w-4" />
-          Education
+          <button
+            type="button"
+            onClick={() => setCollapsedOnMobile((v) => !v)}
+            className="flex items-center gap-2 text-left sm:cursor-default"
+            aria-expanded={!collapsedOnMobile}
+          >
+            <GraduationCap className="h-4 w-4" />
+            Education
+            {entries.length > 0 && (
+              <span className="text-[12px] font-normal text-muted-foreground">({entries.length})</span>
+            )}
+            <ChevronDown
+              className={`h-3.5 w-3.5 text-muted-foreground transition-transform sm:hidden ${!collapsedOnMobile ? 'rotate-180' : ''}`}
+              aria-hidden
+            />
+          </button>
         </CardTitle>
         {!adding && (
-          <Button variant="outline" size="sm" onClick={() => { setAdding(true); setAddForm(BLANK); setError(null) }} disabled={isPending}>
+          <Button variant="outline" size="sm" onClick={() => { setAdding(true); setAddForm(BLANK); setError(null); setCollapsedOnMobile(false) }} disabled={isPending}>
             <Plus className="h-4 w-4 mr-1" />
             Add
           </Button>
         )}
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className={`space-y-3 ${collapsedOnMobile ? 'hidden sm:block' : ''}`}>
         {error && !adding && !editingId && (
           <Alert variant="destructive" className="py-2">
             <AlertDescription className="text-xs">{error}</AlertDescription>

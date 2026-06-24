@@ -116,6 +116,11 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set(initialEntries[0] ? [initialEntries[0].id] : []))
   const [error, setError]         = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  // A-12c — Collapse the section body on mobile by default so the page
+  // doesn't dwarf the user with a long timeline. Always expanded on
+  // sm+. The `Add` button takes priority over the collapse toggle when
+  // both could appear (only the toggle is gated by sm:hidden anyway).
+  const [collapsedOnMobile, setCollapsedOnMobile] = useState(true)
 
   const toggleExpand = (id: string) =>
     setExpandedIds((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
@@ -161,19 +166,35 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      {/* Header */}
+      {/* Header — clicking the title row toggles collapse on mobile;
+          inert on sm+ (sm:cursor-default sm:pointer-events-none on the
+          chevron — but the whole row stays harmless because the body
+          is always rendered on sm+ anyway). */}
       <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setCollapsedOnMobile((v) => !v)}
+          className="flex items-center gap-2 text-left sm:cursor-default"
+          aria-expanded={!collapsedOnMobile}
+        >
           <Briefcase className="h-4 w-4 text-muted-foreground" />
           <span className="text-[15px] font-bold text-foreground">Experience</span>
           {entries.length > 0 && <span className="text-[12px] text-muted-foreground">({entries.length})</span>}
-        </div>
+          <ChevronDown
+            className={`h-3.5 w-3.5 text-muted-foreground transition-transform sm:hidden ${!collapsedOnMobile ? 'rotate-180' : ''}`}
+            aria-hidden
+          />
+        </button>
         {!adding && (
-          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => { setAdding(true); setAddForm(BLANK); setError(null) }} disabled={isPending}>
+          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => { setAdding(true); setAddForm(BLANK); setError(null); setCollapsedOnMobile(false) }} disabled={isPending}>
             <Plus className="h-3.5 w-3.5" />Add
           </Button>
         )}
       </div>
+
+      {/* Body — visible on sm+ always; on mobile only when expanded.
+          Add-form auto-expands the body via the Add button handler. */}
+      <div className={collapsedOnMobile ? 'hidden sm:block' : 'block'}>
 
       {error && !adding && !editingId && (
         <Alert variant="destructive" className="mb-3 py-2">
@@ -258,6 +279,7 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
           })}
         </div>
       )}
+      </div>
     </div>
   )
 }
