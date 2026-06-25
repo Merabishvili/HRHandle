@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { getStageStyle, STALE_TEXT } from '@/lib/pipeline/stage-style'
 import { timeInStage } from '@/lib/pipeline/time-in-stage'
+import { toDisplayName } from '@/lib/format-name'
 import { cn } from '@/lib/utils'
 import type { CrossVacancyCardData } from './cross-vacancy-card'
 
@@ -96,7 +97,7 @@ export function ListView({
                     href={`/candidates/${card.candidateId}`}
                     className="font-medium text-foreground hover:underline"
                   >
-                    {card.firstName} {card.lastName}
+                    {toDisplayName(card.firstName)} {toDisplayName(card.lastName)}
                   </Link>
                   {card.currentPosition && (
                     <p className="text-xs text-muted-foreground">{card.currentPosition}</p>

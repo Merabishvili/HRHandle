@@ -23,7 +23,7 @@ import {
   type RejectionTemplate,
 } from './rejection-dialog'
 import { RoleFilterPills, type RoleOption } from './role-filter-pills'
-import { FooterCounterStrip } from './footer-counter-strip'
+import { TerminalRail } from './terminal-rail'
 import { ReviewMode } from './review-mode'
 import { TintedKanbanColumn } from './tinted-kanban-column'
 import {
@@ -135,7 +135,9 @@ export function CrossVacancyBoard({
     [statuses],
   )
 
-  const footerStatuses = useMemo(
+  // Rejected + Withdrawn — surfaced in the collapsed terminal rail on the
+  // far right of the board row, not as full columns.
+  const terminalStatuses = useMemo(
     () => statuses.filter((s) => ['rejected', 'withdrawn'].includes(s.code)),
     [statuses],
   )
@@ -177,15 +179,27 @@ export function CrossVacancyBoard({
     return m
   }, [cardData])
 
-  const footerCounts = useMemo(
+  const terminalCounts = useMemo(
     () =>
-      footerStatuses.map((s) => ({
+      terminalStatuses.map((s) => ({
         statusId: s.id,
         code: s.code,
         name: s.name,
         count: filteredApplications.filter((a) => a.status_id === s.id).length,
       })),
-    [footerStatuses, filteredApplications],
+    [terminalStatuses, filteredApplications],
+  )
+
+  // Header "N active candidates" must count only non-terminal apps so it
+  // agrees with the role chips' active counts (a rejected/withdrawn app is
+  // not "active"). Mirrors the chips' totalActive when no role is selected.
+  const activeFilteredCount = useMemo(
+    () =>
+      filteredApplications.filter((a) => {
+        const status = a.status_id ? statusById.get(a.status_id) : null
+        return status && !TERMINAL_CODES.has(status.code)
+      }).length,
+    [filteredApplications, statusById],
   )
 
   const reviewQueue = useMemo(
@@ -397,133 +411,137 @@ export function CrossVacancyBoard({
 
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Pipeline</h1>
-            <p className="text-xs text-muted-foreground">
-              {roles.length} open {roles.length === 1 ? 'role' : 'roles'} ·{' '}
-              {filteredApplications.length} active{' '}
-              {filteredApplications.length === 1 ? 'candidate' : 'candidates'}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
-
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5"
-              onClick={() => setReviewing(true)}
-              disabled={reviewQueue.length === 0}
-              aria-label="Enter Review mode"
-            >
-              <Zap className="h-3.5 w-3.5" aria-hidden />
-              Review new
-              {reviewQueue.length > 0 && (
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-foreground">
-                  {reviewQueue.length}
-                </span>
-              )}
-            </Button>
-
-            <Button
-              asChild
-              size="sm"
-              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Link href="/candidates/new">
-                <Plus className="h-3.5 w-3.5" aria-hidden />
-                Add candidate
-              </Link>
-            </Button>
-          </div>
+      {/* Page header — sits directly on the app background (no card wrapper),
+          relying on the dashboard <main> gutter (lg:p-8). Pipeline Page
+          Fixed.dc.html §header. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-bold text-foreground">Pipeline</h1>
+          <p className="mt-0.5 text-[13.5px] text-muted-foreground">
+            {roles.length} open {roles.length === 1 ? 'role' : 'roles'} ·{' '}
+            {activeFilteredCount} active{' '}
+            {activeFilteredCount === 1 ? 'candidate' : 'candidates'}
+          </p>
         </div>
 
-        {/* Role-filter pill tabs — Pipeline Versions.dc.html §3 */}
-        {roles.length > 0 && (
-          <div className="border-b border-border bg-card px-5 py-3">
-            <RoleFilterPills
-              options={roles}
-              value={roleFilter}
-              onChange={setRoleFilter}
-              totalActive={applications.filter((a) => {
-                const status = a.status_id ? statusById.get(a.status_id) : null
-                return status && !TERMINAL_CODES.has(status.code)
-              }).length}
-            />
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
 
-        {viewMode === 'board' ? (
-          <DndContext
-            sensors={sensors}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => setReviewing(true)}
+            disabled={reviewQueue.length === 0}
+            aria-label="Enter Review mode"
           >
-            <div className="flex gap-3.5 overflow-x-auto bg-muted/30 p-5">
-              {columnStatuses.map((status) => (
-                <TintedKanbanColumn
-                  key={status.id}
-                  status={status}
-                  cards={cardsByStageCode.get(status.code) ?? []}
-                  isOver={overId === status.id}
-                  selectedIds={selectedIds}
-                  onToggleSelect={handleToggleSelect}
-                />
-              ))}
-            </div>
-
-            {/* Footer counter strip — Rejected + Withdrawn. The design
-                shifts these outcomes out of the column row entirely; we
-                surface their counts as small chips below the board so
-                the recruiter can still drop a card onto them. */}
-            {footerCounts.length > 0 && (
-              <FooterCounterStrip terminals={footerCounts} overStatusId={overId} />
+            <Zap className="h-3.5 w-3.5" aria-hidden />
+            Review new
+            {reviewQueue.length > 0 && (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-foreground">
+                {reviewQueue.length}
+              </span>
             )}
+          </Button>
 
-            <DragOverlay>
-              {activeApp && (
-                <div className="rotate-2 opacity-90">
-                  <CrossVacancyCard
-                    data={{
-                      applicationId: activeApp.id,
-                      candidateId: activeApp.candidate_id,
-                      firstName: activeApp.first_name,
-                      lastName: activeApp.last_name,
-                      vacancyTitle: activeApp.vacancy_title,
-                      currentPosition: activeApp.current_position,
-                      source: activeApp.source,
-                      inStageSince:
-                        activeApp.last_status_changed_at ?? activeApp.applied_at,
-                      appliedAt: activeApp.applied_at,
-                      stageCode:
-                        (activeApp.status_id && statusById.get(activeApp.status_id)?.code) ??
-                        activeStatuses[0]?.code ??
-                        'applied',
-                      fitScore: activeApp.fit_score,
-                    }}
-                    selected={false}
-                    onToggleSelect={() => {}}
-                  />
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
-        ) : (
-          <div className="bg-muted/30 p-5">
-            <ListView
-              cards={cardData}
-              statuses={statuses}
-              selectedIds={selectedIds}
-              onToggleSelect={handleToggleSelect}
-              onToggleAll={handleToggleAll}
-            />
-          </div>
-        )}
+          <Button
+            asChild
+            size="sm"
+            className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Link href="/candidates/new">
+              <Plus className="h-3.5 w-3.5" aria-hidden />
+              Add candidate
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      {/* Role-filter pill tabs — Pipeline Versions.dc.html §3 */}
+      {roles.length > 0 && (
+        <RoleFilterPills
+          options={roles}
+          value={roleFilter}
+          onChange={setRoleFilter}
+          totalActive={applications.filter((a) => {
+            const status = a.status_id ? statusById.get(a.status_id) : null
+            return status && !TERMINAL_CODES.has(status.code)
+          }).length}
+        />
+      )}
+
+      {viewMode === 'board' ? (
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          {/* Single horizontal row: stage columns share width and scroll
+              instead of clipping, with the collapsed terminal rail pinned
+              at the far right. No card wrapper, no bg tint — the board sits
+              on the app background. */}
+          <div className="flex items-start gap-3 overflow-x-auto pb-2">
+            {columnStatuses.map((status) => (
+              <TintedKanbanColumn
+                key={status.id}
+                status={status}
+                cards={cardsByStageCode.get(status.code) ?? []}
+                isOver={overId === status.id}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
+              />
+            ))}
+
+            {/* Rejected + Withdrawn collapse into a thin vertical rail on the
+                far right (Pipeline Page Fixed.dc.html) — droppable so a card
+                can still be dragged straight onto an outcome. */}
+            {terminalCounts.length > 0 && (
+              <TerminalRail
+                terminals={terminalCounts}
+                overStatusId={overId}
+                isDragging={!!activeApp}
+              />
+            )}
+          </div>
+
+          <DragOverlay>
+            {activeApp && (
+              <div className="rotate-2 opacity-90">
+                <CrossVacancyCard
+                  data={{
+                    applicationId: activeApp.id,
+                    candidateId: activeApp.candidate_id,
+                    firstName: activeApp.first_name,
+                    lastName: activeApp.last_name,
+                    vacancyTitle: activeApp.vacancy_title,
+                    currentPosition: activeApp.current_position,
+                    source: activeApp.source,
+                    inStageSince:
+                      activeApp.last_status_changed_at ?? activeApp.applied_at,
+                    appliedAt: activeApp.applied_at,
+                    stageCode:
+                      (activeApp.status_id && statusById.get(activeApp.status_id)?.code) ??
+                      activeStatuses[0]?.code ??
+                      'applied',
+                    fitScore: activeApp.fit_score,
+                  }}
+                  selected={false}
+                  onToggleSelect={() => {}}
+                />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      ) : (
+        <ListView
+          cards={cardData}
+          statuses={statuses}
+          selectedIds={selectedIds}
+          onToggleSelect={handleToggleSelect}
+          onToggleAll={handleToggleAll}
+        />
+      )}
 
       {selectedIds.size > 0 && (
         <BulkBar

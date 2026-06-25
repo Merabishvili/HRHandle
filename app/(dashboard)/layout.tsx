@@ -284,7 +284,12 @@ export default async function DashboardLayout({
         subscription={subscription}
       />
 
-      <div className="flex flex-1 flex-col lg:ml-64">
+      {/* min-w-0 is load-bearing: the sidebar is position:fixed and this
+          column is the only in-flow flex child. Without min-w-0 the column's
+          flex-basis defaults to its min-content width, so wide children (the
+          pipeline board) push it past the viewport and clip instead of
+          letting overflow-x-auto scroll. */}
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
         <DashboardHeader
           user={user}
           profile={profile}
@@ -292,7 +297,7 @@ export default async function DashboardLayout({
           subscription={subscription}
         />
 
-        <main id="dashboard-main" tabIndex={-1} className="flex-1 p-4 lg:p-8">{children}</main>
+        <main id="dashboard-main" tabIndex={-1} className="min-w-0 flex-1 p-4 lg:p-8">{children}</main>
         <SessionGuard />
         <PostHogIdentify userId={user.id} orgId={profile.organization_id} role={profile.role} />
       </div>

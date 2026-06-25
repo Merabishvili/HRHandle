@@ -118,7 +118,7 @@ A full-screen, keyboard-driven triage UI:
 | Pipeline empty state (org has no vacancies) | Not covered | "Create your first vacancy" CTA, same copy as current dashboard fallback |
 | Pipeline empty state (org has vacancies but no applications) | Not covered | "No candidates yet — share your apply link" CTA + copy-link button per vacancy |
 | Bulk action bar in Compact density | Compact cards are smaller; bar UI not redrawn | Same bar; size unchanged. |
-| Side rail for terminal stages | Mentioned but not pixel-clear | Sketch: vertical strip right of the last visible column; collapsed cards show only count + initials; click-to-expand |
+| Side rail for terminal stages | Mentioned but not pixel-clear | Sketch: vertical strip right of the last visible column; collapsed cards show only count + initials; click-to-expand. **Implemented** in [`components/pipeline/terminal-rail.tsx`](../../../components/pipeline/terminal-rail.tsx) — 44px collapsed rail ("Rejected N · Withdrawn N", vertical text) pinned to the far right of the board row; click-to-expand into droppable outcome tiles, auto-expands during a drag. Replaced the earlier below-board footer strip. |
 | "Schedule" action from bulk bar | Listed but interaction not designed | Single candidate → existing scheduling form. Multi-candidate → either pick interviewer + same time slot for all (panel interview) OR show "Schedule N interviews individually" link that opens each in sequence |
 
 ### 3.2 Edge cases

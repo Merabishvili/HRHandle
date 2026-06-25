@@ -37,7 +37,7 @@ export function TintedKanbanColumn({
 
   return (
     <div
-      className="flex min-w-[260px] flex-1 flex-col rounded-xl border p-2.5 transition-colors"
+      className="flex min-w-[210px] flex-1 flex-col rounded-xl border p-2.5 transition-colors"
       style={{
         background: style.columnBg,
         borderColor: isOver ? style.spine : style.columnBorder,
@@ -61,7 +61,7 @@ export function TintedKanbanColumn({
 
       <div
         ref={setNodeRef}
-        className={cn('flex min-h-[80px] flex-col gap-2 rounded-md p-0.5')}
+        className={cn('flex min-h-[140px] flex-col gap-2 rounded-md p-0.5')}
       >
         <SortableContext
           items={cards.map((c) => c.applicationId)}
@@ -76,6 +76,11 @@ export function TintedKanbanColumn({
             />
           ))}
         </SortableContext>
+        {cards.length === 0 && (
+          <div className="flex flex-1 items-center justify-center px-2 py-4 text-center text-xs text-muted-foreground/60">
+            No candidates
+          </div>
+        )}
       </div>
     </div>
   )

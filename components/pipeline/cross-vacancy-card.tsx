@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { getStageStyle, STALE_SPINE, STALE_TEXT } from '@/lib/pipeline/stage-style'
 import { timeInStage } from '@/lib/pipeline/time-in-stage'
+import { toDisplayName } from '@/lib/format-name'
 
 export interface CrossVacancyCardData {
   applicationId: string
@@ -152,7 +153,7 @@ export function CrossVacancyCard({
                 href={`/candidates/${data.candidateId}`}
                 className="block truncate text-[13px] font-semibold text-foreground hover:underline"
               >
-                {data.firstName} {data.lastName}
+                {toDisplayName(data.firstName)} {toDisplayName(data.lastName)}
               </Link>
               {isFresh && (
                 <span className="shrink-0 rounded bg-[oklch(0.93_0.05_250)] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-[oklch(0.42_0.16_250)]">

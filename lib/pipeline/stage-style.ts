@@ -47,8 +47,8 @@ export const STALE_TEXT = 'oklch(0.5 0.12 70)'
 
 const STAGE_STYLE_MAP: Record<string, StageStyle> = {
   applied: {
-    columnBg: 'oklch(0.965 0.02 250)',
-    columnBorder: 'oklch(0.9 0.03 250)',
+    columnBg: 'oklch(0.97 0.02 250)',
+    columnBorder: 'oklch(0.91 0.04 250)',
     pillBg: 'oklch(0.93 0.05 250)',
     pillText: 'oklch(0.42 0.16 250)',
     spine: 'oklch(0.55 0.18 250)',
@@ -77,8 +77,8 @@ const STAGE_STYLE_MAP: Record<string, StageStyle> = {
   // Terminal stages render in the right-side rail, not as columns, but
   // their pill colours still need to look themselves on the rail tiles.
   hired: {
-    columnBg: 'oklch(0.965 0.04 155)',
-    columnBorder: 'oklch(0.9 0.06 155)',
+    columnBg: 'oklch(0.965 0.03 155)',
+    columnBorder: 'oklch(0.9 0.05 155)',
     pillBg: 'oklch(0.93 0.07 155)',
     pillText: 'oklch(0.38 0.14 150)',
     spine: 'oklch(0.55 0.16 150)',

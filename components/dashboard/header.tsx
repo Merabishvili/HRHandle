@@ -86,19 +86,20 @@ export function DashboardHeader({
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         <div className="w-10 lg:hidden" />
 
-        {/* Breadcrumb */}
-        <div className="hidden lg:flex items-center gap-1.5 text-sm">
+        {/* Breadcrumb — left cluster truncates so it can never push the
+            right-hand controls off-screen. */}
+        <div className="hidden min-w-0 lg:flex items-center gap-1.5 text-sm">
           <span className="text-muted-foreground">HRHandle</span>
           {pageLabel && (
             <>
-              <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-              <span className="font-medium text-foreground">{pageLabel}</span>
+              <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+              <span className="truncate font-medium text-foreground">{pageLabel}</span>
             </>
           )}
         </div>
 
-        {/* User area */}
-        <div className="flex items-center gap-1.5">
+        {/* User area — pinned right, never shrinks. */}
+        <div className="flex shrink-0 items-center gap-1.5">
           <TrialPill
             trialEndAt={subscription?.trial_end_at ?? null}
             status={subscription?.status ?? null}
