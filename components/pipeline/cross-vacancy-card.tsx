@@ -6,7 +6,12 @@ import Link from 'next/link'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
-import { getStageStyle, STALE_SPINE, STALE_TEXT } from '@/lib/pipeline/stage-style'
+import {
+  getStageStyle,
+  isTerminalStage,
+  STALE_SPINE,
+  STALE_TEXT,
+} from '@/lib/pipeline/stage-style'
 import { timeInStage } from '@/lib/pipeline/time-in-stage'
 import { toDisplayName } from '@/lib/format-name'
 
@@ -97,22 +102,31 @@ export function CrossVacancyCard({
 
   const stageStyle = getStageStyle(data.stageCode)
   const time = timeInStage(data.inStageSince)
-  const spine = time.isStale ? STALE_SPINE : stageStyle.spine
+  // Staleness only applies to active stages — a hired/rejected/withdrawn
+  // candidate is done, so it can never be "stale". Gate the amber spine +
+  // label on that so terminal cards keep their own stage hue (Hired = green).
+  const terminal = isTerminalStage(data.stageCode)
+  const isStale = time.isStale && !terminal
+  const spine = isStale ? STALE_SPINE : stageStyle.spine
 
   const initials = `${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`.toUpperCase()
   const avatar = avatarStyle(data.firstName)
   const fit = fitScorePill(data.fitScore)
 
-  // Bottom metadata line varies by stage code. Applied / Standard shows
-  // time-in-stage + source; Stale (any stage) gets the amber "stale"
-  // suffix; other stages currently use the same time-only label. Slice 2
-  // will branch Interview / Offer here to pull scheduled time and offer
-  // status from the application row.
-  const bottomLabel = time.isStale
-    ? `${time.label} in stage · stale`
-    : data.source
-      ? `${time.label} in stage · ${data.source}`
-      : `${time.label} in stage`
+  // Bottom metadata line varies by stage. Terminal stages get a settled,
+  // positive line (never "stale"): Hired reads "Hired Nd ago", the other
+  // closed outcomes just show time-in-stage. Active stages show source and
+  // flip to the amber "· stale" suffix past the threshold.
+  const bottomLabel =
+    data.stageCode === 'hired'
+      ? `Hired ${time.label} ago`
+      : terminal
+        ? `${time.label} in stage`
+        : isStale
+          ? `${time.label} in stage · stale`
+          : data.source
+            ? `${time.label} in stage · ${data.source}`
+            : `${time.label} in stage`
 
   // "New" badge: applies (Applied stage) created within the last 24 hours
   // surface a small pill so the recruiter immediately spots fresh
@@ -169,18 +183,18 @@ export function CrossVacancyCard({
           <span
             className="flex items-center gap-1.5"
             style={{
-              color: time.isStale ? STALE_TEXT : undefined,
-              fontWeight: time.isStale ? 600 : undefined,
+              color: isStale ? STALE_TEXT : undefined,
+              fontWeight: isStale ? 600 : undefined,
             }}
           >
-            {time.isStale && (
+            {isStale && (
               <span
                 className="inline-block h-1.5 w-1.5 rounded-full"
                 style={{ background: STALE_SPINE }}
                 aria-hidden
               />
             )}
-            <span className={time.isStale ? undefined : 'text-muted-foreground'}>
+            <span className={isStale ? undefined : 'text-muted-foreground'}>
               {bottomLabel}
             </span>
           </span>

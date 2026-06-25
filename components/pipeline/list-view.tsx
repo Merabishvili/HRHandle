@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import type { ApplicationStatus } from '@/lib/types/application'
-import { getStageStyle, STALE_TEXT } from '@/lib/pipeline/stage-style'
+import { getStageStyle, isTerminalStage, STALE_TEXT } from '@/lib/pipeline/stage-style'
 import { timeInStage } from '@/lib/pipeline/time-in-stage'
 import { toDisplayName } from '@/lib/format-name'
 import { cn } from '@/lib/utils'
@@ -73,6 +73,8 @@ export function ListView({
             const status = statusById.get(card.stageCode)
             const style = getStageStyle(card.stageCode)
             const time = timeInStage(card.inStageSince)
+            // Terminal stages never go stale (see cross-vacancy-card).
+            const isStale = time.isStale && !isTerminalStage(card.stageCode)
             const fitLabel = card.fitScore === null ? '—' : card.fitScore.toFixed(1)
             const selected = selectedIds.has(card.applicationId)
             return (
@@ -120,12 +122,12 @@ export function ListView({
                   <span
                     className="text-xs"
                     style={{
-                      color: time.isStale ? STALE_TEXT : undefined,
-                      fontWeight: time.isStale ? 600 : undefined,
+                      color: isStale ? STALE_TEXT : undefined,
+                      fontWeight: isStale ? 600 : undefined,
                     }}
                   >
                     {time.label}
-                    {time.isStale ? ' · stale' : ''}
+                    {isStale ? ' · stale' : ''}
                   </span>
                 </td>
                 <td className="px-3 py-2 text-xs font-semibold tabular-nums text-foreground">

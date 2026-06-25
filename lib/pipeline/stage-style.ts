@@ -101,3 +101,15 @@ export function getStageStyle(code: ApplicationStatus['code'] | string | null | 
 /** Days after which an active application's spine + time label flip to
  * amber. Per design ("5d · stale" in the Applied column example). */
 export const STALE_DAYS = 5
+
+/** Stages where the candidate's journey is over. Aging/staleness never
+ * applies here — a hired/rejected/withdrawn candidate can't go "stale". */
+export const TERMINAL_STAGE_CODES: ReadonlySet<string> = new Set([
+  'hired',
+  'rejected',
+  'withdrawn',
+])
+
+export function isTerminalStage(code: string | null | undefined): boolean {
+  return !!code && TERMINAL_STAGE_CODES.has(code)
+}
