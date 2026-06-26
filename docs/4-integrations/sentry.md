@@ -15,9 +15,25 @@ Sentry is used for error monitoring and performance tracing. The `@sentry/nextjs
 
 ## Configuration Files
 
-All three config files follow the same guard pattern: only initialize if `process.env.NEXT_PUBLIC_SENTRY_DSN` is set.
+> **Next.js 16 / Sentry v10 layout (fixed 2026-06-26).** Next.js no longer
+> auto-loads `sentry.server.config.ts` / `sentry.edge.config.ts`, and Turbopack
+> ignores the legacy `sentry.client.config.ts`. The SDKs are now wired through:
+>
+> | File | Loads | Purpose |
+> |---|---|---|
+> | `instrumentation.ts` | server + edge | `register()` imports the server/edge configs by `NEXT_RUNTIME`; exports `onRequestError = Sentry.captureRequestError` for App Router RSC / route-handler / server-action errors. |
+> | `instrumentation-client.ts` | browser | Browser `Sentry.init` (replaces `sentry.client.config.ts`); exports `onRouterTransitionStart` for navigation tracing. |
+> | `sentry.server.config.ts` | — | `Sentry.init` for Node; imported by `instrumentation.ts`. |
+> | `sentry.edge.config.ts` | — | `Sentry.init` for the edge runtime; imported by `instrumentation.ts`. |
+> | `app/global-error.tsx` | browser | Root error boundary; `Sentry.captureException` for render errors that escape the root layout. |
+>
+> **Symptom before the fix:** nothing reached Sentry, because no
+> `instrumentation.ts` existed (server/edge never initialised) and the client
+> config used the old filename Turbopack ignores.
 
-### `sentry.client.config.ts` (Browser)
+All config files follow the same guard pattern: only initialize if `process.env.NEXT_PUBLIC_SENTRY_DSN` is set.
+
+### `instrumentation-client.ts` (Browser)
 
 ```ts
 Sentry.init({
