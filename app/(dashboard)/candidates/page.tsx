@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { toDisplayFullName } from '@/lib/format-name'
 import { getCandidateStatuses } from '@/lib/cache/lookups'
 import { listSavedViews } from '@/lib/actions/saved-views'
 import Link from 'next/link'
@@ -71,7 +72,9 @@ interface VacancyOption {
 }
 
 function getCandidateFullName(candidate: Pick<CandidateRow, 'first_name' | 'last_name'>): string {
-  return `${candidate.first_name} ${candidate.last_name}`.trim()
+  // Display casing only — some records are stored ALL-CAPS (CV/import). The
+  // stored value is untouched; see lib/format-name.
+  return toDisplayFullName(candidate.first_name, candidate.last_name)
 }
 
 function getCandidateInitials(candidate: Pick<CandidateRow, 'first_name' | 'last_name'>): string {

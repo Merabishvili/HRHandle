@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { toDisplayName } from '@/lib/format-name'
 import type { CrossVacancyApplication } from './cross-vacancy-board'
 
 interface ReviewModeProps {
@@ -176,7 +177,7 @@ export function ReviewMode({ queue, onClose, onAdvance, onReject }: ReviewModePr
               </p>
 
               <h2 className="mt-4 text-2xl font-bold text-foreground">
-                {current.first_name} {current.last_name}
+                {toDisplayName(current.first_name)} {toDisplayName(current.last_name)}
               </h2>
 
               {(current.current_position || current.current_company) && (

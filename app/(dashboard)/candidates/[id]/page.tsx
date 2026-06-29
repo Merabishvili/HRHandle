@@ -8,6 +8,7 @@ import {
 } from '@/lib/cache/lookups'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
+import { toDisplayFullName } from '@/lib/format-name'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 import type { ActivityItem } from '@/components/candidates/activity-feed'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
@@ -507,7 +508,7 @@ export default async function CandidateDetailPage({
     <CandidateProfileShell
       candidate={{
         id: candidate.id,
-        fullName: `${candidate.first_name} ${candidate.last_name}`.trim(),
+        fullName: toDisplayFullName(candidate.first_name, candidate.last_name),
         initials: initials(candidate.first_name, candidate.last_name),
         headlineSubtitle,
         location: candidate.location,

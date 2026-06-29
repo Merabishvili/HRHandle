@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { toDisplayFullName } from '@/lib/format-name'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -67,7 +68,8 @@ function getDisplayStatusKey(interview: InterviewRow): string {
 
 function getCandidateFullName(candidate?: { first_name: string; last_name: string } | null) {
   if (!candidate) return 'Unknown candidate'
-  return `${candidate.first_name} ${candidate.last_name}`.trim()
+  // Display casing only (some names are stored ALL-CAPS); see lib/format-name.
+  return toDisplayFullName(candidate.first_name, candidate.last_name)
 }
 
 function getInterviewIcon(type: string) {

@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { GripVertical, Building2, Briefcase } from 'lucide-react'
+import { toDisplayName } from '@/lib/format-name'
 import { Card, CardContent } from '@/components/ui/card'
 
 interface CandidateCardProps {
@@ -82,7 +83,7 @@ export function CandidateCard({
                   href={`/candidates/${candidateId}`}
                   className="truncate text-sm font-medium text-foreground hover:underline"
                 >
-                  {firstName} {lastName}
+                  {toDisplayName(firstName)} {toDisplayName(lastName)}
                 </Link>
               </div>
 

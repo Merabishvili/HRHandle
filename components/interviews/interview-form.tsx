@@ -19,6 +19,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
 import { cn } from '@/lib/utils'
+import { toDisplayFullName } from '@/lib/format-name'
 import { Calendar, Loader2, Mail, MapPin, Phone, Video } from 'lucide-react'
 import type { InterviewType } from '@/lib/types'
 
@@ -53,6 +54,10 @@ interface InterviewFormProps {
   defaultCandidateId?: string
   defaultVacancyId?: string
   defaultApplicationId?: string
+  /** Pre-selected interviewer (defaults to the current user on the New
+   * Interview page). The interviewer is always a team member — candidates
+   * are never in this list. */
+  defaultInterviewerId?: string
   hasGoogleCalendar?: boolean
   hasZoom?: boolean
   hasMicrosoft?: boolean
@@ -67,7 +72,8 @@ const durationOptions = [
 ]
 
 function getCandidateFullName(candidate: InterviewCandidateOption): string {
-  return `${candidate.first_name} ${candidate.last_name}`.trim()
+  // Display casing only (some names are stored ALL-CAPS); see lib/format-name.
+  return toDisplayFullName(candidate.first_name, candidate.last_name)
 }
 
 export function InterviewForm({
@@ -78,6 +84,7 @@ export function InterviewForm({
   defaultCandidateId,
   defaultVacancyId,
   defaultApplicationId,
+  defaultInterviewerId,
   hasGoogleCalendar = false,
   hasZoom = false,
   hasMicrosoft = false,
@@ -90,7 +97,9 @@ export function InterviewForm({
   const [candidateId, setCandidateId] = useState(defaultCandidateId || '')
   const [vacancyId, setVacancyId] = useState(defaultVacancyId || '')
   const [applicationId, setApplicationId] = useState(defaultApplicationId || '')
-  const [interviewerId, setInterviewerId] = useState('')
+  // Default the interviewer to the current user (a team member) so an
+  // interview is never left implicitly unassigned — and never the candidate.
+  const [interviewerId, setInterviewerId] = useState(defaultInterviewerId || '')
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('')
   const [duration, setDuration] = useState(60)
@@ -281,7 +290,9 @@ export function InterviewForm({
                 options={candidates.map((c) => ({
                   value: c.id,
                   label: getCandidateFullName(c),
-                  searchText: `${getCandidateFullName(c)} ${c.email ?? ''}`,
+                  // Keep the raw stored name in the search text too, so typing
+                  // the ALL-CAPS form still matches the title-cased label.
+                  searchText: `${c.first_name} ${c.last_name} ${getCandidateFullName(c)} ${c.email ?? ''}`,
                   description: c.email ?? undefined,
                 }))}
               />

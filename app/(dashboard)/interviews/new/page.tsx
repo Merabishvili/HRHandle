@@ -157,6 +157,7 @@ export default async function NewInterviewPage({
         teamMembers={teamMembers}
         defaultCandidateId={candidateId}
         defaultVacancyId={vacancyId}
+        defaultInterviewerId={user.id}
         hasGoogleCalendar={!!profile.google_refresh_token}
         hasZoom={!!profile.zoom_refresh_token}
         hasMicrosoft={!!profile.microsoft_refresh_token}
