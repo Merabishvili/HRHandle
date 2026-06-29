@@ -197,7 +197,11 @@ export function BatchRejectionDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleConfirm} disabled={isPending}>
+          <Button
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={isPending || (reasons.length > 0 && !reasonId)}
+          >
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

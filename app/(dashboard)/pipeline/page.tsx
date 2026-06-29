@@ -163,6 +163,7 @@ export default async function PipelinePage() {
       .from('applications')
       .select(
         `id, candidate_id, vacancy_id, pipeline_stage_id, applied_at, last_status_changed_at,
+         rejection_reason_id,
          pipeline_stages ( type, name, is_terminal )`,
       )
       .eq('organization_id', orgId)
@@ -195,6 +196,7 @@ export default async function PipelinePage() {
     pipeline_stage_id: string | null
     applied_at: string
     last_status_changed_at: string | null
+    rejection_reason_id: string | null
     pipeline_stages: StageJoin
   }
   const appRows = (applicationsRaw ?? []) as AppRow[]
@@ -229,6 +231,14 @@ export default async function PipelinePage() {
 
   const vacancyMap = new Map(vacancies.map((v) => [v.id, v]))
   const firstStatusId = sortedStatuses[0]?.id ?? null
+
+  // Reason-name lookup for closed (rejected) applications — surfaced in the
+  // collapsed terminal rail's expanded list. The reasons are already fetched
+  // above for the rejection dialog, so this is a free in-memory join.
+  const reasonNameById = new Map<string, string>()
+  for (const r of (rejectionReasonsRaw ?? []) as { id: string; name: string }[]) {
+    reasonNameById.set(r.id, r.name)
+  }
 
   // Wave 2.6 Slice 4 — bucket each app from its pipeline_stages join to
   // the canonical code, then look up the matching application_statuses.id
@@ -280,6 +290,9 @@ export default async function PipelinePage() {
         vacancy_title: vacancy.title,
         source: shortSourceLabel(candidate.source),
         fit_score: fitScore,
+        rejection_reason: a.rejection_reason_id
+          ? reasonNameById.get(a.rejection_reason_id) ?? null
+          : null,
       } satisfies CrossVacancyApplication
     })
     .filter((a): a is CrossVacancyApplication => a !== null)

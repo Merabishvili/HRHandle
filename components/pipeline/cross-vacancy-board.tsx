@@ -24,6 +24,7 @@ import {
 } from './rejection-dialog'
 import { RoleFilterPills, type RoleOption } from './role-filter-pills'
 import { TerminalRail } from './terminal-rail'
+import { BatchRejectionDialog } from '@/components/vacancies/batch-rejection-dialog'
 import { ReviewMode } from './review-mode'
 import { TintedKanbanColumn } from './tinted-kanban-column'
 import {
@@ -62,6 +63,9 @@ export interface CrossVacancyApplication {
   /** Optional 0-10 fit score from the most recent candidate_evaluation —
    * surfaced as a pill on compact-density cards. */
   fit_score: number | null
+  /** Name of the rejection reason stamped on the application (rejected apps
+   * only). Surfaced in the collapsed terminal rail's expanded list. */
+  rejection_reason: string | null
 }
 
 interface CrossVacancyBoardProps {
@@ -104,6 +108,7 @@ export function CrossVacancyBoard({
   const [reviewing, setReviewing] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('board')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -188,6 +193,26 @@ export function CrossVacancyBoard({
         count: filteredApplications.filter((a) => a.status_id === s.id).length,
       })),
     [terminalStatuses, filteredApplications],
+  )
+
+  // Closed candidates listed in the expanded terminal rail, tagged with their
+  // outcome code + rejection reason.
+  const closedCandidates = useMemo(
+    () =>
+      filteredApplications
+        .map((a) => {
+          const status = a.status_id ? statusById.get(a.status_id) : null
+          if (!status || !['rejected', 'withdrawn'].includes(status.code)) return null
+          return {
+            applicationId: a.id,
+            candidateId: a.candidate_id,
+            name: `${a.first_name} ${a.last_name}`.trim(),
+            code: status.code,
+            reason: a.rejection_reason,
+          }
+        })
+        .filter((c): c is NonNullable<typeof c> => c !== null),
+    [filteredApplications, statusById],
   )
 
   // Header "N active candidates" must count only non-terminal apps so it
@@ -398,15 +423,32 @@ export function CrossVacancyBoard({
     setSelectedIds(new Set())
   }
 
-  const handleBulkReject = async () => {
+  // Bulk reject opens the reason picker (BatchRejectionDialog) rather than
+  // rejecting silently — a reason is required and an optional templated email
+  // can be sent. The dialog itself calls rejectApplicationsBatch; on success
+  // we mirror the move into local state and clear the selection.
+  const handleBulkReject = () => {
     if (selectedIds.size === 0) return
+    if (!statusByCode.get('rejected')) return
+    setBulkRejectOpen(true)
+  }
+
+  const handleBulkRejectSuccess = () => {
     const rejectedStatus = statusByCode.get('rejected')
     if (!rejectedStatus) return
-    const confirmed = confirm(
-      `Reject ${selectedIds.size} ${selectedIds.size === 1 ? 'candidate' : 'candidates'}? This won't send an email — open each candidate's profile to send a personalised rejection.`,
+    const ids = new Set(selectedIds)
+    setApplications((prev) =>
+      prev.map((a) =>
+        ids.has(a.id)
+          ? {
+              ...a,
+              status_id: rejectedStatus.id,
+              last_status_changed_at: new Date().toISOString(),
+            }
+          : a,
+      ),
     )
-    if (!confirmed) return
-    await handleBulkMove(rejectedStatus.id)
+    setSelectedIds(new Set())
   }
 
   return (
@@ -477,28 +519,33 @@ export function CrossVacancyBoard({
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          {/* Single horizontal row: stage columns share width and scroll
-              instead of clipping, with the collapsed terminal rail pinned
-              at the far right. No card wrapper, no bg tint — the board sits
-              on the app background. */}
-          <div className="flex items-start gap-3 overflow-x-auto pb-2">
-            {columnStatuses.map((status) => (
-              <TintedKanbanColumn
-                key={status.id}
-                status={status}
-                cards={cardsByStageCode.get(status.code) ?? []}
-                isOver={overId === status.id}
-                selectedIds={selectedIds}
-                onToggleSelect={handleToggleSelect}
-              />
-            ))}
+          {/* Board row: the active stage columns live in a horizontally
+              scrollable area (flex-1 min-w-0), while the collapsed terminal
+              rail is pinned OUTSIDE that scroll container as a shrink-0
+              sibling — so the rail is always fully visible at the right edge
+              and never clips, no matter how many columns there are. */}
+          <div className="flex items-stretch gap-3">
+            <div className="flex min-w-0 flex-1 items-start gap-3 overflow-x-auto pb-2">
+              {columnStatuses.map((status) => (
+                <TintedKanbanColumn
+                  key={status.id}
+                  status={status}
+                  cards={cardsByStageCode.get(status.code) ?? []}
+                  isOver={overId === status.id}
+                  selectedIds={selectedIds}
+                  onToggleSelect={handleToggleSelect}
+                />
+              ))}
+            </div>
 
-            {/* Rejected + Withdrawn collapse into a thin vertical rail on the
-                far right (Pipeline Page Fixed.dc.html) — droppable so a card
-                can still be dragged straight onto an outcome. */}
+            {/* Rejected + Withdrawn collapse into a thin vertical rail
+                (Pipeline Page Fixed.dc.html) — droppable so a card can be
+                dragged straight onto an outcome, click-to-expand to list the
+                closed candidates with their rejection reason. */}
             {terminalCounts.length > 0 && (
               <TerminalRail
                 terminals={terminalCounts}
+                closed={closedCandidates}
                 overStatusId={overId}
                 isDragging={!!activeApp}
               />
@@ -581,6 +628,19 @@ export function CrossVacancyBoard({
           templates={rejectionTemplates}
           onSuccess={handleRejectionSuccess}
           onCancel={() => setPendingRejection(null)}
+        />
+      )}
+
+      {/* Bulk reject — reason picker for the whole selection. */}
+      {statusByCode.get('rejected') && (
+        <BatchRejectionDialog
+          open={bulkRejectOpen}
+          onOpenChange={setBulkRejectOpen}
+          applicationIds={Array.from(selectedIds)}
+          rejectedStatusId={statusByCode.get('rejected')!.id}
+          reasons={rejectionReasons}
+          templates={rejectionTemplates}
+          onSuccess={handleBulkRejectSuccess}
         />
       )}
     </>
