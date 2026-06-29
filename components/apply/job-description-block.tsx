@@ -22,6 +22,13 @@ interface Props {
  */
 export function JobDescriptionBlock({ title, body }: Props) {
   const [expanded, setExpanded] = useState(false)
+
+  // Empty / whitespace-only sections render nothing — never a bare heading
+  // over blank space (or a stray placeholder character). The callers also
+  // gate on a truthy field, but this is the defensive backstop for
+  // whitespace-only content.
+  if (!body || !body.trim()) return null
+
   const looksLong = body.length > 320 || (body.match(/\n/g)?.length ?? 0) > 4
 
   return (

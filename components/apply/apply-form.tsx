@@ -231,7 +231,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
   if (submitted) {
     return (
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="h-2 bg-blue-600" aria-hidden />
+        <div className="h-2 bg-primary" aria-hidden />
         <div className="p-10 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
           <h2 className="mt-4 text-xl font-bold text-gray-900">Thanks for applying!</h2>
@@ -242,7 +242,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
           {statusToken && (
             <a
               href={`/status/${statusToken}`}
-              className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+              className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
             >
               Track your application
               <span aria-hidden>→</span>
@@ -255,7 +255,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="h-2 bg-blue-600" aria-hidden />
+      <div className="h-2 bg-primary" aria-hidden />
       <div className="p-8">
       <h2 className="mb-6 text-lg font-bold text-gray-900">Apply for this position</h2>
 
@@ -471,7 +471,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
                             disabled={isLoading}
                             className={
                               checked
-                                ? 'flex-1 rounded-lg border-[1.5px] border-blue-600 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition-colors'
+                                ? 'flex-1 rounded-lg border-[1.5px] border-primary bg-primary/10 px-3 py-2 text-sm font-semibold text-primary transition-colors'
                                 : 'flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
                             }
                           >
@@ -602,7 +602,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
           <button
             type="submit"
             disabled={isLoading || parseState === 'parsing' || !captchaToken || isMissingBasics}
-            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>

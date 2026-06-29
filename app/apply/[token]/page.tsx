@@ -135,7 +135,7 @@ export default async function ApplyPage({ params }: PageProps) {
         {/* Header — 8px brand-blue bar at top matches /jobs per
             Public Pages.dc.html §2 ("thin brand bar"). */}
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="h-2 bg-blue-600" aria-hidden />
+          <div className="h-2 bg-primary" aria-hidden />
           <div className="p-8">
           <div className="mb-6 flex items-start gap-4">
             {org?.logo_url ? (

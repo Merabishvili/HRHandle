@@ -79,7 +79,7 @@ export default async function PublicJobsPage({ params }: PageProps) {
         {/* Header — 8px brand-blue bar at top, then logo / org name / role count
             (Wave 3.2 spec — visual addition only, no logic change) */}
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="h-2 bg-blue-600" aria-hidden />
+          <div className="h-2 bg-primary" aria-hidden />
           <div className="p-8 text-center">
             {org.logo_url ? (
               <img
@@ -129,7 +129,7 @@ export default async function PublicJobsPage({ params }: PageProps) {
                       <p className="mt-2 text-sm text-gray-600 line-clamp-2">{v.description}</p>
                     )}
                   </div>
-                  <span className="shrink-0 text-sm font-medium text-blue-600">Apply →</span>
+                  <span className="shrink-0 text-sm font-medium text-primary">Apply →</span>
                 </div>
               </Link>
             ))}
