@@ -29,6 +29,7 @@ import {
 } from '@/lib/types/columns'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { parsePageSize, type PageSize } from '@/lib/pagination'
+import { vacancyRecencyLabel } from '@/lib/vacancy-age'
 
 type SearchParams = Promise<{
   page?: string
@@ -298,7 +299,11 @@ export default async function VacanciesPage({
                             <div>
                               <p className="font-medium text-foreground">{vacancy.title}</p>
                               <p className="text-xs text-muted-foreground">
-                                {formatEmploymentType(vacancy.employment_type)}
+                                {formatEmploymentType(vacancy.employment_type)} ·{' '}
+                                {vacancyRecencyLabel(
+                                  vacancy.created_at,
+                                  status?.code === 'draft',
+                                )}
                               </p>
                             </div>
                           </Link>
