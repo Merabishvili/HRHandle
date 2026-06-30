@@ -44,11 +44,7 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          id="start_date"
-          label="Start date"
-          subtitle={<span className="text-[oklch(0.5_0.19_27)]">· now optional</span>}
-        >
+        <Field id="start_date" label="Start date">
           <Input
             id="start_date"
             type="date"
@@ -109,7 +105,7 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
       </div>
 
       <p className="text-[11.5px] text-muted-foreground">
-        Salary range is optional but powers candidate-side filtering and the &ldquo;salary fit&rdquo; knockout once Wave 2.5 ships.
+        Optional. Shown to candidates and used for salary-fit filtering.
       </p>
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, X, Star, Sparkles } from 'lucide-react'
+import { Plus, X, Star, Sparkles, Loader2 } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -30,10 +30,32 @@ export interface ScorecardState {
   screeningQuestions: ScorecardScreeningQuestion[]
 }
 
+/** Role context the "Suggest from JD" assist sends at click time. */
+export interface ScorecardJdContext {
+  title: string
+  department: string | null
+  location: string | null
+  employment_type: 'full_time' | 'part_time' | 'contract' | 'internship' | null
+  sector_name: string | null
+  description: string | null
+  responsibilities: string | null
+  requirements: string | null
+}
+
 interface StepScorecardProps {
   value: ScorecardState
   onChange: (next: ScorecardState) => void
+  jdContext: ScorecardJdContext
 }
+
+type SuggestState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'ok'; skills: string[] }
+  | { status: 'too_thin' }
+  | { status: 'rate_limited' }
+  | { status: 'no_key' }
+  | { status: 'failed' }
 
 const TYPE_LABELS: Record<ScreeningAnswerType, string> = {
   yes_no: 'Yes / No',
@@ -59,12 +81,13 @@ const TYPE_LABELS: Record<ScreeningAnswerType, string> = {
  * form already support. For `select` we also capture the option list as
  * a comma-separated input.
  */
-export function StepScorecard({ value, onChange }: StepScorecardProps) {
+export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps) {
   const [newAttribute, setNewAttribute] = useState('')
   const [newQuestion, setNewQuestion] = useState('')
   const [newAnswerType, setNewAnswerType] = useState<ScreeningAnswerType>('yes_no')
   const [newKnockout, setNewKnockout] = useState(false)
   const [newOptions, setNewOptions] = useState('')
+  const [suggest, setSuggest] = useState<SuggestState>({ status: 'idle' })
 
   const addAttribute = () => {
     const label = newAttribute.trim()
@@ -74,6 +97,60 @@ export function StepScorecard({ value, onChange }: StepScorecardProps) {
       attributes: [...value.attributes, { label, mustHave: false }],
     })
     setNewAttribute('')
+  }
+
+  const hasAttribute = (label: string) =>
+    value.attributes.some((a) => a.label.trim().toLowerCase() === label.trim().toLowerCase())
+
+  const addSuggested = (label: string) => {
+    if (hasAttribute(label)) return
+    onChange({ ...value, attributes: [...value.attributes, { label, mustHave: false }] })
+  }
+
+  // "Suggest from JD" — live during creation. Sends the role context entered
+  // so far to the assessment-suggester (raw-text mode, nothing persisted) and
+  // offers the returned skill labels to add as scorecard attributes.
+  const runSuggest = async () => {
+    if (!jdContext.title.trim()) {
+      setSuggest({ status: 'too_thin' })
+      return
+    }
+    setSuggest({ status: 'loading' })
+    try {
+      const res = await fetch('/api/ai/assessment-suggester', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: jdContext.title,
+          description: jdContext.description,
+          responsibilities: jdContext.responsibilities,
+          requirements: jdContext.requirements,
+          department: jdContext.department,
+          location: jdContext.location,
+          employment_type: jdContext.employment_type,
+          sector_name: jdContext.sector_name,
+        }),
+      })
+      const body = await res.json()
+      if (body.ok && Array.isArray(body.suggestions?.skills)) {
+        setSuggest({ status: 'ok', skills: body.suggestions.skills as string[] })
+        return
+      }
+      const reason = body?.reason
+      setSuggest({
+        status:
+          reason === 'too_thin'
+            ? 'too_thin'
+            : reason === 'rate_limited'
+              ? 'rate_limited'
+              : reason === 'no_key'
+                ? 'no_key'
+                : 'failed',
+      })
+    } catch (err) {
+      console.error('[wizard] suggest-from-jd failed:', err)
+      setSuggest({ status: 'failed' })
+    }
   }
 
   const toggleMustHave = (idx: number) => {
@@ -146,17 +223,70 @@ export function StepScorecard({ value, onChange }: StepScorecardProps) {
     <div className="flex flex-col gap-4 lg:flex-row">
       {/* Interview scorecard */}
       <section className="flex-1 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Interview scorecard">
-        <header className="mb-3 flex items-center gap-2">
+        <header className="mb-3 flex flex-wrap items-center gap-2">
           <h3 className="text-[15px] font-bold text-foreground">Interview scorecard</h3>
-          <span className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-[oklch(0.88_0.05_250)] bg-[oklch(0.98_0.04_250)] px-2.5 py-1 text-[12px] font-semibold text-[oklch(0.45_0.16_250)]">
-            <Sparkles className="h-3 w-3" aria-hidden />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={runSuggest}
+            disabled={suggest.status === 'loading'}
+            className="ml-auto h-8 gap-1.5"
+          >
+            {suggest.status === 'loading' ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
+            )}
             Suggest from JD
-            <span className="ml-1 rounded bg-[oklch(0.93_0.05_250)] px-1 text-[9px] font-bold uppercase">soon</span>
-          </span>
+          </Button>
         </header>
         <p className="mb-3 text-[12px] text-muted-foreground">
           Attributes interviewers rate 1–5. Skip to use a default set you can edit later.
         </p>
+
+        {suggest.status !== 'idle' && suggest.status !== 'loading' && (
+          <div className="mb-3 rounded-[9px] border border-dashed border-[oklch(0.85_0.05_250)] bg-[oklch(0.985_0.012_250)] p-2.5">
+            {suggest.status === 'ok' ? (
+              suggest.skills.filter((s) => !hasAttribute(s)).length === 0 ? (
+                <p className="text-[11.5px] text-muted-foreground">
+                  All suggestions are already on your scorecard.
+                </p>
+              ) : (
+                <>
+                  <p className="mb-1.5 text-[11.5px] font-medium text-muted-foreground">
+                    Suggested attributes — click to add:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {suggest.skills
+                      .filter((s) => !hasAttribute(s))
+                      .map((skill) => (
+                        <button
+                          key={skill}
+                          type="button"
+                          onClick={() => addSuggested(skill)}
+                          className="inline-flex items-center gap-1 rounded-md border border-[oklch(0.85_0.05_250)] bg-white px-2 py-1 text-[12px] font-medium text-foreground/80 transition-colors hover:bg-[oklch(0.96_0.03_250)]"
+                        >
+                          <Plus className="h-3 w-3 text-primary" aria-hidden />
+                          {skill}
+                        </button>
+                      ))}
+                  </div>
+                </>
+              )
+            ) : (
+              <p className="text-[11.5px] text-muted-foreground">
+                {suggest.status === 'too_thin'
+                  ? 'Add a title (and ideally a description) first, then try again.'
+                  : suggest.status === 'rate_limited'
+                    ? 'You’ve generated a lot recently. Try again in a few minutes.'
+                    : suggest.status === 'no_key'
+                      ? 'AI features are not configured on this deployment.'
+                      : 'Could not generate suggestions. Try again.'}
+              </p>
+            )}
+          </div>
+        )}
 
         <ul className="space-y-2">
           {value.attributes.map((attr, idx) => (

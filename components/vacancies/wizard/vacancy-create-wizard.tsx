@@ -31,7 +31,7 @@ const STEPS = [
   { id: 'basics', number: 1, label: 'Basics' },
   { id: 'dates-comp', number: 2, label: 'Dates & compensation' },
   { id: 'description', number: 3, label: 'Description & AI' },
-  { id: 'scorecard', number: 4, label: 'Scorecard & questions', tag: 'NEW · optional' },
+  { id: 'scorecard', number: 4, label: 'Scorecard & questions' },
   { id: 'review', number: 5, label: 'Review & publish' },
 ] as const
 
@@ -60,6 +60,9 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState<StepId>('basics')
   const [pending, startTransition] = useTransition()
+  // Step 5's single commit action follows this choice (radio in the review
+  // body ⇄ the footer's primary button label). Default to Publish.
+  const [publishChoice, setPublishChoice] = useState<'publish' | 'draft'>('publish')
 
   const [basics, setBasics] = useState<BasicsState>({
     title: '',
@@ -195,8 +198,9 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
 
   const railHint = (
     <>
-      Fill <strong className="text-foreground">Basics</strong> →{' '}
-      <strong className="text-foreground">Save &amp; publish</strong>. Steps 2–5 take sensible defaults you can refine later.
+      Fill <strong className="text-foreground">Basics</strong>, then{' '}
+      <strong className="text-foreground">Save as draft</strong> any time. Steps 2–5 take
+      sensible defaults you can refine later.
     </>
   )
 
@@ -223,30 +227,20 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
             </Button>
           )}
 
-          {canPublishFromHere && (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => submit(false)}
-                disabled={pending}
-                className="h-9 border-[oklch(0.88_0.01_250)]"
-              >
-                {pending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden /> : null}
-                Save as draft
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => submit(true)}
-                disabled={pending}
-                className="h-9 border-[oklch(0.88_0.04_145)] text-[oklch(0.36_0.13_150)] hover:bg-[oklch(0.96_0.04_155)]"
-              >
-                Save &amp; publish
-              </Button>
-            </>
+          {/* Steps 2–4: a single "Save as draft" escape hatch. The final
+              commit (publish or draft) happens only on Step 5. */}
+          {canPublishFromHere && !isLastStep && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => submit(false)}
+              disabled={pending}
+              className="h-9"
+            >
+              {pending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden /> : null}
+              Save as draft
+            </Button>
           )}
 
           {!isLastStep ? (
@@ -255,20 +249,21 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
               size="sm"
               onClick={goNext}
               disabled={pending || (currentStep === 'basics' && !isBasicsComplete)}
-              className="ml-auto h-9 gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
+              className="ml-auto h-9 gap-1.5"
             >
               Next: {STEPS[stepIdx + 1]?.label} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </Button>
           ) : (
+            // Single commit on Step 5 — label follows the review-body radio.
             <Button
               type="button"
               size="sm"
-              onClick={() => submit(true)}
+              onClick={() => submit(publishChoice === 'publish')}
               disabled={pending}
-              className="ml-auto h-9 gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
+              className="ml-auto h-9 gap-1.5"
             >
               {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : null}
-              Publish now
+              {publishChoice === 'publish' ? 'Publish now' : 'Save as draft'}
             </Button>
           )}
         </>
@@ -281,10 +276,33 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
         <StepDatesComp value={datesComp} onChange={setDatesComp} />
       )}
       {currentStep === 'description' && (
-        <StepDescription value={description} onChange={setDescription} />
+        <StepDescription
+          value={description}
+          onChange={setDescription}
+          jdContext={{
+            title: basics.title,
+            department: basics.department || null,
+            location: basics.location || null,
+            employment_type: basics.employmentType,
+            sector_name: sectors.find((s) => s.id === basics.sectorId)?.name ?? null,
+          }}
+        />
       )}
       {currentStep === 'scorecard' && (
-        <StepScorecard value={scorecard} onChange={setScorecard} />
+        <StepScorecard
+          value={scorecard}
+          onChange={setScorecard}
+          jdContext={{
+            title: basics.title,
+            department: basics.department || null,
+            location: basics.location || null,
+            employment_type: basics.employmentType,
+            sector_name: sectors.find((s) => s.id === basics.sectorId)?.name ?? null,
+            description: description.description || null,
+            responsibilities: description.responsibilities || null,
+            requirements: description.requirements || null,
+          }}
+        />
       )}
       {currentStep === 'review' && (
         <StepReview
@@ -293,6 +311,9 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
           description={description}
           scorecard={scorecard}
           sectors={sectors}
+          publishChoice={publishChoice}
+          onPublishChoiceChange={setPublishChoice}
+          onEditStep={(id) => setCurrentStep(id as StepId)}
         />
       )}
     </WizardShell>

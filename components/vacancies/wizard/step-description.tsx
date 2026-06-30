@@ -1,10 +1,11 @@
 'use client'
 
-import { Sparkles } from 'lucide-react'
-
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { AiJdSuggest } from '@/components/vacancies/ai-jd-suggest'
+import { AiBiasCheck } from '@/components/vacancies/ai-bias-check'
+import type { JdSection } from '@/lib/ai/jd-generator'
 
 export interface DescriptionState {
   description: string
@@ -13,25 +14,31 @@ export interface DescriptionState {
   showOnPublicPage: boolean
 }
 
+/** Role context the AI assists read at click time (from earlier steps). */
+export interface JdContext {
+  title: string
+  department: string | null
+  location: string | null
+  employment_type: 'full_time' | 'part_time' | 'contract' | 'internship' | null
+  sector_name: string | null
+}
+
 interface StepDescriptionProps {
   value: DescriptionState
   onChange: (next: DescriptionState) => void
+  jdContext: JdContext
 }
 
 /**
- * Wave 2.7 wizard — Step 3 / Description & AI per Create Vacancy
- * Steps.dc.html.
+ * Wave 2.7 wizard — Step 3 / Description & AI.
  *
  * Three text areas (about / responsibilities / requirements) plus the
- * public-page toggle. The two AI affordances (suggest sections + bias
- * check) are shown as calm-blue dashed tiles that link out to the full
- * AI panels on the vacancy detail page after creation — inlining them
- * here would make the wizard considerably larger and the AI components
- * have their own state machines (tech-debt.md §2 covers AiDraftPanel
- * adoption). The wizard primary flow is text entry; AI assist remains
- * available post-create.
+ * public-page toggle. The two AI assists are LIVE during creation: "suggest
+ * job description sections" drafts into the fields here (calm pattern: invoke →
+ * draft → Apply all → user edits → keep), and "check inclusive language" scans
+ * the current text. They also remain available on the vacancy page later.
  */
-export function StepDescription({ value, onChange }: StepDescriptionProps) {
+export function StepDescription({ value, onChange, jdContext }: StepDescriptionProps) {
   const set = <K extends keyof DescriptionState>(key: K, v: DescriptionState[K]) => {
     onChange({ ...value, [key]: v })
   }
@@ -45,20 +52,44 @@ export function StepDescription({ value, onChange }: StepDescriptionProps) {
         </p>
       </div>
 
-      {/* AI assist hint tiles */}
-      <div className="flex flex-col gap-2">
-        <AiHint label="AI assist — suggest job description sections" />
-        <AiHint label="AI assist — check inclusive language" />
+      {/* Live AI assists — draft into the fields below, advisory until applied. */}
+      <div className="flex flex-col gap-2.5">
+        <AiJdSuggest
+          getFormSnapshot={() => ({
+            title: jdContext.title,
+            department: jdContext.department,
+            location: jdContext.location,
+            employment_type: jdContext.employment_type,
+            sector_name: jdContext.sector_name,
+          })}
+          getExistingFieldText={(section: JdSection) =>
+            section === 'description'
+              ? value.description
+              : section === 'responsibilities'
+                ? value.responsibilities
+                : value.requirements
+          }
+          onApplyAll={(generated) =>
+            onChange({
+              ...value,
+              description: generated.description ?? value.description,
+              responsibilities: generated.responsibilities ?? value.responsibilities,
+              requirements: generated.requirements ?? value.requirements,
+            })
+          }
+        />
+        <AiBiasCheck
+          getFormSnapshot={() => ({
+            description: value.description,
+            responsibilities: value.responsibilities,
+            requirements: value.requirements,
+          })}
+        />
       </div>
-      <p className="text-[11px] leading-[1.45] text-muted-foreground">
-        Both AI panels are available on the vacancy page after you create — they save back to the
-        same fields shown below.
-      </p>
 
       <div className="space-y-1.5">
         <Label htmlFor="description" className="text-[11.5px] font-medium text-muted-foreground">
           About the job <span className="text-destructive">*</span>
-          <span className="ml-1 text-muted-foreground/70">— required for publish</span>
         </Label>
         <Textarea
           id="description"
@@ -112,18 +143,6 @@ export function StepDescription({ value, onChange }: StepDescriptionProps) {
           aria-label="Show on public jobs page"
         />
       </div>
-    </div>
-  )
-}
-
-function AiHint({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-[10px] border border-dashed border-[oklch(0.82_0.06_250)] bg-[oklch(0.985_0.012_250)] px-3.5 py-2.5">
-      <Sparkles className="h-3.5 w-3.5 text-[oklch(0.45_0.16_250)]" aria-hidden />
-      <span className="flex-1 text-[12.5px] font-semibold text-foreground/80">{label}</span>
-      <span className="rounded bg-[oklch(0.93_0.05_250)] px-1.5 py-0.5 text-[10px] font-bold uppercase text-[oklch(0.42_0.16_250)]">
-        After create
-      </span>
     </div>
   )
 }

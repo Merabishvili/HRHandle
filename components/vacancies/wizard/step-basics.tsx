@@ -63,11 +63,7 @@ export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
             maxLength={100}
           />
         </Field>
-        <Field
-          id="sector"
-          label="Sector"
-          subtitle={<span className="text-[oklch(0.5_0.19_27)]">· now optional</span>}
-        >
+        <Field id="sector" label="Sector">
           <Select
             value={value.sectorId ?? ''}
             onValueChange={(v) => set('sectorId', v === '__none__' ? null : v)}
@@ -97,11 +93,7 @@ export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
             maxLength={100}
           />
         </Field>
-        <Field
-          id="work_mode"
-          label="Work mode"
-          subtitle={<NewTag />}
-        >
+        <Field id="work_mode" label="Work mode">
           <Select
             value={value.workMode}
             onValueChange={(v) => set('workMode', v as BasicsState['workMode'])}
@@ -155,12 +147,6 @@ export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
           />
         </Field>
       </div>
-
-      <div className="rounded-[10px] border border-[oklch(0.86_0.05_27)] bg-[oklch(0.995_0.01_20)] px-3.5 py-3 text-[12.5px] leading-[1.45] text-[oklch(0.4_0.06_30)]">
-        <strong className="text-[oklch(0.5_0.19_27)]">Removed: the &ldquo;Status&rdquo; dropdown.</strong>{' '}
-        A new vacancy is a <strong className="text-foreground">Draft</strong> until you publish — the
-        footer decides that, so you never hand-pick draft/open/on-hold here.
-      </div>
     </div>
   )
 }
@@ -187,13 +173,5 @@ function Field({
       </Label>
       {children}
     </div>
-  )
-}
-
-function NewTag() {
-  return (
-    <span className="rounded bg-[oklch(0.93_0.07_155)] px-1.5 py-0.5 text-[10px] font-bold uppercase text-[oklch(0.36_0.14_150)]">
-      NEW
-    </span>
   )
 }
