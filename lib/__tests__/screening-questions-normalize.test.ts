@@ -72,7 +72,7 @@ describe('normalizeScreeningQuestionEntries', () => {
     })
   })
 
-  it('forces is_knockout=false for number type', () => {
+  it('number without a passing condition stays informational', () => {
     const out = normalizeScreeningQuestionEntries([
       { label: 'Years of experience?', answerType: 'number', knockout: true },
     ])
@@ -80,22 +80,63 @@ describe('normalizeScreeningQuestionEntries', () => {
     expect(out[0]?.knockout_answer).toBeNull()
   })
 
-  it('cleans select options and uses the first as the knockout answer', () => {
+  it('serialises a number range condition into knockout_answer', () => {
+    const out = normalizeScreeningQuestionEntries([
+      {
+        label: 'Desired salary?',
+        answerType: 'number',
+        knockout: true,
+        knockoutCondition: { kind: 'number', op: 'lte', value: 10000 },
+      },
+    ])
+    expect(out[0]?.is_knockout).toBe(true)
+    expect(out[0]?.knockout_answer).toBe('{"op":"lte","value":10000}')
+  })
+
+  it('honours the chosen Yes/No passing answer', () => {
+    const out = normalizeScreeningQuestionEntries([
+      {
+        label: 'Any criminal record?',
+        answerType: 'yes_no',
+        knockout: true,
+        knockoutCondition: { kind: 'yes_no', passingAnswer: 'no' },
+      },
+    ])
+    expect(out[0]?.knockout_answer).toBe('no')
+  })
+
+  it('cleans select options and serialises the passing subset', () => {
     const out = normalizeScreeningQuestionEntries([
       {
         label: 'Work authorization?',
         answerType: 'select',
         knockout: true,
         options: ['  Citizen ', '', 'Permanent Resident', '   ', 'Visa needed'],
+        knockoutCondition: {
+          kind: 'select',
+          passingOptions: ['Citizen', 'Permanent Resident'],
+        },
       },
     ])
     expect(out[0]).toEqual({
       label: 'Work authorization?',
       answer_type: 'select',
       is_knockout: true,
-      knockout_answer: 'Citizen',
+      knockout_answer: '["Citizen","Permanent Resident"]',
       options: ['Citizen', 'Permanent Resident', 'Visa needed'],
     })
+  })
+
+  it('select knockout with no condition falls back to the first option', () => {
+    const out = normalizeScreeningQuestionEntries([
+      {
+        label: 'Work authorization?',
+        answerType: 'select',
+        knockout: true,
+        options: ['Citizen', 'Visa needed'],
+      },
+    ])
+    expect(out[0]?.knockout_answer).toBe('["Citizen"]')
   })
 
   it('drops select entries with no usable options', () => {

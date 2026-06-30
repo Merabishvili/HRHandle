@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 
 import { getAuthContext, type ActionResult } from './index'
 import { normalizeScreeningQuestionEntries } from '@/lib/screening-questions/normalize'
+import type { KnockoutCondition } from '@/lib/screening-questions/knockout-condition'
 
 export interface ScreeningQuestionRow {
   id: string
@@ -32,6 +33,7 @@ export async function bulkCreateScreeningQuestions(
     knockout?: boolean
     answerType?: 'yes_no' | 'short_text' | 'number' | 'select'
     options?: string[]
+    knockoutCondition?: KnockoutCondition | null
   }[],
 ): Promise<ActionResult<{ inserted: number }>> {
   const ctx = await getAuthContext()

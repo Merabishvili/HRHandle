@@ -6,26 +6,21 @@
  * Inputs from the wizard:
  *   - `label`: free text the recruiter typed.
  *   - `answerType`: 'yes_no' | 'short_text' | 'number' | 'select'.
- *     Defaults to `yes_no` when omitted (compat with older callers).
- *   - `knockout`: boolean toggle. Only meaningful for `yes_no` and
- *     `select` — `short_text` and `number` always normalize to
- *     informational because there's no canonical knockout-answer to
- *     compare against.
- *   - `options`: array of option strings, only relevant when
- *     `answerType === 'select'`.
- *
- * Rules (tested in lib/__tests__/screening-questions-normalize.test.ts):
- *   - Trim labels; drop entries whose trimmed label is empty.
- *   - Drop entries whose trimmed label exceeds 500 chars.
- *   - `yes_no`: when knockout, set `knockout_answer = 'yes'` (the
- *     design's "must = Yes" example). Non-knockout → null.
- *   - `select`: each option is trimmed; empty options dropped. Drop the
- *     whole entry if no options remain. When knockout, the first
- *     option becomes the expected answer (`must = ${options[0]}`).
- *   - `short_text` / `number`: force `is_knockout = false` and
- *     `knockout_answer = null`. No options either.
+ *   - `knockout`: boolean toggle. `short_text` is never a knockout.
+ *   - `options`: option strings, only relevant when `answerType === 'select'`.
+ *   - `knockoutCondition`: the structured passing condition (see
+ *     knockout-condition.ts). Serialised into `knockout_answer`. When a
+ *     knockout is requested but the condition is missing/incomplete, yes_no
+ *     defaults to "yes" and select to its first option; number with no valid
+ *     value falls back to informational (no canonical default).
  */
-export type ScreeningAnswerType = 'yes_no' | 'short_text' | 'number' | 'select'
+import {
+  encodeKnockoutAnswer,
+  type KnockoutCondition,
+  type ScreeningAnswerType,
+} from './knockout-condition'
+
+export type { ScreeningAnswerType }
 
 export interface NormalizedScreeningEntry {
   label: string
@@ -41,6 +36,7 @@ export interface ScreeningEntryInput {
   answerType?: ScreeningAnswerType
   knockout?: boolean
   options?: string[]
+  knockoutCondition?: KnockoutCondition | null
 }
 
 export function normalizeScreeningQuestionEntries(
@@ -53,25 +49,34 @@ export function normalizeScreeningQuestionEntries(
     if (!label || label.length > 500) continue
 
     const answerType: ScreeningAnswerType = e.answerType ?? 'yes_no'
-    const knockoutFlag = Boolean(e.knockout)
+    const wantKnockout = Boolean(e.knockout)
 
-    if (answerType === 'short_text' || answerType === 'number') {
+    if (answerType === 'short_text') {
+      out.push({ label, answer_type: 'short_text', is_knockout: false, knockout_answer: null, options: null })
+      continue
+    }
+
+    if (answerType === 'number') {
+      const ko = wantKnockout ? encodeKnockoutAnswer('number', e.knockoutCondition) : null
       out.push({
         label,
-        answer_type: answerType,
-        is_knockout: false,
-        knockout_answer: null,
+        answer_type: 'number',
+        is_knockout: ko !== null,
+        knockout_answer: ko,
         options: null,
       })
       continue
     }
 
     if (answerType === 'yes_no') {
+      const ko = wantKnockout
+        ? (encodeKnockoutAnswer('yes_no', e.knockoutCondition) ?? 'yes')
+        : null
       out.push({
         label,
         answer_type: 'yes_no',
-        is_knockout: knockoutFlag,
-        knockout_answer: knockoutFlag ? 'yes' : null,
+        is_knockout: ko !== null,
+        knockout_answer: ko,
         options: null,
       })
       continue
@@ -83,11 +88,22 @@ export function normalizeScreeningQuestionEntries(
       .filter((o) => o.length > 0 && o.length <= 200)
     if (cleanedOptions.length === 0) continue
 
+    let ko: string | null = null
+    if (wantKnockout) {
+      const provided =
+        e.knockoutCondition?.kind === 'select' ? e.knockoutCondition.passingOptions : []
+      const passing = provided.filter((o) =>
+        cleanedOptions.some((c) => c.toLowerCase() === o.trim().toLowerCase()),
+      )
+      const effective = passing.length > 0 ? passing : [cleanedOptions[0] as string]
+      ko = encodeKnockoutAnswer('select', { kind: 'select', passingOptions: effective })
+    }
+
     out.push({
       label,
       answer_type: 'select',
-      is_knockout: knockoutFlag,
-      knockout_answer: knockoutFlag ? cleanedOptions[0] ?? null : null,
+      is_knockout: ko !== null,
+      knockout_answer: ko,
       options: cleanedOptions,
     })
   }

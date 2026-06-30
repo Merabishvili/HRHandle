@@ -13,8 +13,25 @@ import { WizardShell } from './wizard-shell'
 import { StepBasics, type BasicsState } from './step-basics'
 import { StepDatesComp, type DatesCompState } from './step-dates-comp'
 import { StepDescription, type DescriptionState } from './step-description'
-import { StepScorecard, type ScorecardState } from './step-scorecard'
+import {
+  StepScorecard,
+  type ScorecardState,
+  type ScorecardScreeningQuestion,
+} from './step-scorecard'
 import { StepReview } from './step-review'
+import type { KnockoutCondition } from '@/lib/screening-questions/knockout-condition'
+
+/** Build the persisted passing condition from a wizard screening question. */
+function toKnockoutCondition(q: ScorecardScreeningQuestion): KnockoutCondition | null {
+  if (!q.knockout) return null
+  if (q.answerType === 'yes_no') return { kind: 'yes_no', passingAnswer: q.passYesNo }
+  if (q.answerType === 'number') {
+    if (q.numberValue === null) return null
+    return { kind: 'number', op: q.numberOp, value: q.numberValue, value2: q.numberValue2 }
+  }
+  if (q.answerType === 'select') return { kind: 'select', passingOptions: q.passOptions }
+  return null
+}
 
 interface VacancyCreateWizardProps {
   sectors: { id: string; name: string }[]
@@ -169,13 +186,10 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
         }
       }
 
-      // Wave 2.5 Slice 2a — persist the screening questions captured in
-      // Step 4 rows on vacancy_screening_questions. Slice 2b ships the
-      // apply form rendering + answers writer; the Wave 2.5 cleanup
-      // ships the wizard's full answer-type picker (yes_no / short_text
-      // / number / select with options). The normalizer enforces the
-      // invariants — short_text / number can't be knockouts, select
-      // needs at least one usable option.
+      // Persist Step 4 screening questions on vacancy_screening_questions.
+      // Each knockout carries a passing condition (Yes/No answer, number
+      // range, or select option subset) which the normalizer serialises into
+      // knockout_answer; short_text can't be a knockout.
       if (scorecard.screeningQuestions.length > 0) {
         const screeningEntries = scorecard.screeningQuestions
           .filter((q) => q.label.trim().length > 0)
@@ -184,6 +198,7 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
             answerType: q.answerType,
             knockout: q.knockout,
             options: q.options,
+            knockoutCondition: toKnockoutCondition(q),
           }))
         if (screeningEntries.length > 0) {
           await bulkCreateScreeningQuestions(result.data.id, screeningEntries)

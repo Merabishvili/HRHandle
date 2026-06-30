@@ -355,7 +355,7 @@ export async function submitPublicApplication(
       const submittedIds = parsed.data.map((a) => a.question_id)
       const { data: matchedQuestions } = await supabase
         .from('vacancy_screening_questions')
-        .select('id, is_knockout, knockout_answer')
+        .select('id, is_knockout, knockout_answer, answer_type')
         .eq('vacancy_id', vacancy.id)
         .in('id', submittedIds)
 
@@ -377,6 +377,13 @@ export async function submitPublicApplication(
               {
                 is_knockout: q.is_knockout as boolean,
                 knockout_answer: (q.knockout_answer as string | null) ?? null,
+                answer_type:
+                  (q.answer_type as
+                    | 'yes_no'
+                    | 'short_text'
+                    | 'number'
+                    | 'select'
+                    | undefined) ?? 'yes_no',
               },
               answerValue,
             ),
