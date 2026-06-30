@@ -414,7 +414,7 @@ export default async function VacancyDetailPage({
           <TabsList className="h-auto w-full justify-start rounded-none border-b border-[oklch(0.93_0.01_250)] bg-transparent px-5 py-0 sm:px-6">
             <TabTriggerStyled value="overview">Overview</TabTriggerStyled>
             <TabTriggerStyled value="jd">Job description</TabTriggerStyled>
-            <TabTriggerStyled value="scorecard">Scorecard &amp; questions</TabTriggerStyled>
+            <TabTriggerStyled value="scorecard">Scorecard &amp; interview</TabTriggerStyled>
             <TabTriggerStyled value="application-form">Apply form</TabTriggerStyled>
             <TabTriggerStyled value="settings">Settings</TabTriggerStyled>
           </TabsList>
@@ -454,6 +454,11 @@ export default async function VacancyDetailPage({
 
           <TabsContent value="scorecard" className="m-0 bg-[oklch(0.985_0.002_247)] p-5 sm:p-6">
             <div className="flex flex-col gap-4">
+              <p className="text-[12.5px] text-muted-foreground">
+                How your team evaluates candidates in interviews — none of this is shown to
+                candidates. (Questions candidates answer when applying live on the{' '}
+                <span className="font-semibold text-foreground">Apply form</span> tab.)
+              </p>
               <AiAssessmentSuggester
                 vacancyId={vacancy.id}
                 existingSkillLabels={questions.filter((q) => q.type === 'score').map((q) => q.label)}
@@ -463,7 +468,7 @@ export default async function VacancyDetailPage({
               <div className="grid gap-4 lg:grid-cols-2">
                 <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Scorecard">
                   <h2 className="text-[15px] font-bold text-foreground">Scorecard</h2>
-                  <p className="mb-3 text-[12.5px] text-muted-foreground">Score-based attributes (1–5) every interviewer answers.</p>
+                  <p className="mb-3 text-[12.5px] text-muted-foreground">Score-based attributes (1–5) every interviewer rates.</p>
                   <VacancyQuestions
                     vacancyId={vacancy.id}
                     initialQuestions={questions.filter((q) => q.type === 'score')}
@@ -471,9 +476,9 @@ export default async function VacancyDetailPage({
                     canEdit={canEditQuestions}
                   />
                 </section>
-                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Questionary">
-                  <h2 className="text-[15px] font-bold text-foreground">Questionary</h2>
-                  <p className="mb-3 text-[12.5px] text-muted-foreground">Open-ended questions for candidates.</p>
+                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Interview guide">
+                  <h2 className="text-[15px] font-bold text-foreground">Interview guide</h2>
+                  <p className="mb-3 text-[12.5px] text-muted-foreground">Open-ended prompts your interviewers ask in the room.</p>
                   <VacancyQuestions
                     vacancyId={vacancy.id}
                     initialQuestions={questions.filter((q) => q.type === 'text')}
@@ -483,19 +488,14 @@ export default async function VacancyDetailPage({
                 </section>
               </div>
 
-              <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Interview questions">
-                <h2 className="mb-3 text-[15px] font-bold text-foreground">Interview questions</h2>
+              <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="AI interview questions">
+                <h2 className="text-[15px] font-bold text-foreground">AI interview questions</h2>
+                <p className="mb-3 text-[12.5px] text-muted-foreground">AI-drafted prompts your interviewers can use — review and keep what fits.</p>
                 <AiInterviewQuestions
                   vacancyId={vacancy.id}
                   savedQuestions={(vacancy.interview_questions as InterviewQuestionsSet | null) ?? null}
                 />
               </section>
-
-              <ScreeningQuestionsCard
-                vacancyId={vacancy.id}
-                initialQuestions={screeningQuestions}
-                canEdit={canEditQuestions}
-              />
 
               {vacancyCustomFieldGroups.length > 0 && (
                 <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Additional information">
@@ -507,11 +507,21 @@ export default async function VacancyDetailPage({
           </TabsContent>
 
           <TabsContent value="application-form" className="m-0 bg-[oklch(0.985_0.002_247)] p-5 sm:p-6">
-            <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
-              <ApplicationFormTab
+            <div className="flex flex-col gap-4">
+              {/* Screening questions are candidate-facing — they render on the
+                  apply form, so they're configured here (moved off the
+                  interviewer-facing Scorecard tab). */}
+              <ScreeningQuestionsCard
                 vacancyId={vacancy.id}
-                initialToken={vacancy.application_form_token ?? null}
+                initialQuestions={screeningQuestions}
+                canEdit={canEditQuestions}
               />
+              <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
+                <ApplicationFormTab
+                  vacancyId={vacancy.id}
+                  initialToken={vacancy.application_form_token ?? null}
+                />
+              </div>
             </div>
           </TabsContent>
 

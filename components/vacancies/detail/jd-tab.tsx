@@ -64,28 +64,10 @@ export function JdTab({
           </div>
         </header>
 
-        <div className="space-y-3.5 text-[13.5px] leading-[1.7] text-foreground/85">
-          {description ? (
-            <p className="whitespace-pre-wrap">{description}</p>
-          ) : (
-            <p className="italic text-muted-foreground">
-              No description yet — click <span className="font-semibold">Improve with AI</span> to draft one from the role title, or <span className="font-semibold">Edit</span> to write it manually.
-            </p>
-          )}
-
-          {responsibilities && (
-            <section>
-              <h3 className="mb-1.5 text-[14px] font-bold text-foreground">What you&apos;ll do</h3>
-              <div className="whitespace-pre-wrap">{responsibilities}</div>
-            </section>
-          )}
-
-          {requirements && (
-            <section>
-              <h3 className="mb-1.5 text-[14px] font-bold text-foreground">What you&apos;ll bring</h3>
-              <div className="whitespace-pre-wrap">{requirements}</div>
-            </section>
-          )}
+        <div className="space-y-4 text-[13.5px] leading-[1.7] text-foreground/85">
+          <JdSection heading="About the role" text={description} vacancyId={vacancyId} hideHeading />
+          <JdSection heading="What you'll do" text={responsibilities} vacancyId={vacancyId} />
+          <JdSection heading="What you'll bring" text={requirements} vacancyId={vacancyId} />
         </div>
       </article>
 
@@ -138,5 +120,45 @@ export function JdTab({
         )}
       </aside>
     </div>
+  )
+}
+
+/**
+ * One JD section. Renders the saved text, or a muted "Not added yet — Edit"
+ * placeholder when the section is empty / whitespace-only — never a stray
+ * character. The "About the role" section hides its heading because the card
+ * header already names it.
+ */
+function JdSection({
+  heading,
+  text,
+  vacancyId,
+  hideHeading,
+}: {
+  heading: string
+  text: string | null
+  vacancyId: string
+  hideHeading?: boolean
+}) {
+  const trimmed = (text ?? '').trim()
+  return (
+    <section>
+      {!hideHeading && (
+        <h3 className="mb-1.5 text-[14px] font-bold text-foreground">{heading}</h3>
+      )}
+      {trimmed ? (
+        <div className="whitespace-pre-wrap">{trimmed}</div>
+      ) : (
+        <p className="italic text-muted-foreground">
+          Not added yet —{' '}
+          <Link
+            href={`/vacancies/${vacancyId}/edit`}
+            className="font-semibold text-[oklch(0.45_0.16_250)] not-italic hover:underline"
+          >
+            Edit
+          </Link>
+        </p>
+      )}
+    </section>
   )
 }
