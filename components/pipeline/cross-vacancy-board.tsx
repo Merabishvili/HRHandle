@@ -521,29 +521,26 @@ export function CrossVacancyBoard({
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          {/* Board row: the active stage columns live in a horizontally
-              scrollable area (flex-1 min-w-0), while the collapsed terminal
-              rail is pinned OUTSIDE that scroll container as a shrink-0
-              sibling — so the rail is always fully visible at the right edge
-              and never clips, no matter how many columns there are. */}
-          <div className="flex items-stretch gap-3">
-            <div className="flex min-w-0 flex-1 items-start gap-3 overflow-x-auto pb-2">
-              {columnStatuses.map((status) => (
-                <TintedKanbanColumn
-                  key={status.id}
-                  status={status}
-                  cards={cardsByStageCode.get(status.code) ?? []}
-                  isOver={overId === status.id}
-                  selectedIds={selectedIds}
-                  onToggleSelect={handleToggleSelect}
-                />
-              ))}
-            </div>
+          {/* ONE horizontal scroll row holding every column — the 5 active
+              stages AND the terminal (CLOSED) group as the last child — so
+              the whole board scrolls sideways together as a single row. The
+              main content column is min-w-0, so this row overflows and scrolls
+              within the page instead of clipping. */}
+          <div className="flex items-start gap-3 overflow-x-auto pb-2">
+            {columnStatuses.map((status) => (
+              <TintedKanbanColumn
+                key={status.id}
+                status={status}
+                cards={cardsByStageCode.get(status.code) ?? []}
+                isOver={overId === status.id}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
+              />
+            ))}
 
-            {/* Rejected + Withdrawn collapse into a thin vertical rail
-                (Pipeline Page Fixed.dc.html) — droppable so a card can be
-                dragged straight onto an outcome, click-to-expand to list the
-                closed candidates with their rejection reason. */}
+            {/* Rejected + Withdrawn — the last child of the SAME scroll row.
+                Collapsed = thin rail; expanded = inline CLOSED group. Either
+                way it scrolls together with the active stages. */}
             {terminalCounts.length > 0 && (
               <TerminalRail
                 terminals={terminalCounts}
