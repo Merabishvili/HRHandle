@@ -47,6 +47,7 @@ interface ApplicationRow {
 interface TeamMemberRow {
   id: string
   full_name: string
+  email: string | null
 }
 
 export default async function NewInterviewPage({
@@ -129,7 +130,7 @@ export default async function NewInterviewPage({
 
   const { data: teamMembersRaw } = await supabase
     .from('profiles')
-    .select('id, full_name')
+    .select('id, full_name, email')
     .eq('organization_id', organizationId)
     .order('full_name', { ascending: true })
 

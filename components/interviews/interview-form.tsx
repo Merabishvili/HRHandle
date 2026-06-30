@@ -20,7 +20,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
 import { cn } from '@/lib/utils'
 import { toDisplayFullName } from '@/lib/format-name'
-import { Calendar, Loader2, Mail, MapPin, Phone, Video } from 'lucide-react'
+import { defaultBusinessTime } from '@/lib/interviews/default-time'
+import { Calendar, Loader2, Lock, Mail, MapPin, Phone, Video } from 'lucide-react'
 import type { InterviewType } from '@/lib/types'
 
 interface InterviewCandidateOption {
@@ -44,6 +45,9 @@ interface InterviewApplicationOption {
 interface InterviewTeamMemberOption {
   id: string
   full_name: string
+  /** Used to exclude a candidate who is also a team member (internal
+   * applicant) from the interviewer picker. */
+  email?: string | null
 }
 
 interface InterviewFormProps {
@@ -76,6 +80,19 @@ function getCandidateFullName(candidate: InterviewCandidateOption): string {
   return toDisplayFullName(candidate.first_name, candidate.last_name)
 }
 
+/** Prefer auto-generated links when a calendar is connected; manual is the
+ * fallback only when nothing is connected. */
+function defaultMeetingOption(
+  hasGoogle: boolean,
+  hasZoom: boolean,
+  hasTeams: boolean,
+): 'manual' | 'google_meet' | 'zoom' | 'teams' {
+  if (hasGoogle) return 'google_meet'
+  if (hasZoom) return 'zoom'
+  if (hasTeams) return 'teams'
+  return 'manual'
+}
+
 export function InterviewForm({
   candidates,
   vacancies,
@@ -94,19 +111,31 @@ export function InterviewForm({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Candidate-first flow: the page was opened from a specific candidate, so
+  // the candidate is locked and the vacancy is derived from their application.
+  const candidateFirst = !!defaultCandidateId
+  const initialApps = applications.filter((a) => a.candidate_id === (defaultCandidateId || ''))
+  const derivedVacancyId =
+    defaultVacancyId || (initialApps.length === 1 ? initialApps[0]!.vacancy_id : '')
+  const derivedApplicationId =
+    defaultApplicationId || (initialApps.length === 1 ? initialApps[0]!.id : '')
+
   const [candidateId, setCandidateId] = useState(defaultCandidateId || '')
-  const [vacancyId, setVacancyId] = useState(defaultVacancyId || '')
-  const [applicationId, setApplicationId] = useState(defaultApplicationId || '')
+  const [vacancyId, setVacancyId] = useState(derivedVacancyId)
+  const [applicationId, setApplicationId] = useState(derivedApplicationId)
   // Default the interviewer to the current user (a team member) so an
   // interview is never left implicitly unassigned — and never the candidate.
   const [interviewerId, setInterviewerId] = useState(defaultInterviewerId || '')
   const [scheduledDate, setScheduledDate] = useState('')
-  const [scheduledTime, setScheduledTime] = useState('')
+  // Default to a business-hour slot, not the arbitrary current minute (#2).
+  const [scheduledTime, setScheduledTime] = useState(defaultBusinessTime)
   const [duration, setDuration] = useState(60)
   const [type, setType] = useState<InterviewType>('video')
 
-  // Meeting options: 'manual' | 'google_meet' | 'zoom' | 'teams'
-  const [meetingOption, setMeetingOption] = useState<'manual' | 'google_meet' | 'zoom' | 'teams'>('manual')
+  // Meeting options: prefer an auto link when a calendar is connected (#5).
+  const [meetingOption, setMeetingOption] = useState<'manual' | 'google_meet' | 'zoom' | 'teams'>(
+    () => defaultMeetingOption(hasGoogleCalendar, hasZoom, hasMicrosoft),
+  )
   const [manualMeetingLink, setManualMeetingLink] = useState('')
   const [sendInvitation, setSendInvitation] = useState(false)
 
@@ -127,6 +156,20 @@ export function InterviewForm({
   )
 
   const candidateHasEmail = !!selectedCandidate?.email
+
+  // The interviewer is always a team member, never the candidate. Candidates
+  // aren't in `teamMembers` to begin with; this also drops an internal
+  // applicant (a team member whose email matches the selected candidate) so
+  // you can't pick the interviewee as their own interviewer (#1).
+  const interviewerMembers = useMemo(() => {
+    const candEmail = selectedCandidate?.email?.trim().toLowerCase()
+    if (!candEmail) return teamMembers
+    return teamMembers.filter((m) => (m.email ?? '').trim().toLowerCase() !== candEmail)
+  }, [teamMembers, selectedCandidate])
+
+  // Lock the vacancy (show it read-only) when we arrived from a candidate and
+  // there's a single role to interview for — no redundant picker (#3).
+  const lockVacancy = candidateFirst && !!vacancyId && availableVacancies.length <= 1
 
   const handleCandidateChange = (id: string) => {
     setCandidateId(id)
@@ -279,44 +322,57 @@ export function InterviewForm({
           <div className="flex-1 space-y-5 p-5 sm:p-6">
             <div className="space-y-2">
               <Label htmlFor="candidate">Candidate *</Label>
-              <SearchableSelect
-                id="candidate"
-                value={candidateId}
-                onValueChange={handleCandidateChange}
-                disabled={isLoading}
-                placeholder="Select a candidate"
-                searchPlaceholder="Search candidates…"
-                emptyText="No candidates found."
-                options={candidates.map((c) => ({
-                  value: c.id,
-                  label: getCandidateFullName(c),
-                  // Keep the raw stored name in the search text too, so typing
-                  // the ALL-CAPS form still matches the title-cased label.
-                  searchText: `${c.first_name} ${c.last_name} ${getCandidateFullName(c)} ${c.email ?? ''}`,
-                  description: c.email ?? undefined,
-                }))}
-              />
+              {candidateFirst && selectedCandidate ? (
+                <LockedField
+                  value={getCandidateFullName(selectedCandidate)}
+                  hint={selectedCandidate.email ?? undefined}
+                />
+              ) : (
+                <SearchableSelect
+                  id="candidate"
+                  value={candidateId}
+                  onValueChange={handleCandidateChange}
+                  disabled={isLoading}
+                  placeholder="Select a candidate"
+                  searchPlaceholder="Search candidates…"
+                  emptyText="No candidates found."
+                  options={candidates.map((c) => ({
+                    value: c.id,
+                    label: getCandidateFullName(c),
+                    // Keep the raw stored name in the search text too, so typing
+                    // the ALL-CAPS form still matches the title-cased label.
+                    searchText: `${c.first_name} ${c.last_name} ${getCandidateFullName(c)} ${c.email ?? ''}`,
+                    description: c.email ?? undefined,
+                  }))}
+                />
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="vacancy">Vacancy *</Label>
-              <SearchableSelect
-                id="vacancy"
-                value={vacancyId}
-                onValueChange={handleVacancyChange}
-                disabled={isLoading || !candidateId}
-                placeholder={candidateId ? 'Select a vacancy' : 'Select candidate first'}
-                searchPlaceholder="Search vacancies…"
-                emptyText="No vacancies found."
-                options={availableVacancies.map((v) => ({
-                  value: v.id,
-                  label: v.title,
-                  searchText: v.title,
-                }))}
-              />
-              <p className="text-xs text-muted-foreground">
-                Only vacancies this candidate is being considered for are shown.
-              </p>
+              {lockVacancy ? (
+                <LockedField value={selectedVacancyTitle ?? 'Derived from candidate'} />
+              ) : (
+                <>
+                  <SearchableSelect
+                    id="vacancy"
+                    value={vacancyId}
+                    onValueChange={handleVacancyChange}
+                    disabled={isLoading || !candidateId}
+                    placeholder={candidateId ? 'Select a vacancy' : 'Select candidate first'}
+                    searchPlaceholder="Search vacancies…"
+                    emptyText="No vacancies found."
+                    options={availableVacancies.map((v) => ({
+                      value: v.id,
+                      label: v.title,
+                      searchText: v.title,
+                    }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Only vacancies this candidate is being considered for are shown.
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Type — segmented control per design */}
@@ -400,7 +456,7 @@ export function InterviewForm({
                 emptyText="No matching team members."
                 options={[
                   { value: 'none', label: 'Not assigned' },
-                  ...teamMembers.map((m) => ({
+                  ...interviewerMembers.map((m) => ({
                     value: m.id,
                     label: m.full_name,
                     searchText: m.full_name,
@@ -581,6 +637,23 @@ function TypeSegment({
       <Icon className="h-4 w-4" aria-hidden />
       {label}
     </button>
+  )
+}
+
+/** Read-only field — used to show a derived/locked value (candidate, vacancy)
+ * with a small lock affordance, styled like a disabled input. */
+function LockedField({ value, hint }: { value: string; hint?: string }) {
+  return (
+    <div className="flex h-10 items-center gap-2 rounded-md border border-border bg-muted/40 px-3 text-sm">
+      <span className="truncate font-medium text-foreground">{value}</span>
+      {hint && (
+        <span className="ml-auto shrink-0 truncate text-xs text-muted-foreground">{hint}</span>
+      )}
+      <Lock
+        className={cn('h-3.5 w-3.5 shrink-0 text-muted-foreground', hint ? '' : 'ml-auto')}
+        aria-hidden
+      />
+    </div>
   )
 }
 
