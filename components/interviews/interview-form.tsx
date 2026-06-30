@@ -20,7 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
 import { cn } from '@/lib/utils'
 import { toDisplayFullName } from '@/lib/format-name'
-import { defaultBusinessTime } from '@/lib/interviews/default-time'
+import { nextBusinessSlot } from '@/lib/interviews/default-time'
 import { Calendar, Loader2, Lock, Mail, MapPin, Phone, Video } from 'lucide-react'
 import type { InterviewType } from '@/lib/types'
 
@@ -126,9 +126,11 @@ export function InterviewForm({
   // Default the interviewer to the current user (a team member) so an
   // interview is never left implicitly unassigned — and never the candidate.
   const [interviewerId, setInterviewerId] = useState(defaultInterviewerId || '')
-  const [scheduledDate, setScheduledDate] = useState('')
-  // Default to a business-hour slot, not the arbitrary current minute (#2).
-  const [scheduledTime, setScheduledTime] = useState(defaultBusinessTime)
+  // Default date + time to the next business-day slot (a real future weekday
+  // time), not an empty date or the arbitrary current minute.
+  const [initialSlot] = useState(nextBusinessSlot)
+  const [scheduledDate, setScheduledDate] = useState(initialSlot.date)
+  const [scheduledTime, setScheduledTime] = useState(initialSlot.time)
   const [duration, setDuration] = useState(60)
   const [type, setType] = useState<InterviewType>('video')
 
@@ -412,6 +414,7 @@ export function InterviewForm({
                   onChange={(v) => setScheduledDate(v ?? '')}
                   placeholder="Pick date"
                   disabled={isLoading}
+                  disablePast
                   fromYear={new Date().getFullYear()}
                   toYear={new Date().getFullYear() + 3}
                 />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { format, parseISO, isValid } from 'date-fns'
+import { format, parseISO, isValid, startOfToday } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,8 @@ interface DatePickerProps {
   placeholder?: string
   className?: string
   disabled?: boolean
+  /** Disable (grey out) every day before today — e.g. interview scheduling. */
+  disablePast?: boolean
   fromYear?: number
   toYear?: number
 }
@@ -24,6 +26,7 @@ export function DatePicker({
   placeholder = 'Pick a date',
   className,
   disabled,
+  disablePast,
   fromYear = 1950,
   toYear = 2040,
 }: DatePickerProps) {
@@ -60,6 +63,7 @@ export function DatePicker({
           captionLayout="dropdown"
           startMonth={new Date(fromYear, 0)}
           endMonth={new Date(toYear, 11)}
+          disabled={disablePast ? { before: startOfToday() } : undefined}
           autoFocus
         />
       </PopoverContent>
