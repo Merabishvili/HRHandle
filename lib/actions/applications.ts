@@ -16,7 +16,6 @@ import { createOrgNotifications } from '@/lib/actions/notifications'
 import {
   MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE,
   APPLICATION_STATUS,
-  ACTIVE_APPLICATION_STATUS_CODES,
   CANDIDATE_STATUS,
 } from '@/lib/types/constants'
 import {
@@ -31,11 +30,18 @@ import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
  * `!inner` and on PostgREST's join inference). This predicate normalises both
  * shapes to a single object so callers can branchlessly compare `.code`.
  */
-function unwrapStatusRelation<T extends { code: string }>(
-  rel: T | T[] | null | undefined
-): T | null {
+/** Normalises an embedded relation (PostgREST returns a single joined row as
+ * either an object or a one-element array depending on join inference). */
+function unwrapRelation<T>(rel: T | T[] | null | undefined): T | null {
   if (!rel) return null
   return Array.isArray(rel) ? rel[0] ?? null : rel
+}
+
+/** Shape of the embedded pipeline_stages row used for bucket-mapping. */
+type StageRelation = {
+  type: 'standard' | 'review' | 'interview' | 'offer'
+  name: string
+  is_terminal: boolean
 }
 
 export async function updateApplicationStatus(
@@ -48,9 +54,16 @@ export async function updateApplicationStatus(
   // Fetch application to get candidate_id + previous status code + sort_order for audit log
   // and the auto-email forward-direction gate. Wave 2.6 Slice 1: also
   // pull vacancy_id so we can resolve the per-vacancy pipeline_stages row.
+  // Wave 2.6 Slice 4 — applications.status_id is gone (Migration 051), so the
+  // previous status is derived from the joined pipeline_stages row, bucket-
+  // mapped back to a canonical code. Selecting the dropped status_id here was
+  // making this query fail and the whole action no-op ("Application not
+  // found") — breaking every status change (board DnD, Review, candidate page).
   const { data: application } = await ctx.supabase
     .from('applications')
-    .select('id, candidate_id, vacancy_id, status_id, application_statuses ( code, sort_order )')
+    .select(
+      'id, candidate_id, vacancy_id, pipeline_stage_id, pipeline_stages ( type, name, is_terminal )',
+    )
     .eq('id', applicationId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
@@ -58,14 +71,25 @@ export async function updateApplicationStatus(
 
   if (!application) return { success: false, error: 'Application not found' }
 
-  type StatusJoin =
-    | { code: string; sort_order: number }
-    | { code: string; sort_order: number }[]
+  type StageJoin =
+    | { type: 'standard' | 'review' | 'interview' | 'offer'; name: string; is_terminal: boolean }
+    | { type: 'standard' | 'review' | 'interview' | 'offer'; name: string; is_terminal: boolean }[]
     | null
-  const beforeJoin = application.application_statuses as StatusJoin
-  const beforeRow = Array.isArray(beforeJoin) ? beforeJoin[0] : beforeJoin
-  const beforeCode = beforeRow?.code
-  const beforeSortOrder = beforeRow?.sort_order ?? null
+  const beforeStageJoin = application.pipeline_stages as StageJoin
+  const beforeStageRow = Array.isArray(beforeStageJoin) ? beforeStageJoin[0] : beforeStageJoin
+  const beforeCode = beforeStageRow ? mapPipelineStageToBucket(beforeStageRow) : undefined
+
+  // sort_order for the forward-email direction gate comes from the canonical
+  // application_statuses row matching the bucket code.
+  let beforeSortOrder: number | null = null
+  if (beforeCode) {
+    const { data: beforeStatusRow } = await ctx.supabase
+      .from('application_statuses')
+      .select('sort_order')
+      .eq('code', beforeCode)
+      .single()
+    beforeSortOrder = beforeStatusRow?.sort_order ?? null
+  }
 
   // Look up the new status's code so we can resolve the matching
   // pipeline_stages row by name in this vacancy. (Pulled before the
@@ -225,16 +249,17 @@ export async function updateApplicationStatus(
       // Moving away from any stage → check if candidate has any other hired application
       const { data: hiredApps } = await ctx.supabase
         .from('applications')
-        .select('id, application_statuses!inner(code)')
+        .select('id, pipeline_stages ( type, name, is_terminal )')
         .eq('candidate_id', application.candidate_id)
         .eq('organization_id', ctx.orgId)
         .is('deleted_at', null)
         .neq('id', applicationId)
 
-      type AppWithStatus = { id: string; application_statuses: { code: string } | { code: string }[] | null }
-      const hasOtherHired = (hiredApps as AppWithStatus[] || []).some(
-        (a) => unwrapStatusRelation(a.application_statuses)?.code === APPLICATION_STATUS.HIRED
-      )
+      type AppWithStage = { id: string; pipeline_stages: StageRelation | StageRelation[] | null }
+      const hasOtherHired = ((hiredApps as AppWithStage[] | null) ?? []).some((a) => {
+        const row = unwrapRelation(a.pipeline_stages)
+        return row ? mapPipelineStageToBucket(row) === APPLICATION_STATUS.HIRED : false
+      })
 
       if (!hasOtherHired) {
         const activeId = statusMap.get(CANDIDATE_STATUS.ACTIVE)
@@ -437,22 +462,17 @@ export async function createApplication(input: {
     return { success: false, error: 'Only active candidates can be added to a vacancy.' }
   }
 
-  // Resolve active application status IDs
-  const { data: activeStatusesRaw } = await ctx.supabase
-    .from('application_statuses')
-    .select('id, code')
-    .in('code', ACTIVE_APPLICATION_STATUS_CODES)
-
-  const activeStatusIds = (activeStatusesRaw || []).map((s) => s.id)
-
-  // Count existing active applications for this candidate
+  // Count existing active applications for this candidate. Wave 2.6 Slice 4 —
+  // status_id is gone; "active" now means the application's pipeline_stage is
+  // non-terminal (applied / screening / interview / offer), so we count via
+  // the joined pipeline_stages row.
   const { count } = await ctx.supabase
     .from('applications')
-    .select('id', { count: 'exact', head: true })
+    .select('id, pipeline_stages!inner(is_terminal)', { count: 'exact', head: true })
     .eq('candidate_id', input.candidateId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
-    .in('status_id', activeStatusIds)
+    .eq('pipeline_stages.is_terminal', false)
 
   if ((count ?? 0) >= MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE) {
     return {
@@ -525,8 +545,8 @@ export async function withdrawApplicationByToken(
   const { data: app, error: appErr } = await admin
     .from('applications')
     .select(
-      `id, candidate_id, vacancy_id, status_id, organization_id, deleted_at,
-       application_statuses ( code )`,
+      `id, candidate_id, vacancy_id, organization_id, deleted_at, pipeline_stage_id,
+       pipeline_stages ( type, name, is_terminal )`,
     )
     .eq('public_token', token)
     .maybeSingle()
@@ -538,9 +558,10 @@ export async function withdrawApplicationByToken(
     return { success: false, error: 'Application not found' }
   }
 
-  type StatusJoin = { code: string } | { code: string }[] | null
-  const beforeJoin = app.application_statuses as StatusJoin
-  const beforeCode = Array.isArray(beforeJoin) ? beforeJoin[0]?.code : beforeJoin?.code
+  // Wave 2.6 Slice 4 — previous status derived from the pipeline_stages join
+  // (status_id is gone), bucket-mapped to a canonical code.
+  const beforeStageRow = unwrapRelation(app.pipeline_stages as StageRelation | StageRelation[] | null)
+  const beforeCode = beforeStageRow ? mapPipelineStageToBucket(beforeStageRow) : undefined
 
   // Block self-withdraw from terminal states. `withdrawn` is a no-op success
   // so a double-submit on the candidate UI is harmless; the other terminals
@@ -712,7 +733,7 @@ export async function rejectApplication(input: {
 
   const { data: application } = await ctx.supabase
     .from('applications')
-    .select('id, candidate_id, vacancy_id, status_id')
+    .select('id, candidate_id, vacancy_id')
     .eq('id', input.applicationId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
@@ -766,16 +787,17 @@ export async function rejectApplication(input: {
 
   const { data: hiredApps } = await ctx.supabase
     .from('applications')
-    .select('id, application_statuses!inner(code)')
+    .select('id, pipeline_stages ( type, name, is_terminal )')
     .eq('candidate_id', application.candidate_id)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .neq('id', input.applicationId)
 
-  type AppWithStatus = { id: string; application_statuses: { code: string } | { code: string }[] | null }
-  const hasOtherHired = (hiredApps as AppWithStatus[] || []).some(
-    (a) => unwrapStatusRelation(a.application_statuses)?.code === APPLICATION_STATUS.HIRED
-  )
+  type AppWithStage = { id: string; pipeline_stages: StageRelation | StageRelation[] | null }
+  const hasOtherHired = ((hiredApps as AppWithStage[] | null) ?? []).some((a) => {
+    const row = unwrapRelation(a.pipeline_stages)
+    return row ? mapPipelineStageToBucket(row) === APPLICATION_STATUS.HIRED : false
+  })
 
   if (!hasOtherHired) {
     const { data: candidate } = await ctx.supabase

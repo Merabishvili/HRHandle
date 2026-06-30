@@ -207,8 +207,10 @@ export function CrossVacancyBoard({
             applicationId: a.id,
             candidateId: a.candidate_id,
             name: `${a.first_name} ${a.last_name}`.trim(),
+            vacancyTitle: a.vacancy_title,
             code: status.code,
             reason: a.rejection_reason,
+            inStageSince: a.last_status_changed_at ?? a.applied_at,
           }
         })
         .filter((c): c is NonNullable<typeof c> => c !== null),
@@ -546,6 +548,8 @@ export function CrossVacancyBoard({
               <TerminalRail
                 terminals={terminalCounts}
                 closed={closedCandidates}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
                 overStatusId={overId}
                 isDragging={!!activeApp}
               />
