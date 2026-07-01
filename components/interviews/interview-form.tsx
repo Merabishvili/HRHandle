@@ -405,8 +405,9 @@ export function InterviewForm({
               </div>
             </div>
 
-            {/* Date / Time / Duration */}
-            <div className="grid gap-4 sm:grid-cols-3">
+            {/* Date / Time / Duration — Date gets extra width so the full
+                "Mon d, yyyy" label isn't cramped against the calendar icon. */}
+            <div className="grid gap-4 sm:grid-cols-[1.4fr_1fr_1fr]">
               <div className="space-y-2">
                 <Label>Date *</Label>
                 <DatePicker
