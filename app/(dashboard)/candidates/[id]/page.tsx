@@ -504,6 +504,32 @@ export default async function CandidateDetailPage({
   const recentMergeRes = await getRecentMerge(candidate.id)
   const recentMerge = recentMergeRes.success ? recentMergeRes.data : null
 
+  // Open/draft vacancies the candidate isn't already active on — feeds the
+  // "Add to Vacancy" dialog (previously hardcoded to an empty list, so it
+  // always claimed there were none).
+  const activeVacancyIds = new Set(activeApplications.map((a) => a.vacancyId))
+  const { data: openVacanciesRaw } = await supabase
+    .from('vacancies')
+    .select('id, title, department, vacancy_statuses ( code )')
+    .eq('organization_id', organizationId)
+    .is('archived_at', null)
+    .is('deleted_at', null)
+    .order('title', { ascending: true })
+
+  const availableVacancies = (
+    (openVacanciesRaw ?? []) as {
+      id: string
+      title: string
+      department: string | null
+      vacancy_statuses: { code: string } | { code: string }[] | null
+    }[]
+  )
+    .filter((v) => {
+      const rel = Array.isArray(v.vacancy_statuses) ? v.vacancy_statuses[0] : v.vacancy_statuses
+      return (rel?.code === 'open' || rel?.code === 'draft') && !activeVacancyIds.has(v.id)
+    })
+    .map((v) => ({ id: v.id, title: v.title, department: v.department }))
+
   return (
     <CandidateProfileShell
       candidate={{
@@ -530,6 +556,7 @@ export default async function CandidateDetailPage({
       organizationId={organizationId}
       currentUserId={user.id}
       currentUserName={profile.full_name ?? null}
+      availableVacancies={availableVacancies}
       activeApplications={activeApplications}
       closedHistoryRows={closedHistoryRows}
       repeatSummary={repeatSummary}

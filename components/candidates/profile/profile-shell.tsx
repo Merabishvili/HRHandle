@@ -74,6 +74,9 @@ interface ProfileShellProps {
   organizationId: string
   currentUserId: string
   currentUserName: string | null
+  /** Open/draft vacancies the candidate can be added to (excludes ones they
+   * are already active on) — feeds the "Add to Vacancy" dialog. */
+  availableVacancies: { id: string; title: string; department: string | null }[]
   /** All active (non-terminal) applications for this candidate — the
    * selector + contextual block read from this. */
   activeApplications: {
@@ -157,6 +160,7 @@ export function CandidateProfileShell({
   organizationId: _organizationId,
   currentUserId,
   currentUserName,
+  availableVacancies,
   activeApplications,
   closedHistoryRows,
   repeatSummary,
@@ -271,7 +275,7 @@ export function CandidateProfileShell({
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <AddApplicationDialog
               candidateId={candidate.id}
-              availableVacancies={[]}
+              availableVacancies={availableVacancies}
               activeApplicationCount={activeApplications.length}
             />
             <Button asChild variant="outline" size="sm" className="h-9 gap-1.5">
