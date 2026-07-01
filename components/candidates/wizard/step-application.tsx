@@ -3,6 +3,7 @@
 import { AlertTriangle } from 'lucide-react'
 
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -33,6 +34,9 @@ interface StepApplicationProps {
   /** Set when the email entered in Step 1 already belongs to an
    * existing candidate in the same org. Shows the inline warning. */
   duplicate: { candidateId: string; candidateName: string } | null
+  /** Merged Notes section (Source + Notes are one step now). */
+  note: string
+  onNoteChange: (next: string) => void
 }
 
 const SOURCES = ['LinkedIn', 'Indeed', 'Referral', 'Company Website', 'Job Board', 'Other'] as const
@@ -56,6 +60,8 @@ export function StepApplication({
   vacancies,
   stages,
   duplicate,
+  note,
+  onNoteChange,
 }: StepApplicationProps) {
   const set = <K extends keyof ApplicationState>(key: K, v: ApplicationState[K]) => {
     onChange({ ...value, [key]: v })
@@ -113,7 +119,7 @@ export function StepApplication({
       {value.vacancyId && (
         <div>
           <Label className="text-[11.5px] font-medium text-muted-foreground">
-            Starting stage <NewTag />
+            Starting stage
           </Label>
           <div className="mt-1.5 flex flex-wrap gap-2">
             {stages.map((stage) => {
@@ -159,11 +165,28 @@ export function StepApplication({
             >
               {duplicate.candidateName}
             </a>
-            . Review &amp; merge before adding.{' '}
-            <NewTag />
+            . Review &amp; merge before adding.
           </p>
         </div>
       )}
+
+      {/* Notes (merged into this step) */}
+      <div className="h-px bg-[oklch(0.93_0.01_250)]" />
+      <div>
+        <h2 className="text-[15px] font-bold text-foreground">
+          Notes <span className="text-[12px] font-normal text-muted-foreground">· optional</span>
+        </h2>
+        <Textarea
+          value={note}
+          onChange={(e) => onNoteChange(e.target.value)}
+          placeholder="Add an initial note about this candidate…"
+          rows={4}
+          maxLength={2000}
+          className="mt-2"
+          aria-label="Initial note"
+        />
+        <p className="mt-1 text-right text-[11px] text-muted-foreground/80">{note.length} / 2000</p>
+      </div>
     </div>
   )
 }
@@ -184,13 +207,5 @@ function Field({
       </Label>
       {children}
     </div>
-  )
-}
-
-function NewTag() {
-  return (
-    <span className="ml-1 rounded bg-[oklch(0.93_0.07_155)] px-1.5 py-0.5 text-[10px] font-bold uppercase text-[oklch(0.36_0.14_150)]">
-      NEW
-    </span>
   )
 }

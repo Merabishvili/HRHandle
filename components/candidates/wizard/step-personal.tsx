@@ -1,11 +1,10 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useRef, useTransition } from 'react'
 import { FileText, Loader2, Upload, X } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { AiDraftTag } from '@/components/ui/ai-draft-tag'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -45,11 +44,8 @@ interface StepPersonalProps {
  *
  * Header bar (CV mode): drop zone → parsing spinner → "AI-filled ·
  * review" banner once parse succeeds. Below: the standard personal
- * fields, prefilled when parse completed.
- *
- * The "Removed: General Status dropdown" callout is rendered after
- * the name row so the recruiter sees it before they look for the
- * dropdown that used to live there.
+ * fields, prefilled when parse completed. (There is no General Status
+ * field — status is derived from the application stage.)
  */
 export function StepPersonal({
   value,
@@ -181,14 +177,6 @@ export function StepPersonal({
         </Field>
       </div>
 
-      <div className="rounded-[10px] border border-[oklch(0.86_0.05_27)] bg-[oklch(0.995_0.01_20)] px-3.5 py-3 text-[12.5px] leading-[1.45] text-[oklch(0.4_0.06_30)]">
-        <strong className="text-[oklch(0.5_0.19_27)]">
-          Removed: the &ldquo;General Status&rdquo; dropdown.
-        </strong>{' '}
-        Status is now <strong className="text-foreground">derived from the application stage</strong>{' '}
-        — no more setting &ldquo;Active&rdquo; by hand.
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2">
         <Field id="email" label="Email">
           <Input
@@ -243,7 +231,7 @@ export function StepPersonal({
             id="salary_expectation"
             value={value.salaryExpectation}
             onChange={(e) => set('salaryExpectation', e.target.value)}
-            placeholder="e.g. $4,500 / mo"
+            placeholder="e.g. USD 3,000 / mo"
             maxLength={50}
           />
         </Field>

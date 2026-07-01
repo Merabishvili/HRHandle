@@ -20,7 +20,7 @@ import {
   type BackgroundState,
 } from './step-experience-education'
 import { StepApplication, type ApplicationState } from './step-application'
-import { StepNotes, type NotesState } from './step-notes'
+import { StepReview } from './step-review'
 import type {
   ParsedCVInput,
   ExperienceEntryInput,
@@ -28,7 +28,7 @@ import type {
 } from '@/lib/validations/candidate-background'
 import type { ApplicationStatus } from '@/lib/types/application'
 
-type StepId = 'path' | 'personal' | 'background' | 'application' | 'notes'
+type StepId = 'path' | 'personal' | 'background' | 'application' | 'review'
 
 interface CandidateCreateWizardProps {
   vacancies: { id: string; title: string }[]
@@ -95,7 +95,7 @@ export function CandidateCreateWizard({
     vacancyId: defaultVacancyId ?? null,
     startingStageCode: 'applied',
   })
-  const [notes, setNotes] = useState<NotesState>({ initialNote: '' })
+  const [note, setNote] = useState('')
 
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [parsedFromCv, setParsedFromCv] = useState(false)
@@ -192,7 +192,7 @@ export function CandidateCreateWizard({
       vacancyId: defaultVacancyId ?? null,
       startingStageCode: 'applied',
     })
-    setNotes({ initialNote: '' })
+    setNote('')
     setCvFile(null)
     setParsedFromCv(false)
     setDuplicate(null)
@@ -251,8 +251,8 @@ export function CandidateCreateWizard({
         await bulkCreateEducationEntries(candidateId, background.education)
       }
 
-      if (notes.initialNote.trim()) {
-        await createNote(candidateId, notes.initialNote.trim())
+      if (note.trim()) {
+        await createNote(candidateId, note.trim())
       }
 
       if (addAnother) {
@@ -372,17 +372,29 @@ export function CandidateCreateWizard({
           vacancies={vacancies}
           stages={startingStages.map((s) => ({ code: s.code, name: s.name }))}
           duplicate={duplicate}
+          note={note}
+          onNoteChange={setNote}
         />
       )}
-      {currentStep === 'notes' && <StepNotes value={notes} onChange={setNotes} />}
+      {currentStep === 'review' && (
+        <StepReview
+          personal={personal}
+          application={application}
+          background={background}
+          note={note}
+          vacancies={vacancies}
+          stages={startingStages.map((s) => ({ code: s.code, name: s.name }))}
+          onEditStep={setCurrentStep}
+        />
+      )}
     </WizardShell>
   )
 }
 
 /**
- * Step list. Path tile gets a small "AI" tag when CV mode is selected,
- * Application step always gets the NEW callout for the starting stage
- * picker so the recruiter knows the redesign added something there.
+ * Step list. The Path tile shows a muted sub-label of the chosen entry mode
+ * (Manual / AI prefill); the final Review step is where the candidate is
+ * committed.
  */
 function useStepDefs(entryMode: EntryMode | null) {
   const tagForPath = entryMode === 'cv' ? 'AI prefill' : entryMode === 'manual' ? 'Manual' : undefined
@@ -390,7 +402,7 @@ function useStepDefs(entryMode: EntryMode | null) {
     { id: 'path' as const, number: 1, label: 'Choose path', tag: tagForPath },
     { id: 'personal' as const, number: 2, label: 'Personal' },
     { id: 'background' as const, number: 3, label: 'Experience & education' },
-    { id: 'application' as const, number: 4, label: 'Application & source', tag: 'NEW · starting stage' },
-    { id: 'notes' as const, number: 5, label: 'Notes', tag: 'Optional' },
+    { id: 'application' as const, number: 4, label: 'Application & notes' },
+    { id: 'review' as const, number: 5, label: 'Review' },
   ]
 }
