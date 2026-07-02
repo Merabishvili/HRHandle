@@ -14,6 +14,8 @@ import type { ApplicationStatus } from '@/lib/types/application'
 interface RailActionsProps {
   applicationId: string
   candidateId: string
+  /** Candidate email — pre-fills the "Email" mailto recipient. */
+  candidateEmail: string | null
   /** Next non-terminal stage the candidate should advance to (used as the
    * primary action's label and target). Null when the current stage is
    * already the last active stage. */
@@ -34,6 +36,7 @@ interface RailActionsProps {
 export function RailActions({
   applicationId,
   candidateId,
+  candidateEmail,
   nextStage,
   onReject,
 }: RailActionsProps) {
@@ -83,7 +86,11 @@ export function RailActions({
           <Calendar className="h-3.5 w-3.5" aria-hidden />
           Schedule
         </SecondaryRailButton>
-        <SecondaryRailButton href={`mailto:`}>
+        <SecondaryRailButton
+          href={candidateEmail ? `mailto:${candidateEmail}` : 'mailto:'}
+          disabled={!candidateEmail}
+          title={candidateEmail ? undefined : 'No email on file for this candidate'}
+        >
           <Mail className="h-3.5 w-3.5" aria-hidden />
           Email
         </SecondaryRailButton>
@@ -106,15 +113,29 @@ export function RailActions({
 function SecondaryRailButton({
   href,
   children,
+  disabled,
+  title,
 }: {
   href: string
   children: React.ReactNode
+  disabled?: boolean
+  title?: string
 }) {
+  const cls =
+    'flex items-center justify-center gap-1 rounded-[9px] border border-[oklch(0.88_0.01_250)] py-2 text-[12px] font-semibold text-foreground transition-colors hover:bg-muted'
+  if (disabled) {
+    return (
+      <span
+        title={title}
+        aria-disabled="true"
+        className={cn(cls, 'cursor-not-allowed opacity-50 hover:bg-transparent')}
+      >
+        {children}
+      </span>
+    )
+  }
   return (
-    <Link
-      href={href}
-      className="flex items-center justify-center gap-1 rounded-[9px] border border-[oklch(0.88_0.01_250)] py-2 text-[12px] font-semibold text-foreground transition-colors hover:bg-muted"
-    >
+    <Link href={href} title={title} className={cls}>
       {children}
     </Link>
   )

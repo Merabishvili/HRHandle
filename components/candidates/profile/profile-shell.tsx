@@ -384,6 +384,7 @@ export function CandidateProfileShell({
                 <RailActions
                   applicationId={selectedApp.id}
                   candidateId={candidate.id}
+                  candidateEmail={candidate.email}
                   nextStage={nextStage}
                   onReject={triggerReject}
                 />
@@ -447,6 +448,7 @@ export function CandidateProfileShell({
                 <RailActions
                   applicationId={selectedApp.id}
                   candidateId={candidate.id}
+                  candidateEmail={candidate.email}
                   nextStage={nextStage}
                   onReject={triggerReject}
                 />

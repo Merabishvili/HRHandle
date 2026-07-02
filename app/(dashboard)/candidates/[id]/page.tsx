@@ -267,9 +267,17 @@ export default async function CandidateDetailPage({
     return { id: row.id, name: row.name, code: canonical as ApplicationStatus['code'] }
   }
 
-  // Partition into active (selector + contextual block) vs closed (history)
+  // Partition into active (selector + contextual block) vs closed (history).
+  // An application with no pipeline_stage yet (pipeline_stage_id NULL) still
+  // belongs in the active list — fall back to the first active stage ("Applied")
+  // instead of silently dropping it (that hid a whole linked vacancy).
+  const fallbackStage = sortedActiveStages[0]
   const activeApplications = applications.flatMap((a) => {
-    const stage = resolveStage(a)
+    const stage =
+      resolveStage(a) ??
+      (fallbackStage
+        ? { id: fallbackStage.id, name: fallbackStage.name, code: fallbackStage.code }
+        : null)
     if (!stage || TERMINAL_CODES.has(stage.code)) return []
     const vacancy = vacancyMap.get(a.vacancy_id)
     if (!vacancy) return []

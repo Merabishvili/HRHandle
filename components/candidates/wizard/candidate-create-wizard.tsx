@@ -12,6 +12,7 @@ import {
   bulkCreateEducationEntries,
 } from '@/lib/actions/candidate-background'
 import { createNote } from '@/lib/actions/notes'
+import { uploadDocument } from '@/lib/actions/documents'
 import { WizardShell } from '@/components/vacancies/wizard/wizard-shell'
 import { StepPathSelect, type EntryMode } from './step-path-select'
 import { StepPersonal, type PersonalState } from './step-personal'
@@ -242,6 +243,19 @@ export function CandidateCreateWizard({
         return
       }
       const candidateId = result.data.id
+
+      // Persist the uploaded CV as a document so it appears under Documents on
+      // the profile (it was only used for field prefill before, then dropped).
+      if (cvFile) {
+        const fd = new FormData()
+        fd.append('file', cvFile)
+        fd.append('document_type', 'cv')
+        const upload = await uploadDocument(candidateId, fd)
+        if (!upload.success) {
+          console.error('[wizard] CV document upload failed:', upload.error)
+          toast.warning('Candidate saved, but the CV file could not be attached.')
+        }
+      }
 
       // Background entries — server actions skip empty rows internally.
       if (background.experience.length > 0) {
