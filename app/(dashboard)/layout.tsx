@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { runOnboarding } from '@/lib/onboarding'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/header'
+import { NavigationLoader } from '@/components/navigation/navigation-loader'
 import { SessionGuard } from '@/components/auth/session-guard'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
 
@@ -297,7 +298,9 @@ export default async function DashboardLayout({
           subscription={subscription}
         />
 
-        <main id="dashboard-main" tabIndex={-1} className="min-w-0 flex-1 p-4 lg:p-8">{children}</main>
+        <main id="dashboard-main" tabIndex={-1} className="min-w-0 flex-1 p-4 lg:p-8">
+          <NavigationLoader>{children}</NavigationLoader>
+        </main>
         <SessionGuard />
         <PostHogIdentify userId={user.id} orgId={profile.organization_id} role={profile.role} />
       </div>
