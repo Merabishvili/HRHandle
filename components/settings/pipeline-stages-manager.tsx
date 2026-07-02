@@ -109,6 +109,19 @@ const STANDARD_META = TYPE_META[0]!
 const typeMeta = (t: PipelineStageType): TypeMeta =>
   TYPE_META.find((m) => m.key === t) ?? STANDARD_META
 
+/** The built-in default set every new vacancy uses when the org hasn't saved
+ * a custom template. Shown read-only in the empty state so the "view" isn't
+ * blank, and reused by "Use defaults". */
+const DEFAULT_STAGE_PREVIEW: { name: string; type: PipelineStageType; is_terminal: boolean }[] = [
+  { name: 'Applied', type: 'standard', is_terminal: false },
+  { name: 'Screening', type: 'review', is_terminal: false },
+  { name: 'Interview', type: 'interview', is_terminal: false },
+  { name: 'Offer', type: 'offer', is_terminal: false },
+  { name: 'Hired', type: 'standard', is_terminal: true },
+  { name: 'Rejected', type: 'standard', is_terminal: true },
+  { name: 'Withdrawn', type: 'standard', is_terminal: true },
+]
+
 export function PipelineStagesManager({ initialStages }: Props) {
   const [stages, setStages] = useState<OrgPipelineStageTemplate[]>(initialStages)
   const [addOpen, setAddOpen] = useState(false)
@@ -215,10 +228,33 @@ export function PipelineStagesManager({ initialStages }: Props) {
     <div className="space-y-4">
       {stages.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
-          <p className="text-sm font-semibold text-foreground">No custom stages yet</p>
+          <p className="text-sm font-semibold text-foreground">Using the built-in default set</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            New vacancies use the built-in default set. Seed it here as a starting point you can edit.
+            New vacancies start with these stages. Seed them here to customise the set (rename,
+            reorder, add up to 10).
           </p>
+          {/* Read-only preview so the view always shows the actual stages. */}
+          <ul className="mx-auto mt-4 flex max-w-md flex-col gap-1.5 text-left">
+            {DEFAULT_STAGE_PREVIEW.map((s) => {
+              const meta = typeMeta(s.type)
+              return (
+                <li
+                  key={s.name}
+                  className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2"
+                >
+                  <span className="text-[13px] font-medium text-foreground">{s.name}</span>
+                  <span className={cn('rounded px-1.5 py-0.5 text-[10.5px] font-semibold', meta.pillBg, meta.pillText)}>
+                    {meta.label}
+                  </span>
+                  {s.is_terminal && (
+                    <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                      Terminal
+                    </span>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
           <div className="mt-4 flex items-center justify-center gap-2">
             <Button
               type="button"
