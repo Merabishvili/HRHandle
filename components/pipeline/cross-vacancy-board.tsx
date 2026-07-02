@@ -170,6 +170,7 @@ export function CrossVacancyBoard({
         appliedAt: a.applied_at,
         stageCode: status?.code ?? activeStatuses[0]?.code ?? 'applied',
         fitScore: a.fit_score,
+        rejectionReason: a.rejection_reason,
       }
     })
   }, [filteredApplications, statusById, activeStatuses])
@@ -573,6 +574,7 @@ export function CrossVacancyBoard({
                       activeStatuses[0]?.code ??
                       'applied',
                     fitScore: activeApp.fit_score,
+                    rejectionReason: activeApp.rejection_reason,
                   }}
                   selected={false}
                   onToggleSelect={() => {}}

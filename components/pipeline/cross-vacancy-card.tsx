@@ -41,6 +41,9 @@ export interface CrossVacancyCardData {
   /** 0–10 fit score from the most recent candidate_evaluation. Optional;
    * surfaced when present, hidden otherwise. */
   fitScore: number | null
+  /** Rejection reason name (rejected cards only) — shown in the List view's
+   * Closed section. */
+  rejectionReason: string | null
 }
 
 interface CrossVacancyCardProps {
