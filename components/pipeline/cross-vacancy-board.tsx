@@ -526,7 +526,7 @@ export function CrossVacancyBoard({
               the whole board scrolls sideways together as a single row. The
               main content column is min-w-0, so this row overflows and scrolls
               within the page instead of clipping. */}
-          <div className="flex items-start gap-3 overflow-x-auto pb-2">
+          <div className="flex items-stretch gap-3 overflow-x-auto pb-2">
             {columnStatuses.map((status) => (
               <TintedKanbanColumn
                 key={status.id}

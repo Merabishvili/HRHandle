@@ -61,7 +61,7 @@ export function TintedKanbanColumn({
 
       <div
         ref={setNodeRef}
-        className={cn('flex min-h-[140px] flex-col gap-2 rounded-md p-0.5')}
+        className={cn('flex min-h-[140px] flex-1 flex-col gap-2 rounded-md p-0.5')}
       >
         <SortableContext
           items={cards.map((c) => c.applicationId)}
