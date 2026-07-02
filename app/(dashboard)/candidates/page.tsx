@@ -192,7 +192,11 @@ export default async function CandidatesPage({
       baseQuery = baseQuery.in('id', candidateIdsForFilter)
     }
 
-    let sortedQuery = baseQuery.order('created_at', { ascending: false })
+    // Apply the sort exactly once. Supabase's `.order()` mutates the builder
+    // and returns it, so pre-seeding a default order here and then calling
+    // `.order()` again in a case would append a SECOND clause — leaving the
+    // pre-seeded one as the primary sort (why "Oldest first" never worked).
+    let sortedQuery
     switch (sort) {
       case 'created_asc':
         sortedQuery = baseQuery.order('created_at', { ascending: true })
@@ -210,6 +214,8 @@ export default async function CandidatesPage({
           .order('candidate_statuses(sort_order)', { ascending: true, nullsFirst: false })
           .order('created_at', { ascending: false })
         break
+      default:
+        sortedQuery = baseQuery.order('created_at', { ascending: false })
     }
     const result = await sortedQuery.range(from, to)
     candidates = (result.data || []) as CandidateRow[]

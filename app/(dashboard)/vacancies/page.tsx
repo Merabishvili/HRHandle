@@ -166,7 +166,10 @@ export default async function VacanciesPage({
     })
     vacancies = sorted.slice(from, to + 1)
   } else {
-    let sortedQuery = baseQuery.order('created_at', { ascending: false })
+    // Apply the sort exactly once — `.order()` mutates + returns the builder,
+    // so pre-seeding a default and then re-ordering in a case would append a
+    // second clause and keep the default as primary (sort appeared broken).
+    let sortedQuery
     switch (sort) {
       case 'created_asc':
         sortedQuery = baseQuery.order('created_at', { ascending: true })
@@ -177,6 +180,8 @@ export default async function VacanciesPage({
       case 'end_desc':
         sortedQuery = baseQuery.order('end_date', { ascending: false, nullsFirst: false })
         break
+      default:
+        sortedQuery = baseQuery.order('created_at', { ascending: false })
     }
     const result = await sortedQuery.range(from, to)
     vacancies = (result.data || []) as VacancyRow[]
