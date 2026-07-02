@@ -39,14 +39,8 @@ export function StepReview({
   stages,
   onEditStep,
 }: StepReviewProps) {
-  // One collapsible open at a time — default to the first non-empty section.
-  const [open, setOpen] = useState<'experience' | 'education' | null>(
-    background.experience.length > 0
-      ? 'experience'
-      : background.education.length > 0
-        ? 'education'
-        : null,
-  )
+  // Both collapsed by default; opening one closes the other (one open at a time).
+  const [open, setOpen] = useState<'experience' | 'education' | null>(null)
 
   const fullName = toDisplayFullName(personal.firstName, personal.lastName) || 'New candidate'
   const initials =
