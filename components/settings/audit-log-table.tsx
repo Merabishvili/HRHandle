@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +9,20 @@ import type { AuditLogRow } from '@/lib/actions/audit-log'
 
 interface AuditLogTableProps {
   rows: AuditLogRow[]
+}
+
+/** Deep-link an audit entry to the underlying record for incident review.
+ * Only entity types with a real detail page are linkable; the rest stay text. */
+function entityHref(entityType: string | null, entityId: string | null): string | null {
+  if (!entityId) return null
+  switch (entityType) {
+    case 'candidate':
+      return `/candidates/${entityId}`
+    case 'vacancy':
+      return `/vacancies/${entityId}`
+    default:
+      return null
+  }
 }
 
 export function AuditLogTable({ rows }: AuditLogTableProps) {
@@ -73,7 +88,21 @@ function Row({ row }: { row: AuditLogRow }) {
             {row.entity_id && (
               <>
                 <br />
-                <span className="font-mono text-[10px] opacity-70">{row.entity_id.slice(0, 8)}…</span>
+                {(() => {
+                  const href = entityHref(row.entity_type, row.entity_id)
+                  const short = `${row.entity_id.slice(0, 8)}…`
+                  return href ? (
+                    <Link
+                      href={href}
+                      className="font-mono text-[10px] text-primary underline-offset-2 hover:underline"
+                      title={`Open ${row.entity_type} record`}
+                    >
+                      {short}
+                    </Link>
+                  ) : (
+                    <span className="font-mono text-[10px] opacity-70">{short}</span>
+                  )
+                })()}
               </>
             )}
           </div>

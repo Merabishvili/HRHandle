@@ -22,6 +22,63 @@ export interface AuditLogFiltersProps {
 }
 
 const USER_NONE = '__none'
+const ANY = '__any'
+
+// The loggable entity + action types (from `writeAuditLog` call sites). Sourced
+// as dropdowns rather than free text so a typo can't silently return zero rows,
+// and so admins can discover what's actually loggable.
+const ENTITY_TYPES = [
+  'application',
+  'candidate',
+  'candidate_evaluation',
+  'integration',
+  'offer',
+  'organization',
+  'profile',
+  'saved_view',
+  'vacancy',
+  'webhook_notification',
+]
+
+const ACTION_TYPES = [
+  'ai_assist',
+  'application_withdrawn',
+  'calendly_connected',
+  'calendly_disconnected',
+  'calendly_link_generated',
+  'candidate_deleted',
+  'candidate_hard_deleted',
+  'candidate_restored',
+  'candidates_imported',
+  'connected',
+  'deletion_scheduled',
+  'disconnected',
+  'interview_canceled',
+  'interview_scheduled',
+  'mfa_admin_reset',
+  'mfa_enrolled',
+  'mfa_policy_updated',
+  'mfa_removed',
+  'offer_accepted',
+  'offer_created',
+  'offer_declined',
+  'offer_sent',
+  'offer_withdrawn',
+  'saved_view_created',
+  'saved_view_deleted',
+  'saved_view_renamed',
+  'saved_view_updated',
+  'scorecard_revoked',
+  'scorecard_shared',
+  'status_change_email_sent',
+  'status_changed',
+  'vacancy_hard_deleted',
+  'vacancy_restored',
+  'webhook_notification_created',
+  'webhook_notification_deleted',
+  'webhook_notification_dispatched',
+  'webhook_notification_updated',
+]
 
 export function AuditLogFilters({
   filter,
@@ -58,12 +115,13 @@ export function AuditLogFilters({
         e.preventDefault()
         const data = new FormData(e.currentTarget)
         const params = new URLSearchParams()
-        const action = data.get('action')?.toString().trim()
-        const entityType = data.get('entityType')?.toString().trim()
+        // action + entityType are controlled Selects (already in the URL via
+        // setParam); only the date inputs are form-submitted, so preserve the
+        // current filter for the rest.
         const from = data.get('from')?.toString().trim()
         const to = data.get('to')?.toString().trim()
-        if (action) params.set('action', action)
-        if (entityType) params.set('entityType', entityType)
+        if (filter.action) params.set('action', filter.action)
+        if (filter.entityType) params.set('entityType', filter.entityType)
         if (filter.userId) params.set('userId', filter.userId)
         if (from) params.set('from', from)
         if (to) params.set('to', to)
@@ -73,23 +131,37 @@ export function AuditLogFilters({
     >
       <div className="space-y-1.5">
         <Label htmlFor="al-action" className="text-xs">Action</Label>
-        <Input
-          id="al-action"
-          name="action"
-          defaultValue={filter.action ?? ''}
-          placeholder="e.g. status_changed"
-          className="h-9 text-sm"
-        />
+        <Select
+          value={filter.action ?? ANY}
+          onValueChange={(v) => setParam('action', v === ANY ? null : v)}
+        >
+          <SelectTrigger id="al-action" className="h-9 text-sm">
+            <SelectValue placeholder="Any action" />
+          </SelectTrigger>
+          <SelectContent className="max-h-72">
+            <SelectItem value={ANY}>Any action</SelectItem>
+            {ACTION_TYPES.map((a) => (
+              <SelectItem key={a} value={a} className="font-mono text-xs">{a}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="al-entity" className="text-xs">Entity type</Label>
-        <Input
-          id="al-entity"
-          name="entityType"
-          defaultValue={filter.entityType ?? ''}
-          placeholder="e.g. candidate"
-          className="h-9 text-sm"
-        />
+        <Select
+          value={filter.entityType ?? ANY}
+          onValueChange={(v) => setParam('entityType', v === ANY ? null : v)}
+        >
+          <SelectTrigger id="al-entity" className="h-9 text-sm">
+            <SelectValue placeholder="Any entity" />
+          </SelectTrigger>
+          <SelectContent className="max-h-72">
+            <SelectItem value={ANY}>Any entity</SelectItem>
+            {ENTITY_TYPES.map((e) => (
+              <SelectItem key={e} value={e} className="font-mono text-xs">{e}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="al-user" className="text-xs">User</Label>
