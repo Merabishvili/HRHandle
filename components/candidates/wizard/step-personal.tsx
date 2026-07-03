@@ -210,7 +210,7 @@ export function StepPersonal({
             id="location"
             value={value.location}
             onChange={(e) => set('location', e.target.value)}
-            placeholder="e.g. Tbilisi, Georgia"
+            placeholder="e.g. San Francisco, USA"
             maxLength={100}
           />
         </Field>
@@ -219,7 +219,7 @@ export function StepPersonal({
             id="timezone"
             value={value.timezone}
             onChange={(e) => set('timezone', e.target.value)}
-            placeholder="e.g. GMT+4"
+            placeholder="e.g. GMT+1"
             maxLength={50}
           />
         </Field>
@@ -251,7 +251,7 @@ export function StepPersonal({
           id="languages"
           value={value.languages}
           onChange={(e) => set('languages', e.target.value)}
-          placeholder="e.g. English, Georgian, Russian"
+          placeholder="e.g. English, Spanish, French"
           maxLength={200}
         />
       </Field>

@@ -45,7 +45,7 @@ export default async function OfferPage({ params }: PageProps) {
     <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <header className="mb-8 text-center">
         <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
-          Offer from {offer.organization_name}
+          Offer from {offer.organization_name?.trim() || 'the hiring team'}
         </p>
         <h1 className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
           Hi {offer.candidate_first_name}, here&apos;s your offer
@@ -65,7 +65,7 @@ export default async function OfferPage({ params }: PageProps) {
             <span className="font-semibold text-gray-900">{offer.role_title}</span>
           </Row>
           <Row icon={Building2} label="Employer">
-            <span className="text-gray-700">{offer.organization_name}</span>
+            <span className="text-gray-700">{offer.organization_name?.trim() || 'the hiring team'}</span>
           </Row>
           {compensationLine && (
             <Row icon={Briefcase} label="Compensation">

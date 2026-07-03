@@ -76,7 +76,7 @@ export function SaveViewDialog({
               id="sv-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Frontend Engineers in Tbilisi"
+              placeholder="e.g. Frontend Engineers in San Francisco"
               maxLength={60}
               autoFocus
               disabled={isPending}

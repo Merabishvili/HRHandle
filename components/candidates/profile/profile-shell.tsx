@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Pencil, MoreHorizontal } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Pencil, MoreHorizontal, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -17,7 +18,7 @@ import {
   type RejectionReason,
   type RejectionTemplate,
 } from '@/components/pipeline/rejection-dialog'
-import { DeleteCandidateButton } from '@/components/candidates/delete-candidate-button'
+import { DeleteCandidateDialog } from '@/components/candidates/delete-candidate-dialog'
 import { AddApplicationDialog } from '@/components/candidates/add-application-dialog'
 import { MergeCandidatesDialog } from '@/components/candidates/merge-candidates-dialog'
 import { RecentMergeBanner } from '@/components/candidates/profile/recent-merge-banner'
@@ -203,7 +204,9 @@ export function CandidateProfileShell({
   const [pendingRejection, setPendingRejection] = useState<
     { applicationId: string; candidateName: string } | null
   >(null)
+  const router = useRouter()
   const [mergeOpen, setMergeOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const selectedApp = useMemo(
     () => activeApplications.find((a) => a.id === selectedAppId) ?? sortedActive[0] ?? null,
@@ -300,13 +303,15 @@ export function CandidateProfileShell({
                   Merge candidates
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild className="text-destructive">
-                  <div className="flex w-full">
-                    <DeleteCandidateButton
-                      candidateId={candidate.id}
-                      candidateName={candidate.fullName}
-                    />
-                  </div>
+                {/* Delete opens a shell-level dialog (not a button nested in the
+                    menu) — otherwise closing the menu unmounts the dialog and it
+                    flickers away after a moment. */}
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => setDeleteOpen(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" aria-hidden />
+                  Delete candidate
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -507,6 +512,14 @@ export function CandidateProfileShell({
           onCancel={() => setPendingRejection(null)}
         />
       )}
+
+      <DeleteCandidateDialog
+        candidateId={candidate.id}
+        candidateName={candidate.fullName}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => router.push('/candidates')}
+      />
 
       <MergeCandidatesDialog
         open={mergeOpen}

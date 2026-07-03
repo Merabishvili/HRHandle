@@ -279,7 +279,7 @@ export async function sendOffer(offerId: string): Promise<ActionResult<{ token: 
         to: candidate.email,
         candidateName: `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim() || 'there',
         vacancyTitle: (offer.role_title as string) || vacancyTitle || 'the role',
-        organizationName: org?.name || 'the company',
+        organizationName: org?.name || 'the hiring team',
         offerUrl: `${baseUrl}/offer/${token}`,
         customSubject: templateRow?.subject || undefined,
         customBody: templateRow?.body || undefined,

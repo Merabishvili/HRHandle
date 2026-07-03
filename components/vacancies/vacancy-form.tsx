@@ -320,7 +320,7 @@ export function VacancyForm({
               <Label htmlFor="location">Location</Label>
               <Input
                 id="location"
-                placeholder="e.g. Tbilisi or Remote"
+                placeholder="e.g. San Francisco or Remote"
                 value={formData.location || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, location: e.target.value })

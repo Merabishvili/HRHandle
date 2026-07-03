@@ -153,7 +153,7 @@ function ExperienceCard({
               id="exp_title"
               value={draft.title}
               onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-              placeholder="e.g. Senior Business Analyst"
+              placeholder="e.g. Software Engineer"
               className="h-8 text-[12.5px]"
             />
           </Field>
@@ -277,7 +277,7 @@ function EducationCard({
               id="edu_institution"
               value={draft.institution}
               onChange={(e) => setDraft({ ...draft, institution: e.target.value })}
-              placeholder="e.g. Ilia State University"
+              placeholder="e.g. State University"
               className="h-8 text-[12.5px]"
             />
           </Field>

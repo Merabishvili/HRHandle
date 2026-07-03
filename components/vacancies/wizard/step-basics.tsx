@@ -89,7 +89,7 @@ export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
             id="location"
             value={value.location}
             onChange={(e) => set('location', e.target.value)}
-            placeholder="e.g. Tbilisi"
+            placeholder="e.g. San Francisco"
             maxLength={100}
           />
         </Field>

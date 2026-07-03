@@ -455,7 +455,7 @@ export function CandidateForm({
               <Label htmlFor="location">Location</Label>
               <Input
                 id="location"
-                placeholder="e.g. Tbilisi, Georgia"
+                placeholder="e.g. San Francisco, USA"
                 value={(formData as {location?: string | null}).location ?? ''}
                 onChange={(e) => handleChange('location' as keyof typeof formData, e.target.value || null)}
                 disabled={isLoading}
@@ -466,7 +466,7 @@ export function CandidateForm({
               <Label htmlFor="timezone">Timezone</Label>
               <Input
                 id="timezone"
-                placeholder="e.g. GMT+4"
+                placeholder="e.g. GMT+1"
                 value={(formData as {timezone?: string | null}).timezone ?? ''}
                 onChange={(e) => handleChange('timezone' as keyof typeof formData, e.target.value || null)}
                 disabled={isLoading}
@@ -502,7 +502,7 @@ export function CandidateForm({
             <Label htmlFor="languages">Languages</Label>
             <Input
               id="languages"
-              placeholder="e.g. English, Georgian, Russian"
+              placeholder="e.g. English, Spanish, French"
               value={((formData as {languages?: string[]}).languages ?? []).join(', ')}
               onChange={(e) => handleChange('languages' as keyof typeof formData, e.target.value ? e.target.value.split(',').map((l) => l.trim()).filter(Boolean) : [])}
               disabled={isLoading}
@@ -832,7 +832,7 @@ export function CandidateForm({
           </CardHeader>
           <CardContent>
             <Textarea
-              placeholder="e.g. Strong referral from Nino. Background in fintech. Prefer afternoon interviews."
+              placeholder="e.g. Strong referral from a teammate. Background in fintech. Prefer afternoon interviews."
               value={pendingNote}
               onChange={(e) => setPendingNote(e.target.value)}
               rows={4}

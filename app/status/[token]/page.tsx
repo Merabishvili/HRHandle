@@ -5,10 +5,10 @@ import { Building2, Briefcase, MapPin, Calendar, FileText } from 'lucide-react'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { statusCodeToBucket } from '@/lib/application-status-bucket'
+import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { isOfferExpired } from '@/lib/offers/expiry'
 import { StatusStepper } from '@/components/status/status-stepper'
 import { WithdrawButton } from '@/components/status/withdraw-button'
-import type { ApplicationStatus } from '@/lib/types/application'
 
 interface PageProps {
   params: Promise<{ token: string }>
@@ -38,8 +38,10 @@ interface CandidateJoin {
   deleted_at: string | null
 }
 
-interface StatusJoin {
-  code: ApplicationStatus['code']
+interface StageJoin {
+  type: 'standard' | 'review' | 'interview' | 'offer'
+  name: string
+  is_terminal: boolean
 }
 
 interface ApplicationRow {
@@ -50,7 +52,7 @@ interface ApplicationRow {
   vacancies: VacancyJoin | VacancyJoin[] | null
   organizations: OrgJoin | OrgJoin[] | null
   candidates: CandidateJoin | CandidateJoin[] | null
-  application_statuses: StatusJoin | StatusJoin[] | null
+  pipeline_stages: StageJoin | StageJoin[] | null
 }
 
 function unwrap<T>(v: T | T[] | null): T | null {
@@ -76,7 +78,7 @@ export default async function StatusPage({ params }: PageProps) {
        vacancies ( title, department, location, deleted_at ),
        organizations ( name, deleted_at ),
        candidates ( first_name, deleted_at ),
-       application_statuses ( code )`,
+       pipeline_stages ( type, name, is_terminal )`,
     )
     .eq('public_token', token)
     .maybeSingle<ApplicationRow>()
@@ -90,7 +92,7 @@ export default async function StatusPage({ params }: PageProps) {
   const vacancy = unwrap(app.vacancies)
   const org = unwrap(app.organizations)
   const candidate = unwrap(app.candidates)
-  const statusRow = unwrap(app.application_statuses)
+  const stageRow = unwrap(app.pipeline_stages)
 
   // If any of the parent rows are soft-deleted (org tearing down, vacancy
   // archived to deleted_at, candidate self-deletion path) we hide the status
@@ -106,7 +108,7 @@ export default async function StatusPage({ params }: PageProps) {
     notFound()
   }
 
-  const view = statusCodeToBucket(statusRow?.code ?? null)
+  const view = statusCodeToBucket(stageRow ? mapPipelineStageToBucket(stageRow) : null)
   const showStepper = view.bucket !== 'closed'
   const decisionComplete = view.outcome === 'hired'
 
