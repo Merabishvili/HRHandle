@@ -12,10 +12,9 @@ import type { Profile } from '@/lib/types'
 
 interface ProfileFormProps {
   profile: Profile
-  email: string
 }
 
-export function ProfileForm({ profile, email }: ProfileFormProps) {
+export function ProfileForm({ profile }: ProfileFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -55,12 +54,8 @@ export function ProfileForm({ profile, email }: ProfileFormProps) {
         </Alert>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" value={email} disabled className="bg-muted" />
-        <p className="text-xs text-muted-foreground">Email cannot be changed here.</p>
-      </div>
-
+      {/* Email is shown read-only in the "Account" card below — no need to
+          repeat it as a disabled input here. */}
       <div className="space-y-2">
         <Label htmlFor="fullName">Full name</Label>
         <Input

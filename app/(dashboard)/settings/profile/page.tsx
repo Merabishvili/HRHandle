@@ -31,7 +31,7 @@ export default async function ProfileSettingsPage() {
           <CardDescription>Update your personal information.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ProfileForm profile={profile} email={user.email || ''} />
+          <ProfileForm profile={profile} />
         </CardContent>
       </Card>
 

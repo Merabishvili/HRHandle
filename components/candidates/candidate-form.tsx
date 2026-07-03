@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createCandidate, updateCandidate } from '@/lib/actions/candidates'
+import { toDisplayName } from '@/lib/format-name'
 import { uploadDocument } from '@/lib/actions/documents'
 import { createNote } from '@/lib/actions/notes'
 import { saveCustomFieldValues } from '@/lib/actions/custom-fields'
@@ -108,8 +109,11 @@ export function CandidateForm({
   )
 
   const [formData, setFormData] = useState<CandidateFormData>({
-    first_name: candidate?.first_name || '',
-    last_name: candidate?.last_name || '',
+    // Normalize ALL-CAPS names (CV imports / caps-lock applies) to natural case
+    // so Edit shows "Aleksandre" not "ALEKSANDRE" — and saving persists the
+    // fixed casing. toDisplayName leaves mixed-case + non-Latin names untouched.
+    first_name: toDisplayName(candidate?.first_name),
+    last_name: toDisplayName(candidate?.last_name),
     email: candidate?.email || '',
     phone: candidate?.phone || '',
     linkedin_profile_url: candidate?.linkedin_profile_url || '',
@@ -166,8 +170,8 @@ export function CandidateForm({
         setCvParseState('done')
         setFormData((prev) => ({
           ...prev,
-          first_name: data.first_name || prev.first_name,
-          last_name: data.last_name || prev.last_name,
+          first_name: toDisplayName(data.first_name) || prev.first_name,
+          last_name: toDisplayName(data.last_name) || prev.last_name,
           email: data.email || prev.email,
           phone: data.phone || prev.phone,
           linkedin_profile_url: data.linkedin_profile_url || prev.linkedin_profile_url,

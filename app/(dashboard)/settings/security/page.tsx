@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChangePasswordForm } from '@/components/settings/change-password-form'
@@ -49,13 +50,35 @@ export default async function SecuritySettingsPage() {
   const recoveryCodesRemaining = codesResult.success ? codesResult.data : 0
 
   const sessionsResult = await listMyActiveSessions()
-  const sessions = sessionsResult.success ? sessionsResult.data : []
+  const trackedSessions = sessionsResult.success ? sessionsResult.data : []
 
   // The JWT carries `session_id`; decode the payload (no verification —
   // we're just reading our own claim to highlight "This device" in the
   // sessions list).
   const { data: { session } } = await supabase.auth.getSession()
-  const currentSessionId = readSessionIdFromJwt(session?.access_token)
+  const decodedSessionId = readSessionIdFromJwt(session?.access_token)
+
+  // A signed-in user always has at least *this* session. The
+  // `list_my_sessions` RPC can come back empty (e.g. the current session row
+  // isn't surfaced), which previously rendered "No active sessions" while the
+  // user was actively viewing the page. Guarantee the current session is
+  // present — synthesised from the request user-agent — so it's never hidden.
+  const currentSessionId = decodedSessionId ?? 'current-session'
+  const userAgent = (await headers()).get('user-agent')
+  const nowIso = new Date().toISOString()
+  const sessions = trackedSessions.some((s) => s.id === currentSessionId)
+    ? trackedSessions
+    : [
+        {
+          id: currentSessionId,
+          user_agent: userAgent,
+          ip: null,
+          created_at: nowIso,
+          refreshed_at: nowIso,
+          not_after: null,
+        },
+        ...trackedSessions,
+      ]
 
   return (
     <div className="max-w-4xl space-y-6">

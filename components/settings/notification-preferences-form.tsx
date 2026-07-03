@@ -203,6 +203,10 @@ function MatrixCheckbox({
   lockedReason?: string
   ariaLabel: string
 }) {
+  // A locked-on cell (e.g. in-app @mentions) is forced on and can't be toggled;
+  // render it in a muted "locked" style with a lock glyph so it reads as
+  // locked-on rather than an ordinary togglable checkbox.
+  const lockedOn = !!lockedReason && checked
   return (
     <div className="flex justify-center">
       <button
@@ -210,22 +214,28 @@ function MatrixCheckbox({
         role="checkbox"
         aria-checked={checked}
         aria-label={ariaLabel}
+        aria-readonly={!!lockedReason}
         title={lockedReason}
         onClick={() => !disabled && onChange(!checked)}
         disabled={disabled}
         className={cn(
           'flex h-5 w-5 items-center justify-center rounded-[5px] border transition-colors',
-          checked
-            ? 'border-primary bg-primary text-primary-foreground'
-            : 'border-border bg-background',
+          lockedOn
+            ? 'border-border bg-muted-foreground/70 text-background'
+            : checked
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border bg-background',
           disabled && !checked && 'opacity-40',
           disabled && 'cursor-not-allowed',
           !disabled && 'hover:border-primary/60',
         )}
       >
-        {checked && <Check className="h-3 w-3" strokeWidth={3.5} aria-hidden />}
-        {lockedReason && !checked && (
-          <Lock className="h-2.5 w-2.5 text-muted-foreground" aria-hidden />
+        {lockedOn ? (
+          <Lock className="h-2.5 w-2.5" aria-hidden />
+        ) : checked ? (
+          <Check className="h-3 w-3" strokeWidth={3.5} aria-hidden />
+        ) : (
+          lockedReason && <Lock className="h-2.5 w-2.5 text-muted-foreground" aria-hidden />
         )}
       </button>
     </div>
