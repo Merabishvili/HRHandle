@@ -143,7 +143,9 @@ function TemplateRow({
         >
           <span className="text-sm font-medium text-foreground">{template.name}</span>
           {linkedReason && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{linkedReason.name}</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              Reason: {linkedReason.name}
+            </span>
           )}
           {expanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
         </button>
@@ -249,7 +251,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
       )}
 
       {adding && (
-        <div className="rounded-lg border border-border bg-accent/30 p-4 space-y-3">
+        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
           <p className="text-sm font-medium text-foreground">New rejection template</p>
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="space-y-1.5">

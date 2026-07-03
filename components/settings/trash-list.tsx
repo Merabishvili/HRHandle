@@ -13,6 +13,7 @@ import {
   CalendarClock,
 } from 'lucide-react'
 
+import { toDisplayFullName } from '@/lib/format-name'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -63,7 +64,7 @@ export function TrashList({ candidates, vacancies }: TrashListProps) {
         }
         const apps = result.data.restoredApplications
         const label = apps === 0 ? '' : ` (${apps} application${apps === 1 ? '' : 's'} too)`
-        toast.success(`Restored ${item.data.first_name} ${item.data.last_name}${label}.`)
+        toast.success(`Restored ${toDisplayFullName(item.data.first_name, item.data.last_name)}${label}.`)
       } else {
         const result = await restoreVacancy(item.data.id)
         if (!result.success) {
@@ -90,7 +91,7 @@ export function TrashList({ candidates, vacancies }: TrashListProps) {
       }
       toast.success(
         item.kind === 'candidate'
-          ? `${item.data.first_name} ${item.data.last_name} permanently deleted.`
+          ? `${toDisplayFullName(item.data.first_name, item.data.last_name)} permanently deleted.`
           : `"${item.data.title}" permanently deleted.`,
       )
       setConfirmHardDelete(null)
@@ -146,7 +147,7 @@ export function TrashList({ candidates, vacancies }: TrashListProps) {
               {confirmHardDelete?.kind === 'candidate' ? (
                 <>
                   <strong>
-                    {confirmHardDelete.data.first_name} {confirmHardDelete.data.last_name}
+                    {toDisplayFullName(confirmHardDelete.data.first_name, confirmHardDelete.data.last_name)}
                   </strong>{' '}
                   and all their applications, evaluations, notes, and documents
                   will be irreversibly deleted now. This skips the 30-day grace
@@ -226,7 +227,7 @@ function CandidatesPanel({
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground">
-                {c.first_name} {c.last_name}
+                {toDisplayFullName(c.first_name, c.last_name)}
               </p>
               <p className="text-xs text-muted-foreground">
                 {c.email ?? '—'} ·{' '}
