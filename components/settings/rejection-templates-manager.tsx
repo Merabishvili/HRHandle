@@ -26,6 +26,32 @@ import { Plus, Trash2, Loader2, Pencil, X, Check, ChevronDown, ChevronUp } from 
 const VARIABLES = ['{{candidate_name}}', '{{role}}', '{{company}}']
 const NO_REASON = '__none__'
 
+/** Render a template with sample data so admins see the real subject/body
+ * before saving — same sample values as the other Email-template tabs. */
+function renderRejectionPreview(text: string): string {
+  return text
+    .replaceAll('{{candidate_name}}', 'Jane Smith')
+    .replaceAll('{{role}}', 'Senior Developer')
+    .replaceAll('{{company}}', 'Acme Corp')
+}
+
+/** Live subject + body preview panel, matching the other Email-template tabs. */
+function RejectionPreview({ subject, body }: { subject: string; body: string }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">Preview</Label>
+      <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
+        <p className="text-foreground">
+          <span className="font-medium">Subject:</span> {renderRejectionPreview(subject) || '—'}
+        </p>
+        <p className="mt-2 whitespace-pre-wrap text-muted-foreground">
+          {renderRejectionPreview(body) || '—'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 interface Props {
   initialTemplates: RejectionTemplate[]
   reasons: RejectionReason[]
@@ -170,9 +196,12 @@ function TemplateRow({
         </div>
       </div>
       {expanded && (
-        <div className="border-t border-border px-3 py-3 space-y-1.5 text-sm text-muted-foreground">
-          <p><span className="font-medium text-foreground">Subject:</span> {template.subject}</p>
-          <p><span className="font-medium text-foreground">Body:</span> {template.body}</p>
+        <div className="space-y-3 border-t border-border px-3 py-3">
+          <div className="space-y-1.5 text-sm text-muted-foreground">
+            <p><span className="font-medium text-foreground">Subject:</span> {template.subject}</p>
+            <p className="whitespace-pre-wrap"><span className="font-medium text-foreground">Body:</span> {template.body}</p>
+          </div>
+          <RejectionPreview subject={template.subject} body={template.body} />
         </div>
       )}
     </div>
@@ -282,6 +311,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
             <Label className="text-xs">Message body</Label>
             <Textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} disabled={isPending} maxLength={10000} rows={4} className="resize-none text-sm" />
           </div>
+          <RejectionPreview subject={newSubject} body={newBody} />
           <div className="flex justify-end gap-2">
             <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setError(null) }} disabled={isPending}>Cancel</Button>
             <Button size="sm" onClick={handleAdd} disabled={isPending || !newName.trim() || !newSubject.trim() || !newBody.trim()}>

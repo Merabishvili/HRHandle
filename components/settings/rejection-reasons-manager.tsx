@@ -16,14 +16,19 @@ const MAX_REASONS = 50
 
 interface Props {
   initialReasons: RejectionReason[]
+  /** IDs of reasons that have a linked email template — drives the per-reason
+   * "Template configured" vs "Default copy" indicator. */
+  reasonIdsWithTemplate?: string[]
 }
 
 function ReasonRow({
   reason,
+  hasTemplate,
   onUpdated,
   onDeleted,
 }: {
   reason: RejectionReason
+  hasTemplate: boolean
   onUpdated: (r: RejectionReason) => void
   onDeleted: (id: string) => void
 }) {
@@ -85,7 +90,26 @@ function ReasonRow({
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5">
-      <span className="flex-1 text-sm text-foreground">{reason.name}</span>
+      <span className="text-sm text-foreground">{reason.name}</span>
+      {hasTemplate ? (
+        <a
+          href="/settings/email-templates"
+          className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 hover:underline"
+          title="This reason has a linked email template"
+        >
+          <Check className="h-3 w-3" aria-hidden />
+          Template configured
+        </a>
+      ) : (
+        <a
+          href="/settings/email-templates"
+          className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground hover:underline"
+          title="No template linked — the default rejection copy is used"
+        >
+          No template · default copy
+        </a>
+      )}
+      <span className="flex-1" />
       {error && <span className="text-xs text-destructive">{error}</span>}
       <div className="flex items-center gap-1 shrink-0">
         <Button
@@ -116,8 +140,9 @@ function ReasonRow({
   )
 }
 
-export function RejectionReasonsManager({ initialReasons }: Props) {
+export function RejectionReasonsManager({ initialReasons, reasonIdsWithTemplate = [] }: Props) {
   const [reasons, setReasons] = useState<RejectionReason[]>(initialReasons)
+  const templateSet = new Set(reasonIdsWithTemplate)
   const [newName, setNewName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -153,6 +178,7 @@ export function RejectionReasonsManager({ initialReasons }: Props) {
             <ReasonRow
               key={r.id}
               reason={r}
+              hasTemplate={templateSet.has(r.id)}
               onUpdated={(updated) => setReasons((prev) => prev.map((x) => x.id === updated.id ? updated : x))}
               onDeleted={(id) => setReasons((prev) => prev.filter((x) => x.id !== id))}
             />
