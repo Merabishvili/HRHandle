@@ -858,7 +858,12 @@ export function CandidateForm({
       )}
 
       <div className="flex items-center justify-end gap-4">
-        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push(isEditing ? `/candidates/${candidate.id}` : '/candidates')}
+          disabled={isLoading}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isLoading}>

@@ -615,6 +615,7 @@ export function CrossVacancyBoard({
       {reviewing && (
         <ReviewMode
           queue={reviewQueue}
+          activeStatuses={activeStatuses}
           onClose={() => setReviewing(false)}
           onAdvance={handleAdvance}
           onReject={handleReviewReject}

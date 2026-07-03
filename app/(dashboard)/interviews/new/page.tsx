@@ -137,9 +137,9 @@ export default async function NewInterviewPage({
   const teamMembers = (teamMembersRaw || []) as TeamMemberRow[]
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+    <div className="mx-auto max-w-[920px] space-y-6">
+      <div className="flex items-start gap-3">
+        <Button variant="ghost" size="icon" asChild className="mt-0.5">
           <Link href="/interviews" aria-label="Back to interviews">
             <ArrowLeft className="h-4 w-4" />
           </Link>

@@ -35,6 +35,10 @@ import { StageTracker } from './stage-tracker'
 
 export interface StageContextualBlockProps {
   applicationId: string
+  /** Vacancy the selected application belongs to — used to deep-link the
+   * "Add full scorecard" action into that vacancy's Scorecard & interview
+   * tab (where the scored attributes are configured). */
+  vacancyId: string
   vacancyTitle: string
   /** Ordered list of non-terminal stages — used by the tracker. */
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
@@ -89,6 +93,7 @@ export interface StageContextualBlockProps {
  */
 export function StageContextualBlock({
   applicationId,
+  vacancyId,
   vacancyTitle,
   stages,
   currentStage,
@@ -110,7 +115,7 @@ export function StageContextualBlock({
     case 'interview':
       return (
         <InterviewState
-          applicationId={applicationId}
+          vacancyId={vacancyId}
           stages={stages}
           currentCode={currentStage.code}
           upcomingInterview={upcomingInterview}
@@ -431,12 +436,12 @@ function GateCard({
 }
 
 function InterviewState({
-  applicationId,
+  vacancyId,
   stages,
   currentCode,
   upcomingInterview,
 }: {
-  applicationId: string
+  vacancyId: string
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   upcomingInterview: StageContextualBlockProps['upcomingInterview']
@@ -482,7 +487,7 @@ function InterviewState({
 
       <div className="flex flex-wrap gap-2">
         <Button asChild size="sm" className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]">
-          <Link href={`/vacancies/${stages[0]?.id ? '' : ''}#evaluation-${applicationId}`}>
+          <Link href={`/vacancies/${vacancyId}?tab=scorecard`}>
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
             Add full scorecard
           </Link>

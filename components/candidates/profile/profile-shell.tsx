@@ -349,6 +349,7 @@ export function CandidateProfileShell({
             {selectedApp && selectedApp.stage && (
               <StageContextualBlock
                 applicationId={selectedApp.id}
+                vacancyId={selectedApp.vacancyId}
                 vacancyTitle={selectedApp.vacancyTitle}
                 stages={activeStages}
                 currentStage={selectedApp.stage}

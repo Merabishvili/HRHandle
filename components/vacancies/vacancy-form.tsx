@@ -630,7 +630,7 @@ export function VacancyForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={() => router.push(vacancy ? `/vacancies/${vacancy.id}` : '/vacancies')}
             disabled={isLoading}
           >
             Cancel
