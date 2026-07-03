@@ -72,6 +72,7 @@ interface VacancyRow {
   vacancy_statuses:
     | { id: string; name: string; code: 'draft' | 'open' | 'on_hold' | 'closed' | 'archived' }[]
     | null
+  sectors: { name: string } | { name: string }[] | null
 }
 
 function formatEmploymentType(value: VacancyRow['employment_type']): string {
@@ -134,7 +135,8 @@ export default async function VacanciesPage({
     employment_type, hiring_manager_name, salary_min, salary_max, salary_currency,
     openings_count, start_date, end_date, description, requirements, created_by,
     created_at, updated_at, archived_at,
-    vacancy_statuses(id, name, code)
+    vacancy_statuses(id, name, code),
+    sectors(name)
   `
 
   let baseQuery = supabase
@@ -192,17 +194,32 @@ export default async function VacanciesPage({
 
   const vacancyIds = vacancies.map((v) => v.id)
 
-  let applicationCounts = new Map<string, number>()
+  const applicationCounts = new Map<string, number>()
+  // Health column: a vacancy is "good" if any of its applications moved stage in
+  // the last 7 days, "stale" if it's been open >30 days with no movement, else
+  // "watch" — same heuristic as the vacancy detail overview.
+  const recentMovementByVacancy = new Set<string>()
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+  const nowMs = Date.now()
   if (vacancyIds.length > 0) {
     const { data: applicationsRaw } = await supabase
       .from('applications')
-      .select('vacancy_id')
+      .select('vacancy_id, last_status_changed_at')
       .eq('organization_id', organizationId)
       .is('deleted_at', null)
       .in('vacancy_id', vacancyIds)
 
-    for (const app of applicationsRaw || []) {
+    for (const app of (applicationsRaw || []) as {
+      vacancy_id: string
+      last_status_changed_at: string | null
+    }[]) {
       applicationCounts.set(app.vacancy_id, (applicationCounts.get(app.vacancy_id) || 0) + 1)
+      if (
+        app.last_status_changed_at &&
+        nowMs - Date.parse(app.last_status_changed_at) < SEVEN_DAYS_MS
+      ) {
+        recentMovementByVacancy.add(app.vacancy_id)
+      }
     }
   }
 
@@ -383,6 +400,56 @@ export default async function VacanciesPage({
                                   {vacancy.hiring_manager_name || '—'}
                                 </TableCell>
                               )
+                            case 'sector': {
+                              const sector = Array.isArray(vacancy.sectors)
+                                ? vacancy.sectors[0]
+                                : vacancy.sectors
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground">
+                                  {sector?.name || '—'}
+                                </TableCell>
+                              )
+                            }
+                            case 'salary': {
+                              const { salary_min: lo, salary_max: hi, salary_currency: cur } = vacancy
+                              const fmt = (n: number) => n.toLocaleString()
+                              const label =
+                                lo != null && hi != null
+                                  ? `${fmt(lo)}–${fmt(hi)} ${cur}`
+                                  : lo != null
+                                    ? `From ${fmt(lo)} ${cur}`
+                                    : hi != null
+                                      ? `Up to ${fmt(hi)} ${cur}`
+                                      : '—'
+                              return (
+                                <TableCell key={col} className="text-sm tabular-nums text-muted-foreground whitespace-nowrap">
+                                  {label}
+                                </TableCell>
+                              )
+                            }
+                            case 'health': {
+                              const openDays = Math.max(
+                                0,
+                                Math.floor((nowMs - Date.parse(vacancy.created_at)) / (1000 * 60 * 60 * 24)),
+                              )
+                              const health: 'good' | 'watch' | 'stale' = recentMovementByVacancy.has(vacancy.id)
+                                ? 'good'
+                                : openDays > 30
+                                  ? 'stale'
+                                  : 'watch'
+                              const meta = {
+                                good: { label: 'Good', cls: 'bg-emerald-100 text-emerald-800' },
+                                watch: { label: 'Watch', cls: 'bg-amber-100 text-amber-800' },
+                                stale: { label: 'Stale', cls: 'bg-red-100 text-red-800' },
+                              }[health]
+                              return (
+                                <TableCell key={col}>
+                                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${meta.cls}`}>
+                                    {meta.label}
+                                  </span>
+                                </TableCell>
+                              )
+                            }
                             default:
                               return <TableCell key={col}>—</TableCell>
                           }

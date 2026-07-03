@@ -25,7 +25,12 @@ export const OPTIONAL_VACANCY_COLUMNS: ColumnDef[] = [
   { key: 'department', label: 'Department' },
   { key: 'location', label: 'Location' },
   { key: 'end_date', label: 'End Date' },
-  { key: 'employment_type', label: 'Type' },
+  // "Type" was ambiguous (employment type vs work mode); the vacancy record
+  // only stores employment type, so this is now explicitly labelled.
+  { key: 'employment_type', label: 'Employment type' },
+  { key: 'sector', label: 'Sector' },
+  { key: 'salary', label: 'Salary range' },
+  { key: 'health', label: 'Health' },
   { key: 'start_date', label: 'Start Date' },
   { key: 'openings_count', label: 'Openings' },
   { key: 'hiring_manager_name', label: 'Hiring Manager' },
