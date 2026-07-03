@@ -4,12 +4,18 @@ export interface ColumnDef {
 }
 
 export const OPTIONAL_CANDIDATE_COLUMNS: ColumnDef[] = [
+  { key: 'stage', label: 'Stage' },
+  { key: 'fit_score', label: 'Fit score' },
   { key: 'current_position', label: 'Current Position' },
   { key: 'current_company', label: 'Current Company' },
   { key: 'created_at', label: 'Added Date' },
   { key: 'email', label: 'Email' },
   { key: 'phone', label: 'Phone' },
   { key: 'years_of_experience', label: 'Experience' },
+  { key: 'location', label: 'Location' },
+  { key: 'salary_expectation', label: 'Salary expectation' },
+  { key: 'notice_period', label: 'Notice period' },
+  { key: 'languages', label: 'Languages' },
   { key: 'source', label: 'Source' },
 ]
 

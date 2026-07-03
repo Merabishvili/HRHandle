@@ -28,6 +28,8 @@ import {
   DEFAULT_CANDIDATE_COLUMNS,
   OPTIONAL_CANDIDATE_COLUMNS,
 } from '@/lib/types/columns'
+import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
+import { getStageStyle, isTerminalStage } from '@/lib/pipeline/stage-style'
 import { formatDistanceToNow } from 'date-fns'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { parsePageSize, type PageSize } from '@/lib/pagination'
@@ -52,18 +54,30 @@ interface CandidateRow {
   years_of_experience: number | null
   source: string | null
   general_status_id: string | null
+  location: string | null
+  salary_expectation: string | null
+  notice_period: string | null
+  languages: string[] | null
   created_at: string
   updated_at: string
 }
 
 import type { CandidateStatusOption } from '@/lib/types/database'
 
+interface StageJoinRow {
+  name: string
+  type: 'standard' | 'review' | 'interview' | 'offer'
+  is_terminal: boolean
+}
+
 interface ApplicationRow {
   id: string
   candidate_id: string
   vacancy_id: string
   applied_at: string
+  pipeline_stage_id: string | null
   vacancies: { id: string; title: string }[] | { id: string; title: string } | null
+  pipeline_stages: StageJoinRow | StageJoinRow[] | null
 }
 
 interface VacancyOption {
@@ -155,6 +169,7 @@ export default async function CandidatesPage({
   const FIELDS = `
     id, first_name, last_name, email, phone, current_company,
     current_position, years_of_experience, source, general_status_id,
+    location, salary_expectation, notice_period, languages,
     created_at, updated_at,
     candidate_statuses (sort_order)
   `
@@ -240,7 +255,9 @@ export default async function CandidatesPage({
   if (candidateIds.length > 0) {
     const { data: applicationsRaw } = await supabase
       .from('applications')
-      .select('id, candidate_id, vacancy_id, applied_at, vacancies(id, title)')
+      .select(
+        'id, candidate_id, vacancy_id, applied_at, pipeline_stage_id, vacancies(id, title), pipeline_stages(name, type, is_terminal)',
+      )
       .eq('organization_id', organizationId)
       .is('deleted_at', null)
       .in('candidate_id', candidateIds)
@@ -253,6 +270,47 @@ export default async function CandidatesPage({
     const existing = applicationsByCandidate.get(app.candidate_id) || []
     existing.push(app)
     applicationsByCandidate.set(app.candidate_id, existing)
+  }
+
+  // Stage + Fit-score columns (optional): derive from each candidate's *active*
+  // (non-terminal) application, falling back to their first application. Stage
+  // is bucket-mapped so the badge uses the same palette as the Pipeline; fit
+  // score is the 0–100 evaluation score on that application, shown as a %.
+  const fitScoreByApplication = new Map<string, number>()
+  const applicationIds = applications.map((a) => a.id)
+  if (applicationIds.length > 0) {
+    const { data: evalRows } = await supabase
+      .from('candidate_evaluations')
+      .select('application_id, score')
+      .in('application_id', applicationIds)
+    for (const row of (evalRows ?? []) as { application_id: string; score: number | null }[]) {
+      if (typeof row.score === 'number') fitScoreByApplication.set(row.application_id, row.score)
+    }
+  }
+
+  const stageByCandidate = new Map<string, { code: string; name: string }>()
+  const fitScoreByCandidate = new Map<string, number>()
+  for (const [candId, apps] of applicationsByCandidate) {
+    const stageOf = (a: ApplicationRow): StageJoinRow | null => {
+      const j = a.pipeline_stages
+      return Array.isArray(j) ? (j[0] ?? null) : j
+    }
+    // Prefer the first application still in a non-terminal stage.
+    const active =
+      apps.find((a) => {
+        const s = stageOf(a)
+        return s ? !isTerminalStage(mapPipelineStageToBucket(s)) : false
+      }) ?? apps[0]
+    if (!active) continue
+    const stageRow = stageOf(active)
+    if (stageRow) {
+      stageByCandidate.set(candId, {
+        code: mapPipelineStageToBucket(stageRow),
+        name: stageRow.name,
+      })
+    }
+    const fit = fitScoreByApplication.get(active.id)
+    if (typeof fit === 'number') fitScoreByCandidate.set(candId, fit)
   }
 
   // Build column label map for header
@@ -477,6 +535,57 @@ export default async function CandidatesPage({
                               return (
                                 <TableCell key={col} className="text-sm text-muted-foreground">
                                   {candidate.source || '—'}
+                                </TableCell>
+                              )
+                            case 'stage': {
+                              const stage = stageByCandidate.get(candidate.id)
+                              if (!stage) {
+                                return <TableCell key={col} className="text-sm text-muted-foreground">—</TableCell>
+                              }
+                              const style = getStageStyle(stage.code)
+                              return (
+                                <TableCell key={col}>
+                                  <span
+                                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                                    style={{ background: style.pillBg, color: style.pillText }}
+                                  >
+                                    {stage.name}
+                                  </span>
+                                </TableCell>
+                              )
+                            }
+                            case 'fit_score': {
+                              const fit = fitScoreByCandidate.get(candidate.id)
+                              return (
+                                <TableCell key={col} className="text-sm tabular-nums text-muted-foreground">
+                                  {typeof fit === 'number' ? `${fit}%` : '—'}
+                                </TableCell>
+                              )
+                            }
+                            case 'location':
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground">
+                                  {candidate.location || '—'}
+                                </TableCell>
+                              )
+                            case 'salary_expectation':
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground">
+                                  {candidate.salary_expectation || '—'}
+                                </TableCell>
+                              )
+                            case 'notice_period':
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground">
+                                  {candidate.notice_period || '—'}
+                                </TableCell>
+                              )
+                            case 'languages':
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground">
+                                  {candidate.languages && candidate.languages.length > 0
+                                    ? candidate.languages.join(', ')
+                                    : '—'}
                                 </TableCell>
                               )
                             default:
