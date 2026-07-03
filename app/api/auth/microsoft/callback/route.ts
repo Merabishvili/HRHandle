@@ -14,6 +14,14 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error')
 
   if (error || !code || !state) {
+    // Microsoft returned an OAuth error (e.g. access_denied, consent_required)
+    // or dropped a param. Log the description so the real reason is visible.
+    console.warn('[microsoft/callback] denied or missing params:', {
+      error,
+      errorDescription: searchParams.get('error_description')?.slice(0, 300),
+      hasCode: !!code,
+      hasState: !!state,
+    })
     return NextResponse.redirect(new URL('/settings/integrations?microsoft=denied', BASE))
   }
 
@@ -22,7 +30,8 @@ export async function GET(request: NextRequest) {
   cookieStore.delete('microsoft_oauth_state')
 
   if (state !== savedState) {
-    return NextResponse.redirect(new URL('/settings/integrations?microsoft=error', BASE))
+    console.error('[microsoft/callback] state mismatch — cookie missing or stale (likely user took >10min or cookies blocked)')
+    return NextResponse.redirect(new URL('/settings/integrations?microsoft=state_mismatch', BASE))
   }
 
   const supabase = await createClient()
@@ -34,7 +43,8 @@ export async function GET(request: NextRequest) {
 
   const tokens = await exchangeMicrosoftCode(code)
   if (!tokens) {
-    return NextResponse.redirect(new URL('/settings/integrations?microsoft=error', BASE))
+    // exchangeMicrosoftCode logs the underlying Azure response (AADSTS code).
+    return NextResponse.redirect(new URL('/settings/integrations?microsoft=token_exchange_failed', BASE))
   }
 
   const admin = createAdminClient()

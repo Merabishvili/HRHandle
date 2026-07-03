@@ -27,7 +27,11 @@ export function MicrosoftConnect({ isConnected }: MicrosoftConnectProps) {
           <AlertDescription>Microsoft account disconnected.</AlertDescription>
         </Alert>
       )}
-      {(status === 'error' || status === 'not_configured' || status === 'denied') && (
+      {(status === 'error' ||
+        status === 'not_configured' ||
+        status === 'denied' ||
+        status === 'state_mismatch' ||
+        status === 'token_exchange_failed') && (
         <Alert variant="destructive">
           <XCircle className="h-4 w-4" />
           <AlertDescription>
@@ -35,6 +39,10 @@ export function MicrosoftConnect({ isConnected }: MicrosoftConnectProps) {
               ? 'Microsoft OAuth credentials are not configured on the server.'
               : status === 'denied'
               ? 'Microsoft connection was cancelled.'
+              : status === 'state_mismatch'
+              ? 'The connection request expired or your browser blocked the security cookie. Please try connecting again.'
+              : status === 'token_exchange_failed'
+              ? 'Microsoft rejected the connection. This is usually a server configuration issue (expired client secret or an unregistered redirect URL). Please contact your administrator.'
               : 'Failed to connect Microsoft account. Please try again.'}
           </AlertDescription>
         </Alert>

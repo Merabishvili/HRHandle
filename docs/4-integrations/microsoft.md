@@ -1,9 +1,10 @@
 # Microsoft Integration
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-03_
 
 ## Changelog
 
+- 2026-07-03 — **Diagnosable connect failures.** The callback previously collapsed every post-consent failure into a single generic `microsoft=error` ("Failed to connect Microsoft account"), so the real cause was invisible. It now mirrors the Google flow: `exchangeMicrosoftCode`/`refreshMicrosoftToken` log the Azure response body (AADSTS code), and the callback returns distinct statuses — `microsoft=denied` (user cancelled / OAuth error, with `error_description` logged), `microsoft=state_mismatch` (CSRF cookie missing/stale), `microsoft=token_exchange_failed` (Azure rejected the code exchange). See **Troubleshooting** below.
 - 🔄 No flow changes. Note: Microsoft redirects use `/settings/integrations?microsoft=*` while Google & Zoom use `/settings?google=*` / `/settings?zoom=*` — the inconsistency is tracked as `BL-microsoft-redirect` in `docs/issues-found.md`.
 
 ---
@@ -108,6 +109,29 @@ Stored in `profiles` table:
 | `MICROSOFT_CLIENT_SECRET` | Azure AD app client secret (optional — feature disabled if missing) |
 
 If either is missing, `GET /api/auth/microsoft` redirects to `/settings/integrations?microsoft=not_configured`.
+
+## Troubleshooting
+
+The connect flow returns a `microsoft=<status>` query param that the UI turns into a message. Match the status to the cause:
+
+| Status | Meaning | Where to look |
+|---|---|---|
+| `not_configured` | `MICROSOFT_CLIENT_ID`/`MICROSOFT_CLIENT_SECRET` unset on the server | Vercel env vars for the affected environment |
+| `denied` | User cancelled, or Microsoft returned an OAuth error at consent | Server log line `[microsoft/callback] denied or missing params` — includes `error` + `error_description` (e.g. `consent_required`, `access_denied`) |
+| `state_mismatch` | CSRF state cookie missing/stale — user took >10 min, or the browser blocked the cookie | Usually transient; retrying fixes it |
+| `token_exchange_failed` | Microsoft rejected the `authorization_code` exchange | Server log line `[microsoft/graph] exchangeMicrosoftCode failed: <status> …` — includes the **AADSTS** code from Azure |
+
+**`token_exchange_failed` is almost always an Azure-side config problem** (the app reached our callback with a valid code, so the credentials/redirect worked at the authorize step but not at the token step). Check, in order:
+
+1. **Client secret** — the most common cause. Azure app secrets **expire** (often 6–24 months). Confirm `MICROSOFT_CLIENT_SECRET` on Vercel holds the secret **Value** (not the secret **ID**) and hasn't expired. Regenerate under _Azure Portal → App registrations → your app → Certificates & secrets_ and update **both** staging and production Vercel envs. AADSTS7000215 = invalid secret.
+2. **Redirect URI registered** — under _Authentication → Web → Redirect URIs_, both must be present:
+   - `https://staging.hrhandle.com/api/auth/microsoft/callback`
+   - `https://hrhandle.com/api/auth/microsoft/callback`
+   - (`http://localhost:3000/api/auth/microsoft/callback` for local dev)
+   AADSTS9002313 / `redirect_uri` mismatch = missing/typo'd URI.
+3. **Admin consent** — `Calendars.ReadWrite` / `OnlineMeetings.ReadWrite` on a tenant that requires admin consent will fail for non-admin users. Grant admin consent for the app, or have a tenant admin approve.
+
+The Azure app for this integration is **separate** from the Supabase `azure` sign-in provider — changing one does not affect the other.
 
 ## Important Notes
 

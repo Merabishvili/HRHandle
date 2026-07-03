@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import {
   Sparkles,
   Loader2,
-  Copy,
   Check,
   RefreshCw,
   Plus,
@@ -15,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AiDraftTag } from '@/components/ui/ai-draft-tag'
+import { cn } from '@/lib/utils'
 import { addVacancyQuestion } from '@/lib/actions/evaluations'
 import type { AssessmentSuggestions } from '@/lib/ai/assessment-suggester'
 
@@ -39,6 +38,10 @@ type PanelState =
   | { status: 'not_found' }
   | { status: 'failed' }
 
+/** A single suggestion row: the text plus which list it becomes when added.
+ * Skills → the Scorecard (scored 1–5); prompts → the Interview guide. */
+type SuggestionRow = { label: string; kind: 'skill' | 'prompt' }
+
 export function AiAssessmentSuggester({
   vacancyId,
   existingSkillLabels,
@@ -48,7 +51,6 @@ export function AiAssessmentSuggester({
   const router = useRouter()
   const [contextText, setContextText] = useState('')
   const [panel, setPanel] = useState<PanelState>({ status: 'idle' })
-  const [copied, setCopied] = useState<string | null>(null)
   const [addError, setAddError] = useState<string | null>(null)
   const [addedKeys, setAddedKeys] = useState<Set<string>>(new Set())
   const [isAdding, startAddTransition] = useTransition()
@@ -71,6 +73,17 @@ export function AiAssessmentSuggester({
     if (kind === 'prompt' && existingPromptSet.has(lower)) return true
     return addedKeys.has(`${kind}::${lower}`)
   }
+
+  // Flatten both suggestion buckets into one list of rows, each carrying its
+  // destination. Skills first, then prompts — mirrors the Scorecard /
+  // Interview guide card order below the panel.
+  const rows: SuggestionRow[] =
+    panel.status === 'ok'
+      ? [
+          ...panel.suggestions.skills.map<SuggestionRow>((label) => ({ label, kind: 'skill' })),
+          ...panel.suggestions.prompts.map<SuggestionRow>((label) => ({ label, kind: 'prompt' })),
+        ]
+      : []
 
   const generate = async () => {
     setPanel({ status: 'loading' })
@@ -102,16 +115,6 @@ export function AiAssessmentSuggester({
     }
   }
 
-  const copyText = async (text: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(key)
-      setTimeout(() => setCopied((c) => (c === key ? null : c)), 1500)
-    } catch (err) {
-      console.error('[ai-assessment-suggester] clipboard write failed:', err)
-    }
-  }
-
   const addItem = (label: string, kind: 'skill' | 'prompt') => {
     setAddError(null)
     const type: 'text' | 'score' = kind === 'skill' ? 'score' : 'text'
@@ -132,32 +135,30 @@ export function AiAssessmentSuggester({
 
   return (
     <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-5">
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-1 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-primary" />
-        <span className="text-[15px] font-bold text-foreground">
-          AI assessment suggestions
-        </span>
-        <span className="ml-auto text-[11px] uppercase tracking-wide text-muted-foreground">
-          Assistant
+        <span className="text-[15px] font-bold text-foreground">Suggest with AI</span>
+        <span className="ml-auto text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Advisory
         </span>
       </div>
 
       <p className="mb-3 text-xs text-muted-foreground">
-        Suggestions are advisory — review each one before adding it. Nothing is saved
-        to this vacancy unless you click <strong>Add</strong> on a specific item.
-        Skills become scored criteria (1–5); prompts become open-ended questions.
+        One click drafts <strong>both</strong> scored attributes and open-ended prompts at
+        once. Review each — nothing is added until you click <strong>Add</strong> on that
+        specific item.
       </p>
 
       {canEdit && (
         <div className="space-y-2">
           <Label htmlFor="as-context" className="text-xs font-medium">
-            Optional context for the AI
+            Optional: tell it what to focus on
           </Label>
           <Textarea
             id="as-context"
             value={contextText}
             onChange={(e) => setContextText(e.target.value)}
-            placeholder="e.g. Focus on data-modelling depth and stakeholder communication."
+            placeholder="e.g. system-design depth and stakeholder communication."
             rows={2}
             maxLength={1000}
             className="text-sm"
@@ -171,7 +172,6 @@ export function AiAssessmentSuggester({
           type="button"
           onClick={generate}
           size="sm"
-          variant="outline"
           disabled={panel.status === 'loading' || !canEdit}
         >
           {panel.status === 'loading' ? (
@@ -179,51 +179,47 @@ export function AiAssessmentSuggester({
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Generating…
             </>
-          ) : panel.status === 'ok' ? (
-            <>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Regenerate
-            </>
           ) : (
             <>
               <Sparkles className="mr-2 h-4 w-4" />
-              Generate suggestions
+              Generate
             </>
           )}
         </Button>
       </div>
 
       {panel.status === 'ok' && (
-        <div className="mt-4 space-y-4">
-          <div>
-            <AiDraftTag label="AI suggestion" />
-          </div>
+        <div className="mt-4 space-y-2">
+          {rows.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No suggestions were generated. Add more detail to the vacancy and try again.
+            </p>
+          ) : (
+            rows.map((row, idx) => (
+              <SuggestionRowItem
+                key={`${row.kind}-${idx}`}
+                row={row}
+                added={isAlreadyAdded(row.label, row.kind)}
+                canEdit={canEdit}
+                isPending={isAdding}
+                onAdd={addItem}
+              />
+            ))
+          )}
 
-          <SuggestionSection
-            title="Evaluation criteria (scored 1–5)"
-            hint="Add to Evaluation Criteria"
-            items={panel.suggestions.skills}
-            kind="skill"
-            canEdit={canEdit}
-            isPending={isAdding}
-            isAlreadyAdded={isAlreadyAdded}
-            onAdd={addItem}
-            onCopy={copyText}
-            copied={copied}
-          />
-
-          <SuggestionSection
-            title="Open-ended prompts"
-            hint="Add to Questionary"
-            items={panel.suggestions.prompts}
-            kind="prompt"
-            canEdit={canEdit}
-            isPending={isAdding}
-            isAlreadyAdded={isAlreadyAdded}
-            onAdd={addItem}
-            onCopy={copyText}
-            copied={copied}
-          />
+          {canEdit && (
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={generate}
+                disabled={panel.status !== 'ok'}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Regenerate
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -282,99 +278,51 @@ export function AiAssessmentSuggester({
   )
 }
 
-interface SuggestionSectionProps {
-  title: string
-  hint: string
-  items: string[]
-  kind: 'skill' | 'prompt'
+interface SuggestionRowItemProps {
+  row: SuggestionRow
+  added: boolean
   canEdit: boolean
   isPending: boolean
-  isAlreadyAdded: (label: string, kind: 'skill' | 'prompt') => boolean
   onAdd: (label: string, kind: 'skill' | 'prompt') => void
-  onCopy: (text: string, key: string) => void
-  copied: string | null
 }
 
-function SuggestionSection({
-  title,
-  hint,
-  items,
-  kind,
-  canEdit,
-  isPending,
-  isAlreadyAdded,
-  onAdd,
-  onCopy,
-  copied,
-}: SuggestionSectionProps) {
+function SuggestionRowItem({ row, added, canEdit, isPending, onAdd }: SuggestionRowItemProps) {
+  const isSkill = row.kind === 'skill'
   return (
-    <div className="rounded-md border border-border bg-background p-3">
-      <div className="mb-2 flex items-baseline gap-2">
-        <span className="text-sm font-semibold text-foreground">{title}</span>
-        <span className="text-[11px] text-muted-foreground">{hint}</span>
-      </div>
-
-      {items.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          No suggestions generated for this section.
-        </p>
-      ) : (
-        <ul className="space-y-2">
-          {items.map((label, idx) => {
-            const key = `${kind}-${idx}`
-            const added = isAlreadyAdded(label, kind)
-            return (
-              <li
-                key={key}
-                className="flex items-start gap-2 text-sm leading-relaxed text-foreground"
-              >
-                <span className="mt-[2px] text-xs text-muted-foreground">
-                  {idx + 1}.
-                </span>
-                <span className="flex-1">{label}</span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onCopy(label, key)}
-                >
-                  {copied === key ? (
-                    <>
-                      <Check className="mr-1.5 h-3.5 w-3.5" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="mr-1.5 h-3.5 w-3.5" />
-                      Copy
-                    </>
-                  )}
-                </Button>
-                {canEdit && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={added ? 'ghost' : 'default'}
-                    onClick={() => onAdd(label, kind)}
-                    disabled={isPending || added}
-                  >
-                    {added ? (
-                      <>
-                        <Check className="mr-1.5 h-3.5 w-3.5" />
-                        Added
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="mr-1.5 h-3.5 w-3.5" />
-                        Add
-                      </>
-                    )}
-                  </Button>
-                )}
-              </li>
-            )
-          })}
-        </ul>
+    <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2.5 text-sm">
+      <span
+        className={cn(
+          'shrink-0 rounded px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide',
+          isSkill
+            ? 'bg-[oklch(0.94_0.01_250)] text-[oklch(0.4_0.02_250)]'
+            : 'bg-[oklch(0.93_0.06_300)] text-[oklch(0.45_0.15_300)]',
+        )}
+      >
+        {isSkill ? '→ Scorecard' : '→ Interview guide'}
+      </span>
+      <span className="flex-1 leading-relaxed text-foreground">{row.label}</span>
+      {canEdit && (
+        <button
+          type="button"
+          onClick={() => onAdd(row.label, row.kind)}
+          disabled={isPending || added}
+          className={cn(
+            'inline-flex shrink-0 items-center gap-1 text-xs font-bold disabled:opacity-60',
+            added ? 'text-muted-foreground' : 'text-[oklch(0.42_0.16_250)] hover:opacity-80',
+          )}
+        >
+          {added ? (
+            <>
+              <Check className="h-3.5 w-3.5" />
+              Added
+            </>
+          ) : (
+            <>
+              <Plus className="h-3.5 w-3.5" />
+              Add
+            </>
+          )}
+        </button>
       )}
     </div>
   )

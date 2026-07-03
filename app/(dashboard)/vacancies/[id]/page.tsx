@@ -13,9 +13,7 @@ import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-di
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { getLinkedInIntegration } from '@/lib/actions/integrations'
-import { AiInterviewQuestions } from '@/components/vacancies/ai-interview-questions'
 import { AiAssessmentSuggester } from '@/components/vacancies/ai-assessment-suggester'
-import type { InterviewQuestionsSet } from '@/lib/ai/interview-questions'
 
 import { VacancyHeader } from '@/components/vacancies/detail/vacancy-header'
 import {
@@ -79,12 +77,6 @@ interface VacancyRow {
   description: string
   responsibilities: string | null
   requirements: string | null
-  interview_questions: {
-    behavioural: string[]
-    technical: string[]
-    situational: string[]
-    closing: string[]
-  } | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -185,7 +177,7 @@ export default async function VacancyDetailPage({
         id, organization_id, title, sector_id, status_id, department, location,
         employment_type, hiring_manager_name, salary_min, salary_max, salary_currency,
         openings_count, start_date, end_date, description, responsibilities, requirements,
-        interview_questions, created_by, created_at, updated_at, archived_at,
+        created_by, created_at, updated_at, archived_at,
         application_form_token, show_on_public_page,
         vacancy_statuses ( id, name, code ),
         sectors ( id, name, code )
@@ -487,15 +479,6 @@ export default async function VacancyDetailPage({
                   />
                 </section>
               </div>
-
-              <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="AI interview questions">
-                <h2 className="text-[15px] font-bold text-foreground">AI interview questions</h2>
-                <p className="mb-3 text-[12.5px] text-muted-foreground">AI-drafted prompts your interviewers can use — review and keep what fits.</p>
-                <AiInterviewQuestions
-                  vacancyId={vacancy.id}
-                  savedQuestions={(vacancy.interview_questions as InterviewQuestionsSet | null) ?? null}
-                />
-              </section>
 
               {vacancyCustomFieldGroups.length > 0 && (
                 <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Additional information">
