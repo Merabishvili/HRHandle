@@ -27,13 +27,10 @@ import { cn } from '@/lib/utils'
 import { createOffer, sendOffer } from '@/lib/actions/offers'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { StageTracker } from './stage-tracker'
+import { ScoreCandidateModal } from './score-candidate-modal'
 
 export interface StageContextualBlockProps {
   applicationId: string
-  /** Vacancy the selected application belongs to — used to deep-link the
-   * "Add full scorecard" action into that vacancy's Scorecard & interview
-   * tab (where the scored attributes are configured). */
-  vacancyId: string
   vacancyTitle: string
   /** Ordered list of non-terminal stages — used by the tracker. */
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
@@ -88,7 +85,6 @@ export interface StageContextualBlockProps {
  */
 export function StageContextualBlock({
   applicationId,
-  vacancyId,
   vacancyTitle,
   stages,
   currentStage,
@@ -109,7 +105,8 @@ export function StageContextualBlock({
     case 'interview':
       return (
         <InterviewState
-          vacancyId={vacancyId}
+          applicationId={applicationId}
+          vacancyTitle={vacancyTitle}
           stages={stages}
           currentCode={currentStage.code}
           upcomingInterview={upcomingInterview}
@@ -250,16 +247,19 @@ function GateCard({
 }
 
 function InterviewState({
-  vacancyId,
+  applicationId,
+  vacancyTitle,
   stages,
   currentCode,
   upcomingInterview,
 }: {
-  vacancyId: string
+  applicationId: string
+  vacancyTitle: string
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   upcomingInterview: StageContextualBlockProps['upcomingInterview']
 }) {
+  const [scoreOpen, setScoreOpen] = useState(false)
   return (
     <article className="space-y-3 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
       <StageTracker stages={stages} currentCode={currentCode} compact />
@@ -300,11 +300,14 @@ function InterviewState({
       )}
 
       <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm" className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]">
-          <Link href={`/vacancies/${vacancyId}?tab=scorecard`}>
-            <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Add full scorecard
-          </Link>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => setScoreOpen(true)}
+          className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
+        >
+          <Sparkles className="h-3.5 w-3.5" aria-hidden />
+          Add full scorecard
         </Button>
         <Button asChild variant="outline" size="sm" className="gap-1.5">
           <Link href={`/interviews/new?reschedule=${upcomingInterview?.id ?? ''}`}>
@@ -315,8 +318,16 @@ function InterviewState({
       </div>
 
       <p className="text-[11.5px] text-muted-foreground">
-        Full 1–5 scorecard goes here. Its average becomes the fit score on the kanban.
+        Score this candidate against the role&apos;s scorecard — the average of the 1–5 ratings
+        becomes the fit score on the kanban.
       </p>
+
+      <ScoreCandidateModal
+        applicationId={applicationId}
+        vacancyTitle={vacancyTitle}
+        open={scoreOpen}
+        onOpenChange={setScoreOpen}
+      />
     </article>
   )
 }

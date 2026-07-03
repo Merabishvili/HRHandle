@@ -213,6 +213,11 @@ export async function saveEvaluation(input: {
   candidateId: string
   score: number | null
   answers: { questionId: string; textValue: string | null; scoreValue: number | null }[]
+  /** Binary advance-or-reject recommendation (the 4-way UI Strong yes / Yes /
+   * Lean no / No maps down to this — the DB column is constrained to yes|no).
+   * Omit to leave the existing recommendation untouched. */
+  recommendation?: 'yes' | 'no' | null
+  recommendationReason?: string | null
 }): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -237,6 +242,10 @@ export async function saveEvaluation(input: {
         candidate_id: input.candidateId,
         organization_id: ctx.orgId,
         score: input.score,
+        ...(input.recommendation !== undefined ? { recommendation: input.recommendation } : {}),
+        ...(input.recommendationReason !== undefined
+          ? { recommendation_reason: input.recommendationReason }
+          : {}),
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'application_id' }
@@ -265,4 +274,106 @@ export async function saveEvaluation(input: {
 
   revalidatePath(`/candidates/${input.candidateId}`)
   return { success: true, data: { id: evaluation.id } }
+}
+
+export interface ScorecardQuestion {
+  id: string
+  label: string
+  type: 'text' | 'score'
+  mustHave: boolean
+}
+
+export interface ScorecardData {
+  vacancyId: string
+  vacancyTitle: string
+  candidateId: string
+  questions: ScorecardQuestion[]
+  existing: {
+    score: number | null
+    recommendation: 'yes' | 'no' | null
+    recommendationReason: string | null
+    answers: { questionId: string; textValue: string | null; scoreValue: number | null }[]
+  } | null
+}
+
+/**
+ * Lazy-load everything the in-place "Score candidate" modal needs for one
+ * application: the vacancy's real scorecard attributes + interview-guide
+ * questions (the SETUP defined on the vacancy) plus this reviewer's existing
+ * evaluation to prefill. Keeps the candidate profile page lean — only fetched
+ * when the recruiter opens the modal.
+ */
+export async function getScorecardData(
+  applicationId: string,
+): Promise<ActionResult<ScorecardData>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { data: app } = await ctx.supabase
+    .from('applications')
+    .select('id, vacancy_id, candidate_id, vacancies ( title )')
+    .eq('id', applicationId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .single()
+
+  if (!app) return { success: false, error: 'Application not found' }
+
+  const vacancyJoin = app.vacancies as { title: string } | { title: string }[] | null
+  const vacancyRow = Array.isArray(vacancyJoin) ? vacancyJoin[0] : vacancyJoin
+
+  const { data: questionRows } = await ctx.supabase
+    .from('vacancy_questions')
+    .select('id, label, type, must_have, sort_order')
+    .eq('vacancy_id', app.vacancy_id)
+    .order('sort_order', { ascending: true })
+
+  const questions: ScorecardQuestion[] = (
+    (questionRows ?? []) as {
+      id: string
+      label: string
+      type: 'text' | 'score'
+      must_have: boolean
+    }[]
+  ).map((q) => ({ id: q.id, label: q.label, type: q.type, mustHave: !!q.must_have }))
+
+  const { data: evalRow } = await ctx.supabase
+    .from('candidate_evaluations')
+    .select('id, score, recommendation, recommendation_reason')
+    .eq('application_id', applicationId)
+    .maybeSingle()
+
+  let existing: ScorecardData['existing'] = null
+  if (evalRow) {
+    const { data: answerRows } = await ctx.supabase
+      .from('candidate_evaluation_answers')
+      .select('question_id, text_value, score_value')
+      .eq('evaluation_id', evalRow.id)
+
+    existing = {
+      score: (evalRow.score as number | null) ?? null,
+      recommendation: (evalRow.recommendation as 'yes' | 'no' | null) ?? null,
+      recommendationReason: (evalRow.recommendation_reason as string | null) ?? null,
+      answers: ((answerRows ?? []) as {
+        question_id: string
+        text_value: string | null
+        score_value: number | null
+      }[]).map((a) => ({
+        questionId: a.question_id,
+        textValue: a.text_value,
+        scoreValue: a.score_value,
+      })),
+    }
+  }
+
+  return {
+    success: true,
+    data: {
+      vacancyId: app.vacancy_id,
+      vacancyTitle: vacancyRow?.title ?? 'this role',
+      candidateId: app.candidate_id,
+      questions,
+      existing,
+    },
+  }
 }

@@ -120,11 +120,14 @@ export function VacancyHeader({
               <DropdownMenuItem asChild>
                 <Link href={`/vacancies/${vacancyId}/edit`}>Edit vacancy</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              {/* preventDefault keeps the menu open so the nested button's
+                  own click reliably fires (and its loading/error state is
+                  visible) instead of the item closing the menu first. */}
+              <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
                 <div className="flex w-full"><DuplicateVacancyButton vacancyId={vacancyId} /></div>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild className="text-destructive">
+              <DropdownMenuItem asChild className="text-destructive" onSelect={(e) => e.preventDefault()}>
                 <div className="flex w-full"><DeleteVacancyButton vacancyId={vacancyId} vacancyTitle={title} /></div>
               </DropdownMenuItem>
             </DropdownMenuContent>
