@@ -18,6 +18,7 @@ import {
   OPTIONAL_VACANCY_COLUMNS,
   DEFAULT_VACANCY_COLUMNS,
   VACANCY_SORT_OPTIONS,
+  type ColumnDef,
 } from '@/lib/types/columns'
 import { SavedViewsMenu } from '@/components/saved-views/saved-views-menu'
 import type { SavedView } from '@/lib/actions/saved-views'
@@ -27,6 +28,8 @@ interface VacanciesToolbarProps {
   initialSort: string
   selectedColumns: string[]
   savedViews: SavedView[]
+  /** Org custom fields, surfaced as addable columns alongside the built-in set. */
+  extraColumns?: ColumnDef[]
 }
 
 const FIXED_COLUMNS = [
@@ -40,6 +43,7 @@ export function VacanciesToolbar({
   initialSort,
   selectedColumns: initialColumns,
   savedViews,
+  extraColumns = [],
 }: VacanciesToolbarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -121,7 +125,7 @@ export function VacanciesToolbar({
       <ColumnManagerDialog
         open={colDialogOpen}
         onOpenChange={setColDialogOpen}
-        allColumns={OPTIONAL_VACANCY_COLUMNS}
+        allColumns={[...OPTIONAL_VACANCY_COLUMNS, ...extraColumns]}
         fixedColumns={FIXED_COLUMNS}
         selectedColumns={activeColumns}
         onSave={handleSaveColumns}

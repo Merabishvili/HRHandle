@@ -27,7 +27,9 @@ import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import {
   DEFAULT_CANDIDATE_COLUMNS,
   OPTIONAL_CANDIDATE_COLUMNS,
+  type ColumnDef,
 } from '@/lib/types/columns'
+import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { getStageStyle, isTerminalStage } from '@/lib/pipeline/stage-style'
 import { formatDistanceToNow } from 'date-fns'
@@ -313,8 +315,48 @@ export default async function CandidatesPage({
     if (typeof fit === 'number') fitScoreByCandidate.set(candId, fit)
   }
 
-  // Build column label map for header
-  const optColMap = new Map(OPTIONAL_CANDIDATE_COLUMNS.map((c) => [c.key, c.label]))
+  // Org custom fields → addable columns (key `cf_<fieldId>`). Values are fetched
+  // in one batch for the visible candidates and formatted per field type.
+  const customFieldGroups = await getCustomFieldSchema('candidate')
+  const customFields = customFieldGroups.flatMap((g) => g.fields)
+  const customFieldColumns: ColumnDef[] = customFields.map((f) => ({
+    key: `cf_${f.id}`,
+    label: f.name,
+  }))
+  const customFieldTypeById = new Map(customFields.map((f) => [f.id, f.field_type]))
+  // valueMap: `${candidateId}:${fieldId}` -> display string
+  const customFieldValueMap = new Map<string, string>()
+  if (candidateIds.length > 0 && customFields.length > 0) {
+    const { data: cfValues } = await supabase
+      .from('custom_field_values')
+      .select('field_id, entity_id, value_text, value_number, value_boolean, value_option')
+      .eq('organization_id', organizationId)
+      .in('entity_id', candidateIds)
+      .in('field_id', customFields.map((f) => f.id))
+    for (const v of (cfValues ?? []) as {
+      field_id: string
+      entity_id: string
+      value_text: string | null
+      value_number: number | null
+      value_boolean: boolean | null
+      value_option: string | null
+    }[]) {
+      const type = customFieldTypeById.get(v.field_id)
+      let display: string | null = null
+      if (type === 'number') display = v.value_number != null ? String(v.value_number) : null
+      else if (type === 'checkbox') display = v.value_boolean == null ? null : v.value_boolean ? 'Yes' : 'No'
+      else if (type === 'dropdown') display = v.value_option
+      else display = v.value_text // text / long_text / date
+      if (display != null && display !== '') {
+        customFieldValueMap.set(`${v.entity_id}:${v.field_id}`, display)
+      }
+    }
+  }
+
+  // Build column label map for header (built-in + custom fields)
+  const optColMap = new Map(
+    [...OPTIONAL_CANDIDATE_COLUMNS, ...customFieldColumns].map((c) => [c.key, c.label]),
+  )
 
   // Preserved URL params for the paginator's links. Plain object — no
   // function prop, so it serialises across the server→client boundary
@@ -373,6 +415,7 @@ export default async function CandidatesPage({
         initialStatus={statusFilter || ''}
         selectedColumns={activeColumns}
         savedViews={savedViewsResult.success ? savedViewsResult.data : []}
+        extraColumns={customFieldColumns}
       />
 
       <div className="flex items-center justify-between gap-4">
@@ -589,6 +632,15 @@ export default async function CandidatesPage({
                                 </TableCell>
                               )
                             default:
+                              // Custom-field columns (key `cf_<fieldId>`).
+                              if (col.startsWith('cf_')) {
+                                const fieldId = col.slice(3)
+                                return (
+                                  <TableCell key={col} className="text-sm text-muted-foreground">
+                                    {customFieldValueMap.get(`${candidate.id}:${fieldId}`) || '—'}
+                                  </TableCell>
+                                )
+                              }
                               return <TableCell key={col}>—</TableCell>
                           }
                         })}

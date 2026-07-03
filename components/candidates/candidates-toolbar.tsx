@@ -18,6 +18,7 @@ import {
   OPTIONAL_CANDIDATE_COLUMNS,
   DEFAULT_CANDIDATE_COLUMNS,
   CANDIDATE_SORT_OPTIONS,
+  type ColumnDef,
 } from '@/lib/types/columns'
 import { SavedViewsMenu } from '@/components/saved-views/saved-views-menu'
 import type { SavedView } from '@/lib/actions/saved-views'
@@ -28,6 +29,8 @@ interface CandidatesToolbarProps {
   initialStatus: string
   selectedColumns: string[]
   savedViews: SavedView[]
+  /** Org custom fields, surfaced as addable columns alongside the built-in set. */
+  extraColumns?: ColumnDef[]
 }
 
 const FIXED_COLUMNS = [
@@ -41,6 +44,7 @@ export function CandidatesToolbar({
   initialSort,
   selectedColumns: initialColumns,
   savedViews,
+  extraColumns = [],
 }: CandidatesToolbarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -122,7 +126,7 @@ export function CandidatesToolbar({
       <ColumnManagerDialog
         open={colDialogOpen}
         onOpenChange={setColDialogOpen}
-        allColumns={OPTIONAL_CANDIDATE_COLUMNS}
+        allColumns={[...OPTIONAL_CANDIDATE_COLUMNS, ...extraColumns]}
         fixedColumns={FIXED_COLUMNS}
         selectedColumns={activeColumns}
         onSave={handleSaveColumns}
