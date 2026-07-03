@@ -5,31 +5,26 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import {
-  Check,
-  X,
   Briefcase,
   Clock,
   MapPin,
   Video,
   Calendar,
-  ChevronRight,
   ExternalLink,
   Sparkles,
   AlertTriangle,
+  Loader2,
+  Save,
+  Send,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { updateApplicationStatus } from '@/lib/actions/applications'
+import { createOffer, sendOffer } from '@/lib/actions/offers'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { StageTracker } from './stage-tracker'
 
@@ -104,8 +99,7 @@ export function StageContextualBlock({
   switch (currentStage.code) {
     case 'screening':
       return (
-        <ScreeningGateResponsive
-          applicationId={applicationId}
+        <ScreeningChecks
           stages={stages}
           currentCode={currentStage.code}
           candidate={candidate}
@@ -142,173 +136,58 @@ export function StageContextualBlock({
 }
 
 /**
- * A-12d — Mobile bottom-sheet wrapper for the Screening gate.
+ * Screening state — passive "Screening checks" panel (no manual gate).
  *
- * Per `docs/redesign/mobile/candidate-profile.md`: "Action-heavy forms
- * benefit from the modal-like focus of a bottom sheet." The Screening
- * gate is the heaviest form on the profile (Yes/No + required reason
- * + screening-flags callout + three data cards + Save). On `sm+` we
- * render it inline as before; on mobile we render a compact trigger
- * card and open the full gate in a bottom sheet.
- *
- * The Sheet defers mounting its content until opened, so `ScreeningGate`
- * mounts in exactly one place at any time — no double state. Inline
- * and sheet versions share the same component code below.
+ * The earlier Yes/No decision gate + required reason was removed by design:
+ * the decision *is* the stage move itself. This panel surfaces the apply-form
+ * knockout flags read-only and points the recruiter at the rail's Advance /
+ * Reject buttons. Lightweight, so no mobile bottom-sheet is needed anymore.
  */
-function ScreeningGateResponsive({
-  applicationId,
+function ScreeningChecks({
   stages,
   currentCode,
   candidate,
   screeningFlags,
 }: {
-  applicationId: string
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   candidate: StageContextualBlockProps['candidate']
   screeningFlags: StageContextualBlockProps['screeningFlags']
 }) {
   const flagCount = screeningFlags.length
-
-  return (
-    <>
-      {/* Inline on sm+ */}
-      <div className="hidden sm:block">
-        <ScreeningGate
-          applicationId={applicationId}
-          stages={stages}
-          currentCode={currentCode}
-          candidate={candidate}
-          screeningFlags={screeningFlags}
-        />
-      </div>
-
-      {/* Compact trigger on mobile; Sheet content mounts on open. */}
-      <div className="sm:hidden">
-        <Sheet>
-          <article className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4">
-            <StageTracker stages={stages} currentCode={currentCode} compact />
-            <header className="mt-3.5">
-              <h3 className="text-[15px] font-bold text-foreground">Screening decision</h3>
-              <p className="mt-0.5 text-[12px] text-muted-foreground">
-                Quick gate — is this candidate worth a full interview?
-              </p>
-            </header>
-
-            {flagCount > 0 && (
-              <div
-                className="mt-3 flex items-center gap-1.5 rounded-md border px-2.5 py-2 text-[12px]"
-                style={{
-                  borderColor: 'oklch(0.86 0.07 70)',
-                  background: 'oklch(0.985 0.03 70)',
-                  color: 'oklch(0.4 0.08 55)',
-                }}
-              >
-                <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                <span className="font-semibold">
-                  {flagCount} screening flag{flagCount === 1 ? '' : 's'}
-                </span>
-                <span className="text-muted-foreground">— review before deciding</span>
-              </div>
-            )}
-
-            <SheetTrigger asChild>
-              <Button
-                type="button"
-                className="mt-3.5 w-full gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
-              >
-                Open screening gate
-                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-              </Button>
-            </SheetTrigger>
-          </article>
-
-          <SheetContent
-            side="bottom"
-            className="max-h-[90vh] overflow-y-auto rounded-t-2xl p-0"
-          >
-            <SheetHeader className="border-b border-border px-4 py-3">
-              <SheetTitle className="text-left text-base font-bold">
-                Screening decision
-              </SheetTitle>
-            </SheetHeader>
-            <div className="p-4">
-              <ScreeningGate
-                applicationId={applicationId}
-                stages={stages}
-                currentCode={currentCode}
-                candidate={candidate}
-                screeningFlags={screeningFlags}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
-  )
-}
-
-function ScreeningGate({
-  applicationId,
-  stages,
-  currentCode,
-  candidate,
-  screeningFlags,
-}: {
-  applicationId: string
-  stages: { code: ApplicationStatus['code']; name: string; id: string }[]
-  currentCode: ApplicationStatus['code']
-  candidate: StageContextualBlockProps['candidate']
-  screeningFlags: StageContextualBlockProps['screeningFlags']
-}) {
-  const router = useRouter()
-  const [decision, setDecision] = useState<'yes' | 'no' | null>(null)
-  const [reason, setReason] = useState('')
-  const [pending, startTransition] = useTransition()
-
-  const interviewStage = stages.find((s) => s.code === 'interview')
-
-  const advance = () => {
-    if (!interviewStage) return
-    if (!reason.trim()) {
-      toast.error('Add a one-line reason before advancing.')
-      return
-    }
-    startTransition(async () => {
-      const result = await updateApplicationStatus(applicationId, interviewStage.id)
-      if (!result.success) {
-        toast.error('Failed to advance — try again.')
-        return
-      }
-      toast.success('Advanced to interview.')
-      router.refresh()
-    })
-  }
+  const allClear = flagCount === 0
 
   return (
     <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
       <StageTracker stages={stages} currentCode={currentCode} compact />
 
-      <header>
+      <header className="flex items-start justify-between gap-3">
         <h3 className="text-[15px] font-bold text-foreground">
-          Screening decision
+          Screening checks
           <span className="ml-2 text-[12px] font-normal text-muted-foreground">
-            · quick gate — is this worth a full interview?
+            · auto-flagged from the apply form
           </span>
         </h3>
-        <p className="mt-1 text-[12px] text-muted-foreground">
-          Lightweight on purpose. The full <strong className="text-foreground">scorecard</strong>{' '}
-          (attributes rated 1–5) appears at the Interview stage.
-        </p>
+        <span
+          className={cn(
+            'shrink-0 rounded-full px-2.5 py-0.5 text-[11.5px] font-bold',
+            allClear
+              ? 'bg-[oklch(0.93_0.06_155)] text-[oklch(0.4_0.13_150)]'
+              : 'bg-[oklch(0.97_0.03_70)] text-[oklch(0.45_0.12_55)]',
+          )}
+        >
+          {allClear ? 'All clear' : `${flagCount} flag${flagCount === 1 ? '' : 's'}`}
+        </span>
       </header>
 
+      {/* Read-only info chips pulled from the candidate profile. */}
       <div className="grid gap-2 sm:grid-cols-3">
         <GateCard icon={Briefcase} label="Salary expectation" value={candidate.salaryExpectation ?? '—'} />
         <GateCard icon={Clock} label="Notice period" value={candidate.noticePeriod ?? '—'} />
         <GateCard icon={MapPin} label="Location" value={candidate.location ?? '—'} />
       </div>
 
-      {screeningFlags.length > 0 && (
+      {flagCount > 0 && (
         <div
           className="rounded-[10px] border px-3 py-2.5"
           style={{
@@ -322,11 +201,8 @@ function ScreeningGate({
               style={{ color: 'oklch(0.5 0.12 60)' }}
               aria-hidden
             />
-            <p
-              className="text-[12px] font-bold"
-              style={{ color: 'oklch(0.4 0.08 55)' }}
-            >
-              Screening flags ({screeningFlags.length})
+            <p className="text-[12px] font-bold" style={{ color: 'oklch(0.4 0.08 55)' }}>
+              Knockout flags ({flagCount})
             </p>
           </div>
           <ul className="space-y-1.5">
@@ -343,74 +219,12 @@ function ScreeningGate({
         </div>
       )}
 
-      <div className="border-t border-[oklch(0.94_0.01_250)] pt-3.5">
-        <p className="mb-1.5 text-[12px] font-semibold text-foreground">
-          Move to interview? <span className="text-destructive">*</span>
-        </p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setDecision('yes')}
-            disabled={pending}
-            className={cn(
-              'flex-1 rounded-lg border px-3 py-2 text-[12.5px] font-bold transition-colors',
-              decision === 'yes'
-                ? 'border-[oklch(0.8_0.1_150)] bg-[oklch(0.93_0.07_155)] text-[oklch(0.36_0.14_150)]'
-                : 'border-[oklch(0.9_0.01_250)] text-foreground hover:bg-muted',
-            )}
-            aria-pressed={decision === 'yes'}
-          >
-            <Check className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-            Yes — interview
-          </button>
-          <button
-            type="button"
-            onClick={() => setDecision('no')}
-            disabled={pending}
-            className={cn(
-              'flex-1 rounded-lg border px-3 py-2 text-[12.5px] font-semibold transition-colors',
-              decision === 'no'
-                ? 'border-[oklch(0.88_0.04_27)] bg-[oklch(0.97_0.03_27)] text-[oklch(0.5_0.19_27)]'
-                : 'border-[oklch(0.9_0.01_250)] text-foreground hover:bg-muted',
-            )}
-            aria-pressed={decision === 'no'}
-          >
-            <X className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-            No — reject
-          </button>
-        </div>
-
-        <Textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="One-line reason (required)"
-          rows={2}
-          maxLength={300}
-          disabled={pending}
-          className="mt-2.5 text-[12.5px]"
-        />
-
-        <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          {decision === 'yes' && interviewStage ? (
-            <Button
-              size="sm"
-              onClick={advance}
-              disabled={pending || !reason.trim()}
-              className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
-            >
-              Save &amp; advance to Interview →
-            </Button>
-          ) : decision === 'no' ? (
-            <p className="text-[12px] text-muted-foreground">
-              Use the right-rail <span className="font-semibold">Reject</span> button to record the rejection with full template + email.
-            </p>
-          ) : (
-            <p className="text-[11.5px] text-muted-foreground">
-              No 1–5 ratings yet — that&apos;s the interview&apos;s job.
-            </p>
-          )}
-        </div>
-      </div>
+      {/* No manual decision here — the stage move is the decision. */}
+      <p className="rounded-[10px] border border-dashed border-[oklch(0.9_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2.5 text-[12px] text-muted-foreground">
+        No manual yes/no here — to screen in, use{' '}
+        <span className="font-semibold text-foreground">Advance</span>; to screen out, use{' '}
+        <span className="font-semibold text-foreground">Reject</span> (right).
+      </p>
     </article>
   )
 }
@@ -507,6 +321,14 @@ function InterviewState({
   )
 }
 
+/**
+ * Offer state — inline Create-offer form. Reuses the existing offer server
+ * actions (createOffer + sendOffer / Public Offer accept-decline flow). The
+ * role title defaults to the vacancy; compensation + dates are optional, offer
+ * details are required. Save draft persists; Save & send also emails the
+ * candidate their accept/decline link. Created offers then appear in the full
+ * OfferPanel below (this is the quick-create entry point).
+ */
 function OfferState({
   applicationId,
   vacancyTitle,
@@ -518,31 +340,150 @@ function OfferState({
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
 }) {
+  const router = useRouter()
+  const [amount, setAmount] = useState('')
+  const [currency, setCurrency] = useState('USD')
+  const [startDate, setStartDate] = useState('')
+  const [expiryDate, setExpiryDate] = useState('')
+  const [body, setBody] = useState('')
+  const [pending, startTransition] = useTransition()
+
+  const submit = (send: boolean) => {
+    if (!body.trim()) {
+      toast.error('Add the offer details before saving.')
+      return
+    }
+    startTransition(async () => {
+      const result = await createOffer(applicationId, {
+        role_title: vacancyTitle.trim() || 'the role',
+        body: body.trim(),
+        recruiter_message: null,
+        compensation_amount: amount.trim() ? Number(amount) : null,
+        compensation_currency: currency.trim() ? currency.trim().toUpperCase() : null,
+        compensation_period: null,
+        start_date: startDate || null,
+        expiry_date: expiryDate || null,
+      })
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      if (send) {
+        const sent = await sendOffer(result.data.id)
+        if (!sent.success) {
+          toast.error(sent.error)
+          return
+        }
+        toast.success('Offer sent to candidate.')
+      } else {
+        toast.success('Offer saved as draft.')
+      }
+      setAmount('')
+      setBody('')
+      setStartDate('')
+      setExpiryDate('')
+      router.refresh()
+    })
+  }
+
   return (
-    <article className="space-y-3 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
+    <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
       <StageTracker stages={stages} currentCode={currentCode} compact />
 
-      <div className="rounded-[10px] border border-[oklch(0.91_0.04_210)] bg-[oklch(0.985_0.012_210)] p-3.5">
-        <p className="text-[13px] font-bold text-foreground">
-          Create offer · <span className="font-semibold text-muted-foreground">{vacancyTitle}</span>
-        </p>
+      <header>
+        <h3 className="text-[15px] font-bold text-foreground">
+          Create offer
+          <span className="ml-2 text-[12px] font-normal text-muted-foreground">· {vacancyTitle}</span>
+        </h3>
         <p className="mt-1 text-[12px] text-muted-foreground">
-          Compensation, start date, expiry — send accept/decline link to the candidate.
+          Sends the candidate an accept/decline link. Compensation and dates are optional.
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Button
-            asChild
-            size="sm"
-            className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
-          >
-            <Link href={`#offer-${applicationId}`}>
-              Build offer →
-            </Link>
-          </Button>
-          <span className="text-[11.5px] text-muted-foreground">
-            Inline offer form is on the roadmap — for now the existing offer flow opens below.
-          </span>
+      </header>
+
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="of-amount" className="text-[12px]">Compensation</Label>
+          <Input
+            id="of-amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            inputMode="decimal"
+            placeholder="e.g. 95000"
+            disabled={pending}
+          />
         </div>
+        <div className="space-y-1">
+          <Label htmlFor="of-currency" className="text-[12px]">Currency</Label>
+          <Input
+            id="of-currency"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+            maxLength={4}
+            placeholder="USD"
+            disabled={pending}
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="of-start" className="text-[12px]">Start date</Label>
+          <Input
+            id="of-start"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            disabled={pending}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="of-expiry" className="text-[12px]">Respond-by date</Label>
+          <Input
+            id="of-expiry"
+            type="date"
+            value={expiryDate}
+            onChange={(e) => setExpiryDate(e.target.value)}
+            disabled={pending}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="of-body" className="text-[12px]">Offer details</Label>
+        <Textarea
+          id="of-body"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={5}
+          maxLength={20000}
+          placeholder="Benefits, equity, signing bonus, vacation, remote/hybrid, reporting line — anything the candidate needs to know. Line breaks are preserved."
+          disabled={pending}
+          className="text-[12.5px]"
+        />
+      </div>
+
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => submit(false)}
+          disabled={pending}
+          className="gap-1.5"
+        >
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+          Save draft
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => submit(true)}
+          disabled={pending}
+          className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
+        >
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+          Save &amp; send
+        </Button>
       </div>
     </article>
   )

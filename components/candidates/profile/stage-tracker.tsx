@@ -24,7 +24,14 @@ interface StageTrackerProps {
  * outline with neutral text.
  */
 export function StageTracker({ stages, currentCode, compact = false }: StageTrackerProps) {
-  const currentIdx = stages.findIndex((s) => s.code === currentCode)
+  // Callers pass only the active (non-terminal) stages, so the terminal "Hired"
+  // node is missing. The confirmed design always shows the full 5-node path
+  // ending in Hired — append it here so every tracker renders it (it's always a
+  // pending/future node since the profile only shows active applications).
+  const renderStages = stages.some((s) => s.code === 'hired')
+    ? stages
+    : [...stages, { code: 'hired' as const, name: 'Hired' }]
+  const currentIdx = renderStages.findIndex((s) => s.code === currentCode)
 
   return (
     <div
@@ -35,11 +42,11 @@ export function StageTracker({ stages, currentCode, compact = false }: StageTrac
       role="list"
       aria-label="Application stages"
     >
-      {stages.map((stage, idx) => {
+      {renderStages.map((stage, idx) => {
         const isCurrent = idx === currentIdx
         const isPassed = currentIdx >= 0 && idx < currentIdx
         const style = getStageStyle(stage.code)
-        const isLast = idx === stages.length - 1
+        const isLast = idx === renderStages.length - 1
 
         const padding = compact ? 'px-1.5 py-0.5' : 'px-2.5 py-[3px]'
 
