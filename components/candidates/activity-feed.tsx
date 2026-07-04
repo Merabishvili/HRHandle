@@ -11,7 +11,7 @@ import { MentionTextarea } from '@/components/notes/mention-textarea'
 import { NoteDisplay } from '@/components/notes/note-display'
 import type { MentionableMember } from '@/lib/notes/mentions'
 
-export type ActivityKind = 'application' | 'document' | 'stage' | 'note' | 'interview'
+export type ActivityKind = 'application' | 'document' | 'stage' | 'note' | 'interview' | 'offer'
 
 export interface ActivityItem {
   id: string
@@ -40,6 +40,7 @@ const KIND_ICON: Record<ActivityKind, React.ReactNode> = {
   stage:       <ArrowRight className="h-[15px] w-[15px]" />,
   note:        <MessageSquare className="h-[15px] w-[15px]" />,
   interview:   <Calendar   className="h-[15px] w-[15px]" />,
+  offer:       <Send       className="h-[15px] w-[15px]" />,
 }
 
 const KIND_STYLE: Record<ActivityKind, string> = {
@@ -48,6 +49,7 @@ const KIND_STYLE: Record<ActivityKind, string> = {
   stage:       'bg-[oklch(0.75_0.15_70/0.2)]    text-[oklch(0.38_0.1_70)]',
   note:        'bg-muted text-muted-foreground',
   interview:   'bg-[oklch(0.65_0.17_145/0.15)]  text-[oklch(0.35_0.13_145)]',
+  offer:       'bg-[oklch(0.6_0.12_210/0.15)]   text-[oklch(0.4_0.12_210)]',
 }
 
 const FILTER_OPTIONS: { label: string; value: ActivityKind | 'all' }[] = [
@@ -55,6 +57,7 @@ const FILTER_OPTIONS: { label: string; value: ActivityKind | 'all' }[] = [
   { label: 'Notes',         value: 'note' },
   { label: 'Interviews',    value: 'interview' },
   { label: 'Stage changes', value: 'stage' },
+  { label: 'Offers',        value: 'offer' },
   { label: 'Documents',     value: 'document' },
 ]
 
