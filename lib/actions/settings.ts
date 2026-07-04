@@ -17,6 +17,7 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<v
     .update({
       full_name: parsed.data.full_name.trim(),
       phone: parsed.data.phone?.trim() || null,
+      language: parsed.data.language?.trim() || null,
     })
     .eq('id', ctx.userId)
 

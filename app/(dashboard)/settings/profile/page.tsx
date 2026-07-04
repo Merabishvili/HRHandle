@@ -17,7 +17,7 @@ export default async function ProfileSettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, organization_id, full_name, email, avatar_url, phone, role, is_active, created_at, updated_at, google_refresh_token, zoom_refresh_token')
+    .select('id, organization_id, full_name, email, avatar_url, phone, language, role, is_active, created_at, updated_at, google_refresh_token, zoom_refresh_token')
     .eq('id', user.id)
     .single()
 
