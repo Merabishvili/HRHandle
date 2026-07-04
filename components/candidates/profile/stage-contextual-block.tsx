@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { createOffer, sendOffer } from '@/lib/actions/offers'
+import { OfferPanel, type OfferRow } from '@/components/offers/offer-panel'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { StageTracker } from './stage-tracker'
 import { ScoreCandidateModal } from './score-candidate-modal'
@@ -32,6 +33,9 @@ import { ScoreCandidateModal } from './score-candidate-modal'
 export interface StageContextualBlockProps {
   applicationId: string
   vacancyTitle: string
+  /** Offers on this application — when present, the Offer stage shows the sent
+   * offer's summary + actions instead of a bare create form. */
+  offers: OfferRow[]
   /** Ordered list of non-terminal stages — used by the tracker. */
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentStage: { code: ApplicationStatus['code']; name: string; id: string }
@@ -86,6 +90,7 @@ export interface StageContextualBlockProps {
 export function StageContextualBlock({
   applicationId,
   vacancyTitle,
+  offers,
   stages,
   currentStage,
   candidate,
@@ -117,6 +122,7 @@ export function StageContextualBlock({
         <OfferState
           applicationId={applicationId}
           vacancyTitle={vacancyTitle}
+          offers={offers}
           stages={stages}
           currentCode={currentStage.code}
         />
@@ -343,11 +349,13 @@ function InterviewState({
 function OfferState({
   applicationId,
   vacancyTitle,
+  offers,
   stages,
   currentCode,
 }: {
   applicationId: string
   vacancyTitle: string
+  offers: OfferRow[]
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
 }) {
@@ -395,6 +403,23 @@ function OfferState({
       setExpiryDate('')
       router.refresh()
     })
+  }
+
+  // Once an offer exists on this application, Save & send has happened — show
+  // the persistent OfferPanel summary (status, terms, View / Edit & resend /
+  // Withdraw) instead of leaving a bare create form behind.
+  if (offers.length > 0) {
+    return (
+      <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
+        <StageTracker stages={stages} currentCode={currentCode} compact />
+        <OfferPanel
+          applicationId={applicationId}
+          vacancyTitle={vacancyTitle}
+          offers={offers}
+          canEdit
+        />
+      </article>
+    )
   }
 
   return (

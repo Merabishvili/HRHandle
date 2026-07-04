@@ -34,6 +34,7 @@ import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-di
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 import type { ApplicationStatus } from '@/lib/types/application'
 import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
+import type { OfferRow } from '@/components/offers/offer-panel'
 
 import {
   ActiveApplicationSelector,
@@ -86,6 +87,9 @@ interface ProfileShellProps {
     vacancyTitle: string
     stage: { id: string; code: ApplicationStatus['code']; name: string } | null
   }[]
+  /** Offers keyed by application id — the offer-stage block shows the sent
+   * offer's summary + actions once one exists. */
+  offersByApplication: Record<string, OfferRow[]>
   closedHistoryRows: HistoryRow[]
   repeatSummary: RepeatApplicantSummary
   /** Ordered list of non-terminal application stages — drives the stage
@@ -176,6 +180,7 @@ export function CandidateProfileShell({
   currentUserName,
   availableVacancies,
   activeApplications,
+  offersByApplication,
   closedHistoryRows,
   repeatSummary,
   activeStages,
@@ -368,6 +373,7 @@ export function CandidateProfileShell({
               <StageContextualBlock
                 applicationId={selectedApp.id}
                 vacancyTitle={selectedApp.vacancyTitle}
+                offers={offersByApplication[selectedApp.id] ?? []}
                 stages={activeStages}
                 currentStage={selectedApp.stage}
                 candidate={{

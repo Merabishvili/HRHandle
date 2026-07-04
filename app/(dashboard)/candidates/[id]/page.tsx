@@ -14,6 +14,7 @@ import type { ActivityItem } from '@/components/candidates/activity-feed'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { getRecentMerge } from '@/lib/actions/candidate-merge'
 import { CandidateProfileShell } from '@/components/candidates/profile/profile-shell'
+import type { OfferRow } from '@/components/offers/offer-panel'
 import type { HistoryRow } from '@/components/candidates/profile/application-history'
 import type { RepeatApplicantSummary } from '@/components/candidates/profile/repeat-applicant-banner'
 import type { StageContextualBlockProps } from '@/components/candidates/profile/stage-contextual-block'
@@ -344,6 +345,25 @@ export default async function CandidateDetailPage({
     reachedStageName: status.name,
   }))
 
+  // Offers per active application → the offer-stage block shows a persistent
+  // "Offer sent" summary (status, terms, actions) once one exists, instead of
+  // leaving a bare create form behind after Save & send.
+  const offersByApplication: Record<string, OfferRow[]> = {}
+  if (activeApplications.length > 0) {
+    const { data: offersRaw } = await supabase
+      .from('offers')
+      .select(
+        'id, application_id, status, role_title, compensation_amount, compensation_currency, compensation_period, start_date, expiry_date, body, recruiter_message, public_token, sent_at, responded_at, decline_reason',
+      )
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null)
+      .in('application_id', activeApplications.map((a) => a.id))
+      .order('created_at', { ascending: false })
+    for (const o of (offersRaw ?? []) as (OfferRow & { application_id: string })[]) {
+      ;(offersByApplication[o.application_id] ??= []).push(o)
+    }
+  }
+
   // Repeat-applicant summary
   const rejectedCount = closedHistoryRows.filter((r) => r.outcome === 'rejected').length
   const withdrawnCount = closedHistoryRows.filter((r) => r.outcome === 'withdrawn').length
@@ -566,6 +586,7 @@ export default async function CandidateDetailPage({
       currentUserName={profile.full_name ?? null}
       availableVacancies={availableVacancies}
       activeApplications={activeApplications}
+      offersByApplication={offersByApplication}
       closedHistoryRows={closedHistoryRows}
       repeatSummary={repeatSummary}
       activeStages={sortedActiveStages.map((s) => ({ id: s.id, code: s.code, name: s.name }))}
