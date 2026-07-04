@@ -35,7 +35,6 @@ const ENTITY_TYPES = [
   'offer',
   'organization',
   'profile',
-  'saved_view',
   'vacancy',
   'webhook_notification',
 ]
@@ -64,10 +63,6 @@ const ACTION_TYPES = [
   'offer_declined',
   'offer_sent',
   'offer_withdrawn',
-  'saved_view_created',
-  'saved_view_deleted',
-  'saved_view_renamed',
-  'saved_view_updated',
   'scorecard_revoked',
   'scorecard_shared',
   'status_change_email_sent',

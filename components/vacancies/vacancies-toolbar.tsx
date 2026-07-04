@@ -20,14 +20,11 @@ import {
   VACANCY_SORT_OPTIONS,
   type ColumnDef,
 } from '@/lib/types/columns'
-import { SavedViewsMenu } from '@/components/saved-views/saved-views-menu'
-import type { SavedView } from '@/lib/actions/saved-views'
 
 interface VacanciesToolbarProps {
   initialSearch: string
   initialSort: string
   selectedColumns: string[]
-  savedViews: SavedView[]
   /** Org custom fields, surfaced as addable columns alongside the built-in set. */
   extraColumns?: ColumnDef[]
 }
@@ -42,7 +39,6 @@ export function VacanciesToolbar({
   initialSearch,
   initialSort,
   selectedColumns: initialColumns,
-  savedViews,
   extraColumns = [],
 }: VacanciesToolbarProps) {
   const router = useRouter()
@@ -95,12 +91,6 @@ export function VacanciesToolbar({
             className="pl-9"
           />
         </div>
-
-        <SavedViewsMenu
-          kind="vacancies"
-          views={savedViews}
-          currentParams={Object.fromEntries(searchParams.entries())}
-        />
 
         <Select value={initialSort || 'created_desc'} onValueChange={handleSortChange}>
           <SelectTrigger className="w-[200px]">
