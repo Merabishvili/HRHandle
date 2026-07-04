@@ -50,14 +50,6 @@ export interface Vacancy {
   responsibilities: string | null
   show_on_public_page?: boolean
 
-  /** Saved AI-assisted interview questions, per category. Null if never saved. */
-  interview_questions?: {
-    behavioural: string[]
-    technical: string[]
-    situational: string[]
-    closing: string[]
-  } | null
-
   created_by: UUID | null
   created_at: ISODateTimeString
   updated_at: ISODateTimeString
