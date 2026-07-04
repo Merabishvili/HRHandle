@@ -479,6 +479,7 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
               hasGoogleCalendar={scheduleData.hasGoogleCalendar}
               hasZoom={scheduleData.hasZoom}
               hasMicrosoft={scheduleData.hasMicrosoft}
+              defaultMeetingProvider={scheduleData.defaultMeetingProvider}
               onScheduled={() => {
                 setScheduleOpen(false)
                 if (current) setScheduledIds((prev) => new Set(prev).add(current.id))

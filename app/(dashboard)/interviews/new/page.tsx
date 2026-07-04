@@ -68,7 +68,7 @@ export default async function NewInterviewPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('organization_id, google_refresh_token, zoom_refresh_token, microsoft_refresh_token')
+    .select('organization_id, google_refresh_token, zoom_refresh_token, microsoft_refresh_token, default_meeting_provider')
     .eq('id', user.id)
     .single()
 
@@ -162,6 +162,9 @@ export default async function NewInterviewPage({
         hasGoogleCalendar={!!profile.google_refresh_token}
         hasZoom={!!profile.zoom_refresh_token}
         hasMicrosoft={!!profile.microsoft_refresh_token}
+        defaultMeetingProvider={
+          (profile.default_meeting_provider as 'google_meet' | 'zoom' | 'teams' | null) ?? null
+        }
       />
     </div>
   )

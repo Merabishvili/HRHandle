@@ -26,6 +26,32 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<v
   return { success: true, data: undefined }
 }
 
+const MEETING_PROVIDERS = ['google_meet', 'zoom', 'teams'] as const
+export type DefaultMeetingProvider = (typeof MEETING_PROVIDERS)[number]
+
+/** #6b — persist the user's preferred auto meeting link for video interviews.
+ * `null` restores the built-in Google > Zoom > Teams precedence. */
+export async function updateDefaultMeetingProvider(
+  provider: DefaultMeetingProvider | null,
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  if (provider !== null && !MEETING_PROVIDERS.includes(provider)) {
+    return { success: false, error: 'Invalid provider' }
+  }
+
+  const { error } = await ctx.supabase
+    .from('profiles')
+    .update({ default_meeting_provider: provider })
+    .eq('id', ctx.userId)
+
+  if (error) return { success: false, error: 'Failed to save preference' }
+
+  revalidatePath('/settings')
+  return { success: true, data: undefined }
+}
+
 export async function updateOrganization(
   orgId: string,
   input: OrganizationInput

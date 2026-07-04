@@ -6,7 +6,9 @@ import { GoogleCalendarConnect } from '@/components/settings/google-calendar-con
 import { ZoomConnect } from '@/components/settings/zoom-connect'
 import { MicrosoftConnect } from '@/components/settings/microsoft-connect'
 import { LinkedInConnect } from '@/components/settings/linkedin-connect'
+import { DefaultMeetingProviderSelect } from '@/components/settings/default-meeting-provider-select'
 import { getLinkedInIntegration } from '@/lib/actions/integrations'
+import type { DefaultMeetingProvider } from '@/lib/actions/settings'
 import Link from 'next/link'
 import { Bell, Calendar as CalendarIcon } from 'lucide-react'
 
@@ -17,13 +19,19 @@ export default async function IntegrationsSettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('google_refresh_token, zoom_refresh_token, microsoft_refresh_token')
+    .select('google_refresh_token, zoom_refresh_token, microsoft_refresh_token, default_meeting_provider')
     .eq('id', user.id)
     .single()
 
   if (!profile) redirect('/pipeline')
 
   const linkedInIntegration = await getLinkedInIntegration()
+
+  const hasGoogle = !!profile.google_refresh_token
+  const hasZoom = !!profile.zoom_refresh_token
+  const hasTeams = !!profile.microsoft_refresh_token
+  // "Default for video interviews" only matters once there's a choice to make.
+  const showDefaultProvider = [hasGoogle, hasZoom, hasTeams].filter(Boolean).length >= 2
 
   return (
     <div className="max-w-2xl">
@@ -44,9 +52,19 @@ export default async function IntegrationsSettingsPage() {
             </div>
             <div className="border-t border-border pt-6">
               <Suspense fallback={null}>
-                <MicrosoftConnect isConnected={!!profile.microsoft_refresh_token} />
+                <MicrosoftConnect isConnected={hasTeams} />
               </Suspense>
             </div>
+            {showDefaultProvider && (
+              <div className="border-t border-border pt-6">
+                <DefaultMeetingProviderSelect
+                  current={(profile.default_meeting_provider as DefaultMeetingProvider | null) ?? null}
+                  hasGoogle={hasGoogle}
+                  hasZoom={hasZoom}
+                  hasTeams={hasTeams}
+                />
+              </div>
+            )}
             <div className="border-t border-border pt-6">
               <Suspense fallback={null}>
                 <LinkedInConnect integration={linkedInIntegration} />

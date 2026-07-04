@@ -65,6 +65,9 @@ interface InterviewFormProps {
   hasGoogleCalendar?: boolean
   hasZoom?: boolean
   hasMicrosoft?: boolean
+  /** The user's saved default auto meeting link (#6b) — prefers this provider
+   * when it's connected. */
+  defaultMeetingProvider?: 'google_meet' | 'zoom' | 'teams' | null
   /** When set, the form is rendered inside an overlay (e.g. Pipeline Review
    * Mode). On a successful create it calls this instead of navigating to
    * /interviews, so the caller can close the overlay and stay in place. */
@@ -88,12 +91,18 @@ function getCandidateFullName(candidate: InterviewCandidateOption): string {
 }
 
 /** Prefer auto-generated links when a calendar is connected; manual is the
- * fallback only when nothing is connected. */
+ * fallback only when nothing is connected. Honours the user's saved
+ * "default for video interviews" (#6b) when that provider is connected,
+ * otherwise falls back to the built-in Google > Zoom > Teams order. */
 function defaultMeetingOption(
   hasGoogle: boolean,
   hasZoom: boolean,
   hasTeams: boolean,
+  preferred?: 'google_meet' | 'zoom' | 'teams' | null,
 ): 'manual' | 'google_meet' | 'zoom' | 'teams' {
+  if (preferred === 'google_meet' && hasGoogle) return 'google_meet'
+  if (preferred === 'zoom' && hasZoom) return 'zoom'
+  if (preferred === 'teams' && hasTeams) return 'teams'
   if (hasGoogle) return 'google_meet'
   if (hasZoom) return 'zoom'
   if (hasTeams) return 'teams'
@@ -112,6 +121,7 @@ export function InterviewForm({
   hasGoogleCalendar = false,
   hasZoom = false,
   hasMicrosoft = false,
+  defaultMeetingProvider = null,
   onScheduled,
   onCancel,
 }: InterviewFormProps) {
@@ -145,7 +155,7 @@ export function InterviewForm({
 
   // Meeting options: prefer an auto link when a calendar is connected (#5).
   const [meetingOption, setMeetingOption] = useState<'manual' | 'google_meet' | 'zoom' | 'teams'>(
-    () => defaultMeetingOption(hasGoogleCalendar, hasZoom, hasMicrosoft),
+    () => defaultMeetingOption(hasGoogleCalendar, hasZoom, hasMicrosoft, defaultMeetingProvider),
   )
   const [manualMeetingLink, setManualMeetingLink] = useState('')
   const [sendInvitation, setSendInvitation] = useState(false)
