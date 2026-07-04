@@ -63,6 +63,8 @@ export default async function IntegrationsSettingsPage() {
                     <p className="font-medium">Slack &amp; Microsoft Teams notifications</p>
                     <p className="text-sm text-muted-foreground">
                       Send messages to your team when applications, offers, and interviews change.
+                      This is a separate connection from <span className="font-medium">Microsoft (Calendar + Teams)</span> above —
+                      that one creates Teams <em>meetings</em>; this one posts team <em>notifications</em>.
                     </p>
                   </div>
                 </div>
