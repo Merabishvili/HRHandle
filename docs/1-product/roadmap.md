@@ -1,8 +1,9 @@
 # HRHandle — Product Roadmap
 
-_Last updated: 2026-06-26_
+_Last updated: 2026-07-04_
 _Owner: Aleksandre Merabishvili_
 
+> **Current outstanding work + manual steps:** [`outstanding-2026-07.md`](outstanding-2026-07.md) — what's left after the 2026-07-03/04 fix batch (4 deferred code tasks + the manual migration / Azure / org-rename steps).
 > **See also:** [`docs/redesign/roadmap.md`](../redesign/roadmap.md) — the standalone roadmap for the proposed UX/IA redesign. Independent of this doc; coordination notes flag overlaps where redesign waves touch Phase 9 / Phase 10 items.
 
 This is the single index of work that's **not yet built but worth building**. It groups everything in one place so future-you (or a contributor) doesn't have to triangulate across `issues-found.md`, `ai-features.md`, and Slack/notes.
