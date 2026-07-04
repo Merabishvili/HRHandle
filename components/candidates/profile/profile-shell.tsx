@@ -127,6 +127,19 @@ interface ProfileShellProps {
   recentMerge: RecentMergeInfo | null
 }
 
+/** True if this candidate has at least one custom field with a real value —
+ * drives whether the "Additional information" card renders at all (empty →
+ * hidden, never an empty shell). */
+function hasCustomFieldValues(values: CustomFieldValue[]): boolean {
+  return values.some(
+    (v) =>
+      (v.value_text != null && v.value_text.trim() !== '') ||
+      v.value_number != null ||
+      v.value_boolean === true ||
+      (v.value_option != null && v.value_option.trim() !== ''),
+  )
+}
+
 /**
  * Wave 2.3 candidate profile shell per Candidate Profile A Refined.dc.html.
  *
@@ -427,7 +440,7 @@ export function CandidateProfileShell({
               />
             </div>
 
-            {customFieldGroups.length > 0 && (
+            {customFieldGroups.length > 0 && hasCustomFieldValues(customFieldValues) && (
               <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4">
                 <p className="mb-3 text-[14px] font-bold text-foreground">Additional information</p>
                 <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
