@@ -11,6 +11,7 @@ export const VacancySchema = z
       .enum(['full_time', 'part_time', 'contract', 'internship'])
       .nullable()
       .optional(),
+    work_mode: z.enum(['remote', 'hybrid', 'onsite']).nullable().optional(),
     hiring_manager_name: z.string().max(100).nullable().optional(),
     salary_min: z.number().min(0).nullable().optional(),
     salary_max: z.number().min(0).nullable().optional(),

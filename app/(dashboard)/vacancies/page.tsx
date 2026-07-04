@@ -57,6 +57,7 @@ interface VacancyRow {
   department: string | null
   location: string | null
   employment_type: 'full_time' | 'part_time' | 'contract' | 'internship' | null
+  work_mode: 'remote' | 'hybrid' | 'onsite' | null
   hiring_manager_name: string | null
   salary_min: number | null
   salary_max: number | null
@@ -83,6 +84,15 @@ function formatEmploymentType(value: VacancyRow['employment_type']): string {
     case 'contract': return 'Contract'
     case 'internship': return 'Internship'
     default: return 'Not specified'
+  }
+}
+
+function formatWorkMode(value: VacancyRow['work_mode']): string {
+  switch (value) {
+    case 'remote': return 'Remote'
+    case 'hybrid': return 'Hybrid'
+    case 'onsite': return 'On-site'
+    default: return '—'
   }
 }
 
@@ -132,7 +142,7 @@ export default async function VacanciesPage({
 
   const FIELDS = `
     id, organization_id, title, sector_id, status_id, department, location,
-    employment_type, hiring_manager_name, salary_min, salary_max, salary_currency,
+    employment_type, work_mode, hiring_manager_name, salary_min, salary_max, salary_currency,
     openings_count, start_date, end_date, description, requirements, created_by,
     created_at, updated_at, archived_at,
     vacancy_statuses(id, name, code),
@@ -419,6 +429,12 @@ export default async function VacanciesPage({
                               return (
                                 <TableCell key={col} className="text-sm text-muted-foreground">
                                   {formatEmploymentType(vacancy.employment_type)}
+                                </TableCell>
+                              )
+                            case 'work_mode':
+                              return (
+                                <TableCell key={col} className="text-sm text-muted-foreground">
+                                  {formatWorkMode(vacancy.work_mode)}
                                 </TableCell>
                               )
                             case 'start_date':

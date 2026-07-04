@@ -67,6 +67,7 @@ interface VacancyRow {
   department: string | null
   location: string | null
   employment_type: 'full_time' | 'part_time' | 'contract' | 'internship' | null
+  work_mode: 'remote' | 'hybrid' | 'onsite' | null
   hiring_manager_name: string | null
   salary_min: number | null
   salary_max: number | null
@@ -125,6 +126,15 @@ function formatEmploymentType(value: VacancyRow['employment_type']): string {
   }
 }
 
+function formatWorkMode(value: VacancyRow['work_mode']): string {
+  switch (value) {
+    case 'remote': return 'Remote'
+    case 'hybrid': return 'Hybrid'
+    case 'onsite': return 'On-site'
+    default: return 'Not specified'
+  }
+}
+
 function formatSalary(vacancy: VacancyRow): string | null {
   if (vacancy.salary_min == null && vacancy.salary_max == null) return null
   const min = vacancy.salary_min != null ? vacancy.salary_min.toLocaleString() : null
@@ -175,7 +185,7 @@ export default async function VacancyDetailPage({
       .from('vacancies')
       .select(`
         id, organization_id, title, sector_id, status_id, department, location,
-        employment_type, hiring_manager_name, salary_min, salary_max, salary_currency,
+        employment_type, work_mode, hiring_manager_name, salary_min, salary_max, salary_currency,
         openings_count, start_date, end_date, description, responsibilities, requirements,
         created_by, created_at, updated_at, archived_at,
         application_form_token, show_on_public_page,
@@ -517,6 +527,7 @@ export default async function VacancyDetailPage({
                 department: vacancy.department,
                 location: vacancy.location,
                 employmentTypeLabel: formatEmploymentType(vacancy.employment_type),
+                workModeLabel: formatWorkMode(vacancy.work_mode),
                 endDate: vacancy.end_date,
               }}
               status={{

@@ -1,6 +1,7 @@
 import type { UUID, ISODateString, ISODateTimeString } from './common'
 
 export type EmploymentType = 'full_time' | 'part_time' | 'contract' | 'internship'
+export type WorkMode = 'remote' | 'hybrid' | 'onsite'
 
 export interface Sector {
   id: UUID
@@ -33,6 +34,7 @@ export interface Vacancy {
   department: string | null
   location: string | null
   employment_type: EmploymentType | null
+  work_mode: WorkMode | null
   hiring_manager_name: string | null
 
   salary_min: number | null
@@ -76,6 +78,7 @@ export interface VacancyFormData {
   department?: string
   location?: string
   employment_type?: EmploymentType | null
+  work_mode?: WorkMode | null
   hiring_manager_name?: string
 
   salary_min?: number | null

@@ -17,6 +17,7 @@ interface VacancyRow {
   department: string | null
   location: string | null
   employment_type: 'full_time' | 'part_time' | 'contract' | 'internship' | null
+  work_mode: 'remote' | 'hybrid' | 'onsite' | null
   hiring_manager_name: string | null
   salary_min: number | null
   salary_max: number | null
@@ -96,6 +97,7 @@ export default async function EditVacancyPage({
           department,
           location,
           employment_type,
+          work_mode,
           hiring_manager_name,
           salary_min,
           salary_max,

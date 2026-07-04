@@ -17,6 +17,7 @@ interface SettingsTabProps {
     department: string | null
     location: string | null
     employmentTypeLabel: string
+    workModeLabel: string
     endDate: string | null
   }
   status: {
@@ -62,7 +63,10 @@ export function SettingsTab({
             <SettingsField label="Location" value={roleDetails.location ?? '—'} />
           </div>
           <div className="flex gap-2.5">
-            <SettingsField label="Type" value={roleDetails.employmentTypeLabel} />
+            <SettingsField label="Employment type" value={roleDetails.employmentTypeLabel} />
+            <SettingsField label="Work mode" value={roleDetails.workModeLabel} />
+          </div>
+          <div className="flex gap-2.5">
             <SettingsField
               label="End date"
               value={roleDetails.endDate ? format(new Date(roleDetails.endDate), 'MMM d, yyyy') : '—'}

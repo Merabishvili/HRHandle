@@ -15,9 +15,8 @@ export interface BasicsState {
   department: string
   sectorId: string | null
   location: string
-  /** Work mode is NEW per design — captured locally only until a
-   * `vacancies.work_mode` column ships (tech-debt.md §1). */
-  workMode: 'on_site' | 'hybrid' | 'remote'
+  /** Work mode — persisted to `vacancies.work_mode`. */
+  workMode: 'remote' | 'hybrid' | 'onsite'
   employmentType: 'full_time' | 'part_time' | 'contract' | 'internship'
   openingsCount: number
   hiringManagerName: string
@@ -102,7 +101,7 @@ export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="on_site">On-site</SelectItem>
+              <SelectItem value="onsite">On-site</SelectItem>
               <SelectItem value="hybrid">Hybrid</SelectItem>
               <SelectItem value="remote">Remote</SelectItem>
             </SelectContent>

@@ -153,7 +153,7 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
 
   const { data: orig } = await ctx.supabase
     .from('vacancies')
-    .select('title, sector_id, status_id, department, location, employment_type, hiring_manager_name, salary_min, salary_max, salary_currency, openings_count, start_date, end_date, description, responsibilities, requirements')
+    .select('title, sector_id, status_id, department, location, employment_type, work_mode, hiring_manager_name, salary_min, salary_max, salary_currency, openings_count, start_date, end_date, description, responsibilities, requirements')
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
@@ -200,6 +200,7 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
       department: orig.department,
       location: orig.location,
       employment_type: orig.employment_type,
+      work_mode: orig.work_mode,
       hiring_manager_name: orig.hiring_manager_name,
       salary_min: orig.salary_min,
       salary_max: orig.salary_max,

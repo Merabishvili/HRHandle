@@ -397,7 +397,7 @@ function formatEmployment(value: BasicsState['employmentType']): string {
 
 function formatWorkMode(value: BasicsState['workMode']): string {
   switch (value) {
-    case 'on_site': return 'On-site'
+    case 'onsite': return 'On-site'
     case 'hybrid': return 'Hybrid'
     case 'remote': return 'Remote'
   }

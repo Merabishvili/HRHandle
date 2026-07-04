@@ -30,6 +30,7 @@ import type {
   Vacancy,
   VacancyFormData,
   EmploymentType,
+  WorkMode,
   Sector,
   VacancyStatus,
 } from '@/lib/types'
@@ -49,6 +50,13 @@ const employmentTypes: { value: EmploymentType; label: string }[] = [
   { value: 'part_time', label: 'Part-time' },
   { value: 'contract', label: 'Contract' },
   { value: 'internship', label: 'Internship' },
+]
+
+const NO_WORK_MODE = '__none'
+const workModes: { value: WorkMode; label: string }[] = [
+  { value: 'remote', label: 'Remote' },
+  { value: 'hybrid', label: 'Hybrid' },
+  { value: 'onsite', label: 'On-site' },
 ]
 
 export function VacancyForm({
@@ -73,6 +81,7 @@ export function VacancyForm({
     department: vacancy?.department || '',
     location: vacancy?.location || '',
     employment_type: vacancy?.employment_type || 'full_time',
+    work_mode: vacancy?.work_mode ?? null,
     hiring_manager_name: vacancy?.hiring_manager_name || '',
     salary_min: vacancy?.salary_min ?? null,
     salary_max: vacancy?.salary_max ?? null,
@@ -184,6 +193,7 @@ export function VacancyForm({
       department: formData.department?.trim() || null,
       location: formData.location?.trim() || null,
       employment_type: formData.employment_type || null,
+      work_mode: formData.work_mode ?? null,
       hiring_manager_name: formData.hiring_manager_name?.trim() || null,
       salary_min: formData.salary_min ?? null,
       salary_max: formData.salary_max ?? null,
@@ -347,6 +357,32 @@ export function VacancyForm({
                   {employmentTypes.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="work_mode">Work mode</Label>
+              <Select
+                value={formData.work_mode ?? NO_WORK_MODE}
+                onValueChange={(value: string) =>
+                  setFormData({
+                    ...formData,
+                    work_mode: value === NO_WORK_MODE ? null : (value as WorkMode),
+                  })
+                }
+                disabled={isLoading}
+              >
+                <SelectTrigger id="work_mode">
+                  <SelectValue placeholder="Not specified" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_WORK_MODE}>Not specified</SelectItem>
+                  {workModes.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

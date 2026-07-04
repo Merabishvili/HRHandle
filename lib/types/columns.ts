@@ -28,6 +28,7 @@ export const OPTIONAL_VACANCY_COLUMNS: ColumnDef[] = [
   // "Type" was ambiguous (employment type vs work mode); the vacancy record
   // only stores employment type, so this is now explicitly labelled.
   { key: 'employment_type', label: 'Employment type' },
+  { key: 'work_mode', label: 'Work mode' },
   { key: 'sector', label: 'Sector' },
   { key: 'salary', label: 'Salary range' },
   { key: 'health', label: 'Health' },
