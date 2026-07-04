@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfileForm } from '@/components/settings/profile-form'
+import { AvatarUpload } from '@/components/settings/avatar-upload'
 
 /**
  * Personal → Profile sub-page.
@@ -30,7 +31,8 @@ export default async function ProfileSettingsPage() {
           <CardTitle>Profile</CardTitle>
           <CardDescription>Update your personal information.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          <AvatarUpload currentUrl={profile.avatar_url} fullName={profile.full_name} />
           <ProfileForm profile={profile} />
         </CardContent>
       </Card>

@@ -2,8 +2,58 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { ProfileSchema, OrganizationSchema } from '@/lib/validations/settings'
 import type { ProfileInput, OrganizationInput } from '@/lib/validations/settings'
+
+const AVATAR_BUCKET = 'avatars'
+const AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const AVATAR_MAX_BYTES = 2 * 1024 * 1024
+
+/** #1 — upload a profile avatar to the public `avatars` bucket and save the URL
+ * on the user's profile. Server-side via the admin client, so no per-user
+ * storage policy is needed. */
+export async function uploadAvatar(formData: FormData): Promise<ActionResult<{ url: string }>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const file = formData.get('file')
+  if (!(file instanceof File)) return { success: false, error: 'No file provided' }
+  if (!AVATAR_MIME_TYPES.has(file.type)) {
+    return { success: false, error: 'Only JPG, PNG, or WebP images are accepted' }
+  }
+  if (file.size > AVATAR_MAX_BYTES) {
+    return { success: false, error: 'Image must be under 2 MB' }
+  }
+
+  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+  const path = `${ctx.userId}/${crypto.randomUUID()}.${ext}`
+  const bytes = await file.arrayBuffer()
+
+  const admin = createAdminClient()
+  const { error: upErr } = await admin.storage
+    .from(AVATAR_BUCKET)
+    .upload(path, bytes, { contentType: file.type, upsert: false })
+  if (upErr) {
+    console.error('[settings] avatar upload failed:', upErr.message)
+    return { success: false, error: 'Failed to upload image' }
+  }
+
+  const { data: pub } = admin.storage.from(AVATAR_BUCKET).getPublicUrl(path)
+  const url = pub.publicUrl
+
+  const { error: dbErr } = await ctx.supabase
+    .from('profiles')
+    .update({ avatar_url: url })
+    .eq('id', ctx.userId)
+  if (dbErr) {
+    await admin.storage.from(AVATAR_BUCKET).remove([path])
+    return { success: false, error: 'Failed to save avatar' }
+  }
+
+  revalidatePath('/settings')
+  return { success: true, data: { url } }
+}
 
 export async function updateProfile(input: ProfileInput): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
