@@ -279,12 +279,23 @@ export default async function CandidatesPage({
   const fitScoreByApplication = new Map<string, number>()
   const applicationIds = applications.map((a) => a.id)
   if (applicationIds.length > 0) {
+    // Fit score = average of *submitted* reviewer cards per application.
     const { data: evalRows } = await supabase
       .from('candidate_evaluations')
       .select('application_id, score')
+      .eq('submitted', true)
       .in('application_id', applicationIds)
+    const agg = new Map<string, { total: number; count: number }>()
     for (const row of (evalRows ?? []) as { application_id: string; score: number | null }[]) {
-      if (typeof row.score === 'number') fitScoreByApplication.set(row.application_id, row.score)
+      if (typeof row.score === 'number') {
+        const cur = agg.get(row.application_id) ?? { total: 0, count: 0 }
+        cur.total += row.score
+        cur.count += 1
+        agg.set(row.application_id, cur)
+      }
+    }
+    for (const [appId, { total, count }] of agg) {
+      fitScoreByApplication.set(appId, Math.round(total / count))
     }
   }
 

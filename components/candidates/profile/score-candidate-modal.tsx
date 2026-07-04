@@ -38,12 +38,11 @@ const RECOMMENDATIONS: { value: Recommendation; label: string; active: string }[
   { value: 'no', label: 'No', active: 'border-[oklch(0.85_0.06_27)] bg-[oklch(0.96_0.04_27)] text-[oklch(0.5_0.19_27)]' },
 ]
 
-/** The DB stores a binary advance-or-reject recommendation; the 4-way UI maps
- * down to it (nuance is UI-only). */
-function toBinary(rec: Recommendation | null): 'yes' | 'no' | null {
-  if (rec === 'strong_yes' || rec === 'yes') return 'yes'
-  if (rec === 'lean_no' || rec === 'no') return 'no'
-  return null
+const RECOMMENDATION_LABEL: Record<Recommendation, string> = {
+  strong_yes: 'Strong yes',
+  yes: 'Yes',
+  lean_no: 'Lean no',
+  no: 'No',
 }
 
 /**
@@ -137,8 +136,9 @@ export function ScoreCandidateModal({
       candidateId: data.candidateId,
       score: fitScore,
       answers,
-      recommendation: toBinary(recommendation),
+      recommendation,
       recommendationReason: reason.trim() || null,
+      submitted: submit,
     })
     setSaving(false)
     if (!result.success) {
@@ -297,9 +297,43 @@ export function ScoreCandidateModal({
               />
             </div>
 
-            <p className="text-[11.5px] text-muted-foreground">
-              Others&apos; cards stay hidden until you submit yours.
-            </p>
+            {/* Other reviewers' cards — revealed only once you've submitted
+                yours (anti-anchoring). */}
+            {data.existing?.submitted && data.otherCards.length > 0 ? (
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <p className="text-[13px] font-semibold text-foreground">
+                  Other scorecards ({data.otherCards.length})
+                </p>
+                <ul className="space-y-2.5">
+                  {data.otherCards.map((c, i) => (
+                    <li key={i} className="space-y-0.5">
+                      <div className="flex items-center justify-between gap-2 text-[12.5px]">
+                        <span className="font-medium text-foreground">{c.reviewerName}</span>
+                        <span className="flex items-center gap-2">
+                          {c.recommendation && (
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-foreground">
+                              {RECOMMENDATION_LABEL[c.recommendation]}
+                            </span>
+                          )}
+                          {typeof c.score === 'number' && (
+                            <span className="tabular-nums text-muted-foreground">Fit {c.score}%</span>
+                          )}
+                        </span>
+                      </div>
+                      {c.recommendationReason && (
+                        <p className="text-[12px] text-muted-foreground">{c.recommendationReason}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-[11.5px] text-muted-foreground">
+                {data.otherSubmittedCount > 0
+                  ? `${data.otherSubmittedCount} other reviewer${data.otherSubmittedCount === 1 ? '' : 's'} submitted — their cards appear once you submit yours (anti-anchoring).`
+                  : "Others' cards stay hidden until you submit yours."}
+              </p>
+            )}
 
             <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
               <Button type="button" variant="outline" onClick={() => persist(false)} disabled={saving} className="gap-1.5">

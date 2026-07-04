@@ -218,13 +218,22 @@ export default async function PipelinePage() {
       const m = new Map<string, number>()
       const ids = appRows.map((a) => a.id)
       if (ids.length === 0) return m
+      // Fit score = average of *submitted* reviewer cards per application.
       const { data } = await supabase
         .from('candidate_evaluations')
         .select('application_id, score')
+        .eq('submitted', true)
         .in('application_id', ids)
+      const agg = new Map<string, { total: number; count: number }>()
       for (const row of (data ?? []) as { application_id: string; score: number | null }[]) {
-        if (typeof row.score === 'number') m.set(row.application_id, row.score)
+        if (typeof row.score === 'number') {
+          const cur = agg.get(row.application_id) ?? { total: 0, count: 0 }
+          cur.total += row.score
+          cur.count += 1
+          agg.set(row.application_id, cur)
+        }
       }
+      for (const [appId, { total, count }] of agg) m.set(appId, Math.round(total / count))
       return m
     })(),
   ])

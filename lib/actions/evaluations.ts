@@ -207,17 +207,19 @@ export async function removeVacancyQuestion(
   return { success: true, data: null }
 }
 
+export type ScorecardRecommendation = 'strong_yes' | 'yes' | 'lean_no' | 'no'
+
 export async function saveEvaluation(input: {
   applicationId: string
   vacancyId: string
   candidateId: string
   score: number | null
   answers: { questionId: string; textValue: string | null; scoreValue: number | null }[]
-  /** Binary advance-or-reject recommendation (the 4-way UI Strong yes / Yes /
-   * Lean no / No maps down to this — the DB column is constrained to yes|no).
-   * Omit to leave the existing recommendation untouched. */
-  recommendation?: 'yes' | 'no' | null
+  /** 4-value recommendation. Omit to leave the existing one untouched. */
+  recommendation?: ScorecardRecommendation | null
   recommendationReason?: string | null
+  /** true = submit (visible to other reviewers); false/omit = draft. */
+  submitted?: boolean
 }): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -233,11 +235,14 @@ export async function saveEvaluation(input: {
 
   if (!appCheck) return { success: false, error: 'Application not found' }
 
+  // One evaluation per reviewer per application — upsert on (application_id,
+  // reviewer_id) so reviewers no longer overwrite each other's cards.
   const { data: evaluation, error: evalError } = await ctx.supabase
     .from('candidate_evaluations')
     .upsert(
       {
         application_id: input.applicationId,
+        reviewer_id: ctx.userId,
         vacancy_id: input.vacancyId,
         candidate_id: input.candidateId,
         organization_id: ctx.orgId,
@@ -246,9 +251,10 @@ export async function saveEvaluation(input: {
         ...(input.recommendationReason !== undefined
           ? { recommendation_reason: input.recommendationReason }
           : {}),
+        ...(input.submitted !== undefined ? { submitted: input.submitted } : {}),
         updated_at: new Date().toISOString(),
       },
-      { onConflict: 'application_id' }
+      { onConflict: 'application_id,reviewer_id' }
     )
     .select('id')
     .single()
@@ -283,17 +289,32 @@ export interface ScorecardQuestion {
   mustHave: boolean
 }
 
+export interface ScorecardReviewerCard {
+  reviewerName: string
+  score: number | null
+  recommendation: ScorecardRecommendation | null
+  recommendationReason: string | null
+}
+
 export interface ScorecardData {
   vacancyId: string
   vacancyTitle: string
   candidateId: string
   questions: ScorecardQuestion[]
+  /** The current reviewer's own card (draft or submitted) — prefill. */
   existing: {
     score: number | null
-    recommendation: 'yes' | 'no' | null
+    recommendation: ScorecardRecommendation | null
     recommendationReason: string | null
+    submitted: boolean
     answers: { questionId: string; textValue: string | null; scoreValue: number | null }[]
   } | null
+  /** Other reviewers' *submitted* cards — only revealed once this reviewer has
+   * submitted their own (anti-anchoring). Empty otherwise. */
+  otherCards: ScorecardReviewerCard[]
+  /** How many other reviewers have submitted (shown even while hidden, so the
+   * reviewer knows cards are waiting). */
+  otherSubmittedCount: number
 }
 
 /**
@@ -337,10 +358,12 @@ export async function getScorecardData(
     }[]
   ).map((q) => ({ id: q.id, label: q.label, type: q.type, mustHave: !!q.must_have }))
 
+  // The current reviewer's own card (draft or submitted) — prefill.
   const { data: evalRow } = await ctx.supabase
     .from('candidate_evaluations')
-    .select('id, score, recommendation, recommendation_reason')
+    .select('id, score, recommendation, recommendation_reason, submitted')
     .eq('application_id', applicationId)
+    .eq('reviewer_id', ctx.userId)
     .maybeSingle()
 
   let existing: ScorecardData['existing'] = null
@@ -352,8 +375,9 @@ export async function getScorecardData(
 
     existing = {
       score: (evalRow.score as number | null) ?? null,
-      recommendation: (evalRow.recommendation as 'yes' | 'no' | null) ?? null,
+      recommendation: (evalRow.recommendation as ScorecardRecommendation | null) ?? null,
       recommendationReason: (evalRow.recommendation_reason as string | null) ?? null,
+      submitted: !!evalRow.submitted,
       answers: ((answerRows ?? []) as {
         question_id: string
         text_value: string | null
@@ -366,6 +390,43 @@ export async function getScorecardData(
     }
   }
 
+  // Other reviewers' submitted cards — counted always, but only revealed once
+  // this reviewer has submitted their own (anti-anchoring).
+  const { data: submittedRows } = await ctx.supabase
+    .from('candidate_evaluations')
+    .select('score, recommendation, recommendation_reason, reviewer_id')
+    .eq('application_id', applicationId)
+    .eq('submitted', true)
+
+  const otherRows = ((submittedRows ?? []) as {
+    score: number | null
+    recommendation: string | null
+    recommendation_reason: string | null
+    reviewer_id: string | null
+  }[]).filter((r) => r.reviewer_id !== ctx.userId)
+
+  const myCardSubmitted = !!existing?.submitted
+  let otherCards: ScorecardReviewerCard[] = []
+  if (myCardSubmitted && otherRows.length > 0) {
+    const reviewerIds = [...new Set(otherRows.map((r) => r.reviewer_id).filter((id): id is string => !!id))]
+    const nameById = new Map<string, string>()
+    if (reviewerIds.length > 0) {
+      const { data: profs } = await ctx.supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', reviewerIds)
+      for (const p of (profs ?? []) as { id: string; full_name: string | null }[]) {
+        nameById.set(p.id, p.full_name ?? 'Teammate')
+      }
+    }
+    otherCards = otherRows.map((r) => ({
+      reviewerName: r.reviewer_id ? nameById.get(r.reviewer_id) ?? 'Teammate' : 'Anonymous',
+      score: r.score,
+      recommendation: (r.recommendation as ScorecardRecommendation | null) ?? null,
+      recommendationReason: r.recommendation_reason,
+    }))
+  }
+
   return {
     success: true,
     data: {
@@ -374,6 +435,8 @@ export async function getScorecardData(
       candidateId: app.candidate_id,
       questions,
       existing,
+      otherCards,
+      otherSubmittedCount: otherRows.length,
     },
   }
 }
