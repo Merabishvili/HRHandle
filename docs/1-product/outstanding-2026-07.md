@@ -1,8 +1,25 @@
 # Outstanding Work & Manual Steps — as of 2026-07-04
 
-_Snapshot after the 2026-07-03/04 fix batch. Companion to [`roadmap.md`](roadmap.md)._
+_Snapshot after the 2026-07-03/04 fix batch + the 4 remaining code tasks. Companion to [`roadmap.md`](roadmap.md)._
 
 Status legend: 🟢 ready to build · 🟡 blocked on a DB migration/config · 🔧 manual step (no code) · ✅ done
+
+> **Update 2026-07-04:** all four "remaining code tasks" below (Language + avatar, Work mode, multi-reviewer scorecard, interview-questions cleanup) are now **built and pushed to `staging`**. They ship with new migrations that must be applied — see the checklist in §0.
+
+---
+
+## 0. Migrations to apply on **staging** (then production with the deploy)
+
+All in `supabase/migrations/`. The code degrades gracefully before they're applied (pages load; the new features just don't work / fit scores blank), except where noted.
+
+- ✅ `20260704_candidate_activity_stage_offer_events.sql` — applied
+- ✅ `20260704_default_meeting_provider.sql` — applied
+- ✅ `20260704_drop_saved_views.sql` — applied
+- ⬜ `20260704_vacancy_work_mode.sql` — **needed** (vacancies list/detail/edit read `work_mode`)
+- ⬜ `20260704_profile_language.sql` — **needed** (Profile page reads `language`)
+- ⬜ `20260704_avatars_bucket.sql` — needed to enable avatar **uploads** (or create the `avatars` public bucket in the dashboard)
+- ⬜ `20260704_drop_vacancy_interview_questions.sql` — optional cleanup (drops an unused column)
+- ⬜ `20260704_scorecard_multi_reviewer.sql` — **needed** to enable scoring (candidate_evaluations gains reviewer_id/submitted + new constraints)
 
 ---
 
@@ -38,16 +55,16 @@ Offer / status / apply pages correctly show `organizations.name` — but your or
 
 ---
 
-## 2. Remaining code tasks (I can build — each needs a migration)
+## 2. Remaining code tasks — ✅ all done (2026-07-04)
 
-| # | Task | Why it's not done | What it needs | Size |
-|---|---|---|---|---|
-| 1 | 🟡 **Profile → Language selector + avatar upload** | Deferred in the settings audit — `profiles.language` column doesn't exist and avatar needs a storage bucket. Email-dedup already shipped. | Migration (`profiles.language`) + a Supabase storage bucket + UI wiring on Profile. | S |
-| 2 | 🟡 **Vacancy "Work mode" column** (Remote/Hybrid/On-site) | "Type" → Employment type shipped; work mode has **no dedicated field** — it's embedded in the free-text `location`. | `vacancies.work_mode` column + a form field on create/edit + the optional column + backfill decision. | S |
-| 3 | 🟡 **Scorecard: multi-reviewer model** | The in-place Score-candidate modal shipped (one evaluation per application, binary recommendation). The full prompt model was deferred. | Schema: `candidate_evaluations.reviewer_id`, drop the one-per-application unique constraint, a 4-value recommendation (strong_yes/yes/lean_no/no), cross-reviewer averaging + RLS. Plus UI: per-reviewer cards, "others hidden until you submit", a Scorecards list. | L |
-| 4 | 🟡 **`vacancies.interview_questions` cleanup** (optional) | The AI interview-questions UI was retired; the backend route + JSONB column remain as accepted tech debt. | Optional drop migration (`046_drop_vacancies_interview_questions.sql`) + delete the orphaned route/action/lib. | XS |
+| # | Task | Status |
+|---|---|---|
+| 1 | **Profile → Language selector + avatar upload** | ✅ Language select + avatar upload (public `avatars` bucket + `uploadAvatar` action + optimistic preview). Migrations `20260704_profile_language.sql`, `20260704_avatars_bucket.sql`. |
+| 2 | **Vacancy "Work mode" column** (Remote/Hybrid/On-site) | ✅ `work_mode` field on create wizard + edit form + detail + optional list column. Migration `20260704_vacancy_work_mode.sql`. |
+| 3 | **Scorecard: multi-reviewer model** | ✅ Per-reviewer evaluations, 4-value recommendation, submitted/draft, anti-anchoring (others' cards hidden until you submit), fit score = average of submitted cards. Migration `20260704_scorecard_multi_reviewer.sql`. |
+| 4 | **`vacancies.interview_questions` cleanup** | ✅ Route/action/lib/test deleted; type field removed; column dropped via `20260704_drop_vacancy_interview_questions.sql`. |
 
-**Suggested order:** #1 (Language/avatar) and #2 (Work mode) are quick, self-contained. #3 (multi-reviewer scorecard) is the largest and deserves its own focused pass. #4 is optional cleanup.
+Nothing left on the code side from the 2026-07 batch — just apply the migrations in §0 and the manual steps in §1.
 
 ---
 
