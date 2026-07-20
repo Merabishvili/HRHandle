@@ -172,6 +172,16 @@
 
 ---
 
+## Forms: react-hook-form + zod (A-005, 2026-07-20)
+
+**Decision:** Larger edit forms migrate from `useState` + a hand-written `validateForm` to **react-hook-form** with a **zodResolver**. Each form keeps two zod schemas: the existing server-payload schema (nullable) and a new form-facing schema (`''`/sentinel-based, plus the extra required fields the UI enforces). The submit handler converts form values into the server payload. Cards split into per-section components under `components/[domain]/form/` that receive the `UseFormReturn`.
+
+**Reason:** The two forms flagged by A-002/A-005 (`vacancy-form.tsx`, `candidate-form.tsx`) were too large to split cleanly while prop-drilling `formData`/`setFormData`. RHF removes the state-threading so sections become self-contained. Reusing the existing zod schemas keeps validation in one place; the second (form-facing) schema exists because a live control emits `''`/a sentinel, not `null`, and the UI requires some fields the DB treats as optional — the two shapes are genuinely different, so deriving one from the other added more friction than duplication. See `docs/3-architecture/frontend.md` → "Forms".
+
+**Files:** `components/vacancies/vacancy-form.tsx` + `components/vacancies/form/*`, `lib/validations/vacancy.ts` (`VacancyFormSchema`, `WORK_MODE_NONE`), and the candidate equivalents.
+
+---
+
 ## Redesign Audit (2026-06-15 / 2026-06-16)
 
 ### Redesign deliverables live in `docs/redesign/`, source materials in `redesign/`

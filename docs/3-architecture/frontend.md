@@ -127,6 +127,15 @@ HRHandle does not use a global client-side state manager (no Redux, Zustand, etc
 - **Feature components**: `components/[domain]/` — compose UI primitives, call server actions.
 - **cn() utility**: `lib/utils.ts` — combines `clsx` + `tailwind-merge` for conditional class names.
 
+### Forms — react-hook-form + zod (A-005)
+
+Larger edit forms use **react-hook-form** with a **zodResolver**, not hand-rolled `useState` + manual `validateForm`. First adopted on the vacancy edit form:
+
+- `components/vacancies/vacancy-form.tsx` — owns `useForm`, the submit/`onInvalid` handlers, and the server-action call. Splits its cards into section components under `components/vacancies/form/` (`basic-info-section`, `dates-compensation-section`, `details-section`), each receiving the `UseFormReturn` and rendering fields via `register` (native inputs/textareas) or `Controller` (Select / DatePicker / Switch / numeric inputs that need `null`-vs-number semantics).
+- **Two schemas per form.** The server-payload schema (e.g. `VacancySchema`) is nullable; the form-facing schema (`VacancyFormSchema`) is `''`/sentinel-based to match what the controls emit, and additionally requires fields the UI enforces (sector + status). The submit handler converts the form values (`''` / `WORK_MODE_NONE` → `null`) into the server payload. This split is intentional — the live form and the DB payload genuinely have different shapes.
+- Scroll-to-first-error on submit is preserved via an `onInvalid` handler that maps the first error field (by a fixed priority) to a DOM id and scrolls + focuses it.
+- Non-form orchestration state (custom-field values, loading, server error) stays in `useState` alongside the form.
+
 ## Guide pattern (`content/guides/*.mdx` + `lib/guides/`)
 
 Guides are static MDX files in `content/guides/`, registered in `lib/guides/registry.ts` (slug, title, summary, category, order). The `[slug]` route uses `next-mdx-remote/rsc` to compile MDX server-side at request time and `generateStaticParams` to prerender every guide that has an MDX file. `remark-gfm` is passed in `MDXRemote` options so GitHub-flavored markdown tables render. Custom `<Screenshot>` is the only authoring component required; styled defaults for headings, lists, links, and GFM tables live in `components/guide/mdx-components.tsx`.
