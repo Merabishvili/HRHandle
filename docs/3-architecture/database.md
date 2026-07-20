@@ -1,8 +1,21 @@
 # Database Schema
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
+
+> **⚠️ Partial reconciliation (2026-07-20 audit).** The changelog below now captures the migration-backed schema deltas since 2026-05-08, but the per-table sections further down have **not** yet been fully re-verified against the live DB — many feature tables/columns added mid-2026 (offers, pipeline_stages, MFA, notification_preferences, Calendly/webhook tables) predate a full rewrite. Some migrations live in `scripts/` rather than `supabase/migrations/` and aren't all in the repo, so trust the live Supabase schema over this doc where they disagree. Full table-by-table refresh is a tracked follow-up (`docs/audit-progress.md`).
 
 ## Changelog
+
+- 🆕 **2026-07 batch (`supabase/migrations/20260704_*`)**:
+  - `vacancies.work_mode text` (`remote|hybrid|onsite|NULL`) — `20260704_vacancy_work_mode.sql`.
+  - `profiles.language text` — `20260704_profile_language.sql`.
+  - `candidate_evaluations` gains `reviewer_id` (FK `profiles`, ON DELETE SET NULL) + `submitted boolean` for the multi-reviewer scorecard; `UNIQUE(application_id, reviewer_id)`; recommendation CHECK widened to `strong_yes|yes|lean_no|no` — `20260704_scorecard_multi_reviewer.sql`.
+  - `avatars` public Storage bucket (2 MB, jpg/png/webp) — `20260704_avatars_bucket.sql`.
+  - `candidate_activity` view rebuilt to also union **stage-change** + **offer** events — `20260704_candidate_activity_stage_offer_events.sql`.
+  - Default meeting provider field — `20260704_default_meeting_provider.sql`.
+  - ❌ `saved_views` table dropped — `20260704_drop_saved_views.sql`.
+  - ❌ `vacancies.interview_questions` column dropped — `20260704_drop_vacancy_interview_questions.sql`.
+- 🆕 **Feature tables/columns added mid-2026 (documented in `docs/1-product/roadmap.md`, not all migrations in-repo):** `offers` table (G-018); per-vacancy `pipeline_stages` + `applications.pipeline_stage_id` with `applications.status_id` **dropped** (Wave 2.6, Migration 051); `applications.source_type` DEFAULT `'manual'` (G-029, Migration 039); `webhook_notifications` table + Calendly fields on `organization_integrations` (G-030/G-031, Migrations 040/041); `organizations.require_mfa` + `require_mfa_for_admins` + `profiles.mfa_enrolled` (G-032, Migration 042); `profiles.notification_preferences jsonb` (Migration 045); custom-fields tables.
 
 - 🔄 (2026-05-23) `activity_log` table is now actively written to via `lib/audit-log.ts` (helper added). Wired call sites: vacancy status change, application status change, LinkedIn integration connect/disconnect. The table itself was always present in the schema (`001_create_schema.sql`) but had zero writers and zero rows until this change.
 - 🆕 `candidate_experience` table — work history (migration `20260514_candidate_background.sql`). RLS enabled.
