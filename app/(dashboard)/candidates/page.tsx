@@ -1,39 +1,38 @@
 import { createClient } from '@/lib/supabase/server'
-import { toDisplayFullName } from '@/lib/format-name'
 import { getCandidateStatuses } from '@/lib/cache/lookups'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Users, Mail, Phone, MoreHorizontal, Download, Upload } from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { CandidateStatusActions } from '@/components/candidates/candidate-status-actions'
+import { Plus, Users, Download, Upload } from 'lucide-react'
 import { CandidatesToolbar } from '@/components/candidates/candidates-toolbar'
+import { CandidateTableRow } from '@/components/candidates/candidate-table-row'
 import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
-import { CANDIDATE_GENERAL_STATUS_COLORS } from '@/lib/types/candidate'
 import {
   DEFAULT_CANDIDATE_COLUMNS,
   OPTIONAL_CANDIDATE_COLUMNS,
   type ColumnDef,
 } from '@/lib/types/columns'
 import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
-import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
-import { getStageStyle, isTerminalStage } from '@/lib/pipeline/stage-style'
-import { formatDistanceToNow } from 'date-fns'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { parsePageSize, type PageSize } from '@/lib/pagination'
+import {
+  aggregateFitScores,
+  buildCustomFieldValueMap,
+  deriveStageAndFit,
+  groupApplicationsByCandidate,
+  type ApplicationRow,
+  type CandidateRow,
+  type EvaluationRow,
+  type CustomFieldValueRow,
+  type VacancyOption,
+} from '@/lib/candidates/list-derivation'
+import type { CandidateStatusOption } from '@/lib/types/database'
 
 type SearchParams = Promise<{
   vacancy?: string
@@ -43,65 +42,6 @@ type SearchParams = Promise<{
   sort?: string
   status?: string
 }>
-
-interface CandidateRow {
-  id: string
-  first_name: string
-  last_name: string
-  email: string | null
-  phone: string | null
-  current_company: string | null
-  current_position: string | null
-  years_of_experience: number | null
-  source: string | null
-  general_status_id: string | null
-  location: string | null
-  salary_expectation: string | null
-  notice_period: string | null
-  languages: string[] | null
-  created_at: string
-  updated_at: string
-}
-
-import type { CandidateStatusOption } from '@/lib/types/database'
-
-interface StageJoinRow {
-  name: string
-  type: 'standard' | 'review' | 'interview' | 'offer'
-  is_terminal: boolean
-}
-
-interface ApplicationRow {
-  id: string
-  candidate_id: string
-  vacancy_id: string
-  applied_at: string
-  pipeline_stage_id: string | null
-  vacancies: { id: string; title: string }[] | { id: string; title: string } | null
-  pipeline_stages: StageJoinRow | StageJoinRow[] | null
-}
-
-interface VacancyOption {
-  id: string
-  title: string
-}
-
-function getCandidateFullName(candidate: Pick<CandidateRow, 'first_name' | 'last_name'>): string {
-  // Display casing only — some records are stored ALL-CAPS (CV/import). The
-  // stored value is untouched; see lib/format-name.
-  return toDisplayFullName(candidate.first_name, candidate.last_name)
-}
-
-function getCandidateInitials(candidate: Pick<CandidateRow, 'first_name' | 'last_name'>): string {
-  return `${candidate.first_name?.[0] || ''}${candidate.last_name?.[0] || ''}`.toUpperCase()
-}
-
-function getVacancyTitle(app: ApplicationRow): string | null {
-  if (!app.vacancies) return null
-  if (Array.isArray(app.vacancies)) return app.vacancies[0]?.title || null
-  return (app.vacancies as { title: string }).title || null
-}
-
 
 export default async function CandidatesPage({
   searchParams,
@@ -265,64 +205,26 @@ export default async function CandidatesPage({
     applications = (applicationsRaw || []) as ApplicationRow[]
   }
 
-  const applicationsByCandidate = new Map<string, ApplicationRow[]>()
-  for (const app of applications) {
-    const existing = applicationsByCandidate.get(app.candidate_id) || []
-    existing.push(app)
-    applicationsByCandidate.set(app.candidate_id, existing)
-  }
+  const applicationsByCandidate = groupApplicationsByCandidate(applications)
 
-  // Stage + Fit-score columns (optional): derive from each candidate's *active*
-  // (non-terminal) application, falling back to their first application. Stage
-  // is bucket-mapped so the badge uses the same palette as the Pipeline; fit
-  // score is the 0–100 evaluation score on that application, shown as a %.
-  const fitScoreByApplication = new Map<string, number>()
+  // Stage + Fit-score columns (optional): fit = average of *submitted* reviewer
+  // cards per application; stage/fit are then attributed to each candidate's
+  // active (non-terminal, else first) application. See lib/candidates/list-derivation.
   const applicationIds = applications.map((a) => a.id)
+  let evalRows: EvaluationRow[] = []
   if (applicationIds.length > 0) {
-    // Fit score = average of *submitted* reviewer cards per application.
-    const { data: evalRows } = await supabase
+    const { data } = await supabase
       .from('candidate_evaluations')
       .select('application_id, score')
       .eq('submitted', true)
       .in('application_id', applicationIds)
-    const agg = new Map<string, { total: number; count: number }>()
-    for (const row of (evalRows ?? []) as { application_id: string; score: number | null }[]) {
-      if (typeof row.score === 'number') {
-        const cur = agg.get(row.application_id) ?? { total: 0, count: 0 }
-        cur.total += row.score
-        cur.count += 1
-        agg.set(row.application_id, cur)
-      }
-    }
-    for (const [appId, { total, count }] of agg) {
-      fitScoreByApplication.set(appId, Math.round(total / count))
-    }
+    evalRows = (data ?? []) as EvaluationRow[]
   }
-
-  const stageByCandidate = new Map<string, { code: string; name: string }>()
-  const fitScoreByCandidate = new Map<string, number>()
-  for (const [candId, apps] of applicationsByCandidate) {
-    const stageOf = (a: ApplicationRow): StageJoinRow | null => {
-      const j = a.pipeline_stages
-      return Array.isArray(j) ? (j[0] ?? null) : j
-    }
-    // Prefer the first application still in a non-terminal stage.
-    const active =
-      apps.find((a) => {
-        const s = stageOf(a)
-        return s ? !isTerminalStage(mapPipelineStageToBucket(s)) : false
-      }) ?? apps[0]
-    if (!active) continue
-    const stageRow = stageOf(active)
-    if (stageRow) {
-      stageByCandidate.set(candId, {
-        code: mapPipelineStageToBucket(stageRow),
-        name: stageRow.name,
-      })
-    }
-    const fit = fitScoreByApplication.get(active.id)
-    if (typeof fit === 'number') fitScoreByCandidate.set(candId, fit)
-  }
+  const fitScoreByApplication = aggregateFitScores(evalRows)
+  const { stageByCandidate, fitScoreByCandidate } = deriveStageAndFit(
+    applicationsByCandidate,
+    fitScoreByApplication,
+  )
 
   // Org custom fields → addable columns (key `cf_<fieldId>`). Values are fetched
   // in one batch for the visible candidates and formatted per field type.
@@ -333,8 +235,7 @@ export default async function CandidatesPage({
     label: f.name,
   }))
   const customFieldTypeById = new Map(customFields.map((f) => [f.id, f.field_type]))
-  // valueMap: `${candidateId}:${fieldId}` -> display string
-  const customFieldValueMap = new Map<string, string>()
+  let customFieldValueMap = new Map<string, string>()
   if (candidateIds.length > 0 && customFields.length > 0) {
     const { data: cfValues } = await supabase
       .from('custom_field_values')
@@ -342,24 +243,10 @@ export default async function CandidatesPage({
       .eq('organization_id', organizationId)
       .in('entity_id', candidateIds)
       .in('field_id', customFields.map((f) => f.id))
-    for (const v of (cfValues ?? []) as {
-      field_id: string
-      entity_id: string
-      value_text: string | null
-      value_number: number | null
-      value_boolean: boolean | null
-      value_option: string | null
-    }[]) {
-      const type = customFieldTypeById.get(v.field_id)
-      let display: string | null = null
-      if (type === 'number') display = v.value_number != null ? String(v.value_number) : null
-      else if (type === 'checkbox') display = v.value_boolean == null ? null : v.value_boolean ? 'Yes' : 'No'
-      else if (type === 'dropdown') display = v.value_option
-      else display = v.value_text // text / long_text / date
-      if (display != null && display !== '') {
-        customFieldValueMap.set(`${v.entity_id}:${v.field_id}`, display)
-      }
-    }
+    customFieldValueMap = buildCustomFieldValueMap(
+      (cfValues ?? []) as CustomFieldValueRow[],
+      customFieldTypeById,
+    )
   }
 
   // Build column label map for header (built-in + custom fields)
@@ -459,224 +346,19 @@ export default async function CandidatesPage({
                 </TableHeader>
 
                 <TableBody>
-                  {candidates.map((candidate) => {
-                    const fullName = getCandidateFullName(candidate)
-                    const initials = getCandidateInitials(candidate)
-                    const candidateApplications = applicationsByCandidate.get(candidate.id) || []
-
-                    const firstApp = candidateApplications[0]
-                    const firstVacancyTitle = firstApp
-                      ? (getVacancyTitle(firstApp) ?? vacancyMap.get(firstApp.vacancy_id)?.title ?? null)
-                      : null
-                    const extraCount = candidateApplications.length > 1 ? candidateApplications.length - 1 : 0
-
-                    const status = candidate.general_status_id
-                      ? statusMap.get(candidate.general_status_id)
-                      : null
-
-                    return (
-                      <TableRow key={candidate.id}>
-                        {/* Fixed: Candidate name */}
-                        <TableCell>
-                          <Link
-                            href={`/candidates/${candidate.id}`}
-                            className="flex items-center gap-3 hover:underline"
-                          >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                              <span className="text-sm font-medium text-primary">{initials}</span>
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">{fullName}</p>
-                              {candidate.source && (
-                                <p className="text-xs text-muted-foreground">via {candidate.source}</p>
-                              )}
-                            </div>
-                          </Link>
-                        </TableCell>
-
-                        {/* Fixed: Status */}
-                        <TableCell>
-                          {status ? (
-                            <Badge
-                              variant="secondary"
-                              className={CANDIDATE_GENERAL_STATUS_COLORS[status.code]}
-                            >
-                              {status.name}
-                            </Badge>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">Not set</span>
-                          )}
-                        </TableCell>
-
-                        {/* Fixed: Linked Vacancy */}
-                        <TableCell>
-                          {candidateApplications.length > 0 ? (
-                            <div className="space-y-0.5">
-                              <p className="text-sm text-foreground">{firstVacancyTitle || 'Unknown vacancy'}</p>
-                              {extraCount > 0 && (
-                                <p className="text-xs text-muted-foreground">+{extraCount} more</p>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">Not linked</span>
-                          )}
-                        </TableCell>
-
-                        {/* Optional columns */}
-                        {activeColumns.map((col) => {
-                          switch (col) {
-                            case 'current_position':
-                              return (
-                                <TableCell key={col}>
-                                  <div>
-                                    <p className="text-sm">{candidate.current_position || '—'}</p>
-                                    {candidate.current_company && (
-                                      <p className="text-xs text-muted-foreground">{candidate.current_company}</p>
-                                    )}
-                                  </div>
-                                </TableCell>
-                              )
-                            case 'current_company':
-                              return (
-                                <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {candidate.current_company || '—'}
-                                </TableCell>
-                              )
-                            case 'created_at':
-                              return (
-                                <TableCell key={col} className="text-sm text-muted-foreground whitespace-nowrap">
-                                  {formatDistanceToNow(new Date(candidate.created_at), { addSuffix: true })}
-                                </TableCell>
-                              )
-                            case 'email':
-                              return (
-                                <TableCell key={col}>
-                                  {candidate.email ? (
-                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                      <Mail className="h-3 w-3" />
-                                      {candidate.email}
-                                    </div>
-                                  ) : (
-                                    <span className="text-sm text-muted-foreground">—</span>
-                                  )}
-                                </TableCell>
-                              )
-                            case 'phone':
-                              return (
-                                <TableCell key={col}>
-                                  {candidate.phone ? (
-                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                      <Phone className="h-3 w-3" />
-                                      {candidate.phone}
-                                    </div>
-                                  ) : (
-                                    <span className="text-sm text-muted-foreground">—</span>
-                                  )}
-                                </TableCell>
-                              )
-                            case 'years_of_experience':
-                              return (
-                                <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {candidate.years_of_experience != null
-                                    ? `${candidate.years_of_experience} yr${candidate.years_of_experience === 1 ? '' : 's'}`
-                                    : '—'}
-                                </TableCell>
-                              )
-                            case 'source':
-                              return (
-                                <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {candidate.source || '—'}
-                                </TableCell>
-                              )
-                            case 'stage': {
-                              const stage = stageByCandidate.get(candidate.id)
-                              if (!stage) {
-                                return <TableCell key={col} className="text-sm text-muted-foreground">—</TableCell>
-                              }
-                              const style = getStageStyle(stage.code)
-                              return (
-                                <TableCell key={col}>
-                                  <span
-                                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                                    style={{ background: style.pillBg, color: style.pillText }}
-                                  >
-                                    {stage.name}
-                                  </span>
-                                </TableCell>
-                              )
-                            }
-                            case 'fit_score': {
-                              const fit = fitScoreByCandidate.get(candidate.id)
-                              return (
-                                <TableCell key={col} className="text-sm tabular-nums text-muted-foreground">
-                                  {typeof fit === 'number' ? `${fit}%` : '—'}
-                                </TableCell>
-                              )
-                            }
-                            case 'location':
-                              return (
-                                <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {candidate.location || '—'}
-                                </TableCell>
-                              )
-                            case 'salary_expectation':
-                              return (
-                                <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {candidate.salary_expectation || '—'}
-                                </TableCell>
-                              )
-                            case 'notice_period':
-                              return (
-                                <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {candidate.notice_period || '—'}
-                                </TableCell>
-                              )
-                            case 'languages':
-                              return (
-                                <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {candidate.languages && candidate.languages.length > 0
-                                    ? candidate.languages.join(', ')
-                                    : '—'}
-                                </TableCell>
-                              )
-                            default:
-                              // Custom-field columns (key `cf_<fieldId>`).
-                              if (col.startsWith('cf_')) {
-                                const fieldId = col.slice(3)
-                                return (
-                                  <TableCell key={col} className="text-sm text-muted-foreground">
-                                    {customFieldValueMap.get(`${candidate.id}:${fieldId}`) || '—'}
-                                  </TableCell>
-                                )
-                              }
-                              return <TableCell key={col}>—</TableCell>
-                          }
-                        })}
-
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" aria-label="Candidate actions">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                <Link href={`/candidates/${candidate.id}`}>View details</Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/candidates/${candidate.id}/edit`}>Edit candidate</Link>
-                              </DropdownMenuItem>
-                              <CandidateStatusActions
-                                candidateId={candidate.id}
-                                candidateName={`${candidate.first_name} ${candidate.last_name}`.trim() || 'this candidate'}
-                              />
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
+                  {candidates.map((candidate) => (
+                    <CandidateTableRow
+                      key={candidate.id}
+                      candidate={candidate}
+                      applications={applicationsByCandidate.get(candidate.id) || []}
+                      vacancyMap={vacancyMap}
+                      status={candidate.general_status_id ? statusMap.get(candidate.general_status_id) ?? null : null}
+                      activeColumns={activeColumns}
+                      stage={stageByCandidate.get(candidate.id)}
+                      fit={fitScoreByCandidate.get(candidate.id)}
+                      customFieldValueMap={customFieldValueMap}
+                    />
+                  ))}
                 </TableBody>
               </Table>
 

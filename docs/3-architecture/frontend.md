@@ -4,6 +4,7 @@ _Last updated: 2026-05-08_
 
 ## Changelog
 
+- 🆕 `components/candidates/candidate-table-row.tsx` & `candidate-optional-cell.tsx` — the Candidates list page (`app/(dashboard)/candidates/page.tsx`) was split (A-002): row + optional-column rendering extracted into these server components, and the fit-score / stage / custom-field shaping moved to the pure `lib/candidates/list-derivation.ts` (unit-tested). The page keeps only the queries + orchestration.
 - 🆕 `components/candidates/experience-section.tsx` & `education-section.tsx` — timeline-style editors on candidate detail page
 - 🆕 `components/candidates/activity-feed.tsx` — reads the rebuilt `candidate_activity` view (kind/headline/body/meta/actor_name)
 - 🆕 `components/vacancies/linkedin-post-job-button.tsx` — uses the saved LinkedIn page ID
@@ -143,6 +144,10 @@ Annotated screenshots are produced by `scripts/capture-screenshots.ts` (Playwrig
 | `metadata-footer.tsx` | Server | 2-col grid: Source, Added (relative), Last Updated, Candidate ID (short, monospace). |
 | `activity-feed.tsx` | Client | Unified activity feed consuming `candidate_activity` view rows. Filter chips (All / Notes / Interviews / Stage changes / Documents). Inline note composer (Enter to post). Delete on note items. |
 | `experience-section.tsx` | Client | Timeline with absolute left rail + dots. First entry expanded by default; others collapsed. Each entry expandable/collapsible. Edit/Delete buttons in expanded body. |
+| `candidate-table-row.tsx` | Server | One row of the `/candidates` list — fixed columns (name / status / linked vacancy) + active optional columns (via `candidate-optional-cell.tsx`) + row actions menu. |
+| `candidate-optional-cell.tsx` | Server | Renders the correct `<TableCell>` for one optional/custom column key (position, email, stage badge, fit %, custom fields, …). |
+
+`lib/candidates/list-derivation.ts` holds the page's pure shaping helpers (`groupApplicationsByCandidate`, `aggregateFitScores`, `deriveStageAndFit`, `formatCustomFieldValue`, `buildCustomFieldValueMap`) plus the shared row types — unit-tested in `lib/candidates/__tests__/`.
 
 ## `components/ui/status-pill.tsx`
 
