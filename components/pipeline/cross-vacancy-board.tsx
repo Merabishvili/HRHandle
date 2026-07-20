@@ -12,11 +12,10 @@ import {
   type DragOverEvent,
 } from '@dnd-kit/core'
 import { toast } from 'sonner'
-import { Plus, Zap, LayoutGrid, List as ListIcon } from 'lucide-react'
+import { Plus, Zap } from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import {
   RejectionDialog,
   type RejectionReason,
@@ -35,38 +34,19 @@ import { ListView } from './list-view'
 import { BulkBar } from './bulk-bar'
 import { updateApplicationStatus } from '@/lib/actions/applications'
 import type { ApplicationStatus } from '@/lib/types/application'
-
-const TERMINAL_CODES: ReadonlySet<ApplicationStatus['code']> = new Set([
-  'hired',
-  'rejected',
-  'withdrawn',
-])
-
-export interface CrossVacancyApplication {
-  id: string
-  candidate_id: string
-  status_id: string | null
-  first_name: string
-  last_name: string
-  /** Candidate email — used by BulkBar's Email action to build a
-   * mailto:bcc=… link. Null when the candidate has no email on file. */
-  email: string | null
-  current_position: string | null
-  current_company: string | null
-  last_status_changed_at: string | null
-  applied_at: string
-  vacancy_id: string
-  vacancy_title: string
-  /** Short source label ("LinkedIn", "Apply link", etc.) threaded from
-   * candidates.source. Null when the recruiter never set it. */
-  source: string | null
-  /** Optional 0-10 fit score from the most recent candidate_evaluation —
-   * surfaced as a pill on compact-density cards. */
-  fit_score: number | null
-  /** Name of the rejection reason stamped on the application (rejected apps
-   * only). Surfaced in the collapsed terminal rail's expanded list. */
-  rejection_reason: string | null
-}
+import {
+  filterApplicationsByRole,
+  buildCardData,
+  groupCardsByStageCode,
+  buildTerminalCounts,
+  buildClosedCandidates,
+  countActiveApplications,
+  buildReviewQueue,
+  TERMINAL_CODES,
+  type CrossVacancyApplication,
+} from './cross-vacancy-derivation'
+import { ViewModeToggle, type ViewMode } from './view-mode-toggle'
+export type { CrossVacancyApplication } from './cross-vacancy-derivation'
 
 interface CrossVacancyBoardProps {
   statuses: ApplicationStatus[]
@@ -82,7 +62,6 @@ interface PendingRejection {
   candidateName: string
 }
 
-type ViewMode = 'board' | 'list'
 
 /**
  * Wave 2.1 Version B — colour-coded cross-vacancy kanban with Board/List
@@ -147,74 +126,27 @@ export function CrossVacancyBoard({
     [statuses],
   )
 
-  const filteredApplications = useMemo(() => {
-    if (roleFilter.length === 0 || roleFilter.length === roles.length) {
-      return applications
-    }
-    const allow = new Set(roleFilter)
-    return applications.filter((a) => allow.has(a.vacancy_id))
-  }, [applications, roleFilter, roles.length])
+  const filteredApplications = useMemo(
+    () => filterApplicationsByRole(applications, roleFilter, roles.length),
+    [applications, roleFilter, roles.length],
+  )
 
-  const cardData: CrossVacancyCardData[] = useMemo(() => {
-    return filteredApplications.map((a) => {
-      const status = a.status_id ? statusById.get(a.status_id) : null
-      return {
-        applicationId: a.id,
-        candidateId: a.candidate_id,
-        firstName: a.first_name,
-        lastName: a.last_name,
-        vacancyTitle: a.vacancy_title,
-        currentPosition: a.current_position,
-        source: a.source,
-        inStageSince: a.last_status_changed_at ?? a.applied_at,
-        appliedAt: a.applied_at,
-        stageCode: status?.code ?? activeStatuses[0]?.code ?? 'applied',
-        fitScore: a.fit_score,
-        rejectionReason: a.rejection_reason,
-      }
-    })
-  }, [filteredApplications, statusById, activeStatuses])
+  const cardData: CrossVacancyCardData[] = useMemo(
+    () => buildCardData(filteredApplications, statusById, activeStatuses),
+    [filteredApplications, statusById, activeStatuses],
+  )
 
-  const cardsByStageCode = useMemo(() => {
-    const m = new Map<string, CrossVacancyCardData[]>()
-    for (const c of cardData) {
-      const arr = m.get(c.stageCode) ?? []
-      arr.push(c)
-      m.set(c.stageCode, arr)
-    }
-    return m
-  }, [cardData])
+  const cardsByStageCode = useMemo(() => groupCardsByStageCode(cardData), [cardData])
 
   const terminalCounts = useMemo(
-    () =>
-      terminalStatuses.map((s) => ({
-        statusId: s.id,
-        code: s.code,
-        name: s.name,
-        count: filteredApplications.filter((a) => a.status_id === s.id).length,
-      })),
+    () => buildTerminalCounts(terminalStatuses, filteredApplications),
     [terminalStatuses, filteredApplications],
   )
 
   // Closed candidates listed in the expanded terminal rail, tagged with their
   // outcome code + rejection reason.
   const closedCandidates = useMemo(
-    () =>
-      filteredApplications
-        .map((a) => {
-          const status = a.status_id ? statusById.get(a.status_id) : null
-          if (!status || !['rejected', 'withdrawn'].includes(status.code)) return null
-          return {
-            applicationId: a.id,
-            candidateId: a.candidate_id,
-            name: `${a.first_name} ${a.last_name}`.trim(),
-            vacancyTitle: a.vacancy_title,
-            code: status.code,
-            reason: a.rejection_reason,
-            inStageSince: a.last_status_changed_at ?? a.applied_at,
-          }
-        })
-        .filter((c): c is NonNullable<typeof c> => c !== null),
+    () => buildClosedCandidates(filteredApplications, statusById),
     [filteredApplications, statusById],
   )
 
@@ -222,26 +154,12 @@ export function CrossVacancyBoard({
   // agrees with the role chips' active counts (a rejected/withdrawn app is
   // not "active"). Mirrors the chips' totalActive when no role is selected.
   const activeFilteredCount = useMemo(
-    () =>
-      filteredApplications.filter((a) => {
-        const status = a.status_id ? statusById.get(a.status_id) : null
-        return status && !TERMINAL_CODES.has(status.code)
-      }).length,
+    () => countActiveApplications(filteredApplications, statusById),
     [filteredApplications, statusById],
   )
 
   const reviewQueue = useMemo(
-    () =>
-      filteredApplications
-        .filter((a) => {
-          const status = a.status_id ? statusById.get(a.status_id) : null
-          if (!status || TERMINAL_CODES.has(status.code)) return false
-          return !a.last_status_changed_at
-        })
-        .sort(
-          (a, b) =>
-            new Date(a.applied_at).getTime() - new Date(b.applied_at).getTime(),
-        ),
+    () => buildReviewQueue(filteredApplications, statusById),
     [filteredApplications, statusById],
   )
 
@@ -650,49 +568,3 @@ export function CrossVacancyBoard({
     </>
   )
 }
-
-function ViewModeToggle({
-  viewMode,
-  onChange,
-}: {
-  viewMode: ViewMode
-  onChange: (next: ViewMode) => void
-}) {
-  return (
-    <div
-      className="inline-flex overflow-hidden rounded-md border border-border bg-muted/30 text-xs"
-      role="group"
-      aria-label="View mode"
-    >
-      <button
-        type="button"
-        onClick={() => onChange('board')}
-        aria-pressed={viewMode === 'board'}
-        className={cn(
-          'flex items-center gap-1.5 px-2.5 py-1.5 transition-colors',
-          viewMode === 'board'
-            ? 'bg-foreground text-background'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
-        Board
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('list')}
-        aria-pressed={viewMode === 'list'}
-        className={cn(
-          'flex items-center gap-1.5 px-2.5 py-1.5 transition-colors',
-          viewMode === 'list'
-            ? 'bg-foreground text-background'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        <ListIcon className="h-3.5 w-3.5" aria-hidden />
-        List
-      </button>
-    </div>
-  )
-}
-
