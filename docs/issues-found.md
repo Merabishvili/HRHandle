@@ -304,7 +304,7 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 
 - **New issues found: 10** — 1 High, 3 Medium, 6 Low.
 - By category: Bugs 1, Mobile 3, Architecture 2, Performance 1, Accessibility 1, Unnecessary 2 (both fixed this pass).
-- **Fixed during this pass:** U-201 + U-202 (dead legacy toast system deleted + unused dep removed).
+- **Fixed during this pass:** B-201 (Toaster mounted), MO-201/202/203 (table scroll), A-202 (`any` removed), AC-201 (QR aria), U-201 + U-202 (dead toast system + dep). **A-201 (large-file splits) and P-201 (bulk-loop, accepted tradeoff) remain open — improvement notes, not defects.**
 - **Top item:** **B-201 — sonner `<Toaster/>` is never mounted, so every `toast()` call in the app is silent.** One-line fix, app-wide UX impact.
 
 ### Verified-clean (no issue — audited, passed)
@@ -315,22 +315,22 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 
 | # | Severity | File + Line | Description | Suggested Fix | Status |
 |---|----------|-------------|-------------|---------------|--------|
-| B-201 | High | `app/layout.tsx` (+ all `layout.tsx`) | Sonner's `<Toaster/>` is **never mounted anywhere**. 37 files `import { toast } from 'sonner'` and fire toasts (validation errors, save/success confirmations, error feedback, the RHF form errors), but with no `<Toaster/>` rendered, sonner renders nothing — all toasts are silent app-wide. `components/ui/sonner.tsx` exports a `Toaster` wrapper that nothing imports. | Mount `<Toaster />` (from `@/components/ui/sonner`) in the root `app/layout.tsx` `<body>` (or the dashboard layout). | Open |
+| B-201 | High | `app/layout.tsx` (+ all `layout.tsx`) | Sonner's `<Toaster/>` is **never mounted anywhere**. 37 files `import { toast } from 'sonner'` and fire toasts (validation errors, save/success confirmations, error feedback, the RHF form errors), but with no `<Toaster/>` rendered, sonner renders nothing — all toasts are silent app-wide. `components/ui/sonner.tsx` exports a `Toaster` wrapper that nothing imports. | Mount `<Toaster />` (from `@/components/ui/sonner`) in the root `app/layout.tsx` `<body>`. | ✅ Fixed 2026-07-20 |
 
 ## 📱 Mobile & Responsive (see `docs/mobile-compatibility.md`)
 
 | # | Severity | File + Line | Description | Suggested Fix | Status |
 |---|----------|-------------|-------------|---------------|--------|
-| MO-201 | Medium | `app/(dashboard)/reports/{pipeline,sources,time-to-hire}/page.tsx` | Data tables not wrapped in an `overflow-x-auto` container → wide report tables overflow the viewport / clip on narrow screens. | Wrap each `<Table>` in `<div className="overflow-x-auto">`. | Open |
-| MO-202 | Medium | `components/pipeline/list-view.tsx:60-61,144` | `<table className="min-w-full">` sits inside an `overflow-hidden` wrapper → a wide pipeline list is **clipped** on mobile instead of horizontally scrollable. | Change the wrapper to `overflow-x-auto` (keep `rounded-xl` via an inner element if needed). | Open |
-| MO-203 | Low | `components/candidate-import/import-wizard.tsx` | CSV preview table has no horizontal-scroll wrapper; many-column CSVs overflow on mobile. | Wrap the preview table in `overflow-x-auto`. | Open |
+| MO-201 | Medium | `app/(dashboard)/reports/{pipeline,sources,time-to-hire}/page.tsx` | Data tables not wrapped in an `overflow-x-auto` container → wide report tables overflow the viewport / clip on narrow screens. | Added `overflow-x-auto` to the table `CardContent`. | ✅ Fixed 2026-07-20 |
+| MO-202 | Medium | `components/pipeline/list-view.tsx:60-61,144` | `<table className="min-w-full">` sits inside an `overflow-hidden` wrapper → a wide pipeline list is **clipped** on mobile instead of horizontally scrollable. | Wrapper changed to `overflow-x-auto rounded-xl`. | ✅ Fixed 2026-07-20 |
+| MO-203 | Low | `components/candidate-import/import-wizard.tsx` | CSV preview table has no horizontal-scroll wrapper; many-column CSVs overflow on mobile. | Added `overflow-x-auto` to the preview `CardContent`s. | ✅ Fixed 2026-07-20 |
 
 ## 🏗️ Architecture & Code Quality
 
 | # | Severity | File + Line | Description | Suggested Fix | Status |
 |---|----------|-------------|-------------|---------------|--------|
 | A-201 | Low | `lib/actions/applications.ts` (1081 LOC), `lib/actions/offers.ts` (771), `components/interviews/interview-form.tsx` (771), `components/pipeline/cross-vacancy-board.tsx` (698), `components/vacancies/wizard/step-scorecard.tsx` (682) | Several files exceed ~700 LOC mixing multiple concerns (multiple actions per file; form + layout + state per component). | Split following the A-002/A-005 pattern (extract pure helpers + section components). Lower priority than forms since these aren't the top-edited surfaces. | Open |
-| A-202 | Low | `lib/actions/scorecards.ts:350` | `displayNameFor(client: any, …)` uses `any` (eslint-disabled, documented) to accept either the RLS or admin Supabase client. | Type as `SupabaseClient` (both clients share the type), removing the only `any` in the codebase. | Open |
+| A-202 | Low | `lib/actions/scorecards.ts:350` | `displayNameFor(client: any, …)` uses `any` (eslint-disabled, documented) to accept either the RLS or admin Supabase client. | Typed as `SupabaseClient`; removed the last `any` + its eslint-disable. | ✅ Fixed 2026-07-20 |
 
 ## ⚡ Performance
 
@@ -342,7 +342,7 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 
 | # | Severity | File + Line | Description | Suggested Fix | Status |
 |---|----------|-------------|-------------|---------------|--------|
-| AC-201 | Low | `components/mfa/enroll-totp-dialog.tsx:87` | The MFA QR code is injected via `dangerouslySetInnerHTML={{ __html: qrCodeSvg }}`. Source is Supabase's server-generated enroll SVG (trusted, not user input) so XSS risk is negligible, but the container has no accessible name. | Add `role="img"` + `aria-label="Two-factor authentication QR code"` to the wrapper. | Open |
+| AC-201 | Low | `components/mfa/enroll-totp-dialog.tsx:87` | The MFA QR code is injected via `dangerouslySetInnerHTML={{ __html: qrCodeSvg }}`. Source is Supabase's server-generated enroll SVG (trusted, not user input) so XSS risk is negligible, but the container has no accessible name. | Added `role="img"` + `aria-label`. | ✅ Fixed 2026-07-20 |
 
 ## 🗑️ Unnecessary / Redundant (fixed this pass)
 

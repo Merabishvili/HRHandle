@@ -63,7 +63,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Sea
             <CardHeader>
               <CardTitle className="text-sm font-semibold">Stage-to-stage conversion</CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>

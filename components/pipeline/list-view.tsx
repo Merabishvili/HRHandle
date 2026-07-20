@@ -57,7 +57,7 @@ export function ListView({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="min-w-full text-sm">
           <thead className="bg-muted/40 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <tr>
@@ -122,7 +122,7 @@ export function ListView({
       {/* Closed — Rejected / Withdrawn, collapsed by default and excluded from
           the active groups above. */}
       {closedCards.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-dashed border-border bg-muted/20">
+        <div className="overflow-x-auto rounded-xl border border-dashed border-border bg-muted/20">
           <button
             type="button"
             onClick={() => setClosedOpen((v) => !v)}

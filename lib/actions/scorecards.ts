@@ -6,6 +6,7 @@ import { getAuthContext, type ActionResult } from './index'
 import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
 import { createAdminClient } from '@/lib/supabase/admin'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   projectScorecard,
   type ScorecardAnswer,
@@ -346,8 +347,7 @@ export async function getScorecardByToken(
 async function displayNameFor(
   // We accept either the user's RLS-scoped client or the admin client — the
   // shape is the same and the lookup is org-scoped via profiles.id.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  client: any,
+  client: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
   try {
