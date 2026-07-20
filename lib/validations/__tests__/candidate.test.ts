@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CandidateSchema } from '@/lib/validations/candidate'
+import { CandidateSchema, CandidateFormSchema } from '@/lib/validations/candidate'
 
 const base = { first_name: 'Jane', last_name: 'Smith' }
 
@@ -263,6 +263,80 @@ describe('CandidateSchema — linkedin_profile_url', () => {
   it('accepts null linkedin_profile_url (optional)', () => {
     const result = CandidateSchema.safeParse({ ...base, linkedin_profile_url: null })
     expect(result.success).toBe(true)
+  })
+})
+
+// ─── CandidateFormSchema (react-hook-form edit/create form) ───────────────────
+
+// The form schema uses ''-based strings (never null) and a string[] languages,
+// and only format-checks email / linkedin when non-empty.
+const formBase = {
+  first_name: 'Jane',
+  last_name: 'Smith',
+  email: '',
+  phone: '',
+  linkedin_profile_url: '',
+  location: '',
+  timezone: '',
+  languages: [] as string[],
+  salary_expectation: '',
+  notice_period: '',
+  source: '',
+}
+
+describe('CandidateFormSchema — required names', () => {
+  it('accepts a minimal valid form', () => {
+    expect(CandidateFormSchema.safeParse(formBase).success).toBe(true)
+  })
+
+  it('rejects empty first_name', () => {
+    expect(CandidateFormSchema.safeParse({ ...formBase, first_name: '' }).success).toBe(false)
+  })
+
+  it('rejects whitespace-only last_name (trimmed to empty)', () => {
+    expect(CandidateFormSchema.safeParse({ ...formBase, last_name: '   ' }).success).toBe(false)
+  })
+
+  it('trims names on parse', () => {
+    const result = CandidateFormSchema.safeParse({ ...formBase, first_name: '  Jane  ' })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.first_name).toBe('Jane')
+  })
+})
+
+describe('CandidateFormSchema — optional format checks', () => {
+  it('accepts an empty email (optional)', () => {
+    expect(CandidateFormSchema.safeParse({ ...formBase, email: '' }).success).toBe(true)
+  })
+
+  it('accepts a valid email', () => {
+    expect(CandidateFormSchema.safeParse({ ...formBase, email: 'user@example.com' }).success).toBe(true)
+  })
+
+  it('rejects an invalid email when non-empty', () => {
+    expect(CandidateFormSchema.safeParse({ ...formBase, email: 'notanemail' }).success).toBe(false)
+  })
+
+  it('accepts an empty linkedin_profile_url (optional)', () => {
+    expect(CandidateFormSchema.safeParse({ ...formBase, linkedin_profile_url: '' }).success).toBe(true)
+  })
+
+  it('accepts a valid linkedin URL', () => {
+    expect(
+      CandidateFormSchema.safeParse({ ...formBase, linkedin_profile_url: 'https://linkedin.com/in/x' }).success,
+    ).toBe(true)
+  })
+
+  it('rejects a bare-domain linkedin URL (no scheme)', () => {
+    expect(
+      CandidateFormSchema.safeParse({ ...formBase, linkedin_profile_url: 'linkedin.com/in/x' }).success,
+    ).toBe(false)
+  })
+
+  it('keeps languages as a string array', () => {
+    const result = CandidateFormSchema.safeParse({ ...formBase, languages: ['English', 'Georgian'] })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.languages).toEqual(['English', 'Georgian'])
   })
 })
 

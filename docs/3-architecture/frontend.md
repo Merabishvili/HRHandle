@@ -129,9 +129,10 @@ HRHandle does not use a global client-side state manager (no Redux, Zustand, etc
 
 ### Forms — react-hook-form + zod (A-005)
 
-Larger edit forms use **react-hook-form** with a **zodResolver**, not hand-rolled `useState` + manual `validateForm`. First adopted on the vacancy edit form:
+Larger edit forms use **react-hook-form** with a **zodResolver**, not hand-rolled `useState` + manual `validateForm`. Adopted on the vacancy and candidate forms:
 
 - `components/vacancies/vacancy-form.tsx` — owns `useForm`, the submit/`onInvalid` handlers, and the server-action call. Splits its cards into section components under `components/vacancies/form/` (`basic-info-section`, `dates-compensation-section`, `details-section`), each receiving the `UseFormReturn` and rendering fields via `register` (native inputs/textareas) or `Controller` (Select / DatePicker / Switch / numeric inputs that need `null`-vs-number semantics).
+- `components/candidates/candidate-form.tsx` — RHF owns the ~11 core profile fields (`CandidateFormSchema`); the rest stays local `useState` because it's orchestration, not form data: CV-parse state, the two-path entry mode, pending experience/education, queued documents, the initial note, custom fields. Split into `components/candidates/form/` — `personal-info-section` + `recruitment-details-section` (RHF), and `pending-experience-card` + `pending-education-card` (create-only editors that own their own draft state and commit entries via `onAdd`/`onRemove`).
 - **Two schemas per form.** The server-payload schema (e.g. `VacancySchema`) is nullable; the form-facing schema (`VacancyFormSchema`) is `''`/sentinel-based to match what the controls emit, and additionally requires fields the UI enforces (sector + status). The submit handler converts the form values (`''` / `WORK_MODE_NONE` → `null`) into the server payload. This split is intentional — the live form and the DB payload genuinely have different shapes.
 - Scroll-to-first-error on submit is preserved via an `onInvalid` handler that maps the first error field (by a fixed priority) to a DOM id and scrolls + focuses it.
 - Non-form orchestration state (custom-field values, loading, server error) stays in `useState` alongside the form.

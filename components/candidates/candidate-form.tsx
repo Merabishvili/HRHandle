@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useForm, type SubmitHandler, type FieldErrors } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { createCandidate, updateCandidate } from '@/lib/actions/candidates'
 import { toDisplayName } from '@/lib/format-name'
@@ -9,8 +11,6 @@ import { uploadDocument } from '@/lib/actions/documents'
 import { createNote } from '@/lib/actions/notes'
 import { saveCustomFieldValues } from '@/lib/actions/custom-fields'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -18,25 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, Linkedin, Paperclip, X, Upload, FileText, Wand2, PenLine, CheckCircle2, AlertCircle, Plus, Trash2, Check, Briefcase, GraduationCap } from 'lucide-react'
+import { Loader2, Paperclip, X, Upload, FileText, Wand2, PenLine, CheckCircle2, AlertCircle } from 'lucide-react'
 import { bulkCreateExperienceEntries, bulkCreateEducationEntries } from '@/lib/actions/candidate-background'
 import type { ParsedCVInput } from '@/lib/validations/candidate-background'
-
-type ExpLocal = { localId: string; company: string; title: string; start_date: string | null; end_date: string | null; is_current: boolean; description: string | null }
-type EduLocal = { localId: string; institution: string; degree: string | null; field_of_study: string | null; start_year: number | null; end_year: number | null; is_ongoing: boolean }
-const BLANK_EXP: Omit<ExpLocal, 'localId'> = { company: '', title: '', start_date: null, end_date: null, is_current: false, description: null }
-const BLANK_EDU: Omit<EduLocal, 'localId'> = { institution: '', degree: null, field_of_study: null, start_year: null, end_year: null, is_ongoing: false }
 import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
-import type {
-  Candidate,
-  CandidateFormData,
-  Vacancy,
-  ApplicationStatus,
-} from '@/lib/types'
+import { PersonalInfoSection } from '@/components/candidates/form/personal-info-section'
+import { RecruitmentDetailsSection } from '@/components/candidates/form/recruitment-details-section'
+import { PendingExperienceCard, type ExpLocal } from '@/components/candidates/form/pending-experience-card'
+import { PendingEducationCard, type EduLocal } from '@/components/candidates/form/pending-education-card'
+import { CandidateFormSchema, type CandidateFormValues } from '@/lib/validations/candidate'
+import type { Candidate, Vacancy } from '@/lib/types'
 import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 
 const DOCUMENT_TYPE_OPTIONS = [
@@ -56,7 +50,7 @@ interface CandidateFormProps {
   vacancies: Pick<Vacancy, 'id' | 'title'>[]
   defaultVacancyId?: string
   defaultApplicationStatusId?: string | null
-  initialApplicationStatuses?: ApplicationStatus[]
+  initialApplicationStatuses?: unknown
   customFieldGroups?: CustomFieldGroupWithFields[]
   customFieldValues?: CustomFieldValue[]
   /**
@@ -70,6 +64,15 @@ interface CandidateFormProps {
 
 type EntryMode = null | 'cv' | 'manual'
 type CvParseState = 'idle' | 'parsing' | 'done' | 'failed'
+
+// Priority mirrors the field order; on invalid submit we land the user on the
+// first offending field (the required name fields, then the format-checked ones).
+const ERROR_PRIORITY: (keyof CandidateFormValues)[] = [
+  'first_name',
+  'last_name',
+  'email',
+  'linkedin_profile_url',
+]
 
 export function CandidateForm({
   candidate,
@@ -93,46 +96,37 @@ export function CandidateForm({
   // Two-path entry state (create-only)
   const [entryMode, setEntryMode] = useState<EntryMode>(candidate ? 'manual' : null)
   const [cvParseState, setCvParseState] = useState<CvParseState>('idle')
-  const [parsedCV, setParsedCV] = useState<ParsedCVInput | null>(null)
+  const [, setParsedCV] = useState<ParsedCVInput | null>(null)
   const [cvFileName, setCvFileName] = useState<string | null>(null)
 
   // Pending experience/education for create form (local state, saved on submit)
   const [pendingExp, setPendingExp] = useState<ExpLocal[]>([])
   const [pendingEdu, setPendingEdu] = useState<EduLocal[]>([])
-  const [addingExp, setAddingExp] = useState(false)
-  const [addExpForm, setAddExpForm] = useState<Omit<ExpLocal, 'localId'>>(BLANK_EXP)
-  const [addingEdu, setAddingEdu] = useState(false)
-  const [addEduForm, setAddEduForm] = useState<Omit<EduLocal, 'localId'>>(BLANK_EDU)
 
-  const [selectedVacancyId, setSelectedVacancyId] = useState<string>(
-    defaultVacancyId || ''
-  )
-
-  const [formData, setFormData] = useState<CandidateFormData>({
-    // Normalize ALL-CAPS names (CV imports / caps-lock applies) to natural case
-    // so Edit shows "Aleksandre" not "ALEKSANDRE" — and saving persists the
-    // fixed casing. toDisplayName leaves mixed-case + non-Latin names untouched.
-    first_name: toDisplayName(candidate?.first_name),
-    last_name: toDisplayName(candidate?.last_name),
-    email: candidate?.email || '',
-    phone: candidate?.phone || '',
-    linkedin_profile_url: candidate?.linkedin_profile_url || '',
-    location: (candidate as {location?: string | null})?.location ?? null,
-    timezone: (candidate as {timezone?: string | null})?.timezone ?? null,
-    languages: (candidate as {languages?: string[]})?.languages ?? [],
-    salary_expectation: (candidate as {salary_expectation?: string | null})?.salary_expectation ?? null,
-    notice_period: (candidate as {notice_period?: string | null})?.notice_period ?? null,
-    source: candidate?.source || '',
-    linked_vacancy_ids: [],
-  })
+  const [selectedVacancyId, setSelectedVacancyId] = useState<string>(defaultVacancyId || '')
+  const [pendingNote, setPendingNote] = useState('')
 
   const isEditing = !!candidate
-  const [pendingNote, setPendingNote] = useState('')
-  const submittingRef = useRef(false)
 
-  const handleChange = <K extends keyof CandidateFormData>(key: K, value: CandidateFormData[K]) => {
-    setFormData((prev) => ({ ...prev, [key]: value }))
-  }
+  const form = useForm<CandidateFormValues>({
+    resolver: zodResolver(CandidateFormSchema),
+    defaultValues: {
+      // Normalize ALL-CAPS names (CV imports / caps-lock applies) to natural case
+      // so Edit shows "Aleksandre" not "ALEKSANDRE" — and saving persists the
+      // fixed casing. toDisplayName leaves mixed-case + non-Latin names untouched.
+      first_name: toDisplayName(candidate?.first_name),
+      last_name: toDisplayName(candidate?.last_name),
+      email: candidate?.email ?? '',
+      phone: candidate?.phone ?? '',
+      linkedin_profile_url: candidate?.linkedin_profile_url ?? '',
+      location: (candidate as { location?: string | null })?.location ?? '',
+      timezone: (candidate as { timezone?: string | null })?.timezone ?? '',
+      languages: (candidate as { languages?: string[] })?.languages ?? [],
+      salary_expectation: (candidate as { salary_expectation?: string | null })?.salary_expectation ?? '',
+      notice_period: (candidate as { notice_period?: string | null })?.notice_period ?? '',
+      source: candidate?.source ?? '',
+    },
+  })
 
   const handleCVUploadForParsing = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -168,29 +162,28 @@ export function CandidateForm({
         const data: ParsedCVInput = json.data
         setParsedCV(data)
         setCvParseState('done')
-        setFormData((prev) => ({
-          ...prev,
-          first_name: toDisplayName(data.first_name) || prev.first_name,
-          last_name: toDisplayName(data.last_name) || prev.last_name,
-          email: data.email || prev.email,
-          phone: data.phone || prev.phone,
-          linkedin_profile_url: data.linkedin_profile_url || prev.linkedin_profile_url,
-          location: data.location || (prev as {location?: string | null}).location,
-          timezone: data.timezone || (prev as {timezone?: string | null}).timezone,
-          languages: (data.languages?.length ? data.languages : null) ?? (prev as {languages?: string[]}).languages ?? [],
-          salary_expectation: data.salary_expectation || (prev as {salary_expectation?: string | null}).salary_expectation,
-          notice_period: data.notice_period || (prev as {notice_period?: string | null}).notice_period,
-        }))
+        // Fill only the fields the CV provided; keep whatever the user already typed.
+        const cur = form.getValues()
+        form.setValue('first_name', toDisplayName(data.first_name) || cur.first_name)
+        form.setValue('last_name', toDisplayName(data.last_name) || cur.last_name)
+        form.setValue('email', data.email || cur.email)
+        form.setValue('phone', data.phone || cur.phone)
+        form.setValue('linkedin_profile_url', data.linkedin_profile_url || cur.linkedin_profile_url)
+        form.setValue('location', data.location || cur.location)
+        form.setValue('timezone', data.timezone || cur.timezone)
+        form.setValue('languages', data.languages?.length ? data.languages : cur.languages)
+        form.setValue('salary_expectation', data.salary_expectation || cur.salary_expectation)
+        form.setValue('notice_period', data.notice_period || cur.notice_period)
         if (data.experience.length > 0) {
           setPendingExp(data.experience
-            .filter((e) => e.company && e.title)
-            .map((e, i) => ({ localId: `cv-exp-${i}`, company: e.company ?? '', title: e.title ?? '', start_date: e.start_date ?? null, end_date: e.end_date ?? null, is_current: e.is_current, description: e.description ?? null }))
+            .filter((x) => x.company && x.title)
+            .map((x, i) => ({ localId: `cv-exp-${i}`, company: x.company ?? '', title: x.title ?? '', start_date: x.start_date ?? null, end_date: x.end_date ?? null, is_current: x.is_current, description: x.description ?? null }))
           )
         }
         if (data.education.length > 0) {
           setPendingEdu(data.education
-            .filter((e) => e.institution)
-            .map((e, i) => ({ localId: `cv-edu-${i}`, institution: e.institution ?? '', degree: e.degree ?? null, field_of_study: e.field_of_study ?? null, start_year: e.start_year ?? null, end_year: e.end_year ?? null, is_ongoing: e.is_ongoing }))
+            .filter((x) => x.institution)
+            .map((x, i) => ({ localId: `cv-edu-${i}`, institution: x.institution ?? '', degree: x.degree ?? null, field_of_study: x.field_of_study ?? null, start_year: x.start_year ?? null, end_year: x.end_year ?? null, is_ongoing: x.is_ongoing }))
           )
         }
       } else {
@@ -212,25 +205,42 @@ export function CandidateForm({
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (submittingRef.current) return
-    submittingRef.current = true
+  const reportValidationError = (message: string, fieldId: string) => {
+    setError(message)
+    toast.error(message)
+    if (typeof window === 'undefined') return
+    const el = document.getElementById(fieldId)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => el.focus({ preventScroll: true }), 350)
+  }
+
+  const onInvalid = (errors: FieldErrors<CandidateFormValues>) => {
+    for (const key of ERROR_PRIORITY) {
+      const fieldError = errors[key]
+      if (fieldError?.message) {
+        reportValidationError(String(fieldError.message), key)
+        return
+      }
+    }
+  }
+
+  const onValid: SubmitHandler<CandidateFormValues> = async (values) => {
     setError(null)
     setIsLoading(true)
 
     const payload = {
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      email: formData.email || null,
-      phone: formData.phone || null,
-      linkedin_profile_url: formData.linkedin_profile_url || null,
-      location: (formData as {location?: string | null}).location || null,
-      timezone: (formData as {timezone?: string | null}).timezone || null,
-      languages: (formData as {languages?: string[]}).languages ?? [],
-      salary_expectation: (formData as {salary_expectation?: string | null}).salary_expectation || null,
-      notice_period: (formData as {notice_period?: string | null}).notice_period || null,
-      source: formData.source || null,
+      first_name: values.first_name, // schema trims
+      last_name: values.last_name,
+      email: values.email || null,
+      phone: values.phone || null,
+      linkedin_profile_url: values.linkedin_profile_url || null,
+      location: values.location || null,
+      timezone: values.timezone || null,
+      languages: values.languages ?? [],
+      salary_expectation: values.salary_expectation || null,
+      notice_period: values.notice_period || null,
+      source: values.source || null,
     }
 
     const result = isEditing
@@ -241,7 +251,6 @@ export function CandidateForm({
       setError(result.error)
       toast.error(result.error)
       setIsLoading(false)
-      submittingRef.current = false
       return
     }
 
@@ -271,7 +280,6 @@ export function CandidateForm({
           setError(`Document upload failed: ${uploadResult.error}`)
           toast.error(`Document upload failed: ${uploadResult.error}`)
           setIsLoading(false)
-          submittingRef.current = false
           return
         }
       }
@@ -328,7 +336,7 @@ export function CandidateForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onValid, onInvalid)} className="space-y-6">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -354,11 +362,7 @@ export function CandidateForm({
               onChange={handleCVUploadForParsing}
             />
             {cvParseState === 'idle' ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => cvUploadRef.current?.click()}
-              >
+              <Button type="button" variant="outline" onClick={() => cvUploadRef.current?.click()}>
                 <Upload className="mr-2 h-4 w-4" />
                 Select CV file
               </Button>
@@ -390,366 +394,38 @@ export function CandidateForm({
         </Card>
       )}
 
-      {/* Personal information */}
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>Personal information</CardTitle>
-          <CardDescription>Basic candidate profile information.</CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="first_name">First Name *</Label>
-              <Input
-                id="first_name"
-                placeholder="e.g. John"
-                value={formData.first_name}
-                onChange={(e) => handleChange('first_name', e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="last_name">Last Name *</Label>
-              <Input
-                id="last_name"
-                placeholder="e.g. Smith"
-                value={formData.last_name}
-                onChange={(e) => handleChange('last_name', e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
-                value={formData.email ?? ''}
-                onChange={(e) => handleChange('email', e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-                value={formData.phone ?? ''}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                placeholder="e.g. San Francisco, USA"
-                value={(formData as {location?: string | null}).location ?? ''}
-                onChange={(e) => handleChange('location' as keyof typeof formData, e.target.value || null)}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="timezone">Timezone</Label>
-              <Input
-                id="timezone"
-                placeholder="e.g. GMT+1"
-                value={(formData as {timezone?: string | null}).timezone ?? ''}
-                onChange={(e) => handleChange('timezone' as keyof typeof formData, e.target.value || null)}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="salary_expectation">Salary expectation</Label>
-              <Input
-                id="salary_expectation"
-                placeholder="e.g. $80,000 – $100,000"
-                value={(formData as {salary_expectation?: string | null}).salary_expectation ?? ''}
-                onChange={(e) => handleChange('salary_expectation' as keyof typeof formData, e.target.value || null)}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notice_period">Notice period</Label>
-              <Input
-                id="notice_period"
-                placeholder="e.g. 1 month"
-                value={(formData as {notice_period?: string | null}).notice_period ?? ''}
-                onChange={(e) => handleChange('notice_period' as keyof typeof formData, e.target.value || null)}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="languages">Languages</Label>
-            <Input
-              id="languages"
-              placeholder="e.g. English, Spanish, French"
-              value={((formData as {languages?: string[]}).languages ?? []).join(', ')}
-              onChange={(e) => handleChange('languages' as keyof typeof formData, e.target.value ? e.target.value.split(',').map((l) => l.trim()).filter(Boolean) : [])}
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="linkedin_profile_url">LinkedIn profile</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="linkedin_profile_url"
-                  type="url"
-                  placeholder="https://linkedin.com/in/johnsmith"
-                  value={formData.linkedin_profile_url ?? ''}
-                  onChange={(e) => handleChange('linkedin_profile_url', e.target.value)}
-                  disabled={isLoading}
-                />
-                {formData.linkedin_profile_url && (
-                  <a href={/^https?:\/\//i.test(formData.linkedin_profile_url) ? formData.linkedin_profile_url : `https://${formData.linkedin_profile_url}`} target="_blank" rel="noopener noreferrer">
-                    <Button type="button" variant="outline" size="icon" title="Open LinkedIn profile" aria-label="Open LinkedIn profile">
-                      <Linkedin className="h-4 w-4 text-[#0A66C2]" />
-                    </Button>
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <PersonalInfoSection form={form} disabled={isLoading} />
 
       {/* Live Experience / Education editors (edit mode only) — kept in the
           same vertical position as the inline create-mode sections below. */}
       {isEditing && extraSections}
 
-      {/* Experience (create only) */}
+      {/* Experience + Education (create only) */}
       {!isEditing && (
-        <Card className="border-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase className="h-4 w-4" />
-                Experience
-              </CardTitle>
-              <CardDescription>Work history entries.</CardDescription>
-            </div>
-            {!addingExp && (
-              <Button type="button" variant="outline" size="sm" onClick={() => { setAddingExp(true); setAddExpForm(BLANK_EXP) }} disabled={isLoading}>
-                <Plus className="h-4 w-4 mr-1" />Add
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {addingExp && (
-              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Company *</Label>
-                    <Input value={addExpForm.company} onChange={(e) => setAddExpForm((p) => ({ ...p, company: e.target.value }))} placeholder="Company name" maxLength={200} disabled={isLoading} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Title *</Label>
-                    <Input value={addExpForm.title} onChange={(e) => setAddExpForm((p) => ({ ...p, title: e.target.value }))} placeholder="Job title" maxLength={200} disabled={isLoading} />
-                  </div>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Start date</Label>
-                    <Input type="month" value={addExpForm.start_date ?? ''} onChange={(e) => setAddExpForm((p) => ({ ...p, start_date: e.target.value || null }))} disabled={isLoading} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">End date</Label>
-                    <Input type="month" value={addExpForm.end_date ?? ''} onChange={(e) => setAddExpForm((p) => ({ ...p, end_date: e.target.value || null }))} disabled={isLoading || addExpForm.is_current} />
-                  </div>
-                </div>
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input type="checkbox" checked={addExpForm.is_current} onChange={(e) => setAddExpForm((p) => ({ ...p, is_current: e.target.checked, end_date: e.target.checked ? null : p.end_date }))} className="rounded" />
-                  Currently working here
-                </label>
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => { setAddingExp(false); setAddExpForm(BLANK_EXP) }}>
-                    <X className="h-4 w-4 mr-1" />Cancel
-                  </Button>
-                  <Button type="button" size="sm" disabled={!addExpForm.company.trim() || !addExpForm.title.trim()} onClick={() => { setPendingExp((p) => [...p, { ...addExpForm, localId: `exp-${Date.now()}` }]); setAddExpForm(BLANK_EXP); setAddingExp(false) }}>
-                    <Check className="h-4 w-4 mr-1" />Add
-                  </Button>
-                </div>
-              </div>
-            )}
-            {pendingExp.length === 0 && !addingExp && (
-              <p className="py-4 text-center text-sm text-muted-foreground">No experience added yet.</p>
-            )}
-            {pendingExp.map((entry) => (
-              <div key={entry.localId} className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/10 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{entry.title}</p>
-                  <p className="text-sm text-muted-foreground truncate">{entry.company}</p>
-                  {(entry.start_date || entry.is_current || entry.end_date) && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{entry.start_date ?? '?'} – {entry.is_current ? 'Present' : (entry.end_date ?? '?')}</p>
-                  )}
-                </div>
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" aria-label="Remove experience entry" onClick={() => setPendingExp((p) => p.filter((e) => e.localId !== entry.localId))}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <PendingExperienceCard
+          entries={pendingExp}
+          onAdd={(entry) => setPendingExp((p) => [...p, entry])}
+          onRemove={(localId) => setPendingExp((p) => p.filter((e) => e.localId !== localId))}
+          disabled={isLoading}
+        />
+      )}
+      {!isEditing && (
+        <PendingEducationCard
+          entries={pendingEdu}
+          onAdd={(entry) => setPendingEdu((p) => [...p, entry])}
+          onRemove={(localId) => setPendingEdu((p) => p.filter((e) => e.localId !== localId))}
+          disabled={isLoading}
+        />
       )}
 
-      {/* Education (create only) */}
-      {!isEditing && (
-        <Card className="border-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4" />
-                Education
-              </CardTitle>
-              <CardDescription>Academic background.</CardDescription>
-            </div>
-            {!addingEdu && (
-              <Button type="button" variant="outline" size="sm" onClick={() => { setAddingEdu(true); setAddEduForm(BLANK_EDU) }} disabled={isLoading}>
-                <Plus className="h-4 w-4 mr-1" />Add
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {addingEdu && (
-              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Institution *</Label>
-                  <Input value={addEduForm.institution} onChange={(e) => setAddEduForm((p) => ({ ...p, institution: e.target.value }))} placeholder="University or school name" maxLength={200} disabled={isLoading} />
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Degree</Label>
-                    <Input value={addEduForm.degree ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, degree: e.target.value || null }))} placeholder="e.g. Bachelor's" maxLength={100} disabled={isLoading} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Field of study</Label>
-                    <Input value={addEduForm.field_of_study ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, field_of_study: e.target.value || null }))} placeholder="e.g. Computer Science" maxLength={200} disabled={isLoading} />
-                  </div>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Start year</Label>
-                    <Input type="number" min={1950} max={new Date().getFullYear()} value={addEduForm.start_year ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, start_year: e.target.value ? Number(e.target.value) : null }))} placeholder="e.g. 2018" disabled={isLoading} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">End year</Label>
-                    <Input type="number" min={1950} max={new Date().getFullYear() + 10} value={addEduForm.end_year ?? ''} onChange={(e) => setAddEduForm((p) => ({ ...p, end_year: e.target.value ? Number(e.target.value) : null }))} placeholder="e.g. 2022" disabled={isLoading || addEduForm.is_ongoing} />
-                  </div>
-                </div>
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input type="checkbox" checked={addEduForm.is_ongoing} onChange={(e) => setAddEduForm((p) => ({ ...p, is_ongoing: e.target.checked, end_year: e.target.checked ? null : p.end_year }))} className="rounded" />
-                  Currently studying
-                </label>
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => { setAddingEdu(false); setAddEduForm(BLANK_EDU) }}>
-                    <X className="h-4 w-4 mr-1" />Cancel
-                  </Button>
-                  <Button type="button" size="sm" disabled={!addEduForm.institution.trim()} onClick={() => { setPendingEdu((p) => [...p, { ...addEduForm, localId: `edu-${Date.now()}` }]); setAddEduForm(BLANK_EDU); setAddingEdu(false) }}>
-                    <Check className="h-4 w-4 mr-1" />Add
-                  </Button>
-                </div>
-              </div>
-            )}
-            {pendingEdu.length === 0 && !addingEdu && (
-              <p className="py-4 text-center text-sm text-muted-foreground">No education added yet.</p>
-            )}
-            {pendingEdu.map((entry) => (
-              <div key={entry.localId} className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/10 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{entry.institution}</p>
-                  {(entry.degree || entry.field_of_study) && (
-                    <p className="text-sm text-muted-foreground truncate">{[entry.degree, entry.field_of_study].filter(Boolean).join(', ')}</p>
-                  )}
-                  {(entry.start_year || entry.end_year || entry.is_ongoing) && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{entry.start_year ?? '?'} – {entry.is_ongoing ? 'Present' : (entry.end_year ?? '?')}</p>
-                  )}
-                </div>
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" aria-label="Remove education entry" onClick={() => setPendingEdu((p) => p.filter((e) => e.localId !== entry.localId))}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Recruitment Details */}
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>Recruitment details</CardTitle>
-          <CardDescription>Source and initial vacancy assignment.</CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className={`grid gap-4 ${isEditing ? '' : 'sm:grid-cols-2'}`}>
-            <div className="space-y-2">
-              <Label htmlFor="source">Source</Label>
-              <Select
-                value={formData.source || 'none'}
-                onValueChange={(value) => handleChange('source', value === 'none' ? '' : value)}
-                disabled={isLoading}
-              >
-                <SelectTrigger id="source">
-                  <SelectValue placeholder="How did they enter the pipeline?" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Not specified</SelectItem>
-                  <SelectItem value="LinkedIn">LinkedIn</SelectItem>
-                  <SelectItem value="Indeed">Indeed</SelectItem>
-                  <SelectItem value="Referral">Referral</SelectItem>
-                  <SelectItem value="Company Website">Company Website</SelectItem>
-                  <SelectItem value="Job Board">Job Board</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {!isEditing && (
-              <div className="space-y-2">
-                <Label htmlFor="initial_vacancy_id">Initial vacancy</Label>
-                <SearchableSelect
-                  id="initial_vacancy_id"
-                  value={selectedVacancyId || 'none'}
-                  onValueChange={(value) => setSelectedVacancyId(value === 'none' ? '' : value)}
-                  disabled={isLoading}
-                  placeholder="Select a vacancy (optional)"
-                  searchPlaceholder="Search vacancies…"
-                  emptyText="No vacancies found."
-                  options={[
-                    { value: 'none', label: 'No vacancy assigned' },
-                    ...vacancies.map((vacancy) => ({
-                      value: vacancy.id,
-                      label: vacancy.title,
-                      searchText: vacancy.title,
-                    })),
-                  ]}
-                />
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <RecruitmentDetailsSection
+        form={form}
+        disabled={isLoading}
+        isEditing={isEditing}
+        vacancies={vacancies}
+        selectedVacancyId={selectedVacancyId}
+        onSelectedVacancyChange={setSelectedVacancyId}
+      />
 
       {/* Documents — only on create, and only in manual mode (cv mode auto-queues the parsed file) */}
       {!isEditing && entryMode !== 'cv' && (
