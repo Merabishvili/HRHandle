@@ -6,7 +6,7 @@ _Last updated: 2026-07-20_
 
 ## ▶ RESUME HERE (next task)
 
-**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Next: `docs/1-product/` (features.md, overview.md, outstanding-2026-07.md) + `docs/2-business/` (processes.md, roles-permissions.md).** Then 4-integrations (12), 6-deployment, 9-compliance, ui-texts. `database.md` per-table body rewrite is a deeper follow-up.
+**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Next: `docs/4-integrations/` (12 files — verify each service wired as described), then `docs/6-deployment/`, `docs/9-compliance/`, `docs/ui-texts.md`.** Deeper follow-up: `database.md` per-table body rewrite.
 
 Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps — read the doc, compare to code, fix what's actually stale. No browser is available (mobile findings stay static).
 
@@ -17,7 +17,7 @@ Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps �
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Clarification | ✅ Done | All 5 phases / delete-safe / static-mobile confirmed. |
-| 1 — Documentation Refresh | 🟡 ~40% | env, endpoints, backend done; database changelog reconciled. Product/business/integrations/compliance/ui-texts pending. |
+| 1 — Documentation Refresh | 🟡 ~55% | env/endpoints/backend/database + 1-product + 2-business done. Integrations/deployment/compliance/ui-texts pending. |
 | 2 — Issue & Improvement Discovery | 🟡 ~50% | Category pattern-scans + spot-checks done → 10 issues (all fixed). Deep per-file / per-route pass outstanding. |
 | 3 — Issue Output Format | ✅ Done | `issues-found.md` re-audit section w/ required tables + summary. Keep appending as new issues surface. |
 | 4 — Test Coverage | 🟡 ~40% | ~50 tests added; `new-tests.md`/`tests-to-remove.md` written. `test-cases.md`/`test-values.md` NOT updated; ~16 helpers still untested. |
@@ -34,12 +34,12 @@ Verify each against code; mark ✅ when done this audit. (`docs/redesign/*` = hi
 
 | Doc | Status | Notes |
 |---|---|---|
-| 1-product/overview.md | 🟡 partial | Removed dead `use-toast.ts` ref. Full pass pending. |
-| 1-product/features.md | ⬜ | |
+| 1-product/overview.md | ✅ | Dashboard→Pipeline fixed; Offers/Reports/Scorecards modules + changelog added. |
+| 1-product/features.md | ✅ | "Shipped since 2026-05-08" changelog block added. |
 | 1-product/roadmap.md | ✅ | Phase 9 + A-002/005/201 updated. |
 | 1-product/outstanding-2026-07.md | ⬜ | May be stale vs. current state. |
-| 2-business/processes.md | ⬜ | |
-| 2-business/roles-permissions.md | ⬜ | |
+| 2-business/processes.md | ✅ | Pipeline-home + offer/2FA/reports/import process notes added. |
+| 2-business/roles-permissions.md | ✅ | Newer owner/admin-gated surfaces + isOrgAdmin note added. |
 | 3-architecture/overview.md | 🟡 partial | Dead toast ref removed. Verify file tree vs. current. |
 | 3-architecture/frontend.md | ✅ | RHF forms + candidates split + toast note. |
 | 3-architecture/backend.md | ✅ | Action-file inventory reconciled (20 missing files added; applications/offers barrels documented). |
@@ -85,4 +85,4 @@ Also outstanding: update `docs/testing/test-cases.md` + `test-values.md`.
 ## Session log
 
 - **2026-07-20 (session 1)** — Phases 2/3/5 core + mobile + fixes + A-201 (all 5 splits). Tests 862 → 930. Set up this tracker.
-- **2026-07-20 (session 2)** — Phase 1: `variables.md` rewritten vs `lib/env.ts`; `endpoints.md` reconciled (27 routes); `backend.md` action-file inventory reconciled (+20 files, barrels); `database.md` changelog reconciled (2026-07 migrations + mid-2026 feature tables). Next: 1-product + 2-business docs.
+- **2026-07-20 (session 2)** — Phase 1: `variables.md`, `endpoints.md`, `backend.md` (+20 action files, barrels), `database.md` changelog, + `1-product/{overview,features}.md` and `2-business/{processes,roles-permissions}.md` (Dashboard→Pipeline fix + "shipped since May" blocks). Next: 4-integrations + 6-deployment + 9-compliance + ui-texts.

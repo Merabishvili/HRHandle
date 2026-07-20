@@ -1,9 +1,11 @@
 # HRHandle — Features
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
+- 🆕 **(2026-07-20 audit) Major features shipped since 2026-05-08:** Offers (G-018, incl. candidate `/offer/<token>`); Reports (G-029: conversion / time-to-hire / source); Slack+Teams webhooks (G-030) + Calendly (G-031); 2FA/TOTP (G-032); CSV candidate import (G-028); cmd-K global search (G-023); scorecard sharing (G-025); custom per-vacancy pipeline stages (Wave 2.6); multi-reviewer scorecards; vacancy work mode; profile language + avatar upload; @-mentions in notes (G-021); candidate self-withdraw (G-022); audit-log viewer (G-019) + trash restore (G-020).
+- 🔄 **Pipeline replaced the Dashboard as the home surface (redesign A-1)** — `/dashboard` redirects to `/pipeline` (cross-vacancy kanban). The vacancy + candidate edit forms migrated to react-hook-form (A-005).
 - 🆕 CV parsing on both internal "New Candidate" form and public apply form (Gemini Flash; PDF/DOCX → structured fields)
 - 🆕 Candidate Experience & Education sections on candidate detail page (CRUD with timeline UI)
 - 🆕 Activity Feed on candidate detail (`candidate_activity` view: applications, notes, documents, interviews)

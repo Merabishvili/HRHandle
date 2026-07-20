@@ -1,9 +1,11 @@
 # HRHandle — Business Processes & Rules
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
+- 🔄 **(2026-07-20 audit) Pipeline is the home surface** (`/dashboard` → `/pipeline`; redesign A-1). Onboarding still runs in the `(dashboard)` route-group layout, which now wraps `/pipeline`.
+- 🆕 **(2026-07-20 audit)** Offer lifecycle (draft → sent → accepted/declined/withdrawn; accept auto-advances to Hired), 2FA enrollment + org policy, Reports, and CSV import processes shipped since 2026-05-08 — see `docs/1-product/roadmap.md` for the full G-0xx list.
 - 🔄 Trial `member_limit` corrected from **3 → 2** (matches `lib/onboarding.ts:111` and `lib/types/subscription.ts`)
 - 🆕 Custom fields cap documented: max 20 per entity type (`lib/actions/custom-fields.ts:202`)
 - 🆕 Rejection reasons cap documented: max 50 per org (`lib/actions/rejection-reasons.ts:12`)
