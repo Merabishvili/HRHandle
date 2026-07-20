@@ -51,3 +51,23 @@ npx vitest run lib/__tests__/campaign.test.ts  # single file
 - No global setup file yet — see `S-fewer-permission-prompts` note about adding `vitest.setup.ts` for shared mocks (localStorage, fetch, Supabase)
 - Path alias `@/` works via `vite-tsconfig-paths`
 - All new mocks use `vi.mock(...)` with closures captured at module level.
+
+---
+
+## Re-audit 2026-07-20 — new test files
+
+Added during the deep re-audit. All pure-logic (no mocks needed).
+
+| Test file | Covers | Cases |
+|---|---|---|
+| `lib/candidates/__tests__/list-derivation.test.ts` | Candidates-list shaping (`groupApplicationsByCandidate`, `aggregateFitScores`, `deriveStageAndFit`, `formatCustomFieldValue`, `buildCustomFieldValueMap`, `stageOf`, `getVacancyTitle`) | 28 |
+| `lib/pipeline/__tests__/stage-style.test.ts` | `getStageStyle` (known/unknown/null fallbacks), `isTerminalStage`, `TERMINAL_STAGE_CODES`, `STALE_DAYS` | 19 (shared file below) |
+| `lib/pipeline-stages/__tests__/bucket.test.ts` | `mapPipelineStageToBucket` (type mapping + terminal-by-name incl. "Re-hired"→hired, "Withdrew"→withdrawn, custom→rejected, case-insensitivity) | (part of the 19) |
+| `lib/validations/__tests__/vacancy.test.ts` (extended) | `VacancyFormSchema` — required sector/status, work_mode sentinel, salary/date refinements, trim | +14 |
+| `lib/validations/__tests__/candidate.test.ts` (extended) | `CandidateFormSchema` — required names, optional email/linkedin format, languages array | +15 |
+
+### Recommended next test targets (untested pure helpers — not yet written)
+
+High-value pure modules currently without tests; good candidates for the next testing pass (skip the `lib/types/*` files — they're type-only):
+
+`lib/permissions.ts`, `lib/offers/state.ts`, `lib/offers/expiry.ts`, `lib/screening-questions/knockout-condition.ts`, `lib/screening-questions/compute-flag.ts`, `lib/candidate-merge/defaults.ts`, `lib/audit-log/filter.ts`, `lib/trash/impact.ts`, `lib/mfa/policy.ts`, `lib/mfa/recovery-codes.ts`, `lib/notes/mentions.ts`, `lib/search/query.ts`, `lib/candidate-import/validation.ts`, `lib/candidate-import/parsing.ts`, `lib/vacancy-questions/normalize.ts`, `lib/guides/loader.ts`.

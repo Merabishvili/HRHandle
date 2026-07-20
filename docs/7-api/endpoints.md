@@ -1,6 +1,6 @@
 # API Endpoints
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20 (🆕 added AI / Calendly / cron / export routes — see bottom section)_
 
 ## Changelog
 
@@ -282,3 +282,25 @@ Schema enforced by `ParsedCVSchema` (`lib/validations/candidate-background.ts`).
 **File:** `app/auth/callback/route.ts`  
 **Query params:** `code`, `next` (optional)  
 **Redirects to:** `next` (relative paths only) on success, `/auth/error` on failure
+
+
+---
+
+## 🆕 Added since 2026-05-08 (documented 2026-07-20)
+
+These route handlers exist in `app/api/` but were missing from this doc. All AI + export routes require an authenticated session (`getAuthContext`); AI routes add a per-org in-memory rate limit and write an `ai_assist` audit-log row (EU AI Act traceability).
+
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| POST | `/api/ai/candidate-summary` | Gemini candidate summary (org-scoped read, not persisted) | Session + per-org rate limit |
+| POST | `/api/ai/note-extractor` | Extract structured fields from a free-text note | Session + rate limit |
+| POST | `/api/ai/assessment-suggester` | Suggest assessment tasks for a vacancy | Session + rate limit |
+| POST | `/api/ai/jd-generator` | Generate job-description sections | Session + rate limit |
+| POST | `/api/ai/bias-check` | Inclusive-language check on JD text | Session + rate limit |
+| GET | `/api/auth/calendly` | Start Calendly OAuth connect | Session (admin) |
+| GET | `/api/auth/calendly/callback` | Calendly OAuth callback → stores tokens + HMAC key | Session (admin) |
+| POST | `/api/webhooks/calendly` | Calendly booking webhook → creates interview + fan-out notification | HMAC-verified (no session) |
+| GET | `/api/cron/purge-deleted` | 30-day hard-purge of soft-deleted rows | Cron secret |
+| GET | `/api/export/audit-log` | CSV export of the org's audit log | Session |
+
+_Note: this section was added as a drift-fix; a full re-verification of every row in the tables above against current handler signatures is a recommended follow-up (this doc was last fully refreshed 2026-05-08)._

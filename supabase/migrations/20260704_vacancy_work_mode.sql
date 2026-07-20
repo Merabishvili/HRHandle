@@ -18,3 +18,4 @@ ALTER TABLE public.vacancies
 
 COMMENT ON COLUMN public.vacancies.work_mode IS
   '#2 — remote | hybrid | onsite | NULL (unspecified).';
+

@@ -1,6 +1,6 @@
 # Issues Found — Re-audit 2026-05-08
 
-_Last updated: 2026-07-20 (Phase 9 complete: exactOptionalPropertyTypes flag + RHF migration / component splits (A-002/A-005) shipped)_
+_Last updated: 2026-07-20 (deep re-audit pass — see the "Re-audit 2026-07-20" section at the bottom; 10 new issues incl. B-201 Toaster-not-mounted. Prior: Phase 9 exactOptionalPropertyTypes + A-002/A-005 shipped)_
 
 This document is the consolidated output of an exhaustive multi-agent re-audit
 of the HRHandle staging codebase. Every issue has a stable ID; prefer
@@ -293,3 +293,60 @@ Live Supabase MCP queries refuted one critical finding and surfaced five new one
 - Issues are deduplicated and re-graded for severity.
 - Verification of live Supabase schema state was **not** performed for this pass — the keys in `.env.local` are the new Supabase publishable/secret format and return 401 against the REST API from the local environment. All DB facts in this audit are taken from `supabase/migrations/`.
 - "Status" is `Open` for every issue. Update inline when fixed (`Open → In Progress → Fixed`).
+
+---
+
+# Re-audit 2026-07-20 (deep pass)
+
+_New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 source files, 74 test files). Verification method: static analysis + targeted source reads; no browser rendering (mobile items are code-level, not pixel-verified — see `mobile-compatibility.md`)._
+
+## Summary
+
+- **New issues found: 10** — 1 High, 3 Medium, 6 Low.
+- By category: Bugs 1, Mobile 3, Architecture 2, Performance 1, Accessibility 1, Unnecessary 2 (both fixed this pass).
+- **Fixed during this pass:** U-201 + U-202 (dead legacy toast system deleted + unused dep removed).
+- **Top item:** **B-201 — sonner `<Toaster/>` is never mounted, so every `toast()` call in the app is silent.** One-line fix, app-wide UX impact.
+
+### Verified-clean (no issue — audited, passed)
+- **IDOR / admin-client authz:** AI routes (`candidate-summary` etc.) scope admin-client reads with `.eq('organization_id', ctx.orgId)` → cross-org access returns not-found. Auth + zod + per-org rate-limit present.
+- No secrets under `NEXT_PUBLIC_`; no raw error objects / PII / tokens in `console.error` (only `.message` + ids); 0 `TODO/FIXME/HACK`; only 1 `any` (justified, eslint-disabled); 0 truly-empty catch blocks; no unused dependencies (after the toast cleanup); large fixed widths are all `max-w-[...]` (responsive).
+
+## 🐛 Code Bugs & Incorrect Logic
+
+| # | Severity | File + Line | Description | Suggested Fix | Status |
+|---|----------|-------------|-------------|---------------|--------|
+| B-201 | High | `app/layout.tsx` (+ all `layout.tsx`) | Sonner's `<Toaster/>` is **never mounted anywhere**. 37 files `import { toast } from 'sonner'` and fire toasts (validation errors, save/success confirmations, error feedback, the RHF form errors), but with no `<Toaster/>` rendered, sonner renders nothing — all toasts are silent app-wide. `components/ui/sonner.tsx` exports a `Toaster` wrapper that nothing imports. | Mount `<Toaster />` (from `@/components/ui/sonner`) in the root `app/layout.tsx` `<body>` (or the dashboard layout). | Open |
+
+## 📱 Mobile & Responsive (see `docs/mobile-compatibility.md`)
+
+| # | Severity | File + Line | Description | Suggested Fix | Status |
+|---|----------|-------------|-------------|---------------|--------|
+| MO-201 | Medium | `app/(dashboard)/reports/{pipeline,sources,time-to-hire}/page.tsx` | Data tables not wrapped in an `overflow-x-auto` container → wide report tables overflow the viewport / clip on narrow screens. | Wrap each `<Table>` in `<div className="overflow-x-auto">`. | Open |
+| MO-202 | Medium | `components/pipeline/list-view.tsx:60-61,144` | `<table className="min-w-full">` sits inside an `overflow-hidden` wrapper → a wide pipeline list is **clipped** on mobile instead of horizontally scrollable. | Change the wrapper to `overflow-x-auto` (keep `rounded-xl` via an inner element if needed). | Open |
+| MO-203 | Low | `components/candidate-import/import-wizard.tsx` | CSV preview table has no horizontal-scroll wrapper; many-column CSVs overflow on mobile. | Wrap the preview table in `overflow-x-auto`. | Open |
+
+## 🏗️ Architecture & Code Quality
+
+| # | Severity | File + Line | Description | Suggested Fix | Status |
+|---|----------|-------------|-------------|---------------|--------|
+| A-201 | Low | `lib/actions/applications.ts` (1081 LOC), `lib/actions/offers.ts` (771), `components/interviews/interview-form.tsx` (771), `components/pipeline/cross-vacancy-board.tsx` (698), `components/vacancies/wizard/step-scorecard.tsx` (682) | Several files exceed ~700 LOC mixing multiple concerns (multiple actions per file; form + layout + state per component). | Split following the A-002/A-005 pattern (extract pure helpers + section components). Lower priority than forms since these aren't the top-edited surfaces. | Open |
+| A-202 | Low | `lib/actions/scorecards.ts:350` | `displayNameFor(client: any, …)` uses `any` (eslint-disabled, documented) to accept either the RLS or admin Supabase client. | Type as `SupabaseClient` (both clients share the type), removing the only `any` in the codebase. | Open |
+
+## ⚡ Performance
+
+| # | Severity | File + Line | Description | Suggested Fix | Status |
+|---|----------|-------------|-------------|---------------|--------|
+| P-201 | Low | `lib/actions/applications.ts:932` (`rejectApplicationsBatch`), `:1057` (`moveApplicationsBatch`) | Bulk operations loop per-row with sequential `await`s, re-running `getAuthContext()` each iteration. Already **documented + bounded** (`MAX_BULK_MOVE_BATCH = 50`) as an accepted tradeoff (reuses per-row audit/sync/email). | If batch sizes grow: lift `getAuthContext` out of the per-row call (the in-code comment already sketches this). | Open (accepted) |
+
+## ♿ Accessibility
+
+| # | Severity | File + Line | Description | Suggested Fix | Status |
+|---|----------|-------------|-------------|---------------|--------|
+| AC-201 | Low | `components/mfa/enroll-totp-dialog.tsx:87` | The MFA QR code is injected via `dangerouslySetInnerHTML={{ __html: qrCodeSvg }}`. Source is Supabase's server-generated enroll SVG (trusted, not user input) so XSS risk is negligible, but the container has no accessible name. | Add `role="img"` + `aria-label="Two-factor authentication QR code"` to the wrapper. | Open |
+
+## 🗑️ Unnecessary / Redundant (fixed this pass)
+
+| # | Severity | File + Line | Description | Suggested Fix | Status |
+|---|----------|-------------|-------------|---------------|--------|
+| U-201 | Low | `hooks/use-toast.ts`, `components/ui/use-toast.ts`, `components/ui/toaster.tsx`, `components/ui/toast.tsx` | Entire legacy Radix/shadcn toast system, fully orphaned (0 real references; app uses sonner). `components/ui/use-toast.ts` had literally 0 importers. | Delete all 4 files. | ✅ Fixed 2026-07-20 |
+| U-202 | Low | `package.json` → `@radix-ui/react-toast` | Dependency used only by the now-deleted `components/ui/toast.tsx`. | `npm uninstall @radix-ui/react-toast`. | ✅ Fixed 2026-07-20 |

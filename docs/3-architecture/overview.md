@@ -174,7 +174,6 @@ lib/
   utils.ts              # cn() Tailwind merge utility
 hooks/
   use-mobile.ts         # Responsive breakpoint hook
-  use-toast.ts          # Toast notification hook
 __tests__/
   validations.test.ts   # Existing validation tests (do not modify)
 scripts/
