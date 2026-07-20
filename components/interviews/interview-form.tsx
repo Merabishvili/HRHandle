@@ -18,64 +18,21 @@ import {
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
-import { cn } from '@/lib/utils'
-import { toDisplayFullName } from '@/lib/format-name'
 import { nextBusinessSlot } from '@/lib/interviews/default-time'
-import { Calendar, Loader2, Lock, Mail, MapPin, Phone, Video } from 'lucide-react'
+import { Calendar, Loader2, MapPin, Phone, Video } from 'lucide-react'
 import type { InterviewType } from '@/lib/types'
-
-interface InterviewCandidateOption {
-  id: string
-  first_name: string
-  last_name: string
-  email?: string | null
-}
-
-interface InterviewVacancyOption {
-  id: string
-  title: string
-}
-
-interface InterviewApplicationOption {
-  id: string
-  candidate_id: string
-  vacancy_id: string
-}
-
-interface InterviewTeamMemberOption {
-  id: string
-  full_name: string
-  /** Used to exclude a candidate who is also a team member (internal
-   * applicant) from the interviewer picker. */
-  email?: string | null
-}
-
-interface InterviewFormProps {
-  candidates: InterviewCandidateOption[]
-  vacancies: InterviewVacancyOption[]
-  applications: InterviewApplicationOption[]
-  teamMembers: InterviewTeamMemberOption[]
-  defaultCandidateId?: string | undefined
-  defaultVacancyId?: string | undefined
-  defaultApplicationId?: string | undefined
-  /** Pre-selected interviewer (defaults to the current user on the New
-   * Interview page). The interviewer is always a team member — candidates
-   * are never in this list. */
-  defaultInterviewerId?: string | undefined
-  hasGoogleCalendar?: boolean | undefined
-  hasZoom?: boolean | undefined
-  hasMicrosoft?: boolean | undefined
-  /** The user's saved default auto meeting link (#6b) — prefers this provider
-   * when it's connected. */
-  defaultMeetingProvider?: 'google_meet' | 'zoom' | 'teams' | null
-  /** When set, the form is rendered inside an overlay (e.g. Pipeline Review
-   * Mode). On a successful create it calls this instead of navigating to
-   * /interviews, so the caller can close the overlay and stay in place. */
-  onScheduled?: (() => void) | undefined
-  /** Overlay callers provide their own dismiss; falls back to navigating to
-   * /interviews when absent (the standalone page). */
-  onCancel?: (() => void) | undefined
-}
+import {
+  getCandidateFullName,
+  defaultMeetingOption,
+  type InterviewFormProps,
+} from './interview-form-helpers'
+import {
+  EmailToggle,
+  TypeSegment,
+  LockedField,
+  MeetChip,
+  SummaryRow,
+} from './interview-form-parts'
 
 const durationOptions = [
   { value: 30, label: '30 minutes' },
@@ -84,30 +41,6 @@ const durationOptions = [
   { value: 90, label: '1.5 hours' },
   { value: 120, label: '2 hours' },
 ]
-
-function getCandidateFullName(candidate: InterviewCandidateOption): string {
-  // Display casing only (some names are stored ALL-CAPS); see lib/format-name.
-  return toDisplayFullName(candidate.first_name, candidate.last_name)
-}
-
-/** Prefer auto-generated links when a calendar is connected; manual is the
- * fallback only when nothing is connected. Honours the user's saved
- * "default for video interviews" (#6b) when that provider is connected,
- * otherwise falls back to the built-in Google > Zoom > Teams order. */
-function defaultMeetingOption(
-  hasGoogle: boolean,
-  hasZoom: boolean,
-  hasTeams: boolean,
-  preferred?: 'google_meet' | 'zoom' | 'teams' | null,
-): 'manual' | 'google_meet' | 'zoom' | 'teams' {
-  if (preferred === 'google_meet' && hasGoogle) return 'google_meet'
-  if (preferred === 'zoom' && hasZoom) return 'zoom'
-  if (preferred === 'teams' && hasTeams) return 'teams'
-  if (hasGoogle) return 'google_meet'
-  if (hasZoom) return 'zoom'
-  if (hasTeams) return 'teams'
-  return 'manual'
-}
 
 export function InterviewForm({
   candidates,
@@ -635,137 +568,3 @@ export function InterviewForm({
 /** Email-candidate checkbox row — reused by the desktop summary card and the
  * mobile sticky footer (distinct ids so both can coexist, bound to the same
  * state). Disabled + dimmed when the candidate has no email on file. */
-function EmailToggle({
-  id,
-  checked,
-  onChange,
-  disabled,
-  candidateHasEmail,
-  showNoEmailHint,
-  className,
-}: {
-  id: string
-  checked: boolean
-  onChange: (next: boolean) => void
-  disabled: boolean
-  candidateHasEmail: boolean
-  showNoEmailHint: boolean
-  className?: string
-}) {
-  return (
-    <div className={className}>
-      <label
-        htmlFor={id}
-        className={`flex items-center gap-2 text-[12.5px] font-medium ${candidateHasEmail ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
-      >
-        <input
-          id={id}
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          disabled={disabled || !candidateHasEmail}
-          className="h-4 w-4 rounded border-border"
-        />
-        <Mail className="h-3.5 w-3.5 text-primary" />
-        Email candidate
-      </label>
-      {showNoEmailHint && (
-        <p className="mt-1 pl-7 text-[11px] text-muted-foreground">
-          Candidate has no email on file.
-        </p>
-      )}
-    </div>
-  )
-}
-
-/** Type segmented-control button — equal-width tile with icon + label.
- * Active state uses the brand-blue tinted background per the design. */
-function TypeSegment({
-  active,
-  icon: Icon,
-  label,
-  onClick,
-  disabled,
-}: {
-  active: boolean
-  icon: typeof Video
-  label: string
-  onClick: () => void
-  disabled: boolean
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      role="radio"
-      aria-checked={active}
-      className={cn(
-        'flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-[13px] font-semibold transition-colors disabled:opacity-50',
-        active
-          ? 'border-[oklch(0.55_0.18_250)] bg-[oklch(0.98_0.015_250)] text-[oklch(0.2_0.16_250)]'
-          : 'border-border bg-white text-foreground/80 hover:bg-muted/40',
-      )}
-    >
-      <Icon className="h-4 w-4" aria-hidden />
-      {label}
-    </button>
-  )
-}
-
-/** Read-only field — used to show a derived/locked value (candidate, vacancy)
- * with a small lock affordance, styled like a disabled input. */
-function LockedField({ value, hint }: { value: string; hint?: string | undefined }) {
-  return (
-    <div className="flex h-10 items-center gap-2 rounded-md border border-border bg-muted/40 px-3 text-sm">
-      <span className="truncate font-medium text-foreground">{value}</span>
-      {hint && (
-        <span className="ml-auto shrink-0 truncate text-xs text-muted-foreground">{hint}</span>
-      )}
-      <Lock
-        className={cn('h-3.5 w-3.5 shrink-0 text-muted-foreground', hint ? '' : 'ml-auto')}
-        aria-hidden
-      />
-    </div>
-  )
-}
-
-function MeetChip({
-  active,
-  label,
-  onClick,
-  disabled,
-}: {
-  active: boolean
-  label: string
-  onClick: () => void
-  disabled: boolean
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={active}
-      className={cn(
-        'rounded-md border px-2.5 py-1 text-[11.5px] font-semibold transition-colors disabled:opacity-50',
-        active
-          ? 'border-[oklch(0.55_0.18_250)] bg-[oklch(0.93_0.05_250)] text-[oklch(0.45_0.16_250)]'
-          : 'border-border bg-white text-foreground/70 hover:bg-muted/40',
-      )}
-    >
-      {label}
-    </button>
-  )
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <li className="flex items-center justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="truncate font-semibold text-foreground/85" title={value}>
-        {value}
-      </span>
-    </li>
-  )
-}
