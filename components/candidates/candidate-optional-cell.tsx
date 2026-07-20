@@ -7,8 +7,8 @@ import type { CandidateRow, DerivedStage } from '@/lib/candidates/list-derivatio
 interface CandidateOptionalCellProps {
   col: string
   candidate: CandidateRow
-  stage?: DerivedStage
-  fit?: number
+  stage?: DerivedStage | undefined
+  fit?: number | undefined
   customFieldValueMap: Map<string, string>
 }
 

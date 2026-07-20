@@ -55,26 +55,26 @@ interface InterviewFormProps {
   vacancies: InterviewVacancyOption[]
   applications: InterviewApplicationOption[]
   teamMembers: InterviewTeamMemberOption[]
-  defaultCandidateId?: string
-  defaultVacancyId?: string
-  defaultApplicationId?: string
+  defaultCandidateId?: string | undefined
+  defaultVacancyId?: string | undefined
+  defaultApplicationId?: string | undefined
   /** Pre-selected interviewer (defaults to the current user on the New
    * Interview page). The interviewer is always a team member — candidates
    * are never in this list. */
-  defaultInterviewerId?: string
-  hasGoogleCalendar?: boolean
-  hasZoom?: boolean
-  hasMicrosoft?: boolean
+  defaultInterviewerId?: string | undefined
+  hasGoogleCalendar?: boolean | undefined
+  hasZoom?: boolean | undefined
+  hasMicrosoft?: boolean | undefined
   /** The user's saved default auto meeting link (#6b) — prefers this provider
    * when it's connected. */
   defaultMeetingProvider?: 'google_meet' | 'zoom' | 'teams' | null
   /** When set, the form is rendered inside an overlay (e.g. Pipeline Review
    * Mode). On a successful create it calls this instead of navigating to
    * /interviews, so the caller can close the overlay and stay in place. */
-  onScheduled?: () => void
+  onScheduled?: (() => void) | undefined
   /** Overlay callers provide their own dismiss; falls back to navigating to
    * /interviews when absent (the standalone page). */
-  onCancel?: () => void
+  onCancel?: (() => void) | undefined
 }
 
 const durationOptions = [
@@ -715,7 +715,7 @@ function TypeSegment({
 
 /** Read-only field — used to show a derived/locked value (candidate, vacancy)
  * with a small lock affordance, styled like a disabled input. */
-function LockedField({ value, hint }: { value: string; hint?: string }) {
+function LockedField({ value, hint }: { value: string; hint?: string | undefined }) {
   return (
     <div className="flex h-10 items-center gap-2 rounded-md border border-border bg-muted/40 px-3 text-sm">
       <span className="truncate font-medium text-foreground">{value}</span>

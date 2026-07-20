@@ -35,7 +35,7 @@ export interface ScreeningEntryInput {
   label: string
   answerType?: ScreeningAnswerType
   knockout?: boolean
-  options?: string[]
+  options?: string[] | undefined
   knockoutCondition?: KnockoutCondition | null
 }
 

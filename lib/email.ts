@@ -87,15 +87,15 @@ export async function sendInterviewInvitationEmail({
   senderName: string
   senderEmail: string
   vacancyTitle: string
-  organizationName?: string
+  organizationName?: string | undefined
   scheduledAt: string
   durationMinutes: number
   interviewType: 'video' | 'phone' | 'onsite'
   meetingLink: string | null
-  customSubject?: string
-  customBody?: string
+  customSubject?: string | undefined
+  customBody?: string | undefined
   rescheduled?: boolean
-  timezone?: string
+  timezone?: string | undefined
 }) {
   const tz = timezone || 'UTC'
   const d = new Date(scheduledAt)
@@ -275,9 +275,9 @@ export async function sendApplicationStatusChangedEmail({
   vacancyTitle: string
   organizationName: string
   stage: StatusChangeStage
-  statusUrl?: string
-  customSubject?: string
-  customBody?: string
+  statusUrl?: string | undefined
+  customSubject?: string | undefined
+  customBody?: string | undefined
 }) {
   const vars = {
     candidate_name: candidateName,
@@ -405,8 +405,8 @@ export async function sendApplicationRejectionEmail({
   organizationName: string
   senderName: string
   senderEmail: string
-  customSubject?: string
-  customBody?: string
+  customSubject?: string | undefined
+  customBody?: string | undefined
 }) {
   const vars = { candidate_name: candidateName, role: vacancyTitle, company: organizationName }
   const defaults = DEFAULT_TEMPLATES.rejection

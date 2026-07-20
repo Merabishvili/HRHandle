@@ -169,7 +169,7 @@ export async function createCustomField(input: {
   name: string
   fieldType: FieldType
   isRequired: boolean
-  options?: string[]
+  options?: string[] | undefined
 }): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }

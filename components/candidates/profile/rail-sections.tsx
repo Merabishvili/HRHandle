@@ -118,8 +118,8 @@ function SecondaryRailButton({
 }: {
   href: string
   children: React.ReactNode
-  disabled?: boolean
-  title?: string
+  disabled?: boolean | undefined
+  title?: string | undefined
 }) {
   const cls =
     'flex items-center justify-center gap-1 rounded-[9px] border border-[oklch(0.88_0.01_250)] py-2 text-[12px] font-semibold text-foreground transition-colors hover:bg-muted'

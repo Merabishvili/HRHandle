@@ -37,9 +37,9 @@ function MicrosoftIcon() {
 }
 
 export interface SignUpFormProps {
-  inviteEmail?: string
-  inviteOrgName?: string
-  inviteToken?: string
+  inviteEmail?: string | undefined
+  inviteOrgName?: string | undefined
+  inviteToken?: string | undefined
 }
 
 export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFormProps) {

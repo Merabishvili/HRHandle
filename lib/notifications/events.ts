@@ -40,5 +40,5 @@ export interface WebhookEventContext {
   /** Optional link back to HRHandle for the recipient to click through. */
   url?: string
   /** Optional structured fields shown as label/value rows. */
-  fields?: { label: string; value: string }[]
+  fields?: { label: string; value: string }[] | undefined
 }

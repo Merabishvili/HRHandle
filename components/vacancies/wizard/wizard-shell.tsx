@@ -10,7 +10,7 @@ export interface WizardStep {
   number: number | string
   label: string
   /** Optional small caption under the label (e.g. "NEW · optional"). */
-  tag?: string
+  tag?: string | undefined
 }
 
 interface WizardShellProps {

@@ -64,11 +64,12 @@ function redactInPlace(value: unknown, depth = 0): unknown {
 export function scrubPii<T extends ErrorEvent | Event>(event: T): T {
   // Drop the user identifier email/IP/username if present
   if (event.user) {
+    const { email, username, ip_address: _ip, ...restUser } = event.user
     event.user = {
-      ...event.user,
-      email: event.user.email ? REDACT : undefined,
-      username: event.user.username ? REDACT : undefined,
-      ip_address: undefined,
+      ...restUser,
+      ...(email ? { email: REDACT } : {}),
+      ...(username ? { username: REDACT } : {}),
+      // ip_address is always dropped (never re-added)
     }
   }
 
@@ -94,7 +95,7 @@ export function scrubPii<T extends ErrorEvent | Event>(event: T): T {
   if (event.breadcrumbs) {
     event.breadcrumbs = event.breadcrumbs.map((b: NonNullable<Event['breadcrumbs']>[number]) => ({
       ...b,
-      data: b.data ? (redactInPlace(b.data) as typeof b.data) : b.data,
+      ...(b.data ? { data: redactInPlace(b.data) as typeof b.data } : {}),
     }))
   }
 

@@ -28,8 +28,8 @@ interface CandidateTableRowProps {
   vacancyMap: Map<string, VacancyOption>
   status: CandidateStatusOption | null
   activeColumns: string[]
-  stage?: DerivedStage
-  fit?: number
+  stage?: DerivedStage | undefined
+  fit?: number | undefined
   customFieldValueMap: Map<string, string>
 }
 

@@ -32,7 +32,7 @@ export async function bulkCreateScreeningQuestions(
     label: string
     knockout?: boolean
     answerType?: 'yes_no' | 'short_text' | 'number' | 'select'
-    options?: string[]
+    options?: string[] | undefined
     knockoutCondition?: KnockoutCondition | null
   }[],
 ): Promise<ActionResult<{ inserted: number }>> {

@@ -175,7 +175,7 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
       const result = await updateEducationEntry(editingId, candidateId, editForm)
       if (!result.success) { setError(result.error); return }
       setEntries((prev) => prev.map((e) =>
-        e.id === editingId ? { ...e, ...editForm } : e
+        e.id === editingId ? ({ ...e, ...editForm } as CandidateEducation) : e
       ))
       setEditingId(null)
     })

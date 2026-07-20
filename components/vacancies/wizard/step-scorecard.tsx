@@ -23,7 +23,7 @@ export interface ScorecardScreeningQuestion {
    * a knockout — there's no canonical condition. */
   knockout: boolean
   /** Required when `answerType === 'select'`; ignored otherwise. */
-  options?: string[]
+  options?: string[] | undefined
   /** Passing condition (only meaningful when `knockout`). One field set is
    * used per `answerType`. */
   passYesNo: 'yes' | 'no'

@@ -199,8 +199,8 @@ function MatrixCheckbox({
 }: {
   checked: boolean
   onChange: (v: boolean) => void
-  disabled?: boolean
-  lockedReason?: string
+  disabled?: boolean | undefined
+  lockedReason?: string | undefined
   ariaLabel: string
 }) {
   // A locked-on cell (e.g. in-app @mentions) is forced on and can't be toggled;

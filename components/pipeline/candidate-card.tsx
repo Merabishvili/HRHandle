@@ -21,7 +21,7 @@ interface CandidateCardProps {
    * the top of the card so the recruiter can tell which vacancy a candidate
    * belongs to at a glance. The per-vacancy board doesn't need it (all cards
    * are for the same role) and just omits the prop. */
-  vacancyTitle?: string | null
+  vacancyTitle?: string | null | undefined
 }
 
 export function CandidateCard({

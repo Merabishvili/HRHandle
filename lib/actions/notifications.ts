@@ -58,7 +58,7 @@ export async function markAllNotificationsRead(): Promise<void> {
 export async function createOrgNotifications(
   orgId: string,
   recipientIds: string[],
-  notification: { type: string; title: string; body?: string; link?: string }
+  notification: { type: string; title: string; body?: string | undefined; link?: string | undefined }
 ): Promise<{ success: boolean }> {
   if (recipientIds.length === 0) return { success: true }
   const supabase = createAdminClient()

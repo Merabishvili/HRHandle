@@ -148,7 +148,7 @@ export function SearchableSelect({
                   <CommandItem
                     key={option.value}
                     value={option.value}
-                    disabled={option.disabled}
+                    disabled={option.disabled ?? false}
                     onSelect={(currentValue) => {
                       onValueChange(currentValue)
                       setOpen(false)

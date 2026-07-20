@@ -34,7 +34,7 @@ export async function loadGuide(slug: string): Promise<LoadedGuide | null> {
     frontmatter: {
       title: typeof data.title === 'string' ? data.title : meta.title,
       summary: typeof data.summary === 'string' ? data.summary : meta.summary,
-      updated: typeof data.updated === 'string' ? data.updated : undefined,
+      ...(typeof data.updated === 'string' ? { updated: data.updated } : {}),
     },
     content,
   }

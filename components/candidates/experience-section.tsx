@@ -150,7 +150,7 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
     startTransition(async () => {
       const result = await updateExperienceEntry(editingId, candidateId, editForm)
       if (!result.success) { setError(result.error); return }
-      setEntries((prev) => prev.map((e) => e.id === editingId ? { ...e, ...editForm } : e))
+      setEntries((prev) => prev.map((e) => e.id === editingId ? ({ ...e, ...editForm } as CandidateExperience) : e))
       setEditingId(null)
     })
   }
