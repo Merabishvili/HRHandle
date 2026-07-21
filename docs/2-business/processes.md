@@ -42,6 +42,7 @@ _Last updated: 2026-07-20_
 - `checkPlanLimit(ctx, 'candidate')` counts non-deleted candidates.
 - `checkPlanLimit(ctx, 'member')` counts all profiles in the org.
 - Returns error string if at or above limit; null if under.
+- **Public applications do NOT enforce the candidate limit** (2026-07-21 audit). `submitPublicApplication` creates/links a candidate **without** a `checkPlanLimit` call — a genuine applicant is never blocked because the org hit its cap. Abuse is controlled instead by Turnstile CAPTCHA + per-IP (5/hr) + per-vacancy rate limits. The candidate limit gates only recruiter-initiated `createCandidate` + CSV import. See BL-203 in `issues-found.md` (confirm intended).
 - Applied before: `createVacancy`, `duplicateVacancy`, `createCandidate`, `inviteTeamMember`.
 
 ### Expiry

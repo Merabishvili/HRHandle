@@ -302,7 +302,7 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 
 ## Summary
 
-- **New issues found: 11** — 1 High, 4 Medium, 6 Low. (S-202 CSV injection added in the 2026-07-21 Phase-2 pass.)
+- **New issues found: 12** — 1 High, 4 Medium, 7 Low. (2026-07-21 Phase-2 pass: S-202 CSV injection [fixed]; BL-203 public-apply limit exemption [confirm].)
 - By category: Bugs 1, Mobile 3, Architecture 2, Performance 1, Accessibility 1, Unnecessary 2 (both fixed this pass).
 - **Fixed during this pass:** B-201 (Toaster mounted), MO-201/202/203 (table scroll), A-202 (`any` removed), AC-201 (QR aria), U-201 + U-202 (dead toast system + dep). **A-201 (large-file splits) and P-201 (bulk-loop, accepted tradeoff) remain open — improvement notes, not defects.**
 - **Top item:** **B-201 — sonner `<Toaster/>` is never mounted, so every `toast()` call in the app is silent.** One-line fix, app-wide UX impact.
@@ -331,6 +331,12 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 | MO-201 | Medium | `app/(dashboard)/reports/{pipeline,sources,time-to-hire}/page.tsx` | Data tables not wrapped in an `overflow-x-auto` container → wide report tables overflow the viewport / clip on narrow screens. | Added `overflow-x-auto` to the table `CardContent`. | ✅ Fixed 2026-07-20 |
 | MO-202 | Medium | `components/pipeline/list-view.tsx:60-61,144` | `<table className="min-w-full">` sits inside an `overflow-hidden` wrapper → a wide pipeline list is **clipped** on mobile instead of horizontally scrollable. | Wrapper changed to `overflow-x-auto rounded-xl`. | ✅ Fixed 2026-07-20 |
 | MO-203 | Low | `components/candidate-import/import-wizard.tsx` | CSV preview table has no horizontal-scroll wrapper; many-column CSVs overflow on mobile. | Added `overflow-x-auto` to the preview `CardContent`s. | ✅ Fixed 2026-07-20 |
+
+## 💼 Business Logic
+
+| # | Severity | File + Line | Description | Suggested Fix | Status |
+|---|----------|-------------|-------------|---------------|--------|
+| BL-203 | Low | `lib/actions/public-apply.ts` | **Public applications bypass the candidate plan limit.** Internal creates (`createCandidate`, CSV import, `duplicateVacancy`, invites) all call `checkPlanLimit`, but `submitPublicApplication` creates/links candidates with no limit check. Appears **intentional** (never block a genuine applicant; abuse is controlled by CAPTCHA + per-IP/per-vacancy rate limits) — flagging so it's a conscious decision, not an oversight that lets a paying-tier candidate cap be circumvented via self-applies. | Confirm intended; documented in `docs/2-business/processes.md`. If a hard cap is ever wanted, gate the candidate insert (but degrade gracefully — don't 500 the applicant). | Open (confirm) |
 
 ## 🏗️ Architecture & Code Quality
 

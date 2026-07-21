@@ -6,7 +6,7 @@ _Last updated: 2026-07-20_
 
 ## ▶ RESUME HERE (next task)
 
-**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Phase 1 core done; Phase 2 admin-client sweep + per-route audit done.** Next Phase-2 slice: **business-logic edge-case pass** (0-item / max-item / boundary conditions across the key flows). Then Phase 4 (remaining ~16 helper tests). Deeper Phase-1 leftovers (database body, ui-texts re-inventory, ropa data-categories) remain lower priority.
+**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Phase 1 core + Phase 2 (admin-client, per-route, business-logic) substantially done.** Next: **Phase 4 — write the remaining ~16 untested pure helpers** (`lib/permissions`, `lib/offers/{state,expiry}`, `lib/screening-questions/*`, `lib/notes/mentions`, `lib/search/query`, `lib/mfa/policy`, …) + update `test-cases.md`/`test-values.md`. Deeper Phase-1 leftovers (database body, ui-texts re-inventory, ropa data-categories) remain lower priority.
 
 Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps — read the doc, compare to code, fix what's actually stale. No browser is available (mobile findings stay static).
 
@@ -18,7 +18,7 @@ Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps �
 |---|---|---|
 | 0 — Clarification | ✅ Done | All 5 phases / delete-safe / static-mobile confirmed. |
 | 1 — Documentation Refresh | 🟢 ~85% | Core docs reconciled. Remaining are deeper follow-ups: database.md per-table body, ui-texts full re-inventory, deep integration read, ropa personal-data update. |
-| 2 — Issue & Improvement Discovery | 🟡 ~70% | + admin-client sweep (clean) + per-route audit (found+fixed S-202 CSV injection). Business-logic edge-case pass still outstanding. |
+| 2 — Issue & Improvement Discovery | 🟢 ~80% | admin-client sweep (clean) + per-route audit (S-202 fixed) + business-logic pass (reports clean; BL-203 flagged). Remaining: offer/interview state-machine edges + a11y sweep. |
 | 3 — Issue Output Format | ✅ Done | `issues-found.md` re-audit section w/ required tables + summary. Keep appending as new issues surface. |
 | 4 — Test Coverage | 🟡 ~40% | ~50 tests added; `new-tests.md`/`tests-to-remove.md` written. `test-cases.md`/`test-values.md` NOT updated; ~16 helpers still untested. |
 | 5 — Cleanup | 🟡 ~70% | Dead toast system removed; `cleanup-candidates.md`/`cleanup-log.md` written. Deeper unused-export / orphan sweep outstanding. |
@@ -66,7 +66,7 @@ Verify each against code; mark ✅ when done this audit. (`docs/redesign/*` = hi
 | Route handlers (all 29) | ✅ | Scanned 2026-07-21 for auth + input-validation + rate-limit. Found **S-202 CSV/formula injection** in the 3 CSV exports → fixed (`lib/csv.ts#csvCell`). Verified: export/audit-log auth delegates to `listAuditLog` (owner/admin); calendly callback validates OAuth `state` cookie; parse-cv/health intentionally public. |
 | Bugs / dead code / TODO / console / any | ✅ | 0 TODO, 1 justified any (now fixed), Toaster bug found. |
 | Perf (N+1, indexes) | 🟡 | Bulk loops reviewed (accepted). DB index review outstanding. |
-| Business-logic edge cases | ⬜ | Per-flow edge-case pass outstanding. |
+| Business-logic edge cases | 🟡 ~60% | Reports have **no div-by-zero** (funnel `stageConversion` returns null on from=0; time-to-hire/queries guard length=0). Plan limits enforced on all internal creates; **public-apply exempt → BL-203** (documented, confirm intended). `noUncheckedIndexedAccess`+`exactOptionalPropertyTypes` cover most null/boundary cases at type level. Remaining: offer/interview state-machine edge cases. |
 | Config / env fallbacks | 🟡 | Spot-checked. |
 | Accessibility (per-page) | 🟡 | MFA QR fixed; full a11y sweep outstanding. |
 
@@ -85,4 +85,4 @@ Also outstanding: update `docs/testing/test-cases.md` + `test-values.md`.
 ## Session log
 
 - **2026-07-20 (session 1)** — Phases 2/3/5 core + mobile + fixes + A-201 (all 5 splits). Tests 862 → 930. Set up this tracker.
-- **2026-07-20/21 (session 2)** — Phase 1 (12 docs): `variables.md`, `endpoints.md`, `backend.md` (+20 action files), `database.md` changelog, `1-product/{overview,features}`, `2-business/{processes,roles-permissions}`, **`ci-cd.md` rewritten** (found: CI workflow exists but doc said it didn't). Integrations spot-verified. + `ai-features.md`, `process.md`, `ui-texts.md`. **Phase 1 core done.** Phase 2: admin-client sweep (clean) + per-route audit → **found & fixed S-202 (CSV/formula injection)** in the 3 CSV exports (`lib/csv.ts`, +14 tests). Suite 930 → 944.
+- **2026-07-20/21 (session 2)** — Phase 1 (12 docs): `variables.md`, `endpoints.md`, `backend.md` (+20 action files), `database.md` changelog, `1-product/{overview,features}`, `2-business/{processes,roles-permissions}`, **`ci-cd.md` rewritten** (found: CI workflow exists but doc said it didn't). Integrations spot-verified. + `ai-features.md`, `process.md`, `ui-texts.md`. **Phase 1 core done.** Phase 2: admin-client sweep (clean) + per-route audit → **S-202 (CSV injection) fixed** + business-logic pass (reports div-by-zero clean; **BL-203** public-apply limit exemption flagged). Suite 930 → 944. Next: Phase 4 helper tests.
