@@ -302,7 +302,7 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 
 ## Summary
 
-- **New issues found: 13** — 1 High, 4 Medium, 8 Low. (2026-07-21: S-202 CSV injection [fixed]; BL-203 public-apply limit [confirm]; B-202 dead e-mail import alias [fixed].)
+- **New issues found: 14** — 1 High, 4 Medium, 9 Low. (2026-07-21: S-202 [fixed], BL-203 [confirm], B-202 [fixed], AC-202 hand-rolled modal a11y [partial].)
 - By category: Bugs 1, Mobile 3, Architecture 2, Performance 1, Accessibility 1, Unnecessary 2 (both fixed this pass).
 - **Fixed during this pass:** B-201 (Toaster mounted), MO-201/202/203 (table scroll), A-202 (`any` removed), AC-201 (QR aria), U-201 + U-202 (dead toast system + dep). **A-201 (large-file splits) and P-201 (bulk-loop, accepted tradeoff) remain open — improvement notes, not defects.**
 - **Top item:** **B-201 — sonner `<Toaster/>` is never mounted, so every `toast()` call in the app is silent.** One-line fix, app-wide UX impact.
@@ -356,6 +356,7 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 | # | Severity | File + Line | Description | Suggested Fix | Status |
 |---|----------|-------------|-------------|---------------|--------|
 | AC-201 | Low | `components/mfa/enroll-totp-dialog.tsx:87` | The MFA QR code is injected via `dangerouslySetInnerHTML={{ __html: qrCodeSvg }}`. Source is Supabase's server-generated enroll SVG (trusted, not user input) so XSS risk is negligible, but the container has no accessible name. | Added `role="img"` + `aria-label`. | ✅ Fixed 2026-07-20 |
+| AC-202 | Low | `components/interviews/interview-actions.tsx:126-132` | The **Reschedule interview** overlay is a hand-rolled modal (backdrop `div` + inner card), unlike the app's 34 Radix-`Dialog` overlays. It lacked `role="dialog"`/`aria-modal`, an Escape-to-close handler, and a focus trap — keyboard/SR users couldn't dismiss it or have focus scoped. | Added `role="dialog"` + `aria-modal` + `aria-label` (this pass). **Recommended:** migrate to `@/components/ui/dialog` (Radix) for Escape + focus-trap for free, matching the rest of the app. | 🟡 Partial |
 
 ## 🐛 Code Bugs (2026-07-21 Phase-4 pass)
 

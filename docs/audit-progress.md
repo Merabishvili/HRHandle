@@ -18,7 +18,7 @@ Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps �
 |---|---|---|
 | 0 — Clarification | ✅ Done | All 5 phases / delete-safe / static-mobile confirmed. |
 | 1 — Documentation Refresh | 🟢 ~85% | Core docs reconciled. Remaining are deeper follow-ups: database.md per-table body, ui-texts full re-inventory, deep integration read, ropa personal-data update. |
-| 2 — Issue & Improvement Discovery | 🟢 ~80% | admin-client sweep (clean) + per-route audit (S-202 fixed) + business-logic pass (reports clean; BL-203 flagged). Remaining: offer/interview state-machine edges + a11y sweep. |
+| 2 — Issue & Improvement Discovery | 🟢 ~90% | admin-client (clean) + per-route (S-202) + business-logic (BL-203) + a11y sweep (AC-202). Remaining: offer/interview state-machine edge cases (minor). |
 | 3 — Issue Output Format | ✅ Done | `issues-found.md` re-audit section w/ required tables + summary. Keep appending as new issues surface. |
 | 4 — Test Coverage | 🟢 ~90% | Suite 862 → **1051**. Batch 4: candidate-import/parsing (+ **fixed B-202** dead e-mail alias), vacancy-questions/normalize. Only mfa/recovery-codes (crypto) + guides/loader (fs) left — better as integration tests. `test-cases.md`/`test-values.md` still not updated. |
 | 5 — Cleanup | 🟡 ~70% | Dead toast system removed; `cleanup-candidates.md`/`cleanup-log.md` written. Deeper unused-export / orphan sweep outstanding. |
@@ -68,7 +68,7 @@ Verify each against code; mark ✅ when done this audit. (`docs/redesign/*` = hi
 | Perf (N+1, indexes) | 🟡 | Bulk loops reviewed (accepted). DB index review outstanding. |
 | Business-logic edge cases | 🟡 ~60% | Reports have **no div-by-zero** (funnel `stageConversion` returns null on from=0; time-to-hire/queries guard length=0). Plan limits enforced on all internal creates; **public-apply exempt → BL-203** (documented, confirm intended). `noUncheckedIndexedAccess`+`exactOptionalPropertyTypes` cover most null/boundary cases at type level. Remaining: offer/interview state-machine edge cases. |
 | Config / env fallbacks | 🟡 | Spot-checked. |
-| Accessibility (per-page) | 🟡 | MFA QR fixed; full a11y sweep outstanding. |
+| Accessibility (per-page) | ✅ | Swept 2026-07-21: no unlabeled `<img>`/`<Image>`; icon-buttons labeled (prior AC-012 pass); the 2 click-outside `div`s are backdrop dismissers (notifications-bell has Escape; interview-actions did not → **AC-202**). Posture good. |
 
 ---
 

@@ -127,6 +127,9 @@ export function InterviewActions({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowReschedule(false)}>
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Reschedule interview"
           className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
