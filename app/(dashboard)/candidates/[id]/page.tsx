@@ -165,6 +165,15 @@ export default async function CandidateDetailPage({
 
   const organizationId = profile.organization_id
 
+  // Wave 3.1 — is AI Fit Analysis enabled for this org? Reads gracefully
+  // (returns false) if the column isn't migrated yet, so the card stays hidden.
+  const { data: orgAiFit } = await supabase
+    .from('organizations')
+    .select('ai_fit_enabled')
+    .eq('id', organizationId)
+    .single()
+  const aiFitEnabled = !!orgAiFit?.ai_fit_enabled
+
   const [
     { data: candidateRaw },
     _candidateStatusesRaw,
@@ -560,6 +569,7 @@ export default async function CandidateDetailPage({
 
   return (
     <CandidateProfileShell
+      aiFitEnabled={aiFitEnabled}
       candidate={{
         id: candidate.id,
         fullName: toDisplayFullName(candidate.first_name, candidate.last_name),

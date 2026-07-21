@@ -49,6 +49,7 @@ import {
   StageContextualBlock,
   type StageContextualBlockProps,
 } from './stage-contextual-block'
+import { AiFitCard } from './ai-fit-card'
 import { RailActions, RailDetails, RailCustomFields } from './rail-sections'
 
 interface ProfileShellProps {
@@ -105,6 +106,8 @@ interface ProfileShellProps {
    * screening answers. Empty list when the candidate cleared every
    * question; missing entry when the vacancy had no screening questions. */
   screeningFlagsByApplication: Map<string, StageContextualBlockProps['screeningFlags']>
+  /** Wave 3.1 — whether the org has enabled AI Fit Analysis. */
+  aiFitEnabled: boolean
   rejectionReasons: RejectionReason[]
   rejectionTemplates: RejectionTemplate[]
   /** The 'rejected' status id from application_statuses — needed by the
@@ -186,6 +189,7 @@ export function CandidateProfileShell({
   activeStages,
   upcomingInterviewByApplication,
   screeningFlagsByApplication,
+  aiFitEnabled,
   rejectionReasons,
   rejectionTemplates,
   rejectedStatusId,
@@ -387,6 +391,8 @@ export function CandidateProfileShell({
                 screeningFlags={screeningFlagsByApplication.get(selectedApp.id) ?? []}
               />
             )}
+
+            {selectedApp && <AiFitCard applicationId={selectedApp.id} enabled={aiFitEnabled} />}
 
             {!selectedApp && (
               <div className="rounded-xl border border-dashed border-border bg-white p-6 text-center text-[13px] text-muted-foreground">
