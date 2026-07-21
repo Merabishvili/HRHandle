@@ -65,11 +65,11 @@ Strategy when it's time:
 
 Blocked on: a decision about which markets to launch in. Until then the work just bloats every PR.
 
-### 🟡 AI screening
+### ✅ AI screening → shipped as AI Fit Analysis (2026-07-22, opt-in default OFF)
 
-Already documented as planned in [ai-features.md](../9-compliance/ai-features.md#planned-features-not-yet-shipped): applicant list per vacancy with advisory fit indicators per candidate, never changes candidate state automatically.
+The "AI screening" concept shipped as **AI Fit Analysis** (redesign Wave 3.1). Rather than an applicant-list fit column, it is a per-application advisory card on the candidate profile: "Meets N of M must-haves" (no overall score), evidence-based, with mandatory recruiter Agree/Override. It is default OFF and owner-enabled behind an EU-AI-Act acknowledgement + geofence. This is the first feature to engage the Annex III high-risk obligation set — the framework it needed is the six guardrails + opt-in gate, not a deferred separate build. See [`ai-features.md`](../9-compliance/ai-features.md), [`ai-fit-analysis.md`](../redesign/ai-fit-analysis.md), and the flow [`S11`](../redesign/flows/S11-ai-fit-analysis.md).
 
-Blocked on: building the EU AI Act risk-management framework for higher-risk features (the current six AI features sit under the "low-risk advisory" framing; screening crosses into Annex III "high-risk" with a much heavier obligation set).
+A broader applicant-**list** fit indicator remains intentionally _not_ built (it invites ranking/auto-decisioning) — see S11 §5 "Deliberately NOT built".
 
 ### ✅ Restore-from-trash UI — shipped 2026-06-16 (G-020)
 

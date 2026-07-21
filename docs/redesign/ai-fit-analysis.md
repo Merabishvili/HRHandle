@@ -1,10 +1,10 @@
 # AI Fit Analysis — Spec, Guardrails, and Competitive Analysis
 
-> **Authored:** 2026-06-16. **Status:** Draft, awaiting legal review before any code work begins.
+> **Authored:** 2026-06-16. **Status:** ✅ **Shipped 2026-07-22 — opt-in, default OFF.** All six guardrails implemented (see the [as-built guardrails](../9-compliance/ai-features.md#ai-fit-analysis--the-six-guardrails-as-built) in the compliance doc + the [flow](flows/S11-ai-fit-analysis.md)). The feature stays OFF until an owner enables it behind an EU-AI-Act acknowledgement gate; the legal review below is now the adopting org's pre-enable step, not a code ship-blocker. This document remains the canonical spec + market posture.
 >
 > **Why this is its own document.** AI Fit Analysis (redesign S11) is the only feature in the redesign that crosses from "low-risk advisory AI" into EU AI Act high-risk territory. It needs more design constraint, more legal context, and more competitive positioning than a typical flow doc would carry. Treat this as the spec + market posture, not a flow analysis.
 >
-> **Companion docs:** [`audit.md` §4.14](audit.md#414-·-s11-·-ai-fit-analysis-ai-fit-analysisdchtml), [`roadmap.md` Wave 3.1](roadmap.md#wave-3--differentiators--polish). When this ships, it will get a flow doc at `flows/S11-ai-fit-analysis.md`.
+> **Companion docs:** [`audit.md` §4.14](audit.md#414-·-s11-·-ai-fit-analysis-ai-fit-analysisdchtml), [`roadmap.md` Wave 3.1](roadmap.md#wave-3--differentiators--polish), the flow at [`flows/S11-ai-fit-analysis.md`](flows/S11-ai-fit-analysis.md), and the as-built inventory in [`9-compliance/ai-features.md`](../9-compliance/ai-features.md).
 
 ---
 

@@ -182,6 +182,18 @@
 
 ---
 
+## AI
+
+### AI Fit Analysis — no overall score, sanitize-by-construction, opt-in (Wave 3.1, 2026-07-22)
+
+**Decision:** AI Fit Analysis outputs **"Meets N of M must-haves"** and per-criterion match with evidence — **never an overall score, grade, ranking, or candidate-to-candidate comparison.** The count is computed **server-side** in `parseFitResponse` from a per-criterion threshold (`MEETS_THRESHOLD`), not returned by the model. Protected attributes reach the model **by construction never**: `sanitizeForFitAnalysis` builds an allowlisted `SanitizedFitInput` field by field (the raw record is never passed through) and scrubs free text of contact details + the candidate's name. The feature is **opt-in, default OFF**, owner-enabled behind an EU-AI-Act acknowledgement + geofence, with a **mandatory** recruiter Agree/Override before an analysis counts as acted on.
+
+**Reason:** This is the only feature that "evaluates candidates" (EU AI Act Annex III, high-risk). A single fit score is the exact artefact that invites ranking and de-facto automated decisions (GDPR Art. 22) — so it is designed out, not merely discouraged. Computing the count server-side means a misbehaving or prompt-injected model cannot inflate "meets". Sanitizing by construction (rather than by blocklist) means a new protected field added later is excluded by default. Mandatory human sign-off is the Art. 14 human-oversight control and keeps the decision with a person. Default-OFF + acknowledgement makes each adopting org affirm the framing (and, for EU orgs, the AI Act posture) before any candidate is assessed. Full rationale + competitive analysis: [`docs/redesign/ai-fit-analysis.md`](redesign/ai-fit-analysis.md); guardrail enforcement map: [`docs/9-compliance/ai-features.md`](9-compliance/ai-features.md).
+
+**Files:** `lib/ai/{cv-sanitizer,fit-analysis,fit-geofence}.ts`, `lib/actions/ai-fit.ts`, `lib/types/ai-fit.ts`, `components/candidates/profile/ai-fit-card.tsx`, `components/settings/ai-fit-policy-card.tsx`, `app/(dashboard)/settings/ai-fit/page.tsx`, `app/apply/[token]/page.tsx` (disclosure), migration `supabase/migrations/20260722_ai_fit_analysis.sql`.
+
+---
+
 ## Redesign Audit (2026-06-15 / 2026-06-16)
 
 ### Redesign deliverables live in `docs/redesign/`, source materials in `redesign/`

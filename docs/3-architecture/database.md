@@ -775,6 +775,33 @@ SHA-256-hashed single-use 2FA recovery codes (raw codes never stored — see `li
 
 _MFA policy columns also live on `organizations` (`require_mfa`, `require_mfa_for_admins`) and `profiles` (`mfa_enrolled`); Calendly fields are on `organization_integrations` (G-031) — see the changelog at the top._
 
+#### `ai_fit_analyses` (Wave 3.1 — S11 AI Fit Analysis)
+One append-only provenance row per AI Fit Analysis run. Migration `20260722_ai_fit_analysis.sql`. RLS: org-scoped via `profiles`. **No overall score is ever stored** — only the factual `meets_count` / `must_have_total`.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| application_id | uuid | NOT NULL | FK → applications |
+| criteria_snapshot | jsonb | NOT NULL | the vacancy scorecard criteria at run time (provenance) |
+| cv_snapshot_hash | text | NOT NULL | sha256 of the sanitized input (reproducibility, no PII) |
+| redacted_categories | jsonb | NOT NULL | protected categories stripped before the model (e.g. `["name","contact_details"]`) |
+| screening_answers_snapshot | jsonb | NULL | job-relevant answers sent |
+| meets_count / must_have_total | int | NOT NULL | "Meets N of M must-haves" — computed server-side, not by the model |
+| confidence | text | NOT NULL | `low\|medium\|high` |
+| rendered_analysis | jsonb | NOT NULL | the full advisory result shown in the card (per-criterion match, strengths, gaps, questions) |
+| model_name / model_version / prompt_version | text | model_name NOT NULL | provenance; `prompt_version` = `FIT_PROMPT_VERSION` |
+| raw_response | text | NULL | raw model text (debugging) |
+| assessment | text | NULL | mandatory human sign-off: `agree\|override` (null until reviewed) |
+| assessment_reason | text | NULL | required when `assessment = 'override'` |
+| assessed_by / assessed_at | uuid / timestamptz | NULL | who reviewed + when |
+| created_by / created_at | uuid / timestamptz | NOT NULL | |
+
+#### `ai_fit_bias_reviews` (Wave 3.1)
+Record of periodic manual bias reviews of the feature (oversight artefact). Org-scoped, RLS on. Columns: id, organization_id, `period_start` / `period_end` date, `reviewed_by` uuid, `notes` text, `created_at`. The live admin surface (Settings → Data → AI oversight) reads aggregates + the override log directly from `ai_fit_analyses`; this table is for signed-off periodic reviews.
+
+**`organizations` opt-in columns (same migration):** `ai_fit_enabled` bool NOT NULL default FALSE, `ai_fit_enabled_at` timestamptz, `ai_fit_enabled_by` uuid → profiles, `ai_fit_eu_acknowledged` bool NOT NULL default FALSE, `billing_country` text. Only an owner can flip `ai_fit_enabled`; enabling stamps `_at`/`_by` and sets `ai_fit_eu_acknowledged` (see `setAiFitEnabled` + `canEnableAiFit`).
+
 ---
 
 ### Migration 044 — fix `sync_candidate_status_on_application_change()` trigger
