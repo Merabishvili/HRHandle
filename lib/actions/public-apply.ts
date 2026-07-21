@@ -9,6 +9,7 @@ import { createOrgNotifications } from '@/lib/actions/notifications'
 import { verifyCaptcha } from '@/lib/turnstile'
 import { computeIsKnockoutFlag } from '@/lib/screening-questions/compute-flag'
 import { resolvePipelineStageId } from '@/lib/pipeline-stages/resolve'
+import { justCrossedLimit } from '@/lib/plan-limits'
 import { headers } from 'next/headers'
 
 const MAX_SUBMISSIONS_PER_IP_PER_HOUR = 5
@@ -460,6 +461,45 @@ export async function submitPublicApplication(
   } catch (err) {
     // Non-fatal: application has already been recorded.
     console.error('[public-apply] new-application notification failed:', err)
+  }
+
+  // ── 16b. Soft plan-limit flag (BL-203) ─────────────────────────────────────
+  // Public applications are NEVER blocked (turning away a real applicant over a
+  // billing cap is the wrong trade). But when a NEW candidate created via the
+  // public form pushes the org past its `candidate_limit`, notify owners/admins
+  // ONCE — at the crossing — so they can upgrade. Best-effort + non-fatal;
+  // mirrors how `checkPlanLimit` counts (non-deleted candidates vs the sub cap).
+  if (isNewCandidate) {
+    try {
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('candidate_limit')
+        .eq('organization_id', orgId)
+        .single()
+      if (sub?.candidate_limit) {
+        const { count } = await supabase
+          .from('candidates')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .is('deleted_at', null)
+        if (justCrossedLimit(count ?? 0, sub.candidate_limit)) {
+          const { data: owners } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('organization_id', orgId)
+            .in('role', ['owner', 'admin'])
+          const ownerIds = (owners ?? []).map((m) => m.id as string)
+          await createOrgNotifications(orgId, ownerIds, {
+            type: 'plan_limit_reached',
+            title: `Over your candidate limit (${sub.candidate_limit})`,
+            body: 'Public applications are still being accepted, but you are over your plan limit — upgrade to keep adding candidates.',
+            link: '/subscription',
+          })
+        }
+      }
+    } catch (err) {
+      console.error('[public-apply] plan-limit flag failed:', err)
+    }
   }
 
   // ── 17. Send confirmation email ────────────────────────────────────────────

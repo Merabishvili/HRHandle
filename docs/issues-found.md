@@ -337,7 +337,7 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 
 | # | Severity | File + Line | Description | Suggested Fix | Status |
 |---|----------|-------------|-------------|---------------|--------|
-| BL-203 | Low | `lib/actions/public-apply.ts` | **Public applications bypass the candidate plan limit.** Internal creates (`createCandidate`, CSV import, `duplicateVacancy`, invites) all call `checkPlanLimit`, but `submitPublicApplication` creates/links candidates with no limit check. Appears **intentional** (never block a genuine applicant; abuse is controlled by CAPTCHA + per-IP/per-vacancy rate limits) — flagging so it's a conscious decision, not an oversight that lets a paying-tier candidate cap be circumvented via self-applies. | Confirm intended; documented in `docs/2-business/processes.md`. If a hard cap is ever wanted, gate the candidate insert (but degrade gracefully — don't 500 the applicant). | Open (confirm) |
+| BL-203 | Low | `lib/actions/public-apply.ts` | **Public applications bypassed the candidate plan limit** (no `checkPlanLimit` — the public path has no auth `ctx`, so the check never got wired in; only IP + per-vacancy caps existed). Owner confirmed it should be capped, but applicant-friendly. | ✅ **Fixed 2026-07-22 — soft cap.** Applicant is never blocked; when a new public-form candidate crosses `candidate_limit`, owners/admins get a one-time upgrade notice (`justCrossedLimit` in `lib/plan-limits.ts`, +tests). | ✅ Fixed |
 
 ## 🏗️ Architecture & Code Quality
 
