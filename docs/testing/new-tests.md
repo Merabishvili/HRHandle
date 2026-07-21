@@ -71,3 +71,20 @@ Added during the deep re-audit. All pure-logic (no mocks needed).
 High-value pure modules currently without tests; good candidates for the next testing pass (skip the `lib/types/*` files — they're type-only):
 
 `lib/permissions.ts`, `lib/offers/state.ts`, `lib/offers/expiry.ts`, `lib/screening-questions/knockout-condition.ts`, `lib/screening-questions/compute-flag.ts`, `lib/candidate-merge/defaults.ts`, `lib/audit-log/filter.ts`, `lib/trash/impact.ts`, `lib/mfa/policy.ts`, `lib/mfa/recovery-codes.ts`, `lib/notes/mentions.ts`, `lib/search/query.ts`, `lib/candidate-import/validation.ts`, `lib/candidate-import/parsing.ts`, `lib/vacancy-questions/normalize.ts`, `lib/guides/loader.ts`.
+
+### Re-audit 2026-07-21 — Phase 4 helper tests (batch 2)
+
+Added 7 pure-helper test files (58 tests):
+
+| Test file | Covers |
+|---|---|
+| `lib/__tests__/permissions.test.ts` | `isOrgAdmin` |
+| `lib/offers/__tests__/state.test.ts` | offer state machine (`isTerminal`, `canEdit/Send/Withdraw/Respond`) |
+| `lib/offers/__tests__/expiry.test.ts` | `isOfferExpired`, `offerCountdown` (YMD-stable boundaries + urgency) |
+| `lib/mfa/__tests__/policy.test.ts` | `evaluatePolicy`, `needsChallenge` (org-wide vs admin-only, AAL) |
+| `lib/screening-questions/__tests__/knockout-condition.test.ts` | `evaluateKnockoutPass`, `encodeKnockoutAnswer`, `describeKnockoutAnswer` (yes_no/number/select) |
+| `lib/screening-questions/__tests__/compute-flag.test.ts` | `computeIsKnockoutFlag` (guards + delegation) |
+| `lib/notes/__tests__/mentions.test.ts` | `extractMentionIds`, `tokenizeNoteForDisplay` (longest-match, coalescing) |
+| `lib/__tests__/csv.test.ts` (Phase 2) | `csvCell` — formula-injection guard + RFC-4180 quoting (S-202) |
+
+**Remaining untested helpers:** `lib/candidate-merge/defaults.ts`, `lib/audit-log/filter.ts`, `lib/trash/impact.ts`, `lib/mfa/recovery-codes.ts`, `lib/search/query.ts`, `lib/candidate-import/{validation,parsing}.ts`, `lib/vacancy-questions/normalize.ts`, `lib/guides/loader.ts`.
