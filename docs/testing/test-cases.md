@@ -1,9 +1,11 @@
 # Test Cases
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
+- 🆕 **(2026-07-20/21 audit) Automated pure-logic coverage grew from ~40 to 16 new test files** (suite 862 → 1051). Canonical list + what each covers: `docs/testing/new-tests.md`. Highlights that double as **regression cases**: S-202 CSV/formula-injection guard (`lib/csv.ts`), B-202 CSV-header alias mapping (`inferMapping`), offer state machine + YMD-stable expiry, MFA policy/AAL, screening knockout evaluation, note @-mention tokenizing, audit-log filter parsing, candidate-import coerce+validate, plan-limit enforcement paths.
+- 🆕 **New feature surfaces to add manual test cases for** (shipped since 2026-05-08; not yet enumerated below): Offers (`/offer/<token>` accept/decline/expiry), Reports (conversion / time-to-hire / source), Slack/Teams + Calendly integrations, 2FA/TOTP enroll + challenge + org policy, CSV import wizard, cmd-K search, scorecard sharing, custom per-vacancy pipeline stages, Pipeline home + Quick Review mode.
 - 🆕 CV-parsing test cases (apply form + new-candidate form)
 - 🆕 LinkedIn integration test cases (save / disconnect / share)
 - 🆕 Candidate experience & education CRUD test cases

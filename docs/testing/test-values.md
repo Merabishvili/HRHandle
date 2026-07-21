@@ -1,9 +1,10 @@
 # Test Values
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
+- 🆕 **(2026-07-20/21 audit) Edge-case values now pinned by unit tests** (see `docs/testing/new-tests.md`): CSV formula-injection leading chars (`= + - @` tab CR), offer expiry YMD boundaries (expires-today vs yesterday vs future; urgency 1/≤7/normal), knockout number ranges (lte/gte/between) + case-insensitive select, `normalizeQuery` min-length + ilike-escaping (`% _ \\`), audit-filter date/UUID validation, import `years_of_experience` comma-decimal, empty-cell → null normalisation, `defaultMergeChoice` empty/whitespace precedence.
 - 🆕 CV-parsing edge cases (file types, magic bytes, size)
 - 🆕 LinkedIn page-ID accepted / rejected inputs
 - 🆕 Candidate experience & education edge cases (open-ended dates, future end dates, very long strings)

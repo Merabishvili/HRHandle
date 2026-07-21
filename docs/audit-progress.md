@@ -20,7 +20,7 @@ Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps �
 | 1 — Documentation Refresh | 🟢 ~85% | Core docs reconciled. Remaining are deeper follow-ups: database.md per-table body, ui-texts full re-inventory, deep integration read, ropa personal-data update. |
 | 2 — Issue & Improvement Discovery | 🟢 ~90% | admin-client (clean) + per-route (S-202) + business-logic (BL-203) + a11y sweep (AC-202). Remaining: offer/interview state-machine edge cases (minor). |
 | 3 — Issue Output Format | ✅ Done | `issues-found.md` re-audit section w/ required tables + summary. Keep appending as new issues surface. |
-| 4 — Test Coverage | 🟢 ~90% | Suite 862 → **1051**. Batch 4: candidate-import/parsing (+ **fixed B-202** dead e-mail alias), vacancy-questions/normalize. Only mfa/recovery-codes (crypto) + guides/loader (fs) left — better as integration tests. `test-cases.md`/`test-values.md` still not updated. |
+| 4 — Test Coverage | ✅ ~95% | Suite 862 → **1051**; all pure helpers tested. `new-tests.md`/`tests-to-remove.md` written; `test-cases.md`/`test-values.md` given audit changelog blocks. Only mfa/recovery-codes + guides/loader remain (need integration, not unit, tests). | |
 | 5 — Cleanup | 🟡 ~70% | Dead toast system removed; `cleanup-candidates.md`/`cleanup-log.md` written. Deeper unused-export / orphan sweep outstanding. |
 | Mobile audit | ✅ Done (static) | `mobile-compatibility.md`, all routes. Pixel-verify when a browser tool exists. |
 
