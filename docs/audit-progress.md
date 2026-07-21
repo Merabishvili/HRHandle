@@ -6,7 +6,7 @@ _Last updated: 2026-07-20_
 
 ## ▶ RESUME HERE (next task)
 
-**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Phase 1 core + Phase 2 done; Phase 4 batch 2 done (suite → 1002).** Next: **Phase 4 batch 3** — remaining ~9 helper tests (`audit-log/filter`, `trash/impact`, `search/query`, `candidate-import/*`, `candidate-merge/defaults`, `vacancy-questions/normalize`, `mfa/recovery-codes`, `guides/loader`) + update `test-cases.md`/`test-values.md`. Deeper Phase-1 leftovers remain lower priority.
+**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Phase 1 core + Phase 2 done; Phase 4 ~85% (suite → 1037).** Next: **Phase 4 batch 4** — last ~4 helper tests (`candidate-import/parsing` inferMapping, `vacancy-questions/normalize`, `mfa/recovery-codes`, `guides/loader`) + update `test-cases.md`/`test-values.md`. Then deeper Phase-1 leftovers (database body, ui-texts re-inventory, ropa data-categories).
 
 Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps — read the doc, compare to code, fix what's actually stale. No browser is available (mobile findings stay static).
 
@@ -20,7 +20,7 @@ Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps �
 | 1 — Documentation Refresh | 🟢 ~85% | Core docs reconciled. Remaining are deeper follow-ups: database.md per-table body, ui-texts full re-inventory, deep integration read, ropa personal-data update. |
 | 2 — Issue & Improvement Discovery | 🟢 ~80% | admin-client sweep (clean) + per-route audit (S-202 fixed) + business-logic pass (reports clean; BL-203 flagged). Remaining: offer/interview state-machine edges + a11y sweep. |
 | 3 — Issue Output Format | ✅ Done | `issues-found.md` re-audit section w/ required tables + summary. Keep appending as new issues surface. |
-| 4 — Test Coverage | 🟡 ~65% | Suite 862 → **1002**. Batch 2 (2026-07-21): permissions, offer state/expiry, mfa/policy, screening knockout+compute-flag, notes/mentions, csv. ~9 helpers still untested; `test-cases.md`/`test-values.md` still not updated. |
+| 4 — Test Coverage | 🟢 ~85% | Suite 862 → **1037**. Batch 3: audit-log/filter, search/query, candidate-merge/defaults, trash/impact, candidate-import/validation. ~4 helpers left (parsing/inferMapping, vacancy-questions/normalize, mfa/recovery-codes, guides/loader); `test-cases.md`/`test-values.md` still not updated. |
 | 5 — Cleanup | 🟡 ~70% | Dead toast system removed; `cleanup-candidates.md`/`cleanup-log.md` written. Deeper unused-export / orphan sweep outstanding. |
 | Mobile audit | ✅ Done (static) | `mobile-compatibility.md`, all routes. Pixel-verify when a browser tool exists. |
 
@@ -86,4 +86,5 @@ Also outstanding: update `docs/testing/test-cases.md` + `test-values.md`.
 
 - **2026-07-20 (session 1)** — Phases 2/3/5 core + mobile + fixes + A-201 (all 5 splits). Tests 862 → 930. Set up this tracker.
 - **2026-07-20/21 (session 2)** — Phase 1 (12 docs): `variables.md`, `endpoints.md`, `backend.md` (+20 action files), `database.md` changelog, `1-product/{overview,features}`, `2-business/{processes,roles-permissions}`, **`ci-cd.md` rewritten** (found: CI workflow exists but doc said it didn't). Integrations spot-verified. + `ai-features.md`, `process.md`, `ui-texts.md`. **Phase 1 core done.** Phase 2: admin-client sweep (clean) + per-route audit → **S-202 (CSV injection) fixed** + business-logic pass (reports div-by-zero clean; **BL-203** public-apply limit exemption flagged). Suite 930 → 944.
-- **2026-07-21 (session 3)** — Phase 4 batch 2: 7 pure-helper test files, +58 tests (permissions, offer state/expiry, mfa/policy, screening knockout+compute-flag, notes/mentions). Suite 944 → **1002**. Next: Phase 4 batch 3 + test-cases/test-values docs.
+- **2026-07-21 (session 3)** — Phase 4 batch 2: 7 pure-helper test files, +58 tests (permissions, offer state/expiry, mfa/policy, screening knockout+compute-flag, notes/mentions). Suite 944 → 1002.
+- **2026-07-21 (session 3)** — Phase 4 batch 3: +5 helper test files (audit-log/filter, search/query, candidate-merge/defaults, trash/impact, candidate-import/validation). Suite 1002 → **1037**. (Confirmed parsing.ts nulls empty cells — no bug.)

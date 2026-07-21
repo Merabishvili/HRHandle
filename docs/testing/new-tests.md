@@ -88,3 +88,9 @@ Added 7 pure-helper test files (58 tests):
 | `lib/__tests__/csv.test.ts` (Phase 2) | `csvCell` — formula-injection guard + RFC-4180 quoting (S-202) |
 
 **Remaining untested helpers:** `lib/candidate-merge/defaults.ts`, `lib/audit-log/filter.ts`, `lib/trash/impact.ts`, `lib/mfa/recovery-codes.ts`, `lib/search/query.ts`, `lib/candidate-import/{validation,parsing}.ts`, `lib/vacancy-questions/normalize.ts`, `lib/guides/loader.ts`.
+
+### Re-audit 2026-07-21 — Phase 4 helper tests (batch 3)
+
++5 files: `lib/audit-log/__tests__/filter.test.ts` (parse/isActive/toSearchParams), `lib/search/__tests__/query.test.ts` (normalize/escapeForIlike/toIlikePattern), `lib/candidate-merge/__tests__/defaults.test.ts` (defaultMergeChoice), `lib/trash/__tests__/impact.test.ts` (extractRestoreImpact/daysUntilPurge), `lib/candidate-import/__tests__/validation.test.ts` (validateRow — coerce + schema; confirmed parsing.ts normalises empty cells → null).
+
+**Remaining untested:** `lib/candidate-import/parsing.ts` (inferMapping), `lib/vacancy-questions/normalize.ts`, `lib/mfa/recovery-codes.ts`, `lib/guides/loader.ts`.
