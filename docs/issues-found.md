@@ -309,6 +309,7 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 
 ### Verified-clean (no issue — audited, passed)
 - **IDOR / admin-client authz:** AI routes (`candidate-summary` etc.) scope admin-client reads with `.eq('organization_id', ctx.orgId)` → cross-org access returns not-found. Auth + zod + per-org rate-limit present.
+- **Full admin-client sweep (2026-07-21):** all ~40 `createAdminClient` sites reviewed — every tenant/user-data site scopes by `organization_id` / `user_id` / token / cron-secret; the `org=0` sites are global ref-data (lookups), crons, user-scoped OAuth-token reads, or caller-passed clients. **No IDOR found.**
 - No secrets under `NEXT_PUBLIC_`; no raw error objects / PII / tokens in `console.error` (only `.message` + ids); 0 `TODO/FIXME/HACK`; only 1 `any` (justified, eslint-disabled); 0 truly-empty catch blocks; no unused dependencies (after the toast cleanup); large fixed widths are all `max-w-[...]` (responsive).
 
 ## 🐛 Code Bugs & Incorrect Logic
