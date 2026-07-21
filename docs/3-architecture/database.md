@@ -2,7 +2,7 @@
 
 _Last updated: 2026-07-20_
 
-> **⚠️ Partial reconciliation (2026-07-20 audit).** The changelog below now captures the migration-backed schema deltas since 2026-05-08, but the per-table sections further down have **not** yet been fully re-verified against the live DB — many feature tables/columns added mid-2026 (offers, pipeline_stages, MFA, notification_preferences, Calendly/webhook tables) predate a full rewrite. Some migrations live in `scripts/` rather than `supabase/migrations/` and aren't all in the repo, so trust the live Supabase schema over this doc where they disagree. Full table-by-table refresh is a tracked follow-up (`docs/audit-progress.md`).
+> **Reconciliation status (2026-07-22 audit).** The live **staging** schema (36 public tables) was pulled via the Supabase Management API and reconciled: **all 6 previously-undocumented tables now have sections** (`offers`, `webhook_notifications`, `pipeline_stages`, `org_pipeline_stage_templates`, `vacancy_screening_questions`, `application_screening_answers`, `candidate_merges`, `mfa_recovery_codes`) and `candidate_evaluations` gained its reviewer + scorecard-sharing columns. **No documented section maps to a dropped table.** The *original* per-table sections (candidates/vacancies/applications/etc.) were not re-diffed column-by-column against live in this pass — trust the live schema on any specific column dispute.
 
 ## Changelog
 
@@ -89,7 +89,7 @@ Links a candidate to a vacancy. Tracks pipeline status.
 | organization_id | uuid | NOT NULL | — | FK → organizations |
 | candidate_id | uuid | NOT NULL | — | FK → candidates |
 | vacancy_id | uuid | NOT NULL | — | FK → vacancies |
-| status_id | uuid | NULL | — | FK → application_statuses |
+| pipeline_stage_id | uuid | NULL | — | 🔄 FK → `pipeline_stages` (per-vacancy). **Replaced `status_id`** (dropped in Wave 2.6, Migration 051); the canonical bucket is derived via `mapPipelineStageToBucket`. |
 | applied_at | timestamptz | NULL | now() | |
 | last_status_changed_at | timestamptz | NULL | — | |
 | notes | text | NULL | — | max 2000 chars |
@@ -101,6 +101,7 @@ Links a candidate to a vacancy. Tracks pipeline status.
 | source_type | text | NULL | 'internal' | 'internal' or 'public_form' |
 | rejection_reason_id | uuid | NULL | — | FK → rejection_reasons |
 | rejection_template_id | uuid | NULL | — | FK → rejection_templates |
+| public_token | text | NULL | — | 🆕 candidate-facing `/status/<token>` credential (G-016) |
 
 ---
 
@@ -158,6 +159,9 @@ A scoring/evaluation record for a candidate's application.
 | submitted | bool | NOT NULL | false | 🆕 draft vs submitted card (anti-anchoring: others' cards revealed only after you submit). |
 | recommendation | text | NULL | — | 🆕 `strong_yes\|yes\|lean_no\|no` (CHECK). |
 | recommendation_reason | text | NULL | — | 🆕 free-text rationale. |
+| scorecard_token | text | NULL | — | 🆕 token for the shared `/scorecard/<token>` page (G-025). |
+| scorecard_revoked_at | timestamptz | NULL | — | 🆕 revokes a shared scorecard. |
+| shared_by / shared_at | uuid / timestamptz | NULL | — | 🆕 who shared + when. |
 | created_at | timestamptz | NULL | — | |
 | updated_at | timestamptz | NULL | — | |
 
@@ -678,9 +682,9 @@ Global lookup. Status of a vacancy.
 
 ## Recent additions (2026-06-18 redesign session)
 
-### 🆕 Tables reconstructed from code (2026-07-21 audit — not live-verified)
+### 🆕 Live-verified additions (2026-07-22 audit)
 
-_Shapes below are derived from the in-repo actions/migrations, not a live-DB dump (MCP + direct access were unauthorized during the audit). Verify against the live schema before relying on exact types/defaults._
+_Pulled from the live **staging** DB (36 public tables) via the Supabase Management API — the tables below were missing from the sections above; columns/types/nullability are as live._
 
 #### `offers` (G-018)
 An offer extended to a candidate for a specific application. State machine in `lib/offers/state.ts`.
@@ -696,13 +700,16 @@ An offer extended to a candidate for a specific application. State machine in `l
 | compensation_amount | numeric | NULL | |
 | compensation_currency | text | NULL | 3–4 uppercase letters |
 | compensation_period | text | NULL | `annual\|monthly\|hourly\|project\|other` |
-| start_date | text | NULL | |
-| expiry_date | text | NULL | drives `expired` via the daily cron + view-time check (`lib/offers/expiry.ts`) |
+| start_date | date | NULL | |
+| expiry_date | date | NULL | drives `expired` via the daily cron + view-time check (`lib/offers/expiry.ts`) |
 | status | text | NOT NULL | `draft\|sent\|accepted\|declined\|expired\|withdrawn` (default `draft`) |
 | public_token | text | NULL | candidate-facing `/offer/<token>` credential |
+| sent_at | timestamptz | NULL | set when the offer is sent |
 | responded_at | timestamptz | NULL | set on accept/decline/withdraw |
+| decline_reason | text | NULL | candidate's optional decline reason |
 | created_by | uuid | NULL | FK → profiles |
-| created_at / updated_at | timestamptz | | |
+| created_at / updated_at | timestamptz | NOT NULL | |
+| deleted_at | timestamptz | NULL | soft delete |
 
 #### `webhook_notifications` (G-030)
 Per-org outgoing Slack/Teams webhook config.
@@ -716,9 +723,57 @@ Per-org outgoing Slack/Teams webhook config.
 | name | text | NULL | label |
 | enabled_events | text[] | NOT NULL | subset of the 8 event types |
 | is_active | bool | NOT NULL | per-webhook on/off |
-| created_at | timestamptz | | |
+| created_by | uuid | NULL | FK → profiles |
+| created_at / updated_at | timestamptz | NOT NULL | |
 
-_Also present but not sectioned above: full `pipeline_stages` (Wave 2.6 — Migration 046 foundation note below), Calendly fields on `organization_integrations` (G-031), and the MFA columns (`organizations.require_mfa`/`require_mfa_for_admins`, `profiles.mfa_enrolled`) — see the changelog at the top._
+#### `pipeline_stages` (Wave 2.6) & `org_pipeline_stage_templates`
+Per-vacancy custom stages, and the org-level templates new vacancies clone.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| vacancy_id | uuid | NOT NULL | *(pipeline_stages only; templates have no vacancy_id)* |
+| name | text | NOT NULL | e.g. "Sourced", "Closed - not a fit" |
+| type | text | NOT NULL | `standard\|review\|interview\|offer` (bucket-mapped via `mapPipelineStageToBucket`) |
+| sort_order | integer | NOT NULL | column order |
+| is_terminal | bool | NOT NULL | default false |
+| created_by | uuid | NULL | |
+| created_at / updated_at | timestamptz | NOT NULL | |
+
+#### `vacancy_screening_questions` & `application_screening_answers`
+Apply-form screening question definitions (per vacancy) + the candidate's answers (per application). Knockout logic in `lib/screening-questions/`.
+
+`vacancy_screening_questions`: id, organization_id, vacancy_id, `label` text, `answer_type` text (`yes_no\|short_text\|number\|select`, default `yes_no`), `options` jsonb, `is_knockout` bool, `knockout_answer` text (encoded per answer_type — see `knockout-condition.ts`), `sort_order` int, timestamps.
+
+`application_screening_answers`: id, organization_id, application_id, question_id, `answer_value` text, `is_knockout_flag` bool (computed via `compute-flag.ts`), created_at.
+
+#### `candidate_merges` (A-3)
+Audit + revert record for a candidate merge.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| winner_id / loser_id | uuid | NOT NULL | surviving vs absorbed candidate |
+| merged_by | uuid | NULL | FK → profiles |
+| loser_snapshot | jsonb | NOT NULL | full loser record for revert |
+| field_choices | jsonb | NOT NULL | per-field winner/loser resolution |
+| reverted_at / reverted_by | timestamptz / uuid | NULL | set if the merge was undone |
+| merged_at | timestamptz | NOT NULL | |
+
+#### `mfa_recovery_codes` (G-032)
+SHA-256-hashed single-use 2FA recovery codes (raw codes never stored — see `lib/mfa/recovery-codes.ts`).
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| user_id | uuid | NOT NULL | FK → profiles (per-user, not org-scoped) |
+| code_hash | text | NOT NULL | sha256-hex of the normalised code |
+| consumed_at | timestamptz | NULL | set when the code is used |
+| created_at | timestamptz | NOT NULL | |
+
+_MFA policy columns also live on `organizations` (`require_mfa`, `require_mfa_for_admins`) and `profiles` (`mfa_enrolled`); Calendly fields are on `organization_integrations` (G-031) — see the changelog at the top._
 
 ---
 

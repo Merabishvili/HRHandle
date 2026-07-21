@@ -17,7 +17,7 @@ Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps �
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Clarification | ✅ Done | All 5 phases / delete-safe / static-mobile confirmed. |
-| 1 — Documentation Refresh | 🟢 ~90% | Core + ci-cd + database body gaps + ropa deltas done. Remaining: ui-texts full re-inventory (low-value, banner in place) + live-DB re-verify of database.md (blocked). |
+| 1 — Documentation Refresh | ✅ ~95% | Core + ci-cd + database.md **live-verified** + ropa deltas done. Only ui-texts full re-inventory remains (low-value; banner in place). |
 | 2 — Issue & Improvement Discovery | 🟢 ~90% | admin-client (clean) + per-route (S-202) + business-logic (BL-203) + a11y sweep (AC-202). Remaining: offer/interview state-machine edge cases (minor). |
 | 3 — Issue Output Format | ✅ Done | `issues-found.md` re-audit section w/ required tables + summary. Keep appending as new issues surface. |
 | 4 — Test Coverage | ✅ Done | Suite 862 → **1059**; **all pure helpers tested** incl. mfa/recovery-codes. Only `guides/loader` (fs/MDX) left — integration-only. Docs updated. | |
@@ -43,7 +43,7 @@ Verify each against code; mark ✅ when done this audit. (`docs/redesign/*` = hi
 | 3-architecture/overview.md | 🟡 partial | Dead toast ref removed. Verify file tree vs. current. |
 | 3-architecture/frontend.md | ✅ | RHF forms + candidates split + toast note. |
 | 3-architecture/backend.md | ✅ | Action-file inventory reconciled (20 missing files added; applications/offers barrels documented). |
-| 3-architecture/database.md | 🟢 mostly | Changelog + body gaps filled from code: added `offers` + `webhook_notifications` sections + `candidate_evaluations` reviewer columns (attributed "reconstructed from code, not live-verified"). Full live-DB re-verify of ALL sections still blocked (MCP + curl unauthorized). |
+| 3-architecture/database.md | ✅ live-verified | 2026-07-22: staging DB resumed + pulled via Management API (36 tables). Added all 6 missing table sections (offers/webhook/pipeline_stages/org-templates/screening-Qs+answers/candidate_merges/mfa_recovery_codes); corrected offers types; candidate_evaluations reviewer+scorecard cols; fixed applications `status_id`→`pipeline_stage_id`. RLS verified: all 36 tables RLS-on with ≥1 policy. |
 | 4-integrations/*.md (12 files) | 🟡 spot | No integration removed; Calendly covered in `phase-5-manual-steps.md`; `google-generative-ai.md` covers the 6 AI features. Deep per-file read = low-priority follow-up. |
 | 5-environment/variables.md | ✅ | Rewritten vs. `lib/env.ts`: ❌ LinkedIn vars, 🆕 Calendly, 🔄 Gemini/Cron/Sentry/Turnstile now validated. |
 | 5-environment/local.md | ⬜ | |
@@ -62,7 +62,7 @@ Verify each against code; mark ✅ when done this audit. (`docs/redesign/*` = hi
 | Area | Deep-audited? | Notes |
 |---|---|---|
 | Security: XSS, public secrets, getSession, IDOR spot-checks | ✅ | AI routes IDOR-safe; no secret leaks. |
-| Admin-client authz (all ~40 sites) | ✅ | Swept 2026-07-21. Every tenant/user-data site scopes by `organization_id` / `user_id` / token-gate / cron-secret. Verified the `org=0` outliers (lookups=global refdata, crons=cron-secret, calendar/zoom/msft=user-scoped OAuth tokens, resolve.ts=caller-passed client, webhook-dispatcher=org-scoped, token pages=token-gated). **No IDOR found.** |
+| Admin-client authz (all ~40 sites) + RLS | ✅ | Swept 2026-07-21. Every tenant/user-data site scopes by `organization_id` / `user_id` / token-gate / cron-secret. Verified the `org=0` outliers. **No IDOR found.** **RLS verified live 2026-07-22:** all 36 tables RLS-on with ≥1 policy. |
 | Route handlers (all 29) | ✅ | Scanned 2026-07-21 for auth + input-validation + rate-limit. Found **S-202 CSV/formula injection** in the 3 CSV exports → fixed (`lib/csv.ts#csvCell`). Verified: export/audit-log auth delegates to `listAuditLog` (owner/admin); calendly callback validates OAuth `state` cookie; parse-cv/health intentionally public. |
 | Bugs / dead code / TODO / console / any | ✅ | 0 TODO, 1 justified any (now fixed), Toaster bug found. |
 | Perf (N+1, indexes) | 🟡 | Bulk loops reviewed (accepted). DB index review outstanding. |
