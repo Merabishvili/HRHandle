@@ -44,7 +44,7 @@ export const MAX_FILE_BYTES = 5 * 1024 * 1024
 const HEADER_ALIASES: Record<ImportField, string[]> = {
   first_name: ['first name', 'firstname', 'first', 'given name', 'givenname'],
   last_name: ['last name', 'lastname', 'last', 'surname', 'family name', 'familyname'],
-  email: ['email', 'email address', 'e-mail', 'mail'],
+  email: ['email', 'email address', 'e-mail', 'e mail', 'mail'],
   phone: ['phone', 'phone number', 'mobile', 'tel', 'telephone', 'cell'],
   current_company: ['current company', 'company', 'employer', 'organization', 'organisation'],
   current_position: ['current position', 'position', 'role', 'title', 'job title', 'jobtitle'],

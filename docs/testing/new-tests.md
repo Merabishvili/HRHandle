@@ -94,3 +94,9 @@ Added 7 pure-helper test files (58 tests):
 +5 files: `lib/audit-log/__tests__/filter.test.ts` (parse/isActive/toSearchParams), `lib/search/__tests__/query.test.ts` (normalize/escapeForIlike/toIlikePattern), `lib/candidate-merge/__tests__/defaults.test.ts` (defaultMergeChoice), `lib/trash/__tests__/impact.test.ts` (extractRestoreImpact/daysUntilPurge), `lib/candidate-import/__tests__/validation.test.ts` (validateRow — coerce + schema; confirmed parsing.ts normalises empty cells → null).
 
 **Remaining untested:** `lib/candidate-import/parsing.ts` (inferMapping), `lib/vacancy-questions/normalize.ts`, `lib/mfa/recovery-codes.ts`, `lib/guides/loader.ts`.
+
+### Re-audit 2026-07-21 — Phase 4 helper tests (batch 4)
+
++2 files: `lib/candidate-import/__tests__/parsing.test.ts` (normalizeHeader / inferMapping / missingRequiredFields / pickCell — surfaced + fixed the dead `e-mail` alias, B-202) and `lib/vacancy-questions/__tests__/normalize.test.ts` (label trim/length + must-have rules).
+
+**Remaining untested (low priority):** `lib/mfa/recovery-codes.ts` (crypto), `lib/guides/loader.ts` (fs/mdx). These aren't pure-logic — best covered by integration tests.

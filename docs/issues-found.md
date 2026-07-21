@@ -302,7 +302,7 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 
 ## Summary
 
-- **New issues found: 12** — 1 High, 4 Medium, 7 Low. (2026-07-21 Phase-2 pass: S-202 CSV injection [fixed]; BL-203 public-apply limit exemption [confirm].)
+- **New issues found: 13** — 1 High, 4 Medium, 8 Low. (2026-07-21: S-202 CSV injection [fixed]; BL-203 public-apply limit [confirm]; B-202 dead e-mail import alias [fixed].)
 - By category: Bugs 1, Mobile 3, Architecture 2, Performance 1, Accessibility 1, Unnecessary 2 (both fixed this pass).
 - **Fixed during this pass:** B-201 (Toaster mounted), MO-201/202/203 (table scroll), A-202 (`any` removed), AC-201 (QR aria), U-201 + U-202 (dead toast system + dep). **A-201 (large-file splits) and P-201 (bulk-loop, accepted tradeoff) remain open — improvement notes, not defects.**
 - **Top item:** **B-201 — sonner `<Toaster/>` is never mounted, so every `toast()` call in the app is silent.** One-line fix, app-wide UX impact.
@@ -356,6 +356,12 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 | # | Severity | File + Line | Description | Suggested Fix | Status |
 |---|----------|-------------|-------------|---------------|--------|
 | AC-201 | Low | `components/mfa/enroll-totp-dialog.tsx:87` | The MFA QR code is injected via `dangerouslySetInnerHTML={{ __html: qrCodeSvg }}`. Source is Supabase's server-generated enroll SVG (trusted, not user input) so XSS risk is negligible, but the container has no accessible name. | Added `role="img"` + `aria-label`. | ✅ Fixed 2026-07-20 |
+
+## 🐛 Code Bugs (2026-07-21 Phase-4 pass)
+
+| # | Severity | File + Line | Description | Suggested Fix | Status |
+|---|----------|-------------|-------------|---------------|--------|
+| B-202 | Low | `lib/candidate-import/parsing.ts` | **Dead CSV-header alias.** `normalizeHeader` converts `-`→space, but the `email` alias list contained `'e-mail'` (with the dash), so a CSV header like "E-Mail" normalised to `'e mail'` and never matched → email column wasn't auto-mapped. Found while unit-testing `inferMapping`. | Added the normalised `'e mail'` alias. | ✅ Fixed 2026-07-21 |
 
 ## 🗑️ Unnecessary / Redundant (fixed this pass)
 
