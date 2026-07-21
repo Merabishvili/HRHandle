@@ -49,7 +49,7 @@ export default async function ApplyPage({ params }: PageProps) {
       archived_at,
       application_form_token,
       vacancy_statuses ( code ),
-      organizations ( name, logo_url, public_page_slug )
+      organizations ( id, name, logo_url, public_page_slug )
     `)
     .eq('application_form_token', token)
     .is('deleted_at', null)
@@ -59,7 +59,8 @@ export default async function ApplyPage({ params }: PageProps) {
 
   // Supabase may return the joined row as object or single-element array — handle both
   type StatusJoin = { code: string } | { code: string }[] | null
-  type OrgJoin = { name: string; logo_url: string | null; public_page_slug: string | null } | { name: string; logo_url: string | null; public_page_slug: string | null }[] | null
+  type OrgRow = { id: string; name: string; logo_url: string | null; public_page_slug: string | null }
+  type OrgJoin = OrgRow | OrgRow[] | null
   const statusJoin = vacancy.vacancy_statuses as StatusJoin
   const statusCode = Array.isArray(statusJoin) ? statusJoin[0]?.code : statusJoin?.code
   const isClosed = vacancy.archived_at || statusCode !== 'open'
@@ -87,6 +88,19 @@ export default async function ApplyPage({ params }: PageProps) {
   const orgJoin = vacancy.organizations as OrgJoin
   const org = (Array.isArray(orgJoin) ? orgJoin[0] : orgJoin) || null
   const publicJobsSlug = org?.public_page_slug as string | null
+
+  // Wave 3.1 — GDPR Art. 22 / EU AI Act transparency: if this org uses AI Fit
+  // Analysis, disclose it to applicants. Separate, graceful query so the
+  // unmigrated column can never take down the public apply page.
+  let aiFitEnabled = false
+  if (org?.id) {
+    const { data: aiOrg } = await supabase
+      .from('organizations')
+      .select('ai_fit_enabled')
+      .eq('id', org.id)
+      .single()
+    aiFitEnabled = !!aiOrg?.ai_fit_enabled
+  }
 
   const employmentLabel: Record<string, string> = {
     full_time: 'Full-time',
@@ -194,6 +208,23 @@ export default async function ApplyPage({ params }: PageProps) {
             companyName={org?.name || 'this company'}
             screeningQuestions={screeningQuestions}
           />
+        )}
+
+        {/* AI transparency notice (Wave 3.1) — only when this org uses AI Fit. */}
+        {aiFitEnabled && !isClosed && (
+          <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-600 shadow-sm">
+            <p className="mb-1 flex items-center gap-2 font-semibold text-gray-900">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3a6 6 0 0 0-6 6c0 1.6.8 3 2 4l.5 3h7l.5-3c1.2-1 2-2.4 2-4a6 6 0 0 0-6-6Z"/><path d="M9 18h6"/><path d="M10 21h4"/></svg>
+              How your application may be reviewed
+            </p>
+            <p>
+              {org?.name || 'This company'} may use an AI assistant to help recruiters see how your application matches
+              this role&apos;s requirements. It is <strong>advisory only</strong>: a person always makes the hiring
+              decision, it produces no automated score and rejects no one, and it assesses only job-relevant information —
+              your name and other personal details are hidden from it. You can ask {org?.name || 'the company'} for more
+              information about how it is used.
+            </p>
+          </div>
         )}
 
         {publicJobsSlug && (

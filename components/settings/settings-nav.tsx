@@ -17,6 +17,7 @@ import {
   ListChecks,
   Trash2,
   GitBranch,
+  Sparkles,
 } from 'lucide-react'
 
 interface NavItem {
@@ -74,8 +75,9 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Data',
     items: [
-      { href: '/settings/audit-log', label: 'Audit log', icon: ListChecks, adminOnly: true },
-      { href: '/settings/trash',     label: 'Trash',     icon: Trash2,     adminOnly: true },
+      { href: '/settings/audit-log', label: 'Audit log',    icon: ListChecks, adminOnly: true },
+      { href: '/settings/ai-fit',    label: 'AI oversight', icon: Sparkles,   adminOnly: true },
+      { href: '/settings/trash',     label: 'Trash',        icon: Trash2,     adminOnly: true },
     ],
   },
 ]

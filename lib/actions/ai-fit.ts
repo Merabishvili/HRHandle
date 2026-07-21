@@ -3,6 +3,7 @@
 import { createHash } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
 import {
   sanitizeForFitAnalysis,
@@ -288,4 +289,70 @@ export async function submitFitAssessment(
     details: { feature: 'ai_fit', analysis_id: analysisId, has_reason: !!reason?.trim() },
   })
   return { success: true, data: undefined }
+}
+
+export interface AiFitOversight {
+  usedThisMonth: number
+  monthlyCap: number
+  agreeCount: number
+  overrideCount: number
+  pendingCount: number
+  recentOverrides: {
+    id: string
+    reason: string | null
+    assessed_at: string | null
+    meets_count: number
+    must_have_total: number
+  }[]
+}
+
+/**
+ * Admin-only bias-oversight surface for AI Fit Analysis (Settings → Data). Shows
+ * this month's usage vs the cap, the agree / override / pending split, and the
+ * log of overrides with reasons — the signal a reviewer watches for skew. No
+ * candidate PII: overrides are keyed by analysis id + the factual meets counts.
+ */
+export async function getAiFitOversight(): Promise<ActionResult<AiFitOversight>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!isOrgAdmin(ctx.role)) return { success: false, error: 'Only owners and admins can view AI oversight.' }
+
+  const monthStart = new Date()
+  monthStart.setUTCDate(1)
+  monthStart.setUTCHours(0, 0, 0, 0)
+
+  const base = () => ctx.supabase.from('ai_fit_analyses').select('id', { count: 'exact', head: true }).eq('organization_id', ctx.orgId)
+
+  const [{ count: usedThisMonth }, { count: agreeCount }, { count: overrideCount }, { count: pendingCount }, { data: overrides }] =
+    await Promise.all([
+      base().gte('created_at', monthStart.toISOString()),
+      base().eq('assessment', 'agree'),
+      base().eq('assessment', 'override'),
+      base().is('assessment', null),
+      ctx.supabase
+        .from('ai_fit_analyses')
+        .select('id, assessment_reason, assessed_at, meets_count, must_have_total')
+        .eq('organization_id', ctx.orgId)
+        .eq('assessment', 'override')
+        .order('assessed_at', { ascending: false })
+        .limit(50),
+    ])
+
+  return {
+    success: true,
+    data: {
+      usedThisMonth: usedThisMonth ?? 0,
+      monthlyCap: MAX_ANALYSES_PER_ORG_PER_MONTH,
+      agreeCount: agreeCount ?? 0,
+      overrideCount: overrideCount ?? 0,
+      pendingCount: pendingCount ?? 0,
+      recentOverrides: (overrides ?? []).map((o) => ({
+        id: o.id as string,
+        reason: (o.assessment_reason as string | null) ?? null,
+        assessed_at: (o.assessed_at as string | null) ?? null,
+        meets_count: (o.meets_count as number | null) ?? 0,
+        must_have_total: (o.must_have_total as number | null) ?? 0,
+      })),
+    },
+  }
 }
