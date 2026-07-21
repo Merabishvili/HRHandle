@@ -1,8 +1,12 @@
 # UI Text Inventory
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
+
+> **⚠️ Partial / stale (2026-07-20 audit).** This inventory predates (a) the redesign's terminology + sentence-case sweep (Role/Position → **Vacancy**, "Evaluation criteria" → **Scorecard**, "Manage applicants" → **Manage candidates**, "Get Started" → "Get started", etc.) and (b) whole new surfaces shipped mid-2026: **Offers** (`/offer/<token>` + recruiter panel), **Reports** (`/reports`), **integrations** (Slack/Teams/Calendly), **2FA** flows, **CSV import** wizard, **cmd-K search**, **scorecard sharing**, the **Pipeline** home surface + Quick Review mode. Those strings are **not** yet catalogued here. Treat the entries below as a partial snapshot; a full re-inventory is a tracked deeper follow-up (`docs/audit-progress.md`). For the redesign terminology decisions, see `docs/redesign/flows/S10-ai-terminology.md`.
 
 ## Changelog
+
+- 🔄 (2026-07-20 audit) Flagged partial/stale — see banner above; redesign terminology pass + mid-2026 surfaces not yet inventoried.
 
 - 🆕 LinkedIn integration status messages (`?linkedin=connected|disconnected|invalid_page_id|error`) — surfaced as toasts on `/settings/integrations`
 - 🆕 CV-parsing UI states on apply form: "Parsing CV…", "Auto-filled from CV", "Could not auto-fill — please fill manually" (`components/apply/apply-form.tsx`)

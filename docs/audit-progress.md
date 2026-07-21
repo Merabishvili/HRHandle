@@ -6,7 +6,7 @@ _Last updated: 2026-07-20_
 
 ## ▶ RESUME HERE (next task)
 
-**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Next: `docs/9-compliance/` (ai-features, breach-response, ropa, sanctions-screening) + `docs/6-deployment/process.md` + `docs/ui-texts.md`.** Deeper follow-ups: `database.md` per-table body rewrite; deep per-file read of the 12 integration docs (low priority — config-stable).
+**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Phase 1 core is done.** Move to **Phase 2 deep pass** — start with the **admin-client authz sweep** (verify all ~40 `createAdminClient` sites enforce org-scoping / their own authz; only `candidate-summary` verified so far). Then per-route audit + business-logic edge cases. Deeper Phase-1 leftovers (database body, ui-texts re-inventory, ropa data-categories) are lower priority.
 
 Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps — read the doc, compare to code, fix what's actually stale. No browser is available (mobile findings stay static).
 
@@ -17,7 +17,7 @@ Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps �
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Clarification | ✅ Done | All 5 phases / delete-safe / static-mobile confirmed. |
-| 1 — Documentation Refresh | 🟡 ~65% | + ci-cd.md rewritten; integrations spot-verified. Remaining: 6-deployment/process.md, 9-compliance, ui-texts, database body. |
+| 1 — Documentation Refresh | 🟢 ~85% | Core docs reconciled. Remaining are deeper follow-ups: database.md per-table body, ui-texts full re-inventory, deep integration read, ropa personal-data update. |
 | 2 — Issue & Improvement Discovery | 🟡 ~50% | Category pattern-scans + spot-checks done → 10 issues (all fixed). Deep per-file / per-route pass outstanding. |
 | 3 — Issue Output Format | ✅ Done | `issues-found.md` re-audit section w/ required tables + summary. Keep appending as new issues surface. |
 | 4 — Test Coverage | 🟡 ~40% | ~50 tests added; `new-tests.md`/`tests-to-remove.md` written. `test-cases.md`/`test-values.md` NOT updated; ~16 helpers still untested. |
@@ -48,12 +48,12 @@ Verify each against code; mark ✅ when done this audit. (`docs/redesign/*` = hi
 | 5-environment/variables.md | ✅ | Rewritten vs. `lib/env.ts`: ❌ LinkedIn vars, 🆕 Calendly, 🔄 Gemini/Cron/Sentry/Turnstile now validated. |
 | 5-environment/local.md | ⬜ | |
 | 6-deployment/ci-cd.md | ✅ | **Rewritten** — CI workflow (lint+test+build on push/PR) now documented (doc had claimed no CI existed). |
-| 6-deployment/process.md | ⬜ | |
+| 6-deployment/process.md | ✅ | Verified current (CI ref, two-env, config-sync); env-var list pointer → variables.md. |
 | 7-api/endpoints.md | ✅ | All 27 route handlers reconciled + covered (10 added last pass). |
 | 8-decisions.md | ✅ | RHF decision added. |
-| 9-compliance/ai-features.md | ⬜ | |
-| 9-compliance/{breach-response,ropa,sanctions-screening}.md | ⬜ | |
-| ui-texts.md | ⬜ | Full UI-text inventory refresh. |
+| 9-compliance/ai-features.md | ✅ | Verified current — already documents interview-questions removal (2026-07-04) + email-drafter retirement; 5 live lib/ai/* modules match. |
+| 9-compliance/{breach-response,ropa,sanctions-screening}.md | 🟡 spot | Legal artifacts (own review cadence). Flag: `ropa.md` likely missing newer personal-data fields (avatar, `profiles.language`, MFA factors, notification_preferences) — add on next compliance review. |
+| ui-texts.md | 🟡 flagged | Staleness banner added (predates redesign terminology pass + mid-2026 surfaces). Full re-inventory = deeper follow-up. |
 
 ---
 
@@ -85,4 +85,4 @@ Also outstanding: update `docs/testing/test-cases.md` + `test-values.md`.
 ## Session log
 
 - **2026-07-20 (session 1)** — Phases 2/3/5 core + mobile + fixes + A-201 (all 5 splits). Tests 862 → 930. Set up this tracker.
-- **2026-07-20 (session 2)** — Phase 1 (9 docs): `variables.md`, `endpoints.md`, `backend.md` (+20 action files), `database.md` changelog, `1-product/{overview,features}`, `2-business/{processes,roles-permissions}`, **`ci-cd.md` rewritten** (found: CI workflow exists but doc said it didn't). Integrations spot-verified. Next: 9-compliance + 6-deployment/process + ui-texts.
+- **2026-07-20/21 (session 2)** — Phase 1 (12 docs): `variables.md`, `endpoints.md`, `backend.md` (+20 action files), `database.md` changelog, `1-product/{overview,features}`, `2-business/{processes,roles-permissions}`, **`ci-cd.md` rewritten** (found: CI workflow exists but doc said it didn't). Integrations spot-verified. + `ai-features.md` (current), `process.md` (verified), `ui-texts.md` (staleness banner). **Phase 1 core done (~85%).** Next: Phase 2 admin-client authz sweep.
