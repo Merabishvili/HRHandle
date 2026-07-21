@@ -6,7 +6,7 @@ _Last updated: 2026-07-20_
 
 ## ▶ RESUME HERE (next task)
 
-**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Phase 1 core + Phase 2 done; Phase 4 ~90% (suite → 1051, pure helpers all tested).** Next options: (a) update `docs/testing/test-cases.md` + `test-values.md`; (b) deeper Phase-1 leftovers (`database.md` per-table body, `ui-texts.md` re-inventory, `ropa.md` data-categories); (c) accessibility sweep. `mfa/recovery-codes` + `guides/loader` need integration (not unit) tests.
+**Phase 1 — Documentation Refresh.** Go through each core `/docs` file, verify claims against current code, mark drift (🆕 added / ❌ removed / 🔄 changed), bump "Last updated". Work top-down through the "Phase 1 checklist" table below; the next unchecked row is the next task. **Audit high-value work complete.** Deep-tail status: recovery-codes tested; `ropa.md` given 2FA + sub-processor deltas. **Genuinely blocked / low-value remaining:** `database.md` per-table body (live-DB access is unauthorized via both curl and MCP — needs the access token or a live-schema paste); `ui-texts.md` full re-inventory (low-value reference churn — staleness banner in place); `guides/loader` test (fs/MDX integration). `mfa/recovery-codes` + `guides/loader` need integration (not unit) tests.
 
 Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps — read the doc, compare to code, fix what's actually stale. No browser is available (mobile findings stay static).
 
@@ -20,7 +20,7 @@ Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps �
 | 1 — Documentation Refresh | 🟢 ~85% | Core docs reconciled. Remaining are deeper follow-ups: database.md per-table body, ui-texts full re-inventory, deep integration read, ropa personal-data update. |
 | 2 — Issue & Improvement Discovery | 🟢 ~90% | admin-client (clean) + per-route (S-202) + business-logic (BL-203) + a11y sweep (AC-202). Remaining: offer/interview state-machine edge cases (minor). |
 | 3 — Issue Output Format | ✅ Done | `issues-found.md` re-audit section w/ required tables + summary. Keep appending as new issues surface. |
-| 4 — Test Coverage | ✅ ~95% | Suite 862 → **1051**; all pure helpers tested. `new-tests.md`/`tests-to-remove.md` written; `test-cases.md`/`test-values.md` given audit changelog blocks. Only mfa/recovery-codes + guides/loader remain (need integration, not unit, tests). | |
+| 4 — Test Coverage | ✅ Done | Suite 862 → **1059**; **all pure helpers tested** incl. mfa/recovery-codes. Only `guides/loader` (fs/MDX) left — integration-only. Docs updated. | |
 | 5 — Cleanup | 🟡 ~70% | Dead toast system removed; `cleanup-candidates.md`/`cleanup-log.md` written. Deeper unused-export / orphan sweep outstanding. |
 | Mobile audit | ✅ Done (static) | `mobile-compatibility.md`, all routes. Pixel-verify when a browser tool exists. |
 

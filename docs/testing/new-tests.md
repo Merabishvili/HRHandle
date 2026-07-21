@@ -100,3 +100,7 @@ Added 7 pure-helper test files (58 tests):
 +2 files: `lib/candidate-import/__tests__/parsing.test.ts` (normalizeHeader / inferMapping / missingRequiredFields / pickCell — surfaced + fixed the dead `e-mail` alias, B-202) and `lib/vacancy-questions/__tests__/normalize.test.ts` (label trim/length + must-have rules).
 
 **Remaining untested (low priority):** `lib/mfa/recovery-codes.ts` (crypto), `lib/guides/loader.ts` (fs/mdx). These aren't pure-logic — best covered by integration tests.
+
+### Re-audit 2026-07-21 — Phase 4 (deep tail)
+
++1 file: `lib/mfa/__tests__/recovery-codes.test.ts` (`generateRecoveryCodes` format/uniqueness/ambiguity-free alphabet; `hashRecoveryCode` deterministic sha256 + dash/space/case normalisation). Turned out unit-testable (node:crypto works in vitest) — the pure-helper backlog is now **fully cleared**. `lib/guides/loader.ts` remains the only untested lib helper (fs/MDX — integration-only).

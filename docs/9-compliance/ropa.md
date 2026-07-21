@@ -1,6 +1,6 @@
 # Records of Processing Activities (ROPA)
 
-_Last updated: 2026-06-20_
+_Last updated: 2026-07-21_
 _Owner: Aleksandre Merabishvili (sole founder + DPO)_
 _GDPR reference: Article 30_
 
@@ -8,6 +8,7 @@ _GDPR reference: Article 30_
 
 - **Tracked as:** [G-005](../issues-found.md)
 - **Review cadence:** at every release that adds or changes a processing activity, and at least quarterly
+- **🆕 (2026-07-21 audit) Deltas to formally incorporate on next review:** (1) **2FA/TOTP + recovery codes** (G-032, shipped 2026-06-25) — new authentication data; added to activity C-1 below. (2) New **sub-processors / recipients**: **Calendly** (USA — interview scheduling when a customer connects it, G-031) and customer-configured **Slack / Microsoft Teams** incoming webhooks (G-030) that deliver notification metadata to the customer's own workspace. These should be reflected in the relevant interview/notification activity rows + the sub-processor register.
 - **Related docs:** [`app/privacy/page.tsx`](../../app/privacy/page.tsx) · [breach response](./breach-response.md) · [`docs/3-architecture/`](../3-architecture/) · [`docs/4-integrations/`](../4-integrations/) · [`docs/issues-found.md`](../issues-found.md)
 
 ## Why HRHandle keeps a ROPA
@@ -53,11 +54,11 @@ For each activity: purpose, legal basis, data subject categories, personal data 
 | Purpose | Allow recruiter accounts to sign up, sign in, recover passwords, and maintain their profile and organisation settings. |
 | Legal basis (Art. 6) | (b) Contract performance — providing the Service the account holder signed up for. |
 | Data subject categories | Recruiter account holders; team members invited into a customer organisation. |
-| Personal data categories | Email address, full name, hashed password (for email/password sign-in), Supabase auth session tokens, Google or Microsoft OAuth identity (when used to sign in), avatar URL, organisation name, role assignment, sign-in preference. |
+| Personal data categories | Email address, full name, hashed password (for email/password sign-in), Supabase auth session tokens, Google or Microsoft OAuth identity (when used to sign in), avatar URL, organisation name, role assignment, sign-in preference; **TOTP two-factor factor (managed by Supabase Auth) and SHA-256-hashed recovery codes** (2FA, G-032 — raw codes never stored); language + notification preferences. |
 | Recipients / sub-processors | Supabase Auth + Postgres (USA, AWS us-east-1); Resend (USA — sign-up confirmation, password reset emails); Cloudflare Turnstile (CAPTCHA verification). |
 | Retention | Active for the life of the account. After account termination: 30-day export/recovery window, then permanent deletion ([Privacy §7](../../app/privacy/page.tsx)). Backups follow Supabase's standard retention. |
 | Transfer mechanism | Standard Contractual Clauses with Supabase, Resend, Cloudflare. |
-| Security (Art. 32) | TLS in transit; encryption at rest by Supabase; RLS on every public table; Turnstile on login + sign-up + forgot-password; per-request CSP nonce ([S-014 fix](../issues-found.md)); rate limits on auth endpoints ([S-002 / S-003 fixes](../issues-found.md)). |
+| Security (Art. 32) | TLS in transit; encryption at rest by Supabase; RLS on every public table; Turnstile on login + sign-up + forgot-password; per-request CSP nonce ([S-014 fix](../issues-found.md)); rate limits on auth endpoints ([S-002 / S-003 fixes](../issues-found.md)); optional **2FA/TOTP** with an owner-enforceable org-wide policy (G-032). |
 
 ## C-2 — Team invitations and membership management
 
