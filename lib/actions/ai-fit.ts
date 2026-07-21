@@ -200,6 +200,50 @@ export async function getAiFitAnalysis(applicationId: string): Promise<ActionRes
 }
 
 /**
+ * Owner-only opt-in toggle for AI Fit Analysis (Wave 3.1). Enabling requires an
+ * explicit acknowledgement of the advisory / EU-AI-Act framing (Guardrail 2),
+ * which also satisfies the EU geofence in {@link canEnableAiFit}. Records
+ * who / when and writes an audit trail.
+ */
+export async function setAiFitEnabled(
+  enabled: boolean,
+  acknowledged: boolean,
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (ctx.role !== 'owner') {
+    return { success: false, error: 'Only the owner can change AI Fit Analysis settings.' }
+  }
+  if (enabled && !acknowledged) {
+    return { success: false, error: 'Please acknowledge how AI Fit Analysis is used before enabling it.' }
+  }
+
+  const update = enabled
+    ? {
+        ai_fit_enabled: true,
+        ai_fit_enabled_at: new Date().toISOString(),
+        ai_fit_enabled_by: ctx.userId,
+        ai_fit_eu_acknowledged: true,
+      }
+    : { ai_fit_enabled: false }
+
+  const { error } = await ctx.supabase.from('organizations').update(update).eq('id', ctx.orgId)
+  if (error) return { success: false, error: 'Failed to update AI Fit Analysis settings.' }
+
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'organization',
+    entityId: ctx.orgId,
+    action: enabled ? 'ai_fit_enabled' : 'ai_fit_disabled',
+    message: enabled ? 'Enabled AI Fit Analysis' : 'Disabled AI Fit Analysis',
+    details: { feature: 'ai_fit', acknowledged: enabled },
+  })
+  revalidatePath('/settings/organization')
+  return { success: true, data: undefined }
+}
+
+/**
  * Record the recruiter's mandatory assessment (Agree / Override) of an analysis
  * — EU AI Act Art. 14 human oversight. Override requires a reason.
  */
