@@ -154,8 +154,14 @@ A scoring/evaluation record for a candidate's application.
 | vacancy_id | uuid | NOT NULL | — | |
 | is_active | bool | NULL | true | |
 | score | smallint | NULL | — | Overall percentage score (0–100) |
+| reviewer_id | uuid | NULL | — | 🆕 FK → profiles (ON DELETE SET NULL). Multi-reviewer model — `20260704_scorecard_multi_reviewer.sql`. |
+| submitted | bool | NOT NULL | false | 🆕 draft vs submitted card (anti-anchoring: others' cards revealed only after you submit). |
+| recommendation | text | NULL | — | 🆕 `strong_yes\|yes\|lean_no\|no` (CHECK). |
+| recommendation_reason | text | NULL | — | 🆕 free-text rationale. |
 | created_at | timestamptz | NULL | — | |
 | updated_at | timestamptz | NULL | — | |
+
+_🆕 Constraint: `UNIQUE(application_id, reviewer_id)` (was `UNIQUE(application_id)`) — one card per reviewer per application._
 
 ---
 
@@ -671,6 +677,50 @@ Global lookup. Status of a vacancy.
 | vacancy_questions | vacancy_id | vacancies |
 
 ## Recent additions (2026-06-18 redesign session)
+
+### 🆕 Tables reconstructed from code (2026-07-21 audit — not live-verified)
+
+_Shapes below are derived from the in-repo actions/migrations, not a live-DB dump (MCP + direct access were unauthorized during the audit). Verify against the live schema before relying on exact types/defaults._
+
+#### `offers` (G-018)
+An offer extended to a candidate for a specific application. State machine in `lib/offers/state.ts`.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| application_id | uuid | NOT NULL | FK → applications |
+| role_title | text | NOT NULL | |
+| body | text | NOT NULL | offer letter body (≤20 000 chars) |
+| recruiter_message | text | NULL | optional cover note (≤2000) |
+| compensation_amount | numeric | NULL | |
+| compensation_currency | text | NULL | 3–4 uppercase letters |
+| compensation_period | text | NULL | `annual\|monthly\|hourly\|project\|other` |
+| start_date | text | NULL | |
+| expiry_date | text | NULL | drives `expired` via the daily cron + view-time check (`lib/offers/expiry.ts`) |
+| status | text | NOT NULL | `draft\|sent\|accepted\|declined\|expired\|withdrawn` (default `draft`) |
+| public_token | text | NULL | candidate-facing `/offer/<token>` credential |
+| responded_at | timestamptz | NULL | set on accept/decline/withdraw |
+| created_by | uuid | NULL | FK → profiles |
+| created_at / updated_at | timestamptz | | |
+
+#### `webhook_notifications` (G-030)
+Per-org outgoing Slack/Teams webhook config.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| channel_type | text | NOT NULL | `slack\|teams` |
+| webhook_url | text | NOT NULL | the incoming-webhook URL (customer-provided) |
+| name | text | NULL | label |
+| enabled_events | text[] | NOT NULL | subset of the 8 event types |
+| is_active | bool | NOT NULL | per-webhook on/off |
+| created_at | timestamptz | | |
+
+_Also present but not sectioned above: full `pipeline_stages` (Wave 2.6 — Migration 046 foundation note below), Calendly fields on `organization_integrations` (G-031), and the MFA columns (`organizations.require_mfa`/`require_mfa_for_admins`, `profiles.mfa_enrolled`) — see the changelog at the top._
+
+---
 
 ### Migration 044 — fix `sync_candidate_status_on_application_change()` trigger
 

@@ -17,7 +17,7 @@ Method reminder: this is a *drift-detection* refresh, not cosmetic date bumps �
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Clarification | ✅ Done | All 5 phases / delete-safe / static-mobile confirmed. |
-| 1 — Documentation Refresh | 🟢 ~85% | Core docs reconciled. Remaining are deeper follow-ups: database.md per-table body, ui-texts full re-inventory, deep integration read, ropa personal-data update. |
+| 1 — Documentation Refresh | 🟢 ~90% | Core + ci-cd + database body gaps + ropa deltas done. Remaining: ui-texts full re-inventory (low-value, banner in place) + live-DB re-verify of database.md (blocked). |
 | 2 — Issue & Improvement Discovery | 🟢 ~90% | admin-client (clean) + per-route (S-202) + business-logic (BL-203) + a11y sweep (AC-202). Remaining: offer/interview state-machine edge cases (minor). |
 | 3 — Issue Output Format | ✅ Done | `issues-found.md` re-audit section w/ required tables + summary. Keep appending as new issues surface. |
 | 4 — Test Coverage | ✅ Done | Suite 862 → **1059**; **all pure helpers tested** incl. mfa/recovery-codes. Only `guides/loader` (fs/MDX) left — integration-only. Docs updated. | |
@@ -43,7 +43,7 @@ Verify each against code; mark ✅ when done this audit. (`docs/redesign/*` = hi
 | 3-architecture/overview.md | 🟡 partial | Dead toast ref removed. Verify file tree vs. current. |
 | 3-architecture/frontend.md | ✅ | RHF forms + candidates split + toast note. |
 | 3-architecture/backend.md | ✅ | Action-file inventory reconciled (20 missing files added; applications/offers barrels documented). |
-| 3-architecture/database.md | 🟡 changelog | 2026-07 migration deltas + mid-2026 feature tables documented in changelog; per-table body rewrite still pending. |
+| 3-architecture/database.md | 🟢 mostly | Changelog + body gaps filled from code: added `offers` + `webhook_notifications` sections + `candidate_evaluations` reviewer columns (attributed "reconstructed from code, not live-verified"). Full live-DB re-verify of ALL sections still blocked (MCP + curl unauthorized). |
 | 4-integrations/*.md (12 files) | 🟡 spot | No integration removed; Calendly covered in `phase-5-manual-steps.md`; `google-generative-ai.md` covers the 6 AI features. Deep per-file read = low-priority follow-up. |
 | 5-environment/variables.md | ✅ | Rewritten vs. `lib/env.ts`: ❌ LinkedIn vars, 🆕 Calendly, 🔄 Gemini/Cron/Sentry/Turnstile now validated. |
 | 5-environment/local.md | ⬜ | |
@@ -52,7 +52,7 @@ Verify each against code; mark ✅ when done this audit. (`docs/redesign/*` = hi
 | 7-api/endpoints.md | ✅ | All 27 route handlers reconciled + covered (10 added last pass). |
 | 8-decisions.md | ✅ | RHF decision added. |
 | 9-compliance/ai-features.md | ✅ | Verified current — already documents interview-questions removal (2026-07-04) + email-drafter retirement; 5 live lib/ai/* modules match. |
-| 9-compliance/{breach-response,ropa,sanctions-screening}.md | 🟡 spot | Legal artifacts (own review cadence). Flag: `ropa.md` likely missing newer personal-data fields (avatar, `profiles.language`, MFA factors, notification_preferences) — add on next compliance review. |
+| 9-compliance/{breach-response,ropa,sanctions-screening}.md | ✅ | `ropa.md` updated: 2FA/TOTP + hashed recovery codes added to C-1; Calendly + Slack/Teams sub-processors flagged for next formal review. breach/sanctions = stable legal artifacts. |
 | ui-texts.md | 🟡 flagged | Staleness banner added (predates redesign terminology pass + mid-2026 surfaces). Full re-inventory = deeper follow-up. |
 
 ---
