@@ -1,11 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { csvCell } from '@/lib/csv'
 import { createClient } from '@/lib/supabase/server'
 
 function csvEscape(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
-    return '"' + value.replace(/"/g, '""') + '"'
-  }
-  return value
+  return csvCell(value)
 }
 
 export async function GET(request: NextRequest) {

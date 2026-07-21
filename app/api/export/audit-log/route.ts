@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { listAuditLog } from '@/lib/actions/audit-log'
 import { parseAuditLogFilter } from '@/lib/audit-log/filter'
+import { csvCell } from '@/lib/csv'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,12 +58,7 @@ function toCsv(rows: AuditCsvRow[]): string {
     'details_json',
   ].join(',')
 
-  const escape = (v: string | null | undefined): string => {
-    if (v == null) return ''
-    const s = String(v)
-    if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`
-    return s
-  }
+  const escape = (v: string | null | undefined): string => csvCell(v)
 
   const body = rows
     .map((r) =>

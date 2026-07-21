@@ -302,7 +302,7 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 
 ## Summary
 
-- **New issues found: 10** — 1 High, 3 Medium, 6 Low.
+- **New issues found: 11** — 1 High, 4 Medium, 6 Low. (S-202 CSV injection added in the 2026-07-21 Phase-2 pass.)
 - By category: Bugs 1, Mobile 3, Architecture 2, Performance 1, Accessibility 1, Unnecessary 2 (both fixed this pass).
 - **Fixed during this pass:** B-201 (Toaster mounted), MO-201/202/203 (table scroll), A-202 (`any` removed), AC-201 (QR aria), U-201 + U-202 (dead toast system + dep). **A-201 (large-file splits) and P-201 (bulk-loop, accepted tradeoff) remain open — improvement notes, not defects.**
 - **Top item:** **B-201 — sonner `<Toaster/>` is never mounted, so every `toast()` call in the app is silent.** One-line fix, app-wide UX impact.
@@ -317,6 +317,12 @@ _New findings from a full-codebase re-audit (58 pages, 29 route handlers, 471 so
 | # | Severity | File + Line | Description | Suggested Fix | Status |
 |---|----------|-------------|-------------|---------------|--------|
 | B-201 | High | `app/layout.tsx` (+ all `layout.tsx`) | Sonner's `<Toaster/>` is **never mounted anywhere**. 37 files `import { toast } from 'sonner'` and fire toasts (validation errors, save/success confirmations, error feedback, the RHF form errors), but with no `<Toaster/>` rendered, sonner renders nothing — all toasts are silent app-wide. `components/ui/sonner.tsx` exports a `Toaster` wrapper that nothing imports. | Mount `<Toaster />` (from `@/components/ui/sonner`) in the root `app/layout.tsx` `<body>`. | ✅ Fixed 2026-07-20 |
+
+## 🔒 Security
+
+| # | Severity | File + Line | Description | Suggested Fix | Status |
+|---|----------|-------------|-------------|---------------|--------|
+| S-202 | Medium | `app/api/export/{candidates,applications,audit-log}/route.ts` | **CSV / formula injection.** The three CSV exports quoted delimiters but did not neutralise cells starting with `=`/`+`/`-`/`@`/tab/CR. Candidate names, positions, and notes are user-controlled (they arrive via the **public** apply form), so an attacker could plant e.g. `=cmd\|'/c calc'!A1` that executes when a recruiter opens the export in Excel / Google Sheets. | Prefix formula-leading cells with `'` (OWASP). Shared `lib/csv.ts#csvCell` now does this + RFC-4180 quoting; all three routes delegate to it. | ✅ Fixed 2026-07-21 |
 
 ## 📱 Mobile & Responsive (see `docs/mobile-compatibility.md`)
 

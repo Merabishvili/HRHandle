@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { csvCell } from '@/lib/csv'
 
 function esc(value: string | null | undefined): string {
-  const s = value ?? ''
-  if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
-    return '"' + s.replace(/"/g, '""') + '"'
-  }
-  return s
+  return csvCell(value)
 }
 
 function fmtDate(date: string | null | undefined): string {
