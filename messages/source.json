@@ -237,5 +237,31 @@
   "profile.fact.added": { "en": "Added", "ru": "Добавлен", "ka": "დამატებულია" },
   "profile.fact.timezone": { "en": "Timezone", "ru": "Часовой пояс", "ka": "დროის სარტყელი" },
   "profile.meta.candidateId": { "en": "Candidate ID", "ru": "ID кандидата", "ka": "კანდიდატის ID" },
-  "profile.meta.lastUpdated": { "en": "Last updated", "ru": "Обновлено", "ka": "ბოლოს განახლდა" }
+  "profile.meta.lastUpdated": { "en": "Last updated", "ru": "Обновлено", "ka": "ბოლოს განახლდა" },
+
+  "common.copy": { "en": "Copy", "ru": "Копировать", "ka": "კოპირება" },
+  "common.copied": { "en": "Copied to clipboard", "ru": "Скопировано в буфер обмена", "ka": "დაკოპირდა ბუფერში" },
+  "common.upload": { "en": "Upload", "ru": "Загрузить", "ka": "ატვირთვა" },
+
+  "contact.linkedin": { "en": "LinkedIn", "ru": "LinkedIn", "ka": "LinkedIn" },
+  "contact.viewProfile": { "en": "View profile", "ru": "Открыть профиль", "ka": "პროფილის ნახვა" },
+  "contact.noInfo": { "en": "No contact information available.", "ru": "Контактная информация отсутствует.", "ka": "საკონტაქტო ინფორმაცია არ არის." },
+
+  "notes.title": { "en": "Notes", "ru": "Заметки", "ka": "შენიშვნები" },
+  "notes.placeholder": { "en": "Add a note about this candidate… Type @ to mention a teammate.", "ru": "Добавьте заметку о кандидате… Введите @, чтобы упомянуть коллегу.", "ka": "დაამატეთ შენიშვნა კანდიდატის შესახებ… აკრიფეთ @ კოლეგის მოსახსენიებლად." },
+  "notes.willNotify": { "en": "{count, plural, one {Will notify # teammate.} other {Will notify # teammates.}}", "ru": "Уведомим коллег: {count}.", "ka": "შეტყობინებას მიიღებს {count} კოლეგა." },
+  "notes.add": { "en": "Add Note", "ru": "Добавить заметку", "ka": "შენიშვნის დამატება" },
+  "notes.empty": { "en": "No notes yet.", "ru": "Заметок пока нет.", "ka": "ჯერ შენიშვნები არ არის." },
+  "notes.deleteAria": { "en": "Delete note", "ru": "Удалить заметку", "ka": "შენიშვნის წაშლა" },
+  "notes.teamMember": { "en": "Team member", "ru": "Участник команды", "ka": "გუნდის წევრი" },
+
+  "documents.title": { "en": "Documents", "ru": "Документы", "ka": "დოკუმენტები" },
+  "documents.typeCv": { "en": "CV / Resume", "ru": "CV / Резюме", "ka": "CV / რეზიუმე" },
+  "documents.typeCoverLetter": { "en": "Cover letter", "ru": "Сопроводительное письмо", "ka": "სამოტივაციო წერილი" },
+  "documents.typeOther": { "en": "Other", "ru": "Другое", "ka": "სხვა" },
+  "documents.hint": { "en": "PDF or Word · max 10 MB", "ru": "PDF или Word · макс. 10 МБ", "ka": "PDF ან Word · მაქს. 10 MB" },
+  "documents.empty": { "en": "No documents uploaded.", "ru": "Документы не загружены.", "ka": "დოკუმენტები არ არის ატვირთული." },
+  "documents.openNewTab": { "en": "Open in new tab", "ru": "Открыть в новой вкладке", "ka": "ახალ ჩანართში გახსნა" },
+  "documents.openAria": { "en": "Open document in new tab", "ru": "Открыть документ в новой вкладке", "ka": "დოკუმენტის ახალ ჩანართში გახსნა" },
+  "documents.deleteAria": { "en": "Delete document", "ru": "Удалить документ", "ka": "დოკუმენტის წაშლა" }
 }

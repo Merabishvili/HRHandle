@@ -41,7 +41,10 @@
     "selectedCount": "{count} selected",
     "tryAgain": "Try again",
     "apply": "Apply",
-    "clear": "Clear"
+    "clear": "Clear",
+    "copy": "Copy",
+    "copied": "Copied to clipboard",
+    "upload": "Upload"
   },
   "settings": {
     "section": {
@@ -266,5 +269,30 @@
       "candidateId": "Candidate ID",
       "lastUpdated": "Last updated"
     }
+  },
+  "contact": {
+    "linkedin": "LinkedIn",
+    "viewProfile": "View profile",
+    "noInfo": "No contact information available."
+  },
+  "notes": {
+    "title": "Notes",
+    "placeholder": "Add a note about this candidate… Type @ to mention a teammate.",
+    "willNotify": "{count, plural, one {Will notify # teammate.} other {Will notify # teammates.}}",
+    "add": "Add Note",
+    "empty": "No notes yet.",
+    "deleteAria": "Delete note",
+    "teamMember": "Team member"
+  },
+  "documents": {
+    "title": "Documents",
+    "typeCv": "CV / Resume",
+    "typeCoverLetter": "Cover letter",
+    "typeOther": "Other",
+    "hint": "PDF or Word · max 10 MB",
+    "empty": "No documents uploaded.",
+    "openNewTab": "Open in new tab",
+    "openAria": "Open document in new tab",
+    "deleteAria": "Delete document"
   }
 }
