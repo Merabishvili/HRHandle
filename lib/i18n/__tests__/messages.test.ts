@@ -36,6 +36,41 @@ describe('messages/source.json integrity', () => {
   })
 })
 
+// Candidate email templates — a separate catalog (org-content-language, {{ }}
+// Handlebars vars, NOT next-intl). Validate completeness + that each locale
+// carries the same {{var}} set as English (a dropped {{role}} would break the
+// rendered email silently).
+const emails = JSON.parse(
+  readFileSync(join(process.cwd(), 'messages', 'emails.source.json'), 'utf8'),
+) as Record<string, SourceEntry>
+
+describe('messages/emails.source.json integrity', () => {
+  const entries = Object.entries(emails).filter(([k]) => !k.startsWith('_'))
+  const vars = (s: string) => (s.match(/\{\{\s*\w+\s*\}\}/g) ?? []).map((v) => v.replace(/\s/g, '')).sort()
+
+  it('every email key has a non-empty value in every locale', () => {
+    const gaps: string[] = []
+    for (const [key, entry] of entries) {
+      for (const locale of LOCALES) {
+        const v = entry[locale]
+        if (typeof v !== 'string' || v.trim() === '') gaps.push(`${key}:${locale}`)
+      }
+    }
+    expect(gaps, `missing email translations: ${gaps.join(', ')}`).toEqual([])
+  })
+
+  it('ka + ru preserve the same {{handlebars}} vars as en', () => {
+    const mismatches: string[] = []
+    for (const [key, entry] of entries) {
+      const enVars = JSON.stringify(vars(entry.en ?? ''))
+      for (const locale of ['ka', 'ru'] as const) {
+        if (JSON.stringify(vars(entry[locale] ?? '')) !== enVars) mismatches.push(`${key}:${locale}`)
+      }
+    }
+    expect(mismatches, `{{var}} set drifted from en: ${mismatches.join(', ')}`).toEqual([])
+  })
+})
+
 describe('locale helpers', () => {
   it('isLocale narrows correctly', () => {
     expect(isLocale('ka')).toBe(true)
