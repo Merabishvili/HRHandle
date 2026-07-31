@@ -201,7 +201,7 @@ Order: easy-to-hard.
 
 ### Phase 7 — Multi-language UI (i18n)
 
-Decoupled from the rest. Triggered by a market-launch decision. Strategy already sketched at the top of "Big features".
+Decoupled from the rest. Triggered by a market-launch decision. Strategy already sketched at the top of "Big features". **Full execution plan (EN/KA/RU, personal UI vs org content, per-vacancy content, AI language rule, landing switcher):** [`docs/redesign/i18n-plan.md`](../redesign/i18n-plan.md) — authored 2026-07-31, awaiting go/scope decision.
 
 Sub-sequence when it lands:
 1. `next-intl` setup + locale routing.
