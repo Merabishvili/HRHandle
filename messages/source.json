@@ -412,5 +412,46 @@
   "apply.error.phoneInvalid": { "en": "Please enter a valid phone number.", "ru": "Введите корректный номер телефона.", "ka": "შეიყვანეთ სწორი ტელეფონის ნომერი." },
   "apply.error.linkedinInvalid": { "en": "Please enter a valid LinkedIn profile URL (e.g. https://linkedin.com/in/yourname).", "ru": "Введите корректный URL профиля LinkedIn (напр. https://linkedin.com/in/yourname).", "ka": "შეიყვანეთ სწორი LinkedIn პროფილის URL (მაგ. https://linkedin.com/in/yourname)." },
   "apply.error.answerAll": { "en": "Please answer all questions before submitting.", "ru": "Ответьте на все вопросы перед отправкой.", "ka": "გაგზავნამდე უპასუხეთ ყველა კითხვას." },
-  "apply.error.captcha": { "en": "Security check not complete. Please wait a moment and try again.", "ru": "Проверка безопасности не завершена. Подождите немного и попробуйте снова.", "ka": "უსაფრთხოების შემოწმება არ დასრულებულა. მოიცადეთ ცოტა ხანი და სცადეთ თავიდან." }
+  "apply.error.captcha": { "en": "Security check not complete. Please wait a moment and try again.", "ru": "Проверка безопасности не завершена. Подождите немного и попробуйте снова.", "ka": "უსაფრთხოების შემოწმება არ დასრულებულა. მოიცადეთ ცოტა ხანი და სცადეთ თავიდან." },
+
+  "status.eyebrow": { "en": "Application status", "ru": "Статус отклика", "ka": "განაცხადის სტატუსი" },
+  "status.greeting": { "en": "Hi {name}, here's where things stand", "ru": "Здравствуйте, {name}! Вот текущий статус", "ka": "გამარჯობა, {name}, აი, სად არის საქმე" },
+  "status.role": { "en": "Role", "ru": "Должность", "ka": "პოზიცია" },
+  "status.employer": { "en": "Employer", "ru": "Работодатель", "ka": "დამსაქმებელი" },
+  "status.where": { "en": "Where", "ru": "Где", "ka": "სად" },
+  "status.appliedLabel": { "en": "Applied", "ru": "Отклик", "ka": "განაცხადი" },
+  "status.appliedOn": { "en": "Applied {date}", "ru": "Отклик от {date}", "ka": "განაცხადი: {date}" },
+  "status.lastUpdated": { "en": "Last updated {date}", "ru": "Обновлено {date}", "ka": "განახლდა {date}" },
+  "status.hasOffer": { "en": "You have an offer to review", "ru": "У вас есть оффер для рассмотрения", "ka": "თქვენ გაქვთ განსახილველი შეთავაზება" },
+  "status.respondBy": { "en": "Respond by {date}", "ru": "Ответьте до {date}", "ka": "უპასუხეთ {date}-მდე" },
+  "status.viewOffer": { "en": "View offer", "ru": "Открыть оффер", "ka": "შეთავაზების ნახვა" },
+  "status.footer": { "en": "This page only shows your own application status. Bookmark this link to check back — the recruiter will contact you directly with any next steps.", "ru": "Эта страница показывает только статус вашего отклика. Добавьте ссылку в закладки, чтобы возвращаться — рекрутер свяжется с вами напрямую по поводу дальнейших шагов.", "ka": "ეს გვერდი აჩვენებს მხოლოდ თქვენი განაცხადის სტატუსს. შეინახეთ ეს ბმული სანიშნეებში დასაბრუნებლად — რეკრუტერი პირდაპირ დაგიკავშირდებათ შემდეგ ნაბიჯებთან დაკავშირებით." },
+
+  "status.bucket.applied": { "en": "Applied", "ru": "Заявка подана", "ka": "განაცხადი გაგზავნილია" },
+  "status.bucket.inReview": { "en": "In review", "ru": "На рассмотрении", "ka": "განხილვაში" },
+  "status.bucket.interview": { "en": "Interview", "ru": "Собеседование", "ka": "გასაუბრება" },
+  "status.bucket.decision": { "en": "Decision", "ru": "Решение", "ka": "გადაწყვეტილება" },
+  "status.bucket.closed": { "en": "Closed", "ru": "Закрыто", "ka": "დახურული" },
+
+  "status.subtitle.applied": { "en": "We received your application.", "ru": "Мы получили ваш отклик.", "ka": "მივიღეთ თქვენი განაცხადი." },
+  "status.subtitle.screening": { "en": "A recruiter is reviewing your application.", "ru": "Рекрутер рассматривает ваш отклик.", "ka": "რეკრუტერი განიხილავს თქვენს განაცხადს." },
+  "status.subtitle.interview": { "en": "Your application is in the interview stage.", "ru": "Ваш отклик на этапе собеседования.", "ka": "თქვენი განაცხადი გასაუბრების ეტაპზეა." },
+  "status.subtitle.offer": { "en": "The hiring team is finalising a decision. The recruiter will be in touch directly.", "ru": "Команда найма принимает окончательное решение. Рекрутер свяжется с вами напрямую.", "ka": "დაქირავების გუნდი საბოლოო გადაწყვეტილებას იღებს. რეკრუტერი პირდაპირ დაგიკავშირდებათ." },
+  "status.subtitle.hired": { "en": "A decision has been reached. The recruiter will follow up directly.", "ru": "Решение принято. Рекрутер свяжется с вами напрямую.", "ka": "გადაწყვეტილება მიღებულია. რეკრუტერი პირდაპირ დაგიკავშირდებათ." },
+  "status.subtitle.closed": { "en": "This application has been closed. The recruiter will follow up directly with any next steps.", "ru": "Этот отклик закрыт. Рекрутер свяжется с вами напрямую по поводу дальнейших шагов.", "ka": "ეს განაცხადი დახურულია. რეკრუტერი პირდაპირ დაგიკავშირდებათ შემდეგ ნაბიჯებთან დაკავშირებით." },
+  "status.subtitle.withdrawn": { "en": "This application has been withdrawn.", "ru": "Этот отклик отозван.", "ka": "ეს განაცხადი გატანილია." },
+
+  "withdraw.prompt": { "en": "Not interested anymore? You can withdraw your application below.", "ru": "Больше не интересно? Вы можете отозвать свой отклик ниже.", "ka": "აღარ ხართ დაინტერესებული? შეგიძლიათ ქვემოთ გაიტანოთ თქვენი განაცხადი." },
+  "withdraw.button": { "en": "Withdraw application", "ru": "Отозвать отклик", "ka": "განაცხადის გატანა" },
+  "withdraw.title": { "en": "Withdraw your application?", "ru": "Отозвать ваш отклик?", "ka": "გავიტანოთ თქვენი განაცხადი?" },
+  "withdraw.desc": { "en": "You're about to withdraw your application for {role} at {company}. The recruiter will be notified and this cannot be undone from this page.", "ru": "Вы собираетесь отозвать свой отклик на {role} в {company}. Рекрутер получит уведомление, и это действие нельзя отменить на этой странице.", "ka": "თქვენ აპირებთ გაიტანოთ თქვენი განაცხადი პოზიციაზე {role} კომპანიაში {company}. რეკრუტერი მიიღებს შეტყობინებას და ამ გვერდიდან ამის გაუქმება შეუძლებელია." },
+  "withdraw.reasonLabel": { "en": "Reason (optional)", "ru": "Причина (необязательно)", "ka": "მიზეზი (არასავალდებულო)" },
+  "withdraw.reasonPlaceholder": { "en": "e.g. Took a different role. Timing isn't right.", "ru": "напр. Принял другое предложение. Сейчас не подходящее время.", "ka": "მაგ. სხვა პოზიცია ავირჩიე. ახლა შესაფერისი დრო არ არის." },
+  "withdraw.reasonHelp": { "en": "Only the recruiter who hired for this role sees this message.", "ru": "Это сообщение видит только рекрутер по этой вакансии.", "ka": "ამ შეტყობინებას ხედავს მხოლოდ ამ პოზიციის რეკრუტერი." },
+  "withdraw.confirm": { "en": "Confirm withdraw", "ru": "Подтвердить отзыв", "ka": "გატანის დადასტურება" },
+  "withdraw.withdrawing": { "en": "Withdrawing…", "ru": "Отзыв…", "ka": "მიმდინარეობს გატანა…" },
+
+  "jobs.metaTitle": { "en": "Jobs", "ru": "Вакансии", "ka": "ვაკანსიები" },
+  "jobs.noPositions": { "en": "No open positions right now. Check back soon.", "ru": "Сейчас нет открытых вакансий. Загляните позже.", "ka": "ამჟამად ღია პოზიციები არ არის. შემოიარეთ მოგვიანებით." },
+  "jobs.poweredBy": { "en": "Powered by HRHandle", "ru": "Работает на HRHandle", "ka": "მუშაობს HRHandle-ზე" }
 }

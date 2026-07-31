@@ -467,5 +467,51 @@
       "answerAll": "Please answer all questions before submitting.",
       "captcha": "Security check not complete. Please wait a moment and try again."
     }
+  },
+  "status": {
+    "eyebrow": "Application status",
+    "greeting": "Hi {name}, here's where things stand",
+    "role": "Role",
+    "employer": "Employer",
+    "where": "Where",
+    "appliedLabel": "Applied",
+    "appliedOn": "Applied {date}",
+    "lastUpdated": "Last updated {date}",
+    "hasOffer": "You have an offer to review",
+    "respondBy": "Respond by {date}",
+    "viewOffer": "View offer",
+    "footer": "This page only shows your own application status. Bookmark this link to check back — the recruiter will contact you directly with any next steps.",
+    "bucket": {
+      "applied": "Applied",
+      "inReview": "In review",
+      "interview": "Interview",
+      "decision": "Decision",
+      "closed": "Closed"
+    },
+    "subtitle": {
+      "applied": "We received your application.",
+      "screening": "A recruiter is reviewing your application.",
+      "interview": "Your application is in the interview stage.",
+      "offer": "The hiring team is finalising a decision. The recruiter will be in touch directly.",
+      "hired": "A decision has been reached. The recruiter will follow up directly.",
+      "closed": "This application has been closed. The recruiter will follow up directly with any next steps.",
+      "withdrawn": "This application has been withdrawn."
+    }
+  },
+  "withdraw": {
+    "prompt": "Not interested anymore? You can withdraw your application below.",
+    "button": "Withdraw application",
+    "title": "Withdraw your application?",
+    "desc": "You're about to withdraw your application for {role} at {company}. The recruiter will be notified and this cannot be undone from this page.",
+    "reasonLabel": "Reason (optional)",
+    "reasonPlaceholder": "e.g. Took a different role. Timing isn't right.",
+    "reasonHelp": "Only the recruiter who hired for this role sees this message.",
+    "confirm": "Confirm withdraw",
+    "withdrawing": "Withdrawing…"
+  },
+  "jobs": {
+    "metaTitle": "Jobs",
+    "noPositions": "No open positions right now. Check back soon.",
+    "poweredBy": "Powered by HRHandle"
   }
 }
