@@ -159,6 +159,19 @@ Generated **content** locale = vacancy content locale → org `default_content_l
 4. **Scope** — **everything together, full coverage.** No dashboard-first deferral; the catalog covers all surfaces and ka/ru are expected at 100% before public launch (so #1's review throughput is the schedule driver).
 
 ## 9. Translation-first execution order (revised per the decisions)
+
+> **Progress (2026-07-31): step 1 done, step 2 COMPLETE.** Foundation shipped
+> (`lib/i18n/locales.ts`, `messages/source.json`, `scripts/build-messages.mjs`,
+> `npm run messages:build`/`messages:check`, completeness test). The catalog now
+> covers the **whole product** — **501** next-intl keys (`messages/source.json`)
+> + **12** candidate email templates (`messages/emails.source.json`), all with
+> `en`/`ru`/`ka` side-by-side, across 11 batches: chrome+settings, pipeline+review,
+> candidates+profile, vacancies, reports+interviews, apply form, status+withdraw+
+> jobs, public offer, landing, and emails. ICU plurals + apostrophe-hazards
+> validated; ka/ru draft-complete and **awaiting native review** before going
+> live. **Next: step 3 — wire next-intl + swap components to `t()`** + org/public/
+> vacancy/AI behaviour (Slices 0/2/3/4/5 in §4).
+
 The user chose **translation files first**. So the order is now:
 1. **Foundation (no app wiring yet):** `lib/i18n/locales.ts`, `messages/source.json` (the reviewable catalog), `scripts/build-messages.mjs` (source → nested per-locale files), `npm run messages:build`, and a completeness check.
 2. **Populate `source.json` surface-by-surface** with en + ru + ka until the whole product is catalogued (this is the long pole; the user reviews as it fills).
