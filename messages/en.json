@@ -44,7 +44,10 @@
     "clear": "Clear",
     "copy": "Copy",
     "copied": "Copied to clipboard",
-    "upload": "Upload"
+    "upload": "Upload",
+    "status": "Status",
+    "notSpecified": "Not specified",
+    "unknown": "Unknown"
   },
   "settings": {
     "section": {
@@ -294,5 +297,71 @@
     "openNewTab": "Open in new tab",
     "openAria": "Open document in new tab",
     "deleteAria": "Delete document"
+  },
+  "enum": {
+    "employment": {
+      "fullTime": "Full-time",
+      "partTime": "Part-time",
+      "contract": "Contract",
+      "internship": "Internship"
+    },
+    "workMode": {
+      "remote": "Remote",
+      "hybrid": "Hybrid",
+      "onsite": "On-site"
+    }
+  },
+  "vacancies": {
+    "title": "Vacancies",
+    "subtitle": "Manage your job postings and track applicants.",
+    "emptyTitle": "No vacancies yet",
+    "emptyBody": "Get started by creating your first job posting.",
+    "colVacancy": "Vacancy",
+    "colCandidates": "Candidates",
+    "viewDetails": "View details",
+    "editVacancy": "Edit vacancy",
+    "duplicateVacancy": "Duplicate vacancy"
+  },
+  "vacancy": {
+    "form": {
+      "basicInfo": "Basic information",
+      "basicInfoDesc": "The main details about this vacancy.",
+      "positionTitle": "Position title",
+      "titlePlaceholder": "e.g. Senior Software Engineer",
+      "selectSector": "Select sector",
+      "searchSectors": "Search sectors…",
+      "noSectors": "No sectors found.",
+      "selectStatus": "Select status",
+      "deptPlaceholder": "e.g. Engineering",
+      "locationPlaceholder": "e.g. San Francisco or Remote",
+      "openingsCount": "Openings count",
+      "hmPlaceholder": "e.g. Nino Beridze",
+      "datesComp": "Dates and Compensation",
+      "datesCompDesc": "Vacancy timeline and salary range.",
+      "selectStartDate": "Select start date",
+      "selectEndDate": "Select end date",
+      "minSalary": "Minimum salary",
+      "maxSalary": "Maximum salary",
+      "currency": "Currency",
+      "details": "Vacancy details",
+      "detailsDesc": "Shown on the public jobs page and included when sharing on LinkedIn.",
+      "aboutJob": "About the Job",
+      "aboutPlaceholder": "Give an overview of the role — what the team does, what success looks like, and why someone would want to join...",
+      "responsibilities": "Responsibilities",
+      "respPlaceholder": "• Lead backend architecture decisions\n• Collaborate with product and design\n• Mentor junior engineers...",
+      "requirements": "Requirements",
+      "reqPlaceholder": "• 5+ years of experience with TypeScript\n• Strong understanding of distributed systems\n• Experience with cloud infrastructure...",
+      "showOnPublic": "Show on public jobs page",
+      "showOnPublicHelp": "Candidates can discover and apply to this vacancy from your public jobs page."
+    },
+    "detail": {
+      "aboutRole": "About the role",
+      "postingDetails": "Posting details",
+      "visibility": "Visibility",
+      "language": "Language",
+      "lastEdited": "Last edited",
+      "public": "Public",
+      "private": "Private"
+    }
   }
 }
