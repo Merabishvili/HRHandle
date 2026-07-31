@@ -1,0 +1,101 @@
+{
+  "nav": {
+    "pipeline": "Pipeline",
+    "vacancies": "Vacancies",
+    "candidates": "Candidates",
+    "interviews": "Interviews",
+    "reports": "Reports",
+    "settings": "Settings",
+    "organization": "Organization",
+    "openMenu": "Open navigation",
+    "closeMenu": "Close navigation"
+  },
+  "sidebar": {
+    "plan": "Plan",
+    "status": "Status",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "refund": "Refund"
+  },
+  "plan": {
+    "trial": "Trial",
+    "individual": "Individual",
+    "organization": "Organization"
+  },
+  "common": {
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "remove": "Remove",
+    "enable": "Enable",
+    "disable": "Disable",
+    "loading": "Loading…",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm",
+    "search": "Search"
+  },
+  "settings": {
+    "section": {
+      "personal": "Personal",
+      "organization": "Organization",
+      "hiringWorkflow": "Hiring workflow",
+      "data": "Data"
+    },
+    "nav": {
+      "profile": "Profile",
+      "notifications": "Notifications",
+      "security": "Security",
+      "organization": "Organization",
+      "team": "Team",
+      "billing": "Billing",
+      "pipelineStages": "Pipeline stages",
+      "customFields": "Custom fields",
+      "emailTemplates": "Email templates",
+      "rejectionReasons": "Rejection reasons",
+      "integrations": "Integrations",
+      "auditLog": "Audit log",
+      "aiOversight": "AI oversight",
+      "trash": "Trash"
+    },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Manage your personal account details.",
+      "changePhoto": "Change photo",
+      "fullName": "Full name",
+      "jobTitle": "Job title",
+      "email": "Email",
+      "language": "Language",
+      "languageHelp": "Changes how HRHandle looks for you. Doesn't affect what candidates or teammates see.",
+      "systemDefault": "System default"
+    },
+    "org": {
+      "title": "Organization",
+      "subtitle": "Manage your organization settings.",
+      "name": "Organization name",
+      "uploadLogo": "Upload logo"
+    },
+    "mfa": {
+      "title": "Two-factor authentication policy",
+      "subtitle": "Require members of your organisation to enroll a TOTP authenticator. Only the owner can change this policy.",
+      "requireAll": "Require 2FA for everyone",
+      "requireAllHelp": "Every member, including owners and admins, must enroll before they can use HRHandle.",
+      "requireAdmins": "Require 2FA for owners and admins only",
+      "savePolicy": "Save policy",
+      "saved": "Policy saved. Members will be prompted to enroll on their next page load."
+    },
+    "aiFit": {
+      "title": "AI Fit Analysis",
+      "subtitle": "An optional, advisory copilot that assesses how an application fits a vacancy's scorecard criteria. Only the owner can change this setting.",
+      "enable": "Enable AI Fit Analysis",
+      "enableHelp": "Adds a collapsed advisory card to each candidate profile. It never scores the person, never advances or rejects anyone, and hides the candidate's name and other protected details from the model.",
+      "acknowledgement": "I understand AI Fit Analysis is advisory only: it produces no overall score, a human always makes the decision and must record an assessment, and outputs are based only on job-relevant evidence. Under the EU AI Act this is a limited-risk, human-in-the-loop use and my organisation acknowledges these terms.",
+      "onNotice": "AI Fit Analysis is on. Recruiters will see the advisory card on candidate profiles.",
+      "offNotice": "AI Fit Analysis is off. The card is hidden everywhere."
+    }
+  }
+}

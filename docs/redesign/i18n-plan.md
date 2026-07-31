@@ -34,11 +34,11 @@ export const DEFAULT_LOCALE: Locale = 'en'
 ```
 **Fix the current cosmetic bug:** the live selector offers 6 languages (`en/ka/ru/es/fr/de`) but can render none. Reduce it to the 3 real locales in Slice 0. `es/fr/de` return only when catalogs exist.
 
-### 2.3 Routing model — **split** (the key call)
+### 2.3 Routing model — **split** (the key call) · ✅ DECIDED 2026-07-31
 - **Dashboard (authed):** **cookie-based** locale (`NEXT_LOCALE`), resolved from `profiles.language`. **No `app/[locale]/…` restructure** — that would rewrite the entire app tree and every internal link for zero SEO benefit on authed pages.
-- **Public pages** (`/jobs`, `/apply`, `/offer`, `/status`): locale via **`?lang=xx` query** + `<link rel="alternate" hreflang>` alternates, defaulting to the org/vacancy content language. Simplest path that keeps existing routes and shareable links working. Path-segment locales (`/jobs/[slug]/[locale]`) are a documented future SEO upgrade, not v1.
+- **Public pages** (`/jobs`, `/apply`, `/offer`, `/status`, landing): **path-segment locale** — `/[locale]/jobs/[slug]` with `next-intl` `localePrefix: 'as-needed'` (English = no prefix, `ka`/`ru` get `/ka/…`, `/ru/…`) + `<link rel="alternate" hreflang>` alternates + per-locale entries in `sitemap.ts`. **Decision (Q2): invest in SEO now** — the user wants job pages to rank in ka/ru, so distinct indexable URLs per language are worth the public-route restructure. (Job pages aren't in the sitemap today — that gets fixed as part of this.)
 
-**Why not one model:** the dashboard is a private app (cookie is ideal); public pages are SEO/shareable (need a URL signal). Forcing both into `[locale]` segments is the single biggest source of avoidable churn.
+**Why the split:** the dashboard is a private app → a cookie is ideal and avoids churn; public pages are SEO/shareable → they need a real per-locale URL Google can index. next-intl's middleware handles the public locale prefix; the dashboard opts out of prefixing and reads the cookie.
 
 ### 2.4 Locale resolution (source of truth per surface)
 | Surface | Resolver | Fallback |
@@ -48,8 +48,8 @@ export const DEFAULT_LOCALE: Locale = 'en'
 | AI generated content | vacancy content locale → org `default_content_locale` (see §6) | `en` |
 | Landing page (no session) | visitor cookie → **always `en`** (never browser/IP) | `en` |
 
-### 2.5 Content model for per-vacancy variants (§3) — **recommend JSONB per-locale**
-Decision was deferred to planning; my recommendation, with the tradeoff stated:
+### 2.5 Content model for per-vacancy variants (§3) — **JSONB per-locale** · ✅ DECIDED 2026-07-31 (Q3 confirmed)
+Confirmed during planning; the tradeoff is stated below.
 
 **Chosen: JSONB per-locale columns.** `description`, `requirements`, `responsibilities` (and the `label` on `vacancy_screening_questions` / `vacancy_questions`) become `LocalizedText`:
 ```ts
@@ -135,7 +135,7 @@ No schema change for §1, §3b, or §4 (§4 is prompt/param only). Email templat
 ## 5. Impact list (what the whole programme touches)
 
 - **Deps:** `next-intl`.
-- **New:** `lib/i18n/*`, `messages/{en,ka,ru}.json`, org-locale action, org language settings card, public language switcher, landing switcher, `LocalizedText`/`pickLocale`.
+- **New:** `lib/i18n/*`, **`messages/source.json`** (single reviewable catalog — every key carries `{ en, ru, ka }` side-by-side, per Q1), a generator (`scripts/build-messages.mjs`) that emits the per-locale **`messages/{en,ka,ru}.json`** next-intl consumes, org-locale action, org language settings card, public language switcher, landing switcher, `LocalizedText`/`pickLocale`.
 - **Schema:** `organizations` (2 cols), `vacancies` (4 cols), `vacancy_screening_questions` + `vacancy_questions` (`label_i18n`); two vacancy migrations (add+backfill, then drop-legacy).
 - **Heavily edited:** every `.tsx` with user-facing strings (~184 files, phased); `profile-form.tsx`; vacancy form + JD tab + screening/scorecard editors; all public pages + candidate emails; all `lib/ai/*` + AI routes.
 - **Types:** `Locale`, `LocalizedText`; vacancy content types flip `string → LocalizedText`; ripple through `lib/validations/vacancy.ts` (coordinate with A-005 RHF schemas) and everywhere those fields are consumed.
@@ -152,11 +152,16 @@ Generated **content** locale = vacancy content locale → org `default_content_l
 - The catalog-completeness test blocks a build if a key is missing in any locale (missing → falls back to `en` at runtime, but CI flags it so gaps are visible).
 - **This human review is the true ship-gate for each locale** and is outside code control — plan the sweep so English ships first and ka/ru light up per-surface as reviews land.
 
-## 8. Open questions / decisions still needed
-1. **Native-speaker reviewer** for ka + ru — who, and is machine-draft-then-review acceptable? (Blocks shipping non-English.)
-2. **Public URL locale** — accept `?lang=` for v1, or invest in `/[locale]/` path segments now for SEO? (Plan assumes `?lang=`.)
-3. **Vacancy content model** — plan recommends **JSONB per-locale** (§2.5); confirm before Slice 4's migration.
-4. **Scope of the full UI sweep** — all surfaces, or dashboard-only first and defer low-traffic admin screens?
+## 8. Open questions / decisions — ✅ ALL RESOLVED 2026-07-31
+1. **Native-speaker reviewer** — **the user reviews.** Translations are delivered as a single side-by-side `source.json` (`{ en, ru, ka }` per key) precisely so the user can proofread ka/ru against en in one place. Machine-draft-then-review is accepted; en ships as source, ka/ru go live per surface as the user signs off.
+2. **Public URL locale** — **path segments, SEO-first** (§2.3). `/[locale]/…` for public pages via `localePrefix: 'as-needed'`; job pages get added to the sitemap per-locale.
+3. **Vacancy content model** — **JSONB per-locale, confirmed** (§2.5).
+4. **Scope** — **everything together, full coverage.** No dashboard-first deferral; the catalog covers all surfaces and ka/ru are expected at 100% before public launch (so #1's review throughput is the schedule driver).
 
-## 9. Sequencing & effort (rough)
-`0 → 1 → {1b… full sweep ∥ 2 → 3 → 4 → 5} → 6`. Slice 0/1 prove the pipeline; 2–5 deliver the org/public/vacancy/AI behaviour; the full-UI sweep (1b…) is the long pole and runs in parallel, gated by translation review. Total is **multi-week**, dominated by string extraction + human translation review — not by the plumbing.
+## 9. Translation-first execution order (revised per the decisions)
+The user chose **translation files first**. So the order is now:
+1. **Foundation (no app wiring yet):** `lib/i18n/locales.ts`, `messages/source.json` (the reviewable catalog), `scripts/build-messages.mjs` (source → nested per-locale files), `npm run messages:build`, and a completeness check.
+2. **Populate `source.json` surface-by-surface** with en + ru + ka until the whole product is catalogued (this is the long pole; the user reviews as it fills).
+3. **Then wire** next-intl + swap components to `t()` + build the org/public/vacancy/AI behaviour (Slices 0/2/3/4/5 from §4).
+
+`source.json` is the human-facing artefact; the generated `en/ka/ru.json` are build outputs next-intl reads. Sequencing/effort is **multi-week**, dominated by writing + reviewing ~2–3K × 3 strings — not the plumbing.

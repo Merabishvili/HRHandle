@@ -10,7 +10,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "guide:screenshots": "tsx scripts/capture-screenshots.ts",
-    "guide:seed": "tsx scripts/seed-demo-org.ts"
+    "guide:seed": "tsx scripts/seed-demo-org.ts",
+    "messages:build": "node scripts/build-messages.mjs",
+    "messages:check": "node scripts/build-messages.mjs --check"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
