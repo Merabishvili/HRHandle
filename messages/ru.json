@@ -193,5 +193,78 @@
     "loadingScheduler": "Загрузка планировщика…",
     "schedulerFailed": "Не удалось открыть планировщик. Попробуйте ещё раз.",
     "cvOpenFailed": "Не удалось открыть CV."
+  },
+  "candidates": {
+    "title": "Кандидаты",
+    "subtitle": "Отслеживайте и управляйте базой кандидатов.",
+    "showingFor": "Кандидаты по вакансии: {vacancy}",
+    "clearFilter": "Сбросить фильтр",
+    "exportCsv": "Экспорт в CSV",
+    "bulkImport": "Массовый импорт",
+    "addCandidate": "Добавить кандидата",
+    "searchPlaceholder": "Поиск кандидатов...",
+    "sortBy": "Сортировка",
+    "columns": "Колонки",
+    "count": "{count, plural, one {# кандидат} few {# кандидата} many {# кандидатов} other {# кандидата}}",
+    "pageOf": "страница {page} из {total}",
+    "allTab": "Все",
+    "colCandidate": "Кандидат",
+    "colStatus": "Статус",
+    "colLinkedVacancy": "Связанная вакансия",
+    "emptyTitle": "Пока нет кандидатов",
+    "emptySearchTitle": "Нет кандидатов по запросу «{search}»",
+    "emptyBody": "Начните добавлять кандидатов, чтобы вести пайплайн найма.",
+    "emptySearchBody": "Попробуйте другой запрос.",
+    "deleteCandidate": "Удалить кандидата"
+  },
+  "columns": {
+    "stage": "Этап",
+    "fitScore": "Оценка соответствия",
+    "currentPosition": "Текущая должность",
+    "currentCompany": "Текущая компания",
+    "addedDate": "Дата добавления",
+    "email": "Эл. почта",
+    "phone": "Телефон",
+    "experience": "Опыт",
+    "location": "Локация",
+    "salaryExpectation": "Ожидаемая зарплата",
+    "noticePeriod": "Срок уведомления",
+    "languages": "Языки",
+    "source": "Источник",
+    "department": "Отдел",
+    "endDate": "Дата окончания",
+    "employmentType": "Тип занятости",
+    "workMode": "Формат работы",
+    "sector": "Сфера",
+    "salaryRange": "Диапазон зарплаты",
+    "health": "Здоровье",
+    "startDate": "Дата начала",
+    "openings": "Мест",
+    "hiringManager": "Нанимающий менеджер"
+  },
+  "sort": {
+    "addedNewest": "Добавлены: сначала новые",
+    "addedOldest": "Добавлены: сначала старые",
+    "experienceHighLow": "Опыт: от большего к меньшему",
+    "experienceLowHigh": "Опыт: от меньшего к большему",
+    "status": "Статус",
+    "endSoonest": "Дата окончания: сначала ближайшие",
+    "endLatest": "Дата окончания: сначала поздние"
+  },
+  "profile": {
+    "contact": "Контакты",
+    "additionalInfo": "Дополнительная информация",
+    "customFields": "Пользовательские поля",
+    "addToVacancy": "Добавить к вакансии",
+    "advanceToNext": "Перевести на следующий этап",
+    "moreActions": "Ещё действия",
+    "fact": {
+      "added": "Добавлен",
+      "timezone": "Часовой пояс"
+    },
+    "meta": {
+      "candidateId": "ID кандидата",
+      "lastUpdated": "Обновлено"
+    }
   }
 }

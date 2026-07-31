@@ -193,5 +193,78 @@
     "loadingScheduler": "დამგეგმავი იტვირთება…",
     "schedulerFailed": "დამგეგმავის გახსნა ვერ მოხერხდა. სცადეთ თავიდან.",
     "cvOpenFailed": "CV-ის გახსნა ვერ მოხერხდა."
+  },
+  "candidates": {
+    "title": "კანდიდატები",
+    "subtitle": "თვალი ადევნეთ და მართეთ თქვენი კანდიდატების ბაზა.",
+    "showingFor": "კანდიდატები პოზიციისთვის: {vacancy}",
+    "clearFilter": "ფილტრის გასუფთავება",
+    "exportCsv": "CSV-ის ექსპორტი",
+    "bulkImport": "მასობრივი იმპორტი",
+    "addCandidate": "კანდიდატის დამატება",
+    "searchPlaceholder": "კანდიდატების ძებნა...",
+    "sortBy": "დალაგება",
+    "columns": "სვეტები",
+    "count": "{count, plural, one {# კანდიდატი} other {# კანდიდატი}}",
+    "pageOf": "გვერდი {page} / {total}",
+    "allTab": "ყველა",
+    "colCandidate": "კანდიდატი",
+    "colStatus": "სტატუსი",
+    "colLinkedVacancy": "დაკავშირებული ვაკანსია",
+    "emptyTitle": "ჯერ კანდიდატები არ არის",
+    "emptySearchTitle": "„{search}“-ის შესაბამისი კანდიდატი არ მოიძებნა",
+    "emptyBody": "დაიწყეთ კანდიდატების დამატება, რომ აწარმოოთ დაქირავების პაიპლაინი.",
+    "emptySearchBody": "სცადეთ სხვა საძიებო სიტყვა.",
+    "deleteCandidate": "კანდიდატის წაშლა"
+  },
+  "columns": {
+    "stage": "ეტაპი",
+    "fitScore": "შესაბამისობის ქულა",
+    "currentPosition": "მიმდინარე პოზიცია",
+    "currentCompany": "მიმდინარე კომპანია",
+    "addedDate": "დამატების თარიღი",
+    "email": "იმეილი",
+    "phone": "ტელეფონი",
+    "experience": "გამოცდილება",
+    "location": "მდებარეობა",
+    "salaryExpectation": "სასურველი ხელფასი",
+    "noticePeriod": "გაფრთხილების ვადა",
+    "languages": "ენები",
+    "source": "წყარო",
+    "department": "დეპარტამენტი",
+    "endDate": "დასრულების თარიღი",
+    "employmentType": "დასაქმების ტიპი",
+    "workMode": "მუშაობის ფორმატი",
+    "sector": "სექტორი",
+    "salaryRange": "ხელფასის დიაპაზონი",
+    "health": "ჯანმრთელობა",
+    "startDate": "დაწყების თარიღი",
+    "openings": "ვაკანტური ადგილები",
+    "hiringManager": "დამქირავებელი მენეჯერი"
+  },
+  "sort": {
+    "addedNewest": "დამატებული: ჯერ ახლები",
+    "addedOldest": "დამატებული: ჯერ ძველები",
+    "experienceHighLow": "გამოცდილება: მეტიდან ნაკლებისკენ",
+    "experienceLowHigh": "გამოცდილება: ნაკლებიდან მეტისკენ",
+    "status": "სტატუსი",
+    "endSoonest": "დასრულების თარიღი: ჯერ უახლოესი",
+    "endLatest": "დასრულების თარიღი: ჯერ გვიანი"
+  },
+  "profile": {
+    "contact": "კონტაქტი",
+    "additionalInfo": "დამატებითი ინფორმაცია",
+    "customFields": "მორგებული ველები",
+    "addToVacancy": "ვაკანსიაზე დამატება",
+    "advanceToNext": "შემდეგ ეტაპზე გადაყვანა",
+    "moreActions": "სხვა მოქმედებები",
+    "fact": {
+      "added": "დამატებულია",
+      "timezone": "დროის სარტყელი"
+    },
+    "meta": {
+      "candidateId": "კანდიდატის ID",
+      "lastUpdated": "ბოლოს განახლდა"
+    }
   }
 }

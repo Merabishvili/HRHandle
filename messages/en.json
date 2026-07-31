@@ -193,5 +193,78 @@
     "loadingScheduler": "Loading scheduler…",
     "schedulerFailed": "Could not open the scheduler. Please try again.",
     "cvOpenFailed": "Could not open the CV."
+  },
+  "candidates": {
+    "title": "Candidates",
+    "subtitle": "Track and manage your candidate database.",
+    "showingFor": "Showing candidates for: {vacancy}",
+    "clearFilter": "Clear filter",
+    "exportCsv": "Export CSV",
+    "bulkImport": "Bulk import",
+    "addCandidate": "Add candidate",
+    "searchPlaceholder": "Search candidates...",
+    "sortBy": "Sort by",
+    "columns": "Columns",
+    "count": "{count, plural, one {# candidate} other {# candidates}}",
+    "pageOf": "page {page} of {total}",
+    "allTab": "All",
+    "colCandidate": "Candidate",
+    "colStatus": "Status",
+    "colLinkedVacancy": "Linked vacancy",
+    "emptyTitle": "No candidates yet",
+    "emptySearchTitle": "No candidates matching “{search}”",
+    "emptyBody": "Start adding candidates to track your hiring pipeline.",
+    "emptySearchBody": "Try a different search term.",
+    "deleteCandidate": "Delete candidate"
+  },
+  "columns": {
+    "stage": "Stage",
+    "fitScore": "Fit score",
+    "currentPosition": "Current position",
+    "currentCompany": "Current company",
+    "addedDate": "Added date",
+    "email": "Email",
+    "phone": "Phone",
+    "experience": "Experience",
+    "location": "Location",
+    "salaryExpectation": "Salary expectation",
+    "noticePeriod": "Notice period",
+    "languages": "Languages",
+    "source": "Source",
+    "department": "Department",
+    "endDate": "End date",
+    "employmentType": "Employment type",
+    "workMode": "Work mode",
+    "sector": "Sector",
+    "salaryRange": "Salary range",
+    "health": "Health",
+    "startDate": "Start date",
+    "openings": "Openings",
+    "hiringManager": "Hiring manager"
+  },
+  "sort": {
+    "addedNewest": "Added: Newest first",
+    "addedOldest": "Added: Oldest first",
+    "experienceHighLow": "Experience: High to low",
+    "experienceLowHigh": "Experience: Low to high",
+    "status": "Status",
+    "endSoonest": "End date: Soonest first",
+    "endLatest": "End date: Latest first"
+  },
+  "profile": {
+    "contact": "Contact",
+    "additionalInfo": "Additional information",
+    "customFields": "Custom fields",
+    "addToVacancy": "Add to vacancy",
+    "advanceToNext": "Advance to next stage",
+    "moreActions": "More actions",
+    "fact": {
+      "added": "Added",
+      "timezone": "Timezone"
+    },
+    "meta": {
+      "candidateId": "Candidate ID",
+      "lastUpdated": "Last updated"
+    }
   }
 }
