@@ -564,5 +564,78 @@
     "goBack": "Go back",
     "declining": "Declining…",
     "confirmDecline": "Confirm decline"
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "guides": "Guides",
+      "signIn": "Sign in",
+      "getStarted": "Get started"
+    },
+    "hero": {
+      "badge": "The ATS built for small teams that hire carefully",
+      "headline": "Hire with structure, not spreadsheets",
+      "subhead": "Manage every role and candidate in one pipeline, score interviews consistently, and make defensible hiring decisions — without enterprise bloat.",
+      "startTrial": "Start free trial",
+      "learnMore": "Learn more",
+      "trialNote": "7-day free trial · no credit card to start"
+    },
+    "proof": {
+      "aria": "Why HRHandle",
+      "onePipeline": "One pipeline",
+      "onePipelineDesc": "every role & candidate in one place",
+      "score": "Score, don't guess",
+      "scoreDesc": "consistent scorecards per role",
+      "priceDesc": "individual plan · cancel anytime"
+    },
+    "features": {
+      "title": "Everything you need, nothing you don't",
+      "subtitle": "The recruiter's daily loop, designed to be fast.",
+      "difference": "The difference",
+      "heroTitle": "Structured evaluation, built in",
+      "heroBody": "Define what matters for each role once. Every interviewer scores against the same criteria, independently — so your decision rests on evidence and consensus, not the loudest voice in the room."
+    },
+    "feature": {
+      "pipeline": {
+        "title": "One pipeline, all roles",
+        "desc": "A board across every vacancy with a fast review mode for new applicants. Stop digging through per-job tabs."
+      },
+      "profiles": {
+        "title": "Rich candidate profiles",
+        "desc": "CV auto-parsed into experience, education and contact. Notes, documents and full history in one view."
+      },
+      "scheduling": {
+        "title": "Interview scheduling",
+        "desc": "Schedule, assign interviewers, and sync with Google, Zoom or Teams automatically."
+      },
+      "ai": {
+        "title": "AI that assists, never decides",
+        "desc": "Draft job descriptions, check inclusive language, parse CVs — always advisory, always your call."
+      },
+      "share": {
+        "title": "Share & collect applies",
+        "desc": "A branded public careers page + one-click LinkedIn share. Applications land straight in your pipeline."
+      },
+      "reports": {
+        "title": "Reports that mean something",
+        "desc": "Time-to-hire, source effectiveness and funnel conversion — powered by the same consistent scorecards."
+      }
+    },
+    "pricing": {
+      "title": "Simple, transparent pricing",
+      "subtitle": "Choose the plan that fits your hiring needs"
+    },
+    "cta": {
+      "title": "Ready to hire with structure?",
+      "subtitle": "Start a 7-day free trial. Set up your first role in minutes.",
+      "button": "Start your free trial"
+    },
+    "footer": {
+      "terms": "Terms and Conditions",
+      "privacy": "Privacy Policy",
+      "refund": "Refund Policy",
+      "rights": "© {year} HRHandle. All rights reserved."
+    }
   }
 }

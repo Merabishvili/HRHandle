@@ -495,5 +495,56 @@
   "offer.declineReasonPlaceholder": { "en": "e.g. Took a different offer. Compensation was lower than expected. Timing isn't right.", "ru": "напр. Принял другое предложение. Компенсация ниже ожидаемой. Сейчас не подходящее время.", "ka": "მაგ. სხვა შეთავაზება ავირჩიე. ანაზღაურება მოსალოდნელზე დაბალი იყო. ახლა შესაფერისი დრო არ არის." },
   "offer.goBack": { "en": "Go back", "ru": "Назад", "ka": "უკან" },
   "offer.declining": { "en": "Declining…", "ru": "Отклонение…", "ka": "მიმდინარეობს უარყოფა…" },
-  "offer.confirmDecline": { "en": "Confirm decline", "ru": "Подтвердить отказ", "ka": "უარის დადასტურება" }
+  "offer.confirmDecline": { "en": "Confirm decline", "ru": "Подтвердить отказ", "ka": "უარის დადასტურება" },
+
+  "landing.nav.features": { "en": "Features", "ru": "Возможности", "ka": "ფუნქციები" },
+  "landing.nav.pricing": { "en": "Pricing", "ru": "Цены", "ka": "ფასები" },
+  "landing.nav.guides": { "en": "Guides", "ru": "Руководства", "ka": "გზამკვლევები" },
+  "landing.nav.signIn": { "en": "Sign in", "ru": "Войти", "ka": "შესვლა" },
+  "landing.nav.getStarted": { "en": "Get started", "ru": "Начать", "ka": "დაწყება" },
+
+  "landing.hero.badge": { "en": "The ATS built for small teams that hire carefully", "ru": "ATS для небольших команд, которые нанимают вдумчиво", "ka": "ATS პატარა გუნდებისთვის, რომლებიც ყურადღებით ქირაობენ" },
+  "landing.hero.headline": { "en": "Hire with structure, not spreadsheets", "ru": "Нанимайте системно, а не через таблицы", "ka": "დაიქირავეთ სისტემურად, და არა ცხრილებით" },
+  "landing.hero.subhead": { "en": "Manage every role and candidate in one pipeline, score interviews consistently, and make defensible hiring decisions — without enterprise bloat.", "ru": "Управляйте всеми вакансиями и кандидатами в одном пайплайне, оценивайте собеседования единообразно и принимайте обоснованные решения о найме — без корпоративного балласта.", "ka": "მართეთ ყველა პოზიცია და კანდიდატი ერთ პაიპლაინში, შეაფასეთ გასაუბრებები თანმიმდევრულად და მიიღეთ დასაბუთებული გადაწყვეტილებები — მსხვილი კორპორაციების ზედმეტი სირთულის გარეშე." },
+  "landing.hero.startTrial": { "en": "Start free trial", "ru": "Начать бесплатный период", "ka": "დაიწყეთ უფასო პერიოდი" },
+  "landing.hero.learnMore": { "en": "Learn more", "ru": "Подробнее", "ka": "გაიგეთ მეტი" },
+  "landing.hero.trialNote": { "en": "7-day free trial · no credit card to start", "ru": "7 дней бесплатно · без карты для старта", "ka": "7-დღიანი უფასო პერიოდი · ბარათის გარეშე" },
+
+  "landing.proof.aria": { "en": "Why HRHandle", "ru": "Почему HRHandle", "ka": "რატომ HRHandle" },
+  "landing.proof.onePipeline": { "en": "One pipeline", "ru": "Один пайплайн", "ka": "ერთი პაიპლაინი" },
+  "landing.proof.onePipelineDesc": { "en": "every role & candidate in one place", "ru": "все вакансии и кандидаты в одном месте", "ka": "ყველა პოზიცია და კანდიდატი ერთ ადგილას" },
+  "landing.proof.score": { "en": "Score, don't guess", "ru": "Оценивайте, а не гадайте", "ka": "შეაფასეთ, ნუ გამოიცნობთ" },
+  "landing.proof.scoreDesc": { "en": "consistent scorecards per role", "ru": "единые оценочные карты по вакансиям", "ka": "ერთგვაროვანი შეფასების ბარათები პოზიციებზე" },
+  "landing.proof.priceDesc": { "en": "individual plan · cancel anytime", "ru": "индивидуальный тариф · отмена в любой момент", "ka": "ინდივიდუალური გეგმა · გაუქმება ნებისმიერ დროს" },
+
+  "landing.features.title": { "en": "Everything you need, nothing you don't", "ru": "Всё, что нужно, и ничего лишнего", "ka": "ყველაფერი, რაც გჭირდებათ, და არაფერი ზედმეტი" },
+  "landing.features.subtitle": { "en": "The recruiter's daily loop, designed to be fast.", "ru": "Ежедневный цикл рекрутера, созданный быть быстрым.", "ka": "რეკრუტერის ყოველდღიური ციკლი, სისწრაფისთვის შექმნილი." },
+  "landing.features.difference": { "en": "The difference", "ru": "Отличие", "ka": "განსხვავება" },
+  "landing.features.heroTitle": { "en": "Structured evaluation, built in", "ru": "Структурированная оценка из коробки", "ka": "სტრუქტურირებული შეფასება, ჩაშენებული" },
+  "landing.features.heroBody": { "en": "Define what matters for each role once. Every interviewer scores against the same criteria, independently — so your decision rests on evidence and consensus, not the loudest voice in the room.", "ru": "Один раз определите, что важно для каждой вакансии. Каждый интервьюер оценивает по одним и тем же критериям независимо — и решение опирается на доказательства и консенсус, а не на самый громкий голос.", "ka": "ერთხელ განსაზღვრეთ, რა არის მნიშვნელოვანი თითოეული პოზიციისთვის. ყველა ინტერვიუერი აფასებს ერთი და იმავე კრიტერიუმებით, დამოუკიდებლად — და გადაწყვეტილება ეყრდნობა მტკიცებულებას და კონსენსუსს, და არა ყველაზე ხმამაღალ აზრს." },
+
+  "landing.feature.pipeline.title": { "en": "One pipeline, all roles", "ru": "Один пайплайн, все вакансии", "ka": "ერთი პაიპლაინი, ყველა პოზიცია" },
+  "landing.feature.pipeline.desc": { "en": "A board across every vacancy with a fast review mode for new applicants. Stop digging through per-job tabs.", "ru": "Доска по всем вакансиям с быстрым режимом просмотра новых откликов. Больше не нужно копаться по вкладкам вакансий.", "ka": "დაფა ყველა ვაკანსიაზე ახალი განაცხადების სწრაფი განხილვის რეჟიმით. აღარ დაგჭირდებათ თითო ვაკანსიის ჩანართებში ძებნა." },
+  "landing.feature.profiles.title": { "en": "Rich candidate profiles", "ru": "Подробные профили кандидатов", "ka": "დეტალური კანდიდატის პროფილები" },
+  "landing.feature.profiles.desc": { "en": "CV auto-parsed into experience, education and contact. Notes, documents and full history in one view.", "ru": "CV автоматически разбирается на опыт, образование и контакты. Заметки, документы и вся история в одном месте.", "ka": "CV ავტომატურად იშლება გამოცდილებად, განათლებად და კონტაქტებად. შენიშვნები, დოკუმენტები და სრული ისტორია ერთ ხედში." },
+  "landing.feature.scheduling.title": { "en": "Interview scheduling", "ru": "Планирование собеседований", "ka": "გასაუბრებების დაგეგმვა" },
+  "landing.feature.scheduling.desc": { "en": "Schedule, assign interviewers, and sync with Google, Zoom or Teams automatically.", "ru": "Планируйте, назначайте интервьюеров и синхронизируйтесь с Google, Zoom или Teams автоматически.", "ka": "დაგეგმეთ, დანიშნეთ ინტერვიუერები და ავტომატურად დაასინქრონეთ Google-თან, Zoom-თან ან Teams-თან." },
+  "landing.feature.ai.title": { "en": "AI that assists, never decides", "ru": "ИИ, который помогает, но не решает", "ka": "AI, რომელიც ეხმარება, მაგრამ არ წყვეტს" },
+  "landing.feature.ai.desc": { "en": "Draft job descriptions, check inclusive language, parse CVs — always advisory, always your call.", "ru": "Составляйте описания вакансий, проверяйте инклюзивность формулировок, разбирайте CV — всегда как рекомендация, решение всегда за вами.", "ka": "შეადგინეთ ვაკანსიის აღწერები, შეამოწმეთ ინკლუზიური ენა, დაამუშავეთ CV-ები — ყოველთვის სარეკომენდაციო, გადაწყვეტილება ყოველთვის თქვენია." },
+  "landing.feature.share.title": { "en": "Share & collect applies", "ru": "Публикуйте и собирайте отклики", "ka": "გააზიარეთ და შეაგროვეთ განაცხადები" },
+  "landing.feature.share.desc": { "en": "A branded public careers page + one-click LinkedIn share. Applications land straight in your pipeline.", "ru": "Брендированная публичная страница вакансий + публикация в LinkedIn в один клик. Отклики попадают прямо в ваш пайплайн.", "ka": "დაბრენდებული საჯარო კარიერის გვერდი + LinkedIn-ზე გაზიარება ერთი დაწკაპუნებით. განაცხადები პირდაპირ თქვენს პაიპლაინში ხვდება." },
+  "landing.feature.reports.title": { "en": "Reports that mean something", "ru": "Отчёты, которые имеют смысл", "ka": "ანგარიშები, რომლებსაც აზრი აქვს" },
+  "landing.feature.reports.desc": { "en": "Time-to-hire, source effectiveness and funnel conversion — powered by the same consistent scorecards.", "ru": "Время найма, эффективность источников и конверсия воронки — на основе тех же единых оценочных карт.", "ka": "დაქირავების დრო, წყაროების ეფექტიანობა და ვორონკის კონვერსია — იმავე ერთგვაროვან შეფასების ბარათებზე დაყრდნობით." },
+
+  "landing.pricing.title": { "en": "Simple, transparent pricing", "ru": "Простые и прозрачные цены", "ka": "მარტივი, გამჭვირვალე ფასები" },
+  "landing.pricing.subtitle": { "en": "Choose the plan that fits your hiring needs", "ru": "Выберите тариф под ваши задачи найма", "ka": "აირჩიეთ თქვენს საჭიროებებზე მორგებული გეგმა" },
+
+  "landing.cta.title": { "en": "Ready to hire with structure?", "ru": "Готовы нанимать системно?", "ka": "მზად ხართ სისტემურად დაქირავებისთვის?" },
+  "landing.cta.subtitle": { "en": "Start a 7-day free trial. Set up your first role in minutes.", "ru": "Начните 7-дневный бесплатный период. Настройте первую вакансию за минуты.", "ka": "დაიწყეთ 7-დღიანი უფასო პერიოდი. პირველი პოზიცია წუთებში დააყენეთ." },
+  "landing.cta.button": { "en": "Start your free trial", "ru": "Начать бесплатный период", "ka": "დაიწყეთ უფასო პერიოდი" },
+
+  "landing.footer.terms": { "en": "Terms and Conditions", "ru": "Условия использования", "ka": "წესები და პირობები" },
+  "landing.footer.privacy": { "en": "Privacy Policy", "ru": "Политика конфиденциальности", "ka": "კონფიდენციალურობის პოლიტიკა" },
+  "landing.footer.refund": { "en": "Refund Policy", "ru": "Политика возврата", "ka": "დაბრუნების პოლიტიკა" },
+  "landing.footer.rights": { "en": "© {year} HRHandle. All rights reserved.", "ru": "© {year} HRHandle. Все права защищены.", "ka": "© {year} HRHandle. ყველა უფლება დაცულია." }
 }
