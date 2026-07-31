@@ -513,5 +513,56 @@
     "metaTitle": "Jobs",
     "noPositions": "No open positions right now. Check back soon.",
     "poweredBy": "Powered by HRHandle"
+  },
+  "offer": {
+    "eyebrow": "Offer from {company}",
+    "hiringTeam": "the hiring team",
+    "greeting": "Hi {name}, here's your offer",
+    "role": "Role",
+    "employer": "Employer",
+    "compensation": "Compensation",
+    "startDate": "Start date",
+    "respondBy": "Respond by",
+    "recruiterNote": "A note from the recruiter",
+    "perYear": "per year",
+    "perMonth": "per month",
+    "perHour": "per hour",
+    "sentOn": "Sent {date}.",
+    "keepPrivate": "Keep this link private — it's the only way to view or respond to this offer.",
+    "readyPrompt": "When you're ready, accept or decline below. You'll see a confirmation straight away.",
+    "notSure": "Not sure?",
+    "askQuestion": "Ask {recruiter} a question",
+    "recruiterFallback": "the recruiter",
+    "accepted": {
+      "title": "You accepted this offer",
+      "body": "The recruiter has been notified and will be in touch with the next steps.",
+      "on": "Accepted {date}"
+    },
+    "declined": {
+      "title": "You declined this offer.",
+      "body": "Thank you for letting the team know. The recruiter has been notified."
+    },
+    "expired": {
+      "title": "This offer has expired.",
+      "body": "If you'd still like to discuss, please contact the recruiter directly."
+    },
+    "withdrawn": {
+      "title": "This offer has been withdrawn.",
+      "body": "The recruiter has retracted this offer. Contact them if you have questions."
+    },
+    "showFull": "Show full offer",
+    "showLess": "Show less",
+    "decline": "Decline",
+    "acceptOffer": "Accept offer",
+    "acceptTitle": "Accept this offer?",
+    "acceptDesc": "The recruiter will be notified you accepted and will be in touch with the next steps.",
+    "accepting": "Accepting…",
+    "declineTitle": "Decline this offer?",
+    "declineDesc": "The recruiter will be notified. You can leave a short reason if you'd like — only they will see it.",
+    "declineReasonLabel": "Reason for declining (optional)",
+    "declineReasonPlaceholder": "e.g. Took a different offer. Compensation was lower than expected. Timing isn't right.",
+    "goBack": "Go back",
+    "declining": "Declining…",
+    "confirmDecline": "Confirm decline"
   }
 }
