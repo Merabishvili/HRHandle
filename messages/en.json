@@ -363,5 +363,59 @@
       "public": "Public",
       "private": "Private"
     }
+  },
+  "reports": {
+    "title": "Reports",
+    "tab": {
+      "pipeline": "Pipeline",
+      "sources": "Sources",
+      "timeToHire": "Time to hire"
+    },
+    "period": {
+      "7d": "Last 7 days",
+      "30d": "Last 30 days",
+      "90d": "Last 90 days",
+      "365d": "Last 365 days",
+      "all": "All time"
+    },
+    "applications": "Applications",
+    "hires": "Hires",
+    "conversion": "Conversion",
+    "funnel": "Funnel",
+    "medianTimeToHire": "Median time to hire",
+    "stageToStage": "Stage-to-stage conversion",
+    "reached": "Reached",
+    "from": "From",
+    "byVacancy": "By vacancy",
+    "bySource": "By source"
+  },
+  "interviews": {
+    "title": "Interviews",
+    "subtitle": "Schedule and manage candidate interviews.",
+    "empty": "No interviews found",
+    "duration": "Duration",
+    "reschedule": "Reschedule interview",
+    "unknownCandidate": "Unknown candidate",
+    "unknownVacancy": "Unknown vacancy",
+    "notAssigned": "Not assigned",
+    "status": {
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "noShow": "No show"
+    },
+    "action": {
+      "complete": "Complete",
+      "cancel": "Cancel",
+      "noShow": "No Show"
+    },
+    "group": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "thisWeek": "This week",
+      "upcoming": "Upcoming",
+      "later": "Later",
+      "past": "Past"
+    }
   }
 }
