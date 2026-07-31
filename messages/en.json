@@ -37,7 +37,11 @@
     "back": "Back",
     "next": "Next",
     "confirm": "Confirm",
-    "search": "Search"
+    "search": "Search",
+    "selectedCount": "{count} selected",
+    "tryAgain": "Try again",
+    "apply": "Apply",
+    "clear": "Clear"
   },
   "settings": {
     "section": {
@@ -97,5 +101,97 @@
       "onNotice": "AI Fit Analysis is on. Recruiters will see the advisory card on candidate profiles.",
       "offNotice": "AI Fit Analysis is off. The card is hidden everywhere."
     }
+  },
+  "pipeline": {
+    "title": "Pipeline",
+    "openRoles": "{count, plural, one {# open role} other {# open roles}}",
+    "activeCandidates": "{count, plural, one {# active candidate} other {# active candidates}}",
+    "reviewNew": "Review new",
+    "enterReviewMode": "Enter Review mode",
+    "addCandidate": "Add candidate",
+    "empty": {
+      "title": "Welcome to HRHandle",
+      "body": "This is your pipeline — every candidate across every role, in one place. To get started, create your first vacancy and your board comes to life.",
+      "createVacancy": "Create your first vacancy",
+      "importCandidates": "Import candidates",
+      "step1Title": "Create a vacancy",
+      "step1Body": "Add the role, let AI draft the description, set a scorecard.",
+      "step2Title": "Add candidates",
+      "step2Body": "Share the apply link or upload CVs — they land here automatically.",
+      "step3Title": "Work the pipeline",
+      "step3Body": "Move people through stages, score interviews, send offers."
+    },
+    "source": {
+      "applyLink": "Apply link",
+      "website": "Website",
+      "jobBoard": "Job board",
+      "csv": "CSV",
+      "manual": "Manual"
+    },
+    "filter": {
+      "groupAria": "Filter by role",
+      "allRoles": "All roles",
+      "more": "+ {count} more",
+      "searchPlaceholder": "Search vacancies…",
+      "searchAria": "Search vacancies",
+      "noMatch": "No vacancies match."
+    },
+    "bulk": {
+      "regionAria": "Bulk actions",
+      "moveToStage": "Move to stage",
+      "schedule": "Schedule",
+      "email": "Email",
+      "reject": "Reject",
+      "clearSelection": "Clear selection",
+      "scheduleTitleOne": "Schedule an interview",
+      "scheduleTitleMany": "Pick one candidate to schedule",
+      "emailTitle": "Open your mail client with every selected candidate BCC'd",
+      "pickOneToSchedule": "Pick exactly one candidate to schedule an interview.",
+      "noEmails": "None of the selected candidates have an email on file."
+    },
+    "toast": {
+      "moveFailed": "Failed to update status. Please try again.",
+      "finalStage": "Already in the final active stage.",
+      "advanceFailed": "Failed to advance candidate.",
+      "moved": "{count, plural, one {Moved # candidate.} other {Moved # candidates.}}",
+      "moveFailedSome": "Failed to move {failed} of {total} candidates."
+    }
+  },
+  "review": {
+    "badge": "Review mode",
+    "progress": "{index} of {total} new",
+    "shortcuts": "← / → navigate · A advance · R reject · K skip · S schedule · Esc exit",
+    "exit": "Exit review mode",
+    "interviewScheduled": "Interview scheduled",
+    "appliedTo": "Applied to",
+    "via": "via {source}",
+    "yearsExperience": "{count}y experience",
+    "summaryFromCv": "Summary from CV",
+    "regenerate": "Regenerate",
+    "generating": "Generating summary…",
+    "generateSummary": "Generate summary",
+    "summaryTooThin": "Not enough CV/profile data to summarize yet.",
+    "summaryRateLimited": "Generated a lot recently — try again in a few minutes.",
+    "summaryNoKey": "AI features are not configured on this deployment.",
+    "summaryError": "Could not generate a summary.",
+    "noCv": "No CV on file",
+    "salaryExp": "Salary exp.",
+    "notice": "Notice",
+    "sourceLabel": "Source",
+    "openFullProfile": "Open full profile",
+    "prevCandidate": "Previous candidate",
+    "nextCandidate": "Next candidate",
+    "action": {
+      "skip": "Skip",
+      "advanceTo": "Advance to {stage}",
+      "advance": "Advance"
+    },
+    "completeTitle": "You've reviewed all new applicants",
+    "completeBody": "Nothing left in the new-arrivals queue. New applications will show up here as they land.",
+    "backToPipeline": "Back to Pipeline",
+    "scheduleInterview": "Schedule interview",
+    "loadingScheduler": "Loading scheduler…",
+    "schedulerFailed": "Could not open the scheduler. Please try again.",
+    "cvOpenFailed": "Could not open the CV."
   }
 }
