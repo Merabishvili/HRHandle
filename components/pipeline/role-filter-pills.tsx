@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -47,6 +48,7 @@ export function RoleFilterPills({
   totalActive,
   maxVisible = 3,
 }: RoleFilterPillsProps) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [draft, setDraft] = useState<Set<string>>(new Set(value))
@@ -109,7 +111,7 @@ export function RoleFilterPills({
   }, [options, search])
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by role">
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('pipeline.filter.groupAria')}>
       <button
         type="button"
         onClick={() => onChange([])}
@@ -121,7 +123,7 @@ export function RoleFilterPills({
             : 'border-border bg-background font-medium text-foreground hover:bg-muted',
         )}
       >
-        All roles
+        {t('pipeline.filter.allRoles')}
         <span className={cn('tabular-nums', isAll ? 'text-background/70' : 'text-muted-foreground')}>
           · {totalActive}
         </span>
@@ -167,7 +169,7 @@ export function RoleFilterPills({
                   ? 'border-[1.5px] border-[oklch(0.55_0.18_250)] bg-[oklch(0.93_0.05_250)] px-[13px] text-[oklch(0.25_0.14_250)]'
                   : 'border-dashed border-border bg-background text-muted-foreground hover:bg-muted',
               )}
-              aria-label={`${overflowOptions.length} more roles${overflowSelectedCount > 0 ? `, ${overflowSelectedCount} selected` : ''}`}
+              aria-label={`${t('pipeline.filter.more', { count: overflowOptions.length })}${overflowSelectedCount > 0 ? `, ${t('common.selectedCount', { count: overflowSelectedCount })}` : ''}`}
             >
               {overflowSelectedCount > 0 && (
                 <span
@@ -175,9 +177,9 @@ export function RoleFilterPills({
                   aria-hidden
                 />
               )}
-              + {overflowOptions.length} more
+              {t('pipeline.filter.more', { count: overflowOptions.length })}
               {overflowSelectedCount > 0 && (
-                <span className="font-semibold">({overflowSelectedCount} selected)</span>
+                <span className="font-semibold">({t('common.selectedCount', { count: overflowSelectedCount })})</span>
               )}
               <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
             </button>
@@ -188,8 +190,8 @@ export function RoleFilterPills({
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search vacancies…"
-                aria-label="Search vacancies"
+                placeholder={t('pipeline.filter.searchPlaceholder')}
+                aria-label={t('pipeline.filter.searchAria')}
                 className="h-auto border-0 p-0 text-[13px] shadow-none focus-visible:ring-0"
               />
             </div>
@@ -197,7 +199,7 @@ export function RoleFilterPills({
             <div className="flex max-h-[220px] flex-col gap-0.5 overflow-y-auto">
               {filteredOverflowList.length === 0 ? (
                 <p className="px-1.5 py-4 text-center text-[12.5px] text-muted-foreground">
-                  No vacancies match.
+                  {t('pipeline.filter.noMatch')}
                 </p>
               ) : (
                 filteredOverflowList.map((opt) => {
@@ -242,21 +244,21 @@ export function RoleFilterPills({
 
             <div className="mt-3 flex items-center gap-2 border-t border-border pt-2.5">
               <span className="flex-1 text-[12.5px] text-muted-foreground">
-                {draft.size} selected
+                {t('common.selectedCount', { count: draft.size })}
               </span>
               <button
                 type="button"
                 onClick={() => setDraft(new Set())}
                 className="rounded-md border border-border px-2.5 py-1 text-[12.5px] font-semibold text-foreground hover:bg-muted"
               >
-                Clear
+                {t('common.clear')}
               </button>
               <button
                 type="button"
                 onClick={applyDraft}
                 className="rounded-md bg-[oklch(0.55_0.18_250)] px-3 py-1 text-[12.5px] font-semibold text-white hover:opacity-90"
               >
-                Apply
+                {t('common.apply')}
               </button>
             </div>
           </PopoverContent>

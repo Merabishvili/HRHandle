@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { Plus, Upload, BarChart3, Briefcase, Users, Sparkles } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -47,6 +48,7 @@ function shortSourceLabel(raw: string | null): string | null {
 }
 
 export default async function PipelinePage() {
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -100,32 +102,30 @@ export default async function PipelinePage() {
             <BarChart3 className="h-9 w-9 text-primary" />
           </div>
           <h2 className="text-[26px] font-bold leading-tight text-foreground">
-            Welcome to HRHandle <Sparkles className="inline h-6 w-6 text-amber-500" />
+            {t('pipeline.empty.title')} <Sparkles className="inline h-6 w-6 text-amber-500" />
           </h2>
           <p className="mx-auto mt-3 max-w-[460px] text-[15.5px] leading-relaxed text-muted-foreground">
-            This is your pipeline — every candidate across every role, in one
-            place. To get started, create your first vacancy and your board
-            comes to life.
+            {t('pipeline.empty.body')}
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" className="gap-2">
               <Link href="/vacancies/new">
                 <Plus className="h-4 w-4" />
-                Create your first vacancy
+                {t('pipeline.empty.createVacancy')}
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="gap-2">
               <Link href="/candidates/import">
                 <Upload className="h-4 w-4" />
-                Import candidates
+                {t('pipeline.empty.importCandidates')}
               </Link>
             </Button>
           </div>
           <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
             {[
-              { n: 1, icon: Briefcase, title: 'Create a vacancy', body: 'Add the role, let AI draft the description, set a scorecard.' },
-              { n: 2, icon: Users,     title: 'Add candidates',   body: 'Share the apply link or upload CVs — they land here automatically.' },
-              { n: 3, icon: BarChart3, title: 'Work the pipeline',body: 'Move people through stages, score interviews, send offers.' },
+              { n: 1, icon: Briefcase, title: t('pipeline.empty.step1Title'), body: t('pipeline.empty.step1Body') },
+              { n: 2, icon: Users,     title: t('pipeline.empty.step2Title'), body: t('pipeline.empty.step2Body') },
+              { n: 3, icon: BarChart3, title: t('pipeline.empty.step3Title'), body: t('pipeline.empty.step3Body') },
             ].map((step) => {
               const Icon = step.icon
               return (

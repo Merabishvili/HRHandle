@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import {
   X,
   ChevronLeft,
@@ -87,6 +88,7 @@ function avatarStyle(seed: string): { background: string; color: string } {
  * there's no scorecard breakdown to show.
  */
 export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject }: ReviewModeProps) {
+  const t = useTranslations()
   const [index, setIndex] = useState(0)
   const [pending, setPending] = useState(false)
 
@@ -151,11 +153,11 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
       if (res.success) {
         setScheduleData(res.data)
       } else {
-        toast.error('Could not open the scheduler. Please try again.')
+        toast.error(t('review.schedulerFailed'))
         setScheduleOpen(false)
       }
     }
-  }, [current, scheduleData])
+  }, [current, scheduleData, t])
 
   const generateSummary = useCallback(async (candidateId: string) => {
     setSummaryByCandidate((prev) => ({ ...prev, [candidateId]: { status: 'loading' } }))
@@ -183,8 +185,8 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
   const openCv = useCallback(async (documentId: string) => {
     const res = await getDocumentSignedUrl(documentId)
     if (res.success) window.open(res.data.url, '_blank', 'noopener,noreferrer')
-    else toast.error('Could not open the CV.')
-  }, [])
+    else toast.error(t('review.cvOpenFailed'))
+  }, [t])
 
   // Dynamic Advance label — the next active stage after the current one.
   const nextStage = useMemo(() => {
@@ -256,21 +258,21 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
       {/* Top bar */}
       <header className="flex flex-shrink-0 items-center gap-3 px-5 py-4 text-[oklch(0.85_0.01_250)] sm:px-7">
         <span className="rounded-md bg-[oklch(0.3_0.04_250)] px-2.5 py-1 text-[11.5px] font-bold uppercase tracking-[0.04em] text-[oklch(0.75_0.12_250)]">
-          Review mode
+          {t('review.badge')}
         </span>
         {queue.length > 0 && (
           <span className="text-[13px] text-[oklch(0.65_0.01_250)]">
-            {index + 1} of {queue.length} new
+            {t('review.progress', { index: index + 1, total: queue.length })}
           </span>
         )}
         <div className="ml-auto flex items-center gap-4">
           <span className="hidden text-[12.5px] text-[oklch(0.55_0.01_250)] lg:inline">
-            ← / → navigate · A advance · R reject · K skip · S schedule · Esc exit
+            {t('review.shortcuts')}
           </span>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Exit review mode"
+            aria-label={t('review.exit')}
             className="text-[oklch(0.7_0.01_250)] transition-colors hover:text-white"
           >
             <X className="h-5 w-5" aria-hidden />
@@ -303,23 +305,23 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                     {isScheduled && (
                       <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-[oklch(0.93_0.06_155)] px-2 py-0.5 align-middle text-[11px] font-bold text-[oklch(0.4_0.13_150)]">
                         <CalendarCheck className="h-3 w-3" aria-hidden />
-                        Interview scheduled
+                        {t('review.interviewScheduled')}
                       </span>
                     )}
                   </h2>
                   <p className="mt-0.5 truncate text-[13px] text-[oklch(0.5_0.02_250)]">
-                    Applied to{' '}
+                    {t('review.appliedTo')}{' '}
                     <strong className="text-[oklch(0.35_0.02_250)]">{current.vacancy_title}</strong>
                     {' · '}
                     {format(new Date(current.applied_at), 'MMM d, yyyy')}
-                    {current.source ? ` · via ${current.source}` : ''}
+                    {current.source ? ` · ${t('review.via', { source: current.source })}` : ''}
                   </p>
                 </div>
                 {/* Tag row */}
                 <div className="hidden shrink-0 flex-wrap justify-end gap-2 sm:flex">
                   {detailData?.location && <FactTag>{detailData.location}</FactTag>}
                   {typeof detailData?.yearsOfExperience === 'number' && (
-                    <FactTag>{detailData.yearsOfExperience}y experience</FactTag>
+                    <FactTag>{t('review.yearsExperience', { count: detailData.yearsOfExperience })}</FactTag>
                   )}
                   {detailData && detailData.languages.length > 0 && (
                     <FactTag>{detailData.languages.join(' · ')}</FactTag>
@@ -331,7 +333,7 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
               <section className="rounded-[10px] border border-[oklch(0.92_0.01_250)] bg-[oklch(0.985_0.002_247)] p-3.5">
                 <div className="mb-1.5 flex items-center justify-between gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[oklch(0.5_0.02_250)]">
-                    Summary from CV
+                    {t('review.summaryFromCv')}
                   </span>
                   {summary.status === 'ok' && (
                     <button
@@ -339,7 +341,7 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                       onClick={() => generateSummary(current.candidate_id)}
                       className="text-[11.5px] font-medium text-[oklch(0.45_0.16_250)] hover:opacity-80"
                     >
-                      Regenerate
+                      {t('review.regenerate')}
                     </button>
                   )}
                 </div>
@@ -348,7 +350,7 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                 ) : summary.status === 'loading' ? (
                   <p className="flex items-center gap-2 text-[13px] text-[oklch(0.5_0.02_250)]">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                    Generating summary…
+                    {t('review.generating')}
                   </p>
                 ) : summary.status === 'idle' ? (
                   <button
@@ -357,24 +359,24 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                     className="inline-flex items-center gap-1.5 rounded-lg border border-[oklch(0.86_0.05_250)] bg-white px-3 py-1.5 text-[12.5px] font-semibold text-[oklch(0.4_0.16_250)] hover:bg-[oklch(0.98_0.015_250)]"
                   >
                     <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                    Generate summary
+                    {t('review.generateSummary')}
                   </button>
                 ) : (
                   <p className="text-[12.5px] text-[oklch(0.5_0.02_250)]">
                     {summary.status === 'too_thin'
-                      ? 'Not enough CV/profile data to summarize yet.'
+                      ? t('review.summaryTooThin')
                       : summary.status === 'rate_limited'
-                        ? 'Generated a lot recently — try again in a few minutes.'
+                        ? t('review.summaryRateLimited')
                         : summary.status === 'no_key'
-                          ? 'AI features are not configured on this deployment.'
-                          : 'Could not generate a summary. '}
+                          ? t('review.summaryNoKey')
+                          : t('review.summaryError')}{' '}
                     {summary.status !== 'no_key' && (
                       <button
                         type="button"
                         onClick={() => generateSummary(current.candidate_id)}
                         className="font-semibold text-[oklch(0.45_0.16_250)] hover:opacity-80"
                       >
-                        Try again
+                        {t('common.tryAgain')}
                       </button>
                     )}
                   </p>
@@ -395,13 +397,13 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                   </button>
                 ) : (
                   <div className="flex h-24 flex-1 items-center justify-center rounded-[10px] border border-dashed border-[oklch(0.88_0.01_250)] bg-[oklch(0.98_0.002_247)] text-[12.5px] text-[oklch(0.55_0.02_250)]">
-                    {detail === 'loading' ? 'Loading…' : 'No CV on file'}
+                    {detail === 'loading' ? t('common.loading') : t('review.noCv')}
                   </div>
                 )}
                 <div className="flex w-full flex-col gap-2 text-[12.5px] sm:w-[210px] sm:shrink-0">
-                  <FactRow label="Salary exp." value={detailData?.salaryExpectation ?? '—'} />
-                  <FactRow label="Notice" value={detailData?.noticePeriod ?? '—'} />
-                  <FactRow label="Source" value={current.source ?? '—'} />
+                  <FactRow label={t('review.salaryExp')} value={detailData?.salaryExpectation ?? '—'} />
+                  <FactRow label={t('review.notice')} value={detailData?.noticePeriod ?? '—'} />
+                  <FactRow label={t('review.sourceLabel')} value={current.source ?? '—'} />
                 </div>
               </div>
 
@@ -410,7 +412,7 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                 href={`/candidates/${current.candidate_id}`}
                 className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[oklch(0.45_0.16_250)] hover:underline"
               >
-                Open full profile
+                {t('review.openFullProfile')}
                 <ExternalLink className="h-3 w-3" aria-hidden />
               </Link>
             </article>
@@ -424,11 +426,11 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
 
           {/* Action bar */}
           <div className="flex flex-shrink-0 flex-wrap items-center justify-center gap-2.5 px-5 pb-6 sm:px-7">
-            <ActionButton label="Reject" shortcut="R" onClick={reject} disabled={pending} icon={XCircle} />
-            <ActionButton label="Skip" shortcut="K" onClick={goNext} disabled={index >= queue.length - 1} icon={SkipForward} />
-            <ActionButton label="Schedule" shortcut="S" onClick={() => void openSchedule()} disabled={pending} icon={CalendarPlus} />
+            <ActionButton label={t('pipeline.bulk.reject')} shortcut="R" onClick={reject} disabled={pending} icon={XCircle} />
+            <ActionButton label={t('review.action.skip')} shortcut="K" onClick={goNext} disabled={index >= queue.length - 1} icon={SkipForward} />
+            <ActionButton label={t('pipeline.bulk.schedule')} shortcut="S" onClick={() => void openSchedule()} disabled={pending} icon={CalendarPlus} />
             <ActionButton
-              label={nextStage ? `Advance to ${nextStage.name}` : 'Advance'}
+              label={nextStage ? t('review.action.advanceTo', { stage: nextStage.name }) : t('review.action.advance')}
               shortcut="A"
               onClick={() => void advance()}
               disabled={pending || !nextStage}
@@ -445,13 +447,13 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
               <CheckCircle2 className="h-7 w-7 text-[oklch(0.42_0.13_150)]" aria-hidden />
             </div>
             <h2 className="text-lg font-bold text-[oklch(0.15_0.02_250)]">
-              You&apos;ve reviewed all new applicants
+              {t('review.completeTitle')}
             </h2>
             <p className="mt-2 text-[13.5px] text-[oklch(0.5_0.02_250)]">
-              Nothing left in the new-arrivals queue. New applications will show up here as they land.
+              {t('review.completeBody')}
             </p>
             <Button onClick={onClose} className="mt-6">
-              Back to Pipeline
+              {t('review.backToPipeline')}
             </Button>
           </div>
         </div>
@@ -461,11 +463,11 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
           here on save without leaving Review Mode. */}
       <Dialog open={scheduleOpen} onOpenChange={(o) => !o && setScheduleOpen(false)}>
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-          <DialogTitle className="mb-2">Schedule interview</DialogTitle>
+          <DialogTitle className="mb-2">{t('review.scheduleInterview')}</DialogTitle>
           {scheduleLoading || !scheduleData ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              Loading scheduler…
+              {t('review.loadingScheduler')}
             </div>
           ) : (
             <InterviewForm
@@ -502,13 +504,14 @@ function ChevronButton({
   onClick: () => void
   disabled: boolean
 }) {
+  const t = useTranslations()
   const Icon = direction === 'prev' ? ChevronLeft : ChevronRight
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={direction === 'prev' ? 'Previous candidate' : 'Next candidate'}
+      aria-label={direction === 'prev' ? t('review.prevCandidate') : t('review.nextCandidate')}
       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[oklch(0.4_0.01_250)] text-[oklch(0.6_0.01_250)] transition-colors hover:border-[oklch(0.5_0.01_250)] hover:text-[oklch(0.8_0.01_250)] disabled:opacity-30 disabled:hover:border-[oklch(0.4_0.01_250)] disabled:hover:text-[oklch(0.6_0.01_250)]"
     >
       <Icon className="h-5 w-5" aria-hidden />

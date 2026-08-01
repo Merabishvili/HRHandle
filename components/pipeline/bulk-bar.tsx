@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, ArrowRight, Calendar, Mail, XCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -52,6 +53,7 @@ export function BulkBar({
   onClear,
 }: BulkBarProps) {
   const router = useRouter()
+  const t = useTranslations()
   const [moveOpen, setMoveOpen] = useState(false)
   const [pending, setPending] = useState(false)
 
@@ -61,7 +63,7 @@ export function BulkBar({
 
   const handleSchedule = () => {
     if (selected.length !== 1) {
-      toast.info('Pick exactly one candidate to schedule an interview.')
+      toast.info(t('pipeline.bulk.pickOneToSchedule'))
       return
     }
     const only = selected[0]!
@@ -71,7 +73,7 @@ export function BulkBar({
   const handleEmail = () => {
     const withEmail = selected.filter((s) => s.email && s.email.trim().length > 0)
     if (withEmail.length === 0) {
-      toast.info('None of the selected candidates have an email on file.')
+      toast.info(t('pipeline.bulk.noEmails'))
       return
     }
     // BCC the list so candidates don't see each other's addresses.
@@ -92,14 +94,14 @@ export function BulkBar({
   return (
     <div
       role="region"
-      aria-label="Bulk actions"
+      aria-label={t('pipeline.bulk.regionAria')}
       className={cn(
         'fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-2',
       )}
     >
       <div className="flex max-w-3xl flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-lg">
         <p className="text-sm font-medium text-foreground">
-          {selectedCount} selected
+          {t('common.selectedCount', { count: selectedCount })}
         </p>
 
         <div className="mx-1 hidden h-5 w-px bg-border sm:block" />
@@ -112,7 +114,7 @@ export function BulkBar({
         >
           <SelectTrigger className="h-8 gap-1.5 text-xs">
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-            <SelectValue placeholder="Move to stage" />
+            <SelectValue placeholder={t('pipeline.bulk.moveToStage')} />
           </SelectTrigger>
           <SelectContent>
             {moveableStages.map((s) => (
@@ -129,10 +131,10 @@ export function BulkBar({
           onClick={handleSchedule}
           disabled={pending}
           className="h-8 gap-1.5 text-xs"
-          title={selected.length === 1 ? 'Schedule an interview' : 'Pick one candidate to schedule'}
+          title={selected.length === 1 ? t('pipeline.bulk.scheduleTitleOne') : t('pipeline.bulk.scheduleTitleMany')}
         >
           <Calendar className="h-3.5 w-3.5" aria-hidden />
-          Schedule
+          {t('pipeline.bulk.schedule')}
         </Button>
 
         <Button
@@ -141,10 +143,10 @@ export function BulkBar({
           onClick={handleEmail}
           disabled={pending}
           className="h-8 gap-1.5 text-xs"
-          title="Open your mail client with every selected candidate BCC'd"
+          title={t('pipeline.bulk.emailTitle')}
         >
           <Mail className="h-3.5 w-3.5" aria-hidden />
-          Email
+          {t('pipeline.bulk.email')}
         </Button>
 
         <Button
@@ -155,7 +157,7 @@ export function BulkBar({
           className="h-8 gap-1.5 text-xs text-destructive hover:text-destructive"
         >
           <XCircle className="h-3.5 w-3.5" aria-hidden />
-          Reject
+          {t('pipeline.bulk.reject')}
         </Button>
 
         <Button
@@ -163,7 +165,7 @@ export function BulkBar({
           size="sm"
           onClick={onClear}
           disabled={pending}
-          aria-label="Clear selection"
+          aria-label={t('pipeline.bulk.clearSelection')}
           className="ml-auto h-8 w-8 p-0"
         >
           {pending ? (

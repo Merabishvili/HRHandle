@@ -12,6 +12,7 @@ import {
   type DragOverEvent,
 } from '@dnd-kit/core'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Plus, Zap } from 'lucide-react'
 import Link from 'next/link'
 
@@ -79,6 +80,7 @@ export function CrossVacancyBoard({
   rejectionReasons,
   rejectionTemplates,
 }: CrossVacancyBoardProps) {
+  const t = useTranslations()
   const [applications, setApplications] = useState(initialApplications)
   const [activeApp, setActiveApp] = useState<CrossVacancyApplication | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
@@ -227,7 +229,7 @@ export function CrossVacancyBoard({
     const result = await updateApplicationStatus(activeIdStr, targetColumnId)
     if (!result.success) {
       setApplications(initialApplications)
-      toast.error('Failed to update status. Please try again.')
+      toast.error(t('pipeline.toast.moveFailed'))
     }
   }
 
@@ -255,7 +257,7 @@ export function CrossVacancyBoard({
       const currentIdx = activeStatuses.findIndex((s) => s.id === currentStatus?.id)
       const nextStatus = activeStatuses[currentIdx + 1] ?? activeStatuses[currentIdx]
       if (!nextStatus || nextStatus.id === app.status_id) {
-        toast.info('Already in the final active stage.')
+        toast.info(t('pipeline.toast.finalStage'))
         return
       }
       setApplications((prev) =>
@@ -272,10 +274,10 @@ export function CrossVacancyBoard({
       const result = await updateApplicationStatus(appId, nextStatus.id)
       if (!result.success) {
         setApplications(initialApplications)
-        toast.error('Failed to advance candidate.')
+        toast.error(t('pipeline.toast.advanceFailed'))
       }
     },
-    [applications, activeStatuses, initialApplications, statusById],
+    [applications, activeStatuses, initialApplications, statusById, t],
   )
 
   const handleReviewReject = useCallback(
@@ -335,11 +337,9 @@ export function CrossVacancyBoard({
     const failed = results.filter((r) => !r.success).length
     if (failed > 0) {
       setApplications(initialApplications)
-      toast.error(
-        `Failed to move ${failed} of ${ids.length} ${ids.length === 1 ? 'candidate' : 'candidates'}.`,
-      )
+      toast.error(t('pipeline.toast.moveFailedSome', { failed, total: ids.length }))
     } else {
-      toast.success(`Moved ${ids.length} ${ids.length === 1 ? 'candidate' : 'candidates'}.`)
+      toast.success(t('pipeline.toast.moved', { count: ids.length }))
     }
     setSelectedIds(new Set())
   }
@@ -379,11 +379,11 @@ export function CrossVacancyBoard({
           Fixed.dc.html §header. */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold text-foreground">Pipeline</h1>
+          <h1 className="text-[22px] font-bold text-foreground">{t('pipeline.title')}</h1>
           <p className="mt-0.5 text-[13.5px] text-muted-foreground">
-            {roles.length} open {roles.length === 1 ? 'role' : 'roles'} ·{' '}
-            {activeFilteredCount} active{' '}
-            {activeFilteredCount === 1 ? 'candidate' : 'candidates'}
+            {t('pipeline.openRoles', { count: roles.length })}
+            {' · '}
+            {t('pipeline.activeCandidates', { count: activeFilteredCount })}
           </p>
         </div>
 
@@ -396,10 +396,10 @@ export function CrossVacancyBoard({
             className="gap-1.5"
             onClick={() => setReviewing(true)}
             disabled={reviewQueue.length === 0}
-            aria-label="Enter Review mode"
+            aria-label={t('pipeline.enterReviewMode')}
           >
             <Zap className="h-3.5 w-3.5" aria-hidden />
-            Review new
+            {t('pipeline.reviewNew')}
             {reviewQueue.length > 0 && (
               <span className="rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-foreground">
                 {reviewQueue.length}
@@ -414,7 +414,7 @@ export function CrossVacancyBoard({
           >
             <Link href="/candidates/new">
               <Plus className="h-3.5 w-3.5" aria-hidden />
-              Add candidate
+              {t('pipeline.addCandidate')}
             </Link>
           </Button>
         </div>
