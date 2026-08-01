@@ -1,10 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
 import { getAuthContext, type ActionResult } from './index'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ProfileSchema, OrganizationSchema } from '@/lib/validations/settings'
 import type { ProfileInput, OrganizationInput } from '@/lib/validations/settings'
+import { isLocale } from '@/lib/i18n/locales'
+
+const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
 
 const AVATAR_BUCKET = 'avatars'
 const AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -72,6 +76,19 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<v
     .eq('id', ctx.userId)
 
   if (error) return { success: false, error: 'Failed to update profile' }
+
+  // Mirror the chosen UI language into the NEXT_LOCALE cookie so i18n/request.ts
+  // picks it up on the next render (the form calls router.refresh() after save).
+  // Only for locales we actually ship messages for; others leave the cookie as-is.
+  const language = parsed.data.language?.trim()
+  if (language && isLocale(language)) {
+    const store = await cookies()
+    store.set('NEXT_LOCALE', language, {
+      path: '/',
+      maxAge: LOCALE_COOKIE_MAX_AGE,
+      sameSite: 'lax',
+    })
+  }
 
   revalidatePath('/settings')
   return { success: true, data: undefined }

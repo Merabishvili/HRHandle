@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import type { User } from '@supabase/supabase-js'
 import type { Profile, Organization, Subscription } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -26,20 +27,19 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
-  { name: 'Pipeline', href: '/pipeline', icon: KanbanSquare },
-  { name: 'Vacancies', href: '/vacancies', icon: Briefcase },
-  { name: 'Candidates', href: '/candidates', icon: Users },
-  { name: 'Interviews', href: '/interviews', icon: Calendar },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { key: 'nav.pipeline', href: '/pipeline', icon: KanbanSquare },
+  { key: 'nav.vacancies', href: '/vacancies', icon: Briefcase },
+  { key: 'nav.candidates', href: '/candidates', icon: Users },
+  { key: 'nav.interviews', href: '/interviews', icon: Calendar },
+  { key: 'nav.reports', href: '/reports', icon: BarChart3 },
+  { key: 'nav.settings', href: '/settings', icon: Settings },
 ]
 
-function getPlanLabel(subscription?: Subscription | null): string {
-  if (!subscription) return 'Trial'
-
-  if (subscription.plan_code === 'individual') return 'Individual'
-  if (subscription.plan_code === 'organization') return 'Organization'
-  return 'Trial'
+/** Returns the plan-label translation key (resolved with `t()` in the component). */
+function getPlanKey(subscription?: Subscription | null): string {
+  if (subscription?.plan_code === 'individual') return 'plan.individual'
+  if (subscription?.plan_code === 'organization') return 'plan.organization'
+  return 'plan.trial'
 }
 
 export function DashboardSidebar({
@@ -48,6 +48,7 @@ export function DashboardSidebar({
   subscription,
 }: DashboardSidebarProps) {
   const pathname = usePathname()
+  const t = useTranslations()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const visibleNavigation = navigation
 
@@ -56,7 +57,7 @@ export function DashboardSidebar({
       <Button
         variant="ghost"
         size="icon"
-        aria-label={isMobileOpen ? 'Close navigation' : 'Open navigation'}
+        aria-label={isMobileOpen ? t('nav.closeMenu') : t('nav.openMenu')}
         aria-expanded={isMobileOpen}
         aria-controls="dashboard-sidebar"
         className="fixed top-4 left-4 z-50 lg:hidden"
@@ -91,7 +92,7 @@ export function DashboardSidebar({
           {organization && (
             <div className="border-b border-sidebar-border px-6 py-4">
               <p className="text-xs uppercase tracking-wider text-sidebar-foreground/60">
-                Organization
+                {t('nav.organization')}
               </p>
               <p className="mt-1 truncate text-sm font-medium text-sidebar-foreground">
                 {organization.name}
@@ -106,7 +107,7 @@ export function DashboardSidebar({
 
               return (
                 <Link
-                  key={item.name}
+                  key={item.key}
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
                   className={cn(
@@ -117,7 +118,7 @@ export function DashboardSidebar({
                   )}
                 >
                   <item.icon className="h-4 w-4 shrink-0" />
-                  {item.name}
+                  {t(item.key)}
                 </Link>
               )
             })}
@@ -125,9 +126,9 @@ export function DashboardSidebar({
 
           <div className="border-t border-sidebar-border px-6 py-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-sidebar-foreground/60">Plan</span>
+              <span className="text-xs text-sidebar-foreground/60">{t('sidebar.plan')}</span>
               <span className="text-xs font-medium capitalize text-sidebar-primary">
-                {getPlanLabel(subscription)}
+                {t(getPlanKey(subscription))}
               </span>
             </div>
 
@@ -138,7 +139,7 @@ export function DashboardSidebar({
               subscription.status !== 'trial' &&
               subscription.status !== 'active' && (
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-sidebar-foreground/60">Status</span>
+                  <span className="text-xs text-sidebar-foreground/60">{t('sidebar.status')}</span>
                   <span className="text-xs font-medium text-sidebar-foreground">
                     {(() => {
                       const s = subscription.status.replace('_', ' ')
@@ -149,9 +150,9 @@ export function DashboardSidebar({
               )}
 
             <div className="mt-3 flex gap-3 text-xs text-sidebar-foreground/40">
-              <Link href="/terms" className="transition-colors hover:text-sidebar-foreground/70">Terms</Link>
-              <Link href="/privacy" className="transition-colors hover:text-sidebar-foreground/70">Privacy</Link>
-              <Link href="/refund" className="transition-colors hover:text-sidebar-foreground/70">Refund</Link>
+              <Link href="/terms" className="transition-colors hover:text-sidebar-foreground/70">{t('sidebar.terms')}</Link>
+              <Link href="/privacy" className="transition-colors hover:text-sidebar-foreground/70">{t('sidebar.privacy')}</Link>
+              <Link href="/refund" className="transition-colors hover:text-sidebar-foreground/70">{t('sidebar.refund')}</Link>
             </div>
           </div>
         </div>

@@ -1,4 +1,9 @@
 import { withSentryConfig } from '@sentry/nextjs'
+import createNextIntlPlugin from 'next-intl/plugin'
+
+// Wires next-intl to ./i18n/request.ts (cookie-based UI locale; see
+// docs/redesign/i18n-plan.md). No i18n URL routing on the dashboard.
+const withNextIntl = createNextIntlPlugin()
 
 // Static headers applied to every response. Content-Security-Policy lives in
 // middleware.ts (lib/security-headers.ts) because it needs a per-request nonce
@@ -30,7 +35,7 @@ const nextConfig = {
   },
 }
 
-export default withSentryConfig(nextConfig, {
+export default withSentryConfig(withNextIntl(nextConfig), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: true,

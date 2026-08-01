@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import {
   User,
@@ -45,39 +46,40 @@ interface NavSection {
  * the standalone /subscription route) are scheduled follow-ups — the nav
  * structure was the user-visible win and ships independently.
  */
+// `label` holds a translation KEY, resolved with `t()` in the component.
 const NAV_SECTIONS: NavSection[] = [
   {
-    label: 'Personal',
+    label: 'settings.section.personal',
     items: [
-      { href: '/settings/profile',       label: 'Profile',       icon: User },
-      { href: '/settings/notifications', label: 'Notifications', icon: Bell },
-      { href: '/settings/security',      label: 'Security',      icon: Lock },
+      { href: '/settings/profile',       label: 'settings.nav.profile',       icon: User },
+      { href: '/settings/notifications', label: 'settings.nav.notifications', icon: Bell },
+      { href: '/settings/security',      label: 'settings.nav.security',      icon: Lock },
     ],
   },
   {
-    label: 'Organization',
+    label: 'settings.section.organization',
     items: [
-      { href: '/settings/organization', label: 'Organization', icon: Building2,  ownerOnly: true },
-      { href: '/settings/team',         label: 'Team',         icon: Users,      adminOnly: true },
-      { href: '/settings/billing',      label: 'Billing',      icon: CreditCard, ownerOnly: true },
+      { href: '/settings/organization', label: 'settings.nav.organization', icon: Building2,  ownerOnly: true },
+      { href: '/settings/team',         label: 'settings.nav.team',         icon: Users,      adminOnly: true },
+      { href: '/settings/billing',      label: 'settings.nav.billing',      icon: CreditCard, ownerOnly: true },
     ],
   },
   {
-    label: 'Hiring workflow',
+    label: 'settings.section.hiringWorkflow',
     items: [
-      { href: '/settings/pipeline-stages',   label: 'Pipeline stages',   icon: GitBranch,  adminOnly: true },
-      { href: '/settings/custom-fields',     label: 'Custom fields',     icon: LayoutGrid, adminOnly: true },
-      { href: '/settings/email-templates',   label: 'Email templates',   icon: Mail,       adminOnly: true },
-      { href: '/settings/rejection-reasons', label: 'Rejection reasons', icon: XCircle,    adminOnly: true },
-      { href: '/settings/integrations',      label: 'Integrations',      icon: Plug },
+      { href: '/settings/pipeline-stages',   label: 'settings.nav.pipelineStages',   icon: GitBranch,  adminOnly: true },
+      { href: '/settings/custom-fields',     label: 'settings.nav.customFields',     icon: LayoutGrid, adminOnly: true },
+      { href: '/settings/email-templates',   label: 'settings.nav.emailTemplates',   icon: Mail,       adminOnly: true },
+      { href: '/settings/rejection-reasons', label: 'settings.nav.rejectionReasons', icon: XCircle,    adminOnly: true },
+      { href: '/settings/integrations',      label: 'settings.nav.integrations',     icon: Plug },
     ],
   },
   {
-    label: 'Data',
+    label: 'settings.section.data',
     items: [
-      { href: '/settings/audit-log', label: 'Audit log',    icon: ListChecks, adminOnly: true },
-      { href: '/settings/ai-fit',    label: 'AI oversight', icon: Sparkles,   adminOnly: true },
-      { href: '/settings/trash',     label: 'Trash',        icon: Trash2,     adminOnly: true },
+      { href: '/settings/audit-log', label: 'settings.nav.auditLog',    icon: ListChecks, adminOnly: true },
+      { href: '/settings/ai-fit',    label: 'settings.nav.aiOversight', icon: Sparkles,   adminOnly: true },
+      { href: '/settings/trash',     label: 'settings.nav.trash',       icon: Trash2,     adminOnly: true },
     ],
   },
 ]
@@ -88,6 +90,7 @@ interface SettingsNavProps {
 
 export function SettingsNav({ role }: SettingsNavProps) {
   const pathname = usePathname()
+  const t = useTranslations()
   const isAdmin = role === 'owner' || role === 'admin'
   const isOwner = role === 'owner'
 
@@ -109,7 +112,7 @@ export function SettingsNav({ role }: SettingsNavProps) {
         {visibleSections.map((section) => (
           <li key={section.label}>
             <p className="mb-1.5 px-3 text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground/70">
-              {section.label}
+              {t(section.label)}
             </p>
             <ul className="space-y-0.5">
               {section.items.map((item) => {
@@ -130,7 +133,7 @@ export function SettingsNav({ role }: SettingsNavProps) {
                       )}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
-                      {item.label}
+                      {t(item.label)}
                     </Link>
                   </li>
                 )

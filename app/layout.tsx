@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 import { PostHogProvider } from './providers'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
@@ -94,21 +96,27 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Resolve the request locale + messages from i18n/request.ts (cookie-based).
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
     <html
-      lang="en"
+      lang={locale}
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} bg-background`}
     >
       <body className="min-h-screen font-sans antialiased">
-        <PostHogProvider>{children}</PostHogProvider>
-        <Toaster />
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <PostHogProvider>{children}</PostHogProvider>
+          <Toaster />
+          {process.env.NODE_ENV === 'production' && <Analytics />}
+        </NextIntlClientProvider>
       </body>
     </html>
   )
