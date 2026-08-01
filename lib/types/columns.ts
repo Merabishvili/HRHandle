@@ -56,3 +56,43 @@ export const VACANCY_SORT_OPTIONS = [
   { value: 'end_desc', label: 'End date: Latest first' },
   { value: 'status', label: 'Status' },
 ]
+
+// i18n key maps — the built-in column + sort labels above are the English
+// source; these map each stable value to its catalog key so any surface can
+// render `t(...)`. Custom-field columns (cf_<id>) have no entry — they fall
+// back to the org-defined field name (candidate/recruiter content, not chrome).
+export const COLUMN_I18N_KEY: Record<string, string> = {
+  stage: 'columns.stage',
+  fit_score: 'columns.fitScore',
+  current_position: 'columns.currentPosition',
+  current_company: 'columns.currentCompany',
+  created_at: 'columns.addedDate',
+  email: 'columns.email',
+  phone: 'columns.phone',
+  years_of_experience: 'columns.experience',
+  location: 'columns.location',
+  salary_expectation: 'columns.salaryExpectation',
+  notice_period: 'columns.noticePeriod',
+  languages: 'columns.languages',
+  source: 'columns.source',
+  department: 'columns.department',
+  end_date: 'columns.endDate',
+  employment_type: 'columns.employmentType',
+  work_mode: 'columns.workMode',
+  sector: 'columns.sector',
+  salary: 'columns.salaryRange',
+  health: 'columns.health',
+  start_date: 'columns.startDate',
+  openings_count: 'columns.openings',
+  hiring_manager_name: 'columns.hiringManager',
+}
+
+export const SORT_I18N_KEY: Record<string, string> = {
+  created_desc: 'sort.addedNewest',
+  created_asc: 'sort.addedOldest',
+  experience_desc: 'sort.experienceHighLow',
+  experience_asc: 'sort.experienceLowHigh',
+  status: 'sort.status',
+  end_asc: 'sort.endSoonest',
+  end_desc: 'sort.endLatest',
+}

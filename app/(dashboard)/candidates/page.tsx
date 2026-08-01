@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCandidateStatuses } from '@/lib/cache/lookups'
+import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,6 +17,7 @@ import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
 import {
   DEFAULT_CANDIDATE_COLUMNS,
   OPTIONAL_CANDIDATE_COLUMNS,
+  COLUMN_I18N_KEY,
   type ColumnDef,
 } from '@/lib/types/columns'
 import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
@@ -54,6 +56,7 @@ export default async function CandidatesPage({
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
 
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -268,38 +271,38 @@ export default async function CandidatesPage({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Candidates</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('candidates.title')}</h1>
           <p className="text-muted-foreground">
             {filterVacancyTitle
-              ? `Showing candidates for: ${filterVacancyTitle}`
-              : 'Track and manage your candidate database.'}
+              ? t('candidates.showingFor', { vacancy: filterVacancyTitle })
+              : t('candidates.subtitle')}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {vacancyFilter && (
             <Button variant="outline" asChild>
-              <Link href="/candidates">Clear filter</Link>
+              <Link href="/candidates">{t('candidates.clearFilter')}</Link>
             </Button>
           )}
           <Button variant="outline" asChild>
             <a href="/api/export/candidates" download>
               <Download className="mr-2 h-4 w-4" />
-              Export CSV
+              {t('candidates.exportCsv')}
             </a>
           </Button>
           {canImport && (
             <Button variant="outline" asChild>
               <Link href="/candidates/import">
                 <Upload className="mr-2 h-4 w-4" />
-                Bulk import
+                {t('candidates.bulkImport')}
               </Link>
             </Button>
           )}
           <Button asChild>
             <Link href={vacancyFilter ? `/candidates/new?vacancy=${vacancyFilter}` : '/candidates/new'}>
               <Plus className="mr-2 h-4 w-4" />
-              Add candidate
+              {t('candidates.addCandidate')}
             </Link>
           </Button>
         </div>
@@ -316,16 +319,16 @@ export default async function CandidatesPage({
       <div className="flex items-center justify-between gap-4">
         <FilterPillTabs
           tabs={[
-            { value: 'all', label: 'All' },
+            { value: 'all', label: t('candidates.allTab') },
             ...candidateStatuses.map((s) => ({ value: s.id, label: s.name })),
           ]}
           paramKey="status"
           activeValue={statusFilter || ''}
         />
         <p className="text-sm text-muted-foreground shrink-0">
-          {totalCount ?? 0} {(totalCount ?? 0) === 1 ? 'candidate' : 'candidates'}
+          {t('candidates.count', { count: totalCount ?? 0 })}
           {search && ` · "${search}"`}
-          {totalPages > 1 && ` · page ${page} of ${totalPages}`}
+          {totalPages > 1 && ` · ${t('candidates.pageOf', { page, total: totalPages })}`}
         </p>
       </div>
 
@@ -335,11 +338,13 @@ export default async function CandidatesPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Candidate</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Linked vacancy</TableHead>
+                    <TableHead>{t('candidates.colCandidate')}</TableHead>
+                    <TableHead>{t('candidates.colStatus')}</TableHead>
+                    <TableHead>{t('candidates.colLinkedVacancy')}</TableHead>
                     {activeColumns.map((col) => (
-                      <TableHead key={col}>{optColMap.get(col) ?? col}</TableHead>
+                      <TableHead key={col}>
+                        {COLUMN_I18N_KEY[col] ? t(COLUMN_I18N_KEY[col]) : (optColMap.get(col) ?? col)}
+                      </TableHead>
                     ))}
                     <TableHead className="w-[70px]" />
                   </TableRow>
@@ -376,18 +381,16 @@ export default async function CandidatesPage({
             <div className="py-12 text-center">
               <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
               <h3 className="mt-4 text-lg font-medium text-foreground">
-                {search ? `No candidates matching "${search}"` : 'No candidates yet'}
+                {search ? t('candidates.emptySearchTitle', { search }) : t('candidates.emptyTitle')}
               </h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                {search
-                  ? 'Try a different search term.'
-                  : 'Start adding candidates to track your hiring pipeline.'}
+                {search ? t('candidates.emptySearchBody') : t('candidates.emptyBody')}
               </p>
               {!search && (
                 <Button className="mt-4" asChild>
                   <Link href="/candidates/new">
                     <Plus className="mr-2 h-4 w-4" />
-                    Add candidate
+                    {t('candidates.addCandidate')}
                   </Link>
                 </Button>
               )}
