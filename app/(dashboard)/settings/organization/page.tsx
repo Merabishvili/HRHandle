@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { OrganizationForm } from '@/components/settings/organization-form'
@@ -7,6 +8,7 @@ import { MfaPolicyCard } from '@/components/settings/mfa-policy-card'
 import { AiFitPolicyCard } from '@/components/settings/ai-fit-policy-card'
 
 export default async function OrganizationSettingsPage() {
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -40,8 +42,8 @@ export default async function OrganizationSettingsPage() {
     <div className="max-w-2xl space-y-6">
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Organization</CardTitle>
-          <CardDescription>Manage your organization settings.</CardDescription>
+          <CardTitle>{t('settings.org.title')}</CardTitle>
+          <CardDescription>{t('settings.org.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           <OrganizationForm organization={organization} />

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Sparkles } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ interface Props {
  */
 export function AiFitPolicyCard({ initial }: Props) {
   const router = useRouter()
+  const t = useTranslations()
   const [enabled, setEnabled] = useState(initial.ai_fit_enabled)
   const [acknowledged, setAcknowledged] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -38,11 +40,7 @@ export function AiFitPolicyCard({ initial }: Props) {
       const res = await setAiFitEnabled(enabled, acknowledged)
       if (res.success) {
         setError(null)
-        setNotice(
-          enabled
-            ? 'AI Fit Analysis is on. Recruiters will see the advisory card on candidate profiles.'
-            : 'AI Fit Analysis is off. The card is hidden everywhere.',
-        )
+        setNotice(enabled ? t('settings.aiFit.onNotice') : t('settings.aiFit.offNotice'))
         router.refresh()
       } else {
         setError(res.error)
@@ -56,11 +54,10 @@ export function AiFitPolicyCard({ initial }: Props) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5" />
-          AI Fit Analysis
+          {t('settings.aiFit.title')}
         </CardTitle>
         <CardDescription>
-          An optional, advisory copilot that assesses how an application fits a vacancy&apos;s scorecard criteria.
-          Only the owner can change this setting.
+          {t('settings.aiFit.subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -74,13 +71,12 @@ export function AiFitPolicyCard({ initial }: Props) {
               if (!e.target.checked) setAcknowledged(false)
             }}
             className="mt-1 h-4 w-4"
-            aria-label="Enable AI Fit Analysis"
+            aria-label={t('settings.aiFit.enable')}
           />
           <label htmlFor="ai-fit-enabled" className="cursor-pointer">
-            <span className="block text-sm font-medium">Enable AI Fit Analysis</span>
+            <span className="block text-sm font-medium">{t('settings.aiFit.enable')}</span>
             <span className="block text-xs text-muted-foreground">
-              Adds a collapsed advisory card to each candidate profile. It never scores the person, never advances or
-              rejects anyone, and hides the candidate&apos;s name and other protected details from the model.
+              {t('settings.aiFit.enableHelp')}
             </span>
           </label>
         </div>
@@ -96,10 +92,7 @@ export function AiFitPolicyCard({ initial }: Props) {
                 className="mt-1 h-4 w-4"
               />
               <span className="text-xs text-muted-foreground">
-                I understand AI Fit Analysis is <strong className="text-foreground">advisory only</strong>: it produces
-                no overall score, a human always makes the decision and must record an assessment, and outputs are based
-                only on job-relevant evidence. Under the EU AI Act this is a limited-risk, human-in-the-loop use and my
-                organisation acknowledges these terms.
+                {t('settings.aiFit.acknowledgement')}
               </span>
             </label>
           </div>
@@ -117,7 +110,7 @@ export function AiFitPolicyCard({ initial }: Props) {
         )}
 
         <Button onClick={onSave} disabled={isPending || !canSave}>
-          {isPending ? 'Saving…' : enabled ? 'Enable' : 'Disable'}
+          {isPending ? t('common.saving') : enabled ? t('common.enable') : t('common.disable')}
         </Button>
       </CardContent>
     </Card>

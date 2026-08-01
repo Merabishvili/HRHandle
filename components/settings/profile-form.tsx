@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { updateProfile } from '@/lib/actions/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,17 +16,13 @@ import {
 } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, CheckCircle } from 'lucide-react'
+import { LOCALES, LOCALE_LABELS } from '@/lib/i18n/locales'
 import type { Profile } from '@/lib/types'
 
 const NO_LANGUAGE = '__default'
-const LANGUAGES: { value: string; label: string }[] = [
-  { value: 'en', label: 'English' },
-  { value: 'ka', label: 'Georgian (ქართული)' },
-  { value: 'ru', label: 'Russian (Русский)' },
-  { value: 'es', label: 'Spanish (Español)' },
-  { value: 'fr', label: 'French (Français)' },
-  { value: 'de', label: 'German (Deutsch)' },
-]
+// Only the locales we actually ship message catalogs for. Others return when
+// their catalog is reviewed + shipped (docs/redesign/i18n-plan.md §2.2).
+const LANGUAGES = LOCALES.map((value) => ({ value, label: LOCALE_LABELS[value] }))
 
 interface ProfileFormProps {
   profile: Profile
@@ -33,6 +30,7 @@ interface ProfileFormProps {
 
 export function ProfileForm({ profile }: ProfileFormProps) {
   const router = useRouter()
+  const t = useTranslations()
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -72,26 +70,26 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       {success && (
         <Alert className="border-green-200 bg-green-50 text-green-800">
           <CheckCircle className="h-4 w-4" />
-          <AlertDescription>Profile updated successfully!</AlertDescription>
+          <AlertDescription>{t('settings.profile.updated')}</AlertDescription>
         </Alert>
       )}
 
       {/* Email is shown read-only in the "Account" card below — no need to
           repeat it as a disabled input here. */}
       <div className="space-y-2">
-        <Label htmlFor="fullName">Full name</Label>
+        <Label htmlFor="fullName">{t('settings.profile.fullName')}</Label>
         <Input
           id="fullName"
           autoComplete="name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          placeholder="Your full name"
+          placeholder={t('settings.profile.fullNamePlaceholder')}
           disabled={isLoading}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
+        <Label htmlFor="phone">{t('columns.phone')}</Label>
         <Input
           id="phone"
           type="tel"
@@ -105,25 +103,25 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="language">Language</Label>
+        <Label htmlFor="language">{t('settings.profile.language')}</Label>
         <Select value={language} onValueChange={setLanguage} disabled={isLoading}>
           <SelectTrigger id="language" className="w-full sm:w-72">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NO_LANGUAGE}>System default</SelectItem>
+            <SelectItem value={NO_LANGUAGE}>{t('settings.profile.systemDefault')}</SelectItem>
             {LANGUAGES.map((l) => (
               <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          Your preferred language. Full localization is rolling out gradually.
+          {t('settings.profile.languageHelp')}
         </p>
       </div>
 
       <Button type="submit" disabled={isLoading}>
-        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : 'Save changes'}
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('common.saving')}</> : t('common.saveChanges')}
       </Button>
     </form>
   )

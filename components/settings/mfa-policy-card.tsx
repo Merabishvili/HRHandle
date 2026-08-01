@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Shield } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ interface Props {
 
 export function MfaPolicyCard({ initial }: Props) {
   const router = useRouter()
+  const t = useTranslations()
   const [requireAll, setRequireAll] = useState(initial.require_mfa)
   const [requireAdmins, setRequireAdmins] = useState(initial.require_mfa_for_admins)
   const [error, setError] = useState<string | null>(null)
@@ -31,7 +33,7 @@ export function MfaPolicyCard({ initial }: Props) {
       })
       if (res.success) {
         setError(null)
-        setNotice('Policy saved. Members will be prompted to enroll on their next page load.')
+        setNotice(t('settings.mfa.saved'))
         router.refresh()
       } else {
         setError(res.error)
@@ -48,10 +50,10 @@ export function MfaPolicyCard({ initial }: Props) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="h-5 w-5" />
-          Two-factor authentication policy
+          {t('settings.mfa.title')}
         </CardTitle>
         <CardDescription>
-          Require members of your organisation to enroll a TOTP authenticator. Only the owner can change this policy.
+          {t('settings.mfa.subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -65,12 +67,12 @@ export function MfaPolicyCard({ initial }: Props) {
               if (e.target.checked) setRequireAdmins(true)
             }}
             className="mt-1 h-4 w-4"
-            aria-label="Require 2FA for everyone"
+            aria-label={t('settings.mfa.requireAll')}
           />
           <label htmlFor="mfa-policy-require-all" className="cursor-pointer">
-            <span className="block text-sm font-medium">Require 2FA for everyone</span>
+            <span className="block text-sm font-medium">{t('settings.mfa.requireAll')}</span>
             <span className="block text-xs text-muted-foreground">
-              Every member, including owners and admins, must enroll before they can use HRHandle.
+              {t('settings.mfa.requireAllHelp')}
             </span>
           </label>
         </div>
@@ -83,12 +85,12 @@ export function MfaPolicyCard({ initial }: Props) {
             disabled={requireAll}
             onChange={(e) => setRequireAdmins(e.target.checked)}
             className="mt-1 h-4 w-4"
-            aria-label="Require 2FA for owners and admins only"
+            aria-label={t('settings.mfa.requireAdmins')}
           />
           <label htmlFor="mfa-policy-require-admins" className="cursor-pointer">
-            <span className="block text-sm font-medium">Require 2FA for owners and admins only</span>
+            <span className="block text-sm font-medium">{t('settings.mfa.requireAdmins')}</span>
             <span className="block text-xs text-muted-foreground">
-              The two roles that can invite members, delete data, and manage billing. Members are unaffected.
+              {t('settings.mfa.requireAdminsHelp')}
             </span>
           </label>
         </div>
@@ -105,7 +107,7 @@ export function MfaPolicyCard({ initial }: Props) {
         )}
 
         <Button onClick={onSave} disabled={isPending || !dirty}>
-          {isPending ? 'Saving…' : 'Save policy'}
+          {isPending ? t('common.saving') : t('settings.mfa.savePolicy')}
         </Button>
       </CardContent>
     </Card>
