@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { createNote, deleteNote, listMentionableMembers } from '@/lib/actions/notes'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -39,6 +40,7 @@ export function CandidateNotes({
   currentUserId,
   initialMembers,
 }: CandidateNotesProps) {
+  const t = useTranslations()
   const [notes, setNotes] = useState<Note[]>(initialNotes)
   const [text, setText] = useState('')
   const [mentions, setMentions] = useState<string[]>([])
@@ -96,7 +98,7 @@ export function CandidateNotes({
   return (
     <Card className="border-border">
       <CardHeader>
-        <CardTitle>Notes</CardTitle>
+        <CardTitle>{t('notes.title')}</CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -114,7 +116,7 @@ export function CandidateNotes({
               setMentions(ids)
             }}
             members={members}
-            placeholder="Add a note about this candidate… Type @ to mention a teammate."
+            placeholder={t('notes.placeholder')}
             rows={3}
             maxLength={5000}
             disabled={isPending}
@@ -122,7 +124,7 @@ export function CandidateNotes({
           <div className="flex items-center justify-between">
             {mentions.length > 0 ? (
               <p className="text-xs text-muted-foreground">
-                Will notify {mentions.length} teammate{mentions.length === 1 ? '' : 's'}.
+                {t('notes.willNotify', { count: mentions.length })}
               </p>
             ) : (
               <span />
@@ -133,13 +135,13 @@ export function CandidateNotes({
               disabled={isPending || !text.trim()}
             >
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Add Note
+              {t('notes.add')}
             </Button>
           </div>
         </div>
 
         {notes.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">No notes yet.</p>
+          <p className="py-4 text-center text-sm text-muted-foreground">{t('notes.empty')}</p>
         ) : (
           <ul className="space-y-3">
             {notes.map((note) => (
@@ -159,7 +161,7 @@ export function CandidateNotes({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
-                      aria-label="Delete note"
+                      aria-label={t('notes.deleteAria')}
                       onClick={() => handleDelete(note.id)}
                       disabled={isPending}
                     >
@@ -168,7 +170,7 @@ export function CandidateNotes({
                   )}
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {note.profiles?.[0]?.full_name ?? 'Team member'} ·{' '}
+                  {note.profiles?.[0]?.full_name ?? t('notes.teamMember')} ·{' '}
                   {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
                 </p>
               </li>
