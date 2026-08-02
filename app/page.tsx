@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import type { Metadata } from 'next'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { LanguageSwitcher } from '@/components/landing/language-switcher'
+import { DEFAULT_LOCALE, isLocale } from '@/lib/i18n/locales'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -70,6 +73,9 @@ export default async function LandingPage() {
   // CSP nonce (S-014): middleware sets `x-nonce` per request; the inline
   // JSON-LD script needs it so it isn't blocked once we tighten the CSP.
   const nonce = (await headers()).get('x-nonce') ?? undefined
+  const t = await getTranslations()
+  const rawLocale = await getLocale()
+  const locale = isLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE
   return (
     <div className="min-h-screen">
       <script
@@ -92,28 +98,29 @@ export default async function LandingPage() {
                 href="#features"
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                Features
+                {t('landing.nav.features')}
               </Link>
               <Link
                 href="#pricing"
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                Pricing
+                {t('landing.nav.pricing')}
               </Link>
               <Link
                 href="/guide"
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                Guides
+                {t('landing.nav.guides')}
               </Link>
             </div>
 
             <div className="flex items-center gap-3">
+              <LanguageSwitcher current={locale} />
               <Button variant="ghost" asChild>
-                <Link href="/auth/login">Sign in</Link>
+                <Link href="/auth/login">{t('landing.nav.signIn')}</Link>
               </Button>
               <Button asChild>
-                <Link href="/auth/sign-up">Get started</Link>
+                <Link href="/auth/sign-up">{t('landing.nav.getStarted')}</Link>
               </Button>
             </div>
           </div>
@@ -125,31 +132,31 @@ export default async function LandingPage() {
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
               <Zap className="h-4 w-4" />
-              The ATS built for small teams that hire carefully
+              {t('landing.hero.badge')}
             </div>
 
             <h1 className="text-balance text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl">
-              Hire with structure, not spreadsheets
+              {t('landing.hero.headline')}
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground sm:text-xl">
-              Manage every role and candidate in one pipeline, score interviews consistently, and make defensible hiring decisions — without enterprise bloat.
+              {t('landing.hero.subhead')}
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button size="lg" asChild className="w-full sm:w-auto">
                 <Link href="/auth/sign-up">
-                  Start free trial
+                  {t('landing.hero.startTrial')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
 
               <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
-                <Link href="#features">Learn more</Link>
+                <Link href="#features">{t('landing.hero.learnMore')}</Link>
               </Button>
             </div>
 
-            <p className="mt-4 text-sm text-muted-foreground">7-day free trial · no credit card to start</p>
+            <p className="mt-4 text-sm text-muted-foreground">{t('landing.hero.trialNote')}</p>
           </div>
 
           {/* Product peek — mini 4-column kanban preview */}
@@ -182,22 +189,22 @@ export default async function LandingPage() {
           to preserve AC-007 semantic grouping. */}
       <section className="border-y border-border bg-card px-4 py-10 sm:px-6 lg:px-8">
         <dl
-          aria-label="Why HRHandle"
+          aria-label={t('landing.proof.aria')}
           className="mx-auto flex max-w-5xl flex-wrap items-start justify-center gap-12 text-center sm:gap-16"
         >
           <div>
-            <dt className="text-2xl font-bold text-foreground sm:text-3xl">One pipeline</dt>
-            <dd className="mt-1 text-sm text-muted-foreground">every role &amp; candidate in one place</dd>
+            <dt className="text-2xl font-bold text-foreground sm:text-3xl">{t('landing.proof.onePipeline')}</dt>
+            <dd className="mt-1 text-sm text-muted-foreground">{t('landing.proof.onePipelineDesc')}</dd>
           </div>
           <div>
-            <dt className="text-2xl font-bold text-foreground sm:text-3xl">Score, don&apos;t guess</dt>
-            <dd className="mt-1 text-sm text-muted-foreground">consistent scorecards per role</dd>
+            <dt className="text-2xl font-bold text-foreground sm:text-3xl">{t('landing.proof.score')}</dt>
+            <dd className="mt-1 text-sm text-muted-foreground">{t('landing.proof.scoreDesc')}</dd>
           </div>
           <div>
             <dt className="text-2xl font-bold text-foreground sm:text-3xl">
               $20<span className="text-base font-medium text-muted-foreground">/mo</span>
             </dt>
-            <dd className="mt-1 text-sm text-muted-foreground">individual plan · cancel anytime</dd>
+            <dd className="mt-1 text-sm text-muted-foreground">{t('landing.proof.priceDesc')}</dd>
           </div>
         </dl>
       </section>
@@ -206,10 +213,10 @@ export default async function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Everything you need, nothing you don&apos;t
+              {t('landing.features.title')}
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-              The recruiter&apos;s daily loop, designed to be fast.
+              {t('landing.features.subtitle')}
             </p>
           </div>
 
@@ -219,13 +226,13 @@ export default async function LandingPage() {
               <div className="flex-1">
                 <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-primary-foreground/90">
                   <Star className="h-3 w-3 fill-current" aria-hidden />
-                  The difference
+                  {t('landing.features.difference')}
                 </div>
                 <h3 className="text-2xl font-bold text-background sm:text-3xl">
-                  Structured evaluation, built in
+                  {t('landing.features.heroTitle')}
                 </h3>
                 <p className="mt-3 text-base leading-relaxed text-background/75">
-                  Define what matters for each role once. Every interviewer scores against the same criteria, independently — so your decision rests on evidence and consensus, not the loudest voice in the room.
+                  {t('landing.features.heroBody')}
                 </p>
               </div>
               <div className="w-full max-w-sm rounded-xl bg-background p-5 lg:w-80 lg:shrink-0">
@@ -241,42 +248,12 @@ export default async function LandingPage() {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[
-              {
-                icon: GitBranch,
-                title: 'One pipeline, all roles',
-                description:
-                  'A board across every vacancy with a fast review mode for new applicants. Stop digging through per-job tabs.',
-              },
-              {
-                icon: Users,
-                title: 'Rich candidate profiles',
-                description:
-                  'CV auto-parsed into experience, education and contact. Notes, documents and full history in one view.',
-              },
-              {
-                icon: Calendar,
-                title: 'Interview scheduling',
-                description:
-                  'Schedule, assign interviewers, and sync with Google, Zoom or Teams automatically.',
-              },
-              {
-                icon: Sparkles,
-                title: 'AI that assists, never decides',
-                description:
-                  'Draft job descriptions, check inclusive language, parse CVs — always advisory, always your call.',
-              },
-              {
-                icon: Share2,
-                title: 'Share & collect applies',
-                description:
-                  'A branded public careers page + one-click LinkedIn share. Applications land straight in your pipeline.',
-              },
-              {
-                icon: BarChart3,
-                title: 'Reports that mean something',
-                description:
-                  'Time-to-hire, source effectiveness and funnel conversion — powered by the same consistent scorecards.',
-              },
+              { icon: GitBranch, title: t('landing.feature.pipeline.title'), description: t('landing.feature.pipeline.desc') },
+              { icon: Users, title: t('landing.feature.profiles.title'), description: t('landing.feature.profiles.desc') },
+              { icon: Calendar, title: t('landing.feature.scheduling.title'), description: t('landing.feature.scheduling.desc') },
+              { icon: Sparkles, title: t('landing.feature.ai.title'), description: t('landing.feature.ai.desc') },
+              { icon: Share2, title: t('landing.feature.share.title'), description: t('landing.feature.share.desc') },
+              { icon: BarChart3, title: t('landing.feature.reports.title'), description: t('landing.feature.reports.desc') },
             ].map((feature) => (
               <Card key={feature.title} className="border-border bg-background">
                 <CardContent className="p-6">
@@ -298,10 +275,10 @@ export default async function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Simple, transparent pricing
+              {t('landing.pricing.title')}
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-              Choose the plan that fits your hiring needs
+              {t('landing.pricing.subtitle')}
             </p>
           </div>
           <PricingSection
@@ -315,14 +292,14 @@ export default async function LandingPage() {
       <section className="bg-primary px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold text-primary-foreground sm:text-4xl">
-            Ready to hire with structure?
+            {t('landing.cta.title')}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-foreground/80">
-            Start a 7-day free trial. Set up your first role in minutes.
+            {t('landing.cta.subtitle')}
           </p>
           <Button size="lg" variant="secondary" className="mt-8" asChild>
             <Link href="/auth/sign-up">
-              Start your free trial
+              {t('landing.cta.button')}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
@@ -341,21 +318,21 @@ export default async function LandingPage() {
 
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
               <Link href="/guide" className="transition-colors hover:text-foreground">
-                Guides
+                {t('landing.nav.guides')}
               </Link>
               <Link href="/terms" className="transition-colors hover:text-foreground">
-                Terms and Conditions
+                {t('landing.footer.terms')}
               </Link>
               <Link href="/privacy" className="transition-colors hover:text-foreground">
-                Privacy Policy
+                {t('landing.footer.privacy')}
               </Link>
               <Link href="/refund" className="transition-colors hover:text-foreground">
-                Refund Policy
+                {t('landing.footer.refund')}
               </Link>
             </div>
 
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} HRHandle. All rights reserved.
+              {t('landing.footer.rights', { year: new Date().getFullYear() })}
             </p>
           </div>
         </div>
