@@ -11,6 +11,15 @@ export const PERIOD_LABELS: Record<Period, string> = {
   all: 'All time',
 }
 
+/** i18n keys for each period — the labels above are the English source. */
+export const PERIOD_I18N_KEY: Record<Period, string> = {
+  '7d': 'reports.period.7d',
+  '30d': 'reports.period.30d',
+  '90d': 'reports.period.90d',
+  '365d': 'reports.period.365d',
+  all: 'reports.period.all',
+}
+
 export function isPeriod(value: string | null | undefined): value is Period {
   return value !== null && value !== undefined && (PERIODS as readonly string[]).includes(value)
 }

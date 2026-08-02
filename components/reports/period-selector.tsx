@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   Select,
   SelectContent,
@@ -8,12 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { PERIODS, PERIOD_LABELS, type Period } from '@/lib/reports/period'
+import { PERIODS, PERIOD_I18N_KEY, type Period } from '@/lib/reports/period'
 
 export function PeriodSelector({ current }: { current: Period }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const t = useTranslations()
 
   function onChange(value: string) {
     const params = new URLSearchParams(searchParams.toString())
@@ -34,7 +36,7 @@ export function PeriodSelector({ current }: { current: Period }) {
       <SelectContent>
         {PERIODS.map((p) => (
           <SelectItem key={p} value={p}>
-            {PERIOD_LABELS[p]}
+            {t(PERIOD_I18N_KEY[p])}
           </SelectItem>
         ))}
       </SelectContent>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { toDisplayFullName } from '@/lib/format-name'
+import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -51,12 +52,13 @@ const STATUS_COLORS: Record<string, string> = {
   no_show: 'bg-red-100 text-red-800',
 }
 
-function getDisplayStatus(interview: InterviewRow): string {
-  if (interview.status === 'cancelled') return 'Cancelled'
-  if (interview.status === 'no_show') return 'No show'
-  if (interview.status === 'completed') return 'Completed'
+/** Returns the i18n key for the display status (resolved with t() at render). */
+function getDisplayStatusKey_i18n(interview: InterviewRow): string {
+  if (interview.status === 'cancelled') return 'interviews.status.cancelled'
+  if (interview.status === 'no_show') return 'interviews.status.noShow'
+  if (interview.status === 'completed') return 'interviews.status.completed'
   // status === 'scheduled' — derive upcoming vs past
-  return isPast(new Date(interview.scheduled_at)) ? 'Past' : 'Upcoming'
+  return isPast(new Date(interview.scheduled_at)) ? 'interviews.group.past' : 'interviews.group.upcoming'
 }
 
 function getDisplayStatusKey(interview: InterviewRow): string {
@@ -87,6 +89,7 @@ export default async function InterviewsPage({
   searchParams: Promise<{ status?: string }>
 }) {
   const { status: statusFilter } = await searchParams
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -158,11 +161,11 @@ export default async function InterviewsPage({
   // past interviews appear at the bottom.
   type Bucket = 'today' | 'tomorrow' | 'this_week' | 'later' | 'past'
   const bucketLabels: Record<Bucket, string> = {
-    today: 'Today',
-    tomorrow: 'Tomorrow',
-    this_week: 'This week',
-    later: 'Later',
-    past: 'Past',
+    today: t('interviews.group.today'),
+    tomorrow: t('interviews.group.tomorrow'),
+    this_week: t('interviews.group.thisWeek'),
+    later: t('interviews.group.later'),
+    past: t('interviews.group.past'),
   }
   const bucketOrder: Bucket[] = ['today', 'tomorrow', 'this_week', 'later', 'past']
 
@@ -195,11 +198,11 @@ export default async function InterviewsPage({
   }
 
   const filterTabs = [
-    { value: 'all', label: 'All' },
-    { value: 'upcoming', label: `Scheduled (${upcomingCount})` },
-    { value: 'past', label: `Past (${pastCount})` },
-    { value: 'cancelled', label: `Cancelled (${cancelledCount})` },
-    { value: 'no_show', label: `No show (${noShowCount})` },
+    { value: 'all', label: t('candidates.allTab') },
+    { value: 'upcoming', label: `${t('interviews.status.scheduled')} (${upcomingCount})` },
+    { value: 'past', label: `${t('interviews.group.past')} (${pastCount})` },
+    { value: 'cancelled', label: `${t('interviews.status.cancelled')} (${cancelledCount})` },
+    { value: 'no_show', label: `${t('interviews.status.noShow')} (${noShowCount})` },
   ]
 
   return (
@@ -207,13 +210,13 @@ export default async function InterviewsPage({
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Interviews</h1>
-          <p className="text-muted-foreground">Schedule and manage candidate interviews.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('interviews.title')}</h1>
+          <p className="text-muted-foreground">{t('interviews.subtitle')}</p>
         </div>
         <Button asChild>
           <Link href="/interviews/new">
             <Plus className="mr-2 h-4 w-4" />
-            Schedule interview
+            {t('interviews.scheduleInterview')}
           </Link>
         </Button>
       </div>
@@ -222,10 +225,10 @@ export default async function InterviewsPage({
           4-col on sm+ matches the design. A-11 Slice 1. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: 'Scheduled', value: upcomingCount, color: 'text-primary' },
-          { label: 'Past', value: pastCount, color: 'text-yellow-600' },
-          { label: 'Cancelled', value: cancelledCount, color: 'text-muted-foreground' },
-          { label: 'No show', value: noShowCount, color: 'text-destructive' },
+          { label: t('interviews.status.scheduled'), value: upcomingCount, color: 'text-primary' },
+          { label: t('interviews.group.past'), value: pastCount, color: 'text-yellow-600' },
+          { label: t('interviews.status.cancelled'), value: cancelledCount, color: 'text-muted-foreground' },
+          { label: t('interviews.status.noShow'), value: noShowCount, color: 'text-destructive' },
         ].map((stat) => (
           <div key={stat.label} className="rounded-lg border border-border bg-card px-4 py-3.5">
             <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
@@ -255,14 +258,14 @@ export default async function InterviewsPage({
                   {list.map((interview) => {
             const Icon = getInterviewIcon(interview.type)
             const displayStatusKey = getDisplayStatusKey(interview)
-            const displayStatusLabel = getDisplayStatus(interview)
+            const displayStatusLabel = t(getDisplayStatusKey_i18n(interview))
 
             const candidate = interview.candidates?.[0] ?? candidateMap.get(interview.candidate_id) ?? null
             const vacancy = interview.vacancies?.[0] ?? vacancyMap.get(interview.vacancy_id) ?? null
             const interviewerName =
               interview.profiles?.[0]?.full_name ??
               (interview.interviewer_id ? teamMemberMap.get(interview.interviewer_id)?.full_name : null) ??
-              'Not assigned'
+              t('interviews.notAssigned')
             const candidateHasEmail = !!candidate?.email
             const meetLink = interview.google_meet_link || interview.meeting_link
 
@@ -297,14 +300,14 @@ export default async function InterviewsPage({
                       {getCandidateFullName(candidate)}
                     </Link>
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {vacancy?.title || 'Unknown vacancy'}
+                      {vacancy?.title || t('interviews.unknownVacancy')}
                     </p>
                     <p className="mt-0.5 truncate text-xs text-muted-foreground/70">
-                      Interviewer: {interviewerName}
+                      {t('interviews.interviewer', { name: interviewerName })}
                     </p>
                     {isOverdue && (
                       <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-[11px] font-medium text-yellow-800">
-                        Past due — mark complete or no-show
+                        {t('interviews.pastDue')}
                       </p>
                     )}
                   </div>
@@ -331,7 +334,7 @@ export default async function InterviewsPage({
                         className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
                       >
                         <Video className="h-3 w-3" />
-                        Join
+                        {t('interviews.join')}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
@@ -358,15 +361,15 @@ export default async function InterviewsPage({
       ) : (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
           <Calendar className="h-10 w-10 text-muted-foreground/40" />
-          <h3 className="mt-4 text-lg font-medium text-foreground">No interviews found</h3>
+          <h3 className="mt-4 text-lg font-medium text-foreground">{t('interviews.empty')}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            {statusFilter ? 'Try a different filter.' : 'Schedule interviews with your candidates.'}
+            {statusFilter ? t('interviews.emptyFilterHint') : t('interviews.emptyHint')}
           </p>
           {!statusFilter && (
             <Button className="mt-6" asChild>
               <Link href="/interviews/new">
                 <Plus className="mr-2 h-4 w-4" />
-                Schedule interview
+                {t('interviews.scheduleInterview')}
               </Link>
             </Button>
           )}

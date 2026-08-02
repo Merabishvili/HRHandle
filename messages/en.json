@@ -47,7 +47,8 @@
     "upload": "Upload",
     "status": "Status",
     "notSpecified": "Not specified",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "no": "No"
   },
   "settings": {
     "section": {
@@ -393,6 +394,7 @@
   },
   "reports": {
     "title": "Reports",
+    "subtitle": "Pipeline conversion, time-to-hire, and source effectiveness across your organisation.",
     "tab": {
       "pipeline": "Pipeline",
       "sources": "Sources",
@@ -443,7 +445,28 @@
       "upcoming": "Upcoming",
       "later": "Later",
       "past": "Past"
-    }
+    },
+    "scheduleInterview": "Schedule interview",
+    "emptyFilterHint": "Try a different filter.",
+    "emptyHint": "Schedule interviews with your candidates.",
+    "markComplete": "Mark complete",
+    "cancelInterview": "Cancel interview",
+    "markNoShow": "Mark as no show",
+    "markAsConfirm": "Mark as {action}?",
+    "actionsAria": "Interview actions",
+    "date": "Date",
+    "time": "Time",
+    "sendInvite": "Send updated invite to candidate",
+    "noEmail": "(no email)",
+    "dateTimeRequired": "Date and time are required.",
+    "dur30m": "30 minutes",
+    "dur45m": "45 minutes",
+    "dur1h": "1 hour",
+    "dur90m": "1.5 hours",
+    "dur2h": "2 hours",
+    "interviewer": "Interviewer: {name}",
+    "pastDue": "Past due — mark complete or no-show",
+    "join": "Join"
   },
   "apply": {
     "applyForPosition": "Apply for this position",
