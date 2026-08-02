@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages, getTranslations } from 'next-intl/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ApplyForm } from '@/components/apply/apply-form'
 import { JobDescriptionBlock } from '@/components/apply/job-description-block'
+import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 
 export const revalidate = 300 // 5 minutes
 
@@ -102,11 +105,25 @@ export default async function ApplyPage({ params }: PageProps) {
     aiFitEnabled = !!aiOrg?.ai_fit_enabled
   }
 
-  const employmentLabel: Record<string, string> = {
-    full_time: 'Full-time',
-    part_time: 'Part-time',
-    contract: 'Contract',
-    internship: 'Internship',
+  // i18n Slice 3b — render the candidate page in the ORG's content language
+  // (graceful: unmigrated / unset → English). The client form is wrapped in a
+  // nested provider with this locale so it doesn't inherit the visitor cookie.
+  const { data: orgLang } = org?.id
+    ? await supabase
+        .from('organizations')
+        .select('default_content_locale, enabled_content_locales')
+        .eq('id', org.id)
+        .single()
+    : { data: null }
+  const contentLocale = resolveOrgContentLocale(orgLang)
+  const t = await getTranslations({ locale: contentLocale })
+  const messages = await getMessages({ locale: contentLocale })
+
+  const employmentLabelKey: Record<string, string> = {
+    full_time: 'enum.employment.fullTime',
+    part_time: 'enum.employment.partTime',
+    contract: 'enum.employment.contract',
+    internship: 'enum.employment.internship',
   }
 
   const jobPostingJsonLd = {
@@ -142,7 +159,7 @@ export default async function ApplyPage({ params }: PageProps) {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            All open positions
+            {t('apply.allOpenPositions')}
           </a>
         )}
 
@@ -166,13 +183,13 @@ export default async function ApplyPage({ params }: PageProps) {
               </div>
             )}
             <div>
-              <p className="text-sm font-medium text-gray-500">{org?.name || 'Company'}</p>
+              <p className="text-sm font-medium text-gray-500">{org?.name || t('apply.company')}</p>
               <h1 className="text-2xl font-bold text-gray-900">{vacancy.title}</h1>
               <div className="mt-1 flex flex-wrap gap-3 text-sm text-gray-500">
                 {vacancy.location && <span>{vacancy.location}</span>}
                 {vacancy.department && <span>· {vacancy.department}</span>}
                 {vacancy.employment_type && (
-                  <span>· {employmentLabel[vacancy.employment_type] || vacancy.employment_type}</span>
+                  <span>· {employmentLabelKey[vacancy.employment_type] ? t(employmentLabelKey[vacancy.employment_type]!) : vacancy.employment_type}</span>
                 )}
               </div>
             </div>
@@ -180,18 +197,18 @@ export default async function ApplyPage({ params }: PageProps) {
 
           {vacancy.description && (
             <div className="mb-4">
-              <JobDescriptionBlock title="About the job" body={vacancy.description} />
+              <JobDescriptionBlock title={t('apply.aboutJob')} body={vacancy.description} />
             </div>
           )}
 
           {vacancy.responsibilities && (
             <div className="mb-4">
-              <JobDescriptionBlock title="Responsibilities" body={vacancy.responsibilities} />
+              <JobDescriptionBlock title={t('apply.responsibilities')} body={vacancy.responsibilities} />
             </div>
           )}
 
           {vacancy.requirements && (
-            <JobDescriptionBlock title="Requirements" body={vacancy.requirements} />
+            <JobDescriptionBlock title={t('apply.requirements')} body={vacancy.requirements} />
           )}
           </div>
         </div>
@@ -199,15 +216,17 @@ export default async function ApplyPage({ params }: PageProps) {
         {/* Application Form */}
         {isClosed ? (
           <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-lg font-semibold text-gray-700">This position is no longer open.</p>
-            <p className="mt-1 text-sm text-gray-500">The role may have been filled or closed. Thank you for your interest.</p>
+            <p className="text-lg font-semibold text-gray-700">{t('apply.closedTitle')}</p>
+            <p className="mt-1 text-sm text-gray-500">{t('apply.closedBody')}</p>
           </div>
         ) : (
-          <ApplyForm
-            token={token}
-            companyName={org?.name || 'this company'}
-            screeningQuestions={screeningQuestions}
-          />
+          <NextIntlClientProvider locale={contentLocale} messages={messages}>
+            <ApplyForm
+              token={token}
+              companyName={org?.name || t('apply.company')}
+              screeningQuestions={screeningQuestions}
+            />
+          </NextIntlClientProvider>
         )}
 
         {/* AI transparency notice (Wave 3.1) — only when this org uses AI Fit. */}
@@ -215,15 +234,9 @@ export default async function ApplyPage({ params }: PageProps) {
           <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-600 shadow-sm">
             <p className="mb-1 flex items-center gap-2 font-semibold text-gray-900">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3a6 6 0 0 0-6 6c0 1.6.8 3 2 4l.5 3h7l.5-3c1.2-1 2-2.4 2-4a6 6 0 0 0-6-6Z"/><path d="M9 18h6"/><path d="M10 21h4"/></svg>
-              How your application may be reviewed
+              {t('apply.aiReviewTitle')}
             </p>
-            <p>
-              {org?.name || 'This company'} may use an AI assistant to help recruiters see how your application matches
-              this role&apos;s requirements. It is <strong>advisory only</strong>: a person always makes the hiring
-              decision, it produces no automated score and rejects no one, and it assesses only job-relevant information —
-              your name and other personal details are hidden from it. You can ask {org?.name || 'the company'} for more
-              information about how it is used.
-            </p>
+            <p>{t('apply.aiReviewBody', { company: org?.name || t('apply.company') })}</p>
           </div>
         )}
 
@@ -234,11 +247,11 @@ export default async function ApplyPage({ params }: PageProps) {
               className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm hover:border-gray-300 hover:bg-gray-50 transition-all"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
-              View all open positions at {org?.name || 'this company'}
+              {t('apply.viewAllAt', { company: org?.name || t('apply.company') })}
             </a>
           </div>
         )}
-        <p className="text-center text-xs text-gray-400">Powered by HRHandle</p>
+        <p className="text-center text-xs text-gray-400">{t('jobs.poweredBy')}</p>
       </div>
     </div>
   )

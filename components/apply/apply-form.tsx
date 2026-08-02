@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { submitPublicApplication } from '@/lib/actions/public-apply'
@@ -34,6 +35,7 @@ interface ApplyFormProps {
 }
 
 export function ApplyForm({ token, companyName, screeningQuestions = [] }: ApplyFormProps) {
+  const t = useTranslations()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
 
@@ -93,12 +95,12 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
 
     const ext = '.' + file.name.split('.').pop()?.toLowerCase()
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      setError('Please upload a PDF or Word document (.pdf, .doc, .docx).')
+      setError(t('apply.error.pdfOrWord'))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
     if (file.size > 10 * 1024 * 1024) {
-      setError('File must be 10 MB or smaller.')
+      setError(t('apply.error.fileSize'))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
@@ -152,22 +154,22 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
     if (isLoading) return
     setError(null)
 
-    if (!firstName.trim()) { setError('First name is required.'); return }
-    if (!lastName.trim()) { setError('Last name is required.'); return }
+    if (!firstName.trim()) { setError(t('apply.error.firstNameRequired')); return }
+    if (!lastName.trim()) { setError(t('apply.error.lastNameRequired')); return }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError('A valid email address is required.')
+      setError(t('apply.error.emailRequired'))
       return
     }
 
     const phoneTrimmed = phone.trim()
     if (phoneTrimmed && (phoneTrimmed.length < 5 || phoneTrimmed.length > 30 || !/^[\d\s\-\+\(\)]+$/.test(phoneTrimmed))) {
-      setError('Please enter a valid phone number.')
+      setError(t('apply.error.phoneInvalid'))
       return
     }
 
     const linkedinTrimmed = linkedinUrl.trim()
     if (linkedinTrimmed && !/^https?:\/\/(www\.)?linkedin\.com\//.test(linkedinTrimmed)) {
-      setError('Please enter a valid LinkedIn profile URL (e.g. https://linkedin.com/in/yourname).')
+      setError(t('apply.error.linkedinInvalid'))
       return
     }
 
@@ -179,13 +181,13 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
     for (const q of screeningQuestions) {
       const answer = (screeningAnswers[q.id] ?? '').trim()
       if (!answer) {
-        setError('Please answer all questions before submitting.')
+        setError(t('apply.error.answerAll'))
         return
       }
     }
 
     if (!captchaToken) {
-      setError('Security check not complete. Please wait a moment and try again.')
+      setError(t('apply.error.captcha'))
       return
     }
 
@@ -234,17 +236,14 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
         <div className="h-2 bg-primary" aria-hidden />
         <div className="p-10 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-          <h2 className="mt-4 text-xl font-bold text-gray-900">Thanks for applying!</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            We&apos;ve sent a confirmation to <strong>{email}</strong>.
-            We will review your details and be in touch.
-          </p>
+          <h2 className="mt-4 text-xl font-bold text-gray-900">{t('apply.successTitle')}</h2>
+          <p className="mt-2 text-sm text-gray-600">{t('apply.successBody', { email })}</p>
           {statusToken && (
             <a
               href={`/status/${statusToken}`}
               className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
             >
-              Track your application
+              {t('apply.trackApplication')}
               <span aria-hidden>→</span>
             </a>
           )}
@@ -257,7 +256,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="h-2 bg-primary" aria-hidden />
       <div className="p-8">
-      <h2 className="mb-6 text-lg font-bold text-gray-900">Apply for this position</h2>
+      <h2 className="mb-6 text-lg font-bold text-gray-900">{t('apply.applyForPosition')}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         {/* Honeypot */}
@@ -279,8 +278,8 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
         {/* ── CV Upload (optional, triggers parse) ──────────────────────────── */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700">
-            CV / Resume
-            <span className="ml-1.5 text-xs font-normal text-gray-400">(recommended — auto-fills your details)</span>
+            {t('apply.cvLabel')}
+            <span className="ml-1.5 text-xs font-normal text-gray-400">{t('apply.cvRecommended')}</span>
           </label>
 
           {cvFile ? (
@@ -293,7 +292,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
                   <button
                     type="button"
                     onClick={handleRemoveFile}
-                    aria-label="Remove uploaded CV"
+                    aria-label={t('apply.removeCvAria')}
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
                     <X className="h-4 w-4" aria-hidden />
@@ -303,21 +302,19 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
               {parseState === 'parsing' && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Filling in your details…
+                  {t('apply.parsing')}
                 </div>
               )}
               {parseState === 'done' && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Details filled in — please review below
+                  {t('apply.parseDone')}
                 </div>
               )}
               {parseState === 'failed' && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-amber-600">
                   <AlertCircle className="h-3.5 w-3.5" />
-                  {parseFailureReason === 'network'
-                    ? 'Could not reach the server — please check your connection and complete the form manually.'
-                    : 'Could not read this file — please complete the form manually.'}
+                  {parseFailureReason === 'network' ? t('apply.parseFailedNetwork') : t('apply.parseFailedFile')}
                 </div>
               )}
             </div>
@@ -341,7 +338,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
               className="flex w-full items-center justify-center gap-2 rounded-[10px] border-[1.5px] border-dashed border-[oklch(0.8_0.04_250)] bg-[oklch(0.985_0.012_250)] px-4 py-4 text-sm font-medium text-[oklch(0.45_0.16_250)] transition-colors hover:bg-[oklch(0.96_0.025_250)] disabled:opacity-50"
             >
               <Upload className="h-4 w-4" aria-hidden />
-              Upload PDF or Word (max 10 MB)
+              {t('apply.uploadCta')}
             </button>
           )}
 
@@ -359,14 +356,14 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              First name <span className="text-red-500">*</span>
+              {t('apply.firstName')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               autoComplete="given-name"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              placeholder="John"
+              placeholder={t('apply.firstNamePlaceholder')}
               maxLength={100}
               disabled={isLoading}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
@@ -374,14 +371,14 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Last name <span className="text-red-500">*</span>
+              {t('apply.lastName')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               autoComplete="family-name"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              placeholder="Smith"
+              placeholder={t('apply.lastNamePlaceholder')}
               maxLength={100}
               disabled={isLoading}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
@@ -391,7 +388,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
 
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700">
-            Email <span className="text-red-500">*</span>
+            {t('apply.email')} <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -399,7 +396,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
             inputMode="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="john@example.com"
+            placeholder={t('apply.emailPlaceholder')}
             maxLength={254}
             disabled={isLoading}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
@@ -408,28 +405,28 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Phone</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('apply.phone')}</label>
             <input
               type="tel"
               autoComplete="tel"
               inputMode="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 555 123 4567"
+              placeholder={t('apply.phonePlaceholder')}
               maxLength={30}
               disabled={isLoading}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">LinkedIn URL</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('apply.linkedinUrl')}</label>
             <input
               type="url"
               autoComplete="url"
               inputMode="url"
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
-              placeholder="https://linkedin.com/in/..."
+              placeholder={t('apply.linkedinPlaceholder')}
               maxLength={500}
               disabled={isLoading}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
@@ -440,9 +437,9 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
         {/* ── Screening questions (Wave 2.5 Slice 2b) ───────────────────────── */}
         {screeningQuestions.length > 0 && (
           <div className="rounded-lg border border-gray-200 bg-white p-4">
-            <h3 className="mb-1 text-sm font-bold text-gray-900">A few quick questions</h3>
+            <h3 className="mb-1 text-sm font-bold text-gray-900">{t('apply.screeningTitle')}</h3>
             <p className="mb-4 text-xs text-gray-500">
-              These help the team focus on candidates who fit the role.
+              {t('apply.screeningSubtitle')}
             </p>
             <div className="space-y-4">
               {screeningQuestions.map((q, idx) => {
@@ -475,7 +472,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
                                 : 'flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
                             }
                           >
-                            {opt === 'yes' ? 'Yes' : 'No'}
+                            {opt === 'yes' ? t('apply.yes') : t('apply.no')}
                           </button>
                         )
                       })}
@@ -501,7 +498,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
                       className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50"
                     >
                       <option value="" disabled>
-                        Select an option
+                        {t('apply.selectOption')}
                       </option>
                       {q.options.map((opt) => (
                         <option key={opt} value={opt}>
@@ -531,8 +528,7 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
                 onClick={() => setScreeningExpanded(true)}
                 className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[oklch(0.45_0.16_250)] hover:underline sm:hidden"
               >
-                Show {screeningQuestions.length - SCREENING_VISIBLE_CAP} more
-                {screeningQuestions.length - SCREENING_VISIBLE_CAP === 1 ? ' question' : ' questions'}
+                {t('apply.showMore', { count: screeningQuestions.length - SCREENING_VISIBLE_CAP })}
                 <ChevronDown className="h-3.5 w-3.5" aria-hidden />
               </button>
             )}
@@ -554,39 +550,22 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
         <details className="group rounded-lg border border-gray-200 bg-gray-50 text-xs leading-relaxed text-gray-600 [&[open]>summary>svg]:rotate-180">
           <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-semibold text-gray-700 marker:hidden">
             <Info className="h-3.5 w-3.5 text-gray-500" aria-hidden />
-            <span>Your data privacy</span>
+            <span>{t('apply.privacyToggle')}</span>
             <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform text-gray-500" aria-hidden />
           </summary>
           <div className="border-t border-gray-200 px-4 pb-4 pt-3">
-            <p>
-              By submitting this form, you&apos;re sharing your personal data with{' '}
-              <strong>{companyName}</strong> — the company recruiting for this position and
-              the data controller for your application. HRHandle operates this form on their
-              behalf as a data processor.
-            </p>
+            <p>{t('apply.privacyIntro', { company: companyName })}</p>
+            <p className="mt-2">{t('apply.privacyCollect')}</p>
+            <p className="mt-2">{t('apply.privacyRetention', { company: companyName })}</p>
             <p className="mt-2">
-              <strong>What we collect.</strong> The contact details and CV you submit. If you
-              uploaded a CV, the file is processed through automated extraction to pre-fill
-              the form fields; no automated hiring decision is taken. We also record the IP
-              address of the submission to prevent abuse.
-            </p>
-            <p className="mt-2">
-              <strong>How long we keep it.</strong> Your application is retained while{' '}
-              {companyName} actively considers candidates, and deleted within 30 days of{' '}
-              {companyName} closing the role or terminating their HRHandle subscription.
-            </p>
-            <p className="mt-2">
-              <strong>Your rights.</strong> You can ask to access, correct, or delete your
-              data, or restrict processing. To exercise these rights for this application,
-              contact {companyName} directly. For HRHandle&apos;s role as data processor, see
-              our{' '}
+              {t('apply.privacyRights', { company: companyName })}{' '}
               <a
                 href="/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline hover:text-gray-900"
               >
-                Privacy Policy
+                {t('apply.privacyPolicyLink')}
               </a>.
             </p>
           </div>
@@ -607,15 +586,15 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Submitting…
+                {t('apply.submitting')}
               </>
             ) : (
-              'Apply now'
+              t('apply.submit')
             )}
           </button>
           {!isLoading && isMissingBasics && (
             <p className="mt-1.5 text-center text-[11px] text-gray-500">
-              Add your name and email to apply
+              {t('apply.missingBasics')}
             </p>
           )}
         </div>
