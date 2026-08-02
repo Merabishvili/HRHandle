@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { ApplyForm } from '@/components/apply/apply-form'
 import { JobDescriptionBlock } from '@/components/apply/job-description-block'
 import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
+import { pickLocale } from '@/lib/i18n/locales'
 
 export const revalidate = 300 // 5 minutes
 
@@ -119,6 +120,17 @@ export default async function ApplyPage({ params }: PageProps) {
   const t = await getTranslations({ locale: contentLocale })
   const messages = await getMessages({ locale: contentLocale })
 
+  // i18n Slice 4 — per-locale JD content (graceful separate read; unmigrated /
+  // no translation → falls back to the legacy single-language columns).
+  const { data: vi18n } = await supabase
+    .from('vacancies')
+    .select('description_i18n, responsibilities_i18n, requirements_i18n')
+    .eq('id', vacancy.id)
+    .single()
+  const descriptionText = pickLocale(vi18n?.description_i18n ?? vacancy.description, contentLocale)
+  const responsibilitiesText = pickLocale(vi18n?.responsibilities_i18n ?? vacancy.responsibilities, contentLocale)
+  const requirementsText = pickLocale(vi18n?.requirements_i18n ?? vacancy.requirements, contentLocale)
+
   const employmentLabelKey: Record<string, string> = {
     full_time: 'enum.employment.fullTime',
     part_time: 'enum.employment.partTime',
@@ -195,20 +207,20 @@ export default async function ApplyPage({ params }: PageProps) {
             </div>
           </div>
 
-          {vacancy.description && (
+          {descriptionText && (
             <div className="mb-4">
-              <JobDescriptionBlock title={t('apply.aboutJob')} body={vacancy.description} />
+              <JobDescriptionBlock title={t('apply.aboutJob')} body={descriptionText} />
             </div>
           )}
 
-          {vacancy.responsibilities && (
+          {responsibilitiesText && (
             <div className="mb-4">
-              <JobDescriptionBlock title={t('apply.responsibilities')} body={vacancy.responsibilities} />
+              <JobDescriptionBlock title={t('apply.responsibilities')} body={responsibilitiesText} />
             </div>
           )}
 
-          {vacancy.requirements && (
-            <JobDescriptionBlock title={t('apply.requirements')} body={vacancy.requirements} />
+          {requirementsText && (
+            <JobDescriptionBlock title={t('apply.requirements')} body={requirementsText} />
           )}
           </div>
         </div>
