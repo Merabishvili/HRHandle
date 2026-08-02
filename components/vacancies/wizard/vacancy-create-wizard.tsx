@@ -20,6 +20,7 @@ import {
 } from './step-scorecard'
 import { StepReview } from './step-review'
 import type { KnockoutCondition } from '@/lib/screening-questions/knockout-condition'
+import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 
 /** Build the persisted passing condition from a wizard screening question. */
 function toKnockoutCondition(q: ScorecardScreeningQuestion): KnockoutCondition | null {
@@ -40,7 +41,12 @@ interface VacancyCreateWizardProps {
     name: string
     code: 'draft' | 'open' | 'on_hold' | 'closed' | 'archived'
   }[]
+  /** Org content languages — when >1, Step 3 shows per-language JD tabs (Slice 4). */
+  orgLocales?: { default: Locale; enabled: Locale[] }
 }
+
+/** Per-locale JD text for the non-default languages (default is `description`). */
+type BodyTranslations = Record<string, { description: string; responsibilities: string; requirements: string }>
 
 type StepId = 'basics' | 'dates-comp' | 'description' | 'scorecard' | 'review'
 
@@ -73,10 +79,23 @@ const STEPS = [
  *     side only for now; needs a vacancies.work_mode column to persist
  *     (tech-debt.md §1).
  */
-export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWizardProps) {
+export function VacancyCreateWizard({
+  sectors,
+  statusOptions,
+  orgLocales = { default: DEFAULT_LOCALE, enabled: [DEFAULT_LOCALE] },
+}: VacancyCreateWizardProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState<StepId>('basics')
   const [pending, startTransition] = useTransition()
+
+  // i18n Slice 4 — non-default-locale JD text (the default locale is authored in
+  // the `description` state below). Seeded empty for each extra enabled locale.
+  const extraLocales = orgLocales.enabled.filter((l) => l !== orgLocales.default)
+  const [translations, setTranslations] = useState<BodyTranslations>(() =>
+    Object.fromEntries(
+      extraLocales.map((l) => [l, { description: '', responsibilities: '', requirements: '' }]),
+    ),
+  )
   // Step 5's single commit action follows this choice (radio in the review
   // body ⇄ the footer's primary button label). Default to Publish.
   const [publishChoice, setPublishChoice] = useState<'publish' | 'draft'>('publish')
@@ -146,6 +165,29 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
       const targetStatusCode = publish ? 'open' : 'draft'
       const targetStatus = statusOptions.find((s) => s.code === targetStatusCode)
 
+      // i18n Slice 4 — assemble per-locale JD objects: the default locale from
+      // the `description` state, other locales from `translations`. Empty
+      // strings are omitted so pickLocale falls back cleanly to the legacy text.
+      const buildI18n = (field: 'description' | 'responsibilities' | 'requirements') => {
+        const out: Record<string, string> = {}
+        const def = description[field].trim()
+        if (def) out[orgLocales.default] = def
+        for (const l of extraLocales) {
+          const v = (translations[l]?.[field] ?? '').trim()
+          if (v) out[l] = v
+        }
+        return out
+      }
+      const description_i18n = buildI18n('description')
+      const responsibilities_i18n = buildI18n('responsibilities')
+      const requirements_i18n = buildI18n('requirements')
+      const posting_locales = [
+        orgLocales.default,
+        ...extraLocales.filter(
+          (l) => description_i18n[l] || responsibilities_i18n[l] || requirements_i18n[l],
+        ),
+      ]
+
       const result = await createVacancy({
         title: basics.title.trim(),
         sector_id: basics.sectorId,
@@ -165,6 +207,10 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
         responsibilities: description.responsibilities.trim() || null,
         requirements: description.requirements.trim() || null,
         show_on_public_page: publish ? description.showOnPublicPage : false,
+        description_i18n,
+        responsibilities_i18n,
+        requirements_i18n,
+        posting_locales,
       })
 
       if (!result.success) {
@@ -295,6 +341,17 @@ export function VacancyCreateWizard({ sectors, statusOptions }: VacancyCreateWiz
         <StepDescription
           value={description}
           onChange={setDescription}
+          orgLocales={orgLocales}
+          translations={translations}
+          onTranslationChange={(locale, field, value) =>
+            setTranslations((prev) => ({
+              ...prev,
+              [locale]: {
+                ...(prev[locale] ?? { description: '', responsibilities: '', requirements: '' }),
+                [field]: value,
+              },
+            }))
+          }
           jdContext={{
             title: basics.title,
             department: basics.department || null,

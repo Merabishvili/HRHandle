@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getVacancyStatuses } from '@/lib/cache/lookups'
 import { VacancyCreateWizard } from '@/components/vacancies/wizard/vacancy-create-wizard'
+import { orgDefaultLocale, orgEnabledLocales } from '@/lib/i18n/org-locale'
 
 /**
  * Wave 2.7 vacancy creation flow — replaced the single-page
@@ -35,21 +36,29 @@ export default async function NewVacancyPage() {
 
   if (!profile?.organization_id) redirect('/pipeline')
 
-  const [{ data: sectorsRaw }, statusOptionsRaw] = await Promise.all([
+  const [{ data: sectorsRaw }, statusOptionsRaw, { data: orgLangRow }] = await Promise.all([
     supabase
       .from('sectors')
       .select('id, name')
       .eq('is_active', true)
       .order('sort_order', { ascending: true }),
     getVacancyStatuses(),
+    // Org content languages — when >1 is enabled the wizard shows per-language
+    // JD tabs (i18n Slice 4). Graceful: a null row falls back to English-only.
+    supabase
+      .from('organizations')
+      .select('default_content_locale, enabled_content_locales')
+      .eq('id', profile.organization_id)
+      .maybeSingle(),
   ])
 
   const sectors = (sectorsRaw || []) as { id: string; name: string }[]
   const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
+  const orgLocales = { default: orgDefaultLocale(orgLangRow), enabled: orgEnabledLocales(orgLangRow) }
 
   return (
     <div className="mx-auto max-w-[1360px] p-4 lg:p-6">
-      <VacancyCreateWizard sectors={sectors} statusOptions={statusOptions} />
+      <VacancyCreateWizard sectors={sectors} statusOptions={statusOptions} orgLocales={orgLocales} />
     </div>
   )
 }
