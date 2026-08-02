@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { updateVacancyStatus, deleteVacancy, duplicateVacancy } from '@/lib/actions/vacancies'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { Loader2 } from 'lucide-react'
@@ -24,6 +25,7 @@ export function VacancyActions({
   statusOptions,
 }: VacancyActionsProps) {
   const router = useRouter()
+  const t = useTranslations()
   const [isDuplicating, setIsDuplicating] = useState(false)
 
   const handleStatusChange = async (statusId: string) => {
@@ -42,7 +44,7 @@ export function VacancyActions({
   }
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this vacancy? This action cannot be undone.')) {
+    if (!confirm(t('vacancies.deleteConfirm'))) {
       return
     }
     const result = await deleteVacancy(vacancyId)
@@ -60,33 +62,33 @@ export function VacancyActions({
     <>
       {openStatus && currentStatusId !== openStatus.id && (
         <DropdownMenuItem onClick={() => handleStatusChange(openStatus.id)}>
-          Set as Open
+          {t('vacancies.setOpen')}
         </DropdownMenuItem>
       )}
       {onHoldStatus && currentStatusId !== onHoldStatus.id && (
         <DropdownMenuItem onClick={() => handleStatusChange(onHoldStatus.id)}>
-          Put On Hold
+          {t('vacancies.putOnHold')}
         </DropdownMenuItem>
       )}
       {closedStatus && currentStatusId !== closedStatus.id && (
         <DropdownMenuItem onClick={() => handleStatusChange(closedStatus.id)}>
-          Close Vacancy
+          {t('vacancies.closeVacancy')}
         </DropdownMenuItem>
       )}
       {archivedStatus && currentStatusId !== archivedStatus.id && (
         <DropdownMenuItem onClick={() => handleStatusChange(archivedStatus.id)}>
-          Archive Vacancy
+          {t('vacancies.archiveVacancy')}
         </DropdownMenuItem>
       )}
       <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
         {isDuplicating ? (
-          <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Duplicating…</>
+          <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />{t('vacancies.duplicating')}</>
         ) : (
-          'Duplicate Vacancy'
+          t('vacancies.duplicateVacancy')
         )}
       </DropdownMenuItem>
       <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-        Delete Vacancy
+        {t('vacancies.deleteVacancy')}
       </DropdownMenuItem>
     </>
   )

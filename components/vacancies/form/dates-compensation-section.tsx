@@ -1,6 +1,7 @@
 'use client'
 
 import { Controller, type UseFormReturn } from 'react-hook-form'
+import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -20,6 +21,7 @@ interface DatesCompensationSectionProps {
 }
 
 export function DatesCompensationSection({ form, disabled }: DatesCompensationSectionProps) {
+  const t = useTranslations()
   const {
     control,
     formState: { errors },
@@ -28,14 +30,14 @@ export function DatesCompensationSection({ form, disabled }: DatesCompensationSe
   return (
     <Card className="border-border">
       <CardHeader>
-        <CardTitle>Dates and Compensation</CardTitle>
-        <CardDescription>Vacancy timeline and salary range.</CardDescription>
+        <CardTitle>{t('vacancy.form.datesComp')}</CardTitle>
+        <CardDescription>{t('vacancy.form.datesCompDesc')}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div id="field-start_date" className="space-y-2">
-            <Label>Start Date *</Label>
+            <Label>{t('columns.startDate')} *</Label>
             <Controller
               control={control}
               name="start_date"
@@ -43,7 +45,7 @@ export function DatesCompensationSection({ form, disabled }: DatesCompensationSe
                 <DatePicker
                   value={field.value || null}
                   onChange={(v) => field.onChange(v ?? '')}
-                  placeholder="Select start date"
+                  placeholder={t('vacancy.form.selectStartDate')}
                   disabled={disabled}
                   fromYear={2020}
                   toYear={2035}
@@ -54,7 +56,7 @@ export function DatesCompensationSection({ form, disabled }: DatesCompensationSe
           </div>
 
           <div id="field-end_date" className="space-y-2">
-            <Label>End date</Label>
+            <Label>{t('columns.endDate')}</Label>
             <Controller
               control={control}
               name="end_date"
@@ -62,7 +64,7 @@ export function DatesCompensationSection({ form, disabled }: DatesCompensationSe
                 <DatePicker
                   value={field.value ?? null}
                   onChange={(v) => field.onChange(v ?? null)}
-                  placeholder="Select end date"
+                  placeholder={t('vacancy.form.selectEndDate')}
                   disabled={disabled}
                   fromYear={2020}
                   toYear={2035}
@@ -75,7 +77,7 @@ export function DatesCompensationSection({ form, disabled }: DatesCompensationSe
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="salary_min">Minimum salary</Label>
+            <Label htmlFor="salary_min">{t('vacancy.form.minSalary')}</Label>
             <Controller
               control={control}
               name="salary_min"
@@ -94,7 +96,7 @@ export function DatesCompensationSection({ form, disabled }: DatesCompensationSe
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="salary_max">Maximum salary</Label>
+            <Label htmlFor="salary_max">{t('vacancy.form.maxSalary')}</Label>
             <Controller
               control={control}
               name="salary_max"
@@ -114,7 +116,7 @@ export function DatesCompensationSection({ form, disabled }: DatesCompensationSe
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="salary_currency">Currency</Label>
+            <Label htmlFor="salary_currency">{t('vacancy.form.currency')}</Label>
             <Controller
               control={control}
               name="salary_currency"

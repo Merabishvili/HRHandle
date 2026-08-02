@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getVacancyStatuses } from '@/lib/cache/lookups'
+import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -25,6 +26,7 @@ import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 import {
   DEFAULT_VACANCY_COLUMNS,
   OPTIONAL_VACANCY_COLUMNS,
+  COLUMN_I18N_KEY,
   type ColumnDef,
 } from '@/lib/types/columns'
 import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
@@ -107,6 +109,7 @@ export default async function VacanciesPage({
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
 
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -285,8 +288,8 @@ export default async function VacanciesPage({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Vacancies</h1>
-          <p className="text-muted-foreground">Manage your job postings and track applicants.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('vacancies.title')}</h1>
+          <p className="text-muted-foreground">{t('vacancies.subtitle')}</p>
         </div>
 
         <Button asChild>
@@ -340,11 +343,13 @@ export default async function VacanciesPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Vacancy</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Candidates</TableHead>
+                    <TableHead>{t('vacancies.colVacancy')}</TableHead>
+                    <TableHead>{t('common.status')}</TableHead>
+                    <TableHead>{t('vacancies.colCandidates')}</TableHead>
                     {activeColumns.map((col) => (
-                      <TableHead key={col}>{optColMap.get(col) ?? col}</TableHead>
+                      <TableHead key={col}>
+                        {COLUMN_I18N_KEY[col] ? t(COLUMN_I18N_KEY[col]) : (optColMap.get(col) ?? col)}
+                      </TableHead>
                     ))}
                     <TableHead className="w-[70px]" />
                   </TableRow>
@@ -387,7 +392,7 @@ export default async function VacanciesPage({
                               {status.name}
                             </Badge>
                           ) : (
-                            <Badge variant="secondary">Unknown</Badge>
+                            <Badge variant="secondary">{t('common.unknown')}</Badge>
                           )}
                         </TableCell>
 
@@ -561,12 +566,12 @@ export default async function VacanciesPage({
             <div className="py-12 text-center">
               <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/50" />
               <h3 className="mt-4 text-lg font-medium text-foreground">
-                {search ? `No vacancies matching "${search}"` : 'No vacancies yet'}
+                {search ? t('vacancies.emptySearchTitle', { search }) : t('vacancies.emptyTitle')}
               </h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 {search
-                  ? 'Try a different search term.'
-                  : 'Get started by creating your first job posting.'}
+                  ? t('candidates.emptySearchBody')
+                  : t('vacancies.emptyBody')}
               </p>
               {!search && (
                 <Button className="mt-4" asChild>

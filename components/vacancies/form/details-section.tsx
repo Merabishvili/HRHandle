@@ -1,6 +1,7 @@
 'use client'
 
 import { Controller, type UseFormReturn } from 'react-hook-form'
+import { useTranslations } from 'next-intl'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
@@ -27,6 +28,7 @@ export function DetailsSection({ form, sectors, disabled }: DetailsSectionProps)
     formState: { errors },
   } = form
 
+  const t = useTranslations()
   const description = watch('description')
   const responsibilities = watch('responsibilities')
   const requirements = watch('requirements')
@@ -34,8 +36,8 @@ export function DetailsSection({ form, sectors, disabled }: DetailsSectionProps)
   return (
     <Card className="border-border">
       <CardHeader>
-        <CardTitle>Vacancy details</CardTitle>
-        <CardDescription>Shown on the public jobs page and included when sharing on LinkedIn.</CardDescription>
+        <CardTitle>{t('vacancy.form.details')}</CardTitle>
+        <CardDescription>{t('vacancy.form.detailsDesc')}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -83,10 +85,10 @@ export function DetailsSection({ form, sectors, disabled }: DetailsSectionProps)
         />
 
         <div className="space-y-2">
-          <Label htmlFor="description">About the Job *</Label>
+          <Label htmlFor="description">{t('vacancy.form.aboutJob')} *</Label>
           <Textarea
             id="description"
-            placeholder="Give an overview of the role — what the team does, what success looks like, and why someone would want to join..."
+            placeholder={t('vacancy.form.aboutPlaceholder')}
             disabled={disabled}
             rows={5}
             maxLength={5000}
@@ -97,10 +99,10 @@ export function DetailsSection({ form, sectors, disabled }: DetailsSectionProps)
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="responsibilities">Responsibilities</Label>
+          <Label htmlFor="responsibilities">{t('vacancy.form.responsibilities')}</Label>
           <Textarea
             id="responsibilities"
-            placeholder="• Lead backend architecture decisions&#10;• Collaborate with product and design&#10;• Mentor junior engineers..."
+            placeholder={t('vacancy.form.respPlaceholder')}
             disabled={disabled}
             rows={5}
             maxLength={5000}
@@ -110,10 +112,10 @@ export function DetailsSection({ form, sectors, disabled }: DetailsSectionProps)
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="requirements">Requirements</Label>
+          <Label htmlFor="requirements">{t('vacancy.form.requirements')}</Label>
           <Textarea
             id="requirements"
-            placeholder="• 5+ years of experience with TypeScript&#10;• Strong understanding of distributed systems&#10;• Experience with cloud infrastructure..."
+            placeholder={t('vacancy.form.reqPlaceholder')}
             disabled={disabled}
             rows={5}
             maxLength={5000}
@@ -124,8 +126,8 @@ export function DetailsSection({ form, sectors, disabled }: DetailsSectionProps)
 
         <div className="flex items-center justify-between rounded-lg border border-border p-4">
           <div className="space-y-0.5">
-            <Label htmlFor="show_on_public_page" className="text-sm font-medium">Show on public jobs page</Label>
-            <p className="text-xs text-muted-foreground">Candidates can discover and apply to this vacancy from your public jobs page.</p>
+            <Label htmlFor="show_on_public_page" className="text-sm font-medium">{t('vacancy.form.showOnPublic')}</Label>
+            <p className="text-xs text-muted-foreground">{t('vacancy.form.showOnPublicHelp')}</p>
           </div>
           <Controller
             control={control}

@@ -335,11 +335,19 @@
     "subtitle": "Управляйте вакансиями и отслеживайте кандидатов.",
     "emptyTitle": "Пока нет вакансий",
     "emptyBody": "Начните с создания первой вакансии.",
+    "emptySearchTitle": "Нет вакансий по запросу «{search}»",
     "colVacancy": "Вакансия",
     "colCandidates": "Кандидаты",
     "viewDetails": "Подробнее",
     "editVacancy": "Редактировать вакансию",
-    "duplicateVacancy": "Дублировать вакансию"
+    "duplicateVacancy": "Дублировать вакансию",
+    "setOpen": "Сделать открытой",
+    "putOnHold": "Поставить на паузу",
+    "closeVacancy": "Закрыть вакансию",
+    "archiveVacancy": "Архивировать вакансию",
+    "duplicating": "Дублирование…",
+    "deleteVacancy": "Удалить вакансию",
+    "deleteConfirm": "Вы уверены, что хотите удалить эту вакансию? Это действие нельзя отменить."
   },
   "vacancy": {
     "form": {
