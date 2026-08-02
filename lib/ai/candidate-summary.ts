@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import * as Sentry from '@sentry/nextjs'
+import { aiLanguageDirective, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 
 // Mirrors the cv-parser.ts shape on purpose: same two-model fallback, same
 // timeout budget, same "fail soft" return type. When we add the next AI
@@ -20,7 +21,7 @@ Strict rules:
 - Use ONLY the data provided. Do not infer, guess, or invent facts.
 - Stay neutral. Do NOT judge fit, talent, or strength. Do NOT use superlatives ("excellent", "strong", "ideal").
 - Do NOT make hiring recommendations. The recruiter decides.
-- Keep candidate language and proper nouns intact. Do not translate.
+- Keep proper nouns (people's names, company names, technologies) as written.
 - Output ONLY the summary text. No preamble, no headings, no JSON, no markdown.
 - If the data is too thin (no role, no experience, no education), output exactly:
   TOO_THIN
@@ -152,6 +153,7 @@ async function callGeminiWithTimeout(
  */
 export async function summarizeCandidate(
   input: CandidateSummaryInput,
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<CandidateSummaryResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
@@ -163,7 +165,7 @@ export async function summarizeCandidate(
     return { ok: false, reason: 'too_thin' }
   }
 
-  const prompt = SUMMARY_PROMPT + buildCandidateContext(input)
+  const prompt = SUMMARY_PROMPT + buildCandidateContext(input) + aiLanguageDirective(locale)
 
   for (let i = 0; i < MODELS.length; i++) {
     const modelName = MODELS[i]!

@@ -13,6 +13,7 @@ import {
 } from '@/lib/ai/cv-sanitizer'
 import { runFitAnalysis, FIT_PROMPT_VERSION, type FitCriterionSpec } from '@/lib/ai/fit-analysis'
 import { canEnableAiFit } from '@/lib/ai/fit-geofence'
+import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 import type { AiFitAnalysis, FitAssessment } from '@/lib/types/ai-fit'
 
 /** Advisory cap — matches the spec's 100 analyses/org/month. */
@@ -31,7 +32,7 @@ export async function runAiFitAnalysis(applicationId: string): Promise<ActionRes
   // ── Opt-in + geofencing gate ───────────────────────────────────────────────
   const { data: org } = await ctx.supabase
     .from('organizations')
-    .select('ai_fit_enabled, ai_fit_eu_acknowledged, billing_country')
+    .select('ai_fit_enabled, ai_fit_eu_acknowledged, billing_country, default_content_locale, enabled_content_locales')
     .eq('id', ctx.orgId)
     .single()
   if (!org?.ai_fit_enabled) {
@@ -119,8 +120,8 @@ export async function runAiFitAnalysis(applicationId: string): Promise<ActionRes
   const sanitized = sanitizeForFitAnalysis(rawInput)
   const cvSnapshotHash = createHash('sha256').update(JSON.stringify(sanitized)).digest('hex')
 
-  // ── Run the model (sanitized input only) ───────────────────────────────────
-  const result = await runFitAnalysis(sanitized, criteria)
+  // ── Run the model (sanitized input only, in the org content language) ───────
+  const result = await runFitAnalysis(sanitized, criteria, resolveOrgContentLocale(org))
   if (!result.ok) {
     // Audit the attempt even on failure (traceability).
     void writeAuditLog({

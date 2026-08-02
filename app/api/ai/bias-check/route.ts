@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/actions'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { writeAuditLog } from '@/lib/audit-log'
 import { checkInclusiveLanguage } from '@/lib/ai/bias-check'
 
@@ -62,11 +63,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, reason: 'rate_limited' }, { status: 429 })
   }
 
+  const contentLocale = await fetchOrgContentLocale(ctx.supabase, ctx.orgId)
   const result = await checkInclusiveLanguage({
     description: parsed.data.description ?? null,
     responsibilities: parsed.data.responsibilities ?? null,
     requirements: parsed.data.requirements ?? null,
-  })
+  }, contentLocale)
 
   // Audit log: feature + findings count. The findings themselves contain
   // verbatim JD snippets which would balloon the log without adding compliance

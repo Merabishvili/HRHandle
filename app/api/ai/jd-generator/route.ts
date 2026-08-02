@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/actions'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { writeAuditLog } from '@/lib/audit-log'
 import {
   generateJobDescriptionSection,
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, reason: 'rate_limited' }, { status: 429 })
   }
 
+  const contentLocale = await fetchOrgContentLocale(ctx.supabase, ctx.orgId)
   const result = await generateJobDescriptionSection(
     {
       title: parsed.data.title,
@@ -79,6 +81,7 @@ export async function POST(req: NextRequest) {
       additional_context: parsed.data.additional_context ?? null,
     },
     parsed.data.section as JdSection,
+    contentLocale,
   )
 
   // EU AI Act traceability — log that an AI invocation happened. The

@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { aiLanguageDirective, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 import * as Sentry from '@sentry/nextjs'
 
 // Sixth feature in lib/ai/. Same Gemini API, same fallback, same fail-soft
@@ -184,6 +185,7 @@ async function callGeminiWithTimeout(
  */
 export async function suggestAssessmentItems(
   input: AssessmentSuggesterInput,
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<AssessmentSuggesterResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
@@ -195,7 +197,7 @@ export async function suggestAssessmentItems(
     return { ok: false, reason: 'too_thin' }
   }
 
-  const prompt = buildPrompt(input)
+  const prompt = buildPrompt(input) + aiLanguageDirective(locale)
 
   for (let i = 0; i < MODELS.length; i++) {
     const modelName = MODELS[i]!

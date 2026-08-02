@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { aiLanguageDirective, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 import * as Sentry from '@sentry/nextjs'
 
 // Mirrors candidate-summary.ts on purpose. Same Gemini API, same fallback,
@@ -33,7 +34,7 @@ const SHARED_RULES = `Rules for every output:
 - Avoid age-, gender-, or culture-coded language ("rockstar", "ninja", "guru", "young", "aggressive", "energetic").
 - Do not invent specific company names, products, technologies, perks, salary, or working hours that were not provided in the input.
 - Write in role-neutral third person. Avoid "we" / "our team". Refer to "the role", "the successful candidate", "the team".
-- Keep the candidate's language and proper nouns intact. Do not translate.
+- Keep proper nouns (company, product, and technology names) as written.
 - Output ONLY the section text — no preamble, no headings, no JSON, no markdown fence.
 - If the input is too thin to write the section (e.g. only a single-word title), output exactly: TOO_THIN`
 
@@ -137,6 +138,7 @@ async function callGeminiWithTimeout(
 export async function generateJobDescriptionSection(
   input: JdGeneratorInput,
   section: JdSection,
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<JdGeneratorResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
@@ -148,7 +150,7 @@ export async function generateJobDescriptionSection(
     return { ok: false, reason: 'too_thin' }
   }
 
-  const prompt = buildPrompt(input, section)
+  const prompt = buildPrompt(input, section) + aiLanguageDirective(locale)
 
   for (let i = 0; i < MODELS.length; i++) {
     const modelName = MODELS[i]!

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/actions'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { writeAuditLog } from '@/lib/audit-log'
 import {
@@ -98,12 +99,13 @@ export async function POST(req: NextRequest) {
     ? (latestVacancy[0]?.title ?? null)
     : (latestVacancy?.title ?? null)
 
+  const contentLocale = await fetchOrgContentLocale(ctx.supabase, ctx.orgId)
   const result = await extractStructuredNotes({
     candidate_first_name: candidate.first_name as string,
     candidate_last_name: candidate.last_name as string,
     role_title,
     raw_notes: parsed.data.raw_notes,
-  })
+  }, contentLocale)
 
   // Audit log: feature + length only. The notes content itself is never logged.
   void writeAuditLog({

@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import type { SanitizedFitInput } from './cv-sanitizer'
 import type { RenderedFitAnalysis, FitCriterion } from '@/lib/types/ai-fit'
+import { aiLanguageDirective, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 
 // Mirrors candidate-summary.ts: same Gemini family, two-model fallback,
 // timeout budget, fail-soft. The whole point of this feature is the FRAMING
@@ -13,8 +14,9 @@ const FIT_TIMEOUT_MS = 25_000
 const RETRY_DELAY_MS = 1_500
 const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'] as const
 
-/** Bump when the prompt changes — stored on every analysis for provenance. */
-export const FIT_PROMPT_VERSION = 'fit-analysis-1'
+/** Bump when the prompt changes — stored on every analysis for provenance.
+ * v2 adds the org-content-language directive (i18n Slice 5). */
+export const FIT_PROMPT_VERSION = 'fit-analysis-2'
 /** A must-have criterion counts as "met" at or above this per-criterion match. */
 export const MEETS_THRESHOLD = 60
 
@@ -79,8 +81,12 @@ function buildContext(sanitized: SanitizedFitInput, criteria: FitCriterionSpec[]
   return lines.join('\n')
 }
 
-export function buildFitPrompt(sanitized: SanitizedFitInput, criteria: FitCriterionSpec[]): string {
-  return `${FIT_SYSTEM_PROMPT}\n${buildContext(sanitized, criteria)}`
+export function buildFitPrompt(
+  sanitized: SanitizedFitInput,
+  criteria: FitCriterionSpec[],
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return `${FIT_SYSTEM_PROMPT}\n${buildContext(sanitized, criteria)}${aiLanguageDirective(locale)}`
 }
 
 const clamp = (n: number): number => Math.max(0, Math.min(100, Math.round(n)))
@@ -201,11 +207,12 @@ async function callGemini(
 export async function runFitAnalysis(
   sanitized: SanitizedFitInput,
   criteria: FitCriterionSpec[],
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<FitRunResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) return { ok: false, reason: 'no_key' }
 
-  const prompt = buildFitPrompt(sanitized, criteria)
+  const prompt = buildFitPrompt(sanitized, criteria, locale)
   for (let i = 0; i < MODELS.length; i++) {
     const modelName = MODELS[i]!
     const result = await callGemini(apiKey, modelName, prompt)

@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { aiLanguageDirective, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 import * as Sentry from '@sentry/nextjs'
 
 // Fourth feature in lib/ai/. Same Gemini, same fallback, same fail-soft return
@@ -46,7 +47,7 @@ const RULES = `Strict rules:
 - NEVER infer or include protected characteristics: age, gender, race, ethnicity, religion, national origin, family or marital status, pregnancy, sexual orientation, disability, or political views — even if hints appear in the notes.
 - NEVER make a hiring recommendation ("advance", "reject", "hire", "pass"). The recruiter decides.
 - NEVER include the candidate's salary expectations in the structured output even if mentioned in the notes — those belong to the offer stage.
-- Keep the recruiter's language and proper nouns intact. Do not translate.
+- Keep proper nouns (people's names, company names, technologies) as written.
 - If the notes are too short, too vague, or contain no useful interview content (fewer than ~30 meaningful words), output exactly: TOO_THIN
 - Otherwise output the JSON shape exactly as specified below. Any of the array fields may be empty if the notes contain nothing for that category.`
 
@@ -158,6 +159,7 @@ async function callGeminiWithTimeout(
  */
 export async function extractStructuredNotes(
   input: NoteExtractorInput,
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<NoteExtractorResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
@@ -170,7 +172,7 @@ export async function extractStructuredNotes(
     return { ok: false, reason: 'too_thin' }
   }
 
-  const prompt = buildPrompt({ ...input, raw_notes: trimmed })
+  const prompt = buildPrompt({ ...input, raw_notes: trimmed }) + aiLanguageDirective(locale)
 
   for (let i = 0; i < MODELS.length; i++) {
     const modelName = MODELS[i]!

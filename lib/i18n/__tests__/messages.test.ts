@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { LOCALES, DEFAULT_LOCALE, isLocale, pickLocale, type Locale } from '@/lib/i18n/locales'
+import { LOCALES, DEFAULT_LOCALE, isLocale, pickLocale, aiLanguageDirective, type Locale } from '@/lib/i18n/locales'
 
 type SourceEntry = Partial<Record<Locale, string>>
 const source = JSON.parse(
@@ -97,5 +97,22 @@ describe('locale helpers', () => {
 
   it('DEFAULT_LOCALE is a valid locale', () => {
     expect(isLocale(DEFAULT_LOCALE)).toBe(true)
+  })
+})
+
+describe('aiLanguageDirective (Slice 5)', () => {
+  it('is empty for English (the source language)', () => {
+    expect(aiLanguageDirective('en')).toBe('')
+  })
+  it('names the target language + native label for non-English', () => {
+    expect(aiLanguageDirective('ka')).toContain('Georgian')
+    expect(aiLanguageDirective('ka')).toContain('ქართული')
+    expect(aiLanguageDirective('ru')).toContain('Russian')
+  })
+  it('is JSON-safe: keeps keys + enum values in English (protects structured output)', () => {
+    const d = aiLanguageDirective('ka')
+    expect(d).toMatch(/JSON keys/i)
+    expect(d).toMatch(/enumerated|category/i)
+    expect(d).toMatch(/proper nouns/i)
   })
 })

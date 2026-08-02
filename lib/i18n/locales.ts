@@ -18,6 +18,32 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   ru: 'Русский',
 }
 
+/** English names — used inside AI prompts (the model recognises these). */
+export const LOCALE_ENGLISH_NAME: Record<Locale, string> = {
+  en: 'English',
+  ka: 'Georgian',
+  ru: 'Russian',
+}
+
+/**
+ * i18n Slice 5 — appended to an AI prompt so generated content is written in the
+ * org's content language (§4), regardless of the recruiter's UI language. Empty
+ * for English (the source). Proper nouns are kept verbatim so names/companies/
+ * technologies aren't mangled.
+ */
+export function aiLanguageDirective(locale: Locale): string {
+  if (locale === DEFAULT_LOCALE) return ''
+  const name = LOCALE_ENGLISH_NAME[locale]
+  return (
+    `\n\nIMPORTANT — LANGUAGE: Write all human-readable text (summaries, ` +
+    `descriptions, explanations, suggestions, questions, evidence) in ${name} ` +
+    `(${LOCALE_LABELS[locale]}). Keep JSON keys, field names, and any ` +
+    `enumerated/category values EXACTLY as specified in English. Keep proper ` +
+    `nouns — people's names, company names, product/technology names — in their ` +
+    `original form.`
+  )
+}
+
 export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value)
 }

@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { DEFAULT_LOCALE, isLocale, LOCALES, type Locale } from './locales'
 
 /**
@@ -44,6 +45,23 @@ export function resolveOrgContentLocale(
  * drop invalid locales, force-include `en`, and clamp the default into the
  * enabled set. Pure — unit-tested and reused by the server action.
  */
+/**
+ * Fetch + resolve an org's default content locale (i18n Slice 5 — used by the
+ * AI routes to generate in the org's language). Graceful: unmigrated / unset →
+ * English. Works with any Supabase client (authed or admin).
+ */
+export async function fetchOrgContentLocale(
+  client: SupabaseClient,
+  orgId: string,
+): Promise<Locale> {
+  const { data } = await client
+    .from('organizations')
+    .select('default_content_locale, enabled_content_locales')
+    .eq('id', orgId)
+    .single()
+  return orgDefaultLocale(data as OrgContentLocaleSettings | null)
+}
+
 export function normalizeOrgLocales(
   defaultLocale: string,
   enabled: string[],

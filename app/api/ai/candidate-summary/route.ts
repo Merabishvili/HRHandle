@@ -4,6 +4,7 @@ import { getAuthContext } from '@/lib/actions'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { writeAuditLog } from '@/lib/audit-log'
 import { summarizeCandidate } from '@/lib/ai/candidate-summary'
+import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 
 // fra1 mirrors parse-cv — Google's API firewall blocks the default iad1 region.
 export const preferredRegion = 'fra1'
@@ -83,6 +84,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, reason: 'not_found' }, { status: 404 })
   }
 
+  // i18n Slice 5 (§4) — generate in the org's content language.
+  const { data: orgLang } = await admin
+    .from('organizations')
+    .select('default_content_locale, enabled_content_locales')
+    .eq('id', ctx.orgId)
+    .single()
+  const contentLocale = resolveOrgContentLocale(orgLang)
+
   const result = await summarizeCandidate({
     first_name: candidate.first_name as string,
     last_name: candidate.last_name as string,
@@ -109,7 +118,7 @@ export async function POST(req: NextRequest) {
           field_of_study: string | null
         }>)
       : [],
-  })
+  }, contentLocale)
 
   // Audit log entry for the EU AI Act "logging and traceability" obligation.
   // Records that an AI summary was requested for this candidate; the summary

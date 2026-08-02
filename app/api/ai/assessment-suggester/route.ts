@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/actions'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { writeAuditLog } from '@/lib/audit-log'
 import {
@@ -138,7 +139,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const result = await suggestAssessmentItems(input)
+  const contentLocale = await fetchOrgContentLocale(ctx.supabase, ctx.orgId)
+  const result = await suggestAssessmentItems(input, contentLocale)
 
   if (auditVacancyId) {
     void writeAuditLog({

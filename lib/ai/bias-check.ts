@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { aiLanguageDirective, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 import * as Sentry from '@sentry/nextjs'
 
 // Fifth feature in lib/ai/. Same Gemini, same fallback, same fail-soft pattern
@@ -237,6 +238,7 @@ async function callGeminiWithTimeout(
  */
 export async function checkInclusiveLanguage(
   input: BiasCheckInput,
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<BiasCheckResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
@@ -248,7 +250,7 @@ export async function checkInclusiveLanguage(
     return { ok: false, reason: 'too_thin' }
   }
 
-  const prompt = buildPrompt(input)
+  const prompt = buildPrompt(input) + aiLanguageDirective(locale)
 
   for (let i = 0; i < MODELS.length; i++) {
     const modelName = MODELS[i]!
