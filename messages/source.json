@@ -88,6 +88,13 @@
   "settings.org.errLogoSize": { "en": "Image must be smaller than 2 MB.", "ru": "Изображение должно быть меньше 2 МБ.", "ka": "სურათი უნდა იყოს 2 MB-ზე ნაკლები." },
   "settings.org.errLogoUpload": { "en": "Failed to upload logo. Please try again.", "ru": "Не удалось загрузить логотип. Попробуйте ещё раз.", "ka": "ლოგოს ატვირთვა ვერ მოხერხდა. სცადეთ თავიდან." },
 
+  "settings.orgLang.title": { "en": "Language", "ru": "Язык", "ka": "ენა" },
+  "settings.orgLang.subtitle": { "en": "Controls what candidates and AI see: job posts, apply forms, offer letters, AI-generated content. Only owners and admins can change this.", "ru": "Определяет, что видят кандидаты и ИИ: вакансии, формы отклика, офферы, контент от ИИ. Изменить это могут только владельцы и админы.", "ka": "განსაზღვრავს, რას ხედავენ კანდიდატები და AI: ვაკანსიები, განაცხადის ფორმები, შეთავაზებები, AI-ის შექმნილი კონტენტი. ამის შეცვლა მხოლოდ მფლობელებსა და ადმინებს შეუძლიათ." },
+  "settings.orgLang.defaultLabel": { "en": "Default language", "ru": "Язык по умолчанию", "ka": "ნაგულისხმევი ენა" },
+  "settings.orgLang.alsoAvailable": { "en": "Also available to candidates", "ru": "Также доступно кандидатам", "ka": "ასევე ხელმისაწვდომი კანდიდატებისთვის" },
+  "settings.orgLang.defaultTag": { "en": "Default", "ru": "По умолчанию", "ka": "ნაგულისხმევი" },
+  "settings.orgLang.saved": { "en": "Language settings saved.", "ru": "Языковые настройки сохранены.", "ka": "ენის პარამეტრები შენახულია." },
+
   "settings.mfa.title": { "en": "Two-factor authentication policy", "ru": "Политика двухфакторной аутентификации", "ka": "ორფაქტორიანი ავთენტიფიკაციის პოლიტიკა" },
   "settings.mfa.subtitle": { "en": "Require members of your organisation to enroll a TOTP authenticator. Only the owner can change this policy.", "ru": "Обяжите участников вашей организации подключить TOTP-аутентификатор. Изменить эту политику может только владелец.", "ka": "მოსთხოვეთ თქვენი ორგანიზაციის წევრებს TOTP-ავთენტიფიკატორის დაყენება. ამ პოლიტიკის შეცვლა მხოლოდ მფლობელს შეუძლია." },
   "settings.mfa.requireAll": { "en": "Require 2FA for everyone", "ru": "Требовать 2FA для всех", "ka": "2FA სავალდებულო ყველასთვის" },

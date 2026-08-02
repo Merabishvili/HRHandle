@@ -7,6 +7,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { ProfileSchema, OrganizationSchema } from '@/lib/validations/settings'
 import type { ProfileInput, OrganizationInput } from '@/lib/validations/settings'
 import { isLocale } from '@/lib/i18n/locales'
+import { normalizeOrgLocales } from '@/lib/i18n/org-locale'
+import { isOrgAdmin } from '@/lib/permissions'
+import { writeAuditLog } from '@/lib/audit-log'
 
 const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
 
@@ -91,6 +94,46 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<v
   }
 
   revalidatePath('/settings')
+  return { success: true, data: undefined }
+}
+
+/**
+ * Set the org's content language (i18n Slice 2 — see docs/redesign/i18n-plan.md
+ * §10.2). Owner/admin only. Governs candidate-facing pages + AI output, not the
+ * recruiter's own UI. Invariants (en always enabled, default within the enabled
+ * set, valid locales only) are enforced by `normalizeOrgLocales`.
+ */
+export async function setOrgContentLocales(
+  defaultLocale: string,
+  enabled: string[],
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!isOrgAdmin(ctx.role)) {
+    return { success: false, error: 'Only owners and admins can change the content language.' }
+  }
+
+  const normalized = normalizeOrgLocales(defaultLocale, enabled)
+
+  const { error } = await ctx.supabase
+    .from('organizations')
+    .update({
+      default_content_locale: normalized.default,
+      enabled_content_locales: normalized.enabled,
+    })
+    .eq('id', ctx.orgId)
+  if (error) return { success: false, error: 'Failed to update the content language.' }
+
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'organization',
+    entityId: ctx.orgId,
+    action: 'org_content_locale_updated',
+    message: `Content language — default=${normalized.default}, enabled=${normalized.enabled.join(', ')}`,
+    details: { default_content_locale: normalized.default, enabled_content_locales: normalized.enabled },
+  })
+  revalidatePath('/settings/organization')
   return { success: true, data: undefined }
 }
 

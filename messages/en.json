@@ -108,6 +108,14 @@
       "errLogoSize": "Image must be smaller than 2 MB.",
       "errLogoUpload": "Failed to upload logo. Please try again."
     },
+    "orgLang": {
+      "title": "Language",
+      "subtitle": "Controls what candidates and AI see: job posts, apply forms, offer letters, AI-generated content. Only owners and admins can change this.",
+      "defaultLabel": "Default language",
+      "alsoAvailable": "Also available to candidates",
+      "defaultTag": "Default",
+      "saved": "Language settings saved."
+    },
     "mfa": {
       "title": "Two-factor authentication policy",
       "subtitle": "Require members of your organisation to enroll a TOTP authenticator. Only the owner can change this policy.",

@@ -6,6 +6,8 @@ import { OrganizationForm } from '@/components/settings/organization-form'
 import { DangerZone } from '@/components/settings/danger-zone'
 import { MfaPolicyCard } from '@/components/settings/mfa-policy-card'
 import { AiFitPolicyCard } from '@/components/settings/ai-fit-policy-card'
+import { OrgLanguageCard } from '@/components/settings/org-language-card'
+import { orgDefaultLocale, orgEnabledLocales } from '@/lib/i18n/org-locale'
 
 export default async function OrganizationSettingsPage() {
   const t = await getTranslations()
@@ -38,6 +40,14 @@ export default async function OrganizationSettingsPage() {
     .eq('id', organization.id)
     .single()
 
+  // Same graceful pattern for the content-language columns (migration
+  // 20260802_org_content_locale) — unmigrated → falls back to English-only.
+  const { data: orgLang } = await supabase
+    .from('organizations')
+    .select('default_content_locale, enabled_content_locales')
+    .eq('id', organization.id)
+    .single()
+
   return (
     <div className="max-w-2xl space-y-6">
       <Card className="border-border">
@@ -54,6 +64,13 @@ export default async function OrganizationSettingsPage() {
         initial={{
           require_mfa: !!organization.require_mfa,
           require_mfa_for_admins: !!organization.require_mfa_for_admins,
+        }}
+      />
+
+      <OrgLanguageCard
+        initial={{
+          default: orgDefaultLocale(orgLang),
+          enabled: orgEnabledLocales(orgLang),
         }}
       />
 
