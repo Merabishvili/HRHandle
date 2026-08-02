@@ -7,6 +7,8 @@ import { VacancyForm } from '@/components/vacancies/vacancy-form'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { getVacancyStatuses } from '@/lib/cache/lookups'
+import { orgDefaultLocale, orgEnabledLocales } from '@/lib/i18n/org-locale'
+import { type LocalizedText } from '@/lib/i18n/locales'
 
 interface VacancyRow {
   id: string
@@ -142,6 +144,27 @@ export default async function EditVacancyPage({
     getCustomFieldValues(id),
   ])
 
+  // i18n Slice 4 — org content languages + this vacancy's per-locale JD content.
+  // Separate graceful reads (unmigrated → org falls back to English-only, and
+  // the _i18n columns come back null → seeded from the legacy text).
+  const { data: orgLangRow } = await supabase
+    .from('organizations')
+    .select('default_content_locale, enabled_content_locales')
+    .eq('id', organizationId)
+    .single()
+  const orgLocales = { default: orgDefaultLocale(orgLangRow), enabled: orgEnabledLocales(orgLangRow) }
+
+  const { data: vi18n } = await supabase
+    .from('vacancies')
+    .select('description_i18n, responsibilities_i18n, requirements_i18n')
+    .eq('id', id)
+    .single()
+  const initialI18n = {
+    description: (vi18n?.description_i18n as LocalizedText | null) ?? { [orgLocales.default]: vacancy.description },
+    responsibilities: (vi18n?.responsibilities_i18n as LocalizedText | null) ?? {},
+    requirements: (vi18n?.requirements_i18n as LocalizedText | null) ?? {},
+  }
+
   return (
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
@@ -168,6 +191,8 @@ export default async function EditVacancyPage({
         customFieldGroups={customFieldGroups}
         customFieldValues={customFieldValues}
         isDuplicated={isDuplicated}
+        orgLocales={orgLocales}
+        initialI18n={initialI18n}
       />
     </div>
   )

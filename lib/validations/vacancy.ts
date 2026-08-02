@@ -23,6 +23,14 @@ export const VacancySchema = z
     responsibilities: z.string().max(5000).nullable().optional(),
     requirements: z.string().max(5000).nullable().optional(),
     show_on_public_page: z.boolean().optional().default(false),
+    // i18n Slice 4 — per-locale JD content (JSONB "{locale: text}"). Optional;
+    // written alongside the single-language columns above (which stay the
+    // English/default source). posting_locales = the locales this vacancy is
+    // published in.
+    description_i18n: z.record(z.string(), z.string()).nullable().optional(),
+    responsibilities_i18n: z.record(z.string(), z.string()).nullable().optional(),
+    requirements_i18n: z.record(z.string(), z.string()).nullable().optional(),
+    posting_locales: z.array(z.string()).optional(),
   })
   .refine(
     (data) =>

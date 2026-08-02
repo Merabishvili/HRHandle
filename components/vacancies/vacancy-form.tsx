@@ -20,8 +20,13 @@ import {
   WORK_MODE_NONE,
   type VacancyFormValues,
 } from '@/lib/validations/vacancy'
+import { DEFAULT_LOCALE, type Locale, type LocalizedText } from '@/lib/i18n/locales'
 import type { Vacancy, Sector, VacancyStatus } from '@/lib/types'
 import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
+
+/** Per-locale body content for the locales OTHER than the org default (the
+ * default locale is edited through the RHF fields). i18n Slice 4. */
+export type BodyTranslations = Record<string, { description: string; responsibilities: string; requirements: string }>
 
 interface VacancyFormProps {
   vacancy?: Vacancy
@@ -30,6 +35,10 @@ interface VacancyFormProps {
   customFieldGroups?: CustomFieldGroupWithFields[]
   customFieldValues?: CustomFieldValue[]
   isDuplicated?: boolean
+  /** Org content-language settings — drives the per-language JD tabs. */
+  orgLocales?: { default: Locale; enabled: Locale[] }
+  /** Existing per-locale JD content (edit mode). */
+  initialI18n?: { description: LocalizedText; responsibilities: LocalizedText; requirements: LocalizedText }
 }
 
 // Maps each RHF field name to the DOM id used for scroll-to-error on submit.
@@ -65,6 +74,8 @@ export function VacancyForm({
   customFieldGroups = [],
   customFieldValues = [],
   isDuplicated = false,
+  orgLocales = { default: DEFAULT_LOCALE, enabled: [DEFAULT_LOCALE] },
+  initialI18n,
 }: VacancyFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -72,6 +83,21 @@ export function VacancyForm({
   const [cfValues, setCfValues] = useState<Record<string, string>>(
     () => valuesToMap(customFieldValues)
   )
+
+  // i18n Slice 4 — locales other than the org default get their own JD content
+  // via the language tabs; the default locale is edited through the RHF fields.
+  const extraLocales = orgLocales.enabled.filter((l) => l !== orgLocales.default)
+  const [translations, setTranslations] = useState<BodyTranslations>(() => {
+    const seed: BodyTranslations = {}
+    for (const l of extraLocales) {
+      seed[l] = {
+        description: initialI18n?.description?.[l] ?? '',
+        responsibilities: initialI18n?.responsibilities?.[l] ?? '',
+        requirements: initialI18n?.requirements?.[l] ?? '',
+      }
+    }
+    return seed
+  })
 
   const form = useForm<VacancyFormValues>({
     resolver: zodResolver(VacancyFormSchema),
@@ -132,6 +158,27 @@ export function VacancyForm({
     setError(null)
     setIsLoading(true)
 
+    // i18n Slice 4 — assemble the per-locale JD objects: the default locale
+    // comes from the RHF field, the other locales from `translations`. Empty
+    // strings are omitted so pickLocale falls back cleanly.
+    const buildI18n = (field: 'description' | 'responsibilities' | 'requirements'): Record<string, string> => {
+      const out: Record<string, string> = {}
+      const def = (values[field] ?? '').trim()
+      if (def) out[orgLocales.default] = def
+      for (const l of extraLocales) {
+        const v = (translations[l]?.[field] ?? '').trim()
+        if (v) out[l] = v
+      }
+      return out
+    }
+    const description_i18n = buildI18n('description')
+    const responsibilities_i18n = buildI18n('responsibilities')
+    const requirements_i18n = buildI18n('requirements')
+    const posting_locales = [
+      orgLocales.default,
+      ...extraLocales.filter((l) => description_i18n[l] || responsibilities_i18n[l] || requirements_i18n[l]),
+    ]
+
     const payload = {
       title: values.title, // schema trims
       sector_id: values.sector_id,
@@ -151,6 +198,10 @@ export function VacancyForm({
       responsibilities: values.responsibilities.trim() || null,
       requirements: values.requirements.trim() || null,
       show_on_public_page: values.show_on_public_page,
+      description_i18n,
+      responsibilities_i18n,
+      requirements_i18n,
+      posting_locales,
     }
 
     let entityId: string | undefined
@@ -195,7 +246,19 @@ export function VacancyForm({
 
       <BasicInfoSection form={form} sectors={sectors} statusOptions={statusOptions} disabled={isLoading} />
       <DatesCompensationSection form={form} disabled={isLoading} />
-      <DetailsSection form={form} sectors={sectors} disabled={isLoading} />
+      <DetailsSection
+        form={form}
+        sectors={sectors}
+        disabled={isLoading}
+        orgLocales={orgLocales}
+        translations={translations}
+        onTranslationChange={(locale, field, value) =>
+          setTranslations((prev) => ({
+            ...prev,
+            [locale]: { ...prev[locale], [field]: value } as BodyTranslations[string],
+          }))
+        }
+      />
 
       {/* Custom Fields */}
       {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
