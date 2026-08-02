@@ -2,9 +2,12 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { Building2, Briefcase, MapPin, Calendar, FileText } from 'lucide-react'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages, getTranslations } from 'next-intl/server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { statusCodeToBucket } from '@/lib/application-status-bucket'
+import { statusCodeToBucket, BUCKET_LABEL_KEY, statusSubtitleKey } from '@/lib/application-status-bucket'
+import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { isOfferExpired } from '@/lib/offers/expiry'
 import { StatusStepper } from '@/components/status/status-stepper'
@@ -29,6 +32,7 @@ interface VacancyJoin {
 }
 
 interface OrgJoin {
+  id: string
   name: string
   deleted_at: string | null
 }
@@ -76,7 +80,7 @@ export default async function StatusPage({ params }: PageProps) {
     .select(
       `id, applied_at, last_status_changed_at, deleted_at,
        vacancies ( title, department, location, deleted_at ),
-       organizations ( name, deleted_at ),
+       organizations ( id, name, deleted_at ),
        candidates ( first_name, deleted_at ),
        pipeline_stages ( type, name, is_terminal )`,
     )
@@ -108,9 +112,22 @@ export default async function StatusPage({ params }: PageProps) {
     notFound()
   }
 
-  const view = statusCodeToBucket(stageRow ? mapPipelineStageToBucket(stageRow) : null)
+  const rawStatusCode = stageRow ? mapPipelineStageToBucket(stageRow) : null
+  const view = statusCodeToBucket(rawStatusCode)
   const showStepper = view.bucket !== 'closed'
   const decisionComplete = view.outcome === 'hired'
+
+  // i18n Slice 3b — render in the org's content language (graceful separate
+  // read; unmigrated / unset → English). The stepper + withdraw button (client)
+  // sit inside a nested provider with this locale.
+  const { data: orgLang } = await supabase
+    .from('organizations')
+    .select('default_content_locale, enabled_content_locales')
+    .eq('id', org.id)
+    .single()
+  const contentLocale = resolveOrgContentLocale(orgLang)
+  const t = await getTranslations({ locale: contentLocale })
+  const messages = await getMessages({ locale: contentLocale })
 
   // S05 §2.3 — surface a pending offer at the top of the status tile.
   // Reads offers where status='sent' (signed and delivered, awaiting candidate
@@ -144,13 +161,14 @@ export default async function StatusPage({ params }: PageProps) {
     <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <header className="mb-8 text-center">
         <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
-          Application status
+          {t('status.eyebrow')}
         </p>
         <h1 className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
-          Hi {candidate.first_name}, here&apos;s where things stand
+          {t('status.greeting', { name: candidate.first_name })}
         </h1>
       </header>
 
+      <NextIntlClientProvider locale={contentLocale} messages={messages}>
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="h-2 bg-blue-600" aria-hidden />
         <div className="p-6 sm:p-8">
@@ -158,14 +176,14 @@ export default async function StatusPage({ params }: PageProps) {
           <div className="flex items-start gap-3">
             <Briefcase className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden />
             <div>
-              <dt className="sr-only">Role</dt>
+              <dt className="sr-only">{t('status.role')}</dt>
               <dd className="font-semibold text-gray-900">{vacancy.title}</dd>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden />
             <div>
-              <dt className="sr-only">Employer</dt>
+              <dt className="sr-only">{t('status.employer')}</dt>
               <dd className="text-gray-700">{org.name}</dd>
             </div>
           </div>
@@ -173,7 +191,7 @@ export default async function StatusPage({ params }: PageProps) {
             <div className="flex items-start gap-3">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden />
               <div>
-                <dt className="sr-only">Where</dt>
+                <dt className="sr-only">{t('status.where')}</dt>
                 <dd className="text-gray-700">
                   {[vacancy.department, vacancy.location].filter(Boolean).join(' · ')}
                 </dd>
@@ -183,8 +201,8 @@ export default async function StatusPage({ params }: PageProps) {
           <div className="flex items-start gap-3">
             <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden />
             <div>
-              <dt className="sr-only">Applied</dt>
-              <dd className="text-gray-700">Applied {appliedAt}</dd>
+              <dt className="sr-only">{t('status.appliedLabel')}</dt>
+              <dd className="text-gray-700">{t('status.appliedOn', { date: appliedAt })}</dd>
             </div>
           </div>
         </dl>
@@ -210,16 +228,16 @@ export default async function StatusPage({ params }: PageProps) {
                 <FileText className="h-5 w-5" aria-hidden />
               </div>
               <div>
-                <p className="text-sm font-semibold text-emerald-900">You have an offer to review</p>
+                <p className="text-sm font-semibold text-emerald-900">{t('status.hasOffer')}</p>
                 {pendingOffer.expiry_date && (
                   <p className="mt-0.5 text-xs text-emerald-800">
-                    Respond by {format(new Date(pendingOffer.expiry_date), 'MMM d, yyyy')}
+                    {t('status.respondBy', { date: format(new Date(pendingOffer.expiry_date), 'MMM d, yyyy') })}
                   </p>
                 )}
               </div>
             </div>
             <span className="text-sm font-medium text-emerald-700" aria-hidden>
-              View offer →
+              {t('status.viewOffer')} →
             </span>
           </Link>
         )}
@@ -234,9 +252,9 @@ export default async function StatusPage({ params }: PageProps) {
                 : 'bg-indigo-50',
           ].join(' ')}
         >
-          <p className="text-sm font-semibold text-gray-900">{view.label}</p>
-          <p className="mt-1 text-sm text-gray-700">{view.subtitle}</p>
-          <p className="mt-3 text-xs text-gray-500">Last updated {lastUpdatedAt}</p>
+          <p className="text-sm font-semibold text-gray-900">{t(BUCKET_LABEL_KEY[view.bucket])}</p>
+          <p className="mt-1 text-sm text-gray-700">{t(statusSubtitleKey(rawStatusCode))}</p>
+          <p className="mt-3 text-xs text-gray-500">{t('status.lastUpdated', { date: lastUpdatedAt })}</p>
         </div>
 
         {/* G-022: candidate-side withdraw. Only shown for non-terminal buckets;
@@ -251,11 +269,11 @@ export default async function StatusPage({ params }: PageProps) {
         )}
         </div>
       </section>
+      </NextIntlClientProvider>
 
       <footer className="mt-6 text-center">
         <p className="text-xs text-gray-500">
-          This page only shows your own application status. Bookmark this link to check back —
-          the recruiter will contact you directly with any next steps.
+          {t('status.footer')}
         </p>
       </footer>
     </main>

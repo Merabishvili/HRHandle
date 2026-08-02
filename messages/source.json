@@ -519,6 +519,9 @@
   "withdraw.withdrawing": { "en": "Withdrawing…", "ru": "Отзыв…", "ka": "მიმდინარეობს გატანა…" },
 
   "jobs.metaTitle": { "en": "Jobs", "ru": "Вакансии", "ka": "ვაკანსიები" },
+  "jobs.openPositions": { "en": "Open positions", "ru": "Открытые вакансии", "ka": "ღია პოზიციები" },
+  "jobs.rolesCount": { "en": "{count, plural, one {# role} other {# roles}}", "ru": "{count, plural, one {# вакансия} few {# вакансии} many {# вакансий} other {# вакансии}}", "ka": "{count, plural, one {# პოზიცია} other {# პოზიცია}}" },
+  "jobs.apply": { "en": "Apply", "ru": "Откликнуться", "ka": "განაცხადი" },
   "jobs.noPositions": { "en": "No open positions right now. Check back soon.", "ru": "Сейчас нет открытых вакансий. Загляните позже.", "ka": "ამჟამად ღია პოზიციები არ არის. შემოიარეთ მოგვიანებით." },
   "jobs.poweredBy": { "en": "Powered by HRHandle", "ru": "Работает на HRHandle", "ka": "მუშაობს HRHandle-ზე" },
 

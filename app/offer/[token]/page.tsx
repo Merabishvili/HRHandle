@@ -1,13 +1,24 @@
 import { notFound } from 'next/navigation'
 import { format } from 'date-fns'
 import { Building2, Briefcase, Calendar, Clock } from 'lucide-react'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages, getTranslations } from 'next-intl/server'
 
 import { getOfferByToken } from '@/lib/actions/offers'
-import { COMPENSATION_PERIOD_LABELS, type CompensationPeriod } from '@/lib/offers/state'
+import { type CompensationPeriod } from '@/lib/offers/state'
 import { offerCountdown } from '@/lib/offers/expiry'
 import { OfferRespondForm } from '@/components/offers/offer-respond-form'
 import { OfferBody } from '@/components/offers/offer-body'
+import { isLocale, DEFAULT_LOCALE } from '@/lib/i18n/locales'
 import { cn } from '@/lib/utils'
+
+type Translator = Awaited<ReturnType<typeof getTranslations>>
+
+const COMPENSATION_PERIOD_KEY: Partial<Record<CompensationPeriod, string>> = {
+  annual: 'offer.perYear',
+  monthly: 'offer.perMonth',
+  hourly: 'offer.perHour',
+}
 
 interface PageProps {
   params: Promise<{ token: string }>
@@ -30,25 +41,31 @@ export default async function OfferPage({ params }: PageProps) {
   const isRespondable = offer.status === 'sent'
   const responded = offer.status === 'accepted' || offer.status === 'declined'
 
+  // i18n Slice 3b — render in the org's content language (resolved in the action).
+  const contentLocale = isLocale(offer.content_locale) ? offer.content_locale : DEFAULT_LOCALE
+  const t = await getTranslations({ locale: contentLocale })
+  const messages = await getMessages({ locale: contentLocale })
+  const companyName = offer.organization_name?.trim() || t('offer.hiringTeam')
+
   const showCompensation =
     offer.compensation_amount !== null && offer.compensation_amount !== undefined
 
+  const periodKey = offer.compensation_period
+    ? COMPENSATION_PERIOD_KEY[offer.compensation_period as CompensationPeriod]
+    : undefined
+  const periodLabel = periodKey ? t(periodKey) : ''
   const compensationLine = showCompensation
-    ? formatCompensation(
-        offer.compensation_amount as number,
-        offer.compensation_currency,
-        (offer.compensation_period ?? null) as CompensationPeriod | null,
-      )
+    ? formatCompensation(offer.compensation_amount as number, offer.compensation_currency, periodLabel)
     : null
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <header className="mb-8 text-center">
         <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
-          Offer from {offer.organization_name?.trim() || 'the hiring team'}
+          {t('offer.eyebrow', { company: companyName })}
         </p>
         <h1 className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
-          Hi {offer.candidate_first_name}, here&apos;s your offer
+          {t('offer.greeting', { name: offer.candidate_first_name })}
         </h1>
       </header>
 
@@ -61,19 +78,19 @@ export default async function OfferPage({ params }: PageProps) {
         <div className="space-y-6 p-6 sm:p-8">
         {/* Summary tile */}
         <dl className="space-y-3 text-sm">
-          <Row icon={Briefcase} label="Role">
+          <Row icon={Briefcase} label={t('offer.role')}>
             <span className="font-semibold text-gray-900">{offer.role_title}</span>
           </Row>
-          <Row icon={Building2} label="Employer">
-            <span className="text-gray-700">{offer.organization_name?.trim() || 'the hiring team'}</span>
+          <Row icon={Building2} label={t('offer.employer')}>
+            <span className="text-gray-700">{companyName}</span>
           </Row>
           {compensationLine && (
-            <Row icon={Briefcase} label="Compensation">
+            <Row icon={Briefcase} label={t('offer.compensation')}>
               <span className="text-gray-900">{compensationLine}</span>
             </Row>
           )}
           {offer.start_date && (
-            <Row icon={Calendar} label="Start date">
+            <Row icon={Calendar} label={t('offer.startDate')}>
               <span className="text-gray-700">
                 {format(new Date(offer.start_date), 'MMMM d, yyyy')}
               </span>
@@ -104,14 +121,14 @@ export default async function OfferPage({ params }: PageProps) {
                   aria-hidden
                 />
                 <div className="flex-1">
-                  <dt className="sr-only">Respond by</dt>
+                  <dt className="sr-only">{t('offer.respondBy')}</dt>
                   <dd
                     className={cn(
                       'font-semibold',
                       isAmber ? 'text-[oklch(0.45_0.12_60)]' : 'text-gray-700',
                     )}
                     aria-label={
-                      countdown ? `Respond by ${dateLabel} — ${countdown.label}` : undefined
+                      countdown ? `${t('offer.respondBy')} ${dateLabel} — ${countdown.label}` : undefined
                     }
                   >
                     {dateLabel}
@@ -142,7 +159,7 @@ export default async function OfferPage({ params }: PageProps) {
             <hr className="border-gray-200" />
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                A note from the recruiter
+                {t('offer.recruiterNote')}
               </h2>
               {/* Italic body per Public Offer.dc.html §1 — recruiter notes
                   read as personal voice, distinct from the formal offer
@@ -157,26 +174,26 @@ export default async function OfferPage({ params }: PageProps) {
         <hr className="border-gray-200" />
 
         {/* Status + action area */}
-        <StatusArea
-          status={offer.status}
-          token={token}
-          respondedAt={offer.responded_at ?? null}
-          recruiterName={offer.recruiter_name}
-          recruiterEmail={offer.recruiter_email}
-          roleTitle={offer.role_title}
-          organizationName={offer.organization_name}
-        />
+        <NextIntlClientProvider locale={contentLocale} messages={messages}>
+          <StatusArea
+            t={t}
+            status={offer.status}
+            token={token}
+            respondedAt={offer.responded_at ?? null}
+            recruiterName={offer.recruiter_name}
+            recruiterEmail={offer.recruiter_email}
+            roleTitle={offer.role_title}
+            organizationName={companyName}
+          />
+        </NextIntlClientProvider>
         </div>
       </section>
 
       <footer className="mt-6 space-y-1 text-center text-xs text-gray-500">
         {!responded && offer.sent_at && (
-          <p>Sent {format(new Date(offer.sent_at), 'MMMM d, yyyy')}.</p>
+          <p>{t('offer.sentOn', { date: format(new Date(offer.sent_at), 'MMMM d, yyyy') })}</p>
         )}
-        <p>
-          Keep this link private — it&apos;s the only way to view or respond to this
-          offer.
-        </p>
+        <p>{t('offer.keepPrivate')}</p>
       </footer>
     </main>
   )
@@ -204,6 +221,7 @@ function Row({
 }
 
 function StatusArea({
+  t,
   status,
   token,
   respondedAt,
@@ -212,6 +230,7 @@ function StatusArea({
   roleTitle,
   organizationName,
 }: {
+  t: Translator
   status: string
   token: string
   respondedAt: string | null
@@ -228,24 +247,15 @@ function StatusArea({
       : null
     return (
       <div className="space-y-3">
-        <p className="text-sm text-gray-700">
-          When you&apos;re ready, accept or decline below. You&apos;ll see a confirmation
-          straight away.
-        </p>
-        {/* A-10c — "Ask a question" tertiary link above the action bar
-            per `docs/redesign/mobile/offer-approval.md`. Opens the
-            device's preferred mail client with the recruiter pre-
-            addressed + a subject line. Hidden when we don't have a
-            recruiter email (created_by is null or profile.email
-            unset). */}
+        <p className="text-sm text-gray-700">{t('offer.readyPrompt')}</p>
         {mailto && (
           <p className="text-center text-xs text-gray-500">
-            Not sure?{' '}
+            {t('offer.notSure')}{' '}
             <a
               href={mailto}
               className="font-semibold text-[oklch(0.45_0.16_250)] hover:underline"
             >
-              Ask {recruiterName || 'the recruiter'} a question
+              {t('offer.askQuestion', { recruiter: recruiterName || t('offer.recruiterFallback') })}
             </a>
           </p>
         )}
@@ -256,18 +266,13 @@ function StatusArea({
   if (status === 'accepted') {
     return (
       <div className="rounded-xl bg-emerald-50 p-4">
-        {/* "🎉" + "Accepted {date}" footer per Public Offer.dc.html §2 —
-            warm the acceptance state slightly without losing the existing
-            green-tile pattern. Tier 2 of fidelity-audit.md. */}
         <p className="text-sm font-semibold text-emerald-900">
-          You accepted this offer <span aria-hidden>🎉</span>
+          {t('offer.accepted.title')} <span aria-hidden>🎉</span>
         </p>
-        <p className="mt-1 text-sm text-emerald-800">
-          The recruiter has been notified and will be in touch with the next steps.
-        </p>
+        <p className="mt-1 text-sm text-emerald-800">{t('offer.accepted.body')}</p>
         {respondedAt && (
           <p className="mt-3 text-xs text-emerald-700/80">
-            Accepted {format(new Date(respondedAt), 'MMMM d, yyyy')}
+            {t('offer.accepted.on', { date: format(new Date(respondedAt), 'MMMM d, yyyy') })}
           </p>
         )}
       </div>
@@ -276,30 +281,24 @@ function StatusArea({
   if (status === 'declined') {
     return (
       <div className="rounded-xl bg-gray-100 p-4">
-        <p className="text-sm font-semibold text-gray-900">You declined this offer.</p>
-        <p className="mt-1 text-sm text-gray-700">
-          Thank you for letting the team know. The recruiter has been notified.
-        </p>
+        <p className="text-sm font-semibold text-gray-900">{t('offer.declined.title')}</p>
+        <p className="mt-1 text-sm text-gray-700">{t('offer.declined.body')}</p>
       </div>
     )
   }
   if (status === 'expired') {
     return (
       <div className="rounded-xl bg-amber-50 p-4">
-        <p className="text-sm font-semibold text-amber-900">This offer has expired.</p>
-        <p className="mt-1 text-sm text-amber-800">
-          If you&apos;d still like to discuss, please contact the recruiter directly.
-        </p>
+        <p className="text-sm font-semibold text-amber-900">{t('offer.expired.title')}</p>
+        <p className="mt-1 text-sm text-amber-800">{t('offer.expired.body')}</p>
       </div>
     )
   }
   if (status === 'withdrawn') {
     return (
       <div className="rounded-xl bg-gray-100 p-4">
-        <p className="text-sm font-semibold text-gray-900">This offer has been withdrawn.</p>
-        <p className="mt-1 text-sm text-gray-700">
-          The recruiter has retracted this offer. Contact them if you have questions.
-        </p>
+        <p className="text-sm font-semibold text-gray-900">{t('offer.withdrawn.title')}</p>
+        <p className="mt-1 text-sm text-gray-700">{t('offer.withdrawn.body')}</p>
       </div>
     )
   }
@@ -310,7 +309,7 @@ function StatusArea({
 function formatCompensation(
   amount: number,
   currency: string | null,
-  period: CompensationPeriod | null,
+  periodLabel: string,
 ): string {
   // Try Intl with the recruiter-supplied currency; fall back to a plain
   // numeric format if Intl rejects the code (it does for non-ISO strings).
@@ -328,6 +327,5 @@ function formatCompensation(
   } else {
     formatted = amount.toLocaleString('en-US')
   }
-  const periodLabel = period ? COMPENSATION_PERIOD_LABELS[period] : ''
   return periodLabel ? `${formatted} ${periodLabel}` : formatted
 }

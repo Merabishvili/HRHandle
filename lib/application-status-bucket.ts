@@ -38,6 +38,31 @@ const BUCKET_INDEX: Record<Bucket, number> = {
   closed: 4,
 }
 
+// i18n keys (the English labels/subtitles above are the source). The candidate
+// status page + stepper render these via t() in the org's content language.
+export const BUCKET_LABEL_KEY: Record<Bucket, string> = {
+  applied: 'status.bucket.applied',
+  in_review: 'status.bucket.inReview',
+  interview: 'status.bucket.interview',
+  decision: 'status.bucket.decision',
+  closed: 'status.bucket.closed',
+}
+
+const STATUS_SUBTITLE_KEY: Record<string, string> = {
+  applied: 'status.subtitle.applied',
+  screening: 'status.subtitle.screening',
+  interview: 'status.subtitle.interview',
+  offer: 'status.subtitle.offer',
+  hired: 'status.subtitle.hired',
+  rejected: 'status.subtitle.closed',
+  withdrawn: 'status.subtitle.withdrawn',
+}
+
+/** i18n key for the subtitle of a given raw status code (falls back to applied). */
+export function statusSubtitleKey(code: string | null | undefined): string {
+  return (code && STATUS_SUBTITLE_KEY[code]) || 'status.subtitle.applied'
+}
+
 /** Default view for an application whose `status_id` is NULL — we still show
  * the stepper, just parked at "Applied". Same as a fresh submission. */
 export const DEFAULT_BUCKET_VIEW: BucketView = {

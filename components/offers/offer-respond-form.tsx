@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Check, X, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -40,6 +41,7 @@ interface OfferRespondFormProps {
  */
 export function OfferRespondForm({ token }: OfferRespondFormProps) {
   const router = useRouter()
+  const t = useTranslations()
   const [acceptOpen, setAcceptOpen] = useState(false)
   const [declineOpen, setDeclineOpen] = useState(false)
   const [reason, setReason] = useState('')
@@ -98,7 +100,7 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
           className="flex-1"
         >
           <X className="mr-2 h-4 w-4" aria-hidden />
-          Decline
+          {t('offer.decline')}
         </Button>
         <Button
           type="button"
@@ -113,7 +115,7 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
           className="flex-1 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
         >
           <Check className="mr-2 h-4 w-4" aria-hidden />
-          Accept offer
+          {t('offer.acceptOffer')}
         </Button>
       </div>
 
@@ -129,14 +131,13 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Accept this offer?</AlertDialogTitle>
+            <AlertDialogTitle>{t('offer.acceptTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              The recruiter will be notified you accepted and will be in touch
-              with the next steps.
+              {t('offer.acceptDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleAcceptConfirm}
               disabled={isPending}
@@ -145,12 +146,12 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                  Accepting…
+                  {t('offer.accepting')}
                 </>
               ) : (
                 <>
                   <Check className="mr-2 h-4 w-4" aria-hidden />
-                  Accept offer
+                  {t('offer.acceptOffer')}
                 </>
               )}
             </AlertDialogAction>
@@ -168,10 +169,9 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Decline this offer?</AlertDialogTitle>
+            <AlertDialogTitle>{t('offer.declineTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              The recruiter will be notified. You can leave a short reason if
-              you&apos;d like — only they will see it.
+              {t('offer.declineDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -180,13 +180,13 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
               htmlFor="decline-reason"
               className="text-sm font-medium text-gray-900"
             >
-              Reason for declining (optional)
+              {t('offer.declineReasonLabel')}
             </label>
             <Textarea
               id="decline-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Took a different offer. Compensation was lower than expected. Timing isn't right."
+              placeholder={t('offer.declineReasonPlaceholder')}
               rows={4}
               maxLength={1000}
               disabled={isPending}
@@ -198,7 +198,7 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
             {/* "Go back" per Public Offer.dc.html — softer copy than the
                 default "Cancel", makes the decision moment less stark on a
                 destructive irreversible action. Tier 2 of fidelity-audit.md. */}
-            <AlertDialogCancel disabled={isPending}>Go back</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>{t('offer.goBack')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeclineConfirm}
               disabled={isPending}
@@ -207,12 +207,12 @@ export function OfferRespondForm({ token }: OfferRespondFormProps) {
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                  Declining…
+                  {t('offer.declining')}
                 </>
               ) : (
                 <>
                   <X className="mr-2 h-4 w-4" aria-hidden />
-                  Confirm decline
+                  {t('offer.confirmDecline')}
                 </>
               )}
             </AlertDialogAction>

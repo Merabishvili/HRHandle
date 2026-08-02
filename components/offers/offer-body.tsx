@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
  * On mobile we clamp to 6 lines until the user expands.
  */
 export function OfferBody({ body }: Props) {
+  const t = useTranslations()
   const [expanded, setExpanded] = useState(false)
   // Heuristic: only show the toggle when the body is genuinely long.
   // Avoids "Show full offer" appearing for a 2-line offer.
@@ -44,11 +46,11 @@ export function OfferBody({ body }: Props) {
         >
           {expanded ? (
             <>
-              Show less <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+              {t('offer.showLess')} <ChevronUp className="h-3.5 w-3.5" aria-hidden />
             </>
           ) : (
             <>
-              Show full offer <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+              {t('offer.showFull')} <ChevronDown className="h-3.5 w-3.5" aria-hidden />
             </>
           )}
         </button>

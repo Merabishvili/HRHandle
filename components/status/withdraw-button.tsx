@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Loader2, XCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -35,6 +36,7 @@ export function WithdrawButton({
   organizationName,
 }: WithdrawButtonProps) {
   const router = useRouter()
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -57,7 +59,7 @@ export function WithdrawButton({
     <>
       <div className="mt-4 flex flex-col items-center gap-2">
         <p className="text-xs text-gray-500">
-          Not interested anymore? You can withdraw your application below.
+          {t('withdraw.prompt')}
         </p>
         <Button
           type="button"
@@ -67,38 +69,35 @@ export function WithdrawButton({
           onClick={() => setOpen(true)}
         >
           <XCircle className="mr-2 h-4 w-4" />
-          Withdraw application
+          {t('withdraw.button')}
         </Button>
       </div>
 
       <AlertDialog open={open} onOpenChange={(o) => !isPending && setOpen(o)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Withdraw your application?</AlertDialogTitle>
+            <AlertDialogTitle>{t('withdraw.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              You&apos;re about to withdraw your application for{' '}
-              <strong>{roleTitle}</strong> at{' '}
-              <strong>{organizationName}</strong>. The recruiter will be notified
-              and this cannot be undone from this page.
+              {t('withdraw.desc', { role: roleTitle, company: organizationName })}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="space-y-2">
             <label htmlFor="withdraw-reason" className="text-sm font-medium text-gray-900">
-              Reason (optional)
+              {t('withdraw.reasonLabel')}
             </label>
             <Textarea
               id="withdraw-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Took a different role. Timing isn't right."
+              placeholder={t('withdraw.reasonPlaceholder')}
               rows={3}
               maxLength={1000}
               disabled={isPending}
               className="text-sm"
             />
             <p className="text-xs text-gray-500">
-              Only the recruiter who hired for this role sees this message.
+              {t('withdraw.reasonHelp')}
             </p>
           </div>
 
@@ -109,7 +108,7 @@ export function WithdrawButton({
           )}
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirm}
               disabled={isPending}
@@ -118,10 +117,10 @@ export function WithdrawButton({
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Withdrawing…
+                  {t('withdraw.withdrawing')}
                 </>
               ) : (
-                'Confirm withdraw'
+                t('withdraw.confirm')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

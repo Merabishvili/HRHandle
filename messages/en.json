@@ -579,6 +579,9 @@
   },
   "jobs": {
     "metaTitle": "Jobs",
+    "openPositions": "Open positions",
+    "rolesCount": "{count, plural, one {# role} other {# roles}}",
+    "apply": "Apply",
     "noPositions": "No open positions right now. Check back soon.",
     "poweredBy": "Powered by HRHandle"
   },

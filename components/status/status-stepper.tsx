@@ -1,4 +1,7 @@
-import { STEPPER_BUCKETS, type Bucket } from '@/lib/application-status-bucket'
+'use client'
+
+import { useTranslations } from 'next-intl'
+import { STEPPER_BUCKETS, BUCKET_LABEL_KEY, type Bucket } from '@/lib/application-status-bucket'
 import { Check } from 'lucide-react'
 
 interface StatusStepperProps {
@@ -14,6 +17,7 @@ export function StatusStepper({
   currentBucket,
   decisionComplete = false,
 }: StatusStepperProps) {
+  const t = useTranslations()
   const currentIndex = STEPPER_BUCKETS.findIndex((s) => s.bucket === currentBucket)
 
   return (
@@ -51,7 +55,7 @@ export function StatusStepper({
                       : 'text-gray-600',
               ].join(' ')}
             >
-              {step.label}
+              {t(BUCKET_LABEL_KEY[step.bucket])}
             </span>
           </li>
         )

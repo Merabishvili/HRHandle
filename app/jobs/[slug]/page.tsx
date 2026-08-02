@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 
 export const revalidate = 300 // 5 minutes
 
@@ -20,6 +22,13 @@ async function resolveOrg(slug: string) {
   return org
 }
 
+const employmentLabelKey: Record<string, string> = {
+  full_time: 'enum.employment.fullTime',
+  part_time: 'enum.employment.partTime',
+  contract: 'enum.employment.contract',
+  internship: 'enum.employment.internship',
+}
+
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params
   const org = await resolveOrg(slug)
@@ -30,19 +39,20 @@ export async function generateMetadata({ params }: PageProps) {
   }
 }
 
-const employmentLabel: Record<string, string> = {
-  full_time: 'Full-time',
-  part_time: 'Part-time',
-  contract: 'Contract',
-  internship: 'Internship',
-}
-
 export default async function PublicJobsPage({ params }: PageProps) {
   const { slug } = await params
   const supabase = createAdminClient()
 
   const org = await resolveOrg(slug)
   if (!org) notFound()
+
+  // i18n Slice 3b — render in the org's content language (graceful separate read).
+  const { data: orgLang } = await supabase
+    .from('organizations')
+    .select('default_content_locale, enabled_content_locales')
+    .eq('id', org.id)
+    .single()
+  const t = await getTranslations({ locale: resolveOrgContentLocale(orgLang) })
 
   const { data: vacanciesRaw } = await supabase
     .from('vacancies')
@@ -97,7 +107,7 @@ export default async function PublicJobsPage({ params }: PageProps) {
             )}
             <h1 className="text-2xl font-bold text-gray-900">{org.name}</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Open positions · {vacancies.length} {vacancies.length === 1 ? 'role' : 'roles'}
+              {t('jobs.openPositions')} · {t('jobs.rolesCount', { count: vacancies.length })}
             </p>
           </div>
         </div>
@@ -105,7 +115,7 @@ export default async function PublicJobsPage({ params }: PageProps) {
         {/* Vacancy list */}
         {vacancies.length === 0 ? (
           <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm text-center">
-            <p className="text-gray-500">No open positions right now. Check back soon.</p>
+            <p className="text-gray-500">{t('jobs.noPositions')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -122,21 +132,21 @@ export default async function PublicJobsPage({ params }: PageProps) {
                       {v.department && <span>{v.department}</span>}
                       {v.location && <span>· {v.location}</span>}
                       {v.employment_type && (
-                        <span>· {employmentLabel[v.employment_type] || v.employment_type}</span>
+                        <span>· {employmentLabelKey[v.employment_type] ? t(employmentLabelKey[v.employment_type]!) : v.employment_type}</span>
                       )}
                     </div>
                     {v.description && (
                       <p className="mt-2 text-sm text-gray-600 line-clamp-2">{v.description}</p>
                     )}
                   </div>
-                  <span className="shrink-0 text-sm font-medium text-primary">Apply →</span>
+                  <span className="shrink-0 text-sm font-medium text-primary">{t('jobs.apply')} →</span>
                 </div>
               </Link>
             ))}
           </div>
         )}
 
-        <p className="text-center text-xs text-gray-400">Powered by HRHandle</p>
+        <p className="text-center text-xs text-gray-400">{t('jobs.poweredBy')}</p>
       </div>
     </div>
   )

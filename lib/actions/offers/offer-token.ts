@@ -14,6 +14,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { resolvePipelineStageId } from '@/lib/pipeline-stages/resolve'
 import { canRespond, type OfferStatus } from '@/lib/offers/state'
 import { isOfferExpired } from '@/lib/offers/expiry'
+import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 
 // ──────────────────────────────────────────────────────────────────────────
 //  Candidate-facing actions (no auth — token is the credential)
@@ -52,6 +53,8 @@ export async function getOfferByToken(token: string): Promise<
      * DELETE SET NULL) or the profile may not have an email stored. */
     recruiter_name: string | null
     recruiter_email: string | null
+    /** i18n Slice 3b — the org's content language for rendering this page. */
+    content_locale: string
   }>
 > {
   if (!token || token.length < 16 || token.length > 64 || !/^[a-f0-9]+$/i.test(token)) {
@@ -64,7 +67,7 @@ export async function getOfferByToken(token: string): Promise<
     .select(
       `id, status, role_title, body, recruiter_message,
        compensation_amount, compensation_currency, compensation_period,
-       start_date, expiry_date, sent_at, responded_at, deleted_at, application_id,
+       start_date, expiry_date, sent_at, responded_at, deleted_at, application_id, organization_id,
        applications ( candidate_id, deleted_at, vacancies ( deleted_at ) ),
        organizations ( name, deleted_at ),
        profiles!offers_created_by_fkey ( full_name, email )`,
@@ -128,6 +131,15 @@ export async function getOfferByToken(token: string): Promise<
       ? 'expired'
       : (data.status as string)
 
+  // i18n Slice 3b — the org's content language (graceful separate read;
+  // unmigrated / unset → English).
+  const { data: orgLang } = await admin
+    .from('organizations')
+    .select('default_content_locale, enabled_content_locales')
+    .eq('id', data.organization_id as string)
+    .single()
+  const contentLocale = resolveOrgContentLocale(orgLang)
+
   return {
     success: true,
     data: {
@@ -147,6 +159,7 @@ export async function getOfferByToken(token: string): Promise<
       organization_name: orgJoin.name as string,
       recruiter_name: recruiterJoin?.full_name ?? null,
       recruiter_email: recruiterJoin?.email ?? null,
+      content_locale: contentLocale,
     },
   }
 }
