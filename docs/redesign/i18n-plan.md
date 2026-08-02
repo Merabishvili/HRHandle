@@ -178,3 +178,75 @@ The user chose **translation files first**. So the order is now:
 3. **Then wire** next-intl + swap components to `t()` + build the org/public/vacancy/AI behaviour (Slices 0/2/3/4/5 from §4).
 
 `source.json` is the human-facing artefact; the generated `en/ka/ru.json` are build outputs next-intl reads. Sequencing/effort is **multi-week**, dominated by writing + reviewing ~2–3K × 3 strings — not the plumbing.
+
+---
+
+## 10. Slice 2 + 3b execution plan — org content language + public path routing
+
+> Authored 2026-08-02, after the whole dashboard + landing were swapped to `t()`
+> (551 keys live). This is the implementation-ready plan for the **last** i18n
+> surface: the candidate-facing public pages. Two decisions are locked: (a) the
+> org content language is a real setting with a schema + admin card; (b) public
+> URLs use **path segments** `/[locale]/…` for SEO. **No code until this is
+> approved** (the middleware change can affect auth/CSP if rushed).
+
+### 10.1 Why these two slices are coupled
+Candidate pages (`/apply`, `/status`, `/offer`, `/jobs`) render in the **org's
+content language**, not the recruiter's UI cookie. So the org must be able to
+*set* that language (Slice 2) before the public pages have anything to switch to
+(Slice 3b). Order is strict: **2 → 3b**.
+
+### 10.2 Slice 2 — org content language (safe half, one migration)
+
+**Migration** `…_org_content_locale.sql` (idempotent; USER applies on staging → prod, like the AI Fit migration):
+```sql
+ALTER TABLE public.organizations
+  ADD COLUMN IF NOT EXISTS default_content_locale  text   NOT NULL DEFAULT 'en',
+  ADD COLUMN IF NOT EXISTS enabled_content_locales  text[] NOT NULL DEFAULT '{en}';
+```
+Invariants (enforced in the action, not the DB): `default_content_locale ∈ enabled_content_locales`; `'en'` is always enabled; every value ∈ `LOCALES`.
+
+**Action** `setOrgContentLocales(defaultLocale, enabled[])` in `lib/actions/…`:
+- Owner/admin-gated (mirror `setOrgMfaPolicy`).
+- Validate the invariants above; audit-log `org_content_locale_updated`.
+- `revalidatePath('/settings/organization')`.
+
+**UI** `components/settings/org-language-card.tsx` (client, admin-gated) — matches design Screen 2: a **Default language** single-select + an **"Also available to candidates"** multi-select checklist over `LOCALES`. Reuses catalog keys already drafted (`settings.orgLang.*` — add if missing). Mounted on Settings → Organization; read the two columns in a **separate graceful query** (same pattern as AI Fit) so an unmigrated column can't break the page.
+
+**Helper** `resolveOrgContentLocale(org, requested?)` in `lib/i18n/` — returns `requested` if it's in `enabled_content_locales`, else `default_content_locale`, else `en`.
+
+**Tests:** action authz (member blocked), default-must-be-enabled, en-always-enabled, `resolveOrgContentLocale` fallback chain.
+
+### 10.3 Slice 3b — public path-segment routing + candidate-page swaps
+
+This is the architectural piece. Sub-steps, in order:
+
+1. **next-intl routing config.** Add `lib/i18n/routing.ts` via `defineRouting({ locales: LOCALES, defaultLocale: 'en', localePrefix: 'as-needed' })` → English keeps clean URLs, `ka`/`ru` get `/ka/…`, `/ru/…`. Keep the existing cookie-based `i18n/request.ts` for the dashboard; the request config becomes locale-aware (reads the routing locale when present, else the cookie).
+
+2. **Route move (public only).** Relocate the public trees under a `[locale]` segment:
+   `app/jobs` → `app/[locale]/jobs`, and likewise `apply`, `offer`, `status`. The dashboard, `auth`, `api`, `onboarding` etc. **stay put** (no locale prefix). Add `app/[locale]/layout.tsx` that calls `setRequestLocale(locale)` (static rendering) + provides the locale; add `generateStaticParams` returning the three locales.
+
+3. **Middleware composition — the risk point.** `middleware.ts` today does the CSP per-request nonce (`lib/security-headers.ts`) + Supabase session refresh + auth gates for every route. Change:
+   - Build `intlMiddleware = createMiddleware(routing)`.
+   - For requests whose path is a **public localizable route**, run `intlMiddleware` first; if it returns a redirect (locale negotiation), return it; otherwise **carry the CSP nonce onto its response** before returning.
+   - For all other paths, run the existing middleware unchanged.
+   - Update the `config.matcher` so both are scoped correctly (exclude `api`, `_next`, static assets; include public routes for intl).
+   - **Explicitly verify:** the `x-nonce` request header + response CSP header are still present on public pages; the Supabase auth redirect still fires for the dashboard; no double-processing of `/api`.
+
+4. **Candidate-page rendering in the content locale.** Each public page resolves its display locale = `resolveOrgContentLocale(org, params.locale)` and renders via `getTranslations({ locale })` (server) — the URL locale is *validated against the org's enabled set*, falling back to the org default. Then swap `apply-form` / status / offer / jobs strings to `t()` (catalog keys already exist: `apply.*`, `status.*`, `offer.*`, `jobs.*`, `withdraw.*`). The apply form's `{company}` interpolations already in the catalog.
+
+5. **hreflang + sitemap.** Each public page's `generateMetadata` emits `alternates.languages` for the org's enabled locales. `app/sitemap.ts` gains per-locale entries — and **starts listing job pages at all** (they aren't in the sitemap today; this is the SEO win the path-segment decision is for).
+
+6. **Candidate emails.** Make `DEFAULT_TEMPLATES` locale-aware from `messages/emails.source.json` (a `Record<Locale, …>`); the dispatcher picks the org's `default_content_locale`. This is separate from next-intl (Handlebars `{{role}}`/`{{company}}` untouched).
+
+7. **Landing switcher tie-in.** On sign-up, pre-fill the new account's `profiles.language` from the visitor's `NEXT_LOCALE` cookie (design §3b), then it's independently changeable.
+
+### 10.4 Risk register (Slice 3b)
+- **Middleware order / CSP:** the nonce must survive the intl middleware path. Test the response headers on `/`, `/ka/jobs/x`, `/apply/x`, and a dashboard route before/after.
+- **Auth untouched:** the Supabase session-refresh + dashboard gate must run exactly as today for non-public paths — the intl branch must never swallow them.
+- **Static params:** `[locale]/layout` needs `setRequestLocale` or public pages lose static optimization / mis-render locale.
+- **Locale ≠ enabled:** always validate `params.locale` against the org's enabled set; never render a locale the org disabled.
+- **Reversibility:** the route move is the big diff; do it on a branch, verify the four public flows + a dashboard smoke test, and keep English URLs unprefixed so existing shared links keep working.
+
+### 10.5 Suggested execution order
+`Slice 2 (migration + action + card + tests)` → **user applies migration** → `Slice 3b step 1–2 (routing + route move)` → `step 3 (middleware) + header verification` → `step 4 (page swaps)` → `step 5 (hreflang/sitemap)` → `step 6 (emails)` → `step 7 (sign-up prefill)`. Each step gated by tsc/lint/build/tests as with every prior slice.
