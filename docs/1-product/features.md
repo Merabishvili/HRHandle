@@ -173,7 +173,7 @@ _Last updated: 2026-07-20_
 | Usage display | Shows vacancies used / limit, candidates used / limit | `app/(dashboard)/subscription/page.tsx` |
 | Trial banner | Shows days remaining in trial, expired state | `components/dashboard/trial-banner.tsx` |
 | Expired redirect | When trial ends (or status=expired), auto-redirects to `/subscription` | `app/(dashboard)/layout.tsx` |
-| Payment wiring | **Not implemented** — buttons display but no payment provider connected (LemonSqueezy planned) | `components/subscription/plan-cards.tsx` |
+| Payment wiring | **Built (Flitt)** — Upgrade → hosted checkout, auto-recurring, signed callback grants the plan; multi-currency GEL/EUR/USD. Pending live switch. | `lib/actions/billing.ts`, `app/api/payments/flitt/callback/route.ts`, `components/subscription/plan-cards.tsx` |
 
 ## Guides
 

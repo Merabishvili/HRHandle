@@ -56,6 +56,13 @@ When adding inline `<script>` tags in server components, **always** stamp the no
 - `NEXT_PUBLIC_SITE_URL` — optional but must be a valid URL if set; **never set to empty string** — t3-oss/env-nextjs will throw at build time
 - `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` — local `.env.local` only, overrides `emailRedirectTo` in sign-up; **must NOT be added to Vercel**
 - `TURNSTILE_SECRET_KEY` — server-only secret for Cloudflare Turnstile verification on the public apply form (`lib/turnstile.ts`). **Never** prefix `NEXT_PUBLIC_`. When unset, the apply form fails-open with a server warning; set on Vercel to activate enforcement. Distinct from the Supabase CAPTCHA secret used for login/sign-up (which lives in the Supabase dashboard).
+- `FLITT_MERCHANT_ID` / `FLITT_SECRET_KEY` — Flitt payment gateway, server-only (**never** `NEXT_PUBLIC_`). Set on **both** Vercel environments. Use a **sandbox merchant on staging** so test clicks never charge real cards once the live merchant is active. Unset → checkout fails soft. Full detail in `docs/4-integrations/flitt.md`.
+
+### Payments (Flitt) — critical gotchas
+- **Multi-currency, one processor.** Flitt charges GEL/EUR/USD; currency is resolved per org (`billing_country` → GE=GEL, EU=EUR, else USD, with a `billing_currency` override). Georgian customers **must** see GEL by law — the public landing pricing defaults to GEL for the same reason. Don't hardcode `$`.
+- **The signed server callback (`/api/payments/flitt/callback`) is the source of truth**, not the browser return URL. It verifies the signature, matches the stored `payment_orders` amount/currency (anti-tamper), and grants the plan via the admin client. Writes to `payment_orders`/`subscriptions` are service-role only.
+- **Recurring uses the SDK's `Subscription()` (protocol 2.0)** so nested `recurring_data` is signed correctly. Trust the SDK source over Flitt's web-doc signature examples (those are unreliable when paraphrased).
+- The migration `20260804_flitt_billing.sql` must be applied on **both** Supabase projects. The merchant is on Flitt's **test** environment until the pre-production checklist is done (real support phone in `lib/legal/contact.ts` is still a placeholder) and Flitt switches it live.
 
 ### Google OAuth Configuration
 

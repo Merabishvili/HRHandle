@@ -18,6 +18,12 @@ export const env = createEnv({
     SENTRY_PROJECT: z.string().min(1).optional(),
     CALENDLY_CLIENT_ID: z.string().min(1).optional(),
     CALENDLY_CLIENT_SECRET: z.string().min(1).optional(),
+    // Flitt payment gateway (portal.flitt.com). Server-only — the secret key
+    // signs every checkout + verifies callbacks. Optional so an unconfigured
+    // deployment builds fine and the checkout fails soft (see lib/flitt/client.ts).
+    // MERCHANT_ID is numeric but kept as a string here; coerced in the client.
+    FLITT_MERCHANT_ID: z.string().min(1).optional(),
+    FLITT_SECRET_KEY: z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
@@ -47,6 +53,8 @@ export const env = createEnv({
     SENTRY_PROJECT: process.env.SENTRY_PROJECT,
     CALENDLY_CLIENT_ID: process.env.CALENDLY_CLIENT_ID,
     CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET,
+    FLITT_MERCHANT_ID: process.env.FLITT_MERCHANT_ID,
+    FLITT_SECRET_KEY: process.env.FLITT_SECRET_KEY,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,

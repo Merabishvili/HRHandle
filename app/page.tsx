@@ -21,6 +21,8 @@ import {
 import { PRICING_PLANS } from '@/lib/types/subscription'
 import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
 import { PricingSection } from '@/components/landing/pricing-section'
+import { PaymentMethods } from '@/components/subscription/payment-methods'
+import { SUPPORT_PHONE } from '@/lib/legal/contact'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hrhandle.com'
 
@@ -333,6 +335,16 @@ export default async function LandingPage() {
 
             <p className="text-sm text-muted-foreground">
               {t('landing.footer.rights', { year: new Date().getFullYear() })}
+            </p>
+          </div>
+
+          <div className="mt-8 flex flex-col items-center gap-4 border-t border-border pt-8 text-center text-xs text-muted-foreground">
+            <PaymentMethods />
+            <p>
+              Aleksandre Merabishvili, Individual Entrepreneur · ID 01019062001 · Tbilisi, Georgia
+              <br />
+              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a> ·{' '}
+              {SUPPORT_PHONE}
             </p>
           </div>
         </div>

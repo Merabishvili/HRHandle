@@ -87,7 +87,7 @@ Live items from [issues-found.md](../issues-found.md). All are postponed for non
 
 | ID | Title | Why parked |
 |---|---|---|
-| F-004 | Cancel-subscription UI | 🟡 Blocked — needs billing provider wiring (LemonSqueezy planned) |
+| F-004 | Cancel-subscription UI | ✅ Built — cancel + currency controls on `/settings/billing` (Flitt) |
 | BL-004 | `PLAN_LIMIT` error code + upgrade CTA | 🟡 Blocked — same reason |
 | C-007 / C-008 | Move hardcoded plan limits + campaign config out of code | 🟡 Blocked — shape depends on what the billing provider exposes |
 | C-012 / A-007 | `exactOptionalPropertyTypes` (remaining strict flag) | ✅ Shipped 2026-07-20 — flag enabled in `tsconfig.json`; 40 cosmetic errors fixed (optional props/params widened to `\| undefined`; Radix wrapper spreads made conditional). |
@@ -224,7 +224,7 @@ Blocked on the EU AI Act risk-management framework for higher-risk features. Don
 
 **Intentionally last.** Until billing is wired, every billing-adjacent item stays parked.
 
-1. **Billing provider wiring** — LemonSqueezy (already documented in `docs/4-integrations/lemonsqueezy.md`) or Stripe.
+1. **Billing provider wiring** — ✅ built with **Flitt** (multi-currency GEL/EUR/USD, auto-recurring); see `docs/4-integrations/flitt.md`. Remaining: finish Flitt's pre-production checklist (real support phone; test card/Google Pay/Apple Pay) then request the live switch.
 2. **F-004 — Cancel subscription UI** with confirmation flow.
 3. **BL-004 — `PLAN_LIMIT` structured error code + upgrade CTA** on every plan-limited action.
 4. **C-007 / C-008 — Move hardcoded plan limits + campaign config out of code** into a DB-backed plans table.

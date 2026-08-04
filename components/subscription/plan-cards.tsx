@@ -1,26 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, Zap } from 'lucide-react'
-import type { PricingPlan } from '@/lib/types/subscription'
+import type { PricingPlan, PlanCode, BillingCycle } from '@/lib/types/subscription'
+import { getPlanMonthly } from '@/lib/types/subscription'
+import { CURRENCY_SYMBOL, type Currency } from '@/lib/pricing/currency'
+import { startPlanCheckout } from '@/lib/actions/billing'
 import type { Campaign } from '@/lib/campaign'
 import { getCampaignPrice } from '@/lib/campaign'
 
 interface PlanCardsProps {
   plans: PricingPlan[]
   currentPlanCode: string
+  currency: Currency
   campaign: Campaign
   campaignActive: boolean
 }
 
-export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: PlanCardsProps) {
-  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
+export function PlanCards({ plans, currentPlanCode, currency, campaign, campaignActive }: PlanCardsProps) {
+  const [billing, setBilling] = useState<BillingCycle>('monthly')
+  const [pendingCode, setPendingCode] = useState<PlanCode | null>(null)
+  const [, startTransition] = useTransition()
 
+  const symbol = CURRENCY_SYMBOL[currency]
   const annualDiscount = Math.round(campaign.discounts.annual * 100)
   const monthlyDiscount = Math.round(campaign.discounts.monthly * 100)
+
+  const handleUpgrade = (code: PlanCode) => {
+    setPendingCode(code)
+    startTransition(async () => {
+      const res = await startPlanCheckout({ planCode: code, cycle: billing })
+      if (res.success) {
+        window.location.href = res.data.checkoutUrl
+      } else {
+        toast.error(res.error)
+        setPendingCode(null)
+      }
+    })
+  }
 
   return (
     <div>
@@ -78,7 +100,7 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
           const isCurrent = plan.code === currentPlanCode
           const isTrial = plan.code === 'trial'
 
-          const basePrice = billing === 'annual' ? plan.price_annual : plan.price_monthly
+          const basePrice = getPlanMonthly(plan, currency, billing)
           const displayPrice = campaignActive && basePrice
             ? getCampaignPrice(basePrice, billing)
             : basePrice
@@ -116,12 +138,12 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
                     <>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-foreground">
-                          ${displayPrice}
+                          {symbol}{displayPrice}
                         </span>
                         <span className="text-muted-foreground">/mo</span>
                         {campaignActive && originalPrice && (
                           <span className="text-sm text-muted-foreground line-through">
-                            ${originalPrice}
+                            {symbol}{originalPrice}
                           </span>
                         )}
                       </div>
@@ -144,8 +166,12 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
                 <Button
                   className="w-full"
                   variant={isCurrent ? 'outline' : plan.popular ? 'default' : 'outline'}
-                  disabled={isCurrent || isTrial}
+                  disabled={isCurrent || isTrial || pendingCode !== null}
+                  onClick={() => !isCurrent && !isTrial && handleUpgrade(plan.code)}
                 >
+                  {pendingCode === plan.code && (
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden />
+                  )}
                   {isCurrent ? 'Current Plan' : isTrial ? 'Trial Plan' : 'Upgrade'}
                 </Button>
               </CardContent>

@@ -80,10 +80,10 @@ For each activity: purpose, legal basis, data subject categories, personal data 
 | Purpose | Manage trial state, plan tier, billing cycle, payment status, plan limits. |
 | Legal basis (Art. 6) | (b) Contract performance; (c) Legal obligation (Georgian tax and accounting requirements for invoicing records once billing is live). |
 | Data subject categories | Account holders representing a paying customer organisation. |
-| Personal data categories | Plan code; billing cycle; subscription status; trial timestamps; payment-provider customer/subscription references; payment status. **No payment card details are stored** — these stay with the payment provider as merchant of record. |
-| Recipients / sub-processors | Supabase Postgres; **payment provider** — currently planned: LemonSqueezy as Merchant of Record (not yet wired). Once integrated, LemonSqueezy will receive customer name, email, country, billing address, and payment details. |
+| Personal data categories | Plan code; billing cycle; subscription status; trial timestamps; payment-provider order/subscription references; payment status. **No payment card details are stored** — card data is handled by the payment provider (Flitt) under PCI DSS. |
+| Recipients / sub-processors | Supabase Postgres; **Flitt** (payment gateway, established in Georgia) — receives customer name, email, country, and payment details at checkout. HRHandle is the seller of record (Flitt is a gateway, **not** a Merchant of Record), so HRHandle carries sanctions-screening (see `docs/9-compliance/sanctions-screening.md`). |
 | Retention | Active for the life of the subscription. Invoicing records retained for the period required by Georgian tax law (commonly 6 years; verify with your accountant once billing is live). Other subscription state retained per [Privacy §7](../../app/privacy/page.tsx). |
-| Transfer mechanism | SCCs (as C-1). For LemonSqueezy: relevant transfer mechanism to be confirmed at integration time. |
+| Transfer mechanism | SCCs (as C-1). Flitt is established in Georgia; card data handled by Flitt under PCI DSS. |
 | Security (Art. 32) | RLS; no payment card details in HRHandle's database; payment provider handles PCI scope. |
 
 ## C-4 — Product telemetry, error monitoring, and analytics
@@ -205,7 +205,7 @@ The authoritative sub-processor list is in [Privacy Policy §5](../../app/privac
 | Microsoft (Graph, Outlook, Teams) | C-1 (sign-in), P-4 | Authentication and calendar integration | USA / Global |
 | Zoom | P-4 | Video meeting creation | USA / Global |
 | LinkedIn | (planned) | Vacancy posting | USA / Global |
-| LemonSqueezy | C-3 (planned) | Payment processing (Merchant of Record) | USA |
+| Flitt | C-3 | Payment processing (gateway) | Georgia |
 
 ---
 

@@ -529,17 +529,46 @@ Billing/plan state for an organization.
 | current_period_start_at | timestamptz | NULL | — | |
 | current_period_end_at | timestamptz | NULL | — | |
 | next_billing_at | timestamptz | NULL | — | |
-| payment_method_linked | bool | NULL | false | |
-| payment_provider_customer_ref | text | NULL | — | LemonSqueezy customer ID (planned) |
-| payment_provider_subscription_ref | text | NULL | — | LemonSqueezy subscription ID (planned) |
-| last_payment_status | text | NULL | — | |
+| payment_method_linked | bool | NULL | false | Set true on first successful Flitt charge |
+| payment_provider_customer_ref | text | NULL | — | Reserved (unused by Flitt) |
+| payment_provider_subscription_ref | text | NULL | — | Flitt order_id — used to stop the recurring on cancel |
+| last_payment_status | text | NULL | — | Latest Flitt callback status |
 | vacancy_limit | int | NULL | 5 | 5 trial, 500 individual, 1000 org |
 | candidate_limit | int | NULL | 100 | 100 trial, 10000 individual, 20000 org |
 | member_limit | int | NULL | 2 | 2 trial, 3 individual, 50 org |
 | created_at | timestamptz | NULL | — | |
 | updated_at | timestamptz | NULL | — | |
 
-When `status === 'expired'` or trial has ended, users are redirected to `/subscription`.
+Written by the Flitt callback route (via the admin client) on `approved` — see
+[`docs/4-integrations/flitt.md`](../4-integrations/flitt.md). When `status ===
+'expired'` or trial has ended, users are redirected to `/subscription`.
+
+---
+
+### `payment_orders`
+Ledger of Flitt checkout attempts (migration `20260804_flitt_billing.sql`). One
+row per checkout; correlates the signed callback to an org + plan and enforces
+idempotency + anti-tamper. **Writes are service-role only** (checkout action +
+callback route use the admin client); RLS gives org members read access to their
+own rows.
+
+| Column | Type | Nullable | Default | Notes |
+|---|---|---|---|---|
+| id | uuid | NOT NULL | gen_random_uuid() | PK |
+| organization_id | uuid | NOT NULL | — | → organizations, ON DELETE CASCADE |
+| order_id | text | NOT NULL | — | UNIQUE — correlation key + recurring handle |
+| plan_code | text | NOT NULL | — | 'individual' \| 'organization' |
+| billing_cycle | text | NOT NULL | — | 'monthly' \| 'annual' |
+| currency | text | NOT NULL | — | 'GEL' \| 'EUR' \| 'USD' |
+| amount_minor | int | NOT NULL | — | tetri / cents |
+| status | text | NOT NULL | 'pending' | pending\|approved\|declined\|expired\|processing\|reversed |
+| flitt_payment_id | text | NULL | — | |
+| flitt_rectoken | text | NULL | — | Recurring token once tokenized |
+| created_by | uuid | NULL | — | → profiles, ON DELETE SET NULL |
+| created_at / updated_at | timestamptz | NOT NULL | now() | |
+
+**`organizations.billing_currency`** (same migration) — manual currency override;
+`NULL` → derived from `billing_country` (GE→GEL, EU/EEA→EUR, else→USD).
 
 ---
 

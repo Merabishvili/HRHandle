@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { SUPPORT_PHONE } from '@/lib/legal/contact'
 
 export const metadata: Metadata = {
   title: 'Refund Policy — HRHandle',
@@ -142,8 +143,10 @@ export default function RefundPage() {
             <h2 className="mb-3 text-lg font-semibold">10. Contact</h2>
             <p>
               Aleksandre Merabishvili, Individual Entrepreneur<br />
+              Identification number: 01019062001<br />
               Tbilisi, Georgia<br />
-              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a>
+              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a><br />
+              Phone: {SUPPORT_PHONE}
             </p>
           </section>
 

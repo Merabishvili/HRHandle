@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CheckCircle, Zap } from 'lucide-react'
 import type { PricingPlan } from '@/lib/types/subscription'
+import { getPlanMonthly } from '@/lib/types/subscription'
+import { CURRENCIES, CURRENCY_SYMBOL, type Currency } from '@/lib/pricing/currency'
+import { PaymentMethods } from '@/components/subscription/payment-methods'
 import type { Campaign } from '@/lib/campaign'
 import { getCampaignPrice } from '@/lib/campaign'
 
@@ -17,7 +20,11 @@ interface PricingSectionProps {
 
 export function PricingSection({ plans, campaign, campaignActive }: PricingSectionProps) {
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
+  // Default to GEL so the public site shows Georgian Lari prices (payment-
+  // provider compliance); visitors elsewhere can switch to EUR/USD.
+  const [currency, setCurrency] = useState<Currency>('GEL')
 
+  const symbol = CURRENCY_SYMBOL[currency]
   const annualDiscount = Math.round(campaign.discounts.annual * 100)
   const monthlyDiscount = Math.round(campaign.discounts.monthly * 100)
 
@@ -36,6 +43,32 @@ export function PricingSection({ plans, campaign, campaignActive }: PricingSecti
           </div>
         </div>
       )}
+
+      <div className="mb-6 flex justify-center">
+        <div
+          role="radiogroup"
+          aria-label="Currency"
+          className="inline-flex items-center rounded-full border border-border bg-muted p-1"
+        >
+          {CURRENCIES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              role="radio"
+              aria-checked={currency === c}
+              aria-label={`Prices in ${c}`}
+              onClick={() => setCurrency(c)}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                currency === c
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {CURRENCY_SYMBOL[c]} {c}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="mb-10 flex justify-center">
         <div
@@ -88,7 +121,7 @@ export function PricingSection({ plans, campaign, campaignActive }: PricingSecti
         {plans.map((plan) => {
           const isTrial = plan.code === 'trial'
 
-          const basePrice = billing === 'annual' ? plan.price_annual : plan.price_monthly
+          const basePrice = getPlanMonthly(plan, currency, billing)
           const displayPrice = campaignActive && basePrice
             ? getCampaignPrice(basePrice, billing)
             : basePrice
@@ -123,12 +156,12 @@ export function PricingSection({ plans, campaign, campaignActive }: PricingSecti
                     <>
                       <div className="flex items-baseline gap-2">
                         <span className="text-4xl font-bold text-foreground">
-                          ${displayPrice}
+                          {symbol}{displayPrice}
                         </span>
                         <span className="text-muted-foreground">/mo</span>
                         {campaignActive && originalPrice && (
                           <span className="text-sm text-muted-foreground line-through">
-                            ${originalPrice}
+                            {symbol}{originalPrice}
                           </span>
                         )}
                       </div>
@@ -161,6 +194,10 @@ export function PricingSection({ plans, campaign, campaignActive }: PricingSecti
             </Card>
           )
         })}
+      </div>
+
+      <div className="mt-10 flex justify-center">
+        <PaymentMethods />
       </div>
     </div>
   )

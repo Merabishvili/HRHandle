@@ -77,5 +77,5 @@ HRHandle is a SaaS applicant tracking system (ATS) for small-to-medium businesse
 
 ### 6. Subscription Upgrade
 1. User visits `/subscription` (trial users auto-redirected there when trial expires).
-2. Views plan cards: Trial, Individual ($20/mo), Organization ($40/mo).
-3. Clicks "Upgrade" — **payment wiring is not yet implemented** (LemonSqueezy planned).
+2. Views plan cards in their local currency (Trial; Individual; Organization) — GEL for Georgia, EUR in the EU, otherwise USD.
+3. Clicks "Upgrade" → **Flitt hosted checkout** (card / Google Pay / Apple Pay); a signed callback activates the plan. Auto-recurring. (Live switch pending Flitt's pre-production checklist.)

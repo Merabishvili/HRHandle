@@ -4,9 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Zap } from 'lucide-react'
-import { PRICING_PLANS } from '@/lib/types/subscription'
+import { PRICING_PLANS, getPlanMonthly } from '@/lib/types/subscription'
+import { resolveBillingCurrency, CURRENCY_SYMBOL } from '@/lib/pricing/currency'
 import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
 import { PlanCards } from '@/components/subscription/plan-cards'
+import { BillingControls } from '@/components/subscription/billing-controls'
+import { PaymentMethods } from '@/components/subscription/payment-methods'
 
 interface ProfileRow {
   id: string
@@ -18,6 +21,8 @@ interface OrganizationRow {
   id: string
   name: string
   slug: string
+  billing_country: string | null
+  billing_currency: string | null
 }
 
 interface SubscriptionRow {
@@ -81,7 +86,12 @@ function getRemainingTrialDays(trialEndAt: string | null): number | null {
  * now redirects here. Per locked Q-S7-g, the redirect stays in place for ~6
  * months so any external bookmarks / email links keep working.
  */
-export default async function BillingSettingsPage() {
+export default async function BillingSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string }>
+}) {
+  const { checkout } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -112,7 +122,7 @@ export default async function BillingSettingsPage() {
 
   const { data: organization } = await supabase
     .from('organizations')
-    .select('id, name, slug')
+    .select('id, name, slug, billing_country, billing_currency')
     .eq('id', organizationId)
     .single()
 
@@ -150,8 +160,20 @@ export default async function BillingSettingsPage() {
     redirect('/pipeline')
   }
 
+  const currency = resolveBillingCurrency(
+    typedOrganization.billing_country,
+    typedOrganization.billing_currency,
+  )
+
   const currentPlan =
     PRICING_PLANS.find((plan) => plan.code === typedSubscription.plan_code) || PRICING_PLANS[0]
+
+  const isPaidActive =
+    typedSubscription.plan_code !== 'trial' && typedSubscription.status === 'active'
+
+  const currentCycle: 'monthly' | 'annual' =
+    typedSubscription.billing_cycle === 'annual' ? 'annual' : 'monthly'
+  const currentMonthly = currentPlan ? getPlanMonthly(currentPlan, currency, currentCycle) : null
 
   const { count: vacancyCount } = await supabase
     .from('vacancies')
@@ -176,6 +198,16 @@ export default async function BillingSettingsPage() {
         <p className="text-muted-foreground">Manage your subscription and billing.</p>
       </div>
 
+      {checkout === 'return' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+          <p className="font-medium">Thanks — we&apos;re confirming your payment.</p>
+          <p className="mt-1">
+            Your plan updates automatically once the payment is confirmed (usually within a
+            moment). Refresh this page if it still shows your previous plan.
+          </p>
+        </div>
+      )}
+
       <Card className="border-border">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -199,11 +231,11 @@ export default async function BillingSettingsPage() {
               {getPlanDisplayName(typedSubscription.plan_code)}
             </span>
 
-            {typedSubscription.plan_code !== 'trial' && currentPlan && (
+            {typedSubscription.plan_code !== 'trial' && currentMonthly !== null && (
               <span className="text-muted-foreground">
-                {typedSubscription.billing_cycle === 'annual'
-                  ? `$${currentPlan.price_annual}/mo billed annually`
-                  : `$${currentPlan.price_monthly}/month`}
+                {currentCycle === 'annual'
+                  ? `${CURRENCY_SYMBOL[currency]}${currentMonthly}/mo billed annually`
+                  : `${CURRENCY_SYMBOL[currency]}${currentMonthly}/month`}
               </span>
             )}
           </div>
@@ -251,12 +283,29 @@ export default async function BillingSettingsPage() {
         </CardContent>
       </Card>
 
+      <BillingControls
+        currency={currency}
+        canManage={typedProfile.role === 'owner' || typedProfile.role === 'admin'}
+        showCancel={isPaidActive}
+        autoRenewOff={isPaidActive && !typedSubscription.next_billing_at}
+      />
+
       <PlanCards
         plans={PRICING_PLANS}
         currentPlanCode={typedSubscription.plan_code}
+        currency={currency}
         campaign={CAMPAIGN}
         campaignActive={isCampaignActive()}
       />
+
+      <PaymentMethods className="justify-center" />
+
+      <p className="text-center text-xs text-muted-foreground">
+        Subscriptions renew automatically. Cancel anytime — you keep access until the end of your
+        paid period. See our{' '}
+        <a href="/refund" className="underline">Refund Policy</a> and{' '}
+        <a href="/terms" className="underline">Terms</a>.
+      </p>
 
       {typedSubscription.plan_code === 'trial' && (
         <Card className="border-primary bg-primary/5">

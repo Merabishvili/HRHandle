@@ -38,6 +38,8 @@ _Last updated: 2026-07-20_
 | `CRON_SECRET` | Bearer token for cron endpoint auth (timing-safe compare). If unset the cron routes reject all requests. | App | `app/api/cron/expire-vacancies/route.ts`, `app/api/cron/purge-deleted/route.ts`, `lib/env.ts` | `a-long-random-string` |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public) | Cloudflare | `app/auth/login/page.tsx`, `components/auth/sign-up-form.tsx`, `components/apply/apply-form.tsx`, `lib/env.ts` | `0x4AAAAAAA...` |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile **secret** key — server-side verification for the public apply form. When unset, `lib/turnstile.ts` fails-open with a warning. **Never** prefix with `NEXT_PUBLIC_`. | Cloudflare | `lib/turnstile.ts`, `lib/env.ts` | `0x4AAAAAAA...` |
+| 🆕 `FLITT_MERCHANT_ID` | Flitt merchant id (numeric). From portal.flitt.com. Server-only. | Flitt | `lib/flitt/client.ts`, `lib/env.ts` | `1549901` |
+| 🆕 `FLITT_SECRET_KEY` | Flitt payment/secret key — signs checkouts + verifies callbacks. When unset the checkout fails soft (`isFlittConfigured()` false). **Never** prefix with `NEXT_PUBLIC_`. Set on **both** environments; use a sandbox merchant on staging. | Flitt | `lib/flitt/client.ts`, `lib/env.ts` | `xxxxxxxxxxxxxxxx` |
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry DSN — enables error monitoring if set | Sentry | `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`, `lib/env.ts` | `https://xxx@oyyy.ingest.sentry.io/zzz` |
 | `SENTRY_ORG` | Sentry organization slug for source-map upload | Sentry | `next.config.mjs`, `lib/env.ts` | `my-org` |
 | `SENTRY_PROJECT` | Sentry project slug for source-map upload | Sentry | `next.config.mjs`, `lib/env.ts` | `hrhandle` |
@@ -59,7 +61,7 @@ _Last updated: 2026-07-20_
 `lib/env.ts` uses `@t3-oss/env-nextjs`. `emptyStringAsUndefined: true` so Vercel's empty-string-for-unset behaviour is treated as "absent" (avoids `.min(1)` false-failures at build).
 
 - **Required:** `NEXT_PUBLIC_SUPABASE_URL` (valid URL), `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
-- **Optional (validated if set):** `RESEND_API_KEY`, `GOOGLE_CLIENT_ID/SECRET`, `ZOOM_CLIENT_ID/SECRET`, `MICROSOFT_CLIENT_ID/SECRET`, `TURNSTILE_SECRET_KEY`, `GOOGLE_GEMINI_API_KEY`, `CRON_SECRET`, `SENTRY_ORG`, `SENTRY_PROJECT`, `CALENDLY_CLIENT_ID/SECRET`, `NEXT_PUBLIC_SITE_URL` (valid URL if set — **never empty string**), `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_SENTRY_DSN` (valid URL if set), `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` (not URL-validated by design).
+- **Optional (validated if set):** `RESEND_API_KEY`, `GOOGLE_CLIENT_ID/SECRET`, `ZOOM_CLIENT_ID/SECRET`, `MICROSOFT_CLIENT_ID/SECRET`, `TURNSTILE_SECRET_KEY`, `FLITT_MERCHANT_ID`, `FLITT_SECRET_KEY`, `GOOGLE_GEMINI_API_KEY`, `CRON_SECRET`, `SENTRY_ORG`, `SENTRY_PROJECT`, `CALENDLY_CLIENT_ID/SECRET`, `NEXT_PUBLIC_SITE_URL` (valid URL if set — **never empty string**), `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_SENTRY_DSN` (valid URL if set), `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` (not URL-validated by design).
 - **Not validated** (read via `process.env.*`): `SENTRY_AUTH_TOKEN`, `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL`, `STAGING_DEMO_*`, `SCREENSHOT_BASE_URL`, `VERCEL_PROTECTION_BYPASS`.
 
 ## Security Notes

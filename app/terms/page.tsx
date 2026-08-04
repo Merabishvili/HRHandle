@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { SUPPORT_PHONE } from '@/lib/legal/contact'
 
 export const metadata: Metadata = {
   title: 'Terms and Conditions — HRHandle',
@@ -87,18 +88,25 @@ export default function TermsPage() {
                 2 team members.
               </li>
               <li>
-                <strong>Individual Plan:</strong> $20/month (or $16/month billed annually).
+                <strong>Individual Plan:</strong> ₾49/month (or ₾39/month billed annually).
                 Includes up to 500 active vacancies, 10,000 candidates, and 3 team members.
               </li>
               <li>
-                <strong>Organization Plan:</strong> $40/month (or $32/month billed annually).
+                <strong>Organization Plan:</strong> ₾99/month (or ₾79/month billed annually).
                 Includes up to 1,000 active vacancies, 20,000 candidates, and 50 team members.
               </li>
             </ul>
             <p className="mt-3">
-              Promotional pricing may be available for limited periods. Any active campaign
-              discount and its end date are displayed on our website and subscription page.
-              Standard pricing applies after the campaign period ends.
+              Prices are shown in your local currency on our pricing page — Georgian Lari (GEL)
+              for customers in Georgia, Euro (EUR) in the European Union, and US Dollars (USD)
+              elsewhere. The amounts above are the GEL prices; the EUR and USD equivalents are
+              displayed at checkout.
+            </p>
+            <p className="mt-3">
+              <strong>Digital delivery.</strong> HRHandle is a digital software-as-a-service
+              product. There are no physical goods to ship. Access to your paid plan is granted
+              immediately and automatically once your payment is confirmed, and remains available
+              for the billing period you have paid for.
             </p>
             <p className="mt-3">
               Both monthly and annual billing cycles are available for paid plans. Annual
@@ -110,8 +118,9 @@ export default function TermsPage() {
               from your account settings.
             </p>
             <p className="mt-3">
-              All payments are processed by our payment provider. We do not store payment
-              card details.
+              Payments are processed securely by our payment provider, Flitt. We accept Visa and
+              Mastercard, as well as Google Pay and Apple Pay. We do not store your payment card
+              details.
             </p>
           </section>
 
@@ -231,8 +240,11 @@ export default function TermsPage() {
           <section>
             <h2 className="mb-3 text-lg font-semibold">15. Contact</h2>
             <p>
-              For questions about these Terms, contact us at:{' '}
-              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a>
+              Aleksandre Merabishvili, Individual Entrepreneur<br />
+              Identification number: 01019062001<br />
+              Tbilisi, Georgia<br />
+              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a><br />
+              Phone: {SUPPORT_PHONE}
             </p>
           </section>
 
