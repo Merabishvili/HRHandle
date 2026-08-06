@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { SUPPORT_PHONE } from '@/lib/legal/contact'
+import { SUPPORT_PHONE, BUSINESS_ADDRESS } from '@/lib/legal/contact'
 
 export const metadata: Metadata = {
   title: 'Terms and Conditions — HRHandle',
@@ -242,7 +242,7 @@ export default function TermsPage() {
             <p>
               Aleksandre Merabishvili, Individual Entrepreneur<br />
               Identification number: 01019062001<br />
-              Tbilisi, Georgia<br />
+              {BUSINESS_ADDRESS}<br />
               <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a><br />
               Phone: {SUPPORT_PHONE}
             </p>

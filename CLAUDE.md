@@ -62,7 +62,7 @@ When adding inline `<script>` tags in server components, **always** stamp the no
 - **Multi-currency, one processor.** Flitt charges GEL/EUR/USD; currency is resolved per org (`billing_country` → GE=GEL, EU=EUR, else USD, with a `billing_currency` override). Georgian customers **must** see GEL by law — the public landing pricing defaults to GEL for the same reason. Don't hardcode `$`.
 - **The signed server callback (`/api/payments/flitt/callback`) is the source of truth**, not the browser return URL. It verifies the signature, matches the stored `payment_orders` amount/currency (anti-tamper), and grants the plan via the admin client. Writes to `payment_orders`/`subscriptions` are service-role only.
 - **Recurring uses the SDK's `Subscription()` (protocol 2.0)** so nested `recurring_data` is signed correctly. Trust the SDK source over Flitt's web-doc signature examples (those are unreliable when paraphrased).
-- The migration `20260804_flitt_billing.sql` must be applied on **both** Supabase projects. The merchant is on Flitt's **test** environment until the pre-production checklist is done (real support phone in `lib/legal/contact.ts` is still a placeholder) and Flitt switches it live.
+- The migration `20260804_flitt_billing.sql` must be applied on **both** Supabase projects. Contact details (name, ID, address, email, phone) are set in `lib/legal/contact.ts`. The merchant is on Flitt's **test** environment until the remaining pre-production steps are done (test the 3 payment methods; request the live switch) and live creds are set on both Vercel envs.
 
 ### Google OAuth Configuration
 
