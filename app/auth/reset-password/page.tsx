@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Briefcase, Loader2, Lock } from 'lucide-react'
 
 export default function ResetPasswordPage() {
+  const t = useTranslations()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -23,12 +25,12 @@ export default function ResetPasswordPage() {
     setError(null)
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+      setError(t('auth.errPasswordMin'))
       return
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.')
+      setError(t('auth.errPasswordsNoMatch'))
       return
     }
 
@@ -48,7 +50,7 @@ export default function ResetPasswordPage() {
       router.push('/auth/reset-password-success')
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reset password.')
+      setError(err instanceof Error ? err.message : t('auth.errResetFailed'))
       setIsLoading(false)
       return
     }
@@ -73,8 +75,8 @@ export default function ResetPasswordPage() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Lock className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Reset password</CardTitle>
-            <CardDescription>Choose a new password for your account.</CardDescription>
+            <CardTitle className="text-2xl">{t('auth.resetTitle')}</CardTitle>
+            <CardDescription>{t('auth.resetSubtitle')}</CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -86,7 +88,7 @@ export default function ResetPasswordPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="password">New password</Label>
+                <Label htmlFor="password">{t('auth.newPassword')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -100,7 +102,7 @@ export default function ResetPasswordPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm new password</Label>
+                <Label htmlFor="confirmPassword">{t('auth.confirmNewPassword')}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -117,10 +119,10 @@ export default function ResetPasswordPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
+                    {t('auth.updating')}
                   </>
                 ) : (
-                  'Update password'
+                  t('auth.updatePassword')
                 )}
               </Button>
             </form>

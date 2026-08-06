@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
@@ -13,6 +14,7 @@ import { Briefcase, Loader2, Mail } from 'lucide-react'
 import { requestPasswordReset } from '@/lib/actions/auth'
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -63,9 +65,9 @@ export default function ForgotPasswordPage() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Mail className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Forgot password?</CardTitle>
+            <CardTitle className="text-2xl">{t('auth.forgotPassword')}</CardTitle>
             <CardDescription>
-              Enter your email and we&apos;ll send you a reset link.
+              {t('auth.forgotSubtitle')}
             </CardDescription>
           </CardHeader>
 
@@ -84,13 +86,13 @@ export default function ForgotPasswordPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.email')}</Label>
                 <Input
                   id="email"
                   type="email"
                   autoComplete="email"
                   inputMode="email"
-                  placeholder="you@company.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                   required
@@ -102,10 +104,10 @@ export default function ForgotPasswordPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending…
+                    {t('auth.sending')}
                   </>
                 ) : (
-                  'Send reset link'
+                  t('auth.sendResetLink')
                 )}
               </Button>
 
@@ -121,7 +123,7 @@ export default function ForgotPasswordPage() {
 
             <div className="mt-6 text-center text-sm">
               <Link href="/auth/login" className="font-medium text-primary hover:underline">
-                Back to sign in
+                {t('auth.backToSignIn')}
               </Link>
             </div>
           </CardContent>

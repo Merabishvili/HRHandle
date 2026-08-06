@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
@@ -43,6 +44,7 @@ export interface SignUpFormProps {
 }
 
 export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFormProps) {
+  const t = useTranslations()
   const [fullName, setFullName] = useState<string>('')
   const [companyName, setCompanyName] = useState<string>('')
   const [email, setEmail] = useState<string>(inviteEmail ?? '')
@@ -74,13 +76,13 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
     setIsLoading(true)
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError(t('auth.errPasswordMin'))
       setIsLoading(false)
       return
     }
 
     if (!captchaToken) {
-      setError('Security check not complete. Please wait a moment and try again.')
+      setError(t('auth.errCaptcha'))
       setIsLoading(false)
       return
     }
@@ -109,7 +111,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
       if (signUpError) throw new Error(signUpError.message)
       router.push('/auth/sign-up-success')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create account.')
+      setError(err instanceof Error ? err.message : t('auth.errCreateFailed'))
       turnstileRef.current?.reset()
       setCaptchaToken(null)
       setIsLoading(false)
@@ -130,7 +132,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
       })
       if (oauthError) throw new Error(oauthError.message)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign up with Google.')
+      setError(err instanceof Error ? err.message : t('auth.errGoogleSignUpFailed'))
       setIsGoogleLoading(false)
     }
   }
@@ -149,7 +151,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
       })
       if (oauthError) throw new Error(oauthError.message)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign up with Microsoft.')
+      setError(err instanceof Error ? err.message : t('auth.errMicrosoftSignUpFailed'))
       setIsMicrosoftLoading(false)
     }
   }
@@ -157,9 +159,9 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
   return (
     <Card className="border-border">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Create your account</CardTitle>
+        <CardTitle className="text-2xl">{t('auth.createAccount')}</CardTitle>
         <CardDescription>
-          {isInviteFlow ? 'Create an account to accept your invitation' : 'Start your free trial today'}
+          {isInviteFlow ? t('auth.signUpInviteSubtitle') : t('auth.signUpSubtitle')}
         </CardDescription>
       </CardHeader>
 
@@ -173,12 +175,12 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
         <div className="flex flex-col gap-2">
           <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isGoogleLoading || isMicrosoftLoading || isLoading}>
             {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-            <span className="ml-2">Continue with Google</span>
+            <span className="ml-2">{t('auth.continueGoogle')}</span>
           </Button>
 
           <Button variant="outline" className="w-full" onClick={handleMicrosoftSignUp} disabled={isGoogleLoading || isMicrosoftLoading || isLoading}>
             {isMicrosoftLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MicrosoftIcon />}
-            <span className="ml-2">Continue with Microsoft</span>
+            <span className="ml-2">{t('auth.continueMicrosoft')}</span>
           </Button>
         </div>
 
@@ -187,18 +189,18 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
             <span className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">or</span>
+            <span className="bg-card px-2 text-muted-foreground">{t('auth.or')}</span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full name</Label>
+            <Label htmlFor="fullName">{t('auth.fullName')}</Label>
             <Input
               id="fullName"
               type="text"
               autoComplete="name"
-              placeholder="John Doe"
+              placeholder={t('auth.fullNamePlaceholder')}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
@@ -208,7 +210,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
 
           {isInviteFlow && inviteOrgName ? (
             <div className="space-y-2">
-              <Label htmlFor="companyName">Company</Label>
+              <Label htmlFor="companyName">{t('auth.company')}</Label>
               <div className="relative">
                 <Input
                   id="companyName"
@@ -223,12 +225,12 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
             </div>
           ) : !isInviteFlow ? (
             <div className="space-y-2">
-              <Label htmlFor="companyName">Company name</Label>
+              <Label htmlFor="companyName">{t('auth.companyName')}</Label>
               <Input
                 id="companyName"
                 type="text"
                 autoComplete="organization"
-                placeholder="Acme Inc."
+                placeholder={t('auth.companyPlaceholder')}
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
@@ -238,7 +240,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
           ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Work email</Label>
+            <Label htmlFor="email">{t('auth.workEmail')}</Label>
             {isInviteFlow && inviteEmail ? (
               <div className="relative">
                 <Input
@@ -257,7 +259,7 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
                 type="email"
                 autoComplete="email"
                 inputMode="email"
-                placeholder="you@company.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -267,12 +269,12 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('auth.password')}</Label>
             <Input
               id="password"
               type="password"
               autoComplete="new-password"
-              placeholder="At least 8 characters"
+              placeholder={t('auth.passwordMinPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -285,10 +287,10 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account…
+                {t('auth.creatingAccount')}
               </>
             ) : (
-              'Create account'
+              t('auth.createAccountButton')
             )}
           </Button>
 
@@ -303,19 +305,19 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
         </form>
 
         <p className="mt-4 text-xs text-center text-muted-foreground">
-          By signing up, you agree to our{' '}
-          <Link href="/terms" className="underline hover:text-foreground">Terms and Conditions</Link>
-          {' '}and{' '}
-          <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>.
+          {t('auth.termsAgree')}{' '}
+          <Link href="/terms" className="underline hover:text-foreground">{t('auth.terms')}</Link>
+          {' '}{t('auth.and')}{' '}
+          <Link href="/privacy" className="underline hover:text-foreground">{t('auth.privacy')}</Link>.
         </p>
 
         <div className="mt-6 text-center text-sm">
-          <span className="text-muted-foreground">Already have an account? </span>
+          <span className="text-muted-foreground">{t('auth.haveAccount')} </span>
           <Link
             href={safeNext ? `/auth/login?next=${encodeURIComponent(safeNext)}` : '/auth/login'}
             className="font-medium text-primary hover:underline"
           >
-            Sign in
+            {t('auth.signIn')}
           </Link>
         </div>
       </CardContent>

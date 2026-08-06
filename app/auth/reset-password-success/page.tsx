@@ -1,9 +1,11 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Briefcase, CheckCircle } from 'lucide-react'
 
-export default function ResetPasswordSuccessPage() {
+export default async function ResetPasswordSuccessPage() {
+  const t = await getTranslations()
   return (
     <div className="min-h-screen bg-background px-4 py-12 flex items-center justify-center">
       <div className="w-full max-w-md">
@@ -21,15 +23,15 @@ export default function ResetPasswordSuccessPage() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Password updated</CardTitle>
+            <CardTitle className="text-2xl">{t('auth.passwordUpdated')}</CardTitle>
             <CardDescription>
-              Your password has been changed successfully.
+              {t('auth.passwordUpdatedSubtitle')}
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <Button className="w-full" asChild>
-              <Link href="/auth/login">Go to sign in</Link>
+              <Link href="/auth/login">{t('auth.goToSignIn')}</Link>
             </Button>
           </CardContent>
         </Card>
