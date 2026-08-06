@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function EnrollTotpDialog({ open, onOpenChange, onEnrolled }: Props) {
+  const t = useTranslations()
   const [enrollment, setEnrollment] = useState<{
     factorId: string
     qrCodeSvg: string
@@ -70,14 +72,14 @@ export function EnrollTotpDialog({ open, onOpenChange, onEnrolled }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Set up an authenticator</DialogTitle>
+          <DialogTitle>{t('mfa.setupTitle')}</DialogTitle>
           <DialogDescription>
-            Scan the QR code with Google Authenticator, 1Password, Authy, or any TOTP app. Then enter the 6-digit code it shows.
+            {t('mfa.setupDesc')}
           </DialogDescription>
         </DialogHeader>
 
         {!enrollment && isPending && (
-          <p className="text-sm text-muted-foreground">Generating QR code…</p>
+          <p className="text-sm text-muted-foreground">{t('mfa.generatingQr')}</p>
         )}
 
         {enrollment && (
@@ -89,12 +91,12 @@ export function EnrollTotpDialog({ open, onOpenChange, onEnrolled }: Props) {
               dangerouslySetInnerHTML={{ __html: enrollment.qrCodeSvg }}
             />
             <details className="text-xs text-muted-foreground">
-              <summary className="cursor-pointer">Can&apos;t scan? Enter this key manually</summary>
+              <summary className="cursor-pointer">{t('mfa.cantScan')}</summary>
               <p className="mt-2 break-all rounded bg-muted p-2 font-mono">{enrollment.secret}</p>
             </details>
 
             <div className="space-y-2">
-              <Label htmlFor="totp-code">6-digit code from your app</Label>
+              <Label htmlFor="totp-code">{t('mfa.codeFromApp')}</Label>
               <Input
                 id="totp-code"
                 value={code}
@@ -116,10 +118,10 @@ export function EnrollTotpDialog({ open, onOpenChange, onEnrolled }: Props) {
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={onVerify} disabled={isPending || !enrollment || code.length < 6}>
-            {isPending ? 'Verifying…' : 'Verify and enable'}
+            {isPending ? t('mfa.verifying') : t('mfa.verifyEnable')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Lock, Loader2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -30,6 +31,7 @@ interface Props {
  * because regenerating invalidates the existing set.
  */
 export function RecoveryCodesRow({ initialRemaining }: Props) {
+  const t = useTranslations()
   const [remaining, setRemaining] = useState(initialRemaining)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [revealCodes, setRevealCodes] = useState<string[] | null>(null)
@@ -55,11 +57,11 @@ export function RecoveryCodesRow({ initialRemaining }: Props) {
       <div className="flex items-center gap-3 rounded-[9px] border border-[oklch(0.92_0.01_250)] px-[13px] py-[11px]">
         <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-[12.5px] font-semibold text-foreground">Recovery codes</p>
+          <p className="text-[12.5px] font-semibold text-foreground">{t('mfa.recoveryCodes')}</p>
           <p className="text-[11px] text-muted-foreground">
             {hasCodes
-              ? `${remaining} of ${RECOVERY_CODE_COUNT} remaining`
-              : 'No recovery codes generated yet'}
+              ? t('mfa.remaining', { remaining, total: RECOVERY_CODE_COUNT })
+              : t('mfa.noCodesYet')}
           </p>
         </div>
         <Button
@@ -75,7 +77,7 @@ export function RecoveryCodesRow({ initialRemaining }: Props) {
           ) : (
             <RefreshCw className="h-3 w-3" aria-hidden />
           )}
-          {hasCodes ? 'Regenerate' : 'Generate'}
+          {hasCodes ? t('mfa.regenerate') : t('mfa.generate')}
         </Button>
       </div>
 
@@ -83,16 +85,16 @@ export function RecoveryCodesRow({ initialRemaining }: Props) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {hasCodes ? 'Regenerate recovery codes?' : 'Generate recovery codes?'}
+              {hasCodes ? t('mfa.regenerateTitle') : t('mfa.generateTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {hasCodes
-                ? `Your existing ${RECOVERY_CODE_COUNT} codes will be invalidated and a new set will be shown — once. Save them somewhere safe before closing the dialog.`
-                : `${RECOVERY_CODE_COUNT} one-time codes will be created and shown — once. Save them somewhere safe before closing the dialog.`}
+                ? t('mfa.regenerateDesc', { total: RECOVERY_CODE_COUNT })
+                : t('mfa.generateDesc', { total: RECOVERY_CODE_COUNT })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()
@@ -103,10 +105,10 @@ export function RecoveryCodesRow({ initialRemaining }: Props) {
               {pending ? (
                 <>
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />
-                  Generating…
+                  {t('mfa.generating')}
                 </>
               ) : (
-                hasCodes ? 'Regenerate' : 'Generate'
+                hasCodes ? t('mfa.regenerate') : t('mfa.generate')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

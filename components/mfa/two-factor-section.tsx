@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Check, KeyRound, Shield, Smartphone, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export function TwoFactorSection({ factors, role, orgPolicy, recoveryCodesRemaining }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const [enrollOpen, setEnrollOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,7 +33,7 @@ export function TwoFactorSection({ factors, role, orgPolicy, recoveryCodesRemain
   const policy = evaluatePolicy(orgPolicy, role, enrolled)
 
   function onRemove(factorId: string) {
-    if (!confirm('Remove this authenticator? You\'ll lose 2FA on this account.')) return
+    if (!confirm(t('mfa.removeConfirm'))) return
     startTransition(async () => {
       const res = await unenrollFactor(factorId)
       if (res.success) {
@@ -47,19 +49,19 @@ export function TwoFactorSection({ factors, role, orgPolicy, recoveryCodesRemain
     <Card className="border-border">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5" /> Two-factor authentication
+          <Shield className="h-5 w-5" /> {t('mfa.twoFactor')}
           {enrolled && (
             <Badge
               variant="secondary"
               className="ml-auto border-transparent bg-emerald-50 text-emerald-700"
             >
               <Check className="mr-1 h-3 w-3" aria-hidden />
-              Enabled
+              {t('mfa.enabled')}
             </Badge>
           )}
         </CardTitle>
         <CardDescription>
-          Add a TOTP authenticator (Google Authenticator, 1Password, Authy, etc.) to require a one-time code at sign-in.
+          {t('mfa.sectionDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -67,8 +69,8 @@ export function TwoFactorSection({ factors, role, orgPolicy, recoveryCodesRemain
           <Alert variant="destructive">
             <AlertDescription>
               {policy.reason === 'org_wide'
-                ? 'Your organization requires every member to enable 2FA. Enroll now to continue using HRHandle.'
-                : 'Your organization requires owners and admins to enable 2FA. Enroll now to continue using HRHandle.'}
+                ? t('mfa.requiredOrgWide')
+                : t('mfa.requiredAdmins')}
             </AlertDescription>
           </Alert>
         )}
@@ -89,12 +91,12 @@ export function TwoFactorSection({ factors, role, orgPolicy, recoveryCodesRemain
                 <div className="flex items-center gap-3">
                   <Smartphone className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">{f.friendly_name ?? 'Authenticator'}</p>
+                    <p className="text-sm font-medium">{f.friendly_name ?? t('mfa.authenticator')}</p>
                     <p className="text-xs text-muted-foreground">
-                      Added {new Date(f.created_at).toLocaleDateString()}
+                      {t('mfa.addedOn', { date: new Date(f.created_at).toLocaleDateString() })}
                     </p>
                   </div>
-                  <Badge variant="secondary">Active</Badge>
+                  <Badge variant="secondary">{t('mfa.active')}</Badge>
                 </div>
                 <Button
                   variant="ghost"
@@ -104,26 +106,26 @@ export function TwoFactorSection({ factors, role, orgPolicy, recoveryCodesRemain
                   className="gap-1.5 text-destructive hover:text-destructive"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  Remove
+                  {t('mfa.remove')}
                 </Button>
               </div>
             ))}
             <Button variant="outline" size="sm" onClick={() => setEnrollOpen(true)} className="gap-2">
               <KeyRound className="h-4 w-4" />
-              Add another authenticator
+              {t('mfa.addAnother')}
             </Button>
             <RecoveryCodesRow initialRemaining={recoveryCodesRemaining} />
           </div>
         ) : (
           <div className="rounded-md border border-dashed bg-card p-6 text-center">
             <Shield className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-2 text-sm font-medium">2FA is off</p>
+            <p className="mt-2 text-sm font-medium">{t('mfa.off')}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Enroll an authenticator to add a second factor at sign-in.
+              {t('mfa.offDesc')}
             </p>
             <Button onClick={() => setEnrollOpen(true)} className="mt-4 gap-2">
               <KeyRound className="h-4 w-4" />
-              Enable 2FA
+              {t('mfa.enable')}
             </Button>
           </div>
         )}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function MfaChallengeForm({ next }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const [challenge, setChallenge] = useState<{ factorId: string; challengeId: string } | null>(null)
   const [code, setCode] = useState('')
@@ -49,7 +51,7 @@ export function MfaChallengeForm({ next }: Props) {
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <div className="space-y-2">
-        <Label htmlFor="mfa-code">6-digit code</Label>
+        <Label htmlFor="mfa-code">{t('mfa.sixDigitCode')}</Label>
         <Input
           id="mfa-code"
           value={code}
@@ -68,11 +70,11 @@ export function MfaChallengeForm({ next }: Props) {
       )}
 
       <Button type="submit" className="w-full" disabled={isPending || !challenge || code.length < 6}>
-        {isPending ? 'Verifying…' : 'Verify'}
+        {isPending ? t('mfa.verifying') : t('mfa.verify')}
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
-        Lost access to your authenticator? Ask an owner or admin to reset your 2FA from the team settings.
+        {t('mfa.lostAccess')}
       </p>
     </form>
   )

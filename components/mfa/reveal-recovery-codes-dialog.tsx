@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Check, Copy, Download, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -28,6 +29,7 @@ interface Props {
  * means the user will need to regenerate.
  */
 export function RevealRecoveryCodesDialog({ codes, onClose }: Props) {
+  const t = useTranslations()
   const [confirmed, setConfirmed] = useState(false)
   const [copied, setCopied] = useState(false)
   const open = codes !== null
@@ -37,10 +39,10 @@ export function RevealRecoveryCodesDialog({ codes, onClose }: Props) {
     try {
       await navigator.clipboard.writeText(codes.join('\n'))
       setCopied(true)
-      toast.success('Codes copied to clipboard')
+      toast.success(t('mfa.codesCopied'))
       setTimeout(() => setCopied(false), 1500)
     } catch {
-      toast.error('Could not copy — select and copy manually')
+      toast.error(t('mfa.copyFailed'))
     }
   }
 
@@ -73,10 +75,10 @@ export function RevealRecoveryCodesDialog({ codes, onClose }: Props) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 text-amber-600" aria-hidden />
-            Your recovery codes
+            {t('mfa.yourRecoveryCodes')}
           </DialogTitle>
           <DialogDescription>
-            These codes will not be shown again. Each can be used once if you lose access to your authenticator app.
+            {t('mfa.revealDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -102,11 +104,11 @@ export function RevealRecoveryCodesDialog({ codes, onClose }: Props) {
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5" aria-hidden /> Copied
+                <Check className="h-3.5 w-3.5" aria-hidden /> {t('common.copied')}
               </>
             ) : (
               <>
-                <Copy className="h-3.5 w-3.5" aria-hidden /> Copy all
+                <Copy className="h-3.5 w-3.5" aria-hidden /> {t('mfa.copyAll')}
               </>
             )}
           </Button>
@@ -117,7 +119,7 @@ export function RevealRecoveryCodesDialog({ codes, onClose }: Props) {
             onClick={handleDownload}
             className="flex-1 gap-1.5"
           >
-            <Download className="h-3.5 w-3.5" aria-hidden /> Download
+            <Download className="h-3.5 w-3.5" aria-hidden /> {t('mfa.download')}
           </Button>
         </div>
 
@@ -126,7 +128,7 @@ export function RevealRecoveryCodesDialog({ codes, onClose }: Props) {
             checked={confirmed}
             onCheckedChange={(v) => setConfirmed(v === true)}
           />
-          I&apos;ve saved these codes somewhere safe
+          {t('mfa.savedConfirm')}
         </label>
 
         <Button
@@ -139,7 +141,7 @@ export function RevealRecoveryCodesDialog({ codes, onClose }: Props) {
           }}
           className="w-full"
         >
-          Close
+          {t('common.close')}
         </Button>
       </DialogContent>
     </Dialog>

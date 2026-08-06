@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MfaChallengeForm } from '@/components/mfa/mfa-challenge-form'
@@ -20,14 +21,15 @@ export default async function MfaChallengePage({ searchParams }: { searchParams:
   }
 
   const next = sp.next ?? '/pipeline'
+  const t = await getTranslations()
 
   return (
     <div className="flex min-h-svh items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Two-factor authentication</CardTitle>
+          <CardTitle>{t('mfa.twoFactor')}</CardTitle>
           <CardDescription>
-            Enter the 6-digit code from your authenticator app to finish signing in.
+            {t('mfa.challengeSubtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent>
