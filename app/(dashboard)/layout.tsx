@@ -157,7 +157,22 @@ export default async function DashboardLayout({
     const hasCompanyName =
       typeof metadataCompanyName === 'string' && metadataCompanyName.trim().length > 0
     if (!hasCompanyName) {
-      redirect('/onboarding/company')
+      // Guard against a redirect loop: a regular-client read can momentarily miss
+      // a freshly-committed onboarding write, and this branch would then bounce a
+      // just-onboarded user to /onboarding/company (which redirects back to
+      // /pipeline once the org is visible → ping-pong). Confirm with the
+      // service-role client that the user truly has no org before redirecting.
+      const { createAdminClient: adminOrgCheck } = await import('@/lib/supabase/admin')
+      const { data: adminOrgRow } = await adminOrgCheck()
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (!adminOrgRow?.organization_id) {
+        redirect('/onboarding/company')
+      }
+      // Org already exists — fall through to runOnboarding (idempotent) + the
+      // admin refetch + redirect below, which resolves the stale read.
     }
 
     const result = await runOnboarding(user)

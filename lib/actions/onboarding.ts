@@ -56,5 +56,23 @@ export async function completeCompanyOnboarding(input: {
     return { success: false, error: result.error }
   }
 
+  // Stamp company_name (+ full_name) into auth metadata so the dashboard layout
+  // stops treating this OAuth user as a "first-time" signup. The layout redirects
+  // users with no user_metadata.company_name to /onboarding/company; once the org
+  // exists the onboarding page redirects back to /pipeline — an onboarding⇄pipeline
+  // loop. Email signups set this at sign-up; OAuth signups must set it here.
+  // Non-fatal: the org is already created, so a metadata failure just logs.
+  try {
+    await admin.auth.admin.updateUserById(user.id, {
+      user_metadata: {
+        ...user.user_metadata,
+        full_name: parsed.data.fullName,
+        company_name: parsed.data.companyName,
+      },
+    })
+  } catch (err) {
+    console.error('[onboarding] auth metadata update failed (non-fatal):', err)
+  }
+
   redirect('/pipeline')
 }
