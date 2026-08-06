@@ -112,6 +112,14 @@
     "download": "Скачать",
     "savedConfirm": "Я сохранил эти коды в надёжном месте"
   },
+  "onboarding": {
+    "title": "Завершите настройку",
+    "subtitle": "Расскажите немного о себе и своей компании, чтобы начать.",
+    "yourName": "Ваше имя",
+    "companyPlaceholder": "напр., Acme Recruiting",
+    "settingUp": "Настройка…",
+    "openDashboard": "Открыть панель"
+  },
   "nav": {
     "pipeline": "Пайплайн",
     "vacancies": "Вакансии",

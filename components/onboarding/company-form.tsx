@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,7 @@ export interface CompanyOnboardingFormProps {
 }
 
 export function CompanyOnboardingForm({ defaultFullName }: CompanyOnboardingFormProps) {
+  const t = useTranslations()
   const [fullName, setFullName] = useState<string>(defaultFullName)
   const [companyName, setCompanyName] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
@@ -37,8 +39,8 @@ export function CompanyOnboardingForm({ defaultFullName }: CompanyOnboardingForm
   return (
     <Card className="border-border">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Finish setting up</CardTitle>
-        <CardDescription>Tell us a bit about you and your company to get started.</CardDescription>
+        <CardTitle className="text-2xl">{t('onboarding.title')}</CardTitle>
+        <CardDescription>{t('onboarding.subtitle')}</CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -50,11 +52,11 @@ export function CompanyOnboardingForm({ defaultFullName }: CompanyOnboardingForm
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Your name</Label>
+            <Label htmlFor="fullName">{t('onboarding.yourName')}</Label>
             <Input
               id="fullName"
               type="text"
-              placeholder="John Doe"
+              placeholder={t('auth.fullNamePlaceholder')}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
@@ -64,11 +66,11 @@ export function CompanyOnboardingForm({ defaultFullName }: CompanyOnboardingForm
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="companyName">Company name</Label>
+            <Label htmlFor="companyName">{t('auth.companyName')}</Label>
             <Input
               id="companyName"
               type="text"
-              placeholder="e.g., Acme Recruiting"
+              placeholder={t('onboarding.companyPlaceholder')}
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               required
@@ -81,10 +83,10 @@ export function CompanyOnboardingForm({ defaultFullName }: CompanyOnboardingForm
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Setting up…
+                {t('onboarding.settingUp')}
               </>
             ) : (
-              'Open dashboard'
+              t('onboarding.openDashboard')
             )}
           </Button>
         </form>

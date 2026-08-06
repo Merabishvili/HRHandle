@@ -112,6 +112,14 @@
     "download": "Download",
     "savedConfirm": "I've saved these codes somewhere safe"
   },
+  "onboarding": {
+    "title": "Finish setting up",
+    "subtitle": "Tell us a bit about you and your company to get started.",
+    "yourName": "Your name",
+    "companyPlaceholder": "e.g., Acme Recruiting",
+    "settingUp": "Setting up…",
+    "openDashboard": "Open dashboard"
+  },
   "nav": {
     "pipeline": "Pipeline",
     "vacancies": "Vacancies",

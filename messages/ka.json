@@ -112,6 +112,14 @@
     "download": "ჩამოტვირთვა",
     "savedConfirm": "ეს კოდები უსაფრთხო ადგილას შევინახე"
   },
+  "onboarding": {
+    "title": "დაასრულეთ მომართვა",
+    "subtitle": "დასაწყებად მოგვიყევით ცოტა რამ თქვენ და თქვენს კომპანიაზე.",
+    "yourName": "თქვენი სახელი",
+    "companyPlaceholder": "მაგ., Acme Recruiting",
+    "settingUp": "მიმდინარეობს მომართვა…",
+    "openDashboard": "დაშბორდის გახსნა"
+  },
   "nav": {
     "pipeline": "პაიპლაინი",
     "vacancies": "ვაკანსიები",
