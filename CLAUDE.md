@@ -96,3 +96,5 @@ Full detail in `docs/claude-code-workflow.md`. Summary:
 See [`docs/1-product/roadmap.md`](docs/1-product/roadmap.md) — single index of planned features, tracked open items, ATS gaps not yet filed, and accepted tech debt. Update it when scoping new work.
 
 ## Things that went wrong before — don't repeat
+
+- **PostgREST embed ambiguity (`profiles` ⇄ `organizations`).** `organizations.ai_fit_enabled_by` references `profiles(id)`, so there are TWO FK relationships between the tables. A plain embed like `.from('profiles').select('… organizations ( … )')` fails with *"Could not embed because more than one relationship was found"* → the dashboard layout's profile read errors → "Something went wrong" for every user. **Always hint the relationship: `organizations!organization_id ( … )`.** The same applies to any new `profiles`↔`organizations` (or other double-FK pair, e.g. `ai_fit_analyses`↔`profiles` via `created_by`/`assessed_by`) embed. Applies to admin-client reads too — it's a schema-level ambiguity, not RLS.
