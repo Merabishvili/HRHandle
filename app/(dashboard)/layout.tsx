@@ -101,7 +101,7 @@ export default async function DashboardLayout({
       is_active,
       created_at,
       updated_at,
-      organizations (
+      organizations!organization_id (
         id,
         name,
         slug,
@@ -195,7 +195,7 @@ export default async function DashboardLayout({
         is_active,
         created_at,
         updated_at,
-        organizations (
+        organizations!organization_id (
           id,
           name,
           slug,
