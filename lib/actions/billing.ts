@@ -3,6 +3,7 @@
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { getRequestCountry } from '@/lib/sanctions'
 import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -66,7 +67,11 @@ export async function startPlanCheckout(input: {
     .eq('id', ctx.orgId)
     .single()
 
-  const currency: Currency = resolveBillingCurrency(org?.billing_country, org?.billing_currency)
+  const requestCountry = getRequestCountry(await headers())
+  const currency: Currency = resolveBillingCurrency(
+    org?.billing_country || requestCountry,
+    org?.billing_currency,
+  )
 
   const plan = PRICING_PLANS.find((p) => p.code === input.planCode)
   if (!plan) return { success: false, error: 'Unknown plan.' }

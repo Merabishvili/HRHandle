@@ -67,10 +67,6 @@ export function BillingControls({
       <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">Billing currency</p>
-          <p className="text-xs text-muted-foreground">
-            Georgian customers are billed in GEL by law. Change only if your billing country
-            differs.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">

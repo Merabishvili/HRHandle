@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { getRequestCountry } from '@/lib/sanctions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -160,8 +162,12 @@ export default async function BillingSettingsPage({
     redirect('/pipeline')
   }
 
+  // Default the currency by the visitor's location when the org hasn't set a
+  // billing country — a Georgian visitor (x-vercel-ip-country = GE) defaults to
+  // GEL. The saved billing_currency override always wins.
+  const requestCountry = getRequestCountry(await headers())
   const currency = resolveBillingCurrency(
-    typedOrganization.billing_country,
+    typedOrganization.billing_country || requestCountry,
     typedOrganization.billing_currency,
   )
 
