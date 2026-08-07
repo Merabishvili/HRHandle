@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Search } from 'lucide-react'
 
 import { GlobalSearchDialog } from './global-search-dialog'
@@ -10,6 +11,7 @@ import { GlobalSearchDialog } from './global-search-dialog'
 // "/" keystroke when no input is focused. Mounted once in the dashboard
 // layout so it's always available.
 export function SearchTrigger() {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const [isMac, setIsMac] = useState(false)
 
@@ -53,11 +55,11 @@ export function SearchTrigger() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Open search"
+        aria-label={t('header.openSearch')}
         className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <Search className="h-3.5 w-3.5" aria-hidden />
-        <span className="hidden sm:inline">Search…</span>
+        <span className="hidden sm:inline">{t('header.search')}</span>
         <kbd className="hidden items-center gap-0.5 rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-flex">
           {isMac ? '⌘' : 'Ctrl'} K
         </kbd>

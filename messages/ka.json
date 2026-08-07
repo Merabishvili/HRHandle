@@ -212,6 +212,19 @@
     "draftSubtitle": "უხილავი, განაცხადის ბმული ჯერ არ არის",
     "upTo": "{amount}-მდე"
   },
+  "header": {
+    "profile": "პროფილი",
+    "billing": "ბილინგი",
+    "signOut": "გასვლა",
+    "user": "მომხმარებელი",
+    "accountMenu": "ანგარიშის მენიუ: {name}",
+    "search": "ძებნა…",
+    "openSearch": "ძებნის გახსნა",
+    "help": "დახმარება",
+    "upgrade": "განახლება",
+    "trialExpiresToday": "საცდელი · იწურება დღეს",
+    "trialDaysLeft": "საცდელი · დარჩა {days, plural, one {# დღე} other {# დღე}}"
+  },
   "nav": {
     "pipeline": "პაიპლაინი",
     "vacancies": "ვაკანსიები",

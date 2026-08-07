@@ -212,6 +212,19 @@
     "draftSubtitle": "Not visible, no apply link yet",
     "upTo": "Up to {amount}"
   },
+  "header": {
+    "profile": "Profile",
+    "billing": "Billing",
+    "signOut": "Sign out",
+    "user": "User",
+    "accountMenu": "Account menu for {name}",
+    "search": "Search…",
+    "openSearch": "Open search",
+    "help": "Help",
+    "upgrade": "Upgrade",
+    "trialExpiresToday": "Trial · expires today",
+    "trialDaysLeft": "Trial · {days, plural, one {# day left} other {# days left}}"
+  },
   "nav": {
     "pipeline": "Pipeline",
     "vacancies": "Vacancies",

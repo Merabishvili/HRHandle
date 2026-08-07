@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import type { User } from '@supabase/supabase-js'
 import type { Profile, Organization, Subscription } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
@@ -41,13 +42,13 @@ function getInitials(profile: Profile, user: User): string {
   return user.email?.slice(0, 2).toUpperCase() || 'U'
 }
 
-const PAGE_LABELS: Record<string, string> = {
-  '/pipeline': 'Pipeline',
-  '/vacancies': 'Vacancies',
-  '/candidates': 'Candidates',
-  '/interviews': 'Interviews',
-  '/reports': 'Reports',
-  '/settings': 'Settings',
+const PAGE_LABEL_KEY: Record<string, string> = {
+  '/pipeline': 'nav.pipeline',
+  '/vacancies': 'nav.vacancies',
+  '/candidates': 'nav.candidates',
+  '/interviews': 'nav.interviews',
+  '/reports': 'nav.reports',
+  '/settings': 'nav.settings',
 }
 
 function getPlanLabel(subscription?: Subscription | null): string {
@@ -63,12 +64,14 @@ export function DashboardHeader({
   organization: _organization,
   subscription,
 }: DashboardHeaderProps) {
+  const t = useTranslations()
   const router = useRouter()
   const pathname = usePathname()
 
-  const pageLabel = Object.entries(PAGE_LABELS).find(([key]) =>
+  const pageLabelKey = Object.entries(PAGE_LABEL_KEY).find(([key]) =>
     pathname === key || pathname.startsWith(key + '/')
   )?.[1] ?? ''
+  const pageLabel = pageLabelKey ? t(pageLabelKey) : ''
 
   const handleSignOut = async () => {
     clearSessionTracking()
@@ -120,7 +123,7 @@ export function DashboardHeader({
               <Button
                 variant="ghost"
                 className="relative h-9 w-9 rounded-full"
-                aria-label={`Account menu for ${profile.full_name || user.email || 'user'}`}
+                aria-label={t('header.accountMenu', { name: profile.full_name || user.email || 'user' })}
               >
                 <Avatar className="h-9 w-9">
                   <AvatarImage
@@ -138,7 +141,7 @@ export function DashboardHeader({
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">
-                  {profile.full_name || 'User'}
+                  {profile.full_name || t('header.user')}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user.email}
@@ -150,24 +153,24 @@ export function DashboardHeader({
 
             <DropdownMenuItem onClick={() => router.push('/settings')}>
               <UserIcon className="mr-2 h-4 w-4" />
-              Profile
+              {t('header.profile')}
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={() => router.push('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              {t('nav.settings')}
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={() => router.push('/settings/billing')}>
               <CreditCard className="mr-2 h-4 w-4" />
-              Billing
+              {t('header.billing')}
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
             <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
-              Sign out
+              {t('header.signOut')}
             </DropdownMenuItem>
           </DropdownMenuContent>
           </DropdownMenu>

@@ -212,6 +212,19 @@
     "draftSubtitle": "Не видна, ссылки для отклика пока нет",
     "upTo": "До {amount}"
   },
+  "header": {
+    "profile": "Профиль",
+    "billing": "Биллинг",
+    "signOut": "Выйти",
+    "user": "Пользователь",
+    "accountMenu": "Меню аккаунта для {name}",
+    "search": "Поиск…",
+    "openSearch": "Открыть поиск",
+    "help": "Помощь",
+    "upgrade": "Улучшить",
+    "trialExpiresToday": "Пробный · истекает сегодня",
+    "trialDaysLeft": "Пробный · осталось {days, plural, one {# день} few {# дня} many {# дней} other {# дней}}"
+  },
   "nav": {
     "pipeline": "Пайплайн",
     "vacancies": "Вакансии",
