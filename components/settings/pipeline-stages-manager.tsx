@@ -174,16 +174,10 @@ export function PipelineStagesManager({ initialStages }: Props) {
         toast.error(result.error)
         return
       }
-      const now = Date.now()
-      setStages([
-        { id: `tmp-${now}-1`, name: 'Applied',   type: 'standard',  sort_order: 1, is_terminal: false },
-        { id: `tmp-${now}-2`, name: 'Screening', type: 'review',    sort_order: 2, is_terminal: false },
-        { id: `tmp-${now}-3`, name: 'Interview', type: 'interview', sort_order: 3, is_terminal: false },
-        { id: `tmp-${now}-4`, name: 'Offer',     type: 'offer',     sort_order: 4, is_terminal: false },
-        { id: `tmp-${now}-5`, name: 'Hired',     type: 'standard',  sort_order: 5, is_terminal: true  },
-        { id: `tmp-${now}-6`, name: 'Rejected',  type: 'standard',  sort_order: 6, is_terminal: true  },
-        { id: `tmp-${now}-7`, name: 'Withdrawn', type: 'standard',  sort_order: 7, is_terminal: true  },
-      ])
+      // Use the REAL rows (with their DB ids) the server returns — inventing
+      // `tmp-*` ids here broke the very next reorder (the reorder RPC takes
+      // uuid[], and a `tmp-*` string fails the uuid cast).
+      setStages(result.data)
       toast.success('Default stages added')
     })
   }

@@ -208,7 +208,7 @@ export async function applyTemplateToEmptyVacancies(): Promise<
  * so the cap-10 trigger + the "must be empty" check live in one place.
  */
 export async function seedOrgPipelineStageTemplateFromDefaults(): Promise<
-  ActionResult<void>
+  ActionResult<OrgPipelineStageTemplate[]>
 > {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -228,6 +228,16 @@ export async function seedOrgPipelineStageTemplateFromDefaults(): Promise<
     return { success: false, error: friendly }
   }
 
+  // Return the freshly-seeded rows with their REAL ids. The client needs these:
+  // it previously invented `tmp-*` placeholder ids, which then broke reorder
+  // (the reorder RPC takes uuid[] — a `tmp-*` string fails the uuid cast and
+  // surfaces as the generic "Could not save the new order").
+  const { data: seeded } = await ctx.supabase
+    .from('org_pipeline_stage_templates')
+    .select('id, name, type, sort_order, is_terminal')
+    .eq('organization_id', ctx.orgId)
+    .order('sort_order', { ascending: true })
+
   revalidatePath('/settings/pipeline-stages')
-  return { success: true, data: undefined }
+  return { success: true, data: (seeded ?? []) as OrgPipelineStageTemplate[] }
 }
