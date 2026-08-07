@@ -9,6 +9,15 @@ export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
   hired: 'Hired',
 }
 
+/** i18n keys per funnel stage — callers translate with `t()`. */
+export const FUNNEL_STAGE_I18N_KEY: Record<FunnelStage, string> = {
+  applied: 'reports.stage.applied',
+  screening: 'reports.stage.screening',
+  interview: 'reports.stage.interview',
+  offer: 'reports.stage.offer',
+  hired: 'reports.stage.hired',
+}
+
 const STAGE_SORT: Record<FunnelStage, number> = {
   applied: 1,
   screening: 2,

@@ -650,7 +650,31 @@
     "reached": "Reached",
     "from": "From",
     "byVacancy": "By vacancy",
-    "bySource": "By source"
+    "bySource": "By source",
+    "pipelineConversion": "Pipeline conversion",
+    "reachedInterview": "Reached interview",
+    "rejectedWithdrawn": "Rejected / withdrawn",
+    "rejWdHint": "{rej} rej · {wd} wd",
+    "to": "To",
+    "loadError": "Could not load report.",
+    "emptyApplications": "No applications in this period yet. Try a wider range.",
+    "emptyHires": "No hires in this period yet. Try a wider range.",
+    "median": "Median",
+    "p25p75": "25th–75th",
+    "mean": "Mean",
+    "vacancy": "Vacancy",
+    "sourceEffectiveness": "Source effectiveness",
+    "overallConversion": "Overall conversion",
+    "sourcesWhereHires": "Sources · where hires come from",
+    "appliedHiredRow": "{applied} applied · {hires} hired",
+    "source": "Source",
+    "stage": {
+      "applied": "Applied",
+      "screening": "Screening",
+      "interview": "Interview",
+      "offer": "Offer",
+      "hired": "Hired"
+    }
   },
   "interviews": {
     "title": "Interviews",

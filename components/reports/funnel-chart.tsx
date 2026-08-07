@@ -1,6 +1,7 @@
+import { getTranslations } from 'next-intl/server'
 import {
   FUNNEL_STAGES,
-  FUNNEL_STAGE_LABELS,
+  FUNNEL_STAGE_I18N_KEY,
   type FunnelCounts,
   stageConversion,
 } from '@/lib/reports/funnel'
@@ -22,7 +23,8 @@ interface FunnelChartProps {
  * Width is calculated as `count / max(applied, 1)` so the Applied bar
  * always sits at 100% and downstream bars shrink in proportion.
  */
-export function FunnelChart({ data }: FunnelChartProps) {
+export async function FunnelChart({ data }: FunnelChartProps) {
+  const t = await getTranslations()
   const maxCount = Math.max(data.applied, 1)
 
   return (
@@ -40,7 +42,7 @@ export function FunnelChart({ data }: FunnelChartProps) {
         return (
           <div key={stage} className="flex items-center gap-3.5">
             <span className="w-[90px] shrink-0 text-[12.5px] text-foreground/70">
-              {FUNNEL_STAGE_LABELS[stage]}
+              {t(FUNNEL_STAGE_I18N_KEY[stage])}
             </span>
             <div
               className="flex h-[34px] items-center rounded-[7px] px-3"

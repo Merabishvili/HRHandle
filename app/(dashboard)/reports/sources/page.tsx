@@ -1,5 +1,6 @@
+import { getTranslations } from 'next-intl/server'
 import { getSourceReport } from '@/lib/reports/queries'
-import { parsePeriod, PERIOD_LABELS } from '@/lib/reports/period'
+import { parsePeriod, PERIOD_I18N_KEY } from '@/lib/reports/period'
 import { formatPercent } from '@/lib/reports/source-summary'
 import { PeriodSelector } from '@/components/reports/period-selector'
 import { SummaryStat } from '@/components/reports/summary-stat'
@@ -25,9 +26,10 @@ export default async function SourcesPage({ searchParams }: { searchParams: Sear
   const sp = await searchParams
   const period = parsePeriod(sp.period)
   const report = await getSourceReport(period)
+  const t = await getTranslations()
 
   if (!report) {
-    return <ReportEmpty message="Could not load report." />
+    return <ReportEmpty message={t('reports.loadError')} />
   }
 
   const { rows, totalApplications, totalHires } = report
@@ -36,18 +38,18 @@ export default async function SourcesPage({ searchParams }: { searchParams: Sear
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">Source effectiveness · {PERIOD_LABELS[period]}</h2>
+        <h2 className="text-base font-semibold">{t('reports.sourceEffectiveness')} · {t(PERIOD_I18N_KEY[period])}</h2>
         <PeriodSelector current={period} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <SummaryStat label="Applications" value={totalApplications} />
-        <SummaryStat label="Hires" value={totalHires} />
-        <SummaryStat label="Overall conversion" value={formatPercent(overallConversion)} />
+        <SummaryStat label={t('reports.applications')} value={totalApplications} />
+        <SummaryStat label={t('reports.hires')} value={totalHires} />
+        <SummaryStat label={t('reports.overallConversion')} value={formatPercent(overallConversion)} />
       </div>
 
       {rows.length === 0 ? (
-        <ReportEmpty message="No applications in this period yet. Try a wider range." />
+        <ReportEmpty message={t('reports.emptyApplications')} />
       ) : (
         <>
           {/* Horizontal bars — applications per source, width-scaled to the
@@ -55,7 +57,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Sear
               volume / low-conversion source pops visually. */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-semibold">Sources · where hires come from</CardTitle>
+              <CardTitle className="text-sm font-semibold">{t('reports.sourcesWhereHires')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-3">
@@ -68,7 +70,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Sear
                       <div className="mb-1 flex justify-between text-[12.5px]">
                         <span className="font-semibold text-foreground/85">{row.label}</span>
                         <span className="text-muted-foreground">
-                          {row.applications} applied · {row.hires} hired
+                          {t('reports.appliedHiredRow', { applied: row.applications, hires: row.hires })}
                         </span>
                       </div>
                       <div className="h-[9px] overflow-hidden rounded-full bg-[oklch(0.94_0.01_250)]">
@@ -86,16 +88,16 @@ export default async function SourcesPage({ searchParams }: { searchParams: Sear
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-semibold">By source</CardTitle>
+              <CardTitle className="text-sm font-semibold">{t('reports.bySource')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-2 text-left">Source</th>
-                  <th className="px-4 py-2 text-right">Applications</th>
-                  <th className="px-4 py-2 text-right">Hires</th>
-                  <th className="px-4 py-2 text-right">Conversion</th>
+                  <th className="px-4 py-2 text-left">{t('reports.source')}</th>
+                  <th className="px-4 py-2 text-right">{t('reports.applications')}</th>
+                  <th className="px-4 py-2 text-right">{t('reports.hires')}</th>
+                  <th className="px-4 py-2 text-right">{t('reports.conversion')}</th>
                 </tr>
               </thead>
               <tbody>

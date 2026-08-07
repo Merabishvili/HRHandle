@@ -1,6 +1,7 @@
+import { getTranslations } from 'next-intl/server'
 import { getPipelineReport } from '@/lib/reports/queries'
-import { parsePeriod, PERIOD_LABELS } from '@/lib/reports/period'
-import { FUNNEL_STAGES, FUNNEL_STAGE_LABELS, stageConversion } from '@/lib/reports/funnel'
+import { parsePeriod, PERIOD_I18N_KEY } from '@/lib/reports/period'
+import { FUNNEL_STAGES, FUNNEL_STAGE_I18N_KEY, stageConversion } from '@/lib/reports/funnel'
 import { PeriodSelector } from '@/components/reports/period-selector'
 import { SummaryStat } from '@/components/reports/summary-stat'
 import { ReportEmpty } from '@/components/reports/empty-state'
@@ -13,9 +14,10 @@ export default async function PipelinePage({ searchParams }: { searchParams: Sea
   const sp = await searchParams
   const period = parsePeriod(sp.period)
   const report = await getPipelineReport(period)
+  const t = await getTranslations()
 
   if (!report) {
-    return <ReportEmpty message="Could not load report." />
+    return <ReportEmpty message={t('reports.loadError')} />
   }
 
   const { funnel } = report
@@ -23,36 +25,36 @@ export default async function PipelinePage({ searchParams }: { searchParams: Sea
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">Pipeline conversion · {PERIOD_LABELS[period]}</h2>
+        <h2 className="text-base font-semibold">{t('reports.pipelineConversion')} · {t(PERIOD_I18N_KEY[period])}</h2>
         <PeriodSelector current={period} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <SummaryStat label="Applications" value={funnel.applied} />
+        <SummaryStat label={t('reports.applications')} value={funnel.applied} />
         <SummaryStat
-          label="Reached interview"
+          label={t('reports.reachedInterview')}
           value={funnel.interview}
           hint={formatRate(stageConversion(funnel.applied, funnel.interview))}
         />
         <SummaryStat
-          label="Hired"
+          label={t('reports.stage.hired')}
           value={funnel.hired}
           hint={formatRate(stageConversion(funnel.applied, funnel.hired))}
         />
         <SummaryStat
-          label="Rejected / withdrawn"
+          label={t('reports.rejectedWithdrawn')}
           value={funnel.rejected + funnel.withdrawn}
-          hint={`${funnel.rejected} rej · ${funnel.withdrawn} wd`}
+          hint={t('reports.rejWdHint', { rej: funnel.rejected, wd: funnel.withdrawn })}
         />
       </div>
 
       {funnel.total === 0 ? (
-        <ReportEmpty message="No applications in this period yet. Try a wider range." />
+        <ReportEmpty message={t('reports.emptyApplications')} />
       ) : (
         <>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-semibold">Funnel</CardTitle>
+              <CardTitle className="text-sm font-semibold">{t('reports.funnel')}</CardTitle>
             </CardHeader>
             <CardContent>
               <FunnelChart data={funnel} />
@@ -61,16 +63,16 @@ export default async function PipelinePage({ searchParams }: { searchParams: Sea
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-semibold">Stage-to-stage conversion</CardTitle>
+              <CardTitle className="text-sm font-semibold">{t('reports.stageToStage')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-2 text-left">From</th>
-                    <th className="px-4 py-2 text-left">To</th>
-                    <th className="px-4 py-2 text-right">Reached</th>
-                    <th className="px-4 py-2 text-right">Conversion</th>
+                    <th className="px-4 py-2 text-left">{t('reports.from')}</th>
+                    <th className="px-4 py-2 text-left">{t('reports.to')}</th>
+                    <th className="px-4 py-2 text-right">{t('reports.reached')}</th>
+                    <th className="px-4 py-2 text-right">{t('reports.conversion')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -82,8 +84,8 @@ export default async function PipelinePage({ searchParams }: { searchParams: Sea
                     const conv = stageConversion(fromCount, toCount)
                     return (
                       <tr key={stage} className="border-b last:border-0">
-                        <td className="px-4 py-2 text-muted-foreground">{FUNNEL_STAGE_LABELS[previous]}</td>
-                        <td className="px-4 py-2 font-medium">{FUNNEL_STAGE_LABELS[stage]}</td>
+                        <td className="px-4 py-2 text-muted-foreground">{t(FUNNEL_STAGE_I18N_KEY[previous])}</td>
+                        <td className="px-4 py-2 font-medium">{t(FUNNEL_STAGE_I18N_KEY[stage])}</td>
                         <td className="px-4 py-2 text-right tabular-nums">{toCount}</td>
                         <td className="px-4 py-2 text-right tabular-nums">{formatRate(conv)}</td>
                       </tr>

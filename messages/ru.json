@@ -650,7 +650,31 @@
     "reached": "Достигли",
     "from": "Из",
     "byVacancy": "По вакансии",
-    "bySource": "По источнику"
+    "bySource": "По источнику",
+    "pipelineConversion": "Конверсия воронки",
+    "reachedInterview": "Дошли до интервью",
+    "rejectedWithdrawn": "Отклонены / отозваны",
+    "rejWdHint": "{rej} откл · {wd} отз",
+    "to": "Куда",
+    "loadError": "Не удалось загрузить отчёт.",
+    "emptyApplications": "Пока нет заявок за этот период. Попробуйте более широкий диапазон.",
+    "emptyHires": "Пока нет наймов за этот период. Попробуйте более широкий диапазон.",
+    "median": "Медиана",
+    "p25p75": "25-й–75-й",
+    "mean": "Среднее",
+    "vacancy": "Вакансия",
+    "sourceEffectiveness": "Эффективность источников",
+    "overallConversion": "Общая конверсия",
+    "sourcesWhereHires": "Источники · откуда приходят наймы",
+    "appliedHiredRow": "{applied} заявок · {hires} нанято",
+    "source": "Источник",
+    "stage": {
+      "applied": "Заявка",
+      "screening": "Скрининг",
+      "interview": "Интервью",
+      "offer": "Оффер",
+      "hired": "Нанят"
+    }
   },
   "interviews": {
     "title": "Собеседования",

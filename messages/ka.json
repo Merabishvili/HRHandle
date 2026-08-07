@@ -650,7 +650,31 @@
     "reached": "მიაღწია",
     "from": "საიდან",
     "byVacancy": "ვაკანსიის მიხედვით",
-    "bySource": "წყაროს მიხედვით"
+    "bySource": "წყაროს მიხედვით",
+    "pipelineConversion": "პაიპლაინის კონვერსია",
+    "reachedInterview": "მიაღწია ინტერვიუს",
+    "rejectedWithdrawn": "უარყოფილი / გატანილი",
+    "rejWdHint": "{rej} უარყ · {wd} გატ",
+    "to": "სად",
+    "loadError": "ანგარიშის ჩატვირთვა ვერ მოხერხდა.",
+    "emptyApplications": "ამ პერიოდში ჯერ არ არის განაცხადები. სცადეთ უფრო ფართო დიაპაზონი.",
+    "emptyHires": "ამ პერიოდში ჯერ არ არის დაქირავებები. სცადეთ უფრო ფართო დიაპაზონი.",
+    "median": "მედიანა",
+    "p25p75": "25-ე–75-ე",
+    "mean": "საშუალო",
+    "vacancy": "ვაკანსია",
+    "sourceEffectiveness": "წყაროების ეფექტიანობა",
+    "overallConversion": "საერთო კონვერსია",
+    "sourcesWhereHires": "წყაროები · საიდან მოდის დაქირავებები",
+    "appliedHiredRow": "{applied} განაცხადი · {hires} დაქირავებული",
+    "source": "წყარო",
+    "stage": {
+      "applied": "განაცხადი",
+      "screening": "სკრინინგი",
+      "interview": "ინტერვიუ",
+      "offer": "შეთავაზება",
+      "hired": "დაქირავებული"
+    }
   },
   "interviews": {
     "title": "გასაუბრებები",
