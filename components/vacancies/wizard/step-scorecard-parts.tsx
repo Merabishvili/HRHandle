@@ -2,11 +2,12 @@
 
 import { type ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import {
   supportsKnockout,
-  TYPE_LABELS,
+  TYPE_LABEL_KEY,
   type ScorecardScreeningQuestion,
   type NumberOp,
 } from './scorecard-shared'
@@ -25,6 +26,7 @@ export function ScreeningQuestionRow({
   onPatch: (patch: Partial<ScorecardScreeningQuestion>) => void
   onRemove: () => void
 }) {
+  const t = useTranslations()
   const canKnockout = supportsKnockout(q.answerType)
   const options = q.options ?? []
 
@@ -35,17 +37,17 @@ export function ScreeningQuestionRow({
           {q.label}
         </span>
         <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-          {TYPE_LABELS[q.answerType]}
+          {t(TYPE_LABEL_KEY[q.answerType])}
         </span>
         {q.knockout && (
           <span className="shrink-0 rounded bg-[oklch(0.96_0.05_27)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[oklch(0.5_0.19_27)]">
-            Knockout
+            {t('wizard.knockout')}
           </span>
         )}
         <button
           type="button"
           onClick={onRemove}
-          aria-label={`Remove ${q.label}`}
+          aria-label={t('wizard.removeNamed', { label: q.label })}
           className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
         >
           <X className="h-3.5 w-3.5" aria-hidden />
@@ -56,22 +58,22 @@ export function ScreeningQuestionRow({
       <div
         className="mt-2 inline-flex rounded-md border border-[oklch(0.9_0.01_250)] p-0.5"
         role="radiogroup"
-        aria-label="Question purpose"
+        aria-label={t('wizard.questionPurpose')}
       >
         <PurposeButton active={!q.knockout} onClick={() => onPatch({ knockout: false })}>
-          Informational
+          {t('wizard.informational')}
         </PurposeButton>
         <PurposeButton
           active={q.knockout}
           disabled={!canKnockout}
           onClick={() => onPatch({ knockout: true })}
         >
-          Knockout
+          {t('wizard.knockout')}
         </PurposeButton>
       </div>
       {!canKnockout && (
         <p className="mt-1 text-[10.5px] text-muted-foreground">
-          Short-text answers can&rsquo;t be knockouts.
+          {t('wizard.shortTextNoKnockout')}
         </p>
       )}
 
@@ -80,7 +82,7 @@ export function ScreeningQuestionRow({
         <div className="mt-2 rounded-md border border-[oklch(0.93_0.03_27)] bg-[oklch(0.99_0.008_27)] p-2.5">
           {q.answerType === 'yes_no' && (
             <div className="flex items-center gap-2 text-[12px]">
-              <span className="text-muted-foreground">Passing answer:</span>
+              <span className="text-muted-foreground">{t('wizard.passingAnswer')}</span>
               {(['yes', 'no'] as const).map((v) => (
                 <button
                   key={v}
@@ -102,16 +104,16 @@ export function ScreeningQuestionRow({
 
           {q.answerType === 'number' && (
             <div className="flex flex-wrap items-center gap-2 text-[12px]">
-              <span className="text-muted-foreground">Passes when</span>
+              <span className="text-muted-foreground">{t('wizard.passesWhen')}</span>
               <select
                 value={q.numberOp}
                 onChange={(e) => onPatch({ numberOp: e.target.value as NumberOp })}
-                aria-label="Comparison"
+                aria-label={t('wizard.comparison')}
                 className="h-8 rounded-md border border-[oklch(0.9_0.01_250)] bg-white px-2 text-[12px]"
               >
                 <option value="lte">≤</option>
                 <option value="gte">≥</option>
-                <option value="between">between</option>
+                <option value="between">{t('wizard.between')}</option>
               </select>
               <Input
                 type="number"
@@ -120,13 +122,13 @@ export function ScreeningQuestionRow({
                 onChange={(e) =>
                   onPatch({ numberValue: e.target.value === '' ? null : Number(e.target.value) })
                 }
-                placeholder="value"
+                placeholder={t('wizard.valuePlaceholder')}
                 className="h-8 w-[110px] text-[12px]"
-                aria-label="Knockout value"
+                aria-label={t('wizard.knockoutValueAria')}
               />
               {q.numberOp === 'between' && (
                 <>
-                  <span className="text-muted-foreground">and</span>
+                  <span className="text-muted-foreground">{t('auth.and')}</span>
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -136,9 +138,9 @@ export function ScreeningQuestionRow({
                         numberValue2: e.target.value === '' ? null : Number(e.target.value),
                       })
                     }
-                    placeholder="value"
+                    placeholder={t('wizard.valuePlaceholder')}
                     className="h-8 w-[110px] text-[12px]"
-                    aria-label="Knockout upper value"
+                    aria-label={t('wizard.knockoutUpperValueAria')}
                   />
                 </>
               )}
@@ -147,7 +149,7 @@ export function ScreeningQuestionRow({
 
           {q.answerType === 'select' && (
             <div className="text-[12px]">
-              <p className="mb-1.5 text-muted-foreground">Passing options:</p>
+              <p className="mb-1.5 text-muted-foreground">{t('wizard.passingOptions')}</p>
               <div className="flex flex-col gap-1">
                 {options.map((opt) => {
                   const checked = q.passOptions.some((o) => o.toLowerCase() === opt.toLowerCase())
@@ -174,7 +176,7 @@ export function ScreeningQuestionRow({
               </div>
               {q.passOptions.length === 0 && (
                 <p className="mt-1 text-[10.5px] text-[oklch(0.5_0.19_27)]">
-                  Pick at least one passing option.
+                  {t('wizard.pickOnePassing')}
                 </p>
               )}
             </div>

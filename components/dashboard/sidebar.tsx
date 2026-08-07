@@ -149,7 +149,7 @@ export function DashboardSidebar({
                 </div>
               )}
 
-            <div className="mt-3 flex gap-3 text-xs text-sidebar-foreground/40">
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-sidebar-foreground/40">
               <Link href="/terms" className="transition-colors hover:text-sidebar-foreground/70">{t('sidebar.terms')}</Link>
               <Link href="/privacy" className="transition-colors hover:text-sidebar-foreground/70">{t('sidebar.privacy')}</Link>
               <Link href="/refund" className="transition-colors hover:text-sidebar-foreground/70">{t('sidebar.refund')}</Link>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -61,6 +62,7 @@ export function StepDescription({
   translations = {},
   onTranslationChange,
 }: StepDescriptionProps) {
+  const t = useTranslations()
   const set = <K extends keyof DescriptionState>(key: K, v: DescriptionState[K]) => {
     onChange({ ...value, [key]: v })
   }
@@ -73,9 +75,9 @@ export function StepDescription({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-[15px] font-bold text-foreground">Vacancy details</h2>
+        <h2 className="text-[15px] font-bold text-foreground">{t('vacancy.form.details')}</h2>
         <p className="text-[12.5px] text-muted-foreground">
-          Shown on the public jobs page and included when sharing on LinkedIn.
+          {t('wizard.detailsSubtitle')}
         </p>
       </div>
 
@@ -94,7 +96,9 @@ export function StepDescription({
               )}
             >
               {LOCALE_LABELS[l]}
-              {l === orgLocales.default && <span className="ml-1 opacity-60">· default</span>}
+              {l === orgLocales.default && (
+                <span className="ml-1 opacity-60">· {t('settings.orgLang.defaultTag')}</span>
+              )}
             </button>
           ))}
         </div>
@@ -139,7 +143,7 @@ export function StepDescription({
 
           <div className="space-y-1.5">
             <Label htmlFor="description" className="text-[11.5px] font-medium text-muted-foreground">
-              About the job <span className="text-destructive">*</span>
+              {t('vacancy.form.aboutJob')} <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="description"
@@ -147,14 +151,14 @@ export function StepDescription({
               onChange={(e) => set('description', e.target.value)}
               rows={5}
               maxLength={5000}
-              placeholder="Give an overview of the role — what the team does, what success looks like, and why someone would want to join."
+              placeholder={t('vacancy.form.aboutPlaceholder')}
             />
             <p className="text-right text-[11px] text-muted-foreground/80">{value.description.length} / 5000</p>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="responsibilities" className="text-[11.5px] font-medium text-muted-foreground">
-              Responsibilities
+              {t('vacancy.form.responsibilities')}
             </Label>
             <Textarea
               id="responsibilities"
@@ -162,13 +166,13 @@ export function StepDescription({
               onChange={(e) => set('responsibilities', e.target.value)}
               rows={4}
               maxLength={5000}
-              placeholder="• Lead… • Collaborate… • Mentor…"
+              placeholder={t('vacancy.form.respPlaceholder')}
             />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="requirements" className="text-[11.5px] font-medium text-muted-foreground">
-              Requirements
+              {t('vacancy.form.requirements')}
             </Label>
             <Textarea
               id="requirements"
@@ -176,7 +180,7 @@ export function StepDescription({
               onChange={(e) => set('requirements', e.target.value)}
               rows={4}
               maxLength={5000}
-              placeholder="• 5+ years… • Strong understanding of…"
+              placeholder={t('vacancy.form.reqPlaceholder')}
             />
           </div>
         </>
@@ -185,7 +189,7 @@ export function StepDescription({
         // assist + validation apply only to the default-locale content above).
         <>
           <div className="space-y-1.5">
-            <Label className="text-[11.5px] font-medium text-muted-foreground">About the job</Label>
+            <Label className="text-[11.5px] font-medium text-muted-foreground">{t('vacancy.form.aboutJob')}</Label>
             <Textarea
               value={tr.description}
               onChange={(e) => onTranslationChange?.(activeLocale, 'description', e.target.value)}
@@ -194,7 +198,7 @@ export function StepDescription({
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[11.5px] font-medium text-muted-foreground">Responsibilities</Label>
+            <Label className="text-[11.5px] font-medium text-muted-foreground">{t('vacancy.form.responsibilities')}</Label>
             <Textarea
               value={tr.responsibilities}
               onChange={(e) => onTranslationChange?.(activeLocale, 'responsibilities', e.target.value)}
@@ -203,7 +207,7 @@ export function StepDescription({
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[11.5px] font-medium text-muted-foreground">Requirements</Label>
+            <Label className="text-[11.5px] font-medium text-muted-foreground">{t('vacancy.form.requirements')}</Label>
             <Textarea
               value={tr.requirements}
               onChange={(e) => onTranslationChange?.(activeLocale, 'requirements', e.target.value)}
@@ -216,15 +220,15 @@ export function StepDescription({
 
       <div className="flex items-center justify-between gap-3 rounded-[10px] border border-[oklch(0.92_0.01_250)] px-3.5 py-3">
         <div>
-          <p className="text-[13px] font-semibold text-foreground">Show on public jobs page</p>
+          <p className="text-[13px] font-semibold text-foreground">{t('vacancy.form.showOnPublic')}</p>
           <p className="text-[11.5px] text-muted-foreground">
-            Candidates can discover and apply from your public jobs page.
+            {t('vacancy.form.showOnPublicHelp')}
           </p>
         </div>
         <Switch
           checked={value.showOnPublicPage}
           onCheckedChange={(checked) => set('showOnPublicPage', checked)}
-          aria-label="Show on public jobs page"
+          aria-label={t('vacancy.form.showOnPublic')}
         />
       </div>
     </div>

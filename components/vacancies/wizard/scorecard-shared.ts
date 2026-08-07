@@ -69,9 +69,10 @@ export interface ScorecardJdContext {
   requirements: string | null
 }
 
-export const TYPE_LABELS: Record<ScreeningAnswerType, string> = {
-  yes_no: 'Yes / No',
-  short_text: 'Short text',
-  number: 'Number',
-  select: 'Select',
+/** i18n keys per answer type — callers translate with `t()` (pure module). */
+export const TYPE_LABEL_KEY: Record<ScreeningAnswerType, string> = {
+  yes_no: 'wizard.typeYesNo',
+  short_text: 'wizard.typeShortText',
+  number: 'wizard.typeNumber',
+  select: 'wizard.typeSelect',
 }

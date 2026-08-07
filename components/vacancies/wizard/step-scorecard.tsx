@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Plus, X, Star, Sparkles, Loader2 } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { blankQuestion, TYPE_LABELS } from './scorecard-shared'
+import { blankQuestion, TYPE_LABEL_KEY } from './scorecard-shared'
 import type {
   ScorecardState,
   ScorecardJdContext,
@@ -56,6 +57,7 @@ type SuggestState =
  * a comma-separated input.
  */
 export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps) {
+  const t = useTranslations()
   const [newAttribute, setNewAttribute] = useState('')
   const [newQuestion, setNewQuestion] = useState('')
   const [newAnswerType, setNewAnswerType] = useState<ScreeningAnswerType>('yes_no')
@@ -186,9 +188,9 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
       {/* Interview scorecard */}
-      <section className="flex-1 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Interview scorecard">
+      <section className="flex-1 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label={t('wizard.interviewScorecard')}>
         <header className="mb-3 flex flex-wrap items-center gap-2">
-          <h3 className="text-[15px] font-bold text-foreground">Interview scorecard</h3>
+          <h3 className="text-[15px] font-bold text-foreground">{t('wizard.interviewScorecard')}</h3>
           <Button
             type="button"
             variant="outline"
@@ -202,11 +204,11 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
             ) : (
               <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
             )}
-            Suggest from JD
+            {t('wizard.suggestFromJd')}
           </Button>
         </header>
         <p className="mb-3 text-[12px] text-muted-foreground">
-          Attributes interviewers rate 1–5. Skip to use a default set you can edit later.
+          {t('wizard.scorecardHint')}
         </p>
 
         {suggest.status !== 'idle' && suggest.status !== 'loading' && (
@@ -214,12 +216,12 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
             {suggest.status === 'ok' ? (
               suggest.skills.filter((s) => !hasAttribute(s)).length === 0 ? (
                 <p className="text-[11.5px] text-muted-foreground">
-                  All suggestions are already on your scorecard.
+                  {t('wizard.suggestAllAdded')}
                 </p>
               ) : (
                 <>
                   <p className="mb-1.5 text-[11.5px] font-medium text-muted-foreground">
-                    Suggested attributes — click to add:
+                    {t('wizard.suggestClickToAdd')}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {suggest.skills
@@ -241,12 +243,12 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
             ) : (
               <p className="text-[11.5px] text-muted-foreground">
                 {suggest.status === 'too_thin'
-                  ? 'Add a title (and ideally a description) first, then try again.'
+                  ? t('wizard.suggestTooThin')
                   : suggest.status === 'rate_limited'
-                    ? 'You’ve generated a lot recently. Try again in a few minutes.'
+                    ? t('wizard.suggestRateLimited')
                     : suggest.status === 'no_key'
-                      ? 'AI features are not configured on this deployment.'
-                      : 'Could not generate suggestions. Try again.'}
+                      ? t('wizard.aiNotConfigured')
+                      : t('wizard.suggestFailed')}
               </p>
             )}
           </div>
@@ -263,7 +265,7 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
                 type="button"
                 onClick={() => toggleMustHave(idx)}
                 aria-pressed={attr.mustHave}
-                aria-label={attr.mustHave ? 'Mark nice-to-have' : 'Mark must-have'}
+                aria-label={attr.mustHave ? t('wizard.markNiceToHave') : t('wizard.markMustHave')}
                 className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10.5px] font-bold transition-colors"
                 style={
                   attr.mustHave
@@ -282,12 +284,12 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
                   fill={attr.mustHave ? 'oklch(0.5 0.19 27)' : 'none'}
                   aria-hidden
                 />
-                {attr.mustHave ? 'Must-have' : 'Nice-to-have'}
+                {attr.mustHave ? t('wizard.mustHave') : t('wizard.niceToHave')}
               </button>
               <button
                 type="button"
                 onClick={() => removeAttribute(idx)}
-                aria-label={`Remove ${attr.label}`}
+                aria-label={t('wizard.removeNamed', { label: attr.label })}
                 className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
               >
                 <X className="h-3.5 w-3.5" aria-hidden />
@@ -306,9 +308,9 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
                 addAttribute()
               }
             }}
-            placeholder="Add attribute — e.g. Stakeholder Communication"
+            placeholder={t('wizard.addAttributePlaceholder')}
             className="h-9 text-[13px]"
-            aria-label="New attribute"
+            aria-label={t('wizard.newAttributeAria')}
           />
           <Button
             type="button"
@@ -319,19 +321,18 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
             className="h-9 gap-1.5"
           >
             <Plus className="h-3.5 w-3.5" aria-hidden />
-            Add
+            {t('wizard.add')}
           </Button>
         </div>
       </section>
 
       {/* Screening questions */}
-      <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px] lg:w-[460px]" aria-label="Screening questions">
+      <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px] lg:w-[460px]" aria-label={t('wizard.screeningQuestions')}>
         <header className="mb-3">
-          <h3 className="text-[15px] font-bold text-foreground">Screening questions</h3>
+          <h3 className="text-[15px] font-bold text-foreground">{t('wizard.screeningQuestions')}</h3>
         </header>
         <p className="mb-3 text-[12px] text-muted-foreground">
-          Knockout answers auto-flag at screening — candidates can still submit, and you decide
-          whether to reject.
+          {t('wizard.screeningHint')}
         </p>
 
         <ul className="space-y-2">
@@ -356,29 +357,29 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
                 addQuestion()
               }
             }}
-            placeholder="Add question — e.g. Eligible to work here?"
+            placeholder={t('wizard.addQuestionPlaceholder')}
             className="h-9 text-[12.5px]"
-            aria-label="New screening question"
+            aria-label={t('wizard.newQuestionAria')}
             maxLength={500}
           />
 
           {/* Type picker */}
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Answer type">
-            {(['yes_no', 'short_text', 'number', 'select'] as const).map((t) => (
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('wizard.answerType')}>
+            {(['yes_no', 'short_text', 'number', 'select'] as const).map((type) => (
               <button
-                key={t}
+                key={type}
                 type="button"
-                onClick={() => setNewAnswerType(t)}
+                onClick={() => setNewAnswerType(type)}
                 role="radio"
-                aria-checked={newAnswerType === t}
+                aria-checked={newAnswerType === type}
                 className={cn(
                   'rounded-md border px-2.5 py-1 text-[11.5px] font-semibold transition-colors',
-                  newAnswerType === t
+                  newAnswerType === type
                     ? 'border-[oklch(0.55_0.18_250)] bg-[oklch(0.98_0.015_250)] text-[oklch(0.2_0.16_250)]'
                     : 'border-[oklch(0.9_0.01_250)] text-foreground/75 hover:bg-muted/40',
                 )}
               >
-                {TYPE_LABELS[t]}
+                {t(TYPE_LABEL_KEY[type])}
               </button>
             ))}
           </div>
@@ -388,15 +389,15 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
             <Input
               value={newOptions}
               onChange={(e) => setNewOptions(e.target.value)}
-              placeholder="Options, comma-separated — e.g. Citizen, Permanent Resident, Visa needed"
+              placeholder={t('wizard.optionsPlaceholder')}
               className="h-9 text-[12.5px]"
-              aria-label="Select options"
+              aria-label={t('wizard.selectOptionsAria')}
             />
           )}
 
           <div className="flex items-center">
             <span className="text-[11px] text-muted-foreground">
-              Added as informational — set knockout below.
+              {t('wizard.addedInformational')}
             </span>
             <Button
               type="button"
@@ -416,8 +417,7 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
         </div>
 
         <p className="mt-3 text-[11.5px] text-muted-foreground">
-          Skip this step → default scorecard + no screening questions. Fully editable later on the
-          vacancy.
+          {t('wizard.skipScorecard')}
         </p>
       </section>
     </div>

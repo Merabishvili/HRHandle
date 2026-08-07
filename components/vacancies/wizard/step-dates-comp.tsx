@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -32,6 +33,7 @@ const COMMON_CURRENCIES = ['USD', 'EUR', 'GBP', 'GEL']
  * existing schema constraint (tech-debt.md §1 tracks the schema relax).
  */
 export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
+  const t = useTranslations()
   const set = <K extends keyof DatesCompState>(key: K, v: DatesCompState[K]) => {
     onChange({ ...value, [key]: v })
   }
@@ -39,12 +41,12 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
   return (
     <div className="flex max-w-[860px] flex-col gap-4">
       <div>
-        <h2 className="text-[15px] font-bold text-foreground">Dates and compensation</h2>
-        <p className="text-[12.5px] text-muted-foreground">Vacancy timeline and salary range.</p>
+        <h2 className="text-[15px] font-bold text-foreground">{t('wizard.stepDates')}</h2>
+        <p className="text-[12.5px] text-muted-foreground">{t('wizard.datesSubtitle')}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="start_date" label="Start date">
+        <Field id="start_date" label={t('columns.startDate')}>
           <Input
             id="start_date"
             type="date"
@@ -52,7 +54,7 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
             onChange={(e) => set('startDate', e.target.value || null)}
           />
         </Field>
-        <Field id="end_date" label="End date">
+        <Field id="end_date" label={t('columns.endDate')}>
           <Input
             id="end_date"
             type="date"
@@ -63,7 +65,7 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-[1fr_1fr_110px]">
-        <Field id="salary_min" label="Minimum salary">
+        <Field id="salary_min" label={t('vacancy.form.minSalary')}>
           <Input
             id="salary_min"
             type="number"
@@ -74,7 +76,7 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
             placeholder="50000"
           />
         </Field>
-        <Field id="salary_max" label="Maximum salary">
+        <Field id="salary_max" label={t('vacancy.form.maxSalary')}>
           <Input
             id="salary_max"
             type="number"
@@ -85,7 +87,7 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
             placeholder="80000"
           />
         </Field>
-        <Field id="currency" label="Currency">
+        <Field id="currency" label={t('vacancy.form.currency')}>
           <Select
             value={value.salaryCurrency}
             onValueChange={(v) => set('salaryCurrency', v)}
@@ -105,7 +107,7 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
       </div>
 
       <p className="text-[11.5px] text-muted-foreground">
-        Optional. Shown to candidates and used for salary-fit filtering.
+        {t('wizard.salaryHint')}
       </p>
     </div>
   )

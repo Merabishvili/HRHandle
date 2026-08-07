@@ -1,13 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Briefcase, Pencil, ChevronRight, Check, AlertTriangle, Star } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import type { BasicsState } from './step-basics'
 import type { DatesCompState } from './step-dates-comp'
 import type { DescriptionState } from './step-description'
-import type { ScorecardState, ScreeningAnswerType } from './step-scorecard'
+import type { ScorecardState } from './step-scorecard'
+import { TYPE_LABEL_KEY } from './scorecard-shared'
+
+/** next-intl `t` — passed to module-level formatters that need translation. */
+type T = (key: string, values?: Record<string, string | number>) => string
 
 interface StepReviewProps {
   basics: BasicsState
@@ -18,13 +23,6 @@ interface StepReviewProps {
   publishChoice: 'publish' | 'draft'
   onPublishChoiceChange: (choice: 'publish' | 'draft') => void
   onEditStep: (stepId: string) => void
-}
-
-const TYPE_LABELS: Record<ScreeningAnswerType, string> = {
-  yes_no: 'YES/NO',
-  short_text: 'TEXT',
-  number: 'NUMBER',
-  select: 'SELECT',
 }
 
 /**
@@ -47,6 +45,7 @@ export function StepReview({
   onPublishChoiceChange,
   onEditStep,
 }: StepReviewProps) {
+  const t = useTranslations()
   const [descOpen, setDescOpen] = useState(false)
   const sectorName = sectors.find((s) => s.id === basics.sectorId)?.name ?? null
   const descriptionComplete = description.description.trim().length > 0
@@ -56,12 +55,12 @@ export function StepReview({
     [
       basics.department,
       basics.location,
-      formatWorkMode(basics.workMode),
-      formatEmployment(basics.employmentType),
-      `${basics.openingsCount} opening${basics.openingsCount === 1 ? '' : 's'}`,
+      t(workModeKey(basics.workMode)),
+      t(employmentKey(basics.employmentType)),
+      t('wizard.openings', { count: basics.openingsCount }),
     ]
       .filter(Boolean)
-      .join(' · ') || 'No department or location yet'
+      .join(' · ') || t('wizard.noDeptLocation')
 
   return (
     <div className="flex max-w-[1000px] flex-col gap-3.5">
@@ -73,54 +72,54 @@ export function StepReview({
           </div>
           <div className="min-w-0">
             <h2 className="truncate text-[18px] font-bold text-foreground">
-              {basics.title || 'Untitled role'}
+              {basics.title || t('wizard.untitledRole')}
             </h2>
             <p className="truncate text-[12.5px] text-muted-foreground">{metaLine}</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-          <StatTile label="Salary" value={formatSalary(datesComp)} />
+          <StatTile label={t('wizard.salary')} value={formatSalary(datesComp, t)} />
           <StatTile
-            label="Scorecard"
+            label={t('wizard.scorecard')}
             value={
               scorecard.attributes.length === 0
-                ? 'Default set'
-                : `${scorecard.attributes.length} attr${
-                    mustHaveCount > 0 ? ` · ${mustHaveCount} must-have` : ''
+                ? t('wizard.defaultSet')
+                : `${t('wizard.attrN', { count: scorecard.attributes.length })}${
+                    mustHaveCount > 0 ? ` · ${t('wizard.mustHaveN', { count: mustHaveCount })}` : ''
                   }`
             }
           />
           <StatTile
-            label="Description"
-            value={descriptionComplete ? '✓ Complete' : 'Incomplete'}
+            label={t('wizard.description')}
+            value={descriptionComplete ? `✓ ${t('wizard.complete')}` : t('wizard.incomplete')}
             tone={descriptionComplete ? 'good' : 'warn'}
           />
           <StatTile
-            label="Visibility"
-            value={description.showOnPublicPage ? 'Public · on' : 'Public · off'}
+            label={t('wizard.visibility')}
+            value={description.showOnPublicPage ? t('wizard.publicOn') : t('wizard.publicOff')}
           />
         </div>
       </div>
 
       {/* Basics + Dates side-by-side */}
       <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
-        <FactSection title="Basics" onEdit={() => onEditStep('basics')}>
-          <FactRow label="Department" value={basics.department || '—'} />
-          <FactRow label="Sector" value={sectorName || '—'} />
+        <FactSection title={t('wizard.stepBasics')} onEdit={() => onEditStep('basics')}>
+          <FactRow label={t('columns.department')} value={basics.department || '—'} />
+          <FactRow label={t('columns.sector')} value={sectorName || '—'} />
           <FactRow
-            label="Employment"
-            value={`${formatEmployment(basics.employmentType)} · ${basics.openingsCount} opening${
-              basics.openingsCount === 1 ? '' : 's'
-            }`}
+            label={t('wizard.employment')}
+            value={`${t(employmentKey(basics.employmentType))} · ${t('wizard.openings', {
+              count: basics.openingsCount,
+            })}`}
           />
-          <FactRow label="Hiring manager" value={basics.hiringManagerName || '—'} muted={!basics.hiringManagerName} />
+          <FactRow label={t('columns.hiringManager')} value={basics.hiringManagerName || '—'} muted={!basics.hiringManagerName} />
         </FactSection>
 
-        <FactSection title="Dates & compensation" onEdit={() => onEditStep('dates-comp')}>
-          <FactRow label="Start date" value={formatDate(datesComp.startDate) ?? 'On creation'} />
-          <FactRow label="End date" value={formatDate(datesComp.endDate) ?? '—'} muted={!datesComp.endDate} />
-          <FactRow label="Salary" value={formatSalary(datesComp)} />
-          <FactRow label="Currency" value={datesComp.salaryCurrency} />
+        <FactSection title={t('wizard.stepDates')} onEdit={() => onEditStep('dates-comp')}>
+          <FactRow label={t('columns.startDate')} value={formatDate(datesComp.startDate) ?? t('wizard.onCreation')} />
+          <FactRow label={t('columns.endDate')} value={formatDate(datesComp.endDate) ?? '—'} muted={!datesComp.endDate} />
+          <FactRow label={t('wizard.salary')} value={formatSalary(datesComp, t)} />
+          <FactRow label={t('vacancy.form.currency')} value={datesComp.salaryCurrency} />
         </FactSection>
       </div>
 
@@ -140,19 +139,19 @@ export function StepReview({
               )}
               aria-hidden
             />
-            <span className="text-[14px] font-bold text-foreground">Description</span>
+            <span className="text-[14px] font-bold text-foreground">{t('wizard.description')}</span>
             <span className="hidden truncate text-[12px] text-muted-foreground sm:inline">
-              About · Responsibilities · Requirements
+              {t('wizard.aboutRespReq')}
             </span>
             {descriptionComplete ? (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-[oklch(0.95_0.05_145)] px-2 py-0.5 text-[11px] font-bold text-[oklch(0.4_0.13_150)]">
                 <Check className="h-3 w-3" aria-hidden />
-                Complete
+                {t('wizard.complete')}
               </span>
             ) : (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-[oklch(0.96_0.04_27)] px-2 py-0.5 text-[11px] font-bold text-[oklch(0.5_0.19_27)]">
                 <AlertTriangle className="h-3 w-3" aria-hidden />
-                Incomplete — About required
+                {t('wizard.incompleteAboutRequired')}
               </span>
             )}
           </button>
@@ -162,23 +161,23 @@ export function StepReview({
             className="inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-[oklch(0.42_0.16_250)] transition-colors hover:underline"
           >
             <Pencil className="h-3 w-3" aria-hidden />
-            Edit
+            {t('common.edit')}
           </button>
         </div>
         {descOpen && (
           <div className="flex flex-col gap-3 border-t border-[oklch(0.95_0.005_250)] px-4 py-3.5">
-            <PreviewBlock label="About the job" text={description.description} required />
-            <PreviewBlock label="Responsibilities" text={description.responsibilities} />
-            <PreviewBlock label="Requirements" text={description.requirements} />
+            <PreviewBlock label={t('vacancy.form.aboutJob')} text={description.description} required />
+            <PreviewBlock label={t('vacancy.form.responsibilities')} text={description.responsibilities} />
+            <PreviewBlock label={t('vacancy.form.requirements')} text={description.requirements} />
           </div>
         )}
       </section>
 
       {/* Scorecard & questions — chips + one-line screening summary */}
-      <FactSection title="Scorecard & questions" onEdit={() => onEditStep('scorecard')}>
+      <FactSection title={t('wizard.stepScorecard')} onEdit={() => onEditStep('scorecard')}>
         {scorecard.attributes.length === 0 ? (
           <p className="text-[12.5px] text-muted-foreground">
-            Default scorecard — customise it later on the vacancy.
+            {t('wizard.defaultScorecardHint')}
           </p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
@@ -201,15 +200,15 @@ export function StepReview({
           </div>
         )}
         <div className="mt-1 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t border-[oklch(0.96_0.005_250)] pt-2.5 text-[12.5px]">
-          <span className="text-muted-foreground">Screening:</span>
+          <span className="text-muted-foreground">{t('wizard.screening')}</span>
           {scorecard.screeningQuestions.length === 0 ? (
-            <span className="text-muted-foreground">None</span>
+            <span className="text-muted-foreground">{t('wizard.none')}</span>
           ) : (
             scorecard.screeningQuestions.map((q, i) => (
               <span key={`${q.label}-${i}`} className="inline-flex items-center gap-1.5 text-foreground">
                 {q.label}
                 <span className="rounded bg-[oklch(0.95_0.01_250)] px-1.5 py-0.5 text-[10.5px] font-semibold tracking-wide text-muted-foreground">
-                  {TYPE_LABELS[q.answerType]}
+                  {t(TYPE_LABEL_KEY[q.answerType])}
                 </span>
               </span>
             ))
@@ -219,19 +218,19 @@ export function StepReview({
 
       {/* Finish */}
       <div className="rounded-xl border border-[oklch(0.91_0.012_250)] bg-white p-4 sm:p-[18px]">
-        <p className="mb-3 text-[14px] font-bold text-foreground">How do you want to finish?</p>
+        <p className="mb-3 text-[14px] font-bold text-foreground">{t('wizard.howFinish')}</p>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           <CommitOption
             selected={publishChoice === 'publish'}
             onSelect={() => onPublishChoiceChange('publish')}
-            title="Publish now"
-            subtitle="Live + apply link generated"
+            title={t('wizard.publishNow')}
+            subtitle={t('wizard.publishSubtitle')}
           />
           <CommitOption
             selected={publishChoice === 'draft'}
             onSelect={() => onPublishChoiceChange('draft')}
-            title="Save as draft"
-            subtitle="Not visible, no apply link yet"
+            title={t('wizard.saveAsDraft')}
+            subtitle={t('wizard.draftSubtitle')}
           />
         </div>
       </div>
@@ -276,6 +275,7 @@ function FactSection({
   onEdit: () => void
   children: React.ReactNode
 }) {
+  const t = useTranslations()
   return (
     <section className="rounded-xl border border-[oklch(0.91_0.012_250)] bg-white">
       <header className="flex items-center px-4 py-3">
@@ -286,7 +286,7 @@ function FactSection({
           className="ml-auto inline-flex items-center gap-1 text-[12.5px] font-semibold text-[oklch(0.42_0.16_250)] transition-colors hover:underline"
         >
           <Pencil className="h-3 w-3" aria-hidden />
-          Edit
+          {t('common.edit')}
         </button>
       </header>
       <div className="px-4 pb-3">{children}</div>
@@ -306,6 +306,7 @@ function FactRow({ label, value, muted }: { label: string; value: string; muted?
 }
 
 function PreviewBlock({ label, text, required }: { label: string; text: string; required?: boolean }) {
+  const t = useTranslations()
   const trimmed = text.trim()
   return (
     <div className="text-[12.5px]">
@@ -316,7 +317,7 @@ function PreviewBlock({ label, text, required }: { label: string; text: string; 
       {trimmed ? (
         <p className="mt-0.5 whitespace-pre-wrap text-foreground/90">{trimmed}</p>
       ) : (
-        <p className="mt-0.5 italic text-muted-foreground/70">Not added yet</p>
+        <p className="mt-0.5 italic text-muted-foreground/70">{t('wizard.notAddedYet')}</p>
       )}
     </div>
   )
@@ -376,29 +377,29 @@ function formatDate(iso: string | null): string | null {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function formatSalary(dc: DatesCompState): string {
+function formatSalary(dc: DatesCompState, t: T): string {
   const { salaryMin, salaryMax, salaryCurrency } = dc
   const min = salaryMin !== null ? salaryMin.toLocaleString() : null
   const max = salaryMax !== null ? salaryMax.toLocaleString() : null
   if (min && max) return `${salaryCurrency} ${min}–${max}`
   if (min) return `${salaryCurrency} ${min}+`
-  if (max) return `Up to ${salaryCurrency} ${max}`
-  return 'Not specified'
+  if (max) return t('wizard.upTo', { amount: `${salaryCurrency} ${max}` })
+  return t('common.notSpecified')
 }
 
-function formatEmployment(value: BasicsState['employmentType']): string {
+function employmentKey(value: BasicsState['employmentType']): string {
   switch (value) {
-    case 'full_time': return 'Full-time'
-    case 'part_time': return 'Part-time'
-    case 'contract': return 'Contract'
-    case 'internship': return 'Internship'
+    case 'full_time': return 'enum.employment.fullTime'
+    case 'part_time': return 'enum.employment.partTime'
+    case 'contract': return 'enum.employment.contract'
+    case 'internship': return 'enum.employment.internship'
   }
 }
 
-function formatWorkMode(value: BasicsState['workMode']): string {
+function workModeKey(value: BasicsState['workMode']): string {
   switch (value) {
-    case 'onsite': return 'On-site'
-    case 'hybrid': return 'Hybrid'
-    case 'remote': return 'Remote'
+    case 'onsite': return 'enum.workMode.onsite'
+    case 'hybrid': return 'enum.workMode.hybrid'
+    case 'remote': return 'enum.workMode.remote'
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ArrowRight, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -51,11 +52,11 @@ type BodyTranslations = Record<string, { description: string; responsibilities: 
 type StepId = 'basics' | 'dates-comp' | 'description' | 'scorecard' | 'review'
 
 const STEPS = [
-  { id: 'basics', number: 1, label: 'Basics' },
-  { id: 'dates-comp', number: 2, label: 'Dates & compensation' },
-  { id: 'description', number: 3, label: 'Description & AI' },
-  { id: 'scorecard', number: 4, label: 'Scorecard & questions' },
-  { id: 'review', number: 5, label: 'Review & publish' },
+  { id: 'basics', number: 1, labelKey: 'wizard.stepBasics' },
+  { id: 'dates-comp', number: 2, labelKey: 'wizard.stepDates' },
+  { id: 'description', number: 3, labelKey: 'wizard.stepDescription' },
+  { id: 'scorecard', number: 4, labelKey: 'wizard.stepScorecard' },
+  { id: 'review', number: 5, labelKey: 'wizard.stepReview' },
 ] as const
 
 /**
@@ -84,6 +85,7 @@ export function VacancyCreateWizard({
   statusOptions,
   orgLocales = { default: DEFAULT_LOCALE, enabled: [DEFAULT_LOCALE] },
 }: VacancyCreateWizardProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState<StepId>('basics')
   const [pending, startTransition] = useTransition()
@@ -148,12 +150,12 @@ export function VacancyCreateWizard({
 
   const submit = (publish: boolean) => {
     if (!isBasicsComplete) {
-      toast.error('Fill in the position title to save.')
+      toast.error(t('wizard.toastFillTitle'))
       setCurrentStep('basics')
       return
     }
     if (!description.description.trim() && publish) {
-      toast.error('Add an "About the job" description before publishing.')
+      toast.error(t('wizard.toastAddAbout'))
       setCurrentStep('description')
       return
     }
@@ -252,25 +254,19 @@ export function VacancyCreateWizard({
         }
       }
 
-      toast.success(publish ? 'Vacancy published.' : 'Vacancy saved as draft.')
+      toast.success(publish ? t('wizard.toastPublished') : t('wizard.toastSavedDraft'))
       router.push(`/vacancies/${result.data.id}`)
       router.refresh()
     })
   }
 
-  const railHint = (
-    <>
-      Fill <strong className="text-foreground">Basics</strong>, then{' '}
-      <strong className="text-foreground">Save as draft</strong> any time. Steps 2–5 take
-      sensible defaults you can refine later.
-    </>
-  )
+  const railHint = t('wizard.railHint')
 
   return (
     <WizardShell
-      title="Create vacancy"
-      stepStatusLabel={`Step ${stepIdx + 1} of ${STEPS.length}`}
-      steps={STEPS.map((s) => ({ ...s }))}
+      title={t('wizard.createVacancy')}
+      stepStatusLabel={t('wizard.stepStatus', { current: stepIdx + 1, total: STEPS.length })}
+      steps={STEPS.map((s) => ({ id: s.id, number: s.number, label: t(s.labelKey) }))}
       currentStepId={currentStep}
       closeHref="/vacancies"
       railHint={railHint}
@@ -285,7 +281,7 @@ export function VacancyCreateWizard({
               disabled={pending}
               className="h-9"
             >
-              ← Back
+              ← {t('common.back')}
             </Button>
           )}
 
@@ -301,7 +297,7 @@ export function VacancyCreateWizard({
               className="h-9"
             >
               {pending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden /> : null}
-              Save as draft
+              {t('wizard.saveAsDraft')}
             </Button>
           )}
 
@@ -313,7 +309,7 @@ export function VacancyCreateWizard({
               disabled={pending || (currentStep === 'basics' && !isBasicsComplete)}
               className="ml-auto h-9 gap-1.5"
             >
-              Next: {STEPS[stepIdx + 1]?.label} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+              {STEPS[stepIdx + 1] ? t('wizard.next', { label: t(STEPS[stepIdx + 1]!.labelKey) }) : ''} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </Button>
           ) : (
             // Single commit on Step 5 — label follows the review-body radio.
@@ -325,7 +321,7 @@ export function VacancyCreateWizard({
               className="ml-auto h-9 gap-1.5"
             >
               {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : null}
-              {publishChoice === 'publish' ? 'Publish now' : 'Save as draft'}
+              {publishChoice === 'publish' ? t('wizard.publishNow') : t('wizard.saveAsDraft')}
             </Button>
           )}
         </>

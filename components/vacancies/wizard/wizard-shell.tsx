@@ -2,6 +2,7 @@
 
 import { X, Check } from 'lucide-react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
 
@@ -59,6 +60,7 @@ export function WizardShell({
   children,
   footer,
 }: WizardShellProps) {
+  const t = useTranslations()
   const currentIdx = steps.findIndex((s) => s.id === currentStepId)
   const currentStep = currentIdx >= 0 ? steps[currentIdx] : null
 
@@ -77,7 +79,7 @@ export function WizardShell({
           {closeHref ? (
             <Link
               href={closeHref}
-              aria-label="Close wizard"
+              aria-label={t('wizard.closeWizard')}
               className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X className="h-4 w-4" aria-hidden />
@@ -86,7 +88,7 @@ export function WizardShell({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close wizard"
+              aria-label={t('wizard.closeWizard')}
               className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X className="h-4 w-4" aria-hidden />
@@ -99,7 +101,7 @@ export function WizardShell({
       <div className="flex flex-col lg:flex-row">
         <aside
           className="flex w-full shrink-0 flex-col gap-1 border-b border-[oklch(0.92_0.01_250)] bg-[oklch(0.985_0.002_247)] p-4 sm:p-[18px] lg:w-[240px] lg:border-b-0 lg:border-r"
-          aria-label="Wizard steps"
+          aria-label={t('wizard.stepsAria')}
         >
           {steps.map((step, idx) => {
             const isCurrent = idx === currentIdx
