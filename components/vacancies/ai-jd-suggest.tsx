@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Sparkles,
   Loader2,
@@ -42,10 +43,10 @@ type SectionState =
   | { status: 'no_key' }
   | { status: 'failed' }
 
-const SECTION_LABELS: Record<JdSection, string> = {
-  description: 'About the job',
-  responsibilities: 'Responsibilities',
-  requirements: 'Requirements',
+const SECTION_LABEL_KEYS: Record<JdSection, string> = {
+  description: 'apply.aboutJob',
+  responsibilities: 'apply.responsibilities',
+  requirements: 'apply.requirements',
 }
 
 const SECTION_ORDER: JdSection[] = ['description', 'responsibilities', 'requirements']
@@ -61,6 +62,7 @@ export function AiJdSuggest({
   getExistingFieldText,
   onApplyAll,
 }: AiJdSuggestProps) {
+  const t = useTranslations()
   const [isOpen, setIsOpen] = useState(false)
   const [contextText, setContextText] = useState('')
   const [sections, setSections] = useState<Record<JdSection, SectionState>>({
@@ -157,9 +159,7 @@ export function AiJdSuggest({
 
     if (
       overwritesExisting &&
-      !window.confirm(
-        'Replace your current text in one or more sections with the AI draft?',
-      )
+      !window.confirm(t('aiJd.overwriteConfirm'))
     ) {
       return
     }
@@ -178,9 +178,9 @@ export function AiJdSuggest({
         aria-expanded={isOpen}
       >
         <Sparkles className="h-4 w-4 text-primary" />
-        <span>AI assist — suggest job description sections</span>
+        <span>{t('aiJd.headerTitle')}</span>
         <span className="ml-auto text-[11px] uppercase tracking-wide text-muted-foreground">
-          Assistant
+          {t('aiJd.assistant')}
         </span>
         {isOpen ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -192,29 +192,27 @@ export function AiJdSuggest({
       {isOpen && (
         <div className="space-y-4 border-t border-primary/20 px-4 py-4">
           <p className="text-xs text-muted-foreground">
-            The AI produces suggestions for each section. Suggestions are advisory —
-            they are not added to the form unless you click <strong>Apply all</strong>{' '}
-            or copy a section manually.
+            {t.rich('aiJd.intro', { b: (c) => <strong>{c}</strong> })}
           </p>
 
           {titleMissing && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Add a job title above before generating suggestions.
+                {t('aiJd.titleMissing')}
               </AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-2">
             <Label htmlFor="ai-jd-context" className="text-xs font-medium">
-              Optional context for the AI
+              {t('aiJd.contextLabel')}
             </Label>
             <Textarea
               id="ai-jd-context"
               value={contextText}
               onChange={(e) => setContextText(e.target.value)}
-              placeholder="e.g. Senior role on the platform team. Must know Kubernetes and PostgreSQL."
+              placeholder={t('aiJd.contextPlaceholder')}
               rows={2}
               maxLength={1000}
               className="text-sm"
@@ -230,7 +228,7 @@ export function AiJdSuggest({
               >
                 <div className="mb-2 flex items-center gap-2">
                   <span className="text-sm font-semibold text-foreground">
-                    {SECTION_LABELS[section]}
+                    {t(SECTION_LABEL_KEYS[section])}
                   </span>
                   <div className="ml-auto flex items-center gap-2">
                     {state.status === 'ok' && (
@@ -243,12 +241,12 @@ export function AiJdSuggest({
                         {copiedSection === section ? (
                           <>
                             <Check className="mr-1.5 h-3.5 w-3.5" />
-                            Copied
+                            {t('offer.copied')}
                           </>
                         ) : (
                           <>
                             <Copy className="mr-1.5 h-3.5 w-3.5" />
-                            Copy
+                            {t('aiJd.copy')}
                           </>
                         )}
                       </Button>
@@ -263,17 +261,17 @@ export function AiJdSuggest({
                       {state.status === 'loading' ? (
                         <>
                           <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                          Generating
+                          {t('aiJd.generating')}
                         </>
                       ) : state.status === 'ok' ? (
                         <>
                           <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-                          Regenerate
+                          {t('aiJd.regenerate')}
                         </>
                       ) : (
                         <>
                           <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                          Generate
+                          {t('aiJd.generate')}
                         </>
                       )}
                     </Button>
@@ -283,7 +281,7 @@ export function AiJdSuggest({
                 {state.status === 'ok' && (
                   <div>
                     <div className="mb-1">
-                      <AiDraftTag label="AI draft" />
+                      <AiDraftTag label={t('aiJd.aiDraft')} />
                     </div>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                       {state.text}
@@ -293,26 +291,25 @@ export function AiJdSuggest({
 
                 {state.status === 'too_thin' && (
                   <p className="text-xs text-muted-foreground">
-                    Not enough context yet. Try adding a department, location, or a hint
-                    in the optional context field above.
+                    {t('aiJd.tooThin')}
                   </p>
                 )}
 
                 {state.status === 'rate_limited' && (
                   <p className="text-xs text-muted-foreground">
-                    You&apos;ve generated a lot recently. Try again in a few minutes.
+                    {t('wizard.suggestRateLimited')}
                   </p>
                 )}
 
                 {state.status === 'no_key' && (
                   <p className="text-xs text-muted-foreground">
-                    AI features are not configured on this deployment.
+                    {t('wizard.aiNotConfigured')}
                   </p>
                 )}
 
                 {state.status === 'failed' && (
                   <p className="text-xs text-destructive">
-                    Could not generate. Try again.
+                    {t('aiJd.failed')}
                   </p>
                 )}
               </div>
@@ -327,7 +324,7 @@ export function AiJdSuggest({
                 size="sm"
                 onClick={applyAll}
               >
-                Apply all to form
+                {t('aiJd.applyAll')}
               </Button>
             </div>
           )}

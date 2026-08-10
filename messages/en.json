@@ -1400,6 +1400,23 @@
     "events": "Events",
     "saveWebhook": "Save webhook"
   },
+  "aiJd": {
+    "headerTitle": "AI assist — suggest job description sections",
+    "assistant": "Assistant",
+    "intro": "The AI produces suggestions for each section. Suggestions are advisory — they are not added to the form unless you click <b>Apply all</b> or copy a section manually.",
+    "titleMissing": "Add a job title above before generating suggestions.",
+    "contextLabel": "Optional context for the AI",
+    "contextPlaceholder": "e.g. Senior role on the platform team. Must know Kubernetes and PostgreSQL.",
+    "copy": "Copy",
+    "generating": "Generating",
+    "regenerate": "Regenerate",
+    "generate": "Generate",
+    "aiDraft": "AI draft",
+    "tooThin": "Not enough context yet. Try adding a department, location, or a hint in the optional context field above.",
+    "failed": "Could not generate. Try again.",
+    "overwriteConfirm": "Replace your current text in one or more sections with the AI draft?",
+    "applyAll": "Apply all to form"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",
