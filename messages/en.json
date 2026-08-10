@@ -1477,6 +1477,23 @@
     "toInterviewGuide": "→ Interview guide",
     "added": "Added"
   },
+  "rejectDialog": {
+    "title": "Reject candidate",
+    "rejecting": "You are rejecting <b>{name}</b>.",
+    "reason": "Rejection reason",
+    "noReasons": "No rejection reasons configured. You can still reject — add reasons in Settings → Rejection reasons.",
+    "selectReason": "Select a reason…",
+    "searchReasons": "Search reasons…",
+    "noReasonsMatch": "No reasons match your search.",
+    "sendEmail": "Send rejection email",
+    "emailTemplate": "Email template",
+    "noTemplates": "No templates configured. A default email will be sent. Configure templates in Settings → Email templates.",
+    "selectTemplate": "Select a template…",
+    "searchTemplates": "Search templates…",
+    "noTemplatesMatch": "No templates match your search.",
+    "noTemplateOption": "— No template (use default) —",
+    "confirm": "Confirm Rejection"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

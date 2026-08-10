@@ -38,7 +38,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (10) components/candidates/profile/ai-fit-card.tsx
 - [ ] (10) components/candidates/ai-summary-panel.tsx
 - [ ] (10) components/settings/notification-preferences-form.tsx
-- [ ] (10) components/pipeline/rejection-dialog.tsx
+- [x] (10) components/pipeline/rejection-dialog.tsx
 - [ ] (10) components/vacancies/vacancy-application-row.tsx
 - [ ] (10) components/vacancies/pipeline-stages-manager.tsx
 - [ ] (10) components/vacancies/detail/jd-tab.tsx
