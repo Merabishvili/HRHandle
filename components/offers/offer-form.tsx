@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Loader2, Save, Send } from 'lucide-react'
 
@@ -29,7 +30,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { createOffer, updateOffer, sendOffer } from '@/lib/actions/offers'
 import {
   COMPENSATION_PERIODS,
-  COMPENSATION_PERIOD_LABELS,
   type CompensationPeriod,
 } from '@/lib/offers/state'
 
@@ -63,6 +63,7 @@ export function OfferForm({
   initial,
   fallbackRoleTitle,
 }: OfferFormProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [roleTitle, setRoleTitle] = useState(initial.role_title || fallbackRoleTitle)
   const [body, setBody] = useState(initial.body)
@@ -115,7 +116,7 @@ export function OfferForm({
       }
 
       if (then !== 'send') {
-        toast.success('Offer saved as draft.')
+        toast.success(t('stageBlock.offerSavedDraft'))
         onOpenChange(false)
         router.refresh()
         return
@@ -134,7 +135,7 @@ export function OfferForm({
         setError(sendResult.error)
         return
       }
-      toast.success('Offer sent to candidate.')
+      toast.success(t('stageBlock.offerSent'))
       onOpenChange(false)
       router.refresh()
     })
@@ -143,40 +144,39 @@ export function OfferForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit offer draft' : 'Create offer'}</DialogTitle>
+          <DialogTitle>{isEdit ? t('offer.editDraft') : t('stageBlock.createOffer')}</DialogTitle>
           <DialogDescription>
-            Fill in what matters for this offer. Compensation, dates, and currency are
-            optional — leave them blank if they don&apos;t apply.
+            {t('offer.formDesc')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="of-role">Role title</Label>
+            <Label htmlFor="of-role">{t('offer.roleTitle')}</Label>
             <Input
               id="of-role"
               value={roleTitle}
               onChange={(e) => setRoleTitle(e.target.value)}
               maxLength={200}
               disabled={isPending}
-              placeholder="e.g. Senior Backend Engineer"
+              placeholder={t('offer.roleTitlePlaceholder')}
             />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5 sm:col-span-1">
-              <Label htmlFor="of-amount">Compensation</Label>
+              <Label htmlFor="of-amount">{t('stageBlock.compensation')}</Label>
               <Input
                 id="of-amount"
                 value={compensationAmount}
                 onChange={(e) => setCompensationAmount(e.target.value)}
                 inputMode="decimal"
-                placeholder="e.g. 95000"
+                placeholder={t('stageBlock.compensationPlaceholder')}
                 disabled={isPending}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="of-currency">Currency</Label>
+              <Label htmlFor="of-currency">{t('stageBlock.currency')}</Label>
               <Input
                 id="of-currency"
                 value={compensationCurrency}
@@ -187,7 +187,7 @@ export function OfferForm({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="of-period">Period</Label>
+              <Label htmlFor="of-period">{t('offer.period')}</Label>
               <Select
                 value={compensationPeriod}
                 onValueChange={(v) =>
@@ -199,10 +199,10 @@ export function OfferForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE_VALUE}>Not specified</SelectItem>
+                  <SelectItem value={NONE_VALUE}>{t('candWizard.application.notSpecified')}</SelectItem>
                   {COMPENSATION_PERIODS.map((p) => (
                     <SelectItem key={p} value={p}>
-                      {(p[0] ?? '').toUpperCase() + p.slice(1)} ({COMPENSATION_PERIOD_LABELS[p] || '—'})
+                      {t(`offer.periodOption.${p}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -212,7 +212,7 @@ export function OfferForm({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="of-start">Start date</Label>
+              <Label htmlFor="of-start">{t('stageBlock.startDate')}</Label>
               <Input
                 id="of-start"
                 type="date"
@@ -222,7 +222,7 @@ export function OfferForm({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="of-expiry">Respond-by date</Label>
+              <Label htmlFor="of-expiry">{t('stageBlock.respondByDate')}</Label>
               <Input
                 id="of-expiry"
                 type="date"
@@ -234,30 +234,30 @@ export function OfferForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="of-body">Offer details</Label>
+            <Label htmlFor="of-body">{t('stageBlock.offerDetails')}</Label>
             <Textarea
               id="of-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={9}
               maxLength={20000}
-              placeholder="Cover everything the candidate needs to know: benefits, equity, signing bonus, vacation, remote/hybrid, on-call, reporting line, anything else. Line breaks are preserved."
+              placeholder={t('offer.bodyPlaceholder')}
               disabled={isPending}
             />
             <p className="text-xs text-muted-foreground">
-              Plain text — line breaks are preserved. Markdown is not rendered.
+              {t('offer.plainTextHint')}
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="of-message">Personal note (optional)</Label>
+            <Label htmlFor="of-message">{t('offer.personalNote')}</Label>
             <Textarea
               id="of-message"
               value={recruiterMessage}
               onChange={(e) => setRecruiterMessage(e.target.value)}
               rows={3}
               maxLength={2000}
-              placeholder="A short personal message from you to the candidate — appears in its own section on their offer page."
+              placeholder={t('offer.notePlaceholder')}
               disabled={isPending}
             />
           </div>
@@ -271,7 +271,7 @@ export function OfferForm({
 
         <DialogFooter className="gap-2">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="button" variant="outline" onClick={() => saveDraft()} disabled={isPending}>
             {isPending ? (
@@ -279,7 +279,7 @@ export function OfferForm({
             ) : (
               <Save className="mr-2 h-4 w-4" />
             )}
-            Save draft
+            {t('stageBlock.saveDraft')}
           </Button>
           <Button type="button" onClick={() => saveDraft('send')} disabled={isPending}>
             {isPending ? (
@@ -287,7 +287,7 @@ export function OfferForm({
             ) : (
               <Send className="mr-2 h-4 w-4" />
             )}
-            Save &amp; send
+            {t('stageBlock.saveSend')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import {
   Briefcase,
@@ -40,7 +41,6 @@ import {
 import {
   type OfferStatus,
   type CompensationPeriod,
-  COMPENSATION_PERIOD_LABELS,
 } from '@/lib/offers/state'
 
 export interface OfferRow {
@@ -70,13 +70,13 @@ interface OfferPanelProps {
   canEdit: boolean
 }
 
-const STATUS_STYLE: Record<OfferStatus, { label: string; className: string }> = {
-  draft: { label: 'Draft', className: 'bg-amber-100 text-amber-900' },
-  sent: { label: 'Sent', className: 'bg-indigo-100 text-indigo-900' },
-  accepted: { label: 'Accepted', className: 'bg-emerald-100 text-emerald-900' },
-  declined: { label: 'Declined', className: 'bg-rose-100 text-rose-900' },
-  expired: { label: 'Expired', className: 'bg-gray-200 text-gray-700' },
-  withdrawn: { label: 'Withdrawn', className: 'bg-gray-200 text-gray-700' },
+const STATUS_STYLE: Record<OfferStatus, { labelKey: string; className: string }> = {
+  draft: { labelKey: 'offer.status.draft', className: 'bg-amber-100 text-amber-900' },
+  sent: { labelKey: 'offer.status.sent', className: 'bg-indigo-100 text-indigo-900' },
+  accepted: { labelKey: 'offer.status.accepted', className: 'bg-emerald-100 text-emerald-900' },
+  declined: { labelKey: 'offer.status.declined', className: 'bg-rose-100 text-rose-900' },
+  expired: { labelKey: 'offer.status.expired', className: 'bg-gray-200 text-gray-700' },
+  withdrawn: { labelKey: 'offer.status.withdrawn', className: 'bg-gray-200 text-gray-700' },
 }
 
 export function OfferPanel({
@@ -85,6 +85,7 @@ export function OfferPanel({
   offers,
   canEdit,
 }: OfferPanelProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<OfferRow | null>(null)
@@ -115,7 +116,7 @@ export function OfferPanel({
     startTransition(async () => {
       const result = await sendOffer(offerId)
       if (result.success) {
-        toast.success('Offer sent to candidate.')
+        toast.success(t('stageBlock.offerSent'))
         router.refresh()
       } else {
         toast.error(result.error)
@@ -129,7 +130,7 @@ export function OfferPanel({
     startTransition(async () => {
       const result = await withdrawOffer(id)
       if (result.success) {
-        toast.success('Offer withdrawn.')
+        toast.success(t('offer.toastWithdrawn'))
         setWithdrawingId(null)
         router.refresh()
       } else {
@@ -144,7 +145,7 @@ export function OfferPanel({
     startTransition(async () => {
       const result = await deleteOffer(id)
       if (result.success) {
-        toast.success('Draft deleted.')
+        toast.success(t('offer.draftDeleted'))
         setDeletingId(null)
         router.refresh()
       } else {
@@ -161,7 +162,7 @@ export function OfferPanel({
       setTimeout(() => setCopiedFor((c) => (c === offerId ? null : c)), 1500)
     } catch (err) {
       console.error('[offer-panel] clipboard failed:', err)
-      toast.error('Could not copy link.')
+      toast.error(t('offer.copyFailed'))
     }
   }
 
@@ -193,7 +194,7 @@ export function OfferPanel({
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center gap-2">
         <Briefcase className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-semibold text-foreground">Offer</span>
+        <span className="text-sm font-semibold text-foreground">{t('offer.title')}</span>
         {canEdit && !active && (
           <Button
             type="button"
@@ -203,15 +204,15 @@ export function OfferPanel({
             onClick={openCreate}
           >
             <Plus className="mr-1 h-3.5 w-3.5" />
-            Create offer
+            {t('stageBlock.createOffer')}
           </Button>
         )}
       </div>
 
       {!active && offers.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No offer for this application yet.
-          {canEdit ? ' Click Create offer to draft one.' : ''}
+          {t('offer.noOffer')}
+          {canEdit ? ` ${t('offer.clickCreate')}` : ''}
         </p>
       )}
 
@@ -233,7 +234,7 @@ export function OfferPanel({
         <details className="mt-3 text-sm">
           <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground">
             <ChevronRight className="mr-1 inline h-3 w-3" aria-hidden />
-            Previous offers ({history.length})
+            {t('offer.previousOffers', { count: history.length })}
           </summary>
           <ul className="mt-2 space-y-2">
             {history.map((o) => {
@@ -242,7 +243,7 @@ export function OfferPanel({
               return (
                 <li key={o.id} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs">
                   <Badge variant="secondary" className={style.className}>
-                    {style.label}
+                    {t(style.labelKey)}
                   </Badge>
                   <span className="text-muted-foreground">{o.role_title}</span>
                   <span className="ml-auto text-muted-foreground">
@@ -268,20 +269,19 @@ export function OfferPanel({
       <AlertDialog open={!!withdrawingId} onOpenChange={(o) => !o && setWithdrawingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Withdraw this offer?</AlertDialogTitle>
+            <AlertDialogTitle>{t('offer.withdrawTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              The candidate&apos;s offer page will show that the offer has been withdrawn.
-              You can create a new offer afterwards if you want to revise.
+              {t('offer.withdrawDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmWithdraw}
               disabled={isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isPending ? 'Withdrawing…' : 'Withdraw offer'}
+              {isPending ? t('offer.withdrawing') : t('offer.withdrawAction')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -290,20 +290,19 @@ export function OfferPanel({
       <AlertDialog open={!!deletingId} onOpenChange={(o) => !o && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
+            <AlertDialogTitle>{t('offer.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the draft entirely. Only drafts can be deleted — sent offers
-              stay as part of the candidate&apos;s history.
+              {t('offer.deleteDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isPending ? 'Deleting…' : 'Delete draft'}
+              {isPending ? t('offer.deleting') : t('offer.deleteDraft')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -335,20 +334,25 @@ function ActiveOfferCard({
   onCopyLink,
   copied,
 }: ActiveOfferCardProps) {
+  const t = useTranslations()
   const style = STATUS_STYLE[offer.status]
   const showDraftActions = offer.status === 'draft'
   const showSentActions = offer.status === 'sent'
 
+  const periodLabel =
+    offer.compensation_period && offer.compensation_period !== 'other'
+      ? t(`offer.periodShort.${offer.compensation_period}`)
+      : ''
   const compensationLine =
     offer.compensation_amount !== null && offer.compensation_amount !== undefined
-      ? formatComp(offer.compensation_amount, offer.compensation_currency, offer.compensation_period)
+      ? formatComp(offer.compensation_amount, offer.compensation_currency, periodLabel)
       : null
 
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-2">
         <Badge variant="secondary" className={style.className}>
-          {style.label}
+          {t(style.labelKey)}
         </Badge>
         <div className="flex-1 text-sm">
           <p className="font-medium text-foreground">{offer.role_title}</p>
@@ -362,12 +366,12 @@ function ActiveOfferCard({
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           {offer.start_date && (
             <span className="inline-flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> Start {format(new Date(offer.start_date), 'MMM d, yyyy')}
+              <Calendar className="h-3 w-3" /> {t('offer.startOn', { date: format(new Date(offer.start_date), 'MMM d, yyyy') })}
             </span>
           )}
           {offer.expiry_date && (
             <span className="inline-flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> Respond by {format(new Date(offer.expiry_date), 'MMM d, yyyy')}
+              <Calendar className="h-3 w-3" /> {t('offer.respondByOn', { date: format(new Date(offer.expiry_date), 'MMM d, yyyy') })}
             </span>
           )}
         </div>
@@ -383,11 +387,11 @@ function ActiveOfferCard({
                 ) : (
                   <Send className="mr-2 h-3.5 w-3.5" />
                 )}
-                Send to candidate
+                {t('offer.sendToCandidate')}
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={onEdit} disabled={isPending}>
                 <Edit className="mr-1.5 h-3.5 w-3.5" />
-                Edit
+                {t('common.edit')}
               </Button>
               <Button
                 type="button"
@@ -398,7 +402,7 @@ function ActiveOfferCard({
                 disabled={isPending}
               >
                 <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                Delete draft
+                {t('offer.deleteDraft')}
               </Button>
             </>
           )}
@@ -409,12 +413,12 @@ function ActiveOfferCard({
                   {copied ? (
                     <>
                       <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
-                      Copied
+                      {t('offer.copied')}
                     </>
                   ) : (
                     <>
                       <Copy className="mr-1.5 h-3.5 w-3.5" />
-                      Copy offer link
+                      {t('offer.copyLink')}
                     </>
                   )}
                 </Button>
@@ -428,7 +432,7 @@ function ActiveOfferCard({
                 disabled={isPending}
               >
                 <X className="mr-1.5 h-3.5 w-3.5" />
-                Withdraw
+                {t('offer.withdraw')}
               </Button>
             </>
           )}
@@ -441,7 +445,7 @@ function ActiveOfferCard({
 function formatComp(
   amount: number,
   currency: string | null,
-  period: CompensationPeriod | null,
+  periodLabel: string,
 ): string {
   let formatted = String(amount)
   if (currency) {
@@ -457,6 +461,5 @@ function formatComp(
   } else {
     formatted = amount.toLocaleString('en-US')
   }
-  const periodLabel = period ? COMPENSATION_PERIOD_LABELS[period] : ''
   return periodLabel ? `${formatted} ${periodLabel}` : formatted
 }
