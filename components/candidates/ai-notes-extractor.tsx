@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   Sparkles,
   Loader2,
@@ -38,27 +39,33 @@ type PanelState =
   | { status: 'malformed' }
   | { status: 'failed' }
 
-const SECTION_LABELS: Record<keyof StructuredNotes | 'summary', string> = {
-  summary: 'Summary',
-  strengths: 'Strengths',
-  concerns: 'Concerns',
-  key_skills_demonstrated: 'Skills demonstrated',
-  follow_ups: 'Follow-ups',
+const SECTION_LABEL_KEYS: Record<keyof StructuredNotes | 'summary', string> = {
+  summary: 'aiNotes.summary',
+  strengths: 'aiNotes.strengths',
+  concerns: 'aiNotes.concerns',
+  key_skills_demonstrated: 'aiNotes.skillsDemonstrated',
+  follow_ups: 'aiNotes.followUps',
 }
 
-function formatAsMarkdown(s: StructuredNotes): string {
+/** Builds the saved-note markdown. `labels` + `header` are passed in so the
+ * persisted note uses the recruiter's UI language. */
+function formatAsMarkdown(
+  s: StructuredNotes,
+  labels: Record<keyof StructuredNotes | 'summary', string>,
+  header: string,
+): string {
   const block = (label: string, items: string[]) =>
     items.length === 0
       ? ''
       : `**${label}**\n${items.map((i) => `- ${i}`).join('\n')}\n\n`
 
   return [
-    `AI interview notes (not reviewed by recruiter):\n`,
+    `${header}\n`,
     s.summary ? `${s.summary}\n\n` : '',
-    block(SECTION_LABELS.strengths, s.strengths),
-    block(SECTION_LABELS.concerns, s.concerns),
-    block(SECTION_LABELS.key_skills_demonstrated, s.key_skills_demonstrated),
-    block(SECTION_LABELS.follow_ups, s.follow_ups),
+    block(labels.strengths, s.strengths),
+    block(labels.concerns, s.concerns),
+    block(labels.key_skills_demonstrated, s.key_skills_demonstrated),
+    block(labels.follow_ups, s.follow_ups),
   ]
     .join('')
     .trim()
@@ -71,7 +78,15 @@ function formatAsMarkdown(s: StructuredNotes): string {
  * "Save as note" click.
  */
 export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
+  const t = useTranslations()
   const router = useRouter()
+  const sectionLabels = {
+    summary: t('aiNotes.summary'),
+    strengths: t('aiNotes.strengths'),
+    concerns: t('aiNotes.concerns'),
+    key_skills_demonstrated: t('aiNotes.skillsDemonstrated'),
+    follow_ups: t('aiNotes.followUps'),
+  }
   const [isOpen, setIsOpen] = useState(false)
   const [rawNotes, setRawNotes] = useState('')
   const [panel, setPanel] = useState<PanelState>({ status: 'idle' })
@@ -124,7 +139,7 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
     if (panel.status !== 'ok' || isSaving) return
     setSaveError(null)
     startSaveTransition(async () => {
-      const result = await createNote(candidateId, formatAsMarkdown(panel.structured))
+      const result = await createNote(candidateId, formatAsMarkdown(panel.structured, sectionLabels, t('aiNotes.savedHeader')))
       if (!result.success) {
         setSaveError(result.error)
         return
@@ -143,9 +158,9 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
         aria-expanded={isOpen}
       >
         <Sparkles className="h-4 w-4 text-primary" />
-        <span>Structure interview notes</span>
+        <span>{t('aiNotes.headerTitle')}</span>
         <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
-          Assistant
+          {t('aiJd.assistant')}
         </span>
         {isOpen ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -157,15 +172,13 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
       {isOpen && (
         <div className="space-y-3 border-t border-primary/20 px-3 py-3">
           <p className="text-[11px] leading-relaxed text-muted-foreground">
-            Paste raw notes from an interview. The AI extracts a structured view —
-            summary, strengths, concerns, skills demonstrated, follow-ups. Advisory
-            only; no decision is taken from this.
+            {t('aiNotes.intro')}
           </p>
 
           <Textarea
             value={rawNotes}
             onChange={(e) => setRawNotes(e.target.value)}
-            placeholder="Paste your raw interview notes here…"
+            placeholder={t('aiNotes.placeholder')}
             rows={6}
             maxLength={MAX_NOTES_LENGTH + 100}
             className="text-sm"
@@ -186,42 +199,42 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
             {panel.status === 'loading' ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Extracting…
+                {t('aiNotes.extracting')}
               </>
             ) : panel.status === 'ok' ? (
               <>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Re-extract
+                {t('aiNotes.reExtract')}
               </>
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Extract structure
+                {t('aiNotes.extractStructure')}
               </>
             )}
           </Button>
 
           {tooShort && rawNotes.length > 0 && (
             <p className="text-[11px] text-muted-foreground">
-              Add at least {MIN_NOTES_LENGTH} characters of notes.
+              {t('aiNotes.tooShort', { min: MIN_NOTES_LENGTH })}
             </p>
           )}
           {tooLong && (
             <p className="text-[11px] text-destructive">
-              Notes are too long — trim to {MAX_NOTES_LENGTH} characters.
+              {t('aiNotes.tooLong', { max: MAX_NOTES_LENGTH })}
             </p>
           )}
 
           {panel.status === 'ok' && (
             <div className="space-y-3">
               <div>
-                <AiDraftTag label="AI draft" />
+                <AiDraftTag label={t('aiJd.aiDraft')} />
               </div>
 
               {/* Summary */}
               {panel.structured.summary && (
                 <Section
-                  label={SECTION_LABELS.summary}
+                  label={sectionLabels.summary}
                   copyKey="summary"
                   copied={copied}
                   onCopy={() => copyText(panel.structured.summary, 'summary')}
@@ -240,7 +253,7 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
                   return (
                     <Section
                       key={key}
-                      label={SECTION_LABELS[key]}
+                      label={t(SECTION_LABEL_KEYS[key])}
                       copyKey={`cat-${key}`}
                       copied={copied}
                       onCopy={() =>
@@ -260,7 +273,7 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
                                 type="button"
                                 onClick={() => copyText(item, k)}
                                 className="shrink-0 text-muted-foreground hover:text-foreground"
-                                aria-label="Copy"
+                                aria-label={t('aiJd.copy')}
                               >
                                 {copied === k ? (
                                   <Check className="h-3 w-3" />
@@ -285,7 +298,7 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
 
               {saved && (
                 <p className="text-[12px] text-green-700 dark:text-green-500">
-                  Saved as a candidate note.
+                  {t('aiNotes.savedNote')}
                 </p>
               )}
 
@@ -301,12 +314,12 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
                   {isSaving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving…
+                      {t('common.saving')}
                     </>
                   ) : (
                     <>
                       <Save className="mr-2 h-4 w-4" />
-                      Save as note
+                      {t('aiNotes.saveAsNote')}
                     </>
                   )}
                 </Button>
@@ -318,8 +331,7 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="text-[12px]">
-                Notes are too short or vague to extract anything useful. Add more detail and
-                try again.
+                {t('aiNotes.tooThinMsg')}
               </AlertDescription>
             </Alert>
           )}
@@ -327,7 +339,7 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
           {panel.status === 'rate_limited' && (
             <Alert>
               <AlertDescription className="text-[12px]">
-                You&apos;ve run a lot recently. Try again in a few minutes.
+                {t('aiNotes.rateLimited')}
               </AlertDescription>
             </Alert>
           )}
@@ -335,7 +347,7 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
           {panel.status === 'no_key' && (
             <Alert>
               <AlertDescription className="text-[12px]">
-                AI features are not configured on this deployment.
+                {t('wizard.aiNotConfigured')}
               </AlertDescription>
             </Alert>
           )}
@@ -343,7 +355,7 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
           {panel.status === 'malformed' && (
             <Alert variant="destructive">
               <AlertDescription className="text-[12px]">
-                The AI returned an unexpected response. Try again.
+                {t('aiNotes.malformed')}
               </AlertDescription>
             </Alert>
           )}
@@ -351,7 +363,7 @@ export function AiNotesExtractor({ candidateId }: AiNotesExtractorProps) {
           {panel.status === 'failed' && (
             <Alert variant="destructive">
               <AlertDescription className="text-[12px]">
-                Could not extract. Try again.
+                {t('aiNotes.failed')}
               </AlertDescription>
             </Alert>
           )}
@@ -374,6 +386,7 @@ function Section({
   onCopy: () => void
   children: React.ReactNode
 }) {
+  const t = useTranslations()
   return (
     <div className="rounded-md border border-border bg-background p-2.5">
       <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -390,12 +403,12 @@ function Section({
           {copied === copyKey ? (
             <>
               <Check className="mr-1 h-3 w-3" />
-              Copied
+              {t('offer.copied')}
             </>
           ) : (
             <>
               <Copy className="mr-1 h-3 w-3" />
-              Copy
+              {t('aiJd.copy')}
             </>
           )}
         </Button>

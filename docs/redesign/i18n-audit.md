@@ -19,7 +19,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (14) components/vacancies/ai-jd-suggest.tsx
 - [x] (13) components/candidates/form/recruitment-details-section.tsx
 - [x] (13) components/candidates/wizard/step-experience-education.tsx
-- [ ] (13) components/candidates/ai-notes-extractor.tsx
+- [x] (13) components/candidates/ai-notes-extractor.tsx
 - [x] (13) components/settings/rejection-templates-manager.tsx
 - [ ] (12) app/(dashboard)/settings/billing/page.tsx
 - [ ] (12) components/candidates/experience-section.tsx
