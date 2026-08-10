@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { cn } from '@/lib/utils'
 import { Lock, Mail, Video } from 'lucide-react'
 
@@ -20,6 +22,7 @@ export function EmailToggle({
   showNoEmailHint: boolean
   className?: string
 }) {
+  const t = useTranslations()
   return (
     <div className={className}>
       <label
@@ -35,11 +38,11 @@ export function EmailToggle({
           className="h-4 w-4 rounded border-border"
         />
         <Mail className="h-3.5 w-3.5 text-primary" />
-        Email candidate
+        {t('interviews.form.emailCandidate')}
       </label>
       {showNoEmailHint && (
         <p className="mt-1 pl-7 text-[11px] text-muted-foreground">
-          Candidate has no email on file.
+          {t('interviews.form.noEmailOnFile')}
         </p>
       )}
     </div>

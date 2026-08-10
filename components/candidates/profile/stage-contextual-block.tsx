@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import {
   Briefcase,
@@ -27,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { createOffer, sendOffer } from '@/lib/actions/offers'
 import { OfferPanel, type OfferRow } from '@/components/offers/offer-panel'
 import type { ApplicationStatus } from '@/lib/types/application'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { StageTracker } from './stage-tracker'
 import { ScoreCandidateModal } from './score-candidate-modal'
 
@@ -157,6 +159,7 @@ function ScreeningChecks({
   candidate: StageContextualBlockProps['candidate']
   screeningFlags: StageContextualBlockProps['screeningFlags']
 }) {
+  const t = useTranslations()
   const flagCount = screeningFlags.length
   const allClear = flagCount === 0
 
@@ -166,9 +169,9 @@ function ScreeningChecks({
 
       <header className="flex items-start justify-between gap-3">
         <h3 className="text-[15px] font-bold text-foreground">
-          Screening checks
+          {t('stageBlock.screeningChecks')}
           <span className="ml-2 text-[12px] font-normal text-muted-foreground">
-            · auto-flagged from the apply form
+            {t('stageBlock.autoFlagged')}
           </span>
         </h3>
         <span
@@ -179,15 +182,15 @@ function ScreeningChecks({
               : 'bg-[oklch(0.97_0.03_70)] text-[oklch(0.45_0.12_55)]',
           )}
         >
-          {allClear ? 'All clear' : `${flagCount} flag${flagCount === 1 ? '' : 's'}`}
+          {allClear ? t('stageBlock.allClear') : t('stageBlock.flagCount', { count: flagCount })}
         </span>
       </header>
 
       {/* Read-only info chips pulled from the candidate profile. */}
       <div className="grid gap-2 sm:grid-cols-3">
-        <GateCard icon={Briefcase} label="Salary expectation" value={candidate.salaryExpectation ?? '—'} />
-        <GateCard icon={Clock} label="Notice period" value={candidate.noticePeriod ?? '—'} />
-        <GateCard icon={MapPin} label="Location" value={candidate.location ?? '—'} />
+        <GateCard icon={Briefcase} label={t('stageBlock.salaryExpectation')} value={candidate.salaryExpectation ?? '—'} />
+        <GateCard icon={Clock} label={t('stageBlock.noticePeriod')} value={candidate.noticePeriod ?? '—'} />
+        <GateCard icon={MapPin} label={t('stageBlock.location')} value={candidate.location ?? '—'} />
       </div>
 
       {flagCount > 0 && (
@@ -205,7 +208,7 @@ function ScreeningChecks({
               aria-hidden
             />
             <p className="text-[12px] font-bold" style={{ color: 'oklch(0.4 0.08 55)' }}>
-              Knockout flags ({flagCount})
+              {t('stageBlock.knockoutFlags', { count: flagCount })}
             </p>
           </div>
           <ul className="space-y-1.5">
@@ -214,7 +217,7 @@ function ScreeningChecks({
                 <span className="font-semibold">{flag.questionLabel}:</span>{' '}
                 <span className="text-foreground/70">{flag.answerValue || '—'}</span>
                 {flag.expectedAnswer && (
-                  <span className="text-muted-foreground"> (expected: {flag.expectedAnswer})</span>
+                  <span className="text-muted-foreground"> {t('stageBlock.expected', { answer: flag.expectedAnswer })}</span>
                 )}
               </li>
             ))}
@@ -224,9 +227,10 @@ function ScreeningChecks({
 
       {/* No manual decision here — the stage move is the decision. */}
       <p className="rounded-[10px] border border-dashed border-[oklch(0.9_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2.5 text-[12px] text-muted-foreground">
-        No manual yes/no here — to screen in, use{' '}
-        <span className="font-semibold text-foreground">Advance</span>; to screen out, use{' '}
-        <span className="font-semibold text-foreground">Reject</span> (right).
+        {t.rich('stageBlock.screenHint', {
+          advance: (chunks) => <span className="font-semibold text-foreground">{chunks}</span>,
+          reject: (chunks) => <span className="font-semibold text-foreground">{chunks}</span>,
+        })}
       </p>
     </article>
   )
@@ -265,7 +269,14 @@ function InterviewState({
   currentCode: ApplicationStatus['code']
   upcomingInterview: StageContextualBlockProps['upcomingInterview']
 }) {
+  const t = useTranslations()
   const [scoreOpen, setScoreOpen] = useState(false)
+  const typeLabelKey =
+    upcomingInterview?.type === 'video'
+      ? 'interviews.form.typeVideo'
+      : upcomingInterview?.type === 'phone'
+        ? 'interviews.form.typePhone'
+        : 'interviews.form.typeOnsite'
   return (
     <article className="space-y-3 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
       <StageTracker stages={stages} currentCode={currentCode} compact />
@@ -281,11 +292,11 @@ function InterviewState({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-semibold text-foreground">
-              <span className="capitalize">{upcomingInterview.type}</span> interview
+              {t('stageBlock.typeInterview', { type: t(typeLabelKey) })}
             </p>
             <p className="text-[11.5px] text-muted-foreground">
               {format(new Date(upcomingInterview.scheduledAt), "MMM d · HH:mm")} ·{' '}
-              {upcomingInterview.durationMinutes} min
+              {t('interviews.form.minutes', { count: upcomingInterview.durationMinutes })}
             </p>
           </div>
           {upcomingInterview.meetingLink && (
@@ -295,13 +306,13 @@ function InterviewState({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 rounded-md bg-[oklch(0.93_0.06_300)] px-3 py-1.5 text-[12px] font-semibold text-[oklch(0.45_0.15_300)] hover:bg-[oklch(0.9_0.07_300)]"
             >
-              Join <ExternalLink className="h-3 w-3" aria-hidden />
+              {t('interviews.join')} <ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           )}
         </div>
       ) : (
         <div className="rounded-[10px] border border-dashed border-[oklch(0.9_0.04_300)] bg-[oklch(0.985_0.015_300)] px-3.5 py-3 text-center text-[12.5px] text-muted-foreground">
-          No interview scheduled yet for this application.
+          {t('stageBlock.noInterviewYet')}
         </div>
       )}
 
@@ -313,19 +324,18 @@ function InterviewState({
           className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
         >
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
-          Add full scorecard
+          {t('stageBlock.addScorecard')}
         </Button>
         <Button asChild variant="outline" size="sm" className="gap-1.5">
           <Link href={`/interviews/new?reschedule=${upcomingInterview?.id ?? ''}`}>
             <Calendar className="h-3.5 w-3.5" aria-hidden />
-            Reschedule
+            {t('stageBlock.reschedule')}
           </Link>
         </Button>
       </div>
 
       <p className="text-[11.5px] text-muted-foreground">
-        Score this candidate against the role&apos;s scorecard — the average of the 1–5 ratings
-        becomes the fit score on the kanban.
+        {t('stageBlock.scoreHint')}
       </p>
 
       <ScoreCandidateModal
@@ -359,6 +369,7 @@ function OfferState({
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
 }) {
+  const t = useTranslations()
   const router = useRouter()
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState('USD')
@@ -369,12 +380,12 @@ function OfferState({
 
   const submit = (send: boolean) => {
     if (!body.trim()) {
-      toast.error('Add the offer details before saving.')
+      toast.error(t('stageBlock.errOfferDetails'))
       return
     }
     startTransition(async () => {
       const result = await createOffer(applicationId, {
-        role_title: vacancyTitle.trim() || 'the role',
+        role_title: vacancyTitle.trim() || t('stageBlock.theRole'),
         body: body.trim(),
         recruiter_message: null,
         compensation_amount: amount.trim() ? Number(amount) : null,
@@ -393,9 +404,9 @@ function OfferState({
           toast.error(sent.error)
           return
         }
-        toast.success('Offer sent to candidate.')
+        toast.success(t('stageBlock.offerSent'))
       } else {
-        toast.success('Offer saved as draft.')
+        toast.success(t('stageBlock.offerSavedDraft'))
       }
       setAmount('')
       setBody('')
@@ -428,28 +439,28 @@ function OfferState({
 
       <header>
         <h3 className="text-[15px] font-bold text-foreground">
-          Create offer
+          {t('stageBlock.createOffer')}
           <span className="ml-2 text-[12px] font-normal text-muted-foreground">· {vacancyTitle}</span>
         </h3>
         <p className="mt-1 text-[12px] text-muted-foreground">
-          Sends the candidate an accept/decline link. Compensation and dates are optional.
+          {t('stageBlock.createOfferHint')}
         </p>
       </header>
 
       <div className="grid gap-2.5 sm:grid-cols-2">
         <div className="space-y-1">
-          <Label htmlFor="of-amount" className="text-[12px]">Compensation</Label>
+          <Label htmlFor="of-amount" className="text-[12px]">{t('stageBlock.compensation')}</Label>
           <Input
             id="of-amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             inputMode="decimal"
-            placeholder="e.g. 95000"
+            placeholder={t('stageBlock.compensationPlaceholder')}
             disabled={pending}
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="of-currency" className="text-[12px]">Currency</Label>
+          <Label htmlFor="of-currency" className="text-[12px]">{t('stageBlock.currency')}</Label>
           <Input
             id="of-currency"
             value={currency}
@@ -463,7 +474,7 @@ function OfferState({
 
       <div className="grid gap-2.5 sm:grid-cols-2">
         <div className="space-y-1">
-          <Label htmlFor="of-start" className="text-[12px]">Start date</Label>
+          <Label htmlFor="of-start" className="text-[12px]">{t('stageBlock.startDate')}</Label>
           <Input
             id="of-start"
             type="date"
@@ -473,7 +484,7 @@ function OfferState({
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="of-expiry" className="text-[12px]">Respond-by date</Label>
+          <Label htmlFor="of-expiry" className="text-[12px]">{t('stageBlock.respondByDate')}</Label>
           <Input
             id="of-expiry"
             type="date"
@@ -485,14 +496,14 @@ function OfferState({
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="of-body" className="text-[12px]">Offer details</Label>
+        <Label htmlFor="of-body" className="text-[12px]">{t('stageBlock.offerDetails')}</Label>
         <Textarea
           id="of-body"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={5}
           maxLength={20000}
-          placeholder="Benefits, equity, signing bonus, vacation, remote/hybrid, reporting line — anything the candidate needs to know. Line breaks are preserved."
+          placeholder={t('stageBlock.offerDetailsPlaceholder')}
           disabled={pending}
           className="text-[12.5px]"
         />
@@ -508,7 +519,7 @@ function OfferState({
           className="gap-1.5"
         >
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-          Save draft
+          {t('stageBlock.saveDraft')}
         </Button>
         <Button
           type="button"
@@ -518,7 +529,7 @@ function OfferState({
           className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
         >
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-          Save &amp; send
+          {t('stageBlock.saveSend')}
         </Button>
       </div>
     </article>
@@ -534,12 +545,15 @@ function DefaultStateCard({
   currentCode: ApplicationStatus['code']
   stageName: string
 }) {
+  const t = useTranslations()
   return (
     <article className="space-y-3 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
       <StageTracker stages={stages} currentCode={currentCode} compact />
       <p className="text-[13px] text-muted-foreground">
-        Application is in the <span className="font-semibold text-foreground">{stageName}</span> stage.
-        Use the right-rail actions to advance, schedule, or close it.
+        {t.rich('stageBlock.defaultState', {
+          name: statusLabel(t, currentCode, stageName),
+          stage: (chunks) => <span className="font-semibold text-foreground">{chunks}</span>,
+        })}
       </p>
     </article>
   )

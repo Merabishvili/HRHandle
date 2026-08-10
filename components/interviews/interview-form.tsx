@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { createInterview } from '@/lib/actions/interviews'
 import { Button } from '@/components/ui/button'
@@ -35,11 +36,11 @@ import {
 } from './interview-form-parts'
 
 const durationOptions = [
-  { value: 30, label: '30 minutes' },
-  { value: 45, label: '45 minutes' },
-  { value: 60, label: '1 hour' },
-  { value: 90, label: '1.5 hours' },
-  { value: 120, label: '2 hours' },
+  { value: 30, labelKey: 'interviews.dur30m' },
+  { value: 45, labelKey: 'interviews.dur45m' },
+  { value: 60, labelKey: 'interviews.dur1h' },
+  { value: 90, labelKey: 'interviews.dur90m' },
+  { value: 120, labelKey: 'interviews.dur2h' },
 ]
 
 export function InterviewForm({
@@ -58,6 +59,7 @@ export function InterviewForm({
   onScheduled,
   onCancel,
 }: InterviewFormProps) {
+  const t = useTranslations()
   const router = useRouter()
 
   const [isLoading, setIsLoading] = useState(false)
@@ -154,19 +156,19 @@ export function InterviewForm({
   }
 
   const validateForm = (): string | null => {
-    if (!candidateId) return 'Please select a candidate.'
-    if (!vacancyId) return 'Please select a vacancy.'
-    if (!scheduledDate) return 'Please select a date.'
-    if (!scheduledTime) return 'Please select a time.'
+    if (!candidateId) return t('interviews.form.errCandidate')
+    if (!vacancyId) return t('interviews.form.errVacancy')
+    if (!scheduledDate) return t('interviews.form.errDate')
+    if (!scheduledTime) return t('interviews.form.errTime')
 
     const matched = applications.find(
       (a) => a.candidate_id === candidateId && a.vacancy_id === vacancyId
     )
-    if (!matched) return 'This candidate has not been added to this vacancy.'
+    if (!matched) return t('interviews.form.errNotInVacancy')
 
     const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`)
-    if (Number.isNaN(scheduledAt.getTime())) return 'Scheduled date/time is invalid.'
-    if (scheduledAt < new Date()) return 'Interview must be scheduled in the future.'
+    if (Number.isNaN(scheduledAt.getTime())) return t('interviews.form.errInvalidDateTime')
+    if (scheduledAt < new Date()) return t('interviews.form.errFuture')
 
     return null
   }
@@ -216,17 +218,15 @@ export function InterviewForm({
     // Google to fix), so surface it on its own when present. Otherwise combine
     // email + notification warnings.
     if (w.includes('meet_creation_failed')) {
-      toast.warning(
-        'Interview scheduled, but the Google Meet link could not be created. Reconnect Google Calendar in Settings → Integrations and try again.',
-      )
+      toast.warning(t('interviews.form.toastMeetFailed'))
     } else if (w.includes('email_failed') && w.includes('notification_failed')) {
-      toast.warning('Interview scheduled, but the invitation email and in-app notification could not be sent.')
+      toast.warning(t('interviews.form.toastEmailNotifFailed'))
     } else if (w.includes('email_failed')) {
-      toast.warning('Interview scheduled, but the invitation email could not be sent.')
+      toast.warning(t('interviews.form.toastEmailFailed'))
     } else if (w.includes('notification_failed')) {
-      toast.warning('Interview scheduled, but the in-app notification could not be sent.')
+      toast.warning(t('interviews.form.toastNotifFailed'))
     } else {
-      toast.success('Interview scheduled.')
+      toast.success(t('interviews.form.toastScheduled'))
     }
 
     // Overlay callers (Review Mode) stay in place and refresh their own data;
@@ -247,12 +247,12 @@ export function InterviewForm({
   const selectedInterviewerName =
     teamMembers.find((m) => m.id === interviewerId)?.full_name ?? null
   const meetingTypeSummary =
-    meetingOption === 'google_meet' ? 'Video · Meet'
-    : meetingOption === 'zoom' ? 'Video · Zoom'
-    : meetingOption === 'teams' ? 'Video · Teams'
-    : type === 'video' ? 'Video'
-    : type === 'phone' ? 'Phone'
-    : 'On-site'
+    meetingOption === 'google_meet' ? t('interviews.form.sumVideoMeet')
+    : meetingOption === 'zoom' ? t('interviews.form.sumVideoZoom')
+    : meetingOption === 'teams' ? t('interviews.form.sumVideoTeams')
+    : type === 'video' ? t('interviews.form.sumVideo')
+    : type === 'phone' ? t('interviews.form.sumPhone')
+    : t('interviews.form.sumOnsite')
 
   // Live When-summary string from the date/time inputs. Defensive: if
   // either is missing, we show '—' so the rail card never lies about a
@@ -286,7 +286,7 @@ export function InterviewForm({
         {/* ── FORM CARD ── */}
         <div className="flex flex-col gap-[18px] rounded-2xl border border-border bg-card p-5 sm:p-6">
           <div className="space-y-2">
-            <Label htmlFor="candidate">Candidate *</Label>
+            <Label htmlFor="candidate">{t('interviews.form.candidate')} *</Label>
             {candidateFirst && selectedCandidate ? (
               <LockedField
                 value={getCandidateFullName(selectedCandidate)}
@@ -298,9 +298,9 @@ export function InterviewForm({
                 value={candidateId}
                 onValueChange={handleCandidateChange}
                 disabled={isLoading}
-                placeholder="Select a candidate"
-                searchPlaceholder="Search candidates…"
-                emptyText="No candidates found."
+                placeholder={t('interviews.form.selectCandidate')}
+                searchPlaceholder={t('interviews.form.searchCandidates')}
+                emptyText={t('interviews.form.noCandidates')}
                 options={candidates.map((c) => ({
                   value: c.id,
                   label: getCandidateFullName(c),
@@ -314,9 +314,9 @@ export function InterviewForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="vacancy">Vacancy *</Label>
+            <Label htmlFor="vacancy">{t('interviews.form.vacancy')} *</Label>
             {lockVacancy ? (
-              <LockedField value={selectedVacancyTitle ?? 'Derived from candidate'} />
+              <LockedField value={selectedVacancyTitle ?? t('interviews.form.derivedFromCandidate')} />
             ) : (
               <>
                 <SearchableSelect
@@ -324,9 +324,9 @@ export function InterviewForm({
                   value={vacancyId}
                   onValueChange={handleVacancyChange}
                   disabled={isLoading || !candidateId}
-                  placeholder={candidateId ? 'Select a vacancy' : 'Select candidate first'}
-                  searchPlaceholder="Search vacancies…"
-                  emptyText="No vacancies found."
+                  placeholder={candidateId ? t('interviews.form.selectVacancy') : t('interviews.form.selectCandidateFirst')}
+                  searchPlaceholder={t('interviews.form.searchVacancies')}
+                  emptyText={t('interviews.form.noVacancies')}
                   options={availableVacancies.map((v) => ({
                     value: v.id,
                     label: v.title,
@@ -334,7 +334,7 @@ export function InterviewForm({
                   }))}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Only vacancies this candidate is being considered for are shown.
+                  {t('interviews.form.onlyConsidered')}
                 </p>
               </>
             )}
@@ -344,26 +344,26 @@ export function InterviewForm({
               Date/Time/Duration below so the rhythm lines up. On mobile the
               tiles stack icon-over-label to stay compact. */}
           <div className="space-y-2">
-            <Label>Interview type</Label>
-            <div className="grid grid-cols-3 gap-2.5" role="radiogroup" aria-label="Interview type">
+            <Label>{t('interviews.form.type')}</Label>
+            <div className="grid grid-cols-3 gap-2.5" role="radiogroup" aria-label={t('interviews.form.type')}>
               <TypeSegment
                 active={type === 'video'}
                 icon={Video}
-                label="Video"
+                label={t('interviews.form.typeVideo')}
                 onClick={() => handleTypeChange('video')}
                 disabled={isLoading}
               />
               <TypeSegment
                 active={type === 'phone'}
                 icon={Phone}
-                label="Phone"
+                label={t('interviews.form.typePhone')}
                 onClick={() => handleTypeChange('phone')}
                 disabled={isLoading}
               />
               <TypeSegment
                 active={type === 'onsite'}
                 icon={MapPin}
-                label="On-site"
+                label={t('interviews.form.typeOnsite')}
                 onClick={() => handleTypeChange('onsite')}
                 disabled={isLoading}
               />
@@ -374,11 +374,11 @@ export function InterviewForm({
               and Duration drops full-width on the narrowest screens. */}
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label>Date *</Label>
+              <Label>{t('interviews.date')} *</Label>
               <DatePicker
                 value={scheduledDate || null}
                 onChange={(v) => setScheduledDate(v ?? '')}
-                placeholder="Pick date"
+                placeholder={t('interviews.form.pickDate')}
                 disabled={isLoading}
                 disablePast
                 fromYear={new Date().getFullYear()}
@@ -386,7 +386,7 @@ export function InterviewForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="time">Time *</Label>
+              <Label htmlFor="time">{t('interviews.time')} *</Label>
               <Input
                 id="time"
                 type="time"
@@ -397,7 +397,7 @@ export function InterviewForm({
               />
             </div>
             <div className="col-span-2 space-y-2 sm:col-span-1">
-              <Label htmlFor="duration">Duration</Label>
+              <Label htmlFor="duration">{t('interviews.duration')}</Label>
               <Select
                 value={duration.toString()}
                 onValueChange={(v) => setDuration(parseInt(v, 10))}
@@ -406,7 +406,7 @@ export function InterviewForm({
                 <SelectTrigger id="duration"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {durationOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value.toString()}>{o.label}</SelectItem>
+                    <SelectItem key={o.value} value={o.value.toString()}>{t(o.labelKey)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -414,17 +414,17 @@ export function InterviewForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="interviewer">Interviewer</Label>
+            <Label htmlFor="interviewer">{t('interviews.form.interviewer')}</Label>
             <SearchableSelect
               id="interviewer"
               value={interviewerId || 'none'}
               onValueChange={handleInterviewerChange}
               disabled={isLoading}
-              placeholder="Select an interviewer (optional)"
-              searchPlaceholder="Search team members…"
-              emptyText="No matching team members."
+              placeholder={t('interviews.form.selectInterviewer')}
+              searchPlaceholder={t('interviews.form.searchTeam')}
+              emptyText={t('interviews.form.noTeam')}
               options={[
-                { value: 'none', label: 'Not assigned' },
+                { value: 'none', label: t('interviews.notAssigned') },
                 ...interviewerMembers.map((m) => ({
                   value: m.id,
                   label: m.full_name,
@@ -437,11 +437,11 @@ export function InterviewForm({
           {/* Manual meeting-link fallback when no calendar integration */}
           {(!showAutoMeetOptions || meetingOption === 'manual') && type === 'video' && (
             <div className="space-y-2">
-              <Label htmlFor="meeting-link">Meeting link (optional)</Label>
+              <Label htmlFor="meeting-link">{t('interviews.form.meetingLink')}</Label>
               <Input
                 id="meeting-link"
                 type="url"
-                placeholder="https://zoom.us/j/... or any meeting link"
+                placeholder={t('interviews.form.meetingLinkPlaceholder')}
                 value={manualMeetingLink}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setManualMeetingLink(e.target.value)}
                 disabled={isLoading}
@@ -460,12 +460,11 @@ export function InterviewForm({
               <div className="mb-1.5 flex items-center gap-2">
                 <Calendar className="h-3.5 w-3.5" style={{ color: 'oklch(0.42 0.14 150)' }} aria-hidden />
                 <p className="text-[13px] font-bold" style={{ color: 'oklch(0.32 0.13 150)' }}>
-                  Google Calendar connected
+                  {t('interviews.form.gcalConnected')}
                 </p>
               </div>
               <p className="text-[12px] leading-[1.5]" style={{ color: 'oklch(0.4 0.06 150)' }}>
-                A Google Meet link will be created automatically and added to both calendars.
-                Switch in Settings → Integrations.
+                {t('interviews.form.gcalHint')}
               </p>
             </div>
           )}
@@ -474,15 +473,15 @@ export function InterviewForm({
           {showAutoMeetOptions && (
             <div className="flex flex-wrap gap-1.5">
               {hasGoogleCalendar && (
-                <MeetChip active={meetingOption === 'google_meet'} label="Auto Meet" onClick={() => setMeetingOption('google_meet')} disabled={isLoading} />
+                <MeetChip active={meetingOption === 'google_meet'} label={t('interviews.form.autoMeet')} onClick={() => setMeetingOption('google_meet')} disabled={isLoading} />
               )}
               {hasZoom && (
-                <MeetChip active={meetingOption === 'zoom'} label="Auto Zoom" onClick={() => setMeetingOption('zoom')} disabled={isLoading} />
+                <MeetChip active={meetingOption === 'zoom'} label={t('interviews.form.autoZoom')} onClick={() => setMeetingOption('zoom')} disabled={isLoading} />
               )}
               {hasMicrosoft && (
-                <MeetChip active={meetingOption === 'teams'} label="Auto Teams" onClick={() => setMeetingOption('teams')} disabled={isLoading} />
+                <MeetChip active={meetingOption === 'teams'} label={t('interviews.form.autoTeams')} onClick={() => setMeetingOption('teams')} disabled={isLoading} />
               )}
-              <MeetChip active={meetingOption === 'manual'} label="Manual" onClick={() => setMeetingOption('manual')} disabled={isLoading} />
+              <MeetChip active={meetingOption === 'manual'} label={t('interviews.form.manual')} onClick={() => setMeetingOption('manual')} disabled={isLoading} />
             </div>
           )}
         </div>
@@ -490,15 +489,15 @@ export function InterviewForm({
         {/* ── SUMMARY CARD (desktop) — content-sized, top-aligned ── */}
         <aside className="hidden self-start rounded-2xl border border-border bg-[oklch(0.985_0.002_247)] p-5 sm:p-6 lg:flex lg:flex-col lg:gap-3.5">
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-            Summary
+            {t('interviews.form.summary')}
           </p>
           <ul className="flex flex-col gap-2 text-[13px]">
-            <SummaryRow label="Candidate" value={selectedCandidate ? getCandidateFullName(selectedCandidate) : '—'} />
-            <SummaryRow label="Role" value={selectedVacancyTitle ?? '—'} />
-            <SummaryRow label="When" value={summaryWhen} />
-            <SummaryRow label="Duration" value={`${duration} min`} />
-            <SummaryRow label="Type" value={meetingTypeSummary} />
-            <SummaryRow label="Interviewer" value={selectedInterviewerName ?? 'Not assigned'} />
+            <SummaryRow label={t('interviews.form.candidate')} value={selectedCandidate ? getCandidateFullName(selectedCandidate) : '—'} />
+            <SummaryRow label={t('interviews.form.role')} value={selectedVacancyTitle ?? '—'} />
+            <SummaryRow label={t('interviews.form.when')} value={summaryWhen} />
+            <SummaryRow label={t('interviews.duration')} value={t('interviews.form.minutes', { count: duration })} />
+            <SummaryRow label={t('interviews.form.typeLabel')} value={meetingTypeSummary} />
+            <SummaryRow label={t('interviews.form.interviewer')} value={selectedInterviewerName ?? t('interviews.notAssigned')} />
           </ul>
 
           <div className="border-t border-border pt-3.5">
@@ -514,16 +513,16 @@ export function InterviewForm({
 
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading} className="flex-1">
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading} className="flex-1 gap-1.5">
               {isLoading ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Scheduling…
+                  {t('interviews.form.scheduling')}
                 </>
               ) : (
-                'Schedule'
+                t('interviews.form.schedule')
               )}
             </Button>
           </div>
@@ -547,16 +546,16 @@ export function InterviewForm({
         </p>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading} className="flex-1">
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" disabled={isLoading} className="flex-[1.4] gap-1.5">
             {isLoading ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Scheduling…
+                {t('interviews.form.scheduling')}
               </>
             ) : (
-              'Schedule'
+              t('interviews.form.schedule')
             )}
           </Button>
         </div>
