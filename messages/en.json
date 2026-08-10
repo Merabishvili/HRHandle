@@ -1379,6 +1379,27 @@
     "ackText": "I understand the offer implications and want to proceed.",
     "reversible": "<b>Reversible for 30 days.</b> A \"Merged from {name}\" entry is written to the audit log; the old candidate ID will redirect here. The merge can be split back from the surviving candidate's page."
   },
+  "webhooks": {
+    "testSent": "Test message sent — check your channel.",
+    "deleteConfirm": "Delete this webhook? Notifications will stop immediately.",
+    "removed": "Webhook removed.",
+    "eventsUpdated": "Event subscriptions updated.",
+    "added": "Webhook added.",
+    "empty": "No webhooks yet. Add one to start receiving notifications.",
+    "add": "Add webhook",
+    "disabled": "Disabled",
+    "test": "Test",
+    "noEvents": "No events subscribed.",
+    "editEvents": "Edit events",
+    "channel": "Channel",
+    "teams": "Microsoft Teams",
+    "nameLabel": "Name (e.g., #hiring)",
+    "urlLabel": "Webhook URL",
+    "slackHint": "Slack → Apps → Incoming Webhooks → Add to Slack → choose channel → copy the URL.",
+    "teamsHint": "Teams channel → ⋯ → Connectors → Incoming Webhook → Configure → copy the URL.",
+    "events": "Events",
+    "saveWebhook": "Save webhook"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

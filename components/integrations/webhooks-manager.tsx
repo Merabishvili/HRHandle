@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Bell, Plus, Trash2, Send, Power } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export function WebhooksManager({ initial }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
@@ -61,7 +63,7 @@ export function WebhooksManager({ initial }: Props) {
   function onTest(id: string) {
     startTransition(async () => {
       const res = await sendTestWebhookAction(id)
-      if (res.success) showOk('Test message sent — check your channel.')
+      if (res.success) showOk(t('webhooks.testSent'))
       else showErr(res.error)
     })
   }
@@ -75,11 +77,11 @@ export function WebhooksManager({ initial }: Props) {
   }
 
   function onDelete(id: string) {
-    if (!confirm('Delete this webhook? Notifications will stop immediately.')) return
+    if (!confirm(t('webhooks.deleteConfirm'))) return
     startTransition(async () => {
       const res = await deleteWebhook(id)
       if (res.success) {
-        showOk('Webhook removed.')
+        showOk(t('webhooks.removed'))
         refresh()
       } else showErr(res.error)
     })
@@ -90,7 +92,7 @@ export function WebhooksManager({ initial }: Props) {
       const res = await updateWebhookEvents(id, events)
       if (res.success) {
         setEditing(null)
-        showOk('Event subscriptions updated.')
+        showOk(t('webhooks.eventsUpdated'))
         refresh()
       } else showErr(res.error)
     })
@@ -113,9 +115,9 @@ export function WebhooksManager({ initial }: Props) {
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
             <Bell className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No webhooks yet. Add one to start receiving notifications.</p>
+            <p className="text-sm text-muted-foreground">{t('webhooks.empty')}</p>
             <Button onClick={() => setAdding(true)} className="gap-2">
-              <Plus className="h-4 w-4" /> Add webhook
+              <Plus className="h-4 w-4" /> {t('webhooks.add')}
             </Button>
           </CardContent>
         </Card>
@@ -124,7 +126,7 @@ export function WebhooksManager({ initial }: Props) {
       {initial.length > 0 && !adding && (
         <div className="flex justify-end">
           <Button onClick={() => setAdding(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Add webhook
+            <Plus className="h-4 w-4" /> {t('webhooks.add')}
           </Button>
         </div>
       )}
@@ -137,13 +139,13 @@ export function WebhooksManager({ initial }: Props) {
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{wh.channel_type === 'slack' ? 'Slack' : 'Teams'}</Badge>
                   <span className="font-medium">{wh.name}</span>
-                  {!wh.is_active && <Badge variant="secondary">Disabled</Badge>}
+                  {!wh.is_active && <Badge variant="secondary">{t('webhooks.disabled')}</Badge>}
                 </div>
                 <p className="mt-1 break-all text-xs text-muted-foreground">{wh.webhook_url}</p>
               </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="sm" onClick={() => onTest(wh.id)} disabled={isPending} className="gap-1.5">
-                  <Send className="h-3.5 w-3.5" /> Test
+                  <Send className="h-3.5 w-3.5" /> {t('webhooks.test')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -152,10 +154,10 @@ export function WebhooksManager({ initial }: Props) {
                   disabled={isPending}
                   className="gap-1.5"
                 >
-                  <Power className="h-3.5 w-3.5" /> {wh.is_active ? 'Disable' : 'Enable'}
+                  <Power className="h-3.5 w-3.5" /> {wh.is_active ? t('common.disable') : t('common.enable')}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => onDelete(wh.id)} disabled={isPending} className="gap-1.5 text-destructive hover:text-destructive">
-                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                  <Trash2 className="h-3.5 w-3.5" /> {t('common.delete')}
                 </Button>
               </div>
             </div>
@@ -172,14 +174,14 @@ export function WebhooksManager({ initial }: Props) {
                 <div className="flex items-center justify-between">
                   <div className="flex flex-wrap gap-1">
                     {wh.enabled_events.length === 0 && (
-                      <span className="text-sm text-muted-foreground">No events subscribed.</span>
+                      <span className="text-sm text-muted-foreground">{t('webhooks.noEvents')}</span>
                     )}
                     {wh.enabled_events.map((e) => (
                       <Badge key={e} variant="secondary">{WEBHOOK_EVENT_LABELS[e as WebhookEvent] ?? e}</Badge>
                     ))}
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setEditing(wh.id)}>
-                    Edit events
+                    {t('webhooks.editEvents')}
                   </Button>
                 </div>
               )}
@@ -196,7 +198,7 @@ export function WebhooksManager({ initial }: Props) {
           }}
           onSaved={() => {
             setAdding(false)
-            showOk('Webhook added.')
+            showOk(t('webhooks.added'))
             refresh()
           }}
           onError={showErr}
@@ -215,6 +217,7 @@ function AddWebhookForm({
   onSaved: () => void
   onError: (msg: string) => void
 }) {
+  const t = useTranslations()
   const [channel, setChannel] = useState<'slack' | 'teams'>('slack')
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
@@ -238,25 +241,25 @@ function AddWebhookForm({
     <Card>
       <CardContent className="space-y-4 p-4">
         <div className="space-y-2">
-          <Label>Channel</Label>
+          <Label>{t('webhooks.channel')}</Label>
           <Select value={channel} onValueChange={(v) => setChannel(v as 'slack' | 'teams')}>
             <SelectTrigger className="w-[200px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="slack">Slack</SelectItem>
-              <SelectItem value="teams">Microsoft Teams</SelectItem>
+              <SelectItem value="teams">{t('webhooks.teams')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="wh-name">Name (e.g., #hiring)</Label>
+          <Label htmlFor="wh-name">{t('webhooks.nameLabel')}</Label>
           <Input id="wh-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="wh-url">Webhook URL</Label>
+          <Label htmlFor="wh-url">{t('webhooks.urlLabel')}</Label>
           <Input
             id="wh-url"
             value={url}
@@ -268,23 +271,21 @@ function AddWebhookForm({
             }
           />
           <p className="text-xs text-muted-foreground">
-            {channel === 'slack'
-              ? 'Slack → Apps → Incoming Webhooks → Add to Slack → choose channel → copy the URL.'
-              : 'Teams channel → ⋯ → Connectors → Incoming Webhook → Configure → copy the URL.'}
+            {channel === 'slack' ? t('webhooks.slackHint') : t('webhooks.teamsHint')}
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label>Events</Label>
+          <Label>{t('webhooks.events')}</Label>
           <EventEditor initialEvents={events} onSave={(ev) => setEvents(ev)} onCancel={() => undefined} inline />
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onCancel} disabled={isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={onSubmit} disabled={isPending || !name.trim() || !url.trim()}>
-            {isPending ? 'Saving…' : 'Save webhook'}
+            {isPending ? t('common.saving') : t('webhooks.saveWebhook')}
           </Button>
         </div>
       </CardContent>
@@ -305,6 +306,7 @@ function EventEditor({
   isPending?: boolean
   inline?: boolean
 }) {
+  const t = useTranslations()
   const [selected, setSelected] = useState<Set<WebhookEvent>>(new Set(initialEvents))
 
   function toggle(event: WebhookEvent) {
@@ -333,10 +335,10 @@ function EventEditor({
       {!inline && (
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" size="sm" onClick={onCancel} disabled={isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button size="sm" onClick={() => onSave(Array.from(selected))} disabled={isPending}>
-            Save
+            {t('common.save')}
           </Button>
         </div>
       )}
