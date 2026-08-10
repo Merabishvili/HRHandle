@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { PipelineStagesManager } from '@/components/settings/pipeline-stages-manager'
 import { listOrgPipelineStageTemplates } from '@/lib/actions/org-pipeline-stage-templates'
@@ -32,13 +33,14 @@ export default async function PipelineStagesSettingsPage() {
 
   const result = await listOrgPipelineStageTemplates()
   const initial = result.success ? result.data : []
+  const t = await getTranslations()
 
   return (
     <div className="max-w-2xl">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-foreground">Pipeline stages</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('pipelineStages.title')}</h2>
         <p className="text-sm text-muted-foreground">
-          The default set every new vacancy starts with. A stage has a name (free-text, any language) and a type — the type drives the actions on the candidate profile, never the name. Capped at 10 stages.
+          {t('pipelineStages.description')}
         </p>
       </div>
       <PipelineStagesManager initialStages={initial} />

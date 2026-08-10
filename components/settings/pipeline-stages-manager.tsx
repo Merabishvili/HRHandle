@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import {
   CheckCheck,
@@ -62,8 +63,8 @@ interface Props {
 
 type TypeMeta = {
   key: PipelineStageType
-  label: string
-  description: string
+  labelKey: string
+  descKey: string
   icon: React.ElementType
   pillBg: string
   pillText: string
@@ -72,32 +73,32 @@ type TypeMeta = {
 const TYPE_META: TypeMeta[] = [
   {
     key: 'standard',
-    label: 'Standard',
-    description: 'Move & notes only',
+    labelKey: 'pipelineStages.type.standard',
+    descKey: 'pipelineStages.typeDesc.standard',
     icon: Circle,
     pillBg: 'bg-[oklch(0.93_0.05_250)]',
     pillText: 'text-[oklch(0.42_0.16_250)]',
   },
   {
     key: 'review',
-    label: 'Review / Assessment',
-    description: 'Scorecard only — no scheduling',
+    labelKey: 'pipelineStages.type.review',
+    descKey: 'pipelineStages.typeDesc.review',
     icon: CheckCheck,
     pillBg: 'bg-[oklch(0.95_0.08_95)]',
     pillText: 'text-[oklch(0.48_0.11_80)]',
   },
   {
     key: 'interview',
-    label: 'Interview',
-    description: 'Schedule interview · add scorecard · feedback',
+    labelKey: 'pipelineStages.type.interview',
+    descKey: 'pipelineStages.typeDesc.interview',
     icon: Video,
     pillBg: 'bg-[oklch(0.93_0.06_300)]',
     pillText: 'text-[oklch(0.45_0.15_300)]',
   },
   {
     key: 'offer',
-    label: 'Offer',
-    description: 'Create & track offer',
+    labelKey: 'pipelineStages.type.offer',
+    descKey: 'pipelineStages.typeDesc.offer',
     icon: FileText,
     pillBg: 'bg-[oklch(0.94_0.06_200)]',
     pillText: 'text-[oklch(0.42_0.12_210)]',
@@ -123,6 +124,7 @@ const DEFAULT_STAGE_PREVIEW: { name: string; type: PipelineStageType; is_termina
 ]
 
 export function PipelineStagesManager({ initialStages }: Props) {
+  const t = useTranslations()
   const [stages, setStages] = useState<OrgPipelineStageTemplate[]>(initialStages)
   const [addOpen, setAddOpen] = useState(false)
   const [applyOpen, setApplyOpen] = useState(false)
@@ -163,7 +165,7 @@ export function PipelineStagesManager({ initialStages }: Props) {
         return
       }
       setStages((prev) => prev.filter((s) => s.id !== id))
-      toast.success('Stage removed')
+      toast.success(t('pipelineStages.stageRemoved'))
     })
   }
 
@@ -178,7 +180,7 @@ export function PipelineStagesManager({ initialStages }: Props) {
       // `tmp-*` ids here broke the very next reorder (the reorder RPC takes
       // uuid[], and a `tmp-*` string fails the uuid cast).
       setStages(result.data)
-      toast.success('Default stages added')
+      toast.success(t('pipelineStages.defaultStagesAdded'))
     })
   }
 
@@ -210,8 +212,8 @@ export function PipelineStagesManager({ initialStages }: Props) {
       const n = result.data.updated
       toast.success(
         n === 0
-          ? 'No empty vacancies to update'
-          : `Applied template to ${n} vacanc${n === 1 ? 'y' : 'ies'}`,
+          ? t('pipelineStages.noEmptyVacancies')
+          : t('pipelineStages.appliedToN', { count: n }),
       )
       setEmptyVacancyCount(0)
       setApplyOpen(false)
@@ -222,10 +224,9 @@ export function PipelineStagesManager({ initialStages }: Props) {
     <div className="space-y-4">
       {stages.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
-          <p className="text-sm font-semibold text-foreground">Using the built-in default set</p>
+          <p className="text-sm font-semibold text-foreground">{t('pipelineStages.usingDefaults')}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            New vacancies start with these stages. Seed them here to customise the set (rename,
-            reorder, add up to 10).
+            {t('pipelineStages.usingDefaultsDesc')}
           </p>
           {/* Read-only preview so the view always shows the actual stages. */}
           <ul className="mx-auto mt-4 flex max-w-md flex-col gap-1.5 text-left">
@@ -238,11 +239,11 @@ export function PipelineStagesManager({ initialStages }: Props) {
                 >
                   <span className="text-[13px] font-medium text-foreground">{s.name}</span>
                   <span className={cn('rounded px-1.5 py-0.5 text-[10.5px] font-semibold', meta.pillBg, meta.pillText)}>
-                    {meta.label}
+                    {t(meta.labelKey)}
                   </span>
                   {s.is_terminal && (
                     <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                      Terminal
+                      {t('pipelineStages.terminal')}
                     </span>
                   )}
                 </li>
@@ -258,10 +259,10 @@ export function PipelineStagesManager({ initialStages }: Props) {
               disabled={pending}
             >
               {pending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" aria-hidden />}
-              Use defaults
+              {t('pipelineStages.useDefaults')}
             </Button>
             <Button type="button" size="sm" onClick={() => setAddOpen(true)} disabled={pending}>
-              <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden /> Add stage
+              <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden /> {t('pipelineStages.addStage')}
             </Button>
           </div>
         </div>
@@ -283,7 +284,7 @@ export function PipelineStagesManager({ initialStages }: Props) {
           </DndContext>
           <div className="mt-3 flex items-center justify-between gap-2">
             <p className="text-[11.5px] text-muted-foreground">
-              {stages.length} of 10 stages · drag to reorder
+              {t('pipelineStages.stagesCount', { count: stages.length })}
             </p>
             <div className="flex items-center gap-2">
               {(emptyVacancyCount ?? 0) > 0 && (
@@ -296,8 +297,7 @@ export function PipelineStagesManager({ initialStages }: Props) {
                   className="gap-1.5"
                 >
                   <Wand2 className="h-3.5 w-3.5" aria-hidden />
-                  Apply to {emptyVacancyCount} empty{' '}
-                  {emptyVacancyCount === 1 ? 'vacancy' : 'vacancies'}
+                  {t('pipelineStages.applyToEmpty', { count: emptyVacancyCount ?? 0 })}
                 </Button>
               )}
               <Button
@@ -306,7 +306,7 @@ export function PipelineStagesManager({ initialStages }: Props) {
                 onClick={() => setAddOpen(true)}
                 disabled={pending || stages.length >= 10}
               >
-                <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden /> Add stage
+                <Plus className="mr-1.5 h-3.5 w-3.5" aria-hidden /> {t('pipelineStages.addStage')}
               </Button>
             </div>
           </div>
@@ -319,22 +319,19 @@ export function PipelineStagesManager({ initialStages }: Props) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Apply template to {emptyVacancyCount ?? 0} empty{' '}
-              {emptyVacancyCount === 1 ? 'vacancy' : 'vacancies'}?
+              {t('pipelineStages.applyDialogTitle', { count: emptyVacancyCount ?? 0 })}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
-                <p>
-                  Vacancies with <strong>no applications</strong> will have their pipeline stages replaced by this template.
-                </p>
+                <p>{t('pipelineStages.applyBody1')}</p>
                 <p className="text-muted-foreground">
-                  Vacancies that already have applications (live or archived) are skipped — re-pointing stage IDs on existing applications is risky and not supported here.
+                  {t('pipelineStages.applyBody2')}
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()
@@ -345,10 +342,10 @@ export function PipelineStagesManager({ initialStages }: Props) {
               {pending ? (
                 <>
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />
-                  Applying…
+                  {t('pipelineStages.applying')}
                 </>
               ) : (
-                'Apply template'
+                t('pipelineStages.applyTemplate')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -367,6 +364,7 @@ function SortableStageRow({
   onRemove: (id: string) => void
   disabled?: boolean
 }) {
+  const t = useTranslations()
   const meta = typeMeta(stage.type)
   const Icon = meta.icon
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -386,7 +384,7 @@ function SortableStageRow({
     >
       <button
         type="button"
-        aria-label={`Drag ${stage.name}`}
+        aria-label={t('pipelineStages.dragNamed', { name: stage.name })}
         className="cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
         {...attributes}
         {...listeners}
@@ -403,10 +401,10 @@ function SortableStageRow({
         <Icon className="h-3 w-3" aria-hidden />
         {stage.name}
       </span>
-      <span className="text-xs text-muted-foreground">· {meta.label}</span>
+      <span className="text-xs text-muted-foreground">· {t(meta.labelKey)}</span>
       {stage.is_terminal && (
         <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-[10.5px] font-semibold uppercase text-muted-foreground">
-          Terminal
+          {t('pipelineStages.terminal')}
         </span>
       )}
       <Button
@@ -414,7 +412,7 @@ function SortableStageRow({
         variant="ghost"
         size="icon"
         className="ml-auto h-7 w-7 text-muted-foreground hover:text-destructive"
-        aria-label={`Remove ${stage.name}`}
+        aria-label={t('pipelineStages.removeNamed', { name: stage.name })}
         onClick={() => onRemove(stage.id)}
         disabled={disabled}
       >
@@ -433,6 +431,7 @@ function AddStageDialog({
   onOpenChange: (open: boolean) => void
   onAdded: (created: OrgPipelineStageTemplate) => void
 }) {
+  const t = useTranslations()
   const [name, setName] = useState('')
   const [type, setType] = useState<PipelineStageType>('standard')
   const [isTerminal, setIsTerminal] = useState(false)
@@ -447,7 +446,7 @@ function AddStageDialog({
   const handleSubmit = () => {
     const trimmed = name.trim()
     if (!trimmed) {
-      toast.error('Name is required')
+      toast.error(t('pipelineStages.nameRequired'))
       return
     }
     startTransition(async () => {
@@ -481,19 +480,19 @@ function AddStageDialog({
     >
       <DialogContent className="max-w-xl gap-0 p-0">
         <DialogHeader className="border-b border-border px-6 py-4">
-          <DialogTitle className="text-base font-bold">Add stage</DialogTitle>
+          <DialogTitle className="text-base font-bold">{t('pipelineStages.addStage')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 px-6 py-5">
           <div>
             <label htmlFor="stage-name" className="text-xs text-muted-foreground">
-              Stage name
+              {t('pipelineStages.stageName')}
             </label>
             <Input
               id="stage-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Technical interview"
+              placeholder={t('pipelineStages.stageNamePlaceholder')}
               maxLength={60}
               disabled={pending}
               className="mt-1"
@@ -502,12 +501,12 @@ function AddStageDialog({
 
           <div>
             <p className="text-xs text-muted-foreground">
-              Stage type{' '}
+              {t('pipelineStages.stageType')}{' '}
               <span className="text-muted-foreground/70">
-                — determines what actions appear on the candidate profile
+                {t('pipelineStages.stageTypeHint')}
               </span>
             </p>
-            <div className="mt-2 space-y-2" role="radiogroup" aria-label="Stage type">
+            <div className="mt-2 space-y-2" role="radiogroup" aria-label={t('pipelineStages.stageType')}>
               {TYPE_META.map((meta) => {
                 const Icon = meta.icon
                 const active = type === meta.key
@@ -536,10 +535,10 @@ function AddStageDialog({
                     </span>
                     <span className="flex-1">
                       <span className={cn('block text-sm font-semibold', active ? 'text-primary' : 'text-foreground')}>
-                        {meta.label}
+                        {t(meta.labelKey)}
                       </span>
                       <span className="block text-[11.5px] text-muted-foreground">
-                        {meta.description}
+                        {t(meta.descKey)}
                       </span>
                     </span>
                   </button>
@@ -557,7 +556,7 @@ function AddStageDialog({
               className="h-3.5 w-3.5 rounded border-border"
             />
             <span>
-              Terminal — candidates in this stage are out of the active pipeline (Hired, Rejected, Withdrawn).
+              {t('pipelineStages.terminalHint')}
             </span>
           </label>
         </div>
@@ -570,15 +569,15 @@ function AddStageDialog({
             onClick={() => onOpenChange(false)}
             disabled={pending}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="button" size="sm" onClick={handleSubmit} disabled={pending || !name.trim()}>
             {pending ? (
               <>
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Adding…
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> {t('pipelineStages.adding')}
               </>
             ) : (
-              'Add stage'
+              t('pipelineStages.addStage')
             )}
           </Button>
         </div>

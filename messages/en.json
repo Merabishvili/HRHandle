@@ -676,6 +676,47 @@
       "hired": "Hired"
     }
   },
+  "pipelineStages": {
+    "title": "Pipeline stages",
+    "description": "The default set every new vacancy starts with. A stage has a name (free-text, any language) and a type — the type drives the actions on the candidate profile, never the name. Capped at 10 stages.",
+    "type": {
+      "standard": "Standard",
+      "review": "Review / Assessment",
+      "interview": "Interview",
+      "offer": "Offer"
+    },
+    "typeDesc": {
+      "standard": "Move & notes only",
+      "review": "Scorecard only — no scheduling",
+      "interview": "Schedule interview · add scorecard · feedback",
+      "offer": "Create & track offer"
+    },
+    "usingDefaults": "Using the built-in default set",
+    "usingDefaultsDesc": "New vacancies start with these stages. Seed them here to customise the set (rename, reorder, add up to 10).",
+    "useDefaults": "Use defaults",
+    "terminal": "Terminal",
+    "addStage": "Add stage",
+    "stagesCount": "{count} of 10 stages · drag to reorder",
+    "applyToEmpty": "Apply to {count, plural, one {# empty vacancy} other {# empty vacancies}}",
+    "applyDialogTitle": "Apply template to {count, plural, one {# empty vacancy} other {# empty vacancies}}?",
+    "applyBody1": "Vacancies with no applications will have their pipeline stages replaced by this template.",
+    "applyBody2": "Vacancies that already have applications (live or archived) are skipped — re-pointing stage IDs on existing applications is risky and not supported here.",
+    "applying": "Applying…",
+    "applyTemplate": "Apply template",
+    "stageRemoved": "Stage removed",
+    "defaultStagesAdded": "Default stages added",
+    "noEmptyVacancies": "No empty vacancies to update",
+    "appliedToN": "Applied template to {count, plural, one {# vacancy} other {# vacancies}}",
+    "nameRequired": "Name is required",
+    "dragNamed": "Drag {name}",
+    "removeNamed": "Remove {name}",
+    "stageName": "Stage name",
+    "stageNamePlaceholder": "e.g. Technical interview",
+    "stageType": "Stage type",
+    "stageTypeHint": "— determines what actions appear on the candidate profile",
+    "terminalHint": "Terminal — candidates in this stage are out of the active pipeline (Hired, Rejected, Withdrawn).",
+    "adding": "Adding…"
+  },
   "interviews": {
     "title": "Interviews",
     "subtitle": "Schedule and manage candidate interviews.",
