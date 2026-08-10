@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import {
   inviteTeamMember,
@@ -71,7 +72,11 @@ export function TeamInvitations({
   teamMembers,
   currentUserId,
 }: TeamInvitationsProps) {
+  const t = useTranslations()
   const router = useRouter()
+  // DB stores role as canonical English; localize the display only.
+  const roleLabel = (r: string) =>
+    r === 'owner' ? t('team.roleOwner') : r === 'admin' ? t('team.roleAdmin') : t('team.roleMember')
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'member' | 'admin'>('member')
   const [isPending, startTransition] = useTransition()
@@ -86,7 +91,7 @@ export function TeamInvitations({
       }
       // Dismissable toast (not a persistent inline banner) + refresh so the
       // new invite appears in the Pending invitations list below.
-      toast.success(`Invitation sent to ${email}`)
+      toast.success(t('team.invitationSent', { email }))
       setEmail('')
       setRole('member')
       router.refresh()
@@ -100,7 +105,7 @@ export function TeamInvitations({
         toast.error(result.error)
         return
       }
-      toast.success(`Invitation to ${inviteeEmail} revoked.`)
+      toast.success(t('team.invitationRevoked', { email: inviteeEmail }))
       router.refresh()
     })
   }
@@ -114,7 +119,7 @@ export function TeamInvitations({
         toast.error(result.error)
         return
       }
-      toast.success(`Invitation resent to ${inviteeEmail}.`)
+      toast.success(t('team.invitationResent', { email: inviteeEmail }))
     })
   }
 
@@ -125,7 +130,7 @@ export function TeamInvitations({
         toast.error(result.error)
         return
       }
-      toast.success(`${member.full_name} is now ${next === 'admin' ? 'an admin' : 'a member'}.`)
+      toast.success(next === 'admin' ? t('team.nowAdmin', { name: member.full_name }) : t('team.nowMember', { name: member.full_name }))
       router.refresh()
     })
   }
@@ -137,14 +142,14 @@ export function TeamInvitations({
         toast.error(result.error)
         return
       }
-      toast.success(`${member.full_name} removed from the team.`)
+      toast.success(t('team.memberRemoved', { name: member.full_name }))
       router.refresh()
     })
   }
 
   const handleReset2fa = async (member: TeamMember) => {
     const res = await adminResetUserFactors(member.id)
-    if (res.success) toast.success(`2FA reset for ${member.full_name}`)
+    if (res.success) toast.success(t('team.twoFaReset', { name: member.full_name }))
     else toast.error(res.error)
   }
 
@@ -154,7 +159,7 @@ export function TeamInvitations({
     <div className="space-y-6">
       {/* Current team members */}
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">Team members</h3>
+        <h3 className="text-sm font-medium text-foreground">{t('team.members')}</h3>
         <ul className="divide-y divide-border rounded-lg border border-border">
           {teamMembers.map((member) => {
             const isSelf = member.id === currentUserId
@@ -169,16 +174,16 @@ export function TeamInvitations({
                     <p className="text-xs text-muted-foreground">{member.email || '—'}</p>
                   </div>
                   {member.mfa_enrolled ? (
-                    <Shield className="h-3.5 w-3.5 text-emerald-600" aria-label="2FA enabled" />
+                    <Shield className="h-3.5 w-3.5 text-emerald-600" aria-label={t('team.twoFaEnabled')} />
                   ) : (
-                    <ShieldOff className="h-3.5 w-3.5 text-muted-foreground" aria-label="2FA off" />
+                    <ShieldOff className="h-3.5 w-3.5 text-muted-foreground" aria-label={t('team.twoFaOff')} />
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="capitalize">
-                    {member.role}
+                  <Badge variant="secondary">
+                    {roleLabel(member.role)}
                   </Badge>
-                  {isSelf && <span className="text-xs text-muted-foreground">(you)</span>}
+                  {isSelf && <span className="text-xs text-muted-foreground">{t('team.you')}</span>}
                   {canManage && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -186,7 +191,7 @@ export function TeamInvitations({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-muted-foreground"
-                          aria-label={`Manage ${member.full_name}`}
+                          aria-label={t('team.manageAria', { name: member.full_name })}
                           disabled={isPending}
                         >
                           <MoreHorizontal className="h-4 w-4" />
@@ -195,16 +200,16 @@ export function TeamInvitations({
                       <DropdownMenuContent align="end" className="w-44">
                         {member.role === 'member' ? (
                           <DropdownMenuItem onSelect={() => handleRoleChange(member, 'admin')}>
-                            Make admin
+                            {t('team.makeAdmin')}
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem onSelect={() => handleRoleChange(member, 'member')}>
-                            Make member
+                            {t('team.makeMember')}
                           </DropdownMenuItem>
                         )}
                         {member.mfa_enrolled && (
                           <DropdownMenuItem onSelect={() => handleReset2fa(member)}>
-                            Reset 2FA
+                            {t('team.reset2fa')}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
@@ -214,24 +219,23 @@ export function TeamInvitations({
                               className="text-destructive focus:text-destructive"
                               onSelect={(e) => e.preventDefault()}
                             >
-                              Remove from team
+                              {t('team.removeFromTeam')}
                             </DropdownMenuItem>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Remove {member.full_name}?</AlertDialogTitle>
+                              <AlertDialogTitle>{t('team.removeConfirmTitle', { name: member.full_name })}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                They&apos;ll lose access to this organization immediately. Their
-                                account isn&apos;t deleted — you can re-invite them later.
+                                {t('team.removeConfirmDesc')}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                               <AlertDialogAction
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 onClick={() => handleRemove(member)}
                               >
-                                Remove
+                                {t('common.remove')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -248,14 +252,14 @@ export function TeamInvitations({
 
       {/* Invite form */}
       <div className="space-y-3">
-        <h3 className="text-sm font-medium text-foreground">Invite a team member</h3>
+        <h3 className="text-sm font-medium text-foreground">{t('team.inviteTitle')}</h3>
         <div className="flex gap-2">
           <div className="flex-1 space-y-1">
-            <Label htmlFor="invite-email" className="sr-only">Email</Label>
+            <Label htmlFor="invite-email" className="sr-only">{t('team.emailLabel')}</Label>
             <Input
               id="invite-email"
               type="email"
-              placeholder="colleague@company.com"
+              placeholder={t('team.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isPending}
@@ -266,23 +270,23 @@ export function TeamInvitations({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="member">Member</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="member">{t('team.roleMember')}</SelectItem>
+              <SelectItem value="admin">{t('team.roleAdmin')}</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={handleInvite} disabled={isPending || !email.trim()}>
             {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-            Invite
+            {t('team.invite')}
           </Button>
         </div>
       </div>
 
       {/* Pending invitations */}
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground">Pending invitations</h3>
+        <h3 className="text-sm font-medium text-foreground">{t('team.pendingInvitations')}</h3>
         {pendingInvitations.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
-            No pending invitations.
+            {t('team.noPending')}
           </p>
         ) : (
           <ul className="divide-y divide-border rounded-lg border border-border">
@@ -291,8 +295,7 @@ export function TeamInvitations({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">{inv.email}</p>
                   <p className="text-xs text-muted-foreground">
-                    <span className="capitalize">{inv.role}</span> · expires{' '}
-                    {formatDistanceToNow(new Date(inv.expires_at), { addSuffix: true })}
+                    {t('team.roleExpires', { role: roleLabel(inv.role), time: formatDistanceToNow(new Date(inv.expires_at), { addSuffix: true }) })}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -308,7 +311,7 @@ export function TeamInvitations({
                     ) : (
                       <RefreshCw className="h-3 w-3" aria-hidden />
                     )}
-                    Resend
+                    {t('team.resend')}
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -317,23 +320,22 @@ export function TeamInvitations({
                         size="icon"
                         className="h-7 w-7 text-muted-foreground hover:text-destructive"
                         disabled={isPending}
-                        aria-label={`Revoke invitation to ${inv.email}`}
+                        aria-label={t('team.revokeAria', { email: inv.email })}
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('team.revokeTitle')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          The invitation to <strong>{inv.email}</strong> will be revoked and the
-                          link will stop working. You can send a new invitation later.
+                          {t.rich('team.revokeDesc', { email: inv.email, b: (c) => <strong>{c}</strong> })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                         <AlertDialogAction onClick={() => handleRevoke(inv.id, inv.email)}>
-                          Revoke
+                          {t('team.revoke')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

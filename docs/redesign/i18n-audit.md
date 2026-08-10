@@ -9,7 +9,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (18) components/candidates/candidate-form.tsx
 - [x] (17) components/settings/email-templates-manager.tsx
 - [ ] (16) components/settings/custom-fields-manager.tsx
-- [ ] (16) components/settings/team-invitations.tsx
+- [x] (16) components/settings/team-invitations.tsx
 - [x] (14) components/candidates/wizard/step-review.tsx
 - [x] (14) components/candidates/wizard/step-application.tsx
 - [ ] (14) components/candidates/merge-candidates-dialog.tsx
