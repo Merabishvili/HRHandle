@@ -1101,6 +1101,76 @@
     "noEduAdded": "No education added yet.",
     "removeEduEntry": "Remove education entry"
   },
+  "emailTpl": {
+    "appReceived": {
+      "label": "Application received",
+      "desc": "Sent to a candidate after they apply via the public apply link.",
+      "preview": "Thanks for applying!"
+    },
+    "interviewInvitation": {
+      "label": "Interview invitation",
+      "desc": "Sent to a candidate when an interview is scheduled with \"Send email\" checked.",
+      "preview": "Interview invitation"
+    },
+    "statusScreening": {
+      "label": "Status: Under review",
+      "desc": "Sent automatically when a recruiter moves an application to the \"Screening\" stage. Disabled by default — toggle on below to opt in. Each candidate gets a link back to their status page.",
+      "preview": "Your application is under review"
+    },
+    "statusInterview": {
+      "label": "Status: Interview stage",
+      "desc": "Sent automatically when a recruiter moves an application to the \"Interview\" stage. Disabled by default — toggle on below to opt in. The recruiter still emails interview details separately.",
+      "preview": "Moving to the interview stage"
+    },
+    "offerSent": {
+      "label": "Offer sent",
+      "desc": "Sent automatically when a recruiter sends an offer to a candidate. Contains a link to the candidate's offer page where they can review the structured terms and accept or decline.",
+      "preview": "You have an offer"
+    },
+    "tab": {
+      "rejection": "Rejection",
+      "statusInterview": "Status: Interview"
+    },
+    "autoOn": "Auto-email is on",
+    "autoOff": "Auto-email is off",
+    "autoOnDesc": "Candidates will receive this email automatically when an application moves to this stage.",
+    "autoOffDesc": "No email will be sent for this transition. Recruiters can still email candidates manually.",
+    "enableAria": "Enable auto-email for this status change",
+    "subjectLine": "Subject line",
+    "subjectPlaceholder": "Email subject...",
+    "messageBody": "Message body",
+    "bodyPlaceholder": "Main message content...",
+    "bodyHint": "This text appears as the main paragraph. The greeting, candidate name, and footer are added automatically.",
+    "saved": "Saved!",
+    "resetDefault": "Reset to default",
+    "preview": "Preview",
+    "subjectPrefix": "Subject:",
+    "previewDear": "Dear <b>{name}</b>,",
+    "pvDate": "Date:",
+    "pvTime": "Time:",
+    "pvDuration": "Duration:",
+    "pvDurationValue": "60 minutes",
+    "pvFormat": "Format:",
+    "pvFormatValue": "Video Call",
+    "sentVia": "Sent via HRHandle"
+  },
+  "rejectTpl": {
+    "templateName": "Template name",
+    "linkedReason": "Linked rejection reason",
+    "noneUnlinked": "None (unlinked)",
+    "subject": "Subject",
+    "reasonLabel": "Reason: {name}",
+    "deleteConfirm": "Delete?",
+    "yes": "Yes",
+    "no": "No",
+    "bodyPrefix": "Body:",
+    "intro": "Link each template to a rejection reason. When rejecting a candidate, the template for the selected reason is pre-filled automatically.",
+    "addTemplate": "Add Template",
+    "empty": "No rejection email templates. A built-in default will be used.",
+    "newTemplate": "New rejection template",
+    "namePlaceholder": "e.g. Standard, Technical Role, Senior Position",
+    "saveTemplate": "Save Template"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

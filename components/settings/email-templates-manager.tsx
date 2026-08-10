@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,39 +20,38 @@ import { RejectionTemplatesManager } from '@/components/settings/rejection-templ
 import type { RejectionTemplate } from '@/lib/actions/rejection-templates'
 import type { RejectionReason } from '@/lib/actions/rejection-reasons'
 
-const TEMPLATE_META: Partial<Record<TemplateType, { label: string; description: string; variables: string[]; previewHeading?: string }>> = {
+// Labels/descriptions/preview headings are looked up by i18n key at render;
+// variables are template tokens (locale-independent) and stay literal.
+const TEMPLATE_META: Partial<Record<TemplateType, { labelKey: string; descKey: string; previewKey: string; variables: string[] }>> = {
   application_received: {
-    label: 'Application received',
-    description: 'Sent to a candidate after they apply via the public apply link.',
+    labelKey: 'emailTpl.appReceived.label',
+    descKey: 'emailTpl.appReceived.desc',
+    previewKey: 'emailTpl.appReceived.preview',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}'],
-    previewHeading: 'Thanks for applying!',
   },
   interview_invitation: {
-    label: 'Interview invitation',
-    description: 'Sent to a candidate when an interview is scheduled with "Send email" checked.',
+    labelKey: 'emailTpl.interviewInvitation.label',
+    descKey: 'emailTpl.interviewInvitation.desc',
+    previewKey: 'emailTpl.interviewInvitation.preview',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{interview_date}}', '{{interview_time}}', '{{meeting_link}}'],
-    previewHeading: 'Interview invitation',
   },
   status_change_screening: {
-    label: 'Status: Under review',
-    description:
-      'Sent automatically when a recruiter moves an application to the "Screening" stage. Disabled by default — toggle on below to opt in. Each candidate gets a link back to their status page.',
+    labelKey: 'emailTpl.statusScreening.label',
+    descKey: 'emailTpl.statusScreening.desc',
+    previewKey: 'emailTpl.statusScreening.preview',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{status_url}}'],
-    previewHeading: 'Your application is under review',
   },
   status_change_interview: {
-    label: 'Status: Interview stage',
-    description:
-      'Sent automatically when a recruiter moves an application to the "Interview" stage. Disabled by default — toggle on below to opt in. The recruiter still emails interview details separately.',
+    labelKey: 'emailTpl.statusInterview.label',
+    descKey: 'emailTpl.statusInterview.desc',
+    previewKey: 'emailTpl.statusInterview.preview',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{status_url}}'],
-    previewHeading: 'Moving to the interview stage',
   },
   offer_sent: {
-    label: 'Offer sent',
-    description:
-      'Sent automatically when a recruiter sends an offer to a candidate. Contains a link to the candidate’s offer page where they can review the structured terms and accept or decline.',
+    labelKey: 'emailTpl.offerSent.label',
+    descKey: 'emailTpl.offerSent.desc',
+    previewKey: 'emailTpl.offerSent.preview',
     variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{offer_url}}'],
-    previewHeading: 'You have an offer',
   },
 }
 
@@ -73,6 +73,7 @@ function TemplateEditor({
   initial: EmailTemplate
   defaults: EmailTemplate
 }) {
+  const t = useTranslations()
   const meta = TEMPLATE_META[type]!
   const [subject, setSubject] = useState(initial.subject)
   const [body, setBody] = useState(initial.body)
@@ -130,7 +131,7 @@ function TemplateEditor({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm text-muted-foreground">{meta.description}</p>
+        <p className="text-sm text-muted-foreground">{t(meta.descKey)}</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {meta.variables.map((v) => (
             <code key={v} className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground font-mono">
@@ -144,19 +145,17 @@ function TemplateEditor({
         <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
           <div>
             <p className="text-sm font-medium text-foreground">
-              {isEnabled ? 'Auto-email is on' : 'Auto-email is off'}
+              {isEnabled ? t('emailTpl.autoOn') : t('emailTpl.autoOff')}
             </p>
             <p className="text-xs text-muted-foreground">
-              {isEnabled
-                ? 'Candidates will receive this email automatically when an application moves to this stage.'
-                : 'No email will be sent for this transition. Recruiters can still email candidates manually.'}
+              {isEnabled ? t('emailTpl.autoOnDesc') : t('emailTpl.autoOffDesc')}
             </p>
           </div>
           <Switch
             checked={isEnabled}
             onCheckedChange={handleToggleEnabled}
             disabled={isPending}
-            aria-label="Enable auto-email for this status change"
+            aria-label={t('emailTpl.enableAria')}
           />
         </div>
       )}
@@ -171,39 +170,39 @@ function TemplateEditor({
         {/* Editor */}
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Subject line</Label>
+            <Label>{t('emailTpl.subjectLine')}</Label>
             <Input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               disabled={isPending}
               maxLength={500}
-              placeholder="Email subject..."
+              placeholder={t('emailTpl.subjectPlaceholder')}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Message body</Label>
+            <Label>{t('emailTpl.messageBody')}</Label>
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               disabled={isPending}
               maxLength={10000}
               rows={6}
-              placeholder="Main message content..."
+              placeholder={t('emailTpl.bodyPlaceholder')}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              This text appears as the main paragraph. The greeting, candidate name, and footer are added automatically.
+              {t('emailTpl.bodyHint')}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={handleSave} disabled={isPending}>
               {isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Save className="mr-2 h-3.5 w-3.5" />}
-              {saved ? 'Saved!' : 'Save'}
+              {saved ? t('emailTpl.saved') : t('common.save')}
             </Button>
             {isModified && (
               <Button size="sm" variant="ghost" onClick={handleReset} disabled={isPending} className="text-muted-foreground">
                 <RotateCcw className="mr-2 h-3.5 w-3.5" />
-                Reset to default
+                {t('emailTpl.resetDefault')}
               </Button>
             )}
           </div>
@@ -211,26 +210,26 @@ function TemplateEditor({
 
         {/* Preview */}
         <div className="space-y-1.5">
-          <Label>Preview</Label>
+          <Label>{t('emailTpl.preview')}</Label>
           <div className="rounded-lg border border-border bg-gray-50 p-4 text-sm space-y-3">
             <div className="text-xs text-muted-foreground">
-              <span className="font-medium">Subject:</span> {previewSubject}
+              <span className="font-medium">{t('emailTpl.subjectPrefix')}</span> {previewSubject}
             </div>
             <div className="border-t border-border pt-3 space-y-2 text-gray-700">
               <p className="font-semibold text-gray-900">
-                {meta.previewHeading ?? meta.label}
+                {t(meta.previewKey)}
               </p>
-              <p>Dear <strong>Jane Smith</strong>,</p>
+              <p>{t.rich('emailTpl.previewDear', { name: 'Jane Smith', b: (c) => <strong>{c}</strong> })}</p>
               <p>{previewBody}</p>
               {type === 'interview_invitation' && (
                 <div className="rounded bg-white border border-border p-2 text-xs space-y-1">
-                  <div><span className="text-gray-500">Date:</span> <strong>Monday, May 5, 2025</strong></div>
-                  <div><span className="text-gray-500">Time:</span> <strong>2:00 PM</strong></div>
-                  <div><span className="text-gray-500">Duration:</span> 60 minutes</div>
-                  <div><span className="text-gray-500">Format:</span> Video Call</div>
+                  <div><span className="text-gray-500">{t('emailTpl.pvDate')}</span> <strong>Monday, May 5, 2025</strong></div>
+                  <div><span className="text-gray-500">{t('emailTpl.pvTime')}</span> <strong>2:00 PM</strong></div>
+                  <div><span className="text-gray-500">{t('emailTpl.pvDuration')}</span> {t('emailTpl.pvDurationValue')}</div>
+                  <div><span className="text-gray-500">{t('emailTpl.pvFormat')}</span> {t('emailTpl.pvFormatValue')}</div>
                 </div>
               )}
-              <p className="text-xs text-gray-400 pt-1 border-t border-gray-100">Sent via HRHandle</p>
+              <p className="text-xs text-gray-400 pt-1 border-t border-gray-100">{t('emailTpl.sentVia')}</p>
             </div>
           </div>
         </div>
@@ -240,15 +239,16 @@ function TemplateEditor({
 }
 
 export function EmailTemplatesManager({ initialTemplates, initialRejectionTemplates, rejectionReasons }: Props) {
+  const t = useTranslations()
   const [activeTab, setActiveTab] = useState<ActiveTab>('application_received')
 
   const tabs: { id: ActiveTab; label: string }[] = [
-    { id: 'application_received', label: 'Application received' },
-    { id: 'interview_invitation', label: 'Interview invitation' },
-    { id: 'rejection', label: 'Rejection' },
-    { id: 'status_change_screening', label: 'Status: Under review' },
-    { id: 'status_change_interview', label: 'Status: Interview' },
-    { id: 'offer_sent', label: 'Offer sent' },
+    { id: 'application_received', label: t('emailTpl.appReceived.label') },
+    { id: 'interview_invitation', label: t('emailTpl.interviewInvitation.label') },
+    { id: 'rejection', label: t('emailTpl.tab.rejection') },
+    { id: 'status_change_screening', label: t('emailTpl.statusScreening.label') },
+    { id: 'status_change_interview', label: t('emailTpl.tab.statusInterview') },
+    { id: 'offer_sent', label: t('emailTpl.offerSent.label') },
   ]
 
   return (

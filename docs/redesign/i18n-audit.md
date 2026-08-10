@@ -7,7 +7,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (20) components/candidate-import/import-wizard.tsx
 - [x] (19) components/candidates/wizard/step-personal.tsx
 - [x] (18) components/candidates/candidate-form.tsx
-- [ ] (17) components/settings/email-templates-manager.tsx
+- [x] (17) components/settings/email-templates-manager.tsx
 - [ ] (16) components/settings/custom-fields-manager.tsx
 - [ ] (16) components/settings/team-invitations.tsx
 - [x] (14) components/candidates/wizard/step-review.tsx
@@ -20,7 +20,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (13) components/candidates/form/recruitment-details-section.tsx
 - [x] (13) components/candidates/wizard/step-experience-education.tsx
 - [ ] (13) components/candidates/ai-notes-extractor.tsx
-- [ ] (13) components/settings/rejection-templates-manager.tsx
+- [x] (13) components/settings/rejection-templates-manager.tsx
 - [ ] (12) app/(dashboard)/settings/billing/page.tsx
 - [ ] (12) components/candidates/experience-section.tsx
 - [ ] (12) components/vacancies/detail/settings-tab.tsx

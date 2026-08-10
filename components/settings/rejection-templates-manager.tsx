@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -37,12 +38,13 @@ function renderRejectionPreview(text: string): string {
 
 /** Live subject + body preview panel, matching the other Email-template tabs. */
 function RejectionPreview({ subject, body }: { subject: string; body: string }) {
+  const tr = useTranslations()
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs">Preview</Label>
+      <Label className="text-xs">{tr('emailTpl.preview')}</Label>
       <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
         <p className="text-foreground">
-          <span className="font-medium">Subject:</span> {renderRejectionPreview(subject) || '—'}
+          <span className="font-medium">{tr('emailTpl.subjectPrefix')}</span> {renderRejectionPreview(subject) || '—'}
         </p>
         <p className="mt-2 whitespace-pre-wrap text-muted-foreground">
           {renderRejectionPreview(body) || '—'}
@@ -68,6 +70,7 @@ function TemplateRow({
   onUpdated: (t: RejectionTemplate) => void
   onDeleted: (id: string) => void
 }) {
+  const tr = useTranslations()
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(template.name)
@@ -120,18 +123,18 @@ function TemplateRow({
       <div className="rounded-lg border border-border bg-accent/30 p-4 space-y-3">
         {error && <p className="text-xs text-destructive">{error}</p>}
         <div className="space-y-1.5">
-          <Label className="text-xs">Template name</Label>
+          <Label className="text-xs">{tr('rejectTpl.templateName')}</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isPending} maxLength={200} className="h-8 text-sm" />
         </div>
         {reasons.length > 0 && (
           <div className="space-y-1.5">
-            <Label className="text-xs">Linked rejection reason</Label>
+            <Label className="text-xs">{tr('rejectTpl.linkedReason')}</Label>
             <Select value={reasonId} onValueChange={setReasonId} disabled={isPending}>
               <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="None (unlinked)" />
+                <SelectValue placeholder={tr('rejectTpl.noneUnlinked')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NO_REASON}>None (unlinked)</SelectItem>
+                <SelectItem value={NO_REASON}>{tr('rejectTpl.noneUnlinked')}</SelectItem>
                 {reasons.map((r) => (
                   <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                 ))}
@@ -140,20 +143,20 @@ function TemplateRow({
           </div>
         )}
         <div className="space-y-1.5">
-          <Label className="text-xs">Subject</Label>
+          <Label className="text-xs">{tr('rejectTpl.subject')}</Label>
           <Input value={subject} onChange={(e) => setSubject(e.target.value)} disabled={isPending} maxLength={500} className="h-8 text-sm" />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">Message body</Label>
+          <Label className="text-xs">{tr('emailTpl.messageBody')}</Label>
           <Textarea value={body} onChange={(e) => setBody(e.target.value)} disabled={isPending} maxLength={10000} rows={4} className="resize-none text-sm" />
         </div>
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={handleCancel} disabled={isPending}>
-            <X className="mr-1.5 h-3.5 w-3.5" /> Cancel
+            <X className="mr-1.5 h-3.5 w-3.5" /> {tr('common.cancel')}
           </Button>
           <Button size="sm" onClick={handleSave} disabled={isPending || !name.trim() || !subject.trim() || !body.trim()}>
             {isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Check className="mr-1.5 h-3.5 w-3.5" />}
-            Save
+            {tr('common.save')}
           </Button>
         </div>
       </div>
@@ -170,7 +173,7 @@ function TemplateRow({
           <span className="text-sm font-medium text-foreground">{template.name}</span>
           {linkedReason && (
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              Reason: {linkedReason.name}
+              {tr('rejectTpl.reasonLabel', { name: linkedReason.name })}
             </span>
           )}
           {expanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -182,11 +185,11 @@ function TemplateRow({
           </Button>
           {confirmDelete ? (
             <>
-              <span className="text-xs text-destructive">Delete?</span>
+              <span className="text-xs text-destructive">{tr('rejectTpl.deleteConfirm')}</span>
               <Button size="sm" variant="destructive" onClick={handleDelete} disabled={isPending} className="h-7 px-2 text-xs">
-                {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Yes'}
+                {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : tr('rejectTpl.yes')}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} className="h-7 px-2 text-xs">No</Button>
+              <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} className="h-7 px-2 text-xs">{tr('rejectTpl.no')}</Button>
             </>
           ) : (
             <Button size="sm" variant="ghost" onClick={handleDelete} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive">
@@ -198,8 +201,8 @@ function TemplateRow({
       {expanded && (
         <div className="space-y-3 border-t border-border px-3 py-3">
           <div className="space-y-1.5 text-sm text-muted-foreground">
-            <p><span className="font-medium text-foreground">Subject:</span> {template.subject}</p>
-            <p className="whitespace-pre-wrap"><span className="font-medium text-foreground">Body:</span> {template.body}</p>
+            <p><span className="font-medium text-foreground">{tr('emailTpl.subjectPrefix')}</span> {template.subject}</p>
+            <p className="whitespace-pre-wrap"><span className="font-medium text-foreground">{tr('rejectTpl.bodyPrefix')}</span> {template.body}</p>
           </div>
           <RejectionPreview subject={template.subject} body={template.body} />
         </div>
@@ -209,6 +212,7 @@ function TemplateRow({
 }
 
 export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) {
+  const tr = useTranslations()
   const [templates, setTemplates] = useState<RejectionTemplate[]>(initialTemplates)
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
@@ -238,7 +242,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            Link each template to a rejection reason. When rejecting a candidate, the template for the selected reason is pre-filled automatically.
+            {tr('rejectTpl.intro')}
           </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {VARIABLES.map((v) => (
@@ -248,7 +252,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
         </div>
         {!adding && (
           <Button size="sm" variant="outline" onClick={() => setAdding(true)} className="shrink-0 ml-4">
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Template
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> {tr('rejectTpl.addTemplate')}
           </Button>
         )}
       </div>
@@ -261,7 +265,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
 
       {templates.length === 0 && !adding && (
         <div className="rounded-lg border border-dashed border-border px-4 py-6 text-center">
-          <p className="text-sm text-muted-foreground">No rejection email templates. A built-in default will be used.</p>
+          <p className="text-sm text-muted-foreground">{tr('rejectTpl.empty')}</p>
         </div>
       )}
 
@@ -281,21 +285,21 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
 
       {adding && (
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-          <p className="text-sm font-medium text-foreground">New rejection template</p>
+          <p className="text-sm font-medium text-foreground">{tr('rejectTpl.newTemplate')}</p>
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="space-y-1.5">
-            <Label className="text-xs">Template name</Label>
-            <Input value={newName} onChange={(e) => setNewName(e.target.value)} disabled={isPending} placeholder="e.g. Standard, Technical Role, Senior Position" maxLength={200} className="text-sm" />
+            <Label className="text-xs">{tr('rejectTpl.templateName')}</Label>
+            <Input value={newName} onChange={(e) => setNewName(e.target.value)} disabled={isPending} placeholder={tr('rejectTpl.namePlaceholder')} maxLength={200} className="text-sm" />
           </div>
           {reasons.length > 0 && (
             <div className="space-y-1.5">
-              <Label className="text-xs">Linked rejection reason</Label>
+              <Label className="text-xs">{tr('rejectTpl.linkedReason')}</Label>
               <Select value={newReasonId} onValueChange={setNewReasonId} disabled={isPending}>
                 <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="None (unlinked)" />
+                  <SelectValue placeholder={tr('rejectTpl.noneUnlinked')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NO_REASON}>None (unlinked)</SelectItem>
+                  <SelectItem value={NO_REASON}>{tr('rejectTpl.noneUnlinked')}</SelectItem>
                   {reasons.map((r) => (
                     <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                   ))}
@@ -304,19 +308,19 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
             </div>
           )}
           <div className="space-y-1.5">
-            <Label className="text-xs">Subject</Label>
+            <Label className="text-xs">{tr('rejectTpl.subject')}</Label>
             <Input value={newSubject} onChange={(e) => setNewSubject(e.target.value)} disabled={isPending} maxLength={500} className="text-sm" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Message body</Label>
+            <Label className="text-xs">{tr('emailTpl.messageBody')}</Label>
             <Textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} disabled={isPending} maxLength={10000} rows={4} className="resize-none text-sm" />
           </div>
           <RejectionPreview subject={newSubject} body={newBody} />
           <div className="flex justify-end gap-2">
-            <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setError(null) }} disabled={isPending}>Cancel</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setError(null) }} disabled={isPending}>{tr('common.cancel')}</Button>
             <Button size="sm" onClick={handleAdd} disabled={isPending || !newName.trim() || !newSubject.trim() || !newBody.trim()}>
               {isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-              Save Template
+              {tr('rejectTpl.saveTemplate')}
             </Button>
           </div>
         </div>
