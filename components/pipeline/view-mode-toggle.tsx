@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { LayoutGrid, List as ListIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -12,11 +13,12 @@ export function ViewModeToggle({
   viewMode: ViewMode
   onChange: (next: ViewMode) => void
 }) {
+  const t = useTranslations()
   return (
     <div
       className="inline-flex overflow-hidden rounded-md border border-border bg-muted/30 text-xs"
       role="group"
-      aria-label="View mode"
+      aria-label={t('pipeline.viewMode')}
     >
       <button
         type="button"
@@ -30,7 +32,7 @@ export function ViewModeToggle({
         )}
       >
         <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
-        Board
+        {t('pipeline.board')}
       </button>
       <button
         type="button"
@@ -44,7 +46,7 @@ export function ViewModeToggle({
         )}
       >
         <ListIcon className="h-3.5 w-3.5" aria-hidden />
-        List
+        {t('pipeline.list')}
       </button>
     </div>
   )

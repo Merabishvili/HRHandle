@@ -2,10 +2,12 @@
 
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { useTranslations } from 'next-intl'
 
 import { CrossVacancyCard, type CrossVacancyCardData } from './cross-vacancy-card'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { cn } from '@/lib/utils'
 
 interface TintedKanbanColumnProps {
@@ -32,6 +34,7 @@ export function TintedKanbanColumn({
   selectedIds,
   onToggleSelect,
 }: TintedKanbanColumnProps) {
+  const t = useTranslations()
   const { setNodeRef } = useDroppable({ id: status.id })
   const style = getStageStyle(status.code)
 
@@ -49,7 +52,7 @@ export function TintedKanbanColumn({
           className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
           style={{ background: style.pillBg, color: style.pillText }}
         >
-          {status.name}
+          {statusLabel(t, status.code, status.name)}
         </span>
         <span
           className="text-[13px] font-semibold tabular-nums"
@@ -78,7 +81,7 @@ export function TintedKanbanColumn({
         </SortableContext>
         {cards.length === 0 && (
           <div className="flex flex-1 items-center justify-center px-2 py-4 text-center text-xs text-muted-foreground/60">
-            No candidates
+            {t('pipeline.noCandidates')}
           </div>
         )}
       </div>

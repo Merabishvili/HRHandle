@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Briefcase, MessageSquare, UserCircle, Loader2 } from 'lucide-react'
 
 import {
@@ -27,6 +28,7 @@ const DEBOUNCE_MS = 200
 // available on every authed page. The keyboard shortcut + trigger button
 // live in <SearchTrigger>; this component is purely the dialog body.
 export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<GlobalSearchResults | null>(null)
@@ -85,14 +87,14 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Search candidates, vacancies, and notes"
-      description="Find anyone or anything in your workspace."
+      title={t('search.title')}
+      description={t('search.desc')}
       // The Command primitive's built-in filter would otherwise hide rows
       // we just fetched. We do the matching server-side.
       shouldFilter={false}
     >
       <CommandInput
-        placeholder="Search candidates, vacancies, and notes…"
+        placeholder={t('search.placeholder')}
         value={query}
         onValueChange={setQuery}
       />
@@ -104,21 +106,21 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
         )}
         {isShort && (
           <CommandEmpty>
-            Keep typing — at least {MIN_QUERY_LENGTH} characters.
+            {t('search.keepTyping', { min: MIN_QUERY_LENGTH })}
           </CommandEmpty>
         )}
         {!isEmpty && !isShort && !results && (
           <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Searching…
+            {t('search.searching')}
           </div>
         )}
         {!isEmpty && !isShort && results && !hasAnyResult && (
-          <CommandEmpty>No matches. Try a different query.</CommandEmpty>
+          <CommandEmpty>{t('search.noMatches')}</CommandEmpty>
         )}
 
         {results && results.candidates.length > 0 && (
-          <CommandGroup heading="Candidates">
+          <CommandGroup heading={t('nav.candidates')}>
             {results.candidates.map((c) => {
               const name = `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim()
               const subtitle =
@@ -145,7 +147,7 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
         )}
 
         {results && results.vacancies.length > 0 && (
-          <CommandGroup heading="Vacancies">
+          <CommandGroup heading={t('nav.vacancies')}>
             {results.vacancies.map((v) => {
               const subtitle =
                 [v.department, v.location].filter(Boolean).join(' · ') || ''
@@ -169,7 +171,7 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
         )}
 
         {results && results.notes.length > 0 && (
-          <CommandGroup heading="Notes">
+          <CommandGroup heading={t('search.notes')}>
             {results.notes.map((n) => {
               const name =
                 `${n.candidate_first_name ?? ''} ${n.candidate_last_name ?? ''}`.trim()
@@ -182,7 +184,7 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
                   <MessageSquare className="text-muted-foreground" aria-hidden />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-foreground">{n.preview}</p>
-                    <p className="truncate text-xs text-muted-foreground">on {name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{t('search.on', { name })}</p>
                   </div>
                 </CommandItem>
               )
@@ -195,13 +197,14 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
 }
 
 function SearchTip() {
+  const t = useTranslations()
   return (
     <div className="px-4 py-6 text-left">
-      <p className="text-sm font-medium text-foreground">Search your workspace</p>
+      <p className="text-sm font-medium text-foreground">{t('search.tipTitle')}</p>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
-        <li>Candidates by name, email, company, or job title</li>
-        <li>Vacancies by title, department, or location</li>
-        <li>Notes by their content</li>
+        <li>{t('search.tipCandidates')}</li>
+        <li>{t('search.tipVacancies')}</li>
+        <li>{t('search.tipNotes')}</li>
       </ul>
     </div>
   )

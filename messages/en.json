@@ -415,6 +415,30 @@
       "advanceFailed": "Failed to advance candidate.",
       "moved": "{count, plural, one {Moved # candidate.} other {Moved # candidates.}}",
       "moveFailedSome": "Failed to move {failed} of {total} candidates."
+    },
+    "board": "Board",
+    "list": "List",
+    "viewMode": "View mode",
+    "noCandidates": "No candidates",
+    "closed": "Closed",
+    "collapse": "collapse",
+    "none": "None",
+    "showClosed": "Show closed outcomes — {summary}",
+    "collapseClosed": "Collapse closed outcomes",
+    "selectNamed": "Select {name}",
+    "dragCandidate": "Drag candidate",
+    "newBadge": "New",
+    "fitScoreAria": "Fit score {score}",
+    "fit": "Fit {score}",
+    "hiredAgo": "Hired {time} ago",
+    "inStage": "{time} in stage",
+    "inStageStale": "{time} in stage · stale",
+    "inStageSource": "{time} in stage · {source}",
+    "reasonAgo": "Reason: {reason} · {time} ago",
+    "timeAgo": "{time} ago",
+    "status": {
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
     }
   },
   "review": {
@@ -716,6 +740,28 @@
     "stageTypeHint": "— determines what actions appear on the candidate profile",
     "terminalHint": "Terminal — candidates in this stage are out of the active pipeline (Hired, Rejected, Withdrawn).",
     "adding": "Adding…"
+  },
+  "search": {
+    "placeholder": "Search candidates, vacancies, and notes…",
+    "title": "Search candidates, vacancies, and notes",
+    "desc": "Find anyone or anything in your workspace.",
+    "keepTyping": "Keep typing — at least {min} characters.",
+    "searching": "Searching…",
+    "noMatches": "No matches. Try a different query.",
+    "notes": "Notes",
+    "on": "on {name}",
+    "tipTitle": "Search your workspace",
+    "tipCandidates": "Candidates by name, email, company, or job title",
+    "tipVacancies": "Vacancies by title, department, or location",
+    "tipNotes": "Notes by their content"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet",
+    "ariaUnread": "Notifications, {count} unread",
+    "errMarkRead": "Could not mark notification as read.",
+    "errMarkAll": "Could not mark notifications as read."
   },
   "interviews": {
     "title": "Interviews",

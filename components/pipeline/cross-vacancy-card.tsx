@@ -3,6 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
@@ -69,24 +70,12 @@ function avatarStyle(seed: string): { background: string; color: string } {
   return { background: hue.bg, color: hue.text }
 }
 
-function fitScorePill(score: number | null): { className: string; label: string } | null {
+function fitScorePill(score: number | null): { className: string; score: string } | null {
   if (score === null) return null
-  if (score >= 7) {
-    return {
-      className: 'bg-[oklch(0.93_0.07_155)] text-[oklch(0.38_0.14_150)]',
-      label: `Fit ${score.toFixed(1)}`,
-    }
-  }
-  if (score >= 5) {
-    return {
-      className: 'bg-[oklch(0.95_0.08_95)] text-[oklch(0.45_0.11_80)]',
-      label: `Fit ${score.toFixed(1)}`,
-    }
-  }
-  return {
-    className: 'bg-[oklch(0.95_0.04_25)] text-[oklch(0.5_0.18_25)]',
-    label: `Fit ${score.toFixed(1)}`,
-  }
+  const s = score.toFixed(1)
+  if (score >= 7) return { className: 'bg-[oklch(0.93_0.07_155)] text-[oklch(0.38_0.14_150)]', score: s }
+  if (score >= 5) return { className: 'bg-[oklch(0.95_0.08_95)] text-[oklch(0.45_0.11_80)]', score: s }
+  return { className: 'bg-[oklch(0.95_0.04_25)] text-[oklch(0.5_0.18_25)]', score: s }
 }
 
 export function CrossVacancyCard({
@@ -94,6 +83,7 @@ export function CrossVacancyCard({
   selected,
   onToggleSelect,
 }: CrossVacancyCardProps) {
+  const t = useTranslations()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: data.applicationId })
 
@@ -122,14 +112,14 @@ export function CrossVacancyCard({
   // flip to the amber "· stale" suffix past the threshold.
   const bottomLabel =
     data.stageCode === 'hired'
-      ? `Hired ${time.label} ago`
+      ? t('pipeline.hiredAgo', { time: time.label })
       : terminal
-        ? `${time.label} in stage`
+        ? t('pipeline.inStage', { time: time.label })
         : isStale
-          ? `${time.label} in stage · stale`
+          ? t('pipeline.inStageStale', { time: time.label })
           : data.source
-            ? `${time.label} in stage · ${data.source}`
-            : `${time.label} in stage`
+            ? t('pipeline.inStageSource', { time: time.label, source: data.source })
+            : t('pipeline.inStage', { time: time.label })
 
   // "New" badge: applies (Applied stage) created within the last 24 hours
   // surface a small pill so the recruiter immediately spots fresh
@@ -151,14 +141,14 @@ export function CrossVacancyCard({
           <Checkbox
             checked={selected}
             onCheckedChange={(v) => onToggleSelect(data.applicationId, v === true)}
-            aria-label={`Select ${data.firstName} ${data.lastName}`}
+            aria-label={t('pipeline.selectNamed', { name: `${data.firstName} ${data.lastName}` })}
             className="mt-1"
           />
           <button
             type="button"
             {...attributes}
             {...listeners}
-            aria-label="Drag candidate"
+            aria-label={t('pipeline.dragCandidate')}
             className="flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-full text-[11px] font-bold active:cursor-grabbing"
             style={{ background: avatar.background, color: avatar.color }}
           >
@@ -174,7 +164,7 @@ export function CrossVacancyCard({
               </Link>
               {isFresh && (
                 <span className="shrink-0 rounded bg-[oklch(0.93_0.05_250)] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-[oklch(0.42_0.16_250)]">
-                  New
+                  {t('pipeline.newBadge')}
                 </span>
               )}
             </div>
@@ -207,9 +197,9 @@ export function CrossVacancyCard({
                 'ml-auto inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums',
                 fit.className,
               )}
-              aria-label={`Fit score ${fit.label}`}
+              aria-label={t('pipeline.fitScoreAria', { score: fit.score })}
             >
-              {fit.label}
+              {t('pipeline.fit', { score: fit.score })}
             </span>
           )}
         </div>

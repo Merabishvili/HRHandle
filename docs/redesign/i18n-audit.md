@@ -1,0 +1,137 @@
+# i18n audit — remaining hardcoded strings
+
+Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are proper nouns/data). Tick files as localized.
+
+- [ ] (25) components/interviews/interview-form.tsx
+- [ ] (21) components/candidates/profile/stage-contextual-block.tsx
+- [ ] (20) components/candidate-import/import-wizard.tsx
+- [ ] (19) components/candidates/wizard/step-personal.tsx
+- [ ] (18) components/candidates/candidate-form.tsx
+- [ ] (17) components/settings/email-templates-manager.tsx
+- [ ] (16) components/settings/custom-fields-manager.tsx
+- [ ] (16) components/settings/team-invitations.tsx
+- [ ] (14) components/candidates/wizard/step-review.tsx
+- [ ] (14) components/candidates/wizard/step-application.tsx
+- [ ] (14) components/candidates/merge-candidates-dialog.tsx
+- [ ] (14) components/offers/offer-panel.tsx
+- [ ] (14) components/offers/offer-form.tsx
+- [ ] (14) components/integrations/webhooks-manager.tsx
+- [ ] (14) components/vacancies/ai-jd-suggest.tsx
+- [ ] (13) components/candidates/form/recruitment-details-section.tsx
+- [ ] (13) components/candidates/wizard/step-experience-education.tsx
+- [ ] (13) components/candidates/ai-notes-extractor.tsx
+- [ ] (13) components/settings/rejection-templates-manager.tsx
+- [ ] (12) app/(dashboard)/settings/billing/page.tsx
+- [ ] (12) components/candidates/experience-section.tsx
+- [ ] (12) components/vacancies/detail/settings-tab.tsx
+- [ ] (12) components/vacancies/detail/overview-tab.tsx
+- [ ] (12) components/vacancies/linkedin-post-job-button.tsx
+- [ ] (11) components/candidates/form/pending-education-card.tsx
+- [ ] (11) components/candidates/form/personal-info-section.tsx
+- [ ] (11) components/candidates/application-evaluation.tsx
+- [ ] (11) components/settings/linkedin-connect.tsx
+- [ ] (11) components/vacancies/ai-bias-check.tsx
+- [ ] (11) components/vacancies/ai-assessment-suggester.tsx
+- [ ] (10) components/candidates/education-section.tsx
+- [ ] (10) components/candidates/form/pending-experience-card.tsx
+- [ ] (10) components/candidates/profile/score-candidate-modal.tsx
+- [ ] (10) components/candidates/profile/ai-fit-card.tsx
+- [ ] (10) components/candidates/ai-summary-panel.tsx
+- [ ] (10) components/settings/notification-preferences-form.tsx
+- [ ] (10) components/pipeline/rejection-dialog.tsx
+- [ ] (10) components/vacancies/vacancy-application-row.tsx
+- [ ] (10) components/vacancies/pipeline-stages-manager.tsx
+- [ ] (10) components/vacancies/detail/jd-tab.tsx
+- [ ] (9) app/(dashboard)/settings/integrations/calendly/page.tsx
+- [ ] (9) components/settings/audit-log-filters.tsx
+- [ ] (9) components/settings/trash-list.tsx
+- [ ] (9) components/landing/pricing-section.tsx
+- [ ] (9) components/shared/column-manager-dialog.tsx
+- [ ] (9) components/vacancies/application-form-tab.tsx
+- [ ] (8) app/(dashboard)/settings/ai-fit/page.tsx
+- [ ] (8) app/(dashboard)/vacancies/[id]/page.tsx
+- [ ] (8) components/candidates/profile/rail-sections.tsx
+- [ ] (8) components/settings/active-sessions-card.tsx
+- [ ] (8) components/scorecards/share-scorecard-dialog.tsx
+- [ ] (7) components/candidates/profile/profile-shell.tsx
+- [ ] (7) components/settings/zoom-connect.tsx
+- [ ] (7) components/settings/audit-log-table.tsx
+- [ ] (7) components/settings/microsoft-connect.tsx
+- [ ] (7) components/settings/google-calendar-connect.tsx
+- [ ] (7) components/pipeline/list-view.tsx
+- [x] (7) components/global-search/global-search-dialog.tsx
+- [ ] (6) components/settings/rejection-reasons-manager.tsx
+- [ ] (6) components/subscription/plan-cards.tsx
+- [ ] (6) components/vacancies/batch-rejection-dialog.tsx
+- [ ] (5) app/(dashboard)/vacancies/[id]/pipeline/page.tsx
+- [ ] (5, partial) app/(dashboard)/vacancies/page.tsx
+- [ ] (5) components/candidates/add-application-dialog.tsx
+- [ ] (5) components/candidates/wizard/candidate-create-wizard.tsx
+- [ ] (5) components/candidates/candidate-table-row.tsx
+- [ ] (5) components/settings/default-meeting-provider-select.tsx
+- [ ] (5) components/settings/change-password-form.tsx
+- [ ] (5) components/settings/danger-zone.tsx
+- [ ] (5) components/subscription/payment-methods.tsx
+- [x] (5) components/dashboard/notifications-bell.tsx
+- [ ] (5) components/vacancies/add-candidate-to-vacancy-dialog.tsx
+- [ ] (4) app/(dashboard)/settings/integrations/page.tsx
+- [ ] (4) components/candidates/metadata-footer.tsx
+- [ ] (4) components/candidates/profile/recent-merge-banner.tsx
+- [ ] (4) components/subscription/billing-controls.tsx
+- [ ] (4) components/vacancies/vacancy-form.tsx
+- [ ] (4) components/vacancies/vacancy-applications-list.tsx
+- [ ] (3) app/(dashboard)/candidates/[id]/edit/page.tsx
+- [ ] (3) app/(dashboard)/candidates/import/page.tsx
+- [ ] (3) app/(dashboard)/interviews/new/page.tsx
+- [ ] (3) components/candidates/activity-feed.tsx
+- [ ] (3) components/candidates/wizard/step-path-select.tsx
+- [ ] (3) components/candidates/profile/active-application-selector.tsx
+- [x] (3) components/pipeline/view-mode-toggle.tsx
+- [x] (3) components/pipeline/terminal-rail.tsx
+- [ ] (3) components/integrations/calendly-link-button.tsx
+- [ ] (3) components/vacancies/detail/vacancy-header.tsx
+- [ ] (3) components/vacancies/screening-questions-card.tsx
+- [ ] (2) app/(dashboard)/settings/audit-log/page.tsx
+- [ ] (2) app/(dashboard)/settings/team/page.tsx
+- [ ] (2) app/(dashboard)/settings/layout.tsx
+- [ ] (2) app/(dashboard)/settings/notifications/page.tsx
+- [ ] (2) app/(dashboard)/settings/rejection-reasons/page.tsx
+- [ ] (2) components/guide/guide-shell.tsx
+- [ ] (2) components/candidates/delete-candidate-dialog.tsx
+- [ ] (2) components/apply/job-description-block.tsx
+- [ ] (2) components/settings/avatar-upload.tsx
+- [ ] (2, partial) components/pipeline/review-mode.tsx
+- [ ] (2, partial) components/dashboard/sidebar.tsx
+- [ ] (2) components/custom-fields/custom-fields-form.tsx
+- [ ] (2) components/interviews/interview-form-parts.tsx
+- [ ] (2) components/vacancies/vacancy-questions.tsx
+- [ ] (2) components/vacancies/copy-apply-link-button.tsx
+- [ ] (2) components/vacancies/vacancy-applications-toolbar.tsx
+- [ ] (2) components/vacancies/delete-vacancy-button.tsx
+- [ ] (1) app/(dashboard)/settings/security/page.tsx
+- [ ] (1) app/(dashboard)/settings/email-templates/page.tsx
+- [ ] (1) app/(dashboard)/settings/trash/page.tsx
+- [ ] (1) app/(dashboard)/settings/integrations/webhooks/page.tsx
+- [ ] (1) app/(dashboard)/settings/custom-fields/page.tsx
+- [ ] (1) app/(dashboard)/layout.tsx
+- [ ] (1) app/(dashboard)/vacancies/[id]/edit/page.tsx
+- [ ] (1) components/guide/guide-card.tsx
+- [ ] (1) components/candidates/delete-candidate-button.tsx
+- [ ] (1) components/candidates/profile/application-history.tsx
+- [ ] (1) components/candidates/profile/repeat-applicant-banner.tsx
+- [ ] (1) components/candidates/profile/stage-tracker.tsx
+- [ ] (1) components/candidates/candidate-applications-list.tsx
+- [ ] (1) components/candidates/candidate-status-actions.tsx
+- [ ] (1, partial) components/offers/offer-body.tsx
+- [x] (1) components/pipeline/cross-vacancy-card.tsx
+- [x] (1) components/pipeline/tinted-kanban-column.tsx
+- [ ] (1, partial) components/pipeline/bulk-bar.tsx
+- [ ] (1) components/pipeline/kanban-board.tsx
+- [ ] (1) components/landing/language-switcher.tsx
+- [ ] (1, partial) components/mfa/enroll-totp-dialog.tsx
+- [ ] (1, partial) components/dashboard/header.tsx
+- [ ] (1) components/integrations/calendly-event-type-picker.tsx
+- [ ] (1) components/notes/mention-textarea.tsx
+- [ ] (1) components/scorecards/share-scorecard-button.tsx
+- [ ] (1) components/vacancies/bulk-move-dialog.tsx
+- [ ] (1) components/vacancies/linkedin-share-button.tsx

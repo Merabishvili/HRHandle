@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { timeInStage } from '@/lib/pipeline/time-in-stage'
 import { toDisplayName } from '@/lib/format-name'
 import { cn } from '@/lib/utils'
@@ -61,10 +63,16 @@ interface TerminalRailProps {
  * cards carry a red spine + the rejection reason; closed cards are dimmed but
  * still selectable, and each column is a drop target.
  *
- * Exported `terminalSummary` is the pure label builder — unit-tested.
+ * Exported `terminalSummary` is the pure label builder — unit-tested. The
+ * optional `labelFor` resolver lets callers localize the outcome name
+ * (Rejected / Withdrawn); it defaults to the raw DB name so the pure test
+ * and any English callers keep working.
  */
-export function terminalSummary(terminals: TerminalCount[]): string {
-  return terminals.map((t) => `${t.name} ${t.count}`).join(' · ')
+export function terminalSummary(
+  terminals: TerminalCount[],
+  labelFor: (t: TerminalCount) => string = (t) => t.name,
+): string {
+  return terminals.map((t) => `${labelFor(t)} ${t.count}`).join(' · ')
 }
 
 export function TerminalRail({
@@ -75,16 +83,17 @@ export function TerminalRail({
   overStatusId,
   isDragging,
 }: TerminalRailProps) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const expanded = open || !!isDragging
-  const summary = terminalSummary(terminals)
+  const summary = terminalSummary(terminals, (term) => statusLabel(t, term.code, term.name))
 
   if (!expanded) {
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`Show closed outcomes — ${summary}`}
+        aria-label={t('pipeline.showClosed', { summary })}
         className="flex w-11 shrink-0 items-center justify-center self-stretch rounded-xl border border-dashed border-border bg-muted/40 py-3 transition-colors hover:bg-muted"
       >
         <span
@@ -104,10 +113,10 @@ export function TerminalRail({
           type="button"
           onClick={() => setOpen(false)}
           className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Collapse closed outcomes"
+          aria-label={t('pipeline.collapseClosed')}
         >
           <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-          <span className="text-[11.5px] font-bold uppercase tracking-[0.05em]">Closed</span>
+          <span className="text-[11.5px] font-bold uppercase tracking-[0.05em]">{t('pipeline.closed')}</span>
         </button>
         {!isDragging && (
           <button
@@ -115,7 +124,7 @@ export function TerminalRail({
             onClick={() => setOpen(false)}
             className="ml-auto text-[11px] text-muted-foreground transition-colors hover:text-foreground"
           >
-            collapse
+            {t('pipeline.collapse')}
           </button>
         )}
       </div>
@@ -149,6 +158,7 @@ function TerminalColumn({
   selectedIds: Set<string>
   onToggleSelect: (id: string, next: boolean) => void
 }) {
+  const t = useTranslations()
   const { setNodeRef } = useDroppable({ id: terminal.statusId })
   const style = getStageStyle(terminal.code)
   return (
@@ -165,7 +175,7 @@ function TerminalColumn({
           className="rounded-md px-2.5 py-0.5 text-[12px] font-semibold"
           style={{ background: style.pillBg, color: style.pillText }}
         >
-          {terminal.name}
+          {statusLabel(t, terminal.code, terminal.name)}
         </span>
         <span className="text-[13px] font-semibold tabular-nums" style={{ color: style.pillText }}>
           {terminal.count}
@@ -174,7 +184,7 @@ function TerminalColumn({
 
       {items.length === 0 ? (
         <div className="flex flex-1 items-center justify-center text-[12px] text-muted-foreground/60">
-          None
+          {t('pipeline.none')}
         </div>
       ) : (
         items.map((c) => (
@@ -205,10 +215,11 @@ function ClosedCard({
   selected: boolean
   onToggleSelect: (id: string, next: boolean) => void
 }) {
+  const t = useTranslations()
   const time = timeInStage(item.inStageSince)
   const metaLabel = item.reason
-    ? `Reason: ${item.reason} · ${time.label} ago`
-    : `${time.label} ago`
+    ? t('pipeline.reasonAgo', { reason: item.reason, time: time.label })
+    : t('pipeline.timeAgo', { time: time.label })
   return (
     <div
       className={cn(
@@ -221,7 +232,7 @@ function ClosedCard({
         <Checkbox
           checked={selected}
           onCheckedChange={(v) => onToggleSelect(item.applicationId, v === true)}
-          aria-label={`Select ${item.name}`}
+          aria-label={t('pipeline.selectNamed', { name: item.name })}
           className="mt-0.5"
         />
         <div className="min-w-0 flex-1">
