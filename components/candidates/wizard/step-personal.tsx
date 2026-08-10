@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { FileText, Loader2, Upload, X } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
@@ -55,6 +56,7 @@ export function StepPersonal({
   cvFile,
   onCvCleared,
 }: StepPersonalProps) {
+  const t = useTranslations()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pending, startTransition] = useTransition()
 
@@ -66,11 +68,11 @@ export function StepPersonal({
     if (!file) return
     const ext = '.' + file.name.split('.').pop()?.toLowerCase()
     if (!['.pdf', '.doc', '.docx'].includes(ext)) {
-      toast.error('Upload a PDF or Word document (.pdf, .doc, .docx).')
+      toast.error(t('candWizard.personal.errFileType'))
       return
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('CV must be 10 MB or smaller.')
+      toast.error(t('candWizard.personal.errFileSize'))
       return
     }
 
@@ -81,7 +83,7 @@ export function StepPersonal({
         const res = await fetch('/api/parse-cv', { method: 'POST', body: fd })
         const json = await res.json()
         if (!json.success || !json.data) {
-          toast.error('Could not read this file — please enter details manually.')
+          toast.error(t('candWizard.personal.errParse'))
           return
         }
         const data: ParsedCVInput = json.data
@@ -98,10 +100,10 @@ export function StepPersonal({
           linkedinUrl: data.linkedin_profile_url ?? value.linkedinUrl,
         })
         onCvParsed(data, file)
-        toast.success('CV parsed — review prefilled fields.')
+        toast.success(t('candWizard.personal.parsedOk'))
       } catch (err) {
         console.error('[wizard] CV parse failed:', err)
-        toast.error('Could not reach the server — please enter details manually.')
+        toast.error(t('candWizard.personal.errServer'))
       }
     })
   }
@@ -114,17 +116,17 @@ export function StepPersonal({
           onClick={() => fileInputRef.current?.click()}
           disabled={pending}
           className="flex w-full items-center justify-center gap-2 rounded-[10px] border-[1.5px] border-dashed border-[oklch(0.8_0.04_250)] bg-[oklch(0.985_0.012_250)] px-4 py-3.5 text-[13px] font-medium text-[oklch(0.45_0.16_250)] transition-colors hover:bg-[oklch(0.96_0.025_250)] disabled:opacity-50"
-          aria-label="Upload CV"
+          aria-label={t('candWizard.personal.uploadCvAria')}
         >
           {pending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              Parsing CV…
+              {t('candWizard.personal.parsing')}
             </>
           ) : (
             <>
               <Upload className="h-4 w-4" aria-hidden />
-              Upload PDF or Word (max 10 MB)
+              {t('candWizard.personal.uploadPrompt')}
             </>
           )}
         </button>
@@ -134,13 +136,16 @@ export function StepPersonal({
         <div className="flex items-center gap-2.5 rounded-[10px] border border-[oklch(0.88_0.05_250)] bg-[oklch(0.985_0.012_250)] px-3.5 py-2.5">
           <FileText className="h-4 w-4 text-[oklch(0.45_0.16_250)]" aria-hidden />
           <span className="flex-1 truncate text-[12.5px] text-foreground">
-            <strong className="font-semibold">{cvFile.name}</strong> parsed — review fields below
+            {t.rich('candWizard.personal.parsedBanner', {
+              name: cvFile.name,
+              b: (chunks) => <strong className="font-semibold">{chunks}</strong>,
+            })}
           </span>
-          <AiDraftTag label="AI-filled · review" />
+          <AiDraftTag label={t('candWizard.personal.aiFilled')} />
           <button
             type="button"
             onClick={onCvCleared}
-            aria-label="Remove uploaded CV"
+            aria-label={t('candWizard.personal.removeCvAria')}
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" aria-hidden />
@@ -157,7 +162,7 @@ export function StepPersonal({
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="first_name" label="First name" required>
+        <Field id="first_name" label={t('candWizard.personal.firstName')} required>
           <Input
             id="first_name"
             autoComplete="given-name"
@@ -166,7 +171,7 @@ export function StepPersonal({
             maxLength={100}
           />
         </Field>
-        <Field id="last_name" label="Last name" required>
+        <Field id="last_name" label={t('candWizard.personal.lastName')} required>
           <Input
             id="last_name"
             autoComplete="family-name"
@@ -178,7 +183,7 @@ export function StepPersonal({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="email" label="Email">
+        <Field id="email" label={t('candWizard.personal.email')}>
           <Input
             id="email"
             type="email"
@@ -190,7 +195,7 @@ export function StepPersonal({
             maxLength={254}
           />
         </Field>
-        <Field id="phone" label="Phone">
+        <Field id="phone" label={t('candWizard.personal.phone')}>
           <Input
             id="phone"
             type="tel"
@@ -205,58 +210,58 @@ export function StepPersonal({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="location" label="Location">
+        <Field id="location" label={t('candWizard.personal.location')}>
           <Input
             id="location"
             value={value.location}
             onChange={(e) => set('location', e.target.value)}
-            placeholder="e.g. San Francisco, USA"
+            placeholder={t('candWizard.personal.phLocation')}
             maxLength={100}
           />
         </Field>
-        <Field id="timezone" label="Timezone">
+        <Field id="timezone" label={t('candWizard.personal.timezone')}>
           <Input
             id="timezone"
             value={value.timezone}
             onChange={(e) => set('timezone', e.target.value)}
-            placeholder="e.g. GMT+1"
+            placeholder={t('candWizard.personal.phTimezone')}
             maxLength={50}
           />
         </Field>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="salary_expectation" label="Salary expectation">
+        <Field id="salary_expectation" label={t('candWizard.personal.salaryExpectation')}>
           <Input
             id="salary_expectation"
             value={value.salaryExpectation}
             onChange={(e) => set('salaryExpectation', e.target.value)}
-            placeholder="e.g. USD 3,000 / mo"
+            placeholder={t('candWizard.personal.phSalary')}
             maxLength={50}
           />
         </Field>
-        <Field id="notice_period" label="Notice period">
+        <Field id="notice_period" label={t('candWizard.personal.noticePeriod')}>
           <Input
             id="notice_period"
             value={value.noticePeriod}
             onChange={(e) => set('noticePeriod', e.target.value)}
-            placeholder="e.g. 1 month"
+            placeholder={t('candWizard.personal.phNotice')}
             maxLength={50}
           />
         </Field>
       </div>
 
-      <Field id="languages" label="Languages">
+      <Field id="languages" label={t('candWizard.personal.languages')}>
         <Input
           id="languages"
           value={value.languages}
           onChange={(e) => set('languages', e.target.value)}
-          placeholder="e.g. English, Spanish, French"
+          placeholder={t('candWizard.personal.phLanguages')}
           maxLength={200}
         />
       </Field>
 
-      <Field id="linkedin" label="LinkedIn">
+      <Field id="linkedin" label={t('candWizard.personal.linkedin')}>
         <Input
           id="linkedin"
           type="url"

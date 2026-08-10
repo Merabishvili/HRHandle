@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Briefcase, GraduationCap, Plus, X } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
@@ -80,6 +81,7 @@ function ExperienceCard({
   parsedFromCv: boolean
   onChange: (next: ExperienceEntryInput[]) => void
 }) {
+  const t = useTranslations()
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState<ExperienceEntryInput>(BLANK_EXP)
 
@@ -91,12 +93,12 @@ function ExperienceCard({
   }
 
   return (
-    <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Experience">
+    <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label={t('candWizard.background.experience')}>
       <header className="mb-3 flex items-center gap-2">
         <Briefcase className="h-4 w-4 text-foreground/70" aria-hidden />
-        <h3 className="text-[15px] font-bold text-foreground">Experience</h3>
+        <h3 className="text-[15px] font-bold text-foreground">{t('candWizard.background.experience')}</h3>
         {parsedFromCv && entries.length > 0 && (
-          <span className="text-[12px] text-muted-foreground">({entries.length} parsed)</span>
+          <span className="text-[12px] text-muted-foreground">{t('candWizard.background.parsedCount', { count: entries.length })}</span>
         )}
         <Button
           type="button"
@@ -106,7 +108,7 @@ function ExperienceCard({
           className="ml-auto h-7 gap-1 text-[12px]"
         >
           {adding ? <X className="h-3 w-3" aria-hidden /> : <Plus className="h-3 w-3" aria-hidden />}
-          {adding ? 'Cancel' : 'Add'}
+          {adding ? t('common.cancel') : t('wizard.add')}
         </Button>
       </header>
 
@@ -118,21 +120,21 @@ function ExperienceCard({
           >
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-semibold text-foreground">
-                {entry.title || 'Untitled role'}
+                {entry.title || t('candWizard.background.untitledRole')}
                 {entry.company && (
                   <span className="text-foreground/70"> · {entry.company}</span>
                 )}
               </p>
               {(entry.start_date || entry.end_date || entry.is_current) && (
                 <p className="text-[11.5px] text-muted-foreground">
-                  {entry.start_date || '?'} — {entry.is_current ? 'Present' : entry.end_date || '?'}
+                  {entry.start_date || '?'} — {entry.is_current ? t('candWizard.background.present') : entry.end_date || '?'}
                 </p>
               )}
             </div>
             <button
               type="button"
               onClick={() => onChange(entries.filter((_, i) => i !== idx))}
-              aria-label={`Remove ${entry.title || 'experience'}`}
+              aria-label={t('wizard.removeNamed', { label: entry.title || t('candWizard.background.expFallback') })}
               className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
             >
               <X className="h-3.5 w-3.5" aria-hidden />
@@ -141,32 +143,32 @@ function ExperienceCard({
         ))}
         {entries.length === 0 && !adding && (
           <p className="rounded-[9px] border border-dashed border-border bg-muted/30 px-3 py-2.5 text-[12.5px] text-muted-foreground">
-            No experience entries yet. Use Add to enter manually, or upload a CV to prefill.
+            {t('candWizard.background.noExpYet')}
           </p>
         )}
       </ul>
 
       {adding && (
         <div className="mt-3 grid gap-2.5 rounded-[9px] border border-dashed border-[oklch(0.85_0.05_250)] bg-[oklch(0.985_0.012_250)] p-3 sm:grid-cols-2">
-          <Field id="exp_title" label="Title">
+          <Field id="exp_title" label={t('candWizard.background.title')}>
             <Input
               id="exp_title"
               value={draft.title}
               onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-              placeholder="e.g. Software Engineer"
+              placeholder={t('candWizard.background.phTitle')}
               className="h-8 text-[12.5px]"
             />
           </Field>
-          <Field id="exp_company" label="Company">
+          <Field id="exp_company" label={t('candWizard.background.company')}>
             <Input
               id="exp_company"
               value={draft.company}
               onChange={(e) => setDraft({ ...draft, company: e.target.value })}
-              placeholder="e.g. Acme Corp"
+              placeholder={t('candWizard.background.phCompany')}
               className="h-8 text-[12.5px]"
             />
           </Field>
-          <Field id="exp_start" label="Start (YYYY-MM)">
+          <Field id="exp_start" label={t('candWizard.background.startYm')}>
             <Input
               id="exp_start"
               value={draft.start_date ?? ''}
@@ -175,18 +177,18 @@ function ExperienceCard({
               className="h-8 text-[12.5px]"
             />
           </Field>
-          <Field id="exp_end" label="End (YYYY-MM)">
+          <Field id="exp_end" label={t('candWizard.background.endYm')}>
             <Input
               id="exp_end"
               value={draft.end_date ?? ''}
               onChange={(e) => setDraft({ ...draft, end_date: e.target.value })}
-              placeholder="Present"
+              placeholder={t('candWizard.background.present')}
               className="h-8 text-[12.5px]"
             />
           </Field>
           <div className="sm:col-span-2 flex justify-end gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={() => { setAdding(false); setDraft(BLANK_EXP) }}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
@@ -194,7 +196,7 @@ function ExperienceCard({
               onClick={submit}
               disabled={!draft.title.trim() && !draft.company.trim()}
             >
-              Save entry
+              {t('candWizard.background.saveEntry')}
             </Button>
           </div>
         </div>
@@ -210,6 +212,7 @@ function EducationCard({
   entries: EducationEntryInput[]
   onChange: (next: EducationEntryInput[]) => void
 }) {
+  const t = useTranslations()
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState<EducationEntryInput>(BLANK_EDU)
 
@@ -221,10 +224,10 @@ function EducationCard({
   }
 
   return (
-    <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Education">
+    <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label={t('candWizard.background.education')}>
       <header className="mb-3 flex items-center gap-2">
         <GraduationCap className="h-4 w-4 text-foreground/70" aria-hidden />
-        <h3 className="text-[15px] font-bold text-foreground">Education</h3>
+        <h3 className="text-[15px] font-bold text-foreground">{t('candWizard.background.education')}</h3>
         <Button
           type="button"
           variant="outline"
@@ -233,7 +236,7 @@ function EducationCard({
           className="ml-auto h-7 gap-1 text-[12px]"
         >
           {adding ? <X className="h-3 w-3" aria-hidden /> : <Plus className="h-3 w-3" aria-hidden />}
-          {adding ? 'Cancel' : 'Add'}
+          {adding ? t('common.cancel') : t('wizard.add')}
         </Button>
       </header>
 
@@ -245,7 +248,7 @@ function EducationCard({
           >
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-semibold text-foreground">
-                {entry.institution || 'Untitled institution'}
+                {entry.institution || t('candWizard.background.untitledInstitution')}
               </p>
               {(entry.degree || entry.field_of_study) && (
                 <p className="text-[11.5px] text-muted-foreground">
@@ -256,7 +259,7 @@ function EducationCard({
             <button
               type="button"
               onClick={() => onChange(entries.filter((_, i) => i !== idx))}
-              aria-label={`Remove ${entry.institution || 'education'}`}
+              aria-label={t('wizard.removeNamed', { label: entry.institution || t('candWizard.background.eduFallback') })}
               className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
             >
               <X className="h-3.5 w-3.5" aria-hidden />
@@ -265,43 +268,43 @@ function EducationCard({
         ))}
         {entries.length === 0 && !adding && (
           <p className="rounded-[9px] border border-dashed border-border bg-muted/30 px-3 py-2.5 text-[12.5px] text-muted-foreground">
-            No education entries yet.
+            {t('candWizard.background.noEduYet')}
           </p>
         )}
       </ul>
 
       {adding && (
         <div className="mt-3 grid gap-2.5 rounded-[9px] border border-dashed border-[oklch(0.85_0.05_250)] bg-[oklch(0.985_0.012_250)] p-3 sm:grid-cols-2">
-          <Field id="edu_institution" label="Institution">
+          <Field id="edu_institution" label={t('candWizard.background.institution')}>
             <Input
               id="edu_institution"
               value={draft.institution}
               onChange={(e) => setDraft({ ...draft, institution: e.target.value })}
-              placeholder="e.g. State University"
+              placeholder={t('candWizard.background.phInstitution')}
               className="h-8 text-[12.5px]"
             />
           </Field>
-          <Field id="edu_degree" label="Degree">
+          <Field id="edu_degree" label={t('candWizard.background.degree')}>
             <Input
               id="edu_degree"
               value={draft.degree ?? ''}
               onChange={(e) => setDraft({ ...draft, degree: e.target.value })}
-              placeholder="e.g. MSc"
+              placeholder={t('candWizard.background.phDegree')}
               className="h-8 text-[12.5px]"
             />
           </Field>
-          <Field id="edu_field" label="Field of study">
+          <Field id="edu_field" label={t('candWizard.background.fieldOfStudy')}>
             <Input
               id="edu_field"
               value={draft.field_of_study ?? ''}
               onChange={(e) => setDraft({ ...draft, field_of_study: e.target.value })}
-              placeholder="e.g. Information Technology"
+              placeholder={t('candWizard.background.phField')}
               className="h-8 text-[12.5px]"
             />
           </Field>
           <div className="sm:col-span-2 flex justify-end gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={() => { setAdding(false); setDraft(BLANK_EDU) }}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
@@ -309,7 +312,7 @@ function EducationCard({
               onClick={submit}
               disabled={!draft.institution.trim()}
             >
-              Save entry
+              {t('candWizard.background.saveEntry')}
             </Button>
           </div>
         </div>

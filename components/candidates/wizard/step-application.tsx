@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { AlertTriangle } from 'lucide-react'
 
 import { Label } from '@/components/ui/label'
@@ -13,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import type { ApplicationStatus } from '@/lib/types/application'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 
 export interface ApplicationState {
   source: string | null
@@ -39,7 +41,17 @@ interface StepApplicationProps {
   onNoteChange: (next: string) => void
 }
 
-const SOURCES = ['LinkedIn', 'Indeed', 'Referral', 'Company Website', 'Job Board', 'Other'] as const
+// Stored value stays canonical English (kept stable in the DB); the label
+// key localizes the display. LinkedIn / Indeed are proper nouns and read
+// the same across locales.
+const SOURCES = [
+  { value: 'LinkedIn', labelKey: null },
+  { value: 'Indeed', labelKey: null },
+  { value: 'Referral', labelKey: 'candWizard.application.srcReferral' },
+  { value: 'Company Website', labelKey: 'candWizard.application.srcCompanyWebsite' },
+  { value: 'Job Board', labelKey: 'candWizard.application.srcJobBoard' },
+  { value: 'Other', labelKey: 'candWizard.application.srcOther' },
+] as const
 
 /**
  * Wave 2.7 candidate wizard — Step 3 / Application & source per
@@ -63,6 +75,7 @@ export function StepApplication({
   note,
   onNoteChange,
 }: StepApplicationProps) {
+  const t = useTranslations()
   const set = <K extends keyof ApplicationState>(key: K, v: ApplicationState[K]) => {
     onChange({ ...value, [key]: v })
   }
@@ -70,42 +83,42 @@ export function StepApplication({
   return (
     <div className="flex max-w-[900px] flex-col gap-4">
       <div>
-        <h2 className="text-[15px] font-bold text-foreground">Recruitment details</h2>
+        <h2 className="text-[15px] font-bold text-foreground">{t('candWizard.application.recruitmentDetails')}</h2>
         <p className="text-[12.5px] text-muted-foreground">
-          Source and which pipeline this candidate enters.
+          {t('candWizard.application.subtitle')}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="source" label="Source">
+        <Field id="source" label={t('candWizard.application.sourceLabel')}>
           <Select
             value={value.source ?? '__none__'}
             onValueChange={(v) => set('source', v === '__none__' ? null : v)}
           >
             <SelectTrigger id="source">
-              <SelectValue placeholder="Select source" />
+              <SelectValue placeholder={t('candWizard.application.selectSource')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">Not specified</SelectItem>
+              <SelectItem value="__none__">{t('candWizard.application.notSpecified')}</SelectItem>
               {SOURCES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
+                <SelectItem key={s.value} value={s.value}>
+                  {s.labelKey ? t(s.labelKey) : s.value}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </Field>
 
-        <Field id="vacancy" label="Initial vacancy">
+        <Field id="vacancy" label={t('candWizard.application.initialVacancy')}>
           <Select
             value={value.vacancyId ?? '__none__'}
             onValueChange={(v) => set('vacancyId', v === '__none__' ? null : v)}
           >
             <SelectTrigger id="vacancy">
-              <SelectValue placeholder="Choose vacancy" />
+              <SelectValue placeholder={t('candWizard.application.chooseVacancy')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">No vacancy yet</SelectItem>
+              <SelectItem value="__none__">{t('candWizard.application.noVacancyYet')}</SelectItem>
               {vacancies.map((v) => (
                 <SelectItem key={v.id} value={v.id}>
                   {v.title}
@@ -119,7 +132,7 @@ export function StepApplication({
       {value.vacancyId && (
         <div>
           <Label className="text-[11.5px] font-medium text-muted-foreground">
-            Starting stage
+            {t('candWizard.application.startingStage')}
           </Label>
           <div className="mt-1.5 flex flex-wrap gap-2">
             {stages.map((stage) => {
@@ -137,16 +150,16 @@ export function StepApplication({
                       : 'border border-[oklch(0.9_0.01_250)] text-foreground/80 hover:bg-muted',
                   )}
                 >
-                  {stage.name}
+                  {statusLabel(t, stage.code, stage.name)}
                   {stage.code === 'applied' && (
-                    <span className="ml-1 text-[10.5px] font-medium text-muted-foreground">default</span>
+                    <span className="ml-1 text-[10.5px] font-medium text-muted-foreground">{t('candWizard.application.default')}</span>
                   )}
                 </button>
               )
             })}
           </div>
           <p className="mt-1.5 text-[11.5px] text-muted-foreground">
-            Sourced someone warm? Drop them straight into a later stage.
+            {t('candWizard.application.warmHint')}
           </p>
         </div>
       )}
@@ -158,14 +171,18 @@ export function StepApplication({
             aria-hidden
           />
           <p className="flex-1 text-[12px] leading-[1.45] text-[oklch(0.4_0.08_55)]">
-            <strong className="font-semibold">Possible duplicate.</strong> This email matches an existing candidate{' '}
-            <a
-              href={`/candidates/${duplicate.candidateId}`}
-              className="font-semibold text-[oklch(0.42_0.12_250)] hover:underline"
-            >
-              {duplicate.candidateName}
-            </a>
-            . Review &amp; merge before adding.
+            {t.rich('candWizard.application.duplicate', {
+              name: duplicate.candidateName,
+              b: (chunks) => <strong className="font-semibold">{chunks}</strong>,
+              link: (chunks) => (
+                <a
+                  href={`/candidates/${duplicate.candidateId}`}
+                  className="font-semibold text-[oklch(0.42_0.12_250)] hover:underline"
+                >
+                  {chunks}
+                </a>
+              ),
+            })}
           </p>
         </div>
       )}
@@ -174,16 +191,16 @@ export function StepApplication({
       <div className="h-px bg-[oklch(0.93_0.01_250)]" />
       <div>
         <h2 className="text-[15px] font-bold text-foreground">
-          Notes <span className="text-[12px] font-normal text-muted-foreground">· optional</span>
+          {t('candWizard.application.notes')} <span className="text-[12px] font-normal text-muted-foreground">{t('candWizard.application.optionalSuffix')}</span>
         </h2>
         <Textarea
           value={note}
           onChange={(e) => onNoteChange(e.target.value)}
-          placeholder="Add an initial note about this candidate…"
+          placeholder={t('candWizard.application.notePlaceholder')}
           rows={4}
           maxLength={2000}
           className="mt-2"
-          aria-label="Initial note"
+          aria-label={t('candWizard.application.noteAria')}
         />
         <p className="mt-1 text-right text-[11px] text-muted-foreground/80">{note.length} / 2000</p>
       </div>

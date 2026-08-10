@@ -5,20 +5,20 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (25) components/interviews/interview-form.tsx
 - [x] (21) components/candidates/profile/stage-contextual-block.tsx
 - [x] (20) components/candidate-import/import-wizard.tsx
-- [ ] (19) components/candidates/wizard/step-personal.tsx
+- [x] (19) components/candidates/wizard/step-personal.tsx
 - [ ] (18) components/candidates/candidate-form.tsx
 - [ ] (17) components/settings/email-templates-manager.tsx
 - [ ] (16) components/settings/custom-fields-manager.tsx
 - [ ] (16) components/settings/team-invitations.tsx
-- [ ] (14) components/candidates/wizard/step-review.tsx
-- [ ] (14) components/candidates/wizard/step-application.tsx
+- [x] (14) components/candidates/wizard/step-review.tsx
+- [x] (14) components/candidates/wizard/step-application.tsx
 - [ ] (14) components/candidates/merge-candidates-dialog.tsx
 - [ ] (14) components/offers/offer-panel.tsx
 - [ ] (14) components/offers/offer-form.tsx
 - [ ] (14) components/integrations/webhooks-manager.tsx
 - [ ] (14) components/vacancies/ai-jd-suggest.tsx
 - [ ] (13) components/candidates/form/recruitment-details-section.tsx
-- [ ] (13) components/candidates/wizard/step-experience-education.tsx
+- [x] (13) components/candidates/wizard/step-experience-education.tsx
 - [ ] (13) components/candidates/ai-notes-extractor.tsx
 - [ ] (13) components/settings/rejection-templates-manager.tsx
 - [ ] (12) app/(dashboard)/settings/billing/page.tsx

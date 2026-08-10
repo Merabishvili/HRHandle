@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Pencil, ChevronRight } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { toDisplayFullName } from '@/lib/format-name'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import type { PersonalState } from './step-personal'
 import type { ApplicationState } from './step-application'
 import type { BackgroundState } from './step-experience-education'
@@ -39,10 +41,11 @@ export function StepReview({
   stages,
   onEditStep,
 }: StepReviewProps) {
+  const t = useTranslations()
   // Both collapsed by default; opening one closes the other (one open at a time).
   const [open, setOpen] = useState<'experience' | 'education' | null>(null)
 
-  const fullName = toDisplayFullName(personal.firstName, personal.lastName) || 'New candidate'
+  const fullName = toDisplayFullName(personal.firstName, personal.lastName) || t('candWizard.review.newCandidate')
   const initials =
     `${personal.firstName[0] ?? ''}${personal.lastName[0] ?? ''}`.toUpperCase() || '?'
   const languages = personal.languages
@@ -55,10 +58,12 @@ export function StepReview({
 
   const vacancyTitle = application.vacancyId
     ? (vacancies.find((v) => v.id === application.vacancyId)?.title ?? '—')
-    : 'No vacancy yet'
-  const stageName =
-    stages.find((s) => s.code === application.startingStageCode)?.name ??
-    application.startingStageCode
+    : t('candWizard.application.noVacancyYet')
+  const stageName = statusLabel(
+    t,
+    application.startingStageCode,
+    stages.find((s) => s.code === application.startingStageCode)?.name ?? application.startingStageCode,
+  )
   const noteCount = note.trim() ? 1 : 0
 
   return (
@@ -79,24 +84,24 @@ export function StepReview({
 
       {/* Contact + Application */}
       <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
-        <FactCard title="Contact & details" onEdit={() => onEditStep('personal')}>
-          <FactRow label="Email" value={personal.email || '—'} />
-          <FactRow label="Phone" value={personal.phone || '—'} />
-          <FactRow label="Salary exp." value={personal.salaryExpectation || '—'} />
-          <FactRow label="Notice" value={personal.noticePeriod || '—'} />
+        <FactCard title={t('candWizard.review.contactDetails')} onEdit={() => onEditStep('personal')}>
+          <FactRow label={t('candWizard.personal.email')} value={personal.email || '—'} />
+          <FactRow label={t('candWizard.personal.phone')} value={personal.phone || '—'} />
+          <FactRow label={t('candWizard.review.salaryExp')} value={personal.salaryExpectation || '—'} />
+          <FactRow label={t('candWizard.review.notice')} value={personal.noticePeriod || '—'} />
         </FactCard>
 
-        <FactCard title="Application" onEdit={() => onEditStep('application')}>
-          <FactRow label="Source" value={application.source || 'Not specified'} />
-          <FactRow label="Vacancy" value={vacancyTitle} />
-          <FactRow label="Starting stage">
+        <FactCard title={t('candWizard.review.application')} onEdit={() => onEditStep('application')}>
+          <FactRow label={t('candWizard.application.sourceLabel')} value={application.source || t('candWizard.application.notSpecified')} />
+          <FactRow label={t('candWizard.review.vacancy')} value={vacancyTitle} />
+          <FactRow label={t('candWizard.application.startingStage')}>
             <span className="rounded-md bg-[oklch(0.93_0.05_250)] px-2 py-0.5 text-[11px] font-bold text-[oklch(0.42_0.16_250)]">
               {stageName}
             </span>
           </FactRow>
           <FactRow
-            label="Note"
-            value={noteCount > 0 ? `${noteCount} note added` : 'None'}
+            label={t('candWizard.review.note')}
+            value={noteCount > 0 ? t('candWizard.review.noteAdded', { count: noteCount }) : t('candWizard.review.none')}
             muted={noteCount === 0}
           />
         </FactCard>
@@ -104,25 +109,25 @@ export function StepReview({
 
       {/* Experience (collapsible) */}
       <CollapsibleSection
-        title="Experience"
-        summary={`${background.experience.length} ${background.experience.length === 1 ? 'role' : 'roles'}`}
+        title={t('candWizard.background.experience')}
+        summary={t('candWizard.review.roles', { count: background.experience.length })}
         isOpen={open === 'experience'}
         onToggle={() => setOpen((o) => (o === 'experience' ? null : 'experience'))}
         onEdit={() => onEditStep('background')}
       >
         {background.experience.length === 0 ? (
-          <p className="text-[12.5px] italic text-muted-foreground/70">None added</p>
+          <p className="text-[12.5px] italic text-muted-foreground/70">{t('candWizard.review.noneAdded')}</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {background.experience.map((e, i) => (
               <li key={i} className="border-t border-[oklch(0.95_0.005_250)] pt-2 first:border-t-0 first:pt-0">
                 <p className="text-[13px] font-semibold text-foreground">
-                  {e.title || 'Untitled role'}
+                  {e.title || t('candWizard.background.untitledRole')}
                   {e.company && <span className="text-foreground/70"> · {e.company}</span>}
                 </p>
                 {(e.start_date || e.end_date || e.is_current) && (
                   <p className="text-[11.5px] text-muted-foreground">
-                    {e.start_date || '?'} — {e.is_current ? 'Present' : e.end_date || '?'}
+                    {e.start_date || '?'} — {e.is_current ? t('candWizard.background.present') : e.end_date || '?'}
                   </p>
                 )}
               </li>
@@ -133,20 +138,20 @@ export function StepReview({
 
       {/* Education (collapsible) */}
       <CollapsibleSection
-        title="Education"
-        summary={`${background.education.length} ${background.education.length === 1 ? 'entry' : 'entries'}`}
+        title={t('candWizard.background.education')}
+        summary={t('candWizard.review.entries', { count: background.education.length })}
         isOpen={open === 'education'}
         onToggle={() => setOpen((o) => (o === 'education' ? null : 'education'))}
         onEdit={() => onEditStep('background')}
       >
         {background.education.length === 0 ? (
-          <p className="text-[12.5px] italic text-muted-foreground/70">None added</p>
+          <p className="text-[12.5px] italic text-muted-foreground/70">{t('candWizard.review.noneAdded')}</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {background.education.map((e, i) => (
               <li key={i} className="border-t border-[oklch(0.95_0.005_250)] pt-2 first:border-t-0 first:pt-0">
                 <p className="text-[13px] font-semibold text-foreground">
-                  {e.institution || 'Untitled institution'}
+                  {e.institution || t('candWizard.background.untitledInstitution')}
                 </p>
                 {(e.degree || e.field_of_study) && (
                   <p className="text-[11.5px] text-muted-foreground">
@@ -163,6 +168,7 @@ export function StepReview({
 }
 
 function EditLink({ onClick }: { onClick: () => void }) {
+  const t = useTranslations()
   return (
     <button
       type="button"
@@ -170,7 +176,7 @@ function EditLink({ onClick }: { onClick: () => void }) {
       className="inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-[oklch(0.42_0.16_250)] transition-colors hover:underline"
     >
       <Pencil className="h-3 w-3" aria-hidden />
-      Edit
+      {t('common.edit')}
     </button>
   )
 }
