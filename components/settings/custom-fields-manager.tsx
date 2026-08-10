@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,13 +37,13 @@ interface Props {
   vacancyGroups: CustomFieldGroupWithFields[]
 }
 
-const FIELD_TYPE_LABELS: Record<FieldType, string> = {
-  text: 'Short text (100 chars)',
-  long_text: 'Long text (5000 chars)',
-  date: 'Date',
-  number: 'Number',
-  dropdown: 'Dropdown',
-  checkbox: 'Yes / No',
+const FIELD_TYPE_LABEL_KEYS: Record<FieldType, string> = {
+  text: 'customFields.typeText',
+  long_text: 'customFields.typeLongText',
+  date: 'customFields.typeDate',
+  number: 'customFields.typeNumber',
+  dropdown: 'customFields.typeDropdown',
+  checkbox: 'customFields.typeCheckbox',
 }
 
 function countFields(groups: CustomFieldGroupWithFields[]) {
@@ -56,6 +57,7 @@ function EntitySection({
   entityType: EntityType
   groups: CustomFieldGroupWithFields[]
 }) {
+  const t = useTranslations()
   const [groups, setGroups] = useState(initialGroups)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
@@ -96,7 +98,7 @@ function EntitySection({
   const handleCreateGroup = () => {
     setGroupError(null)
     const trimmed = newGroupName.trim()
-    if (!trimmed) { setGroupError('Group name is required'); return }
+    if (!trimmed) { setGroupError(t('customFields.errGroupName')); return }
 
     startTransition(async () => {
       const result = await createCustomFieldGroup(entityType, trimmed)
@@ -130,8 +132,8 @@ function EntitySection({
   const handleCreateField = (groupId: string) => {
     setFieldError(null)
     const trimmed = newFieldName.trim()
-    if (!trimmed) { setFieldError('Field name is required'); return }
-    if (atLimit) { setFieldError('20-field limit reached for this entity.'); return }
+    if (!trimmed) { setFieldError(t('customFields.errFieldName')); return }
+    if (atLimit) { setFieldError(t('customFields.errLimit')); return }
 
     const options =
       newFieldType === 'dropdown'
@@ -139,7 +141,7 @@ function EntitySection({
         : undefined
 
     if (newFieldType === 'dropdown' && (!options || options.length === 0)) {
-      setFieldError('Enter at least one option for dropdown fields (comma-separated).')
+      setFieldError(t('customFields.errOptions'))
       return
     }
 
@@ -197,7 +199,7 @@ function EntitySection({
   const handleAddOption = (fieldId: string, groupId: string) => {
     setOptionError(null)
     const trimmed = newOption.trim()
-    if (!trimmed) { setOptionError('Option value is required'); return }
+    if (!trimmed) { setOptionError(t('customFields.errOptionValue')); return }
 
     startTransition(async () => {
       const result = await addDropdownOption(fieldId, trimmed)
@@ -221,20 +223,20 @@ function EntitySection({
     })
   }
 
-  const label = entityType === 'candidate' ? 'Candidate' : 'Vacancy'
+  const label = entityType === 'candidate' ? t('customFields.candidate') : t('customFields.vacancy')
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-foreground">{label} Fields</h3>
+          <h3 className="font-semibold text-foreground">{t('customFields.fieldsHeading', { entity: label })}</h3>
           <p className="text-sm text-muted-foreground">
-            {fieldCount} / 20 fields used
+            {t('customFields.fieldsUsed', { count: fieldCount })}
           </p>
         </div>
         {atLimit && (
           <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-            Limit reached
+            {t('customFields.limitReached')}
           </Badge>
         )}
       </div>
@@ -246,7 +248,7 @@ function EntitySection({
       )}
 
       {groups.length === 0 && (
-        <p className="text-sm text-muted-foreground py-2">No groups yet. Add a group to get started.</p>
+        <p className="text-sm text-muted-foreground py-2">{t('customFields.noGroups')}</p>
       )}
 
       {groups.map((group) => {
@@ -269,7 +271,7 @@ function EntitySection({
                 )}
                 {group.name}
                 <Badge variant="secondary" className="text-xs">
-                  {group.fields.length} field{group.fields.length !== 1 ? 's' : ''}
+                  {t('customFields.fieldCount', { count: group.fields.length })}
                 </Badge>
               </button>
 
@@ -278,7 +280,7 @@ function EntitySection({
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-destructive flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
-                      Delete group and all its fields?
+                      {t('customFields.deleteGroupConfirm')}
                     </span>
                     <Button
                       size="sm"
@@ -286,14 +288,14 @@ function EntitySection({
                       onClick={() => handleDeleteGroup(group.id)}
                       disabled={isPending}
                     >
-                      Confirm
+                      {t('common.confirm')}
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setConfirmDeleteGroupId(null)}
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </Button>
                   </div>
                 ) : (
@@ -313,7 +315,7 @@ function EntitySection({
             {isExpanded && (
               <div className="border-t border-border px-4 py-3 space-y-3">
                 {group.fields.length === 0 && !isAddingField && (
-                  <p className="text-sm text-muted-foreground">No fields in this group.</p>
+                  <p className="text-sm text-muted-foreground">{t('customFields.noFields')}</p>
                 )}
 
                 {group.fields.map((field) => {
@@ -329,11 +331,11 @@ function EntitySection({
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium">{field.name}</span>
                           <Badge variant="secondary" className="text-xs">
-                            {FIELD_TYPE_LABELS[field.field_type as FieldType]}
+                            {t(FIELD_TYPE_LABEL_KEYS[field.field_type as FieldType])}
                           </Badge>
                           {field.is_required && (
                             <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
-                              Required
+                              {t('customFields.required')}
                             </Badge>
                           )}
                         </div>
@@ -342,7 +344,7 @@ function EntitySection({
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-destructive flex items-center gap-1">
                               <AlertTriangle className="h-3 w-3" />
-                              All saved values will be lost.
+                              {t('customFields.deleteFieldWarn')}
                             </span>
                             <Button
                               size="sm"
@@ -350,14 +352,14 @@ function EntitySection({
                               onClick={() => handleDeleteField(field.id, group.id)}
                               disabled={isPending}
                             >
-                              Delete
+                              {t('common.delete')}
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => setConfirmDeleteFieldId(null)}
                             >
-                              Cancel
+                              {t('common.cancel')}
                             </Button>
                           </div>
                         ) : (
@@ -388,7 +390,7 @@ function EntitySection({
                               <Input
                                 value={newOption}
                                 onChange={(e) => setNewOption(e.target.value)}
-                                placeholder="New option"
+                                placeholder={t('customFields.newOption')}
                                 className="h-7 text-sm"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
@@ -403,7 +405,7 @@ function EntitySection({
                                 disabled={isPending}
                                 className="h-7"
                               >
-                                Add
+                                {t('wizard.add')}
                               </Button>
                               <Button
                                 size="sm"
@@ -411,7 +413,7 @@ function EntitySection({
                                 onClick={() => { setAddingOptionFieldId(null); setNewOption(''); setOptionError(null) }}
                                 className="h-7"
                               >
-                                Cancel
+                                {t('common.cancel')}
                               </Button>
                             </div>
                           ) : (
@@ -420,7 +422,7 @@ function EntitySection({
                               onClick={() => { setAddingOptionFieldId(field.id); setOptionError(null) }}
                               className="text-xs text-primary hover:underline"
                             >
-                              + Add option
+                              {t('customFields.addOption')}
                             </button>
                           )}
 
@@ -443,16 +445,16 @@ function EntitySection({
                   <div className="rounded-md border border-dashed border-border p-3 space-y-3">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <Label className="text-xs">Field Name *</Label>
+                        <Label className="text-xs">{t('customFields.fieldName')} *</Label>
                         <Input
                           value={newFieldName}
                           onChange={(e) => setNewFieldName(e.target.value)}
-                          placeholder="e.g. LinkedIn Score"
+                          placeholder={t('customFields.fieldNamePlaceholder')}
                           className="h-8 text-sm"
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Type</Label>
+                        <Label className="text-xs">{t('customFields.type')}</Label>
                         <Select
                           value={newFieldType}
                           onValueChange={(v) => setNewFieldType(v as FieldType)}
@@ -461,8 +463,8 @@ function EntitySection({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(FIELD_TYPE_LABELS).map(([val, lbl]) => (
-                              <SelectItem key={val} value={val}>{lbl}</SelectItem>
+                            {Object.entries(FIELD_TYPE_LABEL_KEYS).map(([val, key]) => (
+                              <SelectItem key={val} value={val}>{t(key)}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -471,11 +473,11 @@ function EntitySection({
 
                     {newFieldType === 'dropdown' && (
                       <div className="space-y-1">
-                        <Label className="text-xs">Options (comma-separated) *</Label>
+                        <Label className="text-xs">{t('customFields.optionsLabel')} *</Label>
                         <Input
                           value={newDropdownOptions}
                           onChange={(e) => setNewDropdownOptions(e.target.value)}
-                          placeholder="Option A, Option B, Option C"
+                          placeholder={t('customFields.optionsPlaceholder')}
                           className="h-8 text-sm"
                         />
                       </div>
@@ -490,7 +492,7 @@ function EntitySection({
                         className="h-3.5 w-3.5"
                       />
                       <label htmlFor={`req-${group.id}`} className="text-xs cursor-pointer">
-                        Mark as required
+                        {t('customFields.markRequired')}
                       </label>
                     </div>
 
@@ -500,7 +502,7 @@ function EntitySection({
                         onClick={() => handleCreateField(group.id)}
                         disabled={isPending || atLimit}
                       >
-                        Add Field
+                        {t('customFields.addField')}
                       </Button>
                       <Button
                         size="sm"
@@ -514,7 +516,7 @@ function EntitySection({
                           setFieldError(null)
                         }}
                       >
-                        Cancel
+                        {t('common.cancel')}
                       </Button>
                     </div>
                   </div>
@@ -526,7 +528,7 @@ function EntitySection({
                       className="flex items-center gap-1 text-sm text-primary hover:underline"
                     >
                       <Plus className="h-3.5 w-3.5" />
-                      Add field
+                      {t('customFields.addFieldLink')}
                     </button>
                   )
                 )}
@@ -541,7 +543,7 @@ function EntitySection({
         <Input
           value={newGroupName}
           onChange={(e) => setNewGroupName(e.target.value)}
-          placeholder={`New ${label.toLowerCase()} group name`}
+          placeholder={t('customFields.newGroupPlaceholder', { entity: label.toLowerCase() })}
           maxLength={100}
           className="h-9 text-sm"
           onKeyDown={(e) => {
@@ -553,7 +555,7 @@ function EntitySection({
         />
         <Button size="sm" onClick={handleCreateGroup} disabled={isPending}>
           <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Add Group
+          {t('customFields.addGroup')}
         </Button>
       </div>
     </div>
@@ -561,23 +563,24 @@ function EntitySection({
 }
 
 export function CustomFieldsManager({ candidateGroups, vacancyGroups }: Props) {
+  const tr = useTranslations()
   const [activeTab, setActiveTab] = useState<EntityType>('candidate')
 
   return (
     <div className="space-y-6">
       <div className="flex gap-2 border-b border-border">
-        {(['candidate', 'vacancy'] as EntityType[]).map((t) => (
+        {(['candidate', 'vacancy'] as EntityType[]).map((tab) => (
           <button
-            key={t}
+            key={tab}
             type="button"
-            onClick={() => setActiveTab(t)}
-            className={`pb-2 px-1 text-sm font-medium capitalize border-b-2 transition-colors ${
-              activeTab === t
+            onClick={() => setActiveTab(tab)}
+            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === tab
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            {t === 'candidate' ? 'Candidates' : 'Vacancies'}
+            {tab === 'candidate' ? tr('nav.candidates') : tr('nav.vacancies')}
           </button>
         ))}
       </div>
