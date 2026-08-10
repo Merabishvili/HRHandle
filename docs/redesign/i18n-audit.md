@@ -12,7 +12,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (16) components/settings/team-invitations.tsx
 - [x] (14) components/candidates/wizard/step-review.tsx
 - [x] (14) components/candidates/wizard/step-application.tsx
-- [ ] (14) components/candidates/merge-candidates-dialog.tsx
+- [x] (14) components/candidates/merge-candidates-dialog.tsx
 - [x] (14) components/offers/offer-panel.tsx
 - [x] (14) components/offers/offer-form.tsx
 - [ ] (14) components/integrations/webhooks-manager.tsx

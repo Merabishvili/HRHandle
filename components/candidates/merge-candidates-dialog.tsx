@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { AlertTriangle, ArrowRight, ChevronLeft, Loader2, Search, Shield } from 'lucide-react'
 
@@ -62,6 +63,7 @@ interface FieldRow {
 }
 
 export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandidatesDialogProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [query, setQuery] = useState('')
@@ -111,7 +113,7 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
     if (!open || step !== 1) return
     let cancelled = false
     setSearching(true)
-    const t = setTimeout(async () => {
+    const handle = setTimeout(async () => {
       const result = await searchMergeCandidates(winner.id, query)
       if (cancelled) return
       setSearching(false)
@@ -120,7 +122,7 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
     }, 250)
     return () => {
       cancelled = true
-      clearTimeout(t)
+      clearTimeout(handle)
     }
   }, [open, step, query, winner.id])
 
@@ -148,62 +150,62 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
     const rows: FieldRow[] = [
       {
         key: 'first_name',
-        label: 'First name',
+        label: t('candWizard.personal.firstName'),
         winnerValue: splitName(winner.full_name).first,
         loserValue: splitName(loser.full_name).first,
       },
       {
         key: 'last_name',
-        label: 'Last name',
+        label: t('candWizard.personal.lastName'),
         winnerValue: splitName(winner.full_name).last,
         loserValue: splitName(loser.full_name).last,
       },
       {
         key: 'email',
-        label: 'Email',
+        label: t('candWizard.personal.email'),
         winnerValue: winner.email,
         loserValue: loser.email,
       },
       {
         key: 'phone',
-        label: 'Phone',
+        label: t('candWizard.personal.phone'),
         winnerValue: winner.phone,
         loserValue: loser.phone,
       },
       {
         key: 'current_company',
-        label: 'Company',
+        label: t('candWizard.background.company'),
         winnerValue: winner.current_company,
         loserValue: loser.current_company ?? loserDetails.current_company ?? null,
       },
       {
         key: 'current_position',
-        label: 'Role',
+        label: t('merge.role'),
         winnerValue: winner.current_position,
         loserValue: loserDetails.current_position ?? null,
       },
       {
         key: 'linkedin_profile_url',
-        label: 'LinkedIn',
+        label: t('candWizard.personal.linkedin'),
         winnerValue: winner.linkedin_profile_url,
         loserValue: loserDetails.linkedin_profile_url ?? null,
       },
       {
         key: 'source',
-        label: 'Source',
+        label: t('candWizard.application.sourceLabel'),
         winnerValue: winner.source,
         loserValue: loserDetails.source ?? null,
       },
       {
         key: 'location',
-        label: 'Location',
+        label: t('candWizard.personal.location'),
         winnerValue: winner.location,
         loserValue: loserDetails.location ?? null,
       },
     ]
     // Only show rows where the values differ — otherwise there's nothing to resolve
     return rows.filter((r) => (r.winnerValue ?? '') !== (r.loserValue ?? ''))
-  }, [winner, loser, loserDetails])
+  }, [winner, loser, loserDetails, t])
 
   const fieldChoices: MergeFieldChoices = useMemo(() => {
     const result: MergeFieldChoices = {}
@@ -228,7 +230,7 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
         toast.error(result.error)
         return
       }
-      toast.success('Candidates merged')
+      toast.success(t('merge.toastMerged'))
       onOpenChange(false)
       router.refresh()
     })
@@ -238,10 +240,12 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl gap-0 p-0">
         <DialogHeader className="flex flex-row items-center gap-3 border-b border-border px-6 py-4">
-          <DialogTitle className="text-base font-bold">Merge candidates</DialogTitle>
+          <DialogTitle className="text-base font-bold">{t('merge.title')}</DialogTitle>
           <span className="text-xs text-muted-foreground">
-            Step {step} of 3 ·{' '}
-            {step === 1 ? 'Pick the duplicate' : step === 2 ? 'Resolve conflicts' : 'Confirm'}
+            {t('merge.stepOf', {
+              step,
+              label: step === 1 ? t('merge.step1') : step === 2 ? t('merge.step2') : t('merge.step3'),
+            })}
           </span>
         </DialogHeader>
 
@@ -290,11 +294,11 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
               className="gap-1"
             >
               <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-              Back
+              {t('common.back')}
             </Button>
           ) : (
             <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           )}
           {step < 3 ? (
@@ -305,7 +309,7 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
               disabled={(step === 1 && !loser) || pending}
               className="gap-1"
             >
-              {step === 1 ? 'Resolve conflicts' : 'Review & merge'}
+              {step === 1 ? t('merge.step2') : t('merge.reviewMerge')}
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </Button>
           ) : (
@@ -319,10 +323,10 @@ export function MergeCandidatesDialog({ open, onOpenChange, winner }: MergeCandi
               {pending ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                  Merging…
+                  {t('merge.merging')}
                 </>
               ) : (
-                'Merge'
+                t('merge.merge')
               )}
             </Button>
           )}
@@ -349,28 +353,29 @@ function Step1({
   selected: MergeCandidateSummary | null
   onSelect: (c: MergeCandidateSummary) => void
 }) {
+  const t = useTranslations()
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Pick the duplicate candidate to fold into <strong className="text-foreground">{winner.full_name}</strong>. Search by name or email — same-email matches surface first.
+        {t.rich('merge.step1Desc', { name: winner.full_name, b: (c) => <strong className="text-foreground">{c}</strong> })}
       </p>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search name or email"
+          placeholder={t('merge.searchPlaceholder')}
           className="pl-9"
         />
       </div>
       {searching && (
         <p className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> Searching…
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> {t('search.searching')}
         </p>
       )}
       {!searching && results.length === 0 && (
         <p className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
-          No duplicates found.
+          {t('merge.noDuplicates')}
         </p>
       )}
       {results.length > 0 && (
@@ -395,7 +400,11 @@ function Step1({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-foreground">{c.full_name}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {c.email ?? 'no email'} · added {new Date(c.created_at).toLocaleDateString()} · {c.applications_count} application{c.applications_count === 1 ? '' : 's'}
+                      {t('merge.resultMeta', {
+                        email: c.email ?? t('merge.noEmail'),
+                        date: new Date(c.created_at).toLocaleDateString(),
+                        count: c.applications_count,
+                      })}
                     </p>
                   </div>
                 </button>
@@ -421,12 +430,13 @@ function Step2({
   choices: Record<string, Choice>
   onChange: (key: string, c: Choice) => void
 }) {
+  const t = useTranslations()
   if (rows.length === 0) {
     return (
       <div className="space-y-4">
         <Heads winner={winner} loser={loser} />
         <div className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
-          No conflicting fields — everything will combine automatically.
+          {t('merge.noConflicts')}
         </div>
       </div>
     )
@@ -434,12 +444,12 @@ function Step2({
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Pick which value to keep for each conflicting field. Everything else (applications, notes, activity, documents, scorecards) combines automatically.
+        {t('merge.step2Desc')}
       </p>
       <div className="grid grid-cols-[110px_1fr_1fr] gap-3">
         <span />
-        <CandidateChip name={winner.full_name} hint="Keep this record" highlight />
-        <CandidateChip name={loser.full_name} hint="Duplicate" />
+        <CandidateChip name={winner.full_name} hint={t('merge.keepRecord')} highlight />
+        <CandidateChip name={loser.full_name} hint={t('merge.duplicate')} />
       </div>
       <div className="-mx-1">
         {rows.map((row) => {
@@ -485,6 +495,7 @@ function Step3({
   acknowledged: boolean
   onAcknowledge: (v: boolean) => void
 }) {
+  const t = useTranslations()
   const changedCount = Object.keys(chosenFields).length
   const showRisks = hasRisks(risks)
   return (
@@ -492,16 +503,16 @@ function Step3({
       <Heads winner={winner} loser={loser} />
       <ul className="space-y-2 text-sm text-foreground">
         <li>
-          <strong>{winner.full_name}</strong> keeps the surviving record.
+          {t.rich('merge.winnerKeeps', { name: winner.full_name, b: (c) => <strong>{c}</strong> })}
         </li>
         <li>
-          <strong>{loser.full_name}</strong> will be soft-deleted.
+          {t.rich('merge.loserDeleted', { name: loser.full_name, b: (c) => <strong>{c}</strong> })}
         </li>
         <li>
-          Applications, notes, documents, activity, scorecards and custom fields combine into the surviving record. Duplicate applications on the same vacancy are archived.
+          {t('merge.combineNote')}
         </li>
         <li>
-          {rowCount === 0 ? 'No conflicting fields to apply.' : `${changedCount} of ${rowCount} conflicting field${rowCount === 1 ? '' : 's'} will use the duplicate's value.`}
+          {rowCount === 0 ? t('merge.noFieldsApply') : t('merge.fieldsApply', { changed: changedCount, total: rowCount })}
         </li>
       </ul>
 
@@ -509,22 +520,22 @@ function Step3({
         <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-3 text-xs text-amber-900">
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span className="font-semibold">Heads up — this merge touches active offers.</span>
+            <span className="font-semibold">{t('merge.riskHeader')}</span>
           </div>
           <ul className="ml-5 list-disc space-y-1">
             {risks.dualOfferVacancyTitles.map((title) => (
               <li key={title}>
-                Both candidates have an active offer on <strong>{title}</strong> — only the surviving record will keep the offer thread; the duplicate&apos;s offer will move under it.
+                {t.rich('merge.riskDualVacancy', { title, b: (c) => <strong>{c}</strong> })}
               </li>
             ))}
             {risks.dualOfferVacancyTitles.length === 0 && risks.winnerHasOffer && risks.loserHasOffer && (
-              <li>Both candidates have active offers — review carefully before combining.</li>
+              <li>{t('merge.riskBothOffers')}</li>
             )}
             {risks.dualOfferVacancyTitles.length === 0 && !risks.winnerHasOffer && risks.loserHasOffer && (
-              <li>The duplicate has an active offer that will move onto this candidate.</li>
+              <li>{t('merge.riskLoserOffer')}</li>
             )}
             {risks.dualOfferVacancyTitles.length === 0 && risks.winnerHasOffer && !risks.loserHasOffer && (
-              <li>This candidate has an active offer; combining will not remove it.</li>
+              <li>{t('merge.riskWinnerOffer')}</li>
             )}
           </ul>
           <label className="flex items-start gap-2 pt-1">
@@ -533,10 +544,10 @@ function Step3({
               checked={acknowledged}
               onChange={(e) => onAcknowledge(e.target.checked)}
               className="mt-0.5 h-3.5 w-3.5 rounded border-amber-400"
-              aria-label="I understand the offer implications"
+              aria-label={t('merge.ackAria')}
             />
             <span className="text-[12px] leading-relaxed">
-              I understand the offer implications and want to proceed.
+              {t('merge.ackText')}
             </span>
           </label>
         </div>
@@ -545,7 +556,7 @@ function Step3({
       <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-3 text-xs text-foreground">
         <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
         <span>
-          <strong>Reversible for 30 days.</strong> A &quot;Merged from {loser.full_name}&quot; entry is written to the audit log; the old candidate ID will redirect here. The merge can be split back from the surviving candidate&apos;s page.
+          {t.rich('merge.reversible', { name: loser.full_name, b: (c) => <strong>{c}</strong> })}
         </span>
       </div>
     </div>
@@ -560,10 +571,11 @@ function hasRisks(risks: MergeRisks | null): boolean {
 }
 
 function Heads({ winner, loser }: { winner: MergeWinnerInfo; loser: MergeCandidateSummary }) {
+  const t = useTranslations()
   return (
     <div className="grid grid-cols-2 gap-3">
-      <CandidateChip name={winner.full_name} hint="Keep this record" highlight />
-      <CandidateChip name={loser.full_name} hint="Duplicate" />
+      <CandidateChip name={winner.full_name} hint={t('merge.keepRecord')} highlight />
+      <CandidateChip name={loser.full_name} hint={t('merge.duplicate')} />
     </div>
   )
 }
@@ -604,6 +616,7 @@ function RadioCell({
   selected: boolean
   onSelect: () => void
 }) {
+  const t = useTranslations()
   return (
     <button
       type="button"
@@ -623,7 +636,7 @@ function RadioCell({
       {value ? (
         <span className="truncate text-sm text-foreground">{value}</span>
       ) : (
-        <span className="text-xs italic text-muted-foreground">empty</span>
+        <span className="text-xs italic text-muted-foreground">{t('merge.empty')}</span>
       )}
     </button>
   )
