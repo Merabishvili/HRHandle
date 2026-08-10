@@ -1439,6 +1439,44 @@
     "malformed": "The AI returned an unexpected response. Try again.",
     "failed": "Could not extract. Try again."
   },
+  "aiBias": {
+    "fieldDescription": "Description",
+    "headerTitle": "AI assist — check inclusive language",
+    "intro": "Scans the description, responsibilities, and requirements for phrases that may deter underrepresented candidates. Advisory only — nothing in your form is changed.",
+    "checking": "Checking…",
+    "reCheck": "Re-check",
+    "runCheck": "Run check",
+    "noIssues": "No inclusive-language issues found across all three fields.",
+    "aiSuggestion": "AI suggestion",
+    "findingCount": "({count, plural, one {# finding} other {# findings}})",
+    "noIssuesIn": "No issues found in: {list}.",
+    "tooThin": "Add some text to the description, responsibilities, or requirements first, then run the check.",
+    "rateLimited": "You've run a lot of checks recently. Try again in a few minutes.",
+    "failed": "Could not run the check. Try again.",
+    "cat": {
+      "gender_coded": "gender-coded",
+      "age_coded": "age-coded",
+      "culture_coded": "culture-coded",
+      "pronoun_bias": "pronoun bias",
+      "discriminatory": "potentially discriminatory",
+      "cultural_fit_code": "vague cultural fit",
+      "other": "other concern"
+    }
+  },
+  "aiAssess": {
+    "headerTitle": "Suggest with AI",
+    "advisory": "Advisory",
+    "intro": "One click drafts <b>both</b> scored attributes and open-ended prompts at once. Review each — nothing is added until you click <b>Add</b> on that specific item.",
+    "contextLabel": "Optional: tell it what to focus on",
+    "contextPlaceholder": "e.g. system-design depth and stakeholder communication.",
+    "generating": "Generating…",
+    "noSuggestions": "No suggestions were generated. Add more detail to the vacancy and try again.",
+    "tooThin": "Not enough context yet. Add a description, responsibilities, or requirements to the vacancy and try again.",
+    "notFound": "Vacancy not found.",
+    "toScorecard": "→ Scorecard",
+    "toInterviewGuide": "→ Interview guide",
+    "added": "Added"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

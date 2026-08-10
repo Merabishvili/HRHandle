@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   Sparkles,
   Loader2,
@@ -48,6 +49,7 @@ export function AiAssessmentSuggester({
   existingPromptLabels,
   canEdit,
 }: AiAssessmentSuggesterProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [contextText, setContextText] = useState('')
   const [panel, setPanel] = useState<PanelState>({ status: 'idle' })
@@ -137,28 +139,26 @@ export function AiAssessmentSuggester({
     <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-5">
       <div className="mb-1 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-primary" />
-        <span className="text-[15px] font-bold text-foreground">Suggest with AI</span>
+        <span className="text-[15px] font-bold text-foreground">{t('aiAssess.headerTitle')}</span>
         <span className="ml-auto text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Advisory
+          {t('aiAssess.advisory')}
         </span>
       </div>
 
       <p className="mb-3 text-xs text-muted-foreground">
-        One click drafts <strong>both</strong> scored attributes and open-ended prompts at
-        once. Review each — nothing is added until you click <strong>Add</strong> on that
-        specific item.
+        {t.rich('aiAssess.intro', { b: (c) => <strong>{c}</strong> })}
       </p>
 
       {canEdit && (
         <div className="space-y-2">
           <Label htmlFor="as-context" className="text-xs font-medium">
-            Optional: tell it what to focus on
+            {t('aiAssess.contextLabel')}
           </Label>
           <Textarea
             id="as-context"
             value={contextText}
             onChange={(e) => setContextText(e.target.value)}
-            placeholder="e.g. system-design depth and stakeholder communication."
+            placeholder={t('aiAssess.contextPlaceholder')}
             rows={2}
             maxLength={1000}
             className="text-sm"
@@ -177,12 +177,12 @@ export function AiAssessmentSuggester({
           {panel.status === 'loading' ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating…
+              {t('aiAssess.generating')}
             </>
           ) : (
             <>
               <Sparkles className="mr-2 h-4 w-4" />
-              Generate
+              {t('aiJd.generate')}
             </>
           )}
         </Button>
@@ -192,7 +192,7 @@ export function AiAssessmentSuggester({
         <div className="mt-4 space-y-2">
           {rows.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              No suggestions were generated. Add more detail to the vacancy and try again.
+              {t('aiAssess.noSuggestions')}
             </p>
           ) : (
             rows.map((row, idx) => (
@@ -216,7 +216,7 @@ export function AiAssessmentSuggester({
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
-                Regenerate
+                {t('aiJd.regenerate')}
               </button>
             </div>
           )}
@@ -227,8 +227,7 @@ export function AiAssessmentSuggester({
         <Alert className="mt-3">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Not enough context yet. Add a description, responsibilities, or requirements
-            to the vacancy and try again.
+            {t('aiAssess.tooThin')}
           </AlertDescription>
         </Alert>
       )}
@@ -236,7 +235,7 @@ export function AiAssessmentSuggester({
       {panel.status === 'rate_limited' && (
         <Alert className="mt-3">
           <AlertDescription>
-            You&apos;ve generated a lot recently. Try again in a few minutes.
+            {t('wizard.suggestRateLimited')}
           </AlertDescription>
         </Alert>
       )}
@@ -244,7 +243,7 @@ export function AiAssessmentSuggester({
       {panel.status === 'no_key' && (
         <Alert className="mt-3">
           <AlertDescription>
-            AI features are not configured on this deployment.
+            {t('wizard.aiNotConfigured')}
           </AlertDescription>
         </Alert>
       )}
@@ -252,20 +251,20 @@ export function AiAssessmentSuggester({
       {panel.status === 'malformed' && (
         <Alert className="mt-3" variant="destructive">
           <AlertDescription>
-            The AI returned an unexpected response. Try again.
+            {t('aiNotes.malformed')}
           </AlertDescription>
         </Alert>
       )}
 
       {panel.status === 'not_found' && (
         <Alert className="mt-3" variant="destructive">
-          <AlertDescription>Vacancy not found.</AlertDescription>
+          <AlertDescription>{t('aiAssess.notFound')}</AlertDescription>
         </Alert>
       )}
 
       {panel.status === 'failed' && (
         <Alert className="mt-3" variant="destructive">
-          <AlertDescription>Could not generate. Try again.</AlertDescription>
+          <AlertDescription>{t('aiJd.failed')}</AlertDescription>
         </Alert>
       )}
 
@@ -287,6 +286,7 @@ interface SuggestionRowItemProps {
 }
 
 function SuggestionRowItem({ row, added, canEdit, isPending, onAdd }: SuggestionRowItemProps) {
+  const t = useTranslations()
   const isSkill = row.kind === 'skill'
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2.5 text-sm">
@@ -298,7 +298,7 @@ function SuggestionRowItem({ row, added, canEdit, isPending, onAdd }: Suggestion
             : 'bg-[oklch(0.93_0.06_300)] text-[oklch(0.45_0.15_300)]',
         )}
       >
-        {isSkill ? '→ Scorecard' : '→ Interview guide'}
+        {isSkill ? t('aiAssess.toScorecard') : t('aiAssess.toInterviewGuide')}
       </span>
       <span className="flex-1 leading-relaxed text-foreground">{row.label}</span>
       {canEdit && (
@@ -314,12 +314,12 @@ function SuggestionRowItem({ row, added, canEdit, isPending, onAdd }: Suggestion
           {added ? (
             <>
               <Check className="h-3.5 w-3.5" />
-              Added
+              {t('aiAssess.added')}
             </>
           ) : (
             <>
               <Plus className="h-3.5 w-3.5" />
-              Add
+              {t('wizard.add')}
             </>
           )}
         </button>

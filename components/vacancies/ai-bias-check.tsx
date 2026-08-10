@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Sparkles,
   Loader2,
@@ -36,25 +37,26 @@ type PanelState =
   | { status: 'malformed' }
   | { status: 'failed' }
 
-const FIELD_LABELS: Record<BiasField, string> = {
-  description: 'Description',
-  responsibilities: 'Responsibilities',
-  requirements: 'Requirements',
+const FIELD_LABEL_KEYS: Record<BiasField, string> = {
+  description: 'aiBias.fieldDescription',
+  responsibilities: 'apply.responsibilities',
+  requirements: 'apply.requirements',
 }
 
-const CATEGORY_LABELS: Record<BiasCategory, string> = {
-  gender_coded: 'gender-coded',
-  age_coded: 'age-coded',
-  culture_coded: 'culture-coded',
-  pronoun_bias: 'pronoun bias',
-  discriminatory: 'potentially discriminatory',
-  cultural_fit_code: 'vague cultural fit',
-  other: 'other concern',
+const CATEGORY_LABEL_KEYS: Record<BiasCategory, string> = {
+  gender_coded: 'aiBias.cat.gender_coded',
+  age_coded: 'aiBias.cat.age_coded',
+  culture_coded: 'aiBias.cat.culture_coded',
+  pronoun_bias: 'aiBias.cat.pronoun_bias',
+  discriminatory: 'aiBias.cat.discriminatory',
+  cultural_fit_code: 'aiBias.cat.cultural_fit_code',
+  other: 'aiBias.cat.other',
 }
 
 const FIELD_ORDER: BiasField[] = ['description', 'responsibilities', 'requirements']
 
 export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
+  const t = useTranslations()
   const [isOpen, setIsOpen] = useState(false)
   const [panel, setPanel] = useState<PanelState>({ status: 'idle' })
   const [copied, setCopied] = useState<string | null>(null)
@@ -121,9 +123,9 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
         aria-expanded={isOpen}
       >
         <Sparkles className="h-4 w-4 text-primary" />
-        <span>AI assist — check inclusive language</span>
+        <span>{t('aiBias.headerTitle')}</span>
         <span className="ml-auto text-[11px] uppercase tracking-wide text-muted-foreground">
-          Assistant
+          {t('aiJd.assistant')}
         </span>
         {isOpen ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -135,9 +137,7 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
       {isOpen && (
         <div className="space-y-4 border-t border-primary/20 px-4 py-4">
           <p className="text-xs text-muted-foreground">
-            Scans the description, responsibilities, and requirements for phrases that
-            may deter underrepresented candidates. Advisory only — nothing in your form
-            is changed.
+            {t('aiBias.intro')}
           </p>
 
           <Button
@@ -150,17 +150,17 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
             {panel.status === 'loading' ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Checking…
+                {t('aiBias.checking')}
               </>
             ) : panel.status === 'ok' ? (
               <>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Re-check
+                {t('aiBias.reCheck')}
               </>
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Run check
+                {t('aiBias.runCheck')}
               </>
             )}
           </Button>
@@ -170,7 +170,7 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
             <div className="flex items-start gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-green-800 dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-300">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
               <p className="text-sm">
-                No inclusive-language issues found across all three fields.
+                {t('aiBias.noIssues')}
               </p>
             </div>
           )}
@@ -178,7 +178,7 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
           {panel.status === 'ok' && totalFindings > 0 && (
             <div className="space-y-3">
               <div>
-                <AiDraftTag label="AI suggestion" />
+                <AiDraftTag label={t('aiBias.aiSuggestion')} />
               </div>
 
               {FIELD_ORDER.map((field) => {
@@ -190,9 +190,9 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
                     className="rounded-md border border-border bg-background p-3"
                   >
                     <p className="mb-2 text-xs font-semibold text-foreground">
-                      {FIELD_LABELS[field]}{' '}
+                      {t(FIELD_LABEL_KEYS[field])}{' '}
                       <span className="font-normal text-muted-foreground">
-                        ({items.length} {items.length === 1 ? 'finding' : 'findings'})
+                        {t('aiBias.findingCount', { count: items.length })}
                       </span>
                     </p>
                     <ul className="space-y-3">
@@ -208,7 +208,7 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
                                 &ldquo;{finding.phrase}&rdquo;
                               </span>
                               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] uppercase tracking-wide text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                                {CATEGORY_LABELS[finding.category]}
+                                {t(CATEGORY_LABEL_KEYS[finding.category])}
                               </span>
                             </div>
                             <p className="mt-1 text-[13px] text-muted-foreground">
@@ -229,12 +229,12 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
                                 {copied === key ? (
                                   <>
                                     <Check className="mr-1 h-3 w-3" />
-                                    Copied
+                                    {t('offer.copied')}
                                   </>
                                 ) : (
                                   <>
                                     <Copy className="mr-1 h-3 w-3" />
-                                    Copy
+                                    {t('aiJd.copy')}
                                   </>
                                 )}
                               </Button>
@@ -250,11 +250,11 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
               {/* "no issues" hint per field that came back clean */}
               {FIELD_ORDER.filter((f) => byField[f].length === 0).length > 0 && (
                 <p className="text-[11px] text-muted-foreground">
-                  No issues found in:{' '}
-                  {FIELD_ORDER.filter((f) => byField[f].length === 0)
-                    .map((f) => FIELD_LABELS[f])
-                    .join(', ')}
-                  .
+                  {t('aiBias.noIssuesIn', {
+                    list: FIELD_ORDER.filter((f) => byField[f].length === 0)
+                      .map((f) => t(FIELD_LABEL_KEYS[f]))
+                      .join(', '),
+                  })}
                 </p>
               )}
             </div>
@@ -265,8 +265,7 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Add some text to the description, responsibilities, or requirements first,
-                then run the check.
+                {t('aiBias.tooThin')}
               </AlertDescription>
             </Alert>
           )}
@@ -274,7 +273,7 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
           {panel.status === 'rate_limited' && (
             <Alert>
               <AlertDescription>
-                You&apos;ve run a lot of checks recently. Try again in a few minutes.
+                {t('aiBias.rateLimited')}
               </AlertDescription>
             </Alert>
           )}
@@ -282,7 +281,7 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
           {panel.status === 'no_key' && (
             <Alert>
               <AlertDescription>
-                AI features are not configured on this deployment.
+                {t('wizard.aiNotConfigured')}
               </AlertDescription>
             </Alert>
           )}
@@ -290,14 +289,14 @@ export function AiBiasCheck({ getFormSnapshot }: AiBiasCheckProps) {
           {panel.status === 'malformed' && (
             <Alert variant="destructive">
               <AlertDescription>
-                The AI returned an unexpected response. Try again.
+                {t('aiNotes.malformed')}
               </AlertDescription>
             </Alert>
           )}
 
           {panel.status === 'failed' && (
             <Alert variant="destructive">
-              <AlertDescription>Could not run the check. Try again.</AlertDescription>
+              <AlertDescription>{t('aiBias.failed')}</AlertDescription>
             </Alert>
           )}
         </div>

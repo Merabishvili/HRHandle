@@ -30,8 +30,8 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (11) components/candidates/form/personal-info-section.tsx
 - [ ] (11) components/candidates/application-evaluation.tsx
 - [ ] (11) components/settings/linkedin-connect.tsx
-- [ ] (11) components/vacancies/ai-bias-check.tsx
-- [ ] (11) components/vacancies/ai-assessment-suggester.tsx
+- [x] (11) components/vacancies/ai-bias-check.tsx
+- [x] (11) components/vacancies/ai-assessment-suggester.tsx
 - [ ] (10) components/candidates/education-section.tsx
 - [x] (10) components/candidates/form/pending-experience-card.tsx
 - [ ] (10) components/candidates/profile/score-candidate-modal.tsx
