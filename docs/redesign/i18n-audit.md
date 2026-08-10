@@ -4,7 +4,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 
 - [x] (25) components/interviews/interview-form.tsx
 - [x] (21) components/candidates/profile/stage-contextual-block.tsx
-- [ ] (20) components/candidate-import/import-wizard.tsx
+- [x] (20) components/candidate-import/import-wizard.tsx
 - [ ] (19) components/candidates/wizard/step-personal.tsx
 - [ ] (18) components/candidates/candidate-form.tsx
 - [ ] (17) components/settings/email-templates-manager.tsx

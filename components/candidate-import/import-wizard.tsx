@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import Papa from 'papaparse'
 import { Upload, Download, FileText, ArrowLeft, AlertTriangle, CheckCircle2 } from 'lucide-react'
@@ -51,6 +52,7 @@ interface ValidationSummary {
 }
 
 export function ImportWizard() {
+  const t = useTranslations()
   const router = useRouter()
   const [step, setStep] = useState<Step>('upload')
   const [error, setError] = useState<string | null>(null)
@@ -72,29 +74,29 @@ export function ImportWizard() {
   function onFile(file: File) {
     setError(null)
     if (file.size > MAX_FILE_BYTES) {
-      setError(`File too large. Max ${Math.round(MAX_FILE_BYTES / (1024 * 1024))}MB.`)
+      setError(t('csvImport.errTooLarge', { mb: Math.round(MAX_FILE_BYTES / (1024 * 1024)) }))
       return
     }
     Papa.parse<string[]>(file, {
       skipEmptyLines: true,
       complete: (results) => {
         if (results.errors.length > 0) {
-          setError(`Parse error: ${results.errors[0]?.message ?? 'unknown'}`)
+          setError(t('csvImport.errParse', { message: results.errors[0]?.message ?? 'unknown' }))
           return
         }
         const data = results.data as string[][]
         if (data.length === 0) {
-          setError('File is empty')
+          setError(t('csvImport.errEmpty'))
           return
         }
         const headers = (data[0] ?? []).map((h) => String(h ?? ''))
         const rows = data.slice(1)
         if (rows.length === 0) {
-          setError('No data rows found after header')
+          setError(t('csvImport.errNoRows'))
           return
         }
         if (rows.length > MAX_ROWS) {
-          setError(`Too many rows. Max ${MAX_ROWS}.`)
+          setError(t('csvImport.errTooManyRows', { max: MAX_ROWS }))
           return
         }
         setParsed({ filename: file.name, headers, rows })
@@ -102,7 +104,7 @@ export function ImportWizard() {
         setStep('map')
       },
       error: (err) => {
-        setError(`Parse error: ${err.message}`)
+        setError(t('csvImport.errParse', { message: err.message }))
       },
     })
   }
@@ -130,7 +132,7 @@ export function ImportWizard() {
     if (!parsed) return
     const { validRows, failures } = buildValidation()
     if (validRows.length === 0) {
-      setError('No rows passed validation. Fix errors and try again.')
+      setError(t('csvImport.errNoneValid'))
       setFailures(failures)
       return
     }
@@ -179,7 +181,7 @@ export function ImportWizard() {
         onBack={reset}
         onNext={() => {
           if (missing.length > 0) {
-            setError(`Missing required field${missing.length === 1 ? '' : 's'}: ${missing.map((f) => IMPORT_FIELD_LABELS[f]).join(', ')}`)
+            setError(t('csvImport.errMissingFields', { count: missing.length, fields: missing.map((f) => IMPORT_FIELD_LABELS[f]).join(', ') }))
             return
           }
           setError(null)
@@ -218,17 +220,18 @@ export function ImportWizard() {
 }
 
 function UploadStep({ onFile, error }: { onFile: (f: File) => void; error: string | null }) {
+  const t = useTranslations()
   const [dragging, setDragging] = useState(false)
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Upload a CSV with up to {MAX_ROWS} candidates. Required: first name, last name, email.
+          {t('csvImport.uploadHint', { max: MAX_ROWS })}
         </p>
         <Button asChild variant="outline" size="sm" className="gap-2">
           <a href="/hrhandle-candidates-template.csv" download>
             <Download className="h-4 w-4" />
-            Download template
+            {t('csvImport.downloadTemplate')}
           </a>
         </Button>
       </div>
@@ -251,8 +254,8 @@ function UploadStep({ onFile, error }: { onFile: (f: File) => void; error: strin
           }}
         >
           <Upload className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm font-medium">Drag a CSV file here</p>
-          <p className="text-xs text-muted-foreground">or</p>
+          <p className="text-sm font-medium">{t('csvImport.dragHere')}</p>
+          <p className="text-xs text-muted-foreground">{t('csvImport.or')}</p>
           <label className="cursor-pointer">
             <input
               type="file"
@@ -265,10 +268,10 @@ function UploadStep({ onFile, error }: { onFile: (f: File) => void; error: strin
               }}
             />
             <span className="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 text-sm font-medium hover:bg-accent">
-              Choose file
+              {t('csvImport.chooseFile')}
             </span>
           </label>
-          <p className="text-xs text-muted-foreground">Max {Math.round(MAX_FILE_BYTES / (1024 * 1024))}MB</p>
+          <p className="text-xs text-muted-foreground">{t('csvImport.maxSize', { mb: Math.round(MAX_FILE_BYTES / (1024 * 1024)) })}</p>
         </CardContent>
       </Card>
 
@@ -297,6 +300,7 @@ function MapStep({
   onNext: () => void
   error: string | null
 }) {
+  const t = useTranslations()
   function updateMapping(idx: number, value: string) {
     const next = [...mapping]
     const field = value === '__none__' ? null : (value as ImportField)
@@ -313,10 +317,10 @@ function MapStep({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold">Map columns</h2>
+          <h2 className="text-base font-semibold">{t('csvImport.mapColumns')}</h2>
           <p className="text-sm text-muted-foreground">
             <FileText className="mr-1 inline h-3 w-3" />
-            {parsed.filename} — {parsed.rows.length} row{parsed.rows.length === 1 ? '' : 's'}
+            {t('csvImport.fileRows', { filename: parsed.filename, count: parsed.rows.length })}
           </p>
         </div>
       </div>
@@ -326,9 +330,9 @@ function MapStep({
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/40">
               <tr>
-                <th className="px-4 py-2 text-left font-medium">CSV column</th>
-                <th className="px-4 py-2 text-left font-medium">Sample</th>
-                <th className="px-4 py-2 text-left font-medium">Map to field</th>
+                <th className="px-4 py-2 text-left font-medium">{t('csvImport.csvColumn')}</th>
+                <th className="px-4 py-2 text-left font-medium">{t('csvImport.sample')}</th>
+                <th className="px-4 py-2 text-left font-medium">{t('csvImport.mapToField')}</th>
               </tr>
             </thead>
             <tbody>
@@ -336,7 +340,7 @@ function MapStep({
                 const sample = parsed.rows[0]?.[idx] ?? ''
                 return (
                   <tr key={idx} className="border-b last:border-0">
-                    <td className="px-4 py-2 font-medium">{h || <span className="text-muted-foreground">(blank)</span>}</td>
+                    <td className="px-4 py-2 font-medium">{h || <span className="text-muted-foreground">{t('csvImport.blank')}</span>}</td>
                     <td className="max-w-[240px] truncate px-4 py-2 text-muted-foreground">{sample}</td>
                     <td className="px-4 py-2">
                       <Select value={mapping[idx] ?? '__none__'} onValueChange={(v) => updateMapping(idx, v)}>
@@ -344,7 +348,7 @@ function MapStep({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="__none__">— Ignore —</SelectItem>
+                          <SelectItem value="__none__">{t('csvImport.ignore')}</SelectItem>
                           {IMPORT_FIELDS.map((f) => (
                             <SelectItem key={f} value={f}>
                               {IMPORT_FIELD_LABELS[f]}
@@ -372,9 +376,9 @@ function MapStep({
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={onBack} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
-          Start over
+          {t('csvImport.startOver')}
         </Button>
-        <Button onClick={onNext}>Preview import</Button>
+        <Button onClick={onNext}>{t('csvImport.previewImport')}</Button>
       </div>
     </div>
   )
@@ -393,6 +397,7 @@ function PreviewStep({
   isPending: boolean
   error: string | null
 }) {
+  const t = useTranslations()
   const previewValid = summary.validRows.slice(0, 10)
   const previewFailures = summary.failures.slice(0, 10)
   const hasErrors = summary.failures.length > 0
@@ -400,9 +405,9 @@ function PreviewStep({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-base font-semibold">Preview</h2>
+        <h2 className="text-base font-semibold">{t('csvImport.preview')}</h2>
         <p className="text-sm text-muted-foreground">
-          {summary.validRows.length} valid · {summary.failures.length} with errors · duplicates will be skipped
+          {t('csvImport.previewSummary', { valid: summary.validRows.length, errors: summary.failures.length })}
         </p>
       </div>
 
@@ -410,16 +415,16 @@ function PreviewStep({
         <Card>
           <CardContent className="p-0 overflow-x-auto">
             <div className="border-b px-4 py-2 text-sm font-medium">
-              First {previewValid.length} valid row{previewValid.length === 1 ? '' : 's'}
+              {t('csvImport.firstValidRows', { count: previewValid.length })}
             </div>
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-xs">
                 <tr>
-                  <th className="px-3 py-2 text-left">Row</th>
-                  <th className="px-3 py-2 text-left">Name</th>
-                  <th className="px-3 py-2 text-left">Email</th>
-                  <th className="px-3 py-2 text-left">Company</th>
-                  <th className="px-3 py-2 text-left">Position</th>
+                  <th className="px-3 py-2 text-left">{t('csvImport.row')}</th>
+                  <th className="px-3 py-2 text-left">{t('csvImport.name')}</th>
+                  <th className="px-3 py-2 text-left">{t('csvImport.email')}</th>
+                  <th className="px-3 py-2 text-left">{t('csvImport.company')}</th>
+                  <th className="px-3 py-2 text-left">{t('csvImport.position')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -450,14 +455,14 @@ function PreviewStep({
             <div className="flex items-center justify-between border-b px-4 py-2">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <AlertTriangle className="h-4 w-4 text-destructive" />
-                {summary.failures.length} row{summary.failures.length === 1 ? '' : 's'} with errors (will be skipped)
+                {t('csvImport.rowsWithErrors', { count: summary.failures.length })}
               </div>
             </div>
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-xs">
                 <tr>
-                  <th className="px-3 py-2 text-left">Row</th>
-                  <th className="px-3 py-2 text-left">Error</th>
+                  <th className="px-3 py-2 text-left">{t('csvImport.row')}</th>
+                  <th className="px-3 py-2 text-left">{t('csvImport.error')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -471,7 +476,7 @@ function PreviewStep({
             </table>
             {summary.failures.length > previewFailures.length && (
               <div className="border-t px-4 py-2 text-xs text-muted-foreground">
-                ...and {summary.failures.length - previewFailures.length} more — the error report after import will list all of them.
+                {t('csvImport.andMore', { count: summary.failures.length - previewFailures.length })}
               </div>
             )}
           </CardContent>
@@ -488,12 +493,12 @@ function PreviewStep({
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={onBack} className="gap-2" disabled={isPending}>
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t('common.back')}
         </Button>
         <Button onClick={onSubmit} disabled={isPending || summary.validRows.length === 0}>
           {isPending
-            ? 'Importing…'
-            : `Import ${summary.validRows.length} candidate${summary.validRows.length === 1 ? '' : 's'}`}
+            ? t('csvImport.importing')
+            : t('csvImport.importN', { count: summary.validRows.length })}
         </Button>
       </div>
     </div>
@@ -511,23 +516,24 @@ function DoneStep({
   onDownloadFailures: () => void
   onAnother: () => void
 }) {
+  const t = useTranslations()
   return (
     <div className="space-y-4">
       <Alert>
         <CheckCircle2 className="h-4 w-4" />
-        <AlertTitle>Import complete</AlertTitle>
+        <AlertTitle>{t('csvImport.complete')}</AlertTitle>
         <AlertDescription>
-          Imported {result.imported} candidate{result.imported === 1 ? '' : 's'}.
+          {t('csvImport.importedN', { count: result.imported })}
         </AlertDescription>
       </Alert>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="secondary">{result.imported} imported</Badge>
+        <Badge variant="secondary">{t('csvImport.badgeImported', { count: result.imported })}</Badge>
         {result.skipped_duplicate > 0 && (
-          <Badge variant="outline">{result.skipped_duplicate} duplicate skipped</Badge>
+          <Badge variant="outline">{t('csvImport.badgeDuplicate', { count: result.skipped_duplicate })}</Badge>
         )}
         {failures.length > 0 && (
-          <Badge variant="destructive">{failures.length} errored</Badge>
+          <Badge variant="destructive">{t('csvImport.badgeErrored', { count: failures.length })}</Badge>
         )}
       </div>
 
@@ -535,17 +541,17 @@ function DoneStep({
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={onDownloadFailures} className="gap-2">
             <Download className="h-4 w-4" />
-            Download error report
+            {t('csvImport.downloadReport')}
           </Button>
         </div>
       )}
 
       <div className="flex items-center gap-2 pt-2">
         <Button asChild>
-          <Link href="/candidates">View candidates</Link>
+          <Link href="/candidates">{t('csvImport.viewCandidates')}</Link>
         </Button>
         <Button variant="outline" onClick={onAnother}>
-          Import another file
+          {t('csvImport.importAnother')}
         </Button>
       </div>
     </div>
