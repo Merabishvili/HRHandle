@@ -6,7 +6,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (21) components/candidates/profile/stage-contextual-block.tsx
 - [x] (20) components/candidate-import/import-wizard.tsx
 - [x] (19) components/candidates/wizard/step-personal.tsx
-- [ ] (18) components/candidates/candidate-form.tsx
+- [x] (18) components/candidates/candidate-form.tsx
 - [ ] (17) components/settings/email-templates-manager.tsx
 - [ ] (16) components/settings/custom-fields-manager.tsx
 - [ ] (16) components/settings/team-invitations.tsx
@@ -17,7 +17,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (14) components/offers/offer-form.tsx
 - [ ] (14) components/integrations/webhooks-manager.tsx
 - [ ] (14) components/vacancies/ai-jd-suggest.tsx
-- [ ] (13) components/candidates/form/recruitment-details-section.tsx
+- [x] (13) components/candidates/form/recruitment-details-section.tsx
 - [x] (13) components/candidates/wizard/step-experience-education.tsx
 - [ ] (13) components/candidates/ai-notes-extractor.tsx
 - [ ] (13) components/settings/rejection-templates-manager.tsx
@@ -26,14 +26,14 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (12) components/vacancies/detail/settings-tab.tsx
 - [ ] (12) components/vacancies/detail/overview-tab.tsx
 - [ ] (12) components/vacancies/linkedin-post-job-button.tsx
-- [ ] (11) components/candidates/form/pending-education-card.tsx
-- [ ] (11) components/candidates/form/personal-info-section.tsx
+- [x] (11) components/candidates/form/pending-education-card.tsx
+- [x] (11) components/candidates/form/personal-info-section.tsx
 - [ ] (11) components/candidates/application-evaluation.tsx
 - [ ] (11) components/settings/linkedin-connect.tsx
 - [ ] (11) components/vacancies/ai-bias-check.tsx
 - [ ] (11) components/vacancies/ai-assessment-suggester.tsx
 - [ ] (10) components/candidates/education-section.tsx
-- [ ] (10) components/candidates/form/pending-experience-card.tsx
+- [x] (10) components/candidates/form/pending-experience-card.tsx
 - [ ] (10) components/candidates/profile/score-candidate-modal.tsx
 - [ ] (10) components/candidates/profile/ai-fit-card.tsx
 - [ ] (10) components/candidates/ai-summary-panel.tsx

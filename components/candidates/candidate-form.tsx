@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useForm, type SubmitHandler, type FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -34,9 +35,9 @@ import type { Candidate, Vacancy } from '@/lib/types'
 import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 
 const DOCUMENT_TYPE_OPTIONS = [
-  { value: 'cv', label: 'CV / Resume' },
-  { value: 'cover_letter', label: 'Cover letter' },
-  { value: 'other', label: 'Other' },
+  { value: 'cv', labelKey: 'candidateForm.docCv' },
+  { value: 'cover_letter', labelKey: 'candidateForm.docCoverLetter' },
+  { value: 'other', labelKey: 'candidateForm.docOther' },
 ]
 
 interface PendingFile {
@@ -82,6 +83,7 @@ export function CandidateForm({
   customFieldValues = [],
   extraSections,
 }: CandidateFormProps) {
+  const t = useTranslations()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cvUploadRef = useRef<HTMLInputElement>(null)
@@ -135,13 +137,13 @@ export function CandidateForm({
 
     const ext = file.name.split('.').pop()?.toLowerCase()
     if (!['pdf', 'doc', 'docx'].includes(ext ?? '')) {
-      setError('CV must be a PDF or Word document.')
-      toast.error('CV must be a PDF or Word document.')
+      setError(t('candidateForm.errCvType'))
+      toast.error(t('candidateForm.errCvType'))
       return
     }
     if (file.size > 10 * 1024 * 1024) {
-      setError('CV file must be 10 MB or smaller.')
-      toast.error('CV file must be 10 MB or smaller.')
+      setError(t('candidateForm.errCvSize'))
+      toast.error(t('candidateForm.errCvSize'))
       return
     }
 
@@ -277,8 +279,8 @@ export function CandidateForm({
         fd.append('document_type', entry.documentType)
         const uploadResult = await uploadDocument(result.data.id, fd)
         if (!uploadResult.success) {
-          setError(`Document upload failed: ${uploadResult.error}`)
-          toast.error(`Document upload failed: ${uploadResult.error}`)
+          setError(t('candidateForm.errUpload', { error: uploadResult.error }))
+          toast.error(t('candidateForm.errUpload', { error: uploadResult.error }))
           setIsLoading(false)
           return
         }
@@ -297,7 +299,7 @@ export function CandidateForm({
   if (!candidate && entryMode === null) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">How would you like to add this candidate?</p>
+        <p className="text-sm text-muted-foreground">{t('candidateForm.howAdd')}</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <button
             type="button"
@@ -308,10 +310,10 @@ export function CandidateForm({
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
                 <Wand2 className="h-5 w-5 text-primary" />
               </div>
-              <p className="font-semibold text-foreground">Upload CV first</p>
+              <p className="font-semibold text-foreground">{t('candidateForm.uploadCvFirst')}</p>
             </div>
             <p className="text-sm text-muted-foreground">
-              Upload a PDF or Word CV and we&apos;ll fill in the candidate details automatically using AI.
+              {t('candidateForm.uploadCvDesc')}
             </p>
           </button>
 
@@ -324,10 +326,10 @@ export function CandidateForm({
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
                 <PenLine className="h-5 w-5 text-muted-foreground" />
               </div>
-              <p className="font-semibold text-foreground">Fill manually</p>
+              <p className="font-semibold text-foreground">{t('candidateForm.fillManually')}</p>
             </div>
             <p className="text-sm text-muted-foreground">
-              Enter candidate details by hand. You can still attach a CV as a document.
+              {t('candidateForm.fillManuallyDesc')}
             </p>
           </button>
         </div>
@@ -349,9 +351,9 @@ export function CandidateForm({
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Wand2 className="h-4 w-4" />
-              Upload CV to auto-fill
+              {t('candidateForm.uploadCvAutofill')}
             </CardTitle>
-            <CardDescription>Fields will be filled automatically from the CV.</CardDescription>
+            <CardDescription>{t('candidateForm.uploadCvCardDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <input
@@ -364,7 +366,7 @@ export function CandidateForm({
             {cvParseState === 'idle' ? (
               <Button type="button" variant="outline" onClick={() => cvUploadRef.current?.click()}>
                 <Upload className="mr-2 h-4 w-4" />
-                Select CV file
+                {t('candidateForm.selectCvFile')}
               </Button>
             ) : (
               <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 px-3 py-2.5">
@@ -373,19 +375,19 @@ export function CandidateForm({
                 {cvParseState === 'parsing' && (
                   <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Parsing…
+                    {t('candidateForm.parsing')}
                   </span>
                 )}
                 {cvParseState === 'done' && (
                   <span className="flex items-center gap-1.5 text-xs text-green-600">
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    Fields filled
+                    {t('candidateForm.fieldsFilled')}
                   </span>
                 )}
                 {cvParseState === 'failed' && (
                   <span className="flex items-center gap-1.5 text-xs text-amber-600">
                     <AlertCircle className="h-3.5 w-3.5" />
-                    Could not parse — fill manually
+                    {t('candidateForm.parseFailed')}
                   </span>
                 )}
               </div>
@@ -431,8 +433,8 @@ export function CandidateForm({
       {!isEditing && entryMode !== 'cv' && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Documents</CardTitle>
-            <CardDescription>Upload CV, cover letter or other files. PDF and Word only, max 10 MB each.</CardDescription>
+            <CardTitle>{t('candidateForm.documents')}</CardTitle>
+            <CardDescription>{t('candidateForm.documentsDesc')}</CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-3">
@@ -456,7 +458,7 @@ export function CandidateForm({
                       </SelectTrigger>
                       <SelectContent>
                         {DOCUMENT_TYPE_OPTIONS.map((o) => (
-                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          <SelectItem key={o.value} value={o.value}>{t(o.labelKey)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -465,7 +467,7 @@ export function CandidateForm({
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                      aria-label="Remove file"
+                      aria-label={t('candidateForm.removeFile')}
                       onClick={() => setPendingFiles((prev) => prev.filter((f) => f.id !== entry.id))}
                       disabled={isLoading}
                     >
@@ -493,7 +495,7 @@ export function CandidateForm({
               disabled={isLoading}
             >
               <Upload className="mr-2 h-4 w-4" />
-              Add File
+              {t('candidateForm.addFile')}
             </Button>
           </CardContent>
         </Card>
@@ -503,12 +505,12 @@ export function CandidateForm({
       {!isEditing && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Notes</CardTitle>
-            <CardDescription>Add an initial note about this candidate (optional).</CardDescription>
+            <CardTitle>{t('candidateForm.notes')}</CardTitle>
+            <CardDescription>{t('candidateForm.notesDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea
-              placeholder="e.g. Strong referral from a teammate. Background in fintech. Prefer afternoon interviews."
+              placeholder={t('candidateForm.notePlaceholder')}
               value={pendingNote}
               onChange={(e) => setPendingNote(e.target.value)}
               rows={4}
@@ -522,8 +524,8 @@ export function CandidateForm({
       {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Additional information</CardTitle>
-            <CardDescription>Custom fields defined for candidates.</CardDescription>
+            <CardTitle>{t('candidateForm.additionalInfo')}</CardTitle>
+            <CardDescription>{t('candidateForm.customFieldsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <CustomFieldsForm
@@ -544,18 +546,18 @@ export function CandidateForm({
           onClick={() => router.push(isEditing ? `/candidates/${candidate.id}` : '/candidates')}
           disabled={isLoading}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isEditing ? 'Updating…' : 'Adding…'}
+              {isEditing ? t('candidateForm.updating') : t('candidateForm.adding')}
             </>
           ) : isEditing ? (
-            'Update Candidate'
+            t('candidateForm.updateCandidate')
           ) : (
-            'Add candidate'
+            t('candidateForm.addCandidate')
           )}
         </Button>
       </div>

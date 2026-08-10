@@ -1,6 +1,7 @@
 'use client'
 
 import { Controller, type UseFormReturn } from 'react-hook-form'
+import { useTranslations } from 'next-intl'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -31,19 +32,20 @@ export function RecruitmentDetailsSection({
   selectedVacancyId,
   onSelectedVacancyChange,
 }: RecruitmentDetailsSectionProps) {
+  const t = useTranslations()
   const { control } = form
 
   return (
     <Card className="border-border">
       <CardHeader>
-        <CardTitle>Recruitment details</CardTitle>
-        <CardDescription>Source and initial vacancy assignment.</CardDescription>
+        <CardTitle>{t('candWizard.application.recruitmentDetails')}</CardTitle>
+        <CardDescription>{t('candidateForm.recruitmentDesc')}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <div className={`grid gap-4 ${isEditing ? '' : 'sm:grid-cols-2'}`}>
           <div className="space-y-2">
-            <Label htmlFor="source">Source</Label>
+            <Label htmlFor="source">{t('candWizard.application.sourceLabel')}</Label>
             <Controller
               control={control}
               name="source"
@@ -54,16 +56,16 @@ export function RecruitmentDetailsSection({
                   disabled={disabled}
                 >
                   <SelectTrigger id="source">
-                    <SelectValue placeholder="How did they enter the pipeline?" />
+                    <SelectValue placeholder={t('candidateForm.sourcePlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Not specified</SelectItem>
+                    <SelectItem value="none">{t('candWizard.application.notSpecified')}</SelectItem>
                     <SelectItem value="LinkedIn">LinkedIn</SelectItem>
                     <SelectItem value="Indeed">Indeed</SelectItem>
-                    <SelectItem value="Referral">Referral</SelectItem>
-                    <SelectItem value="Company Website">Company Website</SelectItem>
-                    <SelectItem value="Job Board">Job Board</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Referral">{t('candWizard.application.srcReferral')}</SelectItem>
+                    <SelectItem value="Company Website">{t('candWizard.application.srcCompanyWebsite')}</SelectItem>
+                    <SelectItem value="Job Board">{t('candWizard.application.srcJobBoard')}</SelectItem>
+                    <SelectItem value="Other">{t('candWizard.application.srcOther')}</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -72,17 +74,17 @@ export function RecruitmentDetailsSection({
 
           {!isEditing && (
             <div className="space-y-2">
-              <Label htmlFor="initial_vacancy_id">Initial vacancy</Label>
+              <Label htmlFor="initial_vacancy_id">{t('candWizard.application.initialVacancy')}</Label>
               <SearchableSelect
                 id="initial_vacancy_id"
                 value={selectedVacancyId || 'none'}
                 onValueChange={(value) => onSelectedVacancyChange(value === 'none' ? '' : value)}
                 disabled={disabled}
-                placeholder="Select a vacancy (optional)"
-                searchPlaceholder="Search vacancies…"
-                emptyText="No vacancies found."
+                placeholder={t('candidateForm.selectVacancyOptional')}
+                searchPlaceholder={t('interviews.form.searchVacancies')}
+                emptyText={t('interviews.form.noVacancies')}
                 options={[
-                  { value: 'none', label: 'No vacancy assigned' },
+                  { value: 'none', label: t('candidateForm.noVacancyAssigned') },
                   ...vacancies.map((vacancy) => ({
                     value: vacancy.id,
                     label: vacancy.title,

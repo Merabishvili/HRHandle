@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { GraduationCap, Plus, X, Check, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,6 +39,7 @@ interface PendingEducationCardProps {
  * entry to the parent via onAdd. Extracted from candidate-form.tsx (A-005).
  */
 export function PendingEducationCard({ entries, onAdd, onRemove, disabled }: PendingEducationCardProps) {
+  const t = useTranslations()
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState<Omit<EduLocal, 'localId'>>(BLANK_EDU)
 
@@ -52,9 +54,9 @@ export function PendingEducationCard({ entries, onAdd, onRemove, disabled }: Pen
         <div>
           <CardTitle className="flex items-center gap-2">
             <GraduationCap className="h-4 w-4" />
-            Education
+            {t('candWizard.background.education')}
           </CardTitle>
-          <CardDescription>Academic background.</CardDescription>
+          <CardDescription>{t('candidateForm.eduDesc')}</CardDescription>
         </div>
         {!adding && (
           <Button
@@ -64,7 +66,7 @@ export function PendingEducationCard({ entries, onAdd, onRemove, disabled }: Pen
             onClick={() => { setAdding(true); setDraft(BLANK_EDU) }}
             disabled={disabled}
           >
-            <Plus className="h-4 w-4 mr-1" />Add
+            <Plus className="h-4 w-4 mr-1" />{t('wizard.add')}
           </Button>
         )}
       </CardHeader>
@@ -72,36 +74,36 @@ export function PendingEducationCard({ entries, onAdd, onRemove, disabled }: Pen
         {adding && (
           <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
             <div className="space-y-1">
-              <Label className="text-xs">Institution *</Label>
-              <Input value={draft.institution} onChange={(e) => setDraft((p) => ({ ...p, institution: e.target.value }))} placeholder="University or school name" maxLength={200} disabled={disabled} />
+              <Label className="text-xs">{t('candWizard.background.institution')} *</Label>
+              <Input value={draft.institution} onChange={(e) => setDraft((p) => ({ ...p, institution: e.target.value }))} placeholder={t('candidateForm.phInstitutionName')} maxLength={200} disabled={disabled} />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label className="text-xs">Degree</Label>
-                <Input value={draft.degree ?? ''} onChange={(e) => setDraft((p) => ({ ...p, degree: e.target.value || null }))} placeholder="e.g. Bachelor's" maxLength={100} disabled={disabled} />
+                <Label className="text-xs">{t('candWizard.background.degree')}</Label>
+                <Input value={draft.degree ?? ''} onChange={(e) => setDraft((p) => ({ ...p, degree: e.target.value || null }))} placeholder={t('candidateForm.phDegree2')} maxLength={100} disabled={disabled} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Field of study</Label>
-                <Input value={draft.field_of_study ?? ''} onChange={(e) => setDraft((p) => ({ ...p, field_of_study: e.target.value || null }))} placeholder="e.g. Computer Science" maxLength={200} disabled={disabled} />
+                <Label className="text-xs">{t('candWizard.background.fieldOfStudy')}</Label>
+                <Input value={draft.field_of_study ?? ''} onChange={(e) => setDraft((p) => ({ ...p, field_of_study: e.target.value || null }))} placeholder={t('candidateForm.phField2')} maxLength={200} disabled={disabled} />
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label className="text-xs">Start year</Label>
-                <Input type="number" min={1950} max={new Date().getFullYear()} value={draft.start_year ?? ''} onChange={(e) => setDraft((p) => ({ ...p, start_year: e.target.value ? Number(e.target.value) : null }))} placeholder="e.g. 2018" disabled={disabled} />
+                <Label className="text-xs">{t('candidateForm.startYear')}</Label>
+                <Input type="number" min={1950} max={new Date().getFullYear()} value={draft.start_year ?? ''} onChange={(e) => setDraft((p) => ({ ...p, start_year: e.target.value ? Number(e.target.value) : null }))} placeholder={t('candidateForm.phStartYear')} disabled={disabled} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">End year</Label>
-                <Input type="number" min={1950} max={new Date().getFullYear() + 10} value={draft.end_year ?? ''} onChange={(e) => setDraft((p) => ({ ...p, end_year: e.target.value ? Number(e.target.value) : null }))} placeholder="e.g. 2022" disabled={disabled || draft.is_ongoing} />
+                <Label className="text-xs">{t('candidateForm.endYear')}</Label>
+                <Input type="number" min={1950} max={new Date().getFullYear() + 10} value={draft.end_year ?? ''} onChange={(e) => setDraft((p) => ({ ...p, end_year: e.target.value ? Number(e.target.value) : null }))} placeholder={t('candidateForm.phEndYear')} disabled={disabled || draft.is_ongoing} />
               </div>
             </div>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input type="checkbox" checked={draft.is_ongoing} onChange={(e) => setDraft((p) => ({ ...p, is_ongoing: e.target.checked, end_year: e.target.checked ? null : p.end_year }))} className="rounded" />
-              Currently studying
+              {t('candidateForm.currentlyStudying')}
             </label>
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="ghost" size="sm" onClick={reset}>
-                <X className="h-4 w-4 mr-1" />Cancel
+                <X className="h-4 w-4 mr-1" />{t('common.cancel')}
               </Button>
               <Button
                 type="button"
@@ -109,13 +111,13 @@ export function PendingEducationCard({ entries, onAdd, onRemove, disabled }: Pen
                 disabled={!draft.institution.trim()}
                 onClick={() => { onAdd({ ...draft, localId: `edu-${Date.now()}` }); reset() }}
               >
-                <Check className="h-4 w-4 mr-1" />Add
+                <Check className="h-4 w-4 mr-1" />{t('wizard.add')}
               </Button>
             </div>
           </div>
         )}
         {entries.length === 0 && !adding && (
-          <p className="py-4 text-center text-sm text-muted-foreground">No education added yet.</p>
+          <p className="py-4 text-center text-sm text-muted-foreground">{t('candidateForm.noEduAdded')}</p>
         )}
         {entries.map((entry) => (
           <div key={entry.localId} className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/10 px-3 py-2.5">
@@ -125,10 +127,10 @@ export function PendingEducationCard({ entries, onAdd, onRemove, disabled }: Pen
                 <p className="text-sm text-muted-foreground truncate">{[entry.degree, entry.field_of_study].filter(Boolean).join(', ')}</p>
               )}
               {(entry.start_year || entry.end_year || entry.is_ongoing) && (
-                <p className="text-xs text-muted-foreground mt-0.5">{entry.start_year ?? '?'} – {entry.is_ongoing ? 'Present' : (entry.end_year ?? '?')}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{entry.start_year ?? '?'} – {entry.is_ongoing ? t('candWizard.background.present') : (entry.end_year ?? '?')}</p>
               )}
             </div>
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" aria-label="Remove education entry" onClick={() => onRemove(entry.localId)}>
+            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" aria-label={t('candidateForm.removeEduEntry')} onClick={() => onRemove(entry.localId)}>
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
