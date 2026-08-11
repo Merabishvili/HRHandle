@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import { format, formatDistanceToNow } from 'date-fns'
+import { getTranslations } from 'next-intl/server'
 import { AlertTriangle, ArrowRight, Copy } from 'lucide-react'
 
 import { getStageStyle } from '@/lib/pipeline/stage-style'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import type { ApplicationStatus } from '@/lib/types/application'
 
 export interface AttentionItem {
@@ -49,7 +51,7 @@ interface OverviewTabProps {
  *   LEFT  → Needs-attention card (or empty state) + Compact pipeline strip
  *   RIGHT → At-a-glance card + Hiring team card + Share card
  */
-export function OverviewTab({
+export async function OverviewTab({
   vacancyId,
   meta,
   attention,
@@ -58,7 +60,9 @@ export function OverviewTab({
   currentUserName,
   applicationFormToken,
 }: OverviewTabProps) {
+  const t = await getTranslations()
   const healthStyle = getHealthStyle(meta.healthLabel)
+  const healthLabelText = t(healthStyle.labelKey)
 
   return (
     <div className="flex flex-col gap-4 bg-[oklch(0.985_0.002_247)] p-5 sm:flex-row sm:p-6">
@@ -68,12 +72,12 @@ export function OverviewTab({
           <section
             className="rounded-xl border bg-[oklch(0.995_0.01_80)] p-4 sm:p-[18px]"
             style={{ borderColor: 'oklch(0.86 0.06 70)' }}
-            aria-label="Needs your attention"
+            aria-label={t('vacOverview.needsAttentionAria')}
           >
             <div className="mb-3 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-[oklch(0.5_0.12_60)]" aria-hidden />
               <h2 className="text-[15px] font-bold text-foreground">
-                Needs your attention · {attention.length}
+                {t('vacOverview.needsAttention', { count: attention.length })}
               </h2>
             </div>
             <ul className="flex flex-col gap-2">
@@ -107,21 +111,21 @@ export function OverviewTab({
         ) : (
           <section
             className="rounded-xl border border-dashed border-border bg-white p-5 text-center text-[13px] text-muted-foreground"
-            aria-label="Nothing demands attention"
+            aria-label={t('vacOverview.nothingAria')}
           >
-            Nothing's blocking you on this role right now. Open the pipeline below to drive next moves.
+            {t('vacOverview.nothingBlocking')}
           </section>
         )}
 
         {/* Pipeline strip */}
-        <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Pipeline">
+        <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label={t('vacOverview.pipeline')}>
           <div className="mb-3.5 flex items-center justify-between gap-2">
-            <h2 className="text-[15px] font-bold text-foreground">Pipeline</h2>
+            <h2 className="text-[15px] font-bold text-foreground">{t('vacOverview.pipeline')}</h2>
             <Link
               href={`/vacancies/${vacancyId}/pipeline`}
               className="text-[12.5px] font-semibold text-[oklch(0.55_0.18_250)] hover:underline"
             >
-              Open board →
+              {t('vacOverview.openBoard')}
             </Link>
           </div>
           <div className="flex gap-2 overflow-x-auto">
@@ -144,7 +148,7 @@ export function OverviewTab({
                   }}
                 >
                   <p className="text-[11px] font-semibold" style={{ color: style.pillText }}>
-                    {stage.name}
+                    {statusLabel(t, stage.code, stage.name)}
                   </p>
                   <p
                     className={`mt-0.5 text-[19px] font-bold ${stage.count === 0 ? 'opacity-60' : ''}`}
@@ -165,70 +169,70 @@ export function OverviewTab({
       {/* Right rail */}
       <aside className="flex w-full shrink-0 flex-col gap-3.5 sm:w-[340px]">
         {/* At a glance */}
-        <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label="At a glance">
-          <h2 className="mb-3 text-[15px] font-bold text-foreground">At a glance</h2>
+        <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('vacOverview.atAGlance')}>
+          <h2 className="mb-3 text-[15px] font-bold text-foreground">{t('vacOverview.atAGlance')}</h2>
           <ul className="flex flex-col gap-2 text-[12.5px]">
             <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">Time open</span>
+              <span className="text-muted-foreground">{t('vacOverview.timeOpen')}</span>
               <span className="font-semibold text-foreground">
-                {meta.timeOpenDays} {meta.timeOpenDays === 1 ? 'day' : 'days'}
+                {t('vacOverview.days', { count: meta.timeOpenDays })}
               </span>
             </li>
             <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">Active candidates</span>
+              <span className="text-muted-foreground">{t('vacOverview.activeCandidates')}</span>
               <span className="font-semibold text-foreground">{meta.activeCandidateCount}</span>
             </li>
             {meta.salaryRangeLabel && (
               <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">Salary range</span>
+                <span className="text-muted-foreground">{t('vacOverview.salaryRange')}</span>
                 <span className="font-semibold text-foreground">{meta.salaryRangeLabel}</span>
               </li>
             )}
             {meta.endDate && (
               <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">End date</span>
+                <span className="text-muted-foreground">{t('vacOverview.endDate')}</span>
                 <span className="font-semibold text-foreground">{meta.endDate}</span>
               </li>
             )}
             <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">Health</span>
+              <span className="text-muted-foreground">{t('vacOverview.health')}</span>
               <span className="inline-flex items-center gap-1.5 font-semibold" style={{ color: healthStyle.text }}>
                 <span
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: healthStyle.dot }}
                   aria-hidden
                 />
-                {healthStyle.label}
+                {healthLabelText}
               </span>
             </li>
           </ul>
         </section>
 
         {/* Hiring team */}
-        <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label="Hiring team">
-          <h2 className="mb-3 text-[15px] font-bold text-foreground">Hiring team</h2>
+        <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('vacOverview.hiringTeam')}>
+          <h2 className="mb-3 text-[15px] font-bold text-foreground">{t('vacOverview.hiringTeam')}</h2>
           <ul className="flex flex-col gap-2.5">
             {hiringManagerName && (
               <TeamMemberRow
                 initials={getInitials(hiringManagerName)}
                 hue="green"
                 name={hiringManagerName}
-                jobTitle="Hiring manager"
+                jobTitle={t('vacOverview.hiringManager')}
               />
             )}
             <TeamMemberRow
               initials={getInitials(currentUserName)}
               hue="blue"
-              name="You"
-              jobTitle="Recruiter"
+              name={t('vacOverview.you')}
+              jobTitle={t('vacOverview.recruiter')}
             />
           </ul>
         </section>
 
         {/* Share */}
         {applicationFormToken && (
-          <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label="Share">
-            <h2 className="mb-2.5 text-[15px] font-bold text-foreground">Share</h2>
+          <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('vacOverview.share')}>
+            <h2 className="mb-2.5 text-[15px] font-bold text-foreground">{t('vacOverview.share')}</h2>
             <div className="flex items-center gap-2 rounded-lg border border-[oklch(0.92_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2 text-[11.5px]">
               <span className="flex-1 truncate text-muted-foreground">
                 {process.env.NEXT_PUBLIC_APP_URL ?? ''}/apply/{applicationFormToken.slice(0, 14)}…
@@ -238,7 +242,7 @@ export function OverviewTab({
                 className="inline-flex items-center gap-0.5 font-semibold text-[oklch(0.55_0.18_250)] hover:underline"
               >
                 <Copy className="h-3 w-3" aria-hidden />
-                Copy
+                {t('aiJd.copy')}
               </Link>
             </div>
           </section>
@@ -307,26 +311,26 @@ function initialsStyle(hue: AttentionItem['initialsHue']): React.CSSProperties {
 function getHealthStyle(label: 'good' | 'watch' | 'stale'): {
   text: string
   dot: string
-  label: string
+  labelKey: string
 } {
   switch (label) {
     case 'good':
       return {
         text: 'oklch(0.35 0.13 145)',
         dot: 'oklch(0.65 0.17 145)',
-        label: 'Good',
+        labelKey: 'vacOverview.healthGood',
       }
     case 'watch':
       return {
         text: 'oklch(0.48 0.11 80)',
         dot: 'oklch(0.65 0.15 80)',
-        label: 'Watch',
+        labelKey: 'vacOverview.healthWatch',
       }
     case 'stale':
       return {
         text: 'oklch(0.5 0.19 27)',
         dot: 'oklch(0.6 0.18 27)',
-        label: 'Stale',
+        labelKey: 'vacOverview.healthStale',
       }
   }
 }
@@ -334,28 +338,29 @@ function getHealthStyle(label: 'good' | 'watch' | 'stale'): {
 // Helper for the page server component — builds the attention list from
 // the raw application + interview data. Exported so the rebuild logic is
 // testable in isolation later.
-export function buildAttentionList({
-  pendingOffers,
-  upcomingInterviewsTomorrow,
-  newApplicantCount,
-}: {
-  pendingOffers: { applicationId: string; candidateInitials: string; candidateFirstName: string; daysAwaiting: number }[]
-  upcomingInterviewsTomorrow: { interviewId: string; candidateInitials: string; candidateFirstName: string; scheduledAt: string }[]
-  newApplicantCount: number
-}): AttentionItem[] {
+type OverviewTranslator = Awaited<ReturnType<typeof getTranslations>>
+
+export function buildAttentionList(
+  {
+    pendingOffers,
+    upcomingInterviewsTomorrow,
+    newApplicantCount,
+  }: {
+    pendingOffers: { applicationId: string; candidateInitials: string; candidateFirstName: string; daysAwaiting: number }[]
+    upcomingInterviewsTomorrow: { interviewId: string; candidateInitials: string; candidateFirstName: string; scheduledAt: string }[]
+    newApplicantCount: number
+  },
+  t: OverviewTranslator,
+): AttentionItem[] {
+  const bold = { b: (chunks: React.ReactNode) => <strong className="font-semibold">{chunks}</strong> }
   const items: AttentionItem[] = []
   for (const o of pendingOffers) {
     items.push({
       id: `offer-${o.applicationId}`,
       initials: o.candidateInitials,
       initialsHue: 'cyan',
-      message: (
-        <>
-          {o.candidateFirstName}&rsquo;s offer awaiting reply{' '}
-          <strong className="font-semibold">{o.daysAwaiting} days</strong>
-        </>
-      ),
-      ctaLabel: 'Follow up →',
+      message: t.rich('vacOverview.offerAwaiting', { name: o.candidateFirstName, count: o.daysAwaiting, ...bold }),
+      ctaLabel: t('vacOverview.followUp'),
       ctaHref: `/candidates/${o.applicationId}`,
     })
   }
@@ -364,14 +369,8 @@ export function buildAttentionList({
       id: `interview-${i.interviewId}`,
       initials: i.candidateInitials,
       initialsHue: 'purple',
-      message: (
-        <>
-          Interview with {i.candidateFirstName}{' '}
-          <strong className="font-semibold">{formatDistanceToNow(new Date(i.scheduledAt), { addSuffix: true })}</strong>
-          {' '}— add scorecard after
-        </>
-      ),
-      ctaLabel: 'View →',
+      message: t.rich('vacOverview.interviewWith', { name: i.candidateFirstName, time: formatDistanceToNow(new Date(i.scheduledAt), { addSuffix: true }), ...bold }),
+      ctaLabel: t('vacOverview.view'),
       ctaHref: `/interviews/${i.interviewId}`,
     })
   }
@@ -380,15 +379,8 @@ export function buildAttentionList({
       id: 'new-applicants',
       initials: `+${newApplicantCount}`,
       initialsHue: 'blue',
-      message: (
-        <>
-          <strong className="font-semibold">
-            {newApplicantCount} new {newApplicantCount === 1 ? 'applicant' : 'applicants'}
-          </strong>{' '}
-          to review
-        </>
-      ),
-      ctaLabel: 'Review →',
+      message: t.rich('vacOverview.newApplicants', { count: newApplicantCount, ...bold }),
+      ctaLabel: t('vacOverview.review'),
       ctaHref: `#`,
     })
   }

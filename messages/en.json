@@ -1592,6 +1592,47 @@
     "editEduAria": "Edit education entry",
     "deleteEduAria": "Delete education entry"
   },
+  "vacTabs": {
+    "overview": "Overview",
+    "jd": "Job description",
+    "scorecard": "Scorecard & interview",
+    "applicationForm": "Apply form",
+    "settings": "Settings"
+  },
+  "vacOverview": {
+    "needsAttention": "Needs your attention · {count}",
+    "needsAttentionAria": "Needs your attention",
+    "nothingAria": "Nothing demands attention",
+    "nothingBlocking": "Nothing's blocking you on this role right now. Open the pipeline below to drive next moves.",
+    "pipeline": "Pipeline",
+    "openBoard": "Open board →",
+    "atAGlance": "At a glance",
+    "timeOpen": "Time open",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "activeCandidates": "Active candidates",
+    "salaryRange": "Salary range",
+    "endDate": "End date",
+    "health": "Health",
+    "healthGood": "Good",
+    "healthWatch": "Watch",
+    "healthStale": "Stale",
+    "hiringTeam": "Hiring team",
+    "hiringManager": "Hiring manager",
+    "you": "You",
+    "recruiter": "Recruiter",
+    "share": "Share",
+    "offerAwaiting": "{name}'s offer awaiting reply <b>{count, plural, one {# day} other {# days}}</b>",
+    "followUp": "Follow up →",
+    "interviewWith": "Interview with {name} <b>{time}</b> — add scorecard after",
+    "view": "View →",
+    "newApplicants": "<b>{count, plural, one {# new applicant} other {# new applicants}}</b> to review",
+    "review": "Review →"
+  },
+  "vacDetail": {
+    "scorecardIntro": "How your team evaluates candidates in interviews — none of this is shown to candidates. (Questions candidates answer when applying live on the <b>Apply form</b> tab.)",
+    "scorecardDesc": "Score-based attributes (1–5) every interviewer rates.",
+    "guideDesc": "Open-ended prompts your interviewers ask in the room."
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

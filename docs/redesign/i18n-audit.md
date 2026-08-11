@@ -24,7 +24,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (12) app/(dashboard)/settings/billing/page.tsx
 - [x] (12) components/candidates/experience-section.tsx
 - [ ] (12) components/vacancies/detail/settings-tab.tsx
-- [ ] (12) components/vacancies/detail/overview-tab.tsx
+- [x] (12) components/vacancies/detail/overview-tab.tsx
 - [ ] (12) components/vacancies/linkedin-post-job-button.tsx
 - [x] (11) components/candidates/form/pending-education-card.tsx
 - [x] (11) components/candidates/form/personal-info-section.tsx
@@ -49,7 +49,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (9) components/shared/column-manager-dialog.tsx
 - [ ] (9) components/vacancies/application-form-tab.tsx
 - [ ] (8) app/(dashboard)/settings/ai-fit/page.tsx
-- [ ] (8) app/(dashboard)/vacancies/[id]/page.tsx
+- [x] (8) app/(dashboard)/vacancies/[id]/page.tsx
 - [ ] (8) components/candidates/profile/rail-sections.tsx
 - [ ] (8) components/settings/active-sessions-card.tsx
 - [ ] (8) components/scorecards/share-scorecard-dialog.tsx

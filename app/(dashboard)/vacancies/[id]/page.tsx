@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { format, formatDistanceToNow } from 'date-fns'
+import { getTranslations } from 'next-intl/server'
 
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -368,11 +369,12 @@ export default async function VacancyDetailPage({
     ? allApplications.filter((a) => a.status_id === appliedStatusId && !a.last_status_changed_at).length
     : 0
 
+  const t = await getTranslations()
   const attention = buildAttentionList({
     pendingOffers,
     upcomingInterviewsTomorrow,
     newApplicantCount,
-  })
+  }, t)
 
   // Time-open + health
   const timeOpenDays = Math.max(
@@ -384,8 +386,8 @@ export default async function VacancyDetailPage({
   // none + role open > 30 days = stale; otherwise watch.
   const recentMovement = allApplications.some((a) => {
     if (!a.last_status_changed_at) return false
-    const t = Date.parse(a.last_status_changed_at)
-    return now - t < 7 * 24 * 60 * 60 * 1000
+    const changedAt = Date.parse(a.last_status_changed_at)
+    return now - changedAt < 7 * 24 * 60 * 60 * 1000
   })
   const healthLabel: 'good' | 'watch' | 'stale' =
     recentMovement ? 'good' : timeOpenDays > 30 ? 'stale' : 'watch'
@@ -414,11 +416,11 @@ export default async function VacancyDetailPage({
 
         <Tabs key={defaultTab} defaultValue={defaultTab} className="border-t border-[oklch(0.93_0.01_250)]">
           <TabsList className="h-auto w-full justify-start rounded-none border-b border-[oklch(0.93_0.01_250)] bg-transparent px-5 py-0 sm:px-6">
-            <TabTriggerStyled value="overview">Overview</TabTriggerStyled>
-            <TabTriggerStyled value="jd">Job description</TabTriggerStyled>
-            <TabTriggerStyled value="scorecard">Scorecard &amp; interview</TabTriggerStyled>
-            <TabTriggerStyled value="application-form">Apply form</TabTriggerStyled>
-            <TabTriggerStyled value="settings">Settings</TabTriggerStyled>
+            <TabTriggerStyled value="overview">{t('vacTabs.overview')}</TabTriggerStyled>
+            <TabTriggerStyled value="jd">{t('vacTabs.jd')}</TabTriggerStyled>
+            <TabTriggerStyled value="scorecard">{t('vacTabs.scorecard')}</TabTriggerStyled>
+            <TabTriggerStyled value="application-form">{t('vacTabs.applicationForm')}</TabTriggerStyled>
+            <TabTriggerStyled value="settings">{t('vacTabs.settings')}</TabTriggerStyled>
           </TabsList>
 
           <TabsContent value="overview" className="m-0">
@@ -434,7 +436,7 @@ export default async function VacancyDetailPage({
               attention={attention}
               funnel={funnel}
               hiringManagerName={vacancy.hiring_manager_name}
-              currentUserName={profile.full_name ?? user.email ?? 'You'}
+              currentUserName={profile.full_name ?? user.email ?? t('vacOverview.you')}
               applicationFormToken={vacancy.application_form_token}
             />
           </TabsContent>
@@ -457,9 +459,7 @@ export default async function VacancyDetailPage({
           <TabsContent value="scorecard" className="m-0 bg-[oklch(0.985_0.002_247)] p-5 sm:p-6">
             <div className="flex flex-col gap-4">
               <p className="text-[12.5px] text-muted-foreground">
-                How your team evaluates candidates in interviews — none of this is shown to
-                candidates. (Questions candidates answer when applying live on the{' '}
-                <span className="font-semibold text-foreground">Apply form</span> tab.)
+                {t.rich('vacDetail.scorecardIntro', { b: (c) => <span className="font-semibold text-foreground">{c}</span> })}
               </p>
               <AiAssessmentSuggester
                 vacancyId={vacancy.id}
@@ -468,9 +468,9 @@ export default async function VacancyDetailPage({
                 canEdit={canEditQuestions}
               />
               <div className="grid gap-4 lg:grid-cols-2">
-                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Scorecard">
-                  <h2 className="text-[15px] font-bold text-foreground">Scorecard</h2>
-                  <p className="mb-3 text-[12.5px] text-muted-foreground">Score-based attributes (1–5) every interviewer rates.</p>
+                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label={t('scoreModal.scorecard')}>
+                  <h2 className="text-[15px] font-bold text-foreground">{t('scoreModal.scorecard')}</h2>
+                  <p className="mb-3 text-[12.5px] text-muted-foreground">{t('vacDetail.scorecardDesc')}</p>
                   <VacancyQuestions
                     vacancyId={vacancy.id}
                     initialQuestions={questions.filter((q) => q.type === 'score')}
@@ -478,9 +478,9 @@ export default async function VacancyDetailPage({
                     canEdit={canEditQuestions}
                   />
                 </section>
-                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Interview guide">
-                  <h2 className="text-[15px] font-bold text-foreground">Interview guide</h2>
-                  <p className="mb-3 text-[12.5px] text-muted-foreground">Open-ended prompts your interviewers ask in the room.</p>
+                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label={t('scoreModal.interviewGuide')}>
+                  <h2 className="text-[15px] font-bold text-foreground">{t('scoreModal.interviewGuide')}</h2>
+                  <p className="mb-3 text-[12.5px] text-muted-foreground">{t('vacDetail.guideDesc')}</p>
                   <VacancyQuestions
                     vacancyId={vacancy.id}
                     initialQuestions={questions.filter((q) => q.type === 'text')}
@@ -491,8 +491,8 @@ export default async function VacancyDetailPage({
               </div>
 
               {vacancyCustomFieldGroups.length > 0 && (
-                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label="Additional information">
-                  <h2 className="mb-3 text-[15px] font-bold text-foreground">Additional information</h2>
+                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label={t('candidateForm.additionalInfo')}>
+                  <h2 className="mb-3 text-[15px] font-bold text-foreground">{t('candidateForm.additionalInfo')}</h2>
                   <CustomFieldsDisplay groups={vacancyCustomFieldGroups} values={vacancyCustomFieldValues} />
                 </section>
               )}
