@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { getTranslations } from 'next-intl/server'
 import { Sparkles, Pencil, ExternalLink } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -29,7 +30,7 @@ interface JdTabProps {
  * + Preview apply page card that opens the public apply form in a new
  * tab so the recruiter can sanity-check what candidates see.
  */
-export function JdTab({
+export async function JdTab({
   vacancyId,
   description,
   responsibilities,
@@ -37,12 +38,13 @@ export function JdTab({
   postingDetails,
   applicationFormToken,
 }: JdTabProps) {
+  const t = await getTranslations()
   return (
     <div className="flex flex-col gap-4 bg-[oklch(0.985_0.002_247)] p-5 sm:flex-row sm:p-6">
       {/* Left — About the role */}
       <article className="flex-1 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-5 sm:p-[22px]">
         <header className="mb-4 flex flex-wrap items-center gap-2.5">
-          <h2 className="text-[17px] font-bold text-foreground">About the role</h2>
+          <h2 className="text-[17px] font-bold text-foreground">{t('jdTab.aboutRole')}</h2>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Button
               asChild
@@ -52,45 +54,45 @@ export function JdTab({
             >
               <Link href={`/vacancies/${vacancyId}/edit#ai-suggest`}>
                 <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                Improve with AI
+                {t('jdTab.improveWithAi')}
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
               <Link href={`/vacancies/${vacancyId}/edit`}>
                 <Pencil className="h-3.5 w-3.5" aria-hidden />
-                Edit
+                {t('common.edit')}
               </Link>
             </Button>
           </div>
         </header>
 
         <div className="space-y-4 text-[13.5px] leading-[1.7] text-foreground/85">
-          <JdSection heading="About the role" text={description} vacancyId={vacancyId} hideHeading />
-          <JdSection heading="What you'll do" text={responsibilities} vacancyId={vacancyId} />
-          <JdSection heading="What you'll bring" text={requirements} vacancyId={vacancyId} />
+          <JdSection heading={t('jdTab.aboutRole')} text={description} vacancyId={vacancyId} hideHeading />
+          <JdSection heading={t('jdTab.whatYoullDo')} text={responsibilities} vacancyId={vacancyId} />
+          <JdSection heading={t('jdTab.whatYoullBring')} text={requirements} vacancyId={vacancyId} />
         </div>
       </article>
 
       {/* Right rail */}
       <aside className="flex w-full shrink-0 flex-col gap-3.5 sm:w-[300px]">
-        <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label="Posting details">
-          <h2 className="mb-3 text-[15px] font-bold text-foreground">Posting details</h2>
+        <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('jdTab.postingDetails')}>
+          <h2 className="mb-3 text-[15px] font-bold text-foreground">{t('jdTab.postingDetails')}</h2>
           <ul className="flex flex-col gap-2 text-[12.5px]">
             <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">Visibility</span>
+              <span className="text-muted-foreground">{t('jdTab.visibility')}</span>
               <span className="font-semibold text-foreground">
-                {postingDetails.visibility === 'public' ? 'Public' : 'Private'}
+                {postingDetails.visibility === 'public' ? t('jdTab.public') : t('jdTab.private')}
               </span>
             </li>
             {postingDetails.language && (
               <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">Language</span>
+                <span className="text-muted-foreground">{t('jdTab.language')}</span>
                 <span className="font-semibold text-foreground">{postingDetails.language}</span>
               </li>
             )}
             {postingDetails.lastEditedAt && (
               <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">Last edited</span>
+                <span className="text-muted-foreground">{t('jdTab.lastEdited')}</span>
                 <span className="font-semibold text-foreground">
                   {format(new Date(postingDetails.lastEditedAt), 'MMM d, yyyy')}
                 </span>
@@ -100,12 +102,12 @@ export function JdTab({
         </section>
 
         {applicationFormToken && (
-          <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label="Preview apply page">
+          <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('jdTab.previewApplyPage')}>
             <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.05em] text-[oklch(0.45_0.16_250)]">
-              Preview
+              {t('emailTpl.preview')}
             </p>
             <p className="text-[12px] leading-[1.5] text-muted-foreground">
-              See exactly what candidates see on the public apply page.
+              {t('jdTab.previewDesc')}
             </p>
             <a
               href={`/apply/${applicationFormToken}`}
@@ -113,7 +115,7 @@ export function JdTab({
               rel="noopener noreferrer"
               className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-[oklch(0.88_0.01_250)] px-3 py-2 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-muted"
             >
-              Preview apply page
+              {t('jdTab.previewApplyPage')}
               <ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           </section>
@@ -129,7 +131,7 @@ export function JdTab({
  * character. The "About the role" section hides its heading because the card
  * header already names it.
  */
-function JdSection({
+async function JdSection({
   heading,
   text,
   vacancyId,
@@ -140,6 +142,7 @@ function JdSection({
   vacancyId: string
   hideHeading?: boolean
 }) {
+  const t = await getTranslations()
   const trimmed = (text ?? '').trim()
   return (
     <section>
@@ -150,12 +153,12 @@ function JdSection({
         <div className="whitespace-pre-wrap">{trimmed}</div>
       ) : (
         <p className="italic text-muted-foreground">
-          Not added yet —{' '}
+          {t('jdTab.notAdded')}{' '}
           <Link
             href={`/vacancies/${vacancyId}/edit`}
             className="font-semibold text-[oklch(0.45_0.16_250)] not-italic hover:underline"
           >
-            Edit
+            {t('common.edit')}
           </Link>
         </p>
       )}

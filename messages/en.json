@@ -1633,6 +1633,33 @@
     "scorecardDesc": "Score-based attributes (1–5) every interviewer rates.",
     "guideDesc": "Open-ended prompts your interviewers ask in the room."
   },
+  "vacSettings": {
+    "vacancyDetails": "Vacancy details",
+    "title": "Title",
+    "department": "Department",
+    "employmentType": "Employment type",
+    "workMode": "Work mode",
+    "editRoleDetails": "Edit role details",
+    "statusVisibility": "Status & visibility",
+    "closingHint": "Closing stops new applications without deleting the role.",
+    "dangerZone": "Danger zone",
+    "dangerDesc": "Closing stops new applications. Deleting removes the role and its candidates — this can't be undone."
+  },
+  "jdTab": {
+    "aboutRole": "About the role",
+    "improveWithAi": "Improve with AI",
+    "whatYoullDo": "What you'll do",
+    "whatYoullBring": "What you'll bring",
+    "postingDetails": "Posting details",
+    "visibility": "Visibility",
+    "public": "Public",
+    "private": "Private",
+    "language": "Language",
+    "lastEdited": "Last edited",
+    "previewApplyPage": "Preview apply page",
+    "previewDesc": "See exactly what candidates see on the public apply page.",
+    "notAdded": "Not added yet —"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

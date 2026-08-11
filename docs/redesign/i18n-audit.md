@@ -23,7 +23,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (13) components/settings/rejection-templates-manager.tsx
 - [ ] (12) app/(dashboard)/settings/billing/page.tsx
 - [x] (12) components/candidates/experience-section.tsx
-- [ ] (12) components/vacancies/detail/settings-tab.tsx
+- [x] (12) components/vacancies/detail/settings-tab.tsx
 - [x] (12) components/vacancies/detail/overview-tab.tsx
 - [ ] (12) components/vacancies/linkedin-post-job-button.tsx
 - [x] (11) components/candidates/form/pending-education-card.tsx
@@ -41,7 +41,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (10) components/pipeline/rejection-dialog.tsx
 - [ ] (10) components/vacancies/vacancy-application-row.tsx
 - [ ] (10) components/vacancies/pipeline-stages-manager.tsx
-- [ ] (10) components/vacancies/detail/jd-tab.tsx
+- [x] (10) components/vacancies/detail/jd-tab.tsx
 - [ ] (9) app/(dashboard)/settings/integrations/calendly/page.tsx
 - [ ] (9) components/settings/audit-log-filters.tsx
 - [ ] (9) components/settings/trash-list.tsx
