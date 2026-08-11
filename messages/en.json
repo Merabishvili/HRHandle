@@ -1735,6 +1735,46 @@
     "descDisconnected": "Connect to auto-create Google Meet links when scheduling video interviews.",
     "connect": "Connect Google"
   },
+  "notifPrefs": {
+    "saved": "Preferences saved",
+    "errSave": "Could not save preferences",
+    "subtitle": "Per-user preferences. Choose how you hear about each event.",
+    "eventCol": "Event",
+    "inApp": "In-app",
+    "slackColHint": "Connect a Slack webhook in Settings → Integrations to enable this column",
+    "mentionsAlwaysOn": "In-app @mentions are always on",
+    "connectSlack": "Connect Slack in Settings → Integrations",
+    "cellAria": "{title} — {channel}",
+    "emailDelivery": "Email delivery",
+    "emailDeliveryDesc": "Slack channel set in Settings → Integrations. In-app notifications always on for @mentions.",
+    "instant": "Instant",
+    "instantDesc": "Email as events happen",
+    "dailyDigest": "Daily digest",
+    "dailyDesc": "One summary email each morning",
+    "savePrefs": "Save preferences",
+    "event": {
+      "new_applicant": {
+        "title": "New application",
+        "description": "Someone applies to a role you own"
+      },
+      "stage_change": {
+        "title": "Stage change",
+        "description": "A candidate you follow moves stage"
+      },
+      "interview_reminder": {
+        "title": "Interview reminder",
+        "description": "1 hour before a scheduled interview"
+      },
+      "offer_response": {
+        "title": "Offer response",
+        "description": "A candidate accepts or declines an offer"
+      },
+      "mention": {
+        "title": "@mention in a note",
+        "description": "A teammate mentions you"
+      }
+    }
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

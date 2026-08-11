@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Check, Loader2, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -32,6 +33,7 @@ type Channel = 'in_app' | 'email' | 'slack'
  * (event, channel) pair.
  */
 export function NotificationPreferencesForm({ initial, slackAvailable }: Props) {
+  const t = useTranslations()
   const [prefs, setPrefs] = useState<NotificationPreferences>(initial)
   const [isPending, startTransition] = useTransition()
 
@@ -66,9 +68,9 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
     startTransition(async () => {
       const result = await updateNotificationPreferences(prefs)
       if (result.success) {
-        toast.success('Preferences saved')
+        toast.success(t('notifPrefs.saved'))
       } else {
-        toast.error(result.error ?? 'Could not save preferences')
+        toast.error(result.error ?? t('notifPrefs.errSave'))
       }
     })
   }
@@ -77,17 +79,17 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
     <div className="space-y-6">
       <Card className="overflow-hidden border-border">
         <CardHeader>
-          <CardTitle>Notifications</CardTitle>
+          <CardTitle>{t('settings.nav.notifications')}</CardTitle>
           <CardDescription>
-            Per-user preferences. Choose how you hear about each event.
+            {t('notifPrefs.subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {/* Header row */}
           <div className="grid grid-cols-[1fr_72px_72px_72px] items-center gap-2 border-y border-border bg-muted/40 px-5 py-2.5 text-[11.5px] font-semibold text-muted-foreground sm:px-6">
-            <span>Event</span>
-            <span className="text-center">In-app</span>
-            <span className="text-center">Email</span>
+            <span>{t('notifPrefs.eventCol')}</span>
+            <span className="text-center">{t('notifPrefs.inApp')}</span>
+            <span className="text-center">{t('candWizard.personal.email')}</span>
             <span
               className={cn(
                 'text-center',
@@ -96,7 +98,7 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
               title={
                 slackAvailable
                   ? undefined
-                  : 'Connect a Slack webhook in Settings → Integrations to enable this column'
+                  : t('notifPrefs.slackColHint')
               }
             >
               Slack
@@ -113,23 +115,23 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
               )}
             >
               <div>
-                <p className="text-[13px] font-semibold text-foreground">{event.title}</p>
-                <p className="text-[11.5px] text-muted-foreground">{event.description}</p>
+                <p className="text-[13px] font-semibold text-foreground">{t(`notifPrefs.event.${event.key}.title`)}</p>
+                <p className="text-[11.5px] text-muted-foreground">{t(`notifPrefs.event.${event.key}.description`)}</p>
               </div>
               <MatrixCheckbox
                 checked={isChannelOn(event, 'in_app')}
                 onChange={(v) => setChannel(event, 'in_app', v)}
                 disabled={isPending || event.inAppLocked}
                 lockedReason={
-                  event.inAppLocked ? 'In-app @mentions are always on' : undefined
+                  event.inAppLocked ? t('notifPrefs.mentionsAlwaysOn') : undefined
                 }
-                ariaLabel={`${event.title} — In-app`}
+                ariaLabel={t('notifPrefs.cellAria', { title: t(`notifPrefs.event.${event.key}.title`), channel: t('notifPrefs.inApp') })}
               />
               <MatrixCheckbox
                 checked={isChannelOn(event, 'email')}
                 onChange={(v) => setChannel(event, 'email', v)}
                 disabled={isPending}
-                ariaLabel={`${event.title} — Email`}
+                ariaLabel={t('notifPrefs.cellAria', { title: t(`notifPrefs.event.${event.key}.title`), channel: t('candWizard.personal.email') })}
               />
               <MatrixCheckbox
                 checked={isChannelOn(event, 'slack')}
@@ -137,10 +139,10 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
                 disabled={isPending || !slackAvailable}
                 lockedReason={
                   !slackAvailable
-                    ? 'Connect Slack in Settings → Integrations'
+                    ? t('notifPrefs.connectSlack')
                     : undefined
                 }
-                ariaLabel={`${event.title} — Slack`}
+                ariaLabel={t('notifPrefs.cellAria', { title: t(`notifPrefs.event.${event.key}.title`), channel: 'Slack' })}
               />
             </div>
           ))}
@@ -149,23 +151,23 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Email delivery</CardTitle>
+          <CardTitle>{t('notifPrefs.emailDelivery')}</CardTitle>
           <CardDescription>
-            Slack channel set in Settings → Integrations. In-app notifications always on for @mentions.
+            {t('notifPrefs.emailDeliveryDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-2.5 sm:flex-row">
             <DeliveryOption
-              label="Instant"
-              description="Email as events happen"
+              label={t('notifPrefs.instant')}
+              description={t('notifPrefs.instantDesc')}
               selected={prefs.email_delivery === 'instant'}
               onSelect={() => setEmailDelivery('instant')}
               disabled={isPending}
             />
             <DeliveryOption
-              label="Daily digest"
-              description="One summary email each morning"
+              label={t('notifPrefs.dailyDigest')}
+              description={t('notifPrefs.dailyDesc')}
               selected={prefs.email_delivery === 'daily'}
               onSelect={() => setEmailDelivery('daily')}
               disabled={isPending}
@@ -179,10 +181,10 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving…
+              {t('common.saving')}
             </>
           ) : (
-            'Save preferences'
+            t('notifPrefs.savePrefs')
           )}
         </Button>
       </div>
