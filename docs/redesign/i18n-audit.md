@@ -50,10 +50,10 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (9) components/vacancies/application-form-tab.tsx
 - [ ] (8) app/(dashboard)/settings/ai-fit/page.tsx
 - [x] (8) app/(dashboard)/vacancies/[id]/page.tsx
-- [ ] (8) components/candidates/profile/rail-sections.tsx
+- [x] (8) components/candidates/profile/rail-sections.tsx
 - [ ] (8) components/settings/active-sessions-card.tsx
 - [x] (8) components/scorecards/share-scorecard-dialog.tsx
-- [ ] (7) components/candidates/profile/profile-shell.tsx
+- [x] (7) components/candidates/profile/profile-shell.tsx
 - [x] (7) components/settings/zoom-connect.tsx
 - [x] (7) components/settings/audit-log-table.tsx
 - [x] (7) components/settings/microsoft-connect.tsx

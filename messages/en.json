@@ -1957,6 +1957,26 @@
     "prevRevoked": "Previous link revoked on {date}. Generating a new link below produces a different URL.",
     "generateLink": "Generate link"
   },
+  "rail": {
+    "advanceFailed": "Failed to advance — try again.",
+    "advancedTo": "Advanced to {name}.",
+    "actions": "Actions",
+    "advanceTo": "Advance to {name}",
+    "finalStage": "Already at the final active stage.",
+    "schedule": "Schedule",
+    "noEmailTitle": "No email on file for this candidate",
+    "reject": "Reject",
+    "details": "Details",
+    "customFields": "Custom fields"
+  },
+  "profileShell": {
+    "activeLive": "Active · {count, plural, one {# live application} other {# live applications}}",
+    "noLive": "No live applications",
+    "moreActions": "More actions",
+    "deleteCandidate": "Delete candidate",
+    "noLiveHint": "No live applications yet. Use <b>Add to vacancy</b> in the header to put this candidate in a pipeline.",
+    "added": "Added"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

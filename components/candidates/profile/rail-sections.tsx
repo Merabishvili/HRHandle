@@ -3,12 +3,14 @@
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Calendar, Mail, XCircle, ArrowRight, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { updateApplicationStatus } from '@/lib/actions/applications'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import type { ApplicationStatus } from '@/lib/types/application'
 
 interface RailActionsProps {
@@ -40,26 +42,28 @@ export function RailActions({
   nextStage,
   onReject,
 }: RailActionsProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [pending, startTransition] = useTransition()
+  const nextStageLabel = nextStage ? statusLabel(t, nextStage.code, nextStage.name) : ''
 
   const advance = () => {
     if (!nextStage) return
     startTransition(async () => {
       const result = await updateApplicationStatus(applicationId, nextStage.id)
       if (!result.success) {
-        toast.error('Failed to advance — try again.')
+        toast.error(t('rail.advanceFailed'))
         return
       }
-      toast.success(`Advanced to ${nextStage.name}.`)
+      toast.success(t('rail.advancedTo', { name: nextStageLabel }))
       router.refresh()
     })
   }
 
   return (
-    <section aria-label="Actions" className="space-y-2.5">
+    <section aria-label={t('rail.actions')} className="space-y-2.5">
       <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        Actions
+        {t('rail.actions')}
       </p>
 
       {nextStage ? (
@@ -73,26 +77,26 @@ export function RailActions({
           ) : (
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           )}
-          Advance to {nextStage.name}
+          {t('rail.advanceTo', { name: nextStageLabel })}
         </Button>
       ) : (
         <p className="rounded-[9px] border border-dashed border-border bg-muted/30 px-3 py-2 text-center text-[12px] text-muted-foreground">
-          Already at the final active stage.
+          {t('rail.finalStage')}
         </p>
       )}
 
       <div className="grid grid-cols-3 gap-1.5">
         <SecondaryRailButton href={`/interviews/new?candidate=${candidateId}&application=${applicationId}`}>
           <Calendar className="h-3.5 w-3.5" aria-hidden />
-          Schedule
+          {t('rail.schedule')}
         </SecondaryRailButton>
         <SecondaryRailButton
           href={candidateEmail ? `mailto:${candidateEmail}` : 'mailto:'}
           disabled={!candidateEmail}
-          title={candidateEmail ? undefined : 'No email on file for this candidate'}
+          title={candidateEmail ? undefined : t('rail.noEmailTitle')}
         >
           <Mail className="h-3.5 w-3.5" aria-hidden />
-          Email
+          {t('candWizard.personal.email')}
         </SecondaryRailButton>
         <button
           type="button"
@@ -103,7 +107,7 @@ export function RailActions({
           )}
         >
           <XCircle className="h-3.5 w-3.5" aria-hidden />
-          Reject
+          {t('rail.reject')}
         </button>
       </div>
     </section>
@@ -151,11 +155,12 @@ interface RailDetailsProps {
 }
 
 export function RailDetails({ items }: RailDetailsProps) {
+  const t = useTranslations()
   if (items.length === 0) return null
   return (
-    <section aria-label="Details" className="space-y-2">
+    <section aria-label={t('rail.details')} className="space-y-2">
       <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        Details
+        {t('rail.details')}
       </p>
       <ul className="flex flex-col gap-[7px] text-[12.5px]">
         {items.map((item) => (
@@ -174,11 +179,12 @@ interface RailCustomFieldsProps {
 }
 
 export function RailCustomFields({ items }: RailCustomFieldsProps) {
+  const t = useTranslations()
   if (items.length === 0) return null
   return (
-    <section aria-label="Custom fields" className="space-y-2">
+    <section aria-label={t('rail.customFields')} className="space-y-2">
       <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        Custom fields
+        {t('rail.customFields')}
       </p>
       <ul className="flex flex-col gap-[7px] text-[12.5px]">
         {items.map((item) => (

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Pencil, MoreHorizontal, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -202,6 +203,7 @@ export function CandidateProfileShell({
   railCustomFields,
   recentMerge,
 }: ProfileShellProps) {
+  const t = useTranslations()
   // Default-select the active application closest to a decision (Offer >
   // Interview > Screening > Applied). When tied, take the most recently
   // updated. Empty when there are no live applications.
@@ -281,13 +283,12 @@ export function CandidateProfileShell({
               </h1>
               {activeApplications.length > 0 && (
                 <span className="rounded-md bg-[oklch(0.95_0.01_250)] px-2 py-0.5 text-[11.5px] font-medium text-foreground/80">
-                  Active · {activeApplications.length} live{' '}
-                  {activeApplications.length === 1 ? 'application' : 'applications'}
+                  {t('profileShell.activeLive', { count: activeApplications.length })}
                 </span>
               )}
               {activeApplications.length === 0 && (
                 <span className="rounded-md bg-muted px-2 py-0.5 text-[11.5px] font-medium text-muted-foreground">
-                  No live applications
+                  {t('profileShell.noLive')}
                 </span>
               )}
             </div>
@@ -306,7 +307,7 @@ export function CandidateProfileShell({
             <Button asChild variant="outline" size="sm" className="h-9 gap-1.5">
               <Link href={`/candidates/${candidate.id}/edit`}>
                 <Pencil className="h-3.5 w-3.5" aria-hidden />
-                Edit
+                {t('common.edit')}
               </Link>
             </Button>
             <DropdownMenu>
@@ -315,14 +316,14 @@ export function CandidateProfileShell({
                   variant="outline"
                   size="icon"
                   className="h-9 w-9"
-                  aria-label="More actions"
+                  aria-label={t('profileShell.moreActions')}
                 >
                   <MoreHorizontal className="h-4 w-4" aria-hidden />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onSelect={() => setMergeOpen(true)}>
-                  Merge candidates
+                  {t('merge.title')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {/* Delete opens a shell-level dialog (not a button nested in the
@@ -333,7 +334,7 @@ export function CandidateProfileShell({
                   onSelect={() => setDeleteOpen(true)}
                 >
                   <Trash2 className="mr-2 h-4 w-4" aria-hidden />
-                  Delete candidate
+                  {t('profileShell.deleteCandidate')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -396,9 +397,7 @@ export function CandidateProfileShell({
 
             {!selectedApp && (
               <div className="rounded-xl border border-dashed border-border bg-white p-6 text-center text-[13px] text-muted-foreground">
-                No live applications yet. Use{' '}
-                <span className="font-semibold text-foreground">Add to vacancy</span> in the header
-                to put this candidate in a pipeline.
+                {t.rich('profileShell.noLiveHint', { b: (c) => <span className="font-semibold text-foreground">{c}</span> })}
               </div>
             )}
 
@@ -454,7 +453,7 @@ export function CandidateProfileShell({
 
             {customFieldGroups.length > 0 && hasCustomFieldValues(customFieldValues) && (
               <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4">
-                <p className="mb-3 text-[14px] font-bold text-foreground">Additional information</p>
+                <p className="mb-3 text-[14px] font-bold text-foreground">{t('candidateForm.additionalInfo')}</p>
                 <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
               </div>
             )}
@@ -498,13 +497,13 @@ export function CandidateProfileShell({
 
             <RailDetails
               items={[
-                { label: 'Salary expectation', value: candidate.salaryExpectation ?? '—' },
-                { label: 'Notice period', value: candidate.noticePeriod ?? '—' },
-                { label: 'Location', value: candidate.location ?? '—' },
-                { label: 'Timezone', value: candidate.timezone ?? '—' },
-                { label: 'Languages', value: candidate.languages.join(', ') || '—' },
-                { label: 'Source', value: candidate.source ?? '—' },
-                { label: 'Added', value: new Date(candidate.addedAt).toLocaleDateString() },
+                { label: t('candWizard.personal.salaryExpectation'), value: candidate.salaryExpectation ?? '—' },
+                { label: t('candWizard.personal.noticePeriod'), value: candidate.noticePeriod ?? '—' },
+                { label: t('candWizard.personal.location'), value: candidate.location ?? '—' },
+                { label: t('candWizard.personal.timezone'), value: candidate.timezone ?? '—' },
+                { label: t('candWizard.personal.languages'), value: candidate.languages.join(', ') || '—' },
+                { label: t('candWizard.application.sourceLabel'), value: candidate.source ?? '—' },
+                { label: t('profileShell.added'), value: new Date(candidate.addedAt).toLocaleDateString() },
               ]}
             />
 
