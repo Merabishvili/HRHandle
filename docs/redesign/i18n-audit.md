@@ -34,7 +34,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (11) components/vacancies/ai-assessment-suggester.tsx
 - [ ] (10) components/candidates/education-section.tsx
 - [x] (10) components/candidates/form/pending-experience-card.tsx
-- [ ] (10) components/candidates/profile/score-candidate-modal.tsx
+- [x] (10) components/candidates/profile/score-candidate-modal.tsx
 - [ ] (10) components/candidates/profile/ai-fit-card.tsx
 - [ ] (10) components/candidates/ai-summary-panel.tsx
 - [ ] (10) components/settings/notification-preferences-form.tsx

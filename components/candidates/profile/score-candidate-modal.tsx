@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { ChevronRight, Loader2, Save, Send } from 'lucide-react'
 
@@ -31,18 +32,18 @@ interface ScoreCandidateModalProps {
 
 type Recommendation = 'strong_yes' | 'yes' | 'lean_no' | 'no'
 
-const RECOMMENDATIONS: { value: Recommendation; label: string; active: string }[] = [
-  { value: 'strong_yes', label: 'Strong yes', active: 'border-[oklch(0.7_0.14_150)] bg-[oklch(0.93_0.08_155)] text-[oklch(0.34_0.14_150)]' },
-  { value: 'yes', label: 'Yes', active: 'border-[oklch(0.8_0.1_150)] bg-[oklch(0.95_0.05_155)] text-[oklch(0.38_0.12_150)]' },
-  { value: 'lean_no', label: 'Lean no', active: 'border-[oklch(0.85_0.08_70)] bg-[oklch(0.97_0.05_70)] text-[oklch(0.45_0.12_55)]' },
-  { value: 'no', label: 'No', active: 'border-[oklch(0.85_0.06_27)] bg-[oklch(0.96_0.04_27)] text-[oklch(0.5_0.19_27)]' },
+const RECOMMENDATIONS: { value: Recommendation; labelKey: string; active: string }[] = [
+  { value: 'strong_yes', labelKey: 'scoreModal.recStrongYes', active: 'border-[oklch(0.7_0.14_150)] bg-[oklch(0.93_0.08_155)] text-[oklch(0.34_0.14_150)]' },
+  { value: 'yes', labelKey: 'scoreModal.recYes', active: 'border-[oklch(0.8_0.1_150)] bg-[oklch(0.95_0.05_155)] text-[oklch(0.38_0.12_150)]' },
+  { value: 'lean_no', labelKey: 'scoreModal.recLeanNo', active: 'border-[oklch(0.85_0.08_70)] bg-[oklch(0.97_0.05_70)] text-[oklch(0.45_0.12_55)]' },
+  { value: 'no', labelKey: 'scoreModal.recNo', active: 'border-[oklch(0.85_0.06_27)] bg-[oklch(0.96_0.04_27)] text-[oklch(0.5_0.19_27)]' },
 ]
 
-const RECOMMENDATION_LABEL: Record<Recommendation, string> = {
-  strong_yes: 'Strong yes',
-  yes: 'Yes',
-  lean_no: 'Lean no',
-  no: 'No',
+const RECOMMENDATION_LABEL_KEY: Record<Recommendation, string> = {
+  strong_yes: 'scoreModal.recStrongYes',
+  yes: 'scoreModal.recYes',
+  lean_no: 'scoreModal.recLeanNo',
+  no: 'scoreModal.recNo',
 }
 
 /**
@@ -59,6 +60,7 @@ export function ScoreCandidateModal({
   open,
   onOpenChange,
 }: ScoreCandidateModalProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [data, setData] = useState<ScorecardData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -112,15 +114,15 @@ export function ScoreCandidateModal({
     if (!data) return
     if (submit) {
       if (!allRated) {
-        toast.error('Rate every attribute before submitting.')
+        toast.error(t('scoreModal.errRateAll'))
         return
       }
       if (!recommendation) {
-        toast.error('Pick an overall recommendation.')
+        toast.error(t('scoreModal.errPickRec'))
         return
       }
       if (!reason.trim()) {
-        toast.error('Add a one-line reason for your recommendation.')
+        toast.error(t('scoreModal.errReason'))
         return
       }
     }
@@ -146,11 +148,11 @@ export function ScoreCandidateModal({
       return
     }
     if (submit) {
-      toast.success('Scorecard submitted.')
+      toast.success(t('scoreModal.submitted'))
       onOpenChange(false)
       router.refresh()
     } else {
-      toast.success('Draft saved.')
+      toast.success(t('scoreModal.draftSaved'))
     }
   }
 
@@ -158,16 +160,16 @@ export function ScoreCandidateModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Score candidate</DialogTitle>
+          <DialogTitle>{t('scoreModal.title')}</DialogTitle>
           <DialogDescription>
-            {vacancyTitle} · rate this candidate against the role&apos;s scorecard.
+            {t('scoreModal.subtitle', { title: vacancyTitle })}
           </DialogDescription>
         </DialogHeader>
 
         {loading || !data ? (
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            Loading scorecard…
+            {t('scoreModal.loading')}
           </div>
         ) : (
           <div className="space-y-5">
@@ -184,9 +186,9 @@ export function ScoreCandidateModal({
                     className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', guideOpen && 'rotate-90')}
                     aria-hidden
                   />
-                  <span className="text-[13px] font-semibold text-foreground">Interview guide</span>
+                  <span className="text-[13px] font-semibold text-foreground">{t('scoreModal.interviewGuide')}</span>
                   <span className="text-[12px] text-muted-foreground">
-                    {guideQuestions.length} question{guideQuestions.length === 1 ? '' : 's'} · reference only
+                    {t('scoreModal.guideCount', { count: guideQuestions.length })}
                   </span>
                 </button>
                 {guideOpen && (
@@ -204,18 +206,17 @@ export function ScoreCandidateModal({
             {/* Scorecard — the vacancy's real attributes, rated 1–5 */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-[14px] font-bold text-foreground">Scorecard</h3>
+                <h3 className="text-[14px] font-bold text-foreground">{t('scoreModal.scorecard')}</h3>
                 {fitScore !== null && (
                   <span className="rounded-full bg-[oklch(0.93_0.07_155)] px-2.5 py-0.5 text-[12px] font-bold text-[oklch(0.38_0.14_150)]">
-                    Fit {fitScore}%
+                    {t('scoreModal.fitPercent', { score: fitScore })}
                   </span>
                 )}
               </div>
 
               {scoreQuestions.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-[12.5px] text-muted-foreground">
-                  No scorecard attributes are configured for this role yet. Add them on the vacancy&apos;s
-                  Scorecard &amp; interview tab.
+                  {t('scoreModal.noAttributes')}
                 </p>
               ) : (
                 scoreQuestions.map((q) => (
@@ -230,7 +231,7 @@ export function ScoreCandidateModal({
                             : 'border-border text-muted-foreground',
                         )}
                       >
-                        {q.mustHave ? 'Must-have' : 'Nice-to-have'}
+                        {q.mustHave ? t('wizard.mustHave') : t('wizard.niceToHave')}
                       </span>
                     </div>
                     <div className="flex gap-1">
@@ -252,7 +253,7 @@ export function ScoreCandidateModal({
                               ? 'border-primary bg-primary text-primary-foreground'
                               : 'border-border bg-background text-foreground hover:bg-muted',
                           )}
-                          aria-label={`${q.label}: ${n}`}
+                          aria-label={t('scoreModal.ratingAria', { label: q.label, n })}
                           aria-pressed={scores[q.id] === n}
                         >
                           {n}
@@ -267,7 +268,7 @@ export function ScoreCandidateModal({
             {/* Overall recommendation */}
             <div className="space-y-2">
               <Label className="text-[13px] font-semibold">
-                Overall recommendation <span className="text-destructive">*</span>
+                {t('scoreModal.overallRec')} <span className="text-destructive">*</span>
               </Label>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {RECOMMENDATIONS.map((r) => (
@@ -283,14 +284,14 @@ export function ScoreCandidateModal({
                         : 'border-border text-foreground hover:bg-muted',
                     )}
                   >
-                    {r.label}
+                    {t(r.labelKey)}
                   </button>
                 ))}
               </div>
               <Textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="One-line reason for your recommendation (required to submit)"
+                placeholder={t('scoreModal.reasonPlaceholder')}
                 rows={2}
                 maxLength={300}
                 className="text-[12.5px]"
@@ -302,7 +303,7 @@ export function ScoreCandidateModal({
             {data.existing?.submitted && data.otherCards.length > 0 ? (
               <div className="space-y-2 rounded-lg border border-border p-3">
                 <p className="text-[13px] font-semibold text-foreground">
-                  Other scorecards ({data.otherCards.length})
+                  {t('scoreModal.otherScorecards', { count: data.otherCards.length })}
                 </p>
                 <ul className="space-y-2.5">
                   {data.otherCards.map((c, i) => (
@@ -312,11 +313,11 @@ export function ScoreCandidateModal({
                         <span className="flex items-center gap-2">
                           {c.recommendation && (
                             <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-foreground">
-                              {RECOMMENDATION_LABEL[c.recommendation]}
+                              {t(RECOMMENDATION_LABEL_KEY[c.recommendation])}
                             </span>
                           )}
                           {typeof c.score === 'number' && (
-                            <span className="tabular-nums text-muted-foreground">Fit {c.score}%</span>
+                            <span className="tabular-nums text-muted-foreground">{t('scoreModal.fitPercent', { score: c.score })}</span>
                           )}
                         </span>
                       </div>
@@ -330,19 +331,19 @@ export function ScoreCandidateModal({
             ) : (
               <p className="text-[11.5px] text-muted-foreground">
                 {data.otherSubmittedCount > 0
-                  ? `${data.otherSubmittedCount} other reviewer${data.otherSubmittedCount === 1 ? '' : 's'} submitted — their cards appear once you submit yours (anti-anchoring).`
-                  : "Others' cards stay hidden until you submit yours."}
+                  ? t('scoreModal.othersSubmitted', { count: data.otherSubmittedCount })
+                  : t('scoreModal.othersHidden')}
               </p>
             )}
 
             <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
               <Button type="button" variant="outline" onClick={() => persist(false)} disabled={saving} className="gap-1.5">
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                Save draft
+                {t('stageBlock.saveDraft')}
               </Button>
               <Button type="button" onClick={() => persist(true)} disabled={saving} className="gap-1.5">
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                Submit scorecard
+                {t('scoreModal.submit')}
               </Button>
             </div>
           </div>
