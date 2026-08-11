@@ -1680,6 +1680,61 @@
     "confirmDeactivate": "Confirm Deactivate",
     "deactivate": "Deactivate Form"
   },
+  "integrations": {
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "connect": "Connect",
+    "disconnect": "Disconnect"
+  },
+  "liConnect": {
+    "connected": "LinkedIn company page connected successfully.",
+    "disconnected": "LinkedIn disconnected.",
+    "errFailed": "Failed to connect LinkedIn. Please try again.",
+    "errInvalidId": "Invalid page ID. Enter the numeric ID from your LinkedIn Company Page URL.",
+    "title": "LinkedIn Company Page",
+    "connectedDesc": "Page ID: {id}. Enables \"Post to LinkedIn Jobs\" on vacancies.",
+    "connectDesc": "Connect your LinkedIn company page to post jobs directly to LinkedIn Jobs from vacancies.",
+    "disconnectTitle": "Disconnect LinkedIn?",
+    "disconnectDesc": "You won't be able to post jobs directly to LinkedIn from this workspace until you reconnect. Existing posts on LinkedIn remain unchanged.",
+    "pageIdPlaceholder": "e.g. 12345678",
+    "findItAt": "Find it at: linkedin.com/company/<b>ID</b>/admin/"
+  },
+  "zoomConnect": {
+    "connected": "Zoom connected successfully.",
+    "disconnected": "Zoom disconnected.",
+    "notConfigured": "Zoom OAuth credentials are not configured on the server.",
+    "errFailed": "Failed to connect Zoom. Please try again.",
+    "descConnected": "Video interviews can auto-create Zoom meetings with a join link.",
+    "descDisconnected": "Connect to auto-create Zoom meetings when scheduling video interviews.",
+    "connect": "Connect Zoom"
+  },
+  "msConnect": {
+    "connected": "Microsoft account connected successfully.",
+    "disconnected": "Microsoft account disconnected.",
+    "notConfigured": "Microsoft OAuth credentials are not configured on the server.",
+    "denied": "Microsoft connection was cancelled.",
+    "stateMismatch": "The connection request expired or your browser blocked the security cookie. Please try connecting again.",
+    "tokenFailed": "Microsoft rejected the connection. This is usually a server configuration issue (expired client secret or an unregistered redirect URL). Please contact your administrator.",
+    "errFailed": "Failed to connect Microsoft account. Please try again.",
+    "title": "Microsoft (Calendar + Teams)",
+    "descConnected": "Video interviews can auto-create Teams meetings and add them to your Outlook Calendar.",
+    "descDisconnected": "Connect to auto-create Teams meetings and Outlook Calendar events when scheduling video interviews.",
+    "connect": "Connect Microsoft"
+  },
+  "gcalConnect": {
+    "connected": "Google Calendar connected successfully.",
+    "disconnected": "Google Calendar disconnected.",
+    "notConfigured": "Google OAuth credentials are not configured on the server.",
+    "stateMismatch": "Connection timed out or your browser blocked the security cookie. Try again and complete the Google consent within 10 minutes.",
+    "tokenFailed": "Google rejected the authorisation code. Check the server logs for the underlying error and try again.",
+    "scopeMissing": "You did not grant the Calendar permission needed to create Meet links. Please click Connect Google again and approve all requested permissions.",
+    "denied": "You declined the Google permission prompt. Click Connect Google to try again.",
+    "errFailed": "Failed to connect Google Calendar. Please try again.",
+    "title": "Google Calendar",
+    "descConnected": "Video interviews can create Google Calendar events with Meet links.",
+    "descDisconnected": "Connect to auto-create Google Meet links when scheduling video interviews.",
+    "connect": "Connect Google"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

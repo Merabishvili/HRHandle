@@ -1,6 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -11,6 +12,7 @@ interface MicrosoftConnectProps {
 }
 
 export function MicrosoftConnect({ isConnected }: MicrosoftConnectProps) {
+  const t = useTranslations()
   const params = useSearchParams()
   const status = params.get('microsoft')
 
@@ -19,12 +21,12 @@ export function MicrosoftConnect({ isConnected }: MicrosoftConnectProps) {
       {status === 'connected' && (
         <Alert>
           <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>Microsoft account connected successfully.</AlertDescription>
+          <AlertDescription>{t('msConnect.connected')}</AlertDescription>
         </Alert>
       )}
       {status === 'disconnected' && (
         <Alert>
-          <AlertDescription>Microsoft account disconnected.</AlertDescription>
+          <AlertDescription>{t('msConnect.disconnected')}</AlertDescription>
         </Alert>
       )}
       {(status === 'error' ||
@@ -36,14 +38,14 @@ export function MicrosoftConnect({ isConnected }: MicrosoftConnectProps) {
           <XCircle className="h-4 w-4" />
           <AlertDescription>
             {status === 'not_configured'
-              ? 'Microsoft OAuth credentials are not configured on the server.'
+              ? t('msConnect.notConfigured')
               : status === 'denied'
-              ? 'Microsoft connection was cancelled.'
+              ? t('msConnect.denied')
               : status === 'state_mismatch'
-              ? 'The connection request expired or your browser blocked the security cookie. Please try connecting again.'
+              ? t('msConnect.stateMismatch')
               : status === 'token_exchange_failed'
-              ? 'Microsoft rejected the connection. This is usually a server configuration issue (expired client secret or an unregistered redirect URL). Please contact your administrator.'
-              : 'Failed to connect Microsoft account. Please try again.'}
+              ? t('msConnect.tokenFailed')
+              : t('msConnect.errFailed')}
           </AlertDescription>
         </Alert>
       )}
@@ -51,29 +53,29 @@ export function MicrosoftConnect({ isConnected }: MicrosoftConnectProps) {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Microsoft (Calendar + Teams)</span>
+            <span className="text-sm font-medium">{t('msConnect.title')}</span>
             {isConnected ? (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">Connected</Badge>
+              <Badge variant="secondary" className="bg-green-100 text-green-800">{t('integrations.connected')}</Badge>
             ) : (
-              <Badge variant="secondary" className="bg-slate-100 text-slate-600">Not connected</Badge>
+              <Badge variant="secondary" className="bg-slate-100 text-slate-600">{t('integrations.notConnected')}</Badge>
             )}
           </div>
           <p className="text-sm text-muted-foreground">
             {isConnected
-              ? 'Video interviews can auto-create Teams meetings and add them to your Outlook Calendar.'
-              : 'Connect to auto-create Teams meetings and Outlook Calendar events when scheduling video interviews.'}
+              ? t('msConnect.descConnected')
+              : t('msConnect.descDisconnected')}
           </p>
         </div>
 
         {isConnected ? (
           <form action="/api/auth/microsoft/disconnect" method="POST">
             <Button type="submit" variant="outline" size="sm">
-              Disconnect
+              {t('integrations.disconnect')}
             </Button>
           </form>
         ) : (
           <Button asChild size="sm">
-            <a href="/api/auth/microsoft">Connect Microsoft</a>
+            <a href="/api/auth/microsoft">{t('msConnect.connect')}</a>
           </Button>
         )}
       </div>

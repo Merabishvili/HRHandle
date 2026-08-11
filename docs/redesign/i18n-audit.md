@@ -29,7 +29,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (11) components/candidates/form/pending-education-card.tsx
 - [x] (11) components/candidates/form/personal-info-section.tsx
 - [x] (11) components/candidates/application-evaluation.tsx
-- [ ] (11) components/settings/linkedin-connect.tsx
+- [x] (11) components/settings/linkedin-connect.tsx
 - [x] (11) components/vacancies/ai-bias-check.tsx
 - [x] (11) components/vacancies/ai-assessment-suggester.tsx
 - [x] (10) components/candidates/education-section.tsx
@@ -54,10 +54,10 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (8) components/settings/active-sessions-card.tsx
 - [ ] (8) components/scorecards/share-scorecard-dialog.tsx
 - [ ] (7) components/candidates/profile/profile-shell.tsx
-- [ ] (7) components/settings/zoom-connect.tsx
+- [x] (7) components/settings/zoom-connect.tsx
 - [ ] (7) components/settings/audit-log-table.tsx
-- [ ] (7) components/settings/microsoft-connect.tsx
-- [ ] (7) components/settings/google-calendar-connect.tsx
+- [x] (7) components/settings/microsoft-connect.tsx
+- [x] (7) components/settings/google-calendar-connect.tsx
 - [ ] (7) components/pipeline/list-view.tsx
 - [x] (7) components/global-search/global-search-dialog.tsx
 - [ ] (6) components/settings/rejection-reasons-manager.tsx
