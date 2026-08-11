@@ -45,8 +45,8 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (9) app/(dashboard)/settings/integrations/calendly/page.tsx
 - [x] (9) components/settings/audit-log-filters.tsx
 - [x] (9) components/settings/trash-list.tsx
-- [ ] (9) components/landing/pricing-section.tsx
-- [ ] (9) components/shared/column-manager-dialog.tsx
+- [x] (9) components/landing/pricing-section.tsx
+- [x] (9) components/shared/column-manager-dialog.tsx
 - [x] (9) components/vacancies/application-form-tab.tsx
 - [ ] (8) app/(dashboard)/settings/ai-fit/page.tsx
 - [x] (8) app/(dashboard)/vacancies/[id]/page.tsx

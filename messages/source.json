@@ -1713,6 +1713,23 @@
   "planCards.trialPlan": { "en": "Trial Plan", "ru": "Пробный план", "ka": "საცდელი გეგმა" },
   "planCards.upgrade": { "en": "Upgrade", "ru": "Перейти", "ka": "გადასვლა" },
 
+  "pricing.promotion": { "en": "Promotion", "ru": "Акция", "ka": "აქცია" },
+  "pricing.currency": { "en": "Currency", "ru": "Валюта", "ka": "ვალუტა" },
+  "pricing.pricesIn": { "en": "Prices in {currency}", "ru": "Цены в {currency}", "ka": "ფასები {currency}-ში" },
+  "pricing.billingCycle": { "en": "Billing cycle", "ru": "Цикл оплаты", "ka": "გადახდის ციკლი" },
+  "pricing.monthlyBilling": { "en": "Monthly billing", "ru": "Ежемесячная оплата", "ka": "ყოველთვიური გადახდა" },
+  "pricing.annualBilling": { "en": "Annual billing", "ru": "Ежегодная оплата", "ka": "ყოველწლიური გადახდა" },
+  "pricing.startTrial": { "en": "Start Free Trial", "ru": "Начать бесплатный период", "ka": "უფასო საცდელის დაწყება" },
+  "pricing.getStarted": { "en": "Get Started", "ru": "Начать", "ka": "დაწყება" },
+
+  "colMgr.title": { "en": "Manage columns", "ru": "Управление столбцами", "ka": "სვეტების მართვა" },
+  "colMgr.fixed": { "en": "Fixed columns", "ru": "Фиксированные столбцы", "ka": "ფიქსირებული სვეტები" },
+  "colMgr.fixedBadge": { "en": "Fixed", "ru": "Фиксир.", "ka": "ფიქსირ." },
+  "colMgr.optional": { "en": "Optional columns", "ru": "Дополнительные столбцы", "ka": "დამატებითი სვეტები" },
+  "colMgr.noneSelected": { "en": "No optional columns selected", "ru": "Дополнительные столбцы не выбраны", "ka": "დამატებითი სვეტები არ არის არჩეული" },
+  "colMgr.addColumns": { "en": "Add columns", "ru": "Добавить столбцы", "ka": "სვეტების დამატება" },
+  "colMgr.removeToAdd": { "en": "Remove a column above to add a different one.", "ru": "Удалите столбец выше, чтобы добавить другой.", "ka": "წაშალეთ ზემოთ სვეტი, რომ სხვა დაამატოთ." },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },

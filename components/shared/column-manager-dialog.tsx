@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { GripVertical, X, Plus } from 'lucide-react'
 import {
   DndContext,
@@ -83,6 +84,7 @@ export function ColumnManagerDialog({
   selectedColumns: initialSelected,
   onSave,
 }: ColumnManagerDialogProps) {
+  const t = useTranslations()
   const [selected, setSelected] = useState<string[]>(initialSelected)
   const [saving, setSaving] = useState(false)
 
@@ -128,14 +130,14 @@ export function ColumnManagerDialog({
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleCancel() }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Manage columns</DialogTitle>
+          <DialogTitle>{t('colMgr.title')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           {/* Fixed columns */}
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Fixed columns
+              {t('colMgr.fixed')}
             </p>
             <div className="space-y-1.5">
               {fixedColumns.map((col) => (
@@ -145,7 +147,7 @@ export function ColumnManagerDialog({
                 >
                   <GripVertical className="h-4 w-4 text-muted-foreground/30" />
                   <span className="flex-1 text-sm text-muted-foreground">{col.label}</span>
-                  <Badge variant="secondary" className="text-[10px]">Fixed</Badge>
+                  <Badge variant="secondary" className="text-[10px]">{t('colMgr.fixedBadge')}</Badge>
                 </div>
               ))}
             </div>
@@ -154,7 +156,7 @@ export function ColumnManagerDialog({
           {/* Selected optional columns */}
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Optional columns
+              {t('colMgr.optional')}
               <span className="ml-1.5 font-normal normal-case text-foreground">
                 ({selected.length}/{MAX_OPTIONAL_COLUMNS})
               </span>
@@ -177,7 +179,7 @@ export function ColumnManagerDialog({
               </DndContext>
             ) : (
               <p className="py-3 text-center text-sm text-muted-foreground">
-                No optional columns selected
+                {t('colMgr.noneSelected')}
               </p>
             )}
           </div>
@@ -186,7 +188,7 @@ export function ColumnManagerDialog({
           {available.length > 0 && selected.length < MAX_OPTIONAL_COLUMNS && (
             <div>
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Add columns
+                {t('colMgr.addColumns')}
               </p>
               <div className="flex flex-wrap gap-2">
                 {available.map((col) => (
@@ -205,17 +207,17 @@ export function ColumnManagerDialog({
 
           {selected.length >= MAX_OPTIONAL_COLUMNS && available.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              Remove a column above to add a different one.
+              {t('colMgr.removeToAdd')}
             </p>
           )}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={handleCancel} disabled={saving}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('common.saving') : t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

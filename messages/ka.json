@@ -1923,6 +1923,25 @@
     "trialPlan": "საცდელი გეგმა",
     "upgrade": "გადასვლა"
   },
+  "pricing": {
+    "promotion": "აქცია",
+    "currency": "ვალუტა",
+    "pricesIn": "ფასები {currency}-ში",
+    "billingCycle": "გადახდის ციკლი",
+    "monthlyBilling": "ყოველთვიური გადახდა",
+    "annualBilling": "ყოველწლიური გადახდა",
+    "startTrial": "უფასო საცდელის დაწყება",
+    "getStarted": "დაწყება"
+  },
+  "colMgr": {
+    "title": "სვეტების მართვა",
+    "fixed": "ფიქსირებული სვეტები",
+    "fixedBadge": "ფიქსირ.",
+    "optional": "დამატებითი სვეტები",
+    "noneSelected": "დამატებითი სვეტები არ არის არჩეული",
+    "addColumns": "სვეტების დამატება",
+    "removeToAdd": "წაშალეთ ზემოთ სვეტი, რომ სხვა დაამატოთ."
+  },
   "apply": {
     "applyForPosition": "განაცხადის გაგზავნა ამ პოზიციაზე",
     "allOpenPositions": "ყველა ღია პოზიცია",

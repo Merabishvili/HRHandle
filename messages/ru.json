@@ -1923,6 +1923,25 @@
     "trialPlan": "Пробный план",
     "upgrade": "Перейти"
   },
+  "pricing": {
+    "promotion": "Акция",
+    "currency": "Валюта",
+    "pricesIn": "Цены в {currency}",
+    "billingCycle": "Цикл оплаты",
+    "monthlyBilling": "Ежемесячная оплата",
+    "annualBilling": "Ежегодная оплата",
+    "startTrial": "Начать бесплатный период",
+    "getStarted": "Начать"
+  },
+  "colMgr": {
+    "title": "Управление столбцами",
+    "fixed": "Фиксированные столбцы",
+    "fixedBadge": "Фиксир.",
+    "optional": "Дополнительные столбцы",
+    "noneSelected": "Дополнительные столбцы не выбраны",
+    "addColumns": "Добавить столбцы",
+    "removeToAdd": "Удалите столбец выше, чтобы добавить другой."
+  },
   "apply": {
     "applyForPosition": "Откликнуться на вакансию",
     "allOpenPositions": "Все открытые вакансии",

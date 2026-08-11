@@ -1923,6 +1923,25 @@
     "trialPlan": "Trial Plan",
     "upgrade": "Upgrade"
   },
+  "pricing": {
+    "promotion": "Promotion",
+    "currency": "Currency",
+    "pricesIn": "Prices in {currency}",
+    "billingCycle": "Billing cycle",
+    "monthlyBilling": "Monthly billing",
+    "annualBilling": "Annual billing",
+    "startTrial": "Start Free Trial",
+    "getStarted": "Get Started"
+  },
+  "colMgr": {
+    "title": "Manage columns",
+    "fixed": "Fixed columns",
+    "fixedBadge": "Fixed",
+    "optional": "Optional columns",
+    "noneSelected": "No optional columns selected",
+    "addColumns": "Add columns",
+    "removeToAdd": "Remove a column above to add a different one."
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",
