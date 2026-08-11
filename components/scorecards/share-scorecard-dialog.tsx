@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { Check, Copy, Link as LinkIcon, Loader2, X } from 'lucide-react'
@@ -42,6 +43,7 @@ export function ShareScorecardDialog({
   candidateName,
   vacancyTitle,
 }: ShareScorecardDialogProps) {
+  const t = useTranslations()
   const [state, setState] = useState<ScorecardShareState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -86,11 +88,7 @@ export function ShareScorecardDialog({
 
   const handleRevoke = () => {
     setError(null)
-    if (
-      !confirm(
-        'Revoke this share link? The current URL will stop working immediately. You can generate a new link afterwards.',
-      )
-    ) {
+    if (!confirm(t('shareScorecard.revokeConfirm'))) {
       return
     }
     startTransition(async () => {
@@ -100,7 +98,7 @@ export function ShareScorecardDialog({
         return
       }
       setState(r.data)
-      toast.success('Share link revoked.')
+      toast.success(t('shareScorecard.revoked'))
     })
   }
 
@@ -112,7 +110,7 @@ export function ShareScorecardDialog({
       setTimeout(() => setCopied(false), 1500)
     } catch (err) {
       console.error('[scorecards] clipboard failed:', err)
-      toast.error('Could not copy link.')
+      toast.error(t('offer.copyFailed'))
     }
   }
 
@@ -122,12 +120,9 @@ export function ShareScorecardDialog({
     <Dialog open={open} onOpenChange={(o) => !isPending && onOpenChange(o)}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Share scorecard</DialogTitle>
+          <DialogTitle>{t('shareScorecard.title')}</DialogTitle>
           <DialogDescription>
-            Share <strong>{candidateName}</strong>&apos;s evaluation for{' '}
-            <strong>{vacancyTitle}</strong> with someone who isn&apos;t in HRHandle.
-            They see only the answers and scores — no recruiter notes, no contact
-            details, no pipeline status.
+            {t.rich('shareScorecard.desc', { name: candidateName, title: vacancyTitle, b: (c) => <strong>{c}</strong> })}
           </DialogDescription>
         </DialogHeader>
 
@@ -135,13 +130,13 @@ export function ShareScorecardDialog({
           {isLoading ? (
             <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Checking share status…
+              {t('shareScorecard.checking')}
             </div>
           ) : hasLiveLink && state ? (
             <>
               <div className="space-y-1.5">
                 <label htmlFor="scorecard-share-url" className="text-xs font-medium text-foreground">
-                  Share link
+                  {t('shareScorecard.shareLink')}
                 </label>
                 <div className="flex items-center gap-2">
                   <Input
@@ -160,12 +155,12 @@ export function ShareScorecardDialog({
                     {copied ? (
                       <>
                         <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
-                        Copied
+                        {t('offer.copied')}
                       </>
                     ) : (
                       <>
                         <Copy className="mr-1.5 h-3.5 w-3.5" />
-                        Copy
+                        {t('aiJd.copy')}
                       </>
                     )}
                   </Button>
@@ -174,12 +169,11 @@ export function ShareScorecardDialog({
 
               {(state.sharedByName || state.sharedAt) && (
                 <p className="text-xs text-muted-foreground">
-                  First shared
-                  {state.sharedByName ? ` by ${state.sharedByName}` : ''}
-                  {state.sharedAt
-                    ? ` on ${format(new Date(state.sharedAt), 'MMM d, yyyy')}`
-                    : ''}
-                  .
+                  {state.sharedByName && state.sharedAt
+                    ? t('shareScorecard.firstSharedByOn', { name: state.sharedByName, date: format(new Date(state.sharedAt), 'MMM d, yyyy') })
+                    : state.sharedByName
+                      ? t('shareScorecard.firstSharedBy', { name: state.sharedByName })
+                      : t('shareScorecard.firstSharedOn', { date: format(new Date(state.sharedAt!), 'MMM d, yyyy') })}
                 </p>
               )}
 
@@ -197,7 +191,7 @@ export function ShareScorecardDialog({
                   ) : (
                     <X className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  Revoke link
+                  {t('shareScorecard.revokeLink')}
                 </Button>
               </div>
             </>
@@ -205,16 +199,13 @@ export function ShareScorecardDialog({
             <>
               <Alert>
                 <AlertDescription>
-                  No share link yet. Click below to generate one — you can revoke it
-                  at any time.
+                  {t('shareScorecard.noLinkYet')}
                 </AlertDescription>
               </Alert>
 
               {state?.revokedAt && (
                 <p className="text-xs text-muted-foreground">
-                  Previous link revoked on{' '}
-                  {format(new Date(state.revokedAt), 'MMM d, yyyy')}. Generating a new
-                  link below produces a different URL.
+                  {t('shareScorecard.prevRevoked', { date: format(new Date(state.revokedAt), 'MMM d, yyyy') })}
                 </p>
               )}
 
@@ -222,12 +213,12 @@ export function ShareScorecardDialog({
                 {isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating…
+                    {t('aiAssess.generating')}
                   </>
                 ) : (
                   <>
                     <LinkIcon className="mr-2 h-4 w-4" />
-                    Generate link
+                    {t('shareScorecard.generateLink')}
                   </>
                 )}
               </Button>

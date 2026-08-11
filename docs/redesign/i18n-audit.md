@@ -52,7 +52,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (8) app/(dashboard)/vacancies/[id]/page.tsx
 - [ ] (8) components/candidates/profile/rail-sections.tsx
 - [ ] (8) components/settings/active-sessions-card.tsx
-- [ ] (8) components/scorecards/share-scorecard-dialog.tsx
+- [x] (8) components/scorecards/share-scorecard-dialog.tsx
 - [ ] (7) components/candidates/profile/profile-shell.tsx
 - [x] (7) components/settings/zoom-connect.tsx
 - [x] (7) components/settings/audit-log-table.tsx
@@ -132,6 +132,6 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (1, partial) components/dashboard/header.tsx
 - [ ] (1) components/integrations/calendly-event-type-picker.tsx
 - [ ] (1) components/notes/mention-textarea.tsx
-- [ ] (1) components/scorecards/share-scorecard-button.tsx
+- [x] (1) components/scorecards/share-scorecard-button.tsx
 - [ ] (1) components/vacancies/bulk-move-dialog.tsx
 - [ ] (1) components/vacancies/linkedin-share-button.tsx

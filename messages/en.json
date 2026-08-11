@@ -1942,6 +1942,21 @@
     "addColumns": "Add columns",
     "removeToAdd": "Remove a column above to add a different one."
   },
+  "shareScorecard": {
+    "revokeConfirm": "Revoke this share link? The current URL will stop working immediately. You can generate a new link afterwards.",
+    "revoked": "Share link revoked.",
+    "title": "Share scorecard",
+    "desc": "Share <b>{name}</b>'s evaluation for <b>{title}</b> with someone who isn't in HRHandle. They see only the answers and scores — no recruiter notes, no contact details, no pipeline status.",
+    "checking": "Checking share status…",
+    "shareLink": "Share link",
+    "firstSharedByOn": "First shared by {name} on {date}.",
+    "firstSharedBy": "First shared by {name}.",
+    "firstSharedOn": "First shared on {date}.",
+    "revokeLink": "Revoke link",
+    "noLinkYet": "No share link yet. Click below to generate one — you can revoke it at any time.",
+    "prevRevoked": "Previous link revoked on {date}. Generating a new link below produces a different URL.",
+    "generateLink": "Generate link"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

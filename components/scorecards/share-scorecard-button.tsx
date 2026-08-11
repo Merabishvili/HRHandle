@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Share2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ export function ShareScorecardButton({
   candidateName,
   vacancyTitle,
 }: ShareScorecardButtonProps) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
 
   return (
@@ -32,7 +34,7 @@ export function ShareScorecardButton({
         onClick={() => setOpen(true)}
       >
         <Share2 className="h-3.5 w-3.5" />
-        Share
+        {t('vacOverview.share')}
       </Button>
       <ShareScorecardDialog
         open={open}
