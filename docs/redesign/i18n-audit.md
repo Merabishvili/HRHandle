@@ -25,7 +25,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (12) components/candidates/experience-section.tsx
 - [x] (12) components/vacancies/detail/settings-tab.tsx
 - [x] (12) components/vacancies/detail/overview-tab.tsx
-- [ ] (12) components/vacancies/linkedin-post-job-button.tsx
+- [x] (12) components/vacancies/linkedin-post-job-button.tsx
 - [x] (11) components/candidates/form/pending-education-card.tsx
 - [x] (11) components/candidates/form/personal-info-section.tsx
 - [x] (11) components/candidates/application-evaluation.tsx
@@ -39,8 +39,8 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (10) components/candidates/ai-summary-panel.tsx
 - [x] (10) components/settings/notification-preferences-form.tsx
 - [x] (10) components/pipeline/rejection-dialog.tsx
-- [ ] (10) components/vacancies/vacancy-application-row.tsx
-- [ ] (10) components/vacancies/pipeline-stages-manager.tsx
+- [x] (10) components/vacancies/vacancy-application-row.tsx
+- [x] (10) components/vacancies/pipeline-stages-manager.tsx
 - [x] (10) components/vacancies/detail/jd-tab.tsx
 - [ ] (9) app/(dashboard)/settings/integrations/calendly/page.tsx
 - [x] (9) components/settings/audit-log-filters.tsx

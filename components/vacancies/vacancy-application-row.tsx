@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { formatDistanceToNow } from 'date-fns'
 import { Trash2, Loader2, ChevronRight, CheckCircle2, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { updateApplicationStatus, removeApplication } from '@/lib/actions/applications'
 import { saveEvaluation } from '@/lib/actions/evaluations'
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from '@/components/pipeline/rejection-dialog'
@@ -107,6 +109,7 @@ export function VacancyApplicationRow({
   selectionDisabled = false,
   onRemoved,
 }: Props) {
+  const t = useTranslations()
   const [statusId, setStatusId] = useState<string>(currentStatusId ?? '')
   const [expanded, setExpanded] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -189,7 +192,7 @@ export function VacancyApplicationRow({
               <Checkbox
                 checked={selected}
                 onCheckedChange={(v) => onSelectedChange?.(v === true)}
-                aria-label={`Select ${candidateName}`}
+                aria-label={t('pipeline.selectNamed', { name: candidateName })}
                 className="shrink-0"
               />
             )}
@@ -202,7 +205,7 @@ export function VacancyApplicationRow({
               type="button"
               onClick={() => setExpanded((v) => !v)}
               className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={expanded ? 'Collapse assessment' : 'Expand assessment'}
+              aria-label={expanded ? t('vacRow.collapseAssessment') : t('vacRow.expandAssessment')}
               aria-expanded={expanded}
             >
               <ChevronRight
@@ -217,7 +220,7 @@ export function VacancyApplicationRow({
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{candidateName}</p>
                 <p className="text-xs text-muted-foreground">
-                  Applied {formatDistanceToNow(new Date(appliedAt), { addSuffix: true })}
+                  {t('vacRow.appliedAgo', { time: formatDistanceToNow(new Date(appliedAt), { addSuffix: true }) })}
                 </p>
               </div>
             </Link>
@@ -236,7 +239,7 @@ export function VacancyApplicationRow({
               !['hired', 'rejected', 'withdrawn'].includes(currentStatus?.code ?? '') ? (
               <Badge variant="secondary" className="bg-amber-100 text-amber-800">
                 <Clock className="mr-1 h-3 w-3" />
-                Not assessed
+                {t('appEval.notAssessed')}
               </Badge>
             ) : null}
 
@@ -246,10 +249,10 @@ export function VacancyApplicationRow({
                 <SelectValue>
                   {currentStatus ? (
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${(APPLICATION_STATUS_COLORS as Record<string, string>)[currentStatus.code]}`}>
-                      {currentStatus.name}
+                      {statusLabel(t, currentStatus.code, currentStatus.name)}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground text-xs">No status</span>
+                    <span className="text-muted-foreground text-xs">{t('appEval.noStatus')}</span>
                   )}
                 </SelectValue>
               </SelectTrigger>
@@ -257,7 +260,7 @@ export function VacancyApplicationRow({
                 {allStatuses.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${(APPLICATION_STATUS_COLORS as Record<string, string>)[s.code]}`}>
-                      {s.name}
+                      {statusLabel(t, s.code, s.name)}
                     </span>
                   </SelectItem>
                 ))}
@@ -282,9 +285,9 @@ export function VacancyApplicationRow({
           <div className="border-t border-border bg-muted/20 px-6 py-4 space-y-4">
             {questions.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No assessment questions configured for this vacancy.{' '}
+                {t('appEval.noQuestions')}{' '}
                 <Link href={`/vacancies/${vacancyId}?tab=qe`} className="underline hover:no-underline">
-                  Add questions
+                  {t('appEval.addQuestions')}
                 </Link>
               </p>
             ) : (
@@ -295,7 +298,7 @@ export function VacancyApplicationRow({
                     {q.type === 'text' ? (
                       <Textarea
                         rows={3}
-                        placeholder="Enter answer…"
+                        placeholder={t('appEval.answerPlaceholder')}
                         value={answers[q.id]?.text ?? ''}
                         onChange={(e) =>
                           setAnswers((prev) => ({ ...prev, [q.id]: { text: e.target.value, score: prev[q.id]?.score ?? null } }))
@@ -328,22 +331,22 @@ export function VacancyApplicationRow({
                 ))}
 
                 <div className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">
-                  <span className="text-sm font-medium">Overall score</span>
+                  <span className="text-sm font-medium">{t('appEval.overallScore')}</span>
                   {calculatedScore !== null ? (
                     <Badge variant="secondary" className="font-semibold">{calculatedScore}%</Badge>
                   ) : (
                     <span className="text-sm text-muted-foreground">
-                      {questions.some((q) => q.type === 'score') ? 'Fill all score criteria' : 'No score criteria'}
+                      {questions.some((q) => q.type === 'score') ? t('appEval.fillAllCriteria') : t('appEval.noScoreCriteria')}
                     </span>
                   )}
                 </div>
 
                 {evalError && <p className="text-sm text-destructive">{evalError}</p>}
-                {evalSaved && <p className="text-sm text-green-600">Saved successfully.</p>}
+                {evalSaved && <p className="text-sm text-green-600">{t('appEval.savedSuccess')}</p>}
 
                 <Button size="sm" onClick={handleSaveEvaluation} disabled={isPending}>
                   {isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
-                  Save changes
+                  {t('common.saveChanges')}
                 </Button>
               </>
             )}
@@ -369,18 +372,18 @@ export function VacancyApplicationRow({
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove candidate from vacancy?</AlertDialogTitle>
+            <AlertDialogTitle>{t('vacRow.removeTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove <strong>{candidateName}</strong> from this vacancy. The candidate profile will not be deleted.
+              {t.rich('vacRow.removeDesc', { name: candidateName, b: (c) => <strong>{c}</strong> })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleRemove}
             >
-              Remove
+              {t('common.remove')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

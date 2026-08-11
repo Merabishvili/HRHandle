@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   DndContext,
   PointerSensor,
@@ -67,26 +68,26 @@ interface PipelineStagesManagerProps {
   canEdit: boolean
 }
 
-const TYPE_META: Record<PipelineStageType, { label: string; icon: typeof Users; description: string }> = {
+const TYPE_META: Record<PipelineStageType, { labelKey: string; icon: typeof Users; descKey: string }> = {
   standard: {
-    label: 'Standard',
+    labelKey: 'pipeStages.typeStandard',
     icon: Circle,
-    description: 'Plain pipeline stage with no special tooling.',
+    descKey: 'pipeStages.typeStandardDesc',
   },
   review: {
-    label: 'Review',
+    labelKey: 'pipeStages.typeReview',
     icon: Sparkles,
-    description: 'Lightweight screening — Yes/No advance with a one-line reason.',
+    descKey: 'pipeStages.typeReviewDesc',
   },
   interview: {
-    label: 'Interview',
+    labelKey: 'pipeStages.typeInterview',
     icon: Users,
-    description: 'Inherits the full Interview toolkit — schedule + scorecard + feedback.',
+    descKey: 'pipeStages.typeInterviewDesc',
   },
   offer: {
-    label: 'Offer',
+    labelKey: 'pipeStages.typeOffer',
     icon: Check,
-    description: 'Offer state — surfaces "Create offer" on the candidate profile.',
+    descKey: 'pipeStages.typeOfferDesc',
   },
 }
 
@@ -107,6 +108,7 @@ export function PipelineStagesManager({
   initialStages,
   canEdit,
 }: PipelineStagesManagerProps) {
+  const tr = useTranslations()
   const router = useRouter()
   const [stages, setStages] = useState(initialStages)
   const [pending, startTransition] = useTransition()
@@ -152,7 +154,7 @@ export function PipelineStagesManager({
         return
       }
       setAddOpen(false)
-      toast.success(`Added ${name}.`)
+      toast.success(tr('pipeStages.added', { name }))
       router.refresh()
     })
   }
@@ -193,11 +195,7 @@ export function PipelineStagesManager({
   }
 
   const handleDelete = (stage: PipelineStageRow) => {
-    if (
-      !window.confirm(
-        `Delete the "${stage.name}" stage? Candidates currently on this stage must be moved first.`,
-      )
-    ) {
+    if (!window.confirm(tr('pipeStages.deleteConfirm', { name: stage.name }))) {
       return
     }
     const previous = stages
@@ -252,18 +250,16 @@ export function PipelineStagesManager({
             className="h-8 gap-1.5"
           >
             <Plus className="h-3.5 w-3.5" aria-hidden />
-            Add stage
+            {tr('pipeStages.addStage')}
           </Button>
           <span className="text-[11.5px] text-muted-foreground">
-            {stages.length} / {STAGE_CAP} stages
+            {tr('pipeStages.stageCount', { count: stages.length, cap: STAGE_CAP })}
           </span>
         </div>
       )}
 
       <p className="text-[12px] text-muted-foreground">
-        A stage&apos;s <strong className="text-foreground">type</strong> drives the candidate
-        profile actions — pick Interview for round-by-round scorecards, Review for screening
-        gates, Offer for the offer state.
+        {tr.rich('pipeStages.typeHint', { b: (c) => <strong className="text-foreground">{c}</strong> })}
       </p>
 
       {addOpen && (
@@ -305,6 +301,7 @@ function SortableStageRow({
   onDelete,
   pending,
 }: SortableStageRowProps) {
+  const tr = useTranslations()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: stage.id,
   })
@@ -331,7 +328,7 @@ function SortableStageRow({
         <button
           type="button"
           className="cursor-grab touch-none text-muted-foreground hover:text-foreground"
-          aria-label="Drag to reorder"
+          aria-label={tr('pipeStages.dragReorder')}
           {...attributes}
           {...listeners}
         >
@@ -373,13 +370,13 @@ function SortableStageRow({
         />
       ) : (
         <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-          {TYPE_META[stage.type].label}
+          {tr(TYPE_META[stage.type].labelKey)}
         </span>
       )}
 
       {stage.is_terminal && (
         <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
-          Terminal
+          {tr('pipeStages.terminal')}
         </span>
       )}
 
@@ -392,7 +389,7 @@ function SortableStageRow({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-green-600"
-                aria-label="Save name"
+                aria-label={tr('pipeStages.saveNameAria')}
                 onClick={onEditSave}
                 disabled={pending}
               >
@@ -403,7 +400,7 @@ function SortableStageRow({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                aria-label="Cancel edit"
+                aria-label={tr('pipeStages.cancelEditAria')}
                 onClick={onEditCancel}
                 disabled={pending}
               >
@@ -417,7 +414,7 @@ function SortableStageRow({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                aria-label="Rename stage"
+                aria-label={tr('pipeStages.renameAria')}
                 onClick={onEditStart}
                 disabled={pending}
               >
@@ -428,7 +425,7 @@ function SortableStageRow({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                aria-label="Delete stage"
+                aria-label={tr('pipeStages.deleteAria')}
                 onClick={onDelete}
                 disabled={pending}
               >
@@ -449,17 +446,18 @@ interface TypeSelectProps {
 }
 
 function TypeSelect({ value, onChange, disabled }: TypeSelectProps) {
+  const tr = useTranslations()
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value as PipelineStageType)}
       disabled={disabled}
       className="h-7 rounded-md border border-[oklch(0.9_0.01_250)] bg-white px-1.5 text-[11.5px] font-semibold text-foreground/80 focus:outline-none focus:ring-1 focus:ring-[oklch(0.55_0.18_250)] disabled:opacity-60"
-      aria-label="Stage type"
+      aria-label={tr('pipeStages.stageType')}
     >
-      {(['standard', 'review', 'interview', 'offer'] as const).map((t) => (
-        <option key={t} value={t}>
-          {TYPE_META[t].label}
+      {(['standard', 'review', 'interview', 'offer'] as const).map((opt) => (
+        <option key={opt} value={opt}>
+          {tr(TYPE_META[opt].labelKey)}
         </option>
       ))}
     </select>
@@ -474,6 +472,7 @@ interface AddStageDialogProps {
 }
 
 function AddStageDialog({ open, onOpenChange, onAdd, pending }: AddStageDialogProps) {
+  const tr = useTranslations()
   const [name, setName] = useState('')
   const [type, setType] = useState<PipelineStageType>('interview')
 
@@ -481,19 +480,19 @@ function AddStageDialog({ open, onOpenChange, onAdd, pending }: AddStageDialogPr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add stage</DialogTitle>
+          <DialogTitle>{tr('pipeStages.addStage')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="stage-name" className="text-[12px] font-medium text-muted-foreground">
-              Stage name
+              {tr('pipeStages.stageName')}
             </Label>
             <Input
               id="stage-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Technical Interview"
+              placeholder={tr('pipeStages.stageNamePlaceholder')}
               maxLength={60}
               disabled={pending}
               autoFocus
@@ -502,21 +501,21 @@ function AddStageDialog({ open, onOpenChange, onAdd, pending }: AddStageDialogPr
 
           <div className="space-y-1.5">
             <Label className="text-[12px] font-medium text-muted-foreground">
-              Stage type{' '}
+              {tr('pipeStages.stageType')}{' '}
               <span className="text-muted-foreground/70">
-                — determines what actions appear on the candidate profile
+                {tr('pipeStages.stageTypeHint')}
               </span>
             </Label>
             <div className="grid gap-2 sm:grid-cols-2">
-              {(['standard', 'review', 'interview', 'offer'] as const).map((t) => {
-                const meta = TYPE_META[t]
+              {(['standard', 'review', 'interview', 'offer'] as const).map((opt) => {
+                const meta = TYPE_META[opt]
                 const Icon = meta.icon
-                const selected = type === t
+                const selected = type === opt
                 return (
                   <button
-                    key={t}
+                    key={opt}
                     type="button"
-                    onClick={() => setType(t)}
+                    onClick={() => setType(opt)}
                     aria-pressed={selected}
                     disabled={pending}
                     className={cn(
@@ -549,10 +548,10 @@ function AddStageDialog({ open, onOpenChange, onAdd, pending }: AddStageDialogPr
                           selected ? 'text-[oklch(0.2_0.16_250)]' : 'text-foreground',
                         )}
                       >
-                        {meta.label}
+                        {tr(meta.labelKey)}
                       </p>
                       <p className="mt-0.5 text-[11px] leading-[1.4] text-muted-foreground">
-                        {meta.description}
+                        {tr(meta.descKey)}
                       </p>
                     </div>
                   </button>
@@ -570,7 +569,7 @@ function AddStageDialog({ open, onOpenChange, onAdd, pending }: AddStageDialogPr
             onClick={() => onOpenChange(false)}
             disabled={pending}
           >
-            Cancel
+            {tr('common.cancel')}
           </Button>
           <Button
             type="button"
@@ -582,7 +581,7 @@ function AddStageDialog({ open, onOpenChange, onAdd, pending }: AddStageDialogPr
             {pending ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />
             ) : null}
-            Add stage
+            {tr('pipeStages.addStage')}
           </Button>
         </DialogFooter>
       </DialogContent>
