@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { ChevronRight, Loader2, CheckCircle2, Clock, Trash2, Link as LinkIcon, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { saveEvaluation } from '@/lib/actions/evaluations'
 import { updateApplicationStatus, removeApplication } from '@/lib/actions/applications'
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from '@/components/pipeline/rejection-dialog'
@@ -110,6 +112,7 @@ export function ApplicationEvaluation({
   canManageOffers,
   onRemoved,
 }: ApplicationEvaluationProps) {
+  const t = useTranslations()
   const [expanded, setExpanded] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [statusLinkCopied, setStatusLinkCopied] = useState(false)
@@ -243,7 +246,7 @@ export function ApplicationEvaluation({
               !['hired', 'rejected', 'withdrawn'].includes(appStatus?.code ?? '') && (
                 <Badge variant="secondary" className="bg-amber-100 text-amber-800">
                   <Clock className="mr-1 h-3 w-3" />
-                  Not assessed
+                  {t('appEval.notAssessed')}
                 </Badge>
               )
             )}
@@ -263,10 +266,10 @@ export function ApplicationEvaluation({
                 <SelectValue>
                   {appStatus ? (
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${(APPLICATION_STATUS_COLORS as Record<string, string>)[appStatus.code]}`}>
-                      {appStatus.name}
+                      {statusLabel(t, appStatus.code, appStatus.name)}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground text-xs">No status</span>
+                    <span className="text-muted-foreground text-xs">{t('appEval.noStatus')}</span>
                   )}
                 </SelectValue>
               </SelectTrigger>
@@ -274,7 +277,7 @@ export function ApplicationEvaluation({
                 {allStatuses.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${(APPLICATION_STATUS_COLORS as Record<string, string>)[s.code]}`}>
-                      {s.name}
+                      {statusLabel(t, s.code, s.name)}
                     </span>
                   </SelectItem>
                 ))}
@@ -288,8 +291,8 @@ export function ApplicationEvaluation({
                 className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                 onClick={copyStatusLink}
                 disabled={isPending}
-                title="Copy candidate status page link"
-                aria-label="Copy candidate status page link"
+                title={t('appEval.copyStatusLink')}
+                aria-label={t('appEval.copyStatusLink')}
               >
                 {statusLinkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <LinkIcon className="h-3.5 w-3.5" />}
               </Button>
@@ -314,7 +317,7 @@ export function ApplicationEvaluation({
               className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
               onClick={() => setConfirmDelete(true)}
               disabled={isPending}
-              aria-label={`Remove application from ${vacancyTitle}`}
+              aria-label={t('appEval.removeAria', { title: vacancyTitle })}
             >
               {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" aria-hidden />}
             </Button>
@@ -345,9 +348,9 @@ export function ApplicationEvaluation({
           <div className="border-t border-border px-4 pb-4 pt-4 space-y-4">
             {questions.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No evaluation questions configured for this vacancy.{' '}
+                {t('appEval.noQuestions')}{' '}
                 <Link href={`/vacancies/${vacancyId}?tab=qe`} className="underline hover:no-underline">
-                  Add questions
+                  {t('appEval.addQuestions')}
                 </Link>
               </p>
             )}
@@ -358,7 +361,7 @@ export function ApplicationEvaluation({
                 {q.type === 'text' ? (
                   <Textarea
                     rows={3}
-                    placeholder="Enter your answer..."
+                    placeholder={t('appEval.answerPlaceholder')}
                     value={answers[q.id]?.text ?? ''}
                     onChange={(e) =>
                       setAnswers((prev) => ({
@@ -394,29 +397,29 @@ export function ApplicationEvaluation({
             ))}
 
             <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
-              <span className="text-sm font-medium">Overall score</span>
+              <span className="text-sm font-medium">{t('appEval.overallScore')}</span>
               {calculatedScore !== null ? (
                 <Badge variant="secondary" className="text-sm font-semibold">
                   {calculatedScore}%
                 </Badge>
               ) : (
                 <span className="text-sm text-muted-foreground">
-                  {questions.some((q) => q.type === 'score') ? 'Fill all score criteria' : 'No score criteria'}
+                  {questions.some((q) => q.type === 'score') ? t('appEval.fillAllCriteria') : t('appEval.noScoreCriteria')}
                 </span>
               )}
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}
-            {saved && <p className="text-sm text-green-600">Saved successfully.</p>}
+            {saved && <p className="text-sm text-green-600">{t('appEval.savedSuccess')}</p>}
 
             <Button onClick={handleSave} disabled={isPending} size="sm">
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving…
+                  {t('common.saving')}
                 </>
               ) : (
-                'Save changes'
+                t('common.saveChanges')
               )}
             </Button>
           </div>
@@ -426,18 +429,18 @@ export function ApplicationEvaluation({
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove this vacancy application?</AlertDialogTitle>
+            <AlertDialogTitle>{t('appEval.removeTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the application for <strong>{vacancyTitle}</strong>. The candidate profile will not be deleted.
+              {t.rich('appEval.removeDesc', { title: vacancyTitle, b: (c) => <strong>{c}</strong> })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleRemove}
             >
-              Remove
+              {t('common.remove')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1494,6 +1494,21 @@
     "noTemplateOption": "— No template (use default) —",
     "confirm": "Confirm Rejection"
   },
+  "appEval": {
+    "notAssessed": "Not assessed",
+    "noStatus": "No status",
+    "copyStatusLink": "Copy candidate status page link",
+    "removeAria": "Remove application from {title}",
+    "noQuestions": "No evaluation questions configured for this vacancy.",
+    "addQuestions": "Add questions",
+    "answerPlaceholder": "Enter your answer...",
+    "overallScore": "Overall score",
+    "fillAllCriteria": "Fill all score criteria",
+    "noScoreCriteria": "No score criteria",
+    "savedSuccess": "Saved successfully.",
+    "removeTitle": "Remove this vacancy application?",
+    "removeDesc": "This will remove the application for <b>{title}</b>. The candidate profile will not be deleted."
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

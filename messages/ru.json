@@ -1494,6 +1494,21 @@
     "noTemplateOption": "— Без шаблона (по умолчанию) —",
     "confirm": "Подтвердить отказ"
   },
+  "appEval": {
+    "notAssessed": "Не оценён",
+    "noStatus": "Без статуса",
+    "copyStatusLink": "Скопировать ссылку на страницу статуса кандидата",
+    "removeAria": "Удалить заявку из {title}",
+    "noQuestions": "Для этой вакансии не настроены вопросы оценки.",
+    "addQuestions": "Добавить вопросы",
+    "answerPlaceholder": "Введите ваш ответ...",
+    "overallScore": "Общий балл",
+    "fillAllCriteria": "Заполните все критерии оценки",
+    "noScoreCriteria": "Нет критериев оценки",
+    "savedSuccess": "Успешно сохранено.",
+    "removeTitle": "Удалить эту заявку на вакансию?",
+    "removeDesc": "Это удалит заявку на <b>{title}</b>. Профиль кандидата не будет удалён."
+  },
   "apply": {
     "applyForPosition": "Откликнуться на вакансию",
     "allOpenPositions": "Все открытые вакансии",
