@@ -1409,6 +1409,17 @@
   "aiFit.generated": { "en": "generated:", "ru": "создано:", "ka": "შეიქმნა:" },
   "aiFit.reviewed": { "en": "reviewed:", "ru": "проверено:", "ka": "შემოწმდა:" },
 
+  "bgSection.description": { "en": "Description", "ru": "Описание", "ka": "აღწერა" },
+  "bgSection.descPlaceholder": { "en": "Role description (optional)", "ru": "Описание роли (необязательно)", "ka": "როლის აღწერა (არასავალდებულო)" },
+  "bgSection.noDescription": { "en": "No description.", "ru": "Нет описания.", "ka": "აღწერა არ არის." },
+  "bgSection.yShort": { "en": "y", "ru": "г", "ka": "წ" },
+  "bgSection.moShort": { "en": "mo", "ru": "мес", "ka": "თვე" },
+  "bgSection.presentShort": { "en": "Present", "ru": "н.в.", "ka": "დღემდე" },
+  "bgSection.phDegree": { "en": "e.g. Bachelor's, Master's", "ru": "напр. бакалавр, магистр", "ka": "მაგ. ბაკალავრი, მაგისტრი" },
+  "bgSection.currentlyStudyingHere": { "en": "Currently studying here", "ru": "Учится здесь сейчас", "ka": "ამჟამად აქ სწავლობს" },
+  "bgSection.editEduAria": { "en": "Edit education entry", "ru": "Редактировать запись об образовании", "ka": "განათლების ჩანაწერის რედაქტირება" },
+  "bgSection.deleteEduAria": { "en": "Delete education entry", "ru": "Удалить запись об образовании", "ka": "განათლების ჩანაწერის წაშლა" },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },

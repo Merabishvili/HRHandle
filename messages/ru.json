@@ -1580,6 +1580,18 @@
     "generated": "создано:",
     "reviewed": "проверено:"
   },
+  "bgSection": {
+    "description": "Описание",
+    "descPlaceholder": "Описание роли (необязательно)",
+    "noDescription": "Нет описания.",
+    "yShort": "г",
+    "moShort": "мес",
+    "presentShort": "н.в.",
+    "phDegree": "напр. бакалавр, магистр",
+    "currentlyStudyingHere": "Учится здесь сейчас",
+    "editEduAria": "Редактировать запись об образовании",
+    "deleteEduAria": "Удалить запись об образовании"
+  },
   "apply": {
     "applyForPosition": "Откликнуться на вакансию",
     "allOpenPositions": "Все открытые вакансии",

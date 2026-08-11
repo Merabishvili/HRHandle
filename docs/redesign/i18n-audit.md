@@ -22,7 +22,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (13) components/candidates/ai-notes-extractor.tsx
 - [x] (13) components/settings/rejection-templates-manager.tsx
 - [ ] (12) app/(dashboard)/settings/billing/page.tsx
-- [ ] (12) components/candidates/experience-section.tsx
+- [x] (12) components/candidates/experience-section.tsx
 - [ ] (12) components/vacancies/detail/settings-tab.tsx
 - [ ] (12) components/vacancies/detail/overview-tab.tsx
 - [ ] (12) components/vacancies/linkedin-post-job-button.tsx
@@ -32,7 +32,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (11) components/settings/linkedin-connect.tsx
 - [x] (11) components/vacancies/ai-bias-check.tsx
 - [x] (11) components/vacancies/ai-assessment-suggester.tsx
-- [ ] (10) components/candidates/education-section.tsx
+- [x] (10) components/candidates/education-section.tsx
 - [x] (10) components/candidates/form/pending-experience-card.tsx
 - [x] (10) components/candidates/profile/score-candidate-modal.tsx
 - [x] (10) components/candidates/profile/ai-fit-card.tsx

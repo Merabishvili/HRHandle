@@ -1580,6 +1580,18 @@
     "generated": "შეიქმნა:",
     "reviewed": "შემოწმდა:"
   },
+  "bgSection": {
+    "description": "აღწერა",
+    "descPlaceholder": "როლის აღწერა (არასავალდებულო)",
+    "noDescription": "აღწერა არ არის.",
+    "yShort": "წ",
+    "moShort": "თვე",
+    "presentShort": "დღემდე",
+    "phDegree": "მაგ. ბაკალავრი, მაგისტრი",
+    "currentlyStudyingHere": "ამჟამად აქ სწავლობს",
+    "editEduAria": "განათლების ჩანაწერის რედაქტირება",
+    "deleteEduAria": "განათლების ჩანაწერის წაშლა"
+  },
   "apply": {
     "applyForPosition": "განაცხადის გაგზავნა ამ პოზიციაზე",
     "allOpenPositions": "ყველა ღია პოზიცია",

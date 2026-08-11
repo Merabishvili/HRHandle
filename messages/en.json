@@ -1580,6 +1580,18 @@
     "generated": "generated:",
     "reviewed": "reviewed:"
   },
+  "bgSection": {
+    "description": "Description",
+    "descPlaceholder": "Role description (optional)",
+    "noDescription": "No description.",
+    "yShort": "y",
+    "moShort": "mo",
+    "presentShort": "Present",
+    "phDegree": "e.g. Bachelor's, Master's",
+    "currentlyStudyingHere": "Currently studying here",
+    "editEduAria": "Edit education entry",
+    "deleteEduAria": "Delete education entry"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

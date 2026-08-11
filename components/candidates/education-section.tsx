@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   createEducationEntry,
   updateEducationEntry,
@@ -39,6 +40,7 @@ interface EntryFormProps {
 }
 
 function EntryForm({ value, onChange, onSave, onCancel, isPending, error }: EntryFormProps) {
+  const t = useTranslations()
   const currentYear = new Date().getFullYear()
   return (
     <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
@@ -48,32 +50,32 @@ function EntryForm({ value, onChange, onSave, onCancel, isPending, error }: Entr
         </Alert>
       )}
       <div className="space-y-1">
-        <Label className="text-xs">Institution *</Label>
+        <Label className="text-xs">{t('candWizard.background.institution')} *</Label>
         <Input
           value={value.institution}
           onChange={(e) => onChange({ ...value, institution: e.target.value })}
-          placeholder="University or school name"
+          placeholder={t('candidateForm.phInstitutionName')}
           maxLength={200}
           disabled={isPending}
         />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
-          <Label className="text-xs">Degree</Label>
+          <Label className="text-xs">{t('candWizard.background.degree')}</Label>
           <Input
             value={value.degree ?? ''}
             onChange={(e) => onChange({ ...value, degree: e.target.value || null })}
-            placeholder="e.g. Bachelor's, Master's"
+            placeholder={t('bgSection.phDegree')}
             maxLength={100}
             disabled={isPending}
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Field of Study</Label>
+          <Label className="text-xs">{t('candWizard.background.fieldOfStudy')}</Label>
           <Input
             value={value.field_of_study ?? ''}
             onChange={(e) => onChange({ ...value, field_of_study: e.target.value || null })}
-            placeholder="e.g. Computer Science"
+            placeholder={t('candidateForm.phField2')}
             maxLength={200}
             disabled={isPending}
           />
@@ -81,7 +83,7 @@ function EntryForm({ value, onChange, onSave, onCancel, isPending, error }: Entr
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
-          <Label className="text-xs">Start year</Label>
+          <Label className="text-xs">{t('candidateForm.startYear')}</Label>
           <Input
             type="number"
             min={1900}
@@ -93,7 +95,7 @@ function EntryForm({ value, onChange, onSave, onCancel, isPending, error }: Entr
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">End year</Label>
+          <Label className="text-xs">{t('candidateForm.endYear')}</Label>
           <Input
             type="number"
             min={1900}
@@ -113,16 +115,16 @@ function EntryForm({ value, onChange, onSave, onCancel, isPending, error }: Entr
           disabled={isPending}
           className="rounded"
         />
-        Currently studying here
+        {t('bgSection.currentlyStudyingHere')}
       </label>
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" size="sm" onClick={onCancel} disabled={isPending}>
           <X className="h-4 w-4 mr-1" />
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button size="sm" onClick={onSave} disabled={isPending || !value.institution.trim()}>
           {isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}
-          Save
+          {t('common.save')}
         </Button>
       </div>
     </div>
@@ -130,6 +132,7 @@ function EntryForm({ value, onChange, onSave, onCancel, isPending, error }: Entr
 }
 
 export function EducationSection({ candidateId, initialEntries }: EducationSectionProps) {
+  const t = useTranslations()
   const [entries, setEntries] = useState<CandidateEducation[]>(initialEntries)
   const [adding, setAdding] = useState(false)
   const [addForm, setAddForm] = useState<EducationEntryInput>(BLANK)
@@ -201,7 +204,7 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
             aria-expanded={!collapsedOnMobile}
           >
             <GraduationCap className="h-4 w-4" />
-            Education
+            {t('candWizard.background.education')}
             {entries.length > 0 && (
               <span className="text-[12px] font-normal text-muted-foreground">({entries.length})</span>
             )}
@@ -214,7 +217,7 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
         {!adding && (
           <Button variant="outline" size="sm" onClick={() => { setAdding(true); setAddForm(BLANK); setError(null); setCollapsedOnMobile(false) }} disabled={isPending}>
             <Plus className="h-4 w-4 mr-1" />
-            Add
+            {t('wizard.add')}
           </Button>
         )}
       </CardHeader>
@@ -237,7 +240,7 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
         )}
 
         {entries.length === 0 && !adding && (
-          <p className="py-4 text-center text-sm text-muted-foreground">No education added yet.</p>
+          <p className="py-4 text-center text-sm text-muted-foreground">{t('candidateForm.noEduAdded')}</p>
         )}
 
         {entries.map((entry) => (
@@ -262,7 +265,7 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
                   )}
                   {(entry.start_year || entry.end_year || entry.is_ongoing) && (
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {entry.start_year ?? '?'} – {entry.is_ongoing ? 'Present' : (entry.end_year ?? '?')}
+                      {entry.start_year ?? '?'} – {entry.is_ongoing ? t('bgSection.presentShort') : (entry.end_year ?? '?')}
                     </p>
                   )}
                 </div>
@@ -271,7 +274,7 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                    aria-label="Edit education entry"
+                    aria-label={t('bgSection.editEduAria')}
                     onClick={() => handleEdit(entry)}
                     disabled={isPending}
                   >
@@ -281,7 +284,7 @@ export function EducationSection({ candidateId, initialEntries }: EducationSecti
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    aria-label="Delete education entry"
+                    aria-label={t('bgSection.deleteEduAria')}
                     onClick={() => handleDelete(entry.id)}
                     disabled={isPending}
                   >
