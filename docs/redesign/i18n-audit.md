@@ -47,7 +47,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (9) components/settings/trash-list.tsx
 - [ ] (9) components/landing/pricing-section.tsx
 - [ ] (9) components/shared/column-manager-dialog.tsx
-- [ ] (9) components/vacancies/application-form-tab.tsx
+- [x] (9) components/vacancies/application-form-tab.tsx
 - [ ] (8) app/(dashboard)/settings/ai-fit/page.tsx
 - [x] (8) app/(dashboard)/vacancies/[id]/page.tsx
 - [ ] (8) components/candidates/profile/rail-sections.tsx

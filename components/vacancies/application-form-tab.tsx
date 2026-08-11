@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
+  const t = useTranslations()
   const [token, setToken] = useState<string | null>(initialToken)
   const [copied, setCopied] = useState(false)
   const [confirmDeactivate, setConfirmDeactivate] = useState(false)
@@ -61,23 +63,23 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
       {!token ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
           <LinkIcon className="h-10 w-10 text-muted-foreground/40" />
-          <h3 className="mt-4 text-lg font-medium text-foreground">No apply link active</h3>
+          <h3 className="mt-4 text-lg font-medium text-foreground">{t('applyForm.noLinkActive')}</h3>
           <p className="mt-1 mb-6 text-sm text-muted-foreground max-w-sm">
-            Activate a public link so candidates can apply directly. Share it on LinkedIn or any job board.
+            {t('applyForm.activateHint')}
           </p>
           <Button onClick={handleActivate} disabled={isPending}>
-            {isPending ? 'Activating...' : 'Activate Application Form'}
+            {isPending ? t('applyForm.activating') : t('applyForm.activate')}
           </Button>
         </div>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-foreground">Apply link</h3>
-            <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
+            <h3 className="font-semibold text-foreground">{t('applyForm.applyLink')}</h3>
+            <Badge variant="secondary" className="bg-green-100 text-green-800">{t('applyForm.active')}</Badge>
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Share this link on LinkedIn or any job board. Candidates can apply without creating an account.
+            {t('applyForm.shareHint')}
           </p>
 
           <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
@@ -87,7 +89,7 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
               variant="ghost"
               onClick={handleCopy}
               className="shrink-0 h-8 w-8 p-0"
-              title="Copy link"
+              title={t('applyForm.copyLink')}
             >
               {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
             </Button>
@@ -96,19 +98,19 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              title="Open form"
+              title={t('applyForm.openForm')}
             >
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
 
           <div className="rounded-lg border border-border bg-background p-4 space-y-2">
-            <h4 className="text-sm font-medium text-foreground">What candidates will see</h4>
+            <h4 className="text-sm font-medium text-foreground">{t('applyForm.whatCandidatesSee')}</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• Job description, responsibilities and requirements from this vacancy</li>
-              <li>• Fields: First name, Last name, Email (required), Phone, LinkedIn URL</li>
-              <li>• CV upload (PDF or Word, required)</li>
-              <li>• Automatic confirmation email sent to the applicant</li>
+              <li>• {t('applyForm.bullet1')}</li>
+              <li>• {t('applyForm.bullet2')}</li>
+              <li>• {t('applyForm.bullet3')}</li>
+              <li>• {t('applyForm.bullet4')}</li>
             </ul>
           </div>
 
@@ -117,7 +119,7 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
               <div className="flex items-center gap-3">
                 <span className="text-sm text-destructive flex items-center gap-1.5">
                   <AlertTriangle className="h-4 w-4" />
-                  The link will stop working immediately. Existing candidates are kept.
+                  {t('applyForm.deactivateWarn')}
                 </span>
                 <Button
                   size="sm"
@@ -125,14 +127,14 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
                   onClick={handleDeactivate}
                   disabled={isPending}
                 >
-                  {isPending ? 'Deactivating...' : 'Confirm Deactivate'}
+                  {isPending ? t('applyForm.deactivating') : t('applyForm.confirmDeactivate')}
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setConfirmDeactivate(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             ) : (
@@ -144,7 +146,7 @@ export function ApplicationFormTab({ vacancyId, initialToken }: Props) {
                 disabled={isPending}
               >
                 <Trash2 className="mr-2 h-3.5 w-3.5" />
-                Deactivate Form
+                {t('applyForm.deactivate')}
               </Button>
             )}
           </div>

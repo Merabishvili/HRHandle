@@ -1660,6 +1660,26 @@
     "previewDesc": "See exactly what candidates see on the public apply page.",
     "notAdded": "Not added yet —"
   },
+  "applyForm": {
+    "noLinkActive": "No apply link active",
+    "activateHint": "Activate a public link so candidates can apply directly. Share it on LinkedIn or any job board.",
+    "activating": "Activating...",
+    "activate": "Activate Application Form",
+    "applyLink": "Apply link",
+    "active": "Active",
+    "shareHint": "Share this link on LinkedIn or any job board. Candidates can apply without creating an account.",
+    "copyLink": "Copy link",
+    "openForm": "Open form",
+    "whatCandidatesSee": "What candidates will see",
+    "bullet1": "Job description, responsibilities and requirements from this vacancy",
+    "bullet2": "Fields: First name, Last name, Email (required), Phone, LinkedIn URL",
+    "bullet3": "CV upload (PDF or Word, required)",
+    "bullet4": "Automatic confirmation email sent to the applicant",
+    "deactivateWarn": "The link will stop working immediately. Existing candidates are kept.",
+    "deactivating": "Deactivating...",
+    "confirmDeactivate": "Confirm Deactivate",
+    "deactivate": "Deactivate Form"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",
