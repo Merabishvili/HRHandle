@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import {
@@ -49,6 +50,7 @@ interface TrashListProps {
 type Tab = 'candidates' | 'vacancies'
 
 export function TrashList({ candidates, vacancies }: TrashListProps) {
+  const t = useTranslations()
   const [tab, setTab] = useState<Tab>('candidates')
   const [confirmHardDelete, setConfirmHardDelete] = useState<Item | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -63,15 +65,15 @@ export function TrashList({ candidates, vacancies }: TrashListProps) {
           return
         }
         const apps = result.data.restoredApplications
-        const label = apps === 0 ? '' : ` (${apps} application${apps === 1 ? '' : 's'} too)`
-        toast.success(`Restored ${toDisplayFullName(item.data.first_name, item.data.last_name)}${label}.`)
+        const appsSuffix = apps === 0 ? '' : t('trash.appsToo', { count: apps })
+        toast.success(t('trash.restoredCandidate', { name: toDisplayFullName(item.data.first_name, item.data.last_name), apps: appsSuffix }))
       } else {
         const result = await restoreVacancy(item.data.id)
         if (!result.success) {
           toast.error(result.error)
           return
         }
-        toast.success(`Restored "${item.data.title}".`)
+        toast.success(t('trash.restoredVacancy', { title: item.data.title }))
       }
       router.refresh()
     })
@@ -91,8 +93,8 @@ export function TrashList({ candidates, vacancies }: TrashListProps) {
       }
       toast.success(
         item.kind === 'candidate'
-          ? `${toDisplayFullName(item.data.first_name, item.data.last_name)} permanently deleted.`
-          : `"${item.data.title}" permanently deleted.`,
+          ? t('trash.candidateDeleted', { name: toDisplayFullName(item.data.first_name, item.data.last_name) })
+          : t('trash.vacancyDeleted', { title: item.data.title }),
       )
       setConfirmHardDelete(null)
       router.refresh()
@@ -104,13 +106,13 @@ export function TrashList({ candidates, vacancies }: TrashListProps) {
       <div className="border-b border-border">
         <div className="flex gap-0">
           <TabButton active={tab === 'candidates'} onClick={() => setTab('candidates')}>
-            Candidates
+            {t('nav.candidates')}
             <Badge variant="secondary" className="ml-2 h-5 text-[10px]">
               {candidates.length}
             </Badge>
           </TabButton>
           <TabButton active={tab === 'vacancies'} onClick={() => setTab('vacancies')}>
-            Vacancies
+            {t('nav.vacancies')}
             <Badge variant="secondary" className="ml-2 h-5 text-[10px]">
               {vacancies.length}
             </Badge>
@@ -142,33 +144,29 @@ export function TrashList({ candidates, vacancies }: TrashListProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete permanently?</AlertDialogTitle>
+            <AlertDialogTitle>{t('trash.deletePermTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmHardDelete?.kind === 'candidate' ? (
-                <>
-                  <strong>
-                    {toDisplayFullName(confirmHardDelete.data.first_name, confirmHardDelete.data.last_name)}
-                  </strong>{' '}
-                  and all their applications, evaluations, notes, and documents
-                  will be irreversibly deleted now. This skips the 30-day grace
-                  period.
-                </>
+                t.rich('trash.candidateDeleteDesc', {
+                  name: toDisplayFullName(confirmHardDelete.data.first_name, confirmHardDelete.data.last_name),
+                  b: (c) => <strong>{c}</strong>,
+                })
               ) : confirmHardDelete?.kind === 'vacancy' ? (
-                <>
-                  <strong>&quot;{confirmHardDelete.data.title}&quot;</strong> will be
-                  irreversibly deleted now. This skips the 30-day grace period.
-                </>
+                t.rich('trash.vacancyDeleteDesc', {
+                  title: confirmHardDelete.data.title,
+                  b: (c) => <strong>{c}</strong>,
+                })
               ) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleHardDelete}
               disabled={isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isPending ? 'Deleting…' : 'Delete permanently'}
+              {isPending ? t('offer.deleting') : t('trash.deletePerm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -213,8 +211,9 @@ function CandidatesPanel({
   onRestore: (c: TrashedCandidate) => void
   onHardDelete: (c: TrashedCandidate) => void
 }) {
+  const t = useTranslations()
   if (rows.length === 0) {
-    return <EmptyState icon={<UserCircle className="h-10 w-10 text-muted-foreground/40" />} label="No deleted candidates" />
+    return <EmptyState icon={<UserCircle className="h-10 w-10 text-muted-foreground/40" />} label={t('trash.noCandidates')} />
   }
   return (
     <ul className="space-y-2">
@@ -232,14 +231,12 @@ function CandidatesPanel({
               <p className="text-xs text-muted-foreground">
                 {c.email ?? '—'} ·{' '}
                 <span className="inline-flex items-center gap-1">
-                  <CalendarClock className="h-3 w-3" /> Deleted{' '}
-                  {format(new Date(c.deleted_at), 'MMM d, yyyy')}
+                  <CalendarClock className="h-3 w-3" /> {t('trash.deletedOn', { date: format(new Date(c.deleted_at), 'MMM d, yyyy') })}
                 </span>
               </p>
               {c.cascadedApplicationIds.length > 0 && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Restoring brings back {c.cascadedApplicationIds.length} application
-                  {c.cascadedApplicationIds.length === 1 ? '' : 's'}.
+                  {t('trash.restoringBrings', { count: c.cascadedApplicationIds.length })}
                 </p>
               )}
             </div>
@@ -256,7 +253,7 @@ function CandidatesPanel({
                 ) : (
                   <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                Restore
+                {t('trash.restore')}
               </Button>
               <Button
                 size="sm"
@@ -266,7 +263,7 @@ function CandidatesPanel({
                 disabled={isPending}
               >
                 <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                Delete now
+                {t('trash.deleteNow')}
               </Button>
             </div>
           </li>
@@ -287,8 +284,9 @@ function VacanciesPanel({
   onRestore: (v: TrashedVacancy) => void
   onHardDelete: (v: TrashedVacancy) => void
 }) {
+  const t = useTranslations()
   if (rows.length === 0) {
-    return <EmptyState icon={<Briefcase className="h-10 w-10 text-muted-foreground/40" />} label="No deleted vacancies" />
+    return <EmptyState icon={<Briefcase className="h-10 w-10 text-muted-foreground/40" />} label={t('trash.noVacancies')} />
   }
   return (
     <ul className="space-y-2">
@@ -304,8 +302,7 @@ function VacanciesPanel({
               <p className="text-xs text-muted-foreground">
                 {[v.department, v.location].filter(Boolean).join(' · ') || '—'} ·{' '}
                 <span className="inline-flex items-center gap-1">
-                  <CalendarClock className="h-3 w-3" /> Deleted{' '}
-                  {format(new Date(v.deleted_at), 'MMM d, yyyy')}
+                  <CalendarClock className="h-3 w-3" /> {t('trash.deletedOn', { date: format(new Date(v.deleted_at), 'MMM d, yyyy') })}
                 </span>
               </p>
             </div>
@@ -322,7 +319,7 @@ function VacanciesPanel({
                 ) : (
                   <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                Restore
+                {t('trash.restore')}
               </Button>
               <Button
                 size="sm"
@@ -332,7 +329,7 @@ function VacanciesPanel({
                 disabled={isPending}
               >
                 <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                Delete now
+                {t('trash.deleteNow')}
               </Button>
             </div>
           </li>
@@ -343,35 +340,37 @@ function VacanciesPanel({
 }
 
 function EmptyState({ icon, label }: { icon: React.ReactNode; label: string }) {
+  const t = useTranslations()
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12 text-center">
       {icon}
       <p className="mt-3 text-sm font-medium text-foreground">{label}</p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Soft-deleted candidates and vacancies appear here for 30 days.
+        {t('trash.emptyHint')}
       </p>
     </div>
   )
 }
 
 function PurgeBadge({ days }: { days: number }) {
+  const t = useTranslations()
   if (days === 0) {
     return (
       <Badge variant="secondary" className="bg-rose-100 text-rose-900">
-        Purge imminent
+        {t('trash.purgeImminent')}
       </Badge>
     )
   }
   if (days <= 7) {
     return (
       <Badge variant="secondary" className="bg-amber-100 text-amber-900">
-        {days} day{days === 1 ? '' : 's'} left
+        {t('trash.daysLeft', { count: days })}
       </Badge>
     )
   }
   return (
     <Badge variant="secondary" className="bg-gray-100 text-gray-700">
-      {days} days left
+      {t('trash.daysLeft', { count: days })}
     </Badge>
   )
 }

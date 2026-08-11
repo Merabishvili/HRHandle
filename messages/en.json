@@ -1775,6 +1775,26 @@
       }
     }
   },
+  "trash": {
+    "appsToo": "{count, plural, one { (# application too)} other { (# applications too)}}",
+    "restoredCandidate": "Restored {name}{apps}.",
+    "restoredVacancy": "Restored \"{title}\".",
+    "candidateDeleted": "{name} permanently deleted.",
+    "vacancyDeleted": "\"{title}\" permanently deleted.",
+    "deletePermTitle": "Delete permanently?",
+    "candidateDeleteDesc": "<b>{name}</b> and all their applications, evaluations, notes, and documents will be irreversibly deleted now. This skips the 30-day grace period.",
+    "vacancyDeleteDesc": "<b>\"{title}\"</b> will be irreversibly deleted now. This skips the 30-day grace period.",
+    "deletePerm": "Delete permanently",
+    "noCandidates": "No deleted candidates",
+    "noVacancies": "No deleted vacancies",
+    "emptyHint": "Soft-deleted candidates and vacancies appear here for 30 days.",
+    "deletedOn": "Deleted {date}",
+    "restoringBrings": "Restoring brings back {count, plural, one {# application} other {# applications}}.",
+    "restore": "Restore",
+    "deleteNow": "Delete now",
+    "purgeImminent": "Purge imminent",
+    "daysLeft": "{count, plural, one {# day left} other {# days left}}"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

@@ -1775,6 +1775,26 @@
       }
     }
   },
+  "trash": {
+    "appsToo": "{count, plural, one { (# განაცხადიც)} other { (# განაცხადიც)}}",
+    "restoredCandidate": "აღდგა {name}{apps}.",
+    "restoredVacancy": "აღდგა „{title}“.",
+    "candidateDeleted": "{name} სამუდამოდ წაიშალა.",
+    "vacancyDeleted": "„{title}“ სამუდამოდ წაიშალა.",
+    "deletePermTitle": "სამუდამოდ წაიშალოს?",
+    "candidateDeleteDesc": "<b>{name}</b> და მათი ყველა განაცხადი, შეფასება, შენიშვნა და დოკუმენტი შეუქცევადად წაიშლება ახლა. ეს გამოტოვებს 30-დღიან საშეღავათო პერიოდს.",
+    "vacancyDeleteDesc": "<b>„{title}“</b> შეუქცევადად წაიშლება ახლა. ეს გამოტოვებს 30-დღიან საშეღავათო პერიოდს.",
+    "deletePerm": "სამუდამოდ წაშლა",
+    "noCandidates": "წაშლილი კანდიდატები არ არის",
+    "noVacancies": "წაშლილი ვაკანსიები არ არის",
+    "emptyHint": "რბილად წაშლილი კანდიდატები და ვაკანსიები აქ ჩანს 30 დღის განმავლობაში.",
+    "deletedOn": "წაიშალა {date}",
+    "restoringBrings": "აღდგენა დააბრუნებს {count, plural, one {# განაცხადს} other {# განაცხადს}}.",
+    "restore": "აღდგენა",
+    "deleteNow": "ახლავე წაშლა",
+    "purgeImminent": "წაშლა მოახლოებულია",
+    "daysLeft": "{count, plural, one {დარჩა # დღე} other {დარჩა # დღე}}"
+  },
   "apply": {
     "applyForPosition": "განაცხადის გაგზავნა ამ პოზიციაზე",
     "allOpenPositions": "ყველა ღია პოზიცია",

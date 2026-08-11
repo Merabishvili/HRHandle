@@ -1775,6 +1775,26 @@
       }
     }
   },
+  "trash": {
+    "appsToo": "{count, plural, one { (# отклик тоже)} few { (# отклика тоже)} many { (# откликов тоже)} other { (# отклика тоже)}}",
+    "restoredCandidate": "Восстановлен {name}{apps}.",
+    "restoredVacancy": "Восстановлена «{title}».",
+    "candidateDeleted": "{name} удалён навсегда.",
+    "vacancyDeleted": "«{title}» удалена навсегда.",
+    "deletePermTitle": "Удалить навсегда?",
+    "candidateDeleteDesc": "<b>{name}</b> и все их отклики, оценки, заметки и документы будут безвозвратно удалены сейчас. Это пропускает 30-дневный льготный период.",
+    "vacancyDeleteDesc": "<b>«{title}»</b> будет безвозвратно удалена сейчас. Это пропускает 30-дневный льготный период.",
+    "deletePerm": "Удалить навсегда",
+    "noCandidates": "Нет удалённых кандидатов",
+    "noVacancies": "Нет удалённых вакансий",
+    "emptyHint": "Мягко удалённые кандидаты и вакансии отображаются здесь в течение 30 дней.",
+    "deletedOn": "Удалено {date}",
+    "restoringBrings": "Восстановление вернёт {count, plural, one {# отклик} few {# отклика} many {# откликов} other {# отклика}}.",
+    "restore": "Восстановить",
+    "deleteNow": "Удалить сейчас",
+    "purgeImminent": "Скоро очистка",
+    "daysLeft": "{count, plural, one {осталось # день} few {осталось # дня} many {осталось # дней} other {осталось # дня}}"
+  },
   "apply": {
     "applyForPosition": "Откликнуться на вакансию",
     "allOpenPositions": "Все открытые вакансии",
