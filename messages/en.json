@@ -1535,6 +1535,16 @@
     "othersHidden": "Others' cards stay hidden until you submit yours.",
     "submit": "Submit scorecard"
   },
+  "aiSummary": {
+    "title": "AI summary",
+    "intro": "Generate a brief, neutral summary of this candidate's background. The summary is informational only — no decision is taken from it, and nothing is saved unless you choose to save it as a note.",
+    "generate": "Generate summary",
+    "tooThin": "Not enough information yet — add experience, education, or a current role, then try again.",
+    "rateLimited": "You've generated a lot of summaries recently. Try again in a few minutes.",
+    "failed": "Could not generate the summary right now. You can try again.",
+    "tryAgain": "Try again",
+    "savedHeader": "AI summary (not reviewed by recruiter):"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

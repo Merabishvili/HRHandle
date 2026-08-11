@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Sparkles, Loader2, RefreshCw, Save, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -28,6 +29,7 @@ type State =
  * candidate-note flow (clearly prefixed so it's traceable as AI output).
  */
 export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
+  const t = useTranslations()
   const [state, setState] = useState<State>({ status: 'idle' })
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -64,7 +66,7 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
     if (state.status !== 'ok' || isSaving) return
     setSaveError(null)
     startSaveTransition(async () => {
-      const noteText = `AI summary (not reviewed by recruiter):\n${state.summary}`
+      const noteText = `${t('aiSummary.savedHeader')}\n${state.summary}`
       const result = await createNote(candidateId, noteText)
       if (!result.success) {
         setSaveError(result.error)
@@ -79,22 +81,20 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="mb-3 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-primary" />
-        <span className="text-[15px] font-bold text-foreground">AI summary</span>
+        <span className="text-[15px] font-bold text-foreground">{t('aiSummary.title')}</span>
         <span className="ml-auto text-[11px] uppercase tracking-wide text-muted-foreground">
-          Assistant
+          {t('aiJd.assistant')}
         </span>
       </div>
 
       {state.status === 'idle' && (
         <div>
           <p className="mb-3 text-sm text-muted-foreground">
-            Generate a brief, neutral summary of this candidate&apos;s background. The
-            summary is informational only — no decision is taken from it, and nothing is
-            saved unless you choose to save it as a note.
+            {t('aiSummary.intro')}
           </p>
           <Button onClick={generate} size="sm" variant="outline">
             <Sparkles className="mr-2 h-4 w-4" />
-            Generate summary
+            {t('aiSummary.generate')}
           </Button>
         </div>
       )}
@@ -102,14 +102,14 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
       {state.status === 'loading' && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Generating…
+          {t('aiAssess.generating')}
         </div>
       )}
 
       {state.status === 'ok' && (
         <div>
           <div className="mb-2">
-            <AiDraftTag label="AI draft" />
+            <AiDraftTag label={t('aiJd.aiDraft')} />
           </div>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
             {state.summary}
@@ -123,26 +123,26 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
 
           {saved && (
             <p className="mt-3 text-sm text-green-700 dark:text-green-500">
-              Saved as a candidate note.
+              {t('aiNotes.savedNote')}
             </p>
           )}
 
           <div className="mt-4 flex gap-2">
             <Button onClick={generate} size="sm" variant="ghost" disabled={isSaving}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Regenerate
+              {t('aiJd.regenerate')}
             </Button>
             {!saved && (
               <Button onClick={saveAsNote} size="sm" variant="outline" disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving…
+                    {t('common.saving')}
                   </>
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    Save as note
+                    {t('aiNotes.saveAsNote')}
                   </>
                 )}
               </Button>
@@ -155,8 +155,7 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Not enough information yet — add experience, education, or a current role,
-            then try again.
+            {t('aiSummary.tooThin')}
           </AlertDescription>
         </Alert>
       )}
@@ -164,7 +163,7 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
       {state.status === 'rate_limited' && (
         <Alert>
           <AlertDescription>
-            You&apos;ve generated a lot of summaries recently. Try again in a few minutes.
+            {t('aiSummary.rateLimited')}
           </AlertDescription>
         </Alert>
       )}
@@ -172,7 +171,7 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
       {state.status === 'no_key' && (
         <Alert>
           <AlertDescription>
-            AI features are not configured on this deployment.
+            {t('wizard.aiNotConfigured')}
           </AlertDescription>
         </Alert>
       )}
@@ -181,12 +180,12 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
         <div>
           <Alert variant="destructive">
             <AlertDescription>
-              Could not generate the summary right now. You can try again.
+              {t('aiSummary.failed')}
             </AlertDescription>
           </Alert>
           <Button onClick={generate} size="sm" variant="outline" className="mt-3">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Try again
+            {t('aiSummary.tryAgain')}
           </Button>
         </div>
       )}
