@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -80,6 +81,7 @@ export function AuditLogFilters({
   members,
   basePath = '/settings/audit-log',
 }: AuditLogFiltersProps) {
+  const t = useTranslations()
   const router = useRouter()
 
   const setParam = (key: keyof AuditLogFilter, value: string | null) => {
@@ -125,16 +127,16 @@ export function AuditLogFilters({
       className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
     >
       <div className="space-y-1.5">
-        <Label htmlFor="al-action" className="text-xs">Action</Label>
+        <Label htmlFor="al-action" className="text-xs">{t('auditFilters.action')}</Label>
         <Select
           value={filter.action ?? ANY}
           onValueChange={(v) => setParam('action', v === ANY ? null : v)}
         >
           <SelectTrigger id="al-action" className="h-9 text-sm">
-            <SelectValue placeholder="Any action" />
+            <SelectValue placeholder={t('auditFilters.anyAction')} />
           </SelectTrigger>
           <SelectContent className="max-h-72">
-            <SelectItem value={ANY}>Any action</SelectItem>
+            <SelectItem value={ANY}>{t('auditFilters.anyAction')}</SelectItem>
             {ACTION_TYPES.map((a) => (
               <SelectItem key={a} value={a} className="font-mono text-xs">{a}</SelectItem>
             ))}
@@ -142,16 +144,16 @@ export function AuditLogFilters({
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="al-entity" className="text-xs">Entity type</Label>
+        <Label htmlFor="al-entity" className="text-xs">{t('auditFilters.entityType')}</Label>
         <Select
           value={filter.entityType ?? ANY}
           onValueChange={(v) => setParam('entityType', v === ANY ? null : v)}
         >
           <SelectTrigger id="al-entity" className="h-9 text-sm">
-            <SelectValue placeholder="Any entity" />
+            <SelectValue placeholder={t('auditFilters.anyEntity')} />
           </SelectTrigger>
           <SelectContent className="max-h-72">
-            <SelectItem value={ANY}>Any entity</SelectItem>
+            <SelectItem value={ANY}>{t('auditFilters.anyEntity')}</SelectItem>
             {ENTITY_TYPES.map((e) => (
               <SelectItem key={e} value={e} className="font-mono text-xs">{e}</SelectItem>
             ))}
@@ -159,16 +161,16 @@ export function AuditLogFilters({
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="al-user" className="text-xs">User</Label>
+        <Label htmlFor="al-user" className="text-xs">{t('auditFilters.user')}</Label>
         <Select
           value={filter.userId ?? USER_NONE}
           onValueChange={(v) => setParam('userId', v)}
         >
           <SelectTrigger id="al-user" className="h-9 text-sm">
-            <SelectValue placeholder="Any user" />
+            <SelectValue placeholder={t('auditFilters.anyUser')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={USER_NONE}>Any user</SelectItem>
+            <SelectItem value={USER_NONE}>{t('auditFilters.anyUser')}</SelectItem>
             {members.map((m) => (
               <SelectItem key={m.id} value={m.id}>
                 {m.full_name || m.email || m.id}
@@ -178,7 +180,7 @@ export function AuditLogFilters({
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="al-from" className="text-xs">From</Label>
+        <Label htmlFor="al-from" className="text-xs">{t('auditFilters.from')}</Label>
         <Input
           id="al-from"
           name="from"
@@ -188,7 +190,7 @@ export function AuditLogFilters({
         />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="al-to" className="text-xs">To</Label>
+        <Label htmlFor="al-to" className="text-xs">{t('auditFilters.to')}</Label>
         <Input
           id="al-to"
           name="to"
@@ -201,7 +203,7 @@ export function AuditLogFilters({
       <div className="col-span-full flex items-center gap-2">
         <Button type="submit" size="sm">
           <Search className="mr-2 h-3.5 w-3.5" />
-          Apply
+          {t('auditFilters.apply')}
         </Button>
         {hasAny && (
           <Button
@@ -211,7 +213,7 @@ export function AuditLogFilters({
             onClick={() => router.push(basePath)}
           >
             <X className="mr-2 h-3.5 w-3.5" />
-            Clear filters
+            {t('auditFilters.clearFilters')}
           </Button>
         )}
       </div>

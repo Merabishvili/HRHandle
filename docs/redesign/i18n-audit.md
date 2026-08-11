@@ -43,7 +43,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (10) components/vacancies/pipeline-stages-manager.tsx
 - [x] (10) components/vacancies/detail/jd-tab.tsx
 - [ ] (9) app/(dashboard)/settings/integrations/calendly/page.tsx
-- [ ] (9) components/settings/audit-log-filters.tsx
+- [x] (9) components/settings/audit-log-filters.tsx
 - [x] (9) components/settings/trash-list.tsx
 - [ ] (9) components/landing/pricing-section.tsx
 - [ ] (9) components/shared/column-manager-dialog.tsx
@@ -55,7 +55,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (8) components/scorecards/share-scorecard-dialog.tsx
 - [ ] (7) components/candidates/profile/profile-shell.tsx
 - [x] (7) components/settings/zoom-connect.tsx
-- [ ] (7) components/settings/audit-log-table.tsx
+- [x] (7) components/settings/audit-log-table.tsx
 - [x] (7) components/settings/microsoft-connect.tsx
 - [x] (7) components/settings/google-calendar-connect.tsx
 - [ ] (7) components/pipeline/list-view.tsx

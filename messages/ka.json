@@ -1795,6 +1795,30 @@
     "purgeImminent": "წაშლა მოახლოებულია",
     "daysLeft": "{count, plural, one {დარჩა # დღე} other {დარჩა # დღე}}"
   },
+  "auditFilters": {
+    "action": "მოქმედება",
+    "anyAction": "ნებისმიერი მოქმედება",
+    "entityType": "ერთეულის ტიპი",
+    "anyEntity": "ნებისმიერი ერთეული",
+    "user": "მომხმარებელი",
+    "anyUser": "ნებისმიერი მომხმარებელი",
+    "from": "დან",
+    "to": "მდე",
+    "apply": "გამოყენება",
+    "clearFilters": "ფილტრების გასუფთავება"
+  },
+  "auditTable": {
+    "noActivity": "ამ ფილტრებს აქტივობა არ ემთხვევა.",
+    "noActivityHint": "სცადეთ თარიღების უფრო ფართო დიაპაზონი ან გაასუფთავეთ ფილტრები ყველაფრის სანახავად.",
+    "when": "როდის",
+    "who": "ვინ",
+    "entity": "ერთეული",
+    "details": "დეტალები",
+    "system": "სისტემა",
+    "openRecord": "{type} ჩანაწერის გახსნა",
+    "hideJson": "JSON-ის დამალვა",
+    "showJson": "JSON-ის ჩვენება"
+  },
   "apply": {
     "applyForPosition": "განაცხადის გაგზავნა ამ პოზიციაზე",
     "allOpenPositions": "ყველა ღია პოზიცია",

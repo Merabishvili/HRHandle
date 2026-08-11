@@ -1795,6 +1795,30 @@
     "purgeImminent": "Purge imminent",
     "daysLeft": "{count, plural, one {# day left} other {# days left}}"
   },
+  "auditFilters": {
+    "action": "Action",
+    "anyAction": "Any action",
+    "entityType": "Entity type",
+    "anyEntity": "Any entity",
+    "user": "User",
+    "anyUser": "Any user",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply",
+    "clearFilters": "Clear filters"
+  },
+  "auditTable": {
+    "noActivity": "No activity matches these filters.",
+    "noActivityHint": "Try a wider date range or clear filters to see everything.",
+    "when": "When",
+    "who": "Who",
+    "entity": "Entity",
+    "details": "Details",
+    "system": "System",
+    "openRecord": "Open {type} record",
+    "hideJson": "Hide JSON",
+    "showJson": "Show JSON"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

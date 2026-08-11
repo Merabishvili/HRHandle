@@ -1795,6 +1795,30 @@
     "purgeImminent": "Скоро очистка",
     "daysLeft": "{count, plural, one {осталось # день} few {осталось # дня} many {осталось # дней} other {осталось # дня}}"
   },
+  "auditFilters": {
+    "action": "Действие",
+    "anyAction": "Любое действие",
+    "entityType": "Тип объекта",
+    "anyEntity": "Любой объект",
+    "user": "Пользователь",
+    "anyUser": "Любой пользователь",
+    "from": "С",
+    "to": "По",
+    "apply": "Применить",
+    "clearFilters": "Сбросить фильтры"
+  },
+  "auditTable": {
+    "noActivity": "Нет активности по этим фильтрам.",
+    "noActivityHint": "Попробуйте расширить диапазон дат или сбросьте фильтры, чтобы увидеть всё.",
+    "when": "Когда",
+    "who": "Кто",
+    "entity": "Объект",
+    "details": "Детали",
+    "system": "Система",
+    "openRecord": "Открыть запись {type}",
+    "hideJson": "Скрыть JSON",
+    "showJson": "Показать JSON"
+  },
   "apply": {
     "applyForPosition": "Откликнуться на вакансию",
     "allOpenPositions": "Все открытые вакансии",

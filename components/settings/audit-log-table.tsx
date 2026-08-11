@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
@@ -26,12 +27,13 @@ function entityHref(entityType: string | null, entityId: string | null): string 
 }
 
 export function AuditLogTable({ rows }: AuditLogTableProps) {
+  const t = useTranslations()
   if (rows.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-10 text-center">
-        <p className="text-sm font-medium text-foreground">No activity matches these filters.</p>
+        <p className="text-sm font-medium text-foreground">{t('auditTable.noActivity')}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Try a wider date range or clear filters to see everything.
+          {t('auditTable.noActivityHint')}
         </p>
       </div>
     )
@@ -42,11 +44,11 @@ export function AuditLogTable({ rows }: AuditLogTableProps) {
       <table className="w-full text-sm">
         <thead className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
-            <th className="px-4 py-2.5 font-medium">When</th>
-            <th className="px-4 py-2.5 font-medium">Who</th>
-            <th className="px-4 py-2.5 font-medium">Action</th>
-            <th className="px-4 py-2.5 font-medium">Entity</th>
-            <th className="px-4 py-2.5 font-medium">Details</th>
+            <th className="px-4 py-2.5 font-medium">{t('auditTable.when')}</th>
+            <th className="px-4 py-2.5 font-medium">{t('auditTable.who')}</th>
+            <th className="px-4 py-2.5 font-medium">{t('auditFilters.action')}</th>
+            <th className="px-4 py-2.5 font-medium">{t('auditTable.entity')}</th>
+            <th className="px-4 py-2.5 font-medium">{t('auditTable.details')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -60,6 +62,7 @@ export function AuditLogTable({ rows }: AuditLogTableProps) {
 }
 
 function Row({ row }: { row: AuditLogRow }) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const detailsString = row.details ? JSON.stringify(row.details, null, 2) : null
   const hasDetails = !!detailsString && detailsString !== '{}'
@@ -73,7 +76,7 @@ function Row({ row }: { row: AuditLogRow }) {
         <td className="px-4 py-2.5">
           <div className="text-sm text-foreground">
             {row.user_full_name || row.user_email || (
-              <span className="text-muted-foreground italic">System</span>
+              <span className="text-muted-foreground italic">{t('auditTable.system')}</span>
             )}
           </div>
         </td>
@@ -95,7 +98,7 @@ function Row({ row }: { row: AuditLogRow }) {
                     <Link
                       href={href}
                       className="font-mono text-[10px] text-primary underline-offset-2 hover:underline"
-                      title={`Open ${row.entity_type} record`}
+                      title={t('auditTable.openRecord', { type: row.entity_type ?? '' })}
                     >
                       {short}
                     </Link>
@@ -120,7 +123,7 @@ function Row({ row }: { row: AuditLogRow }) {
               ) : (
                 <ChevronRight className="h-3 w-3" />
               )}
-              {open ? 'Hide JSON' : 'Show JSON'}
+              {open ? t('auditTable.hideJson') : t('auditTable.showJson')}
             </button>
           )}
         </td>
