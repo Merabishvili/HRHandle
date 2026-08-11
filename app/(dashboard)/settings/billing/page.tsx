@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { getRequestCountry } from '@/lib/sanctions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -62,11 +63,11 @@ function getSubscriptionBadgeClass(status: SubscriptionRow['status']) {
   }
 }
 
-function getPlanDisplayName(planCode: 'trial' | 'individual' | 'organization') {
+function getPlanDisplayNameKey(planCode: 'trial' | 'individual' | 'organization') {
   switch (planCode) {
-    case 'individual': return 'Individual'
-    case 'organization': return 'Organization'
-    default: return 'Free Trial'
+    case 'individual': return 'billing.planIndividual'
+    case 'organization': return 'billing.planOrganization'
+    default: return 'billing.planTrial'
   }
 }
 
@@ -196,20 +197,20 @@ export default async function BillingSettingsPage({
 
   const remainingTrialDays = getRemainingTrialDays(typedSubscription.trial_end_at)
   const isTrial = typedSubscription.plan_code === 'trial'
+  const t = await getTranslations()
 
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Billing</h1>
-        <p className="text-muted-foreground">Manage your subscription and billing.</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('settings.nav.billing')}</h1>
+        <p className="text-muted-foreground">{t('billing.subtitle')}</p>
       </div>
 
       {checkout === 'return' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-          <p className="font-medium">Thanks — we&apos;re confirming your payment.</p>
+          <p className="font-medium">{t('billing.checkoutThanks')}</p>
           <p className="mt-1">
-            Your plan updates automatically once the payment is confirmed (usually within a
-            moment). Refresh this page if it still shows your previous plan.
+            {t('billing.checkoutDesc')}
           </p>
         </div>
       )}
@@ -218,15 +219,15 @@ export default async function BillingSettingsPage({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Current plan</CardTitle>
-              <CardDescription>Your active subscription details</CardDescription>
+              <CardTitle>{t('billing.currentPlan')}</CardTitle>
+              <CardDescription>{t('billing.currentPlanDesc')}</CardDescription>
             </div>
 
             <Badge
               variant="secondary"
               className={getSubscriptionBadgeClass(typedSubscription.status)}
             >
-              {typedSubscription.status.replace('_', ' ')}
+              {t(`billing.status.${typedSubscription.status}`)}
             </Badge>
           </div>
         </CardHeader>
@@ -234,28 +235,28 @@ export default async function BillingSettingsPage({
         <CardContent>
           <div className="mb-6 flex items-baseline gap-2">
             <span className="text-4xl font-bold text-foreground">
-              {getPlanDisplayName(typedSubscription.plan_code)}
+              {t(getPlanDisplayNameKey(typedSubscription.plan_code))}
             </span>
 
             {typedSubscription.plan_code !== 'trial' && currentMonthly !== null && (
               <span className="text-muted-foreground">
                 {currentCycle === 'annual'
-                  ? `${CURRENCY_SYMBOL[currency]}${currentMonthly}/mo billed annually`
-                  : `${CURRENCY_SYMBOL[currency]}${currentMonthly}/month`}
+                  ? t('billing.perMoAnnual', { price: `${CURRENCY_SYMBOL[currency]}${currentMonthly}` })
+                  : t('billing.perMonth', { price: `${CURRENCY_SYMBOL[currency]}${currentMonthly}` })}
               </span>
             )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg bg-muted/50 p-4">
-              <p className="text-sm text-muted-foreground">Vacancies used</p>
+              <p className="text-sm text-muted-foreground">{t('billing.vacanciesUsed')}</p>
               <p className="text-2xl font-bold text-foreground">
                 {vacancyCount || 0} / {typedSubscription.vacancy_limit}
               </p>
             </div>
 
             <div className="rounded-lg bg-muted/50 p-4">
-              <p className="text-sm text-muted-foreground">Candidates used</p>
+              <p className="text-sm text-muted-foreground">{t('billing.candidatesUsed')}</p>
               <p className="text-2xl font-bold text-foreground">
                 {candidateCount || 0} / {typedSubscription.candidate_limit}
               </p>
@@ -264,14 +265,14 @@ export default async function BillingSettingsPage({
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">Organization</p>
+              <p className="text-sm text-muted-foreground">{t('billing.planOrganization')}</p>
               <p className="font-medium text-foreground">{typedOrganization.name}</p>
             </div>
 
             <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">Payment method</p>
+              <p className="text-sm text-muted-foreground">{t('billing.paymentMethod')}</p>
               <p className="font-medium text-foreground">
-                {typedSubscription.payment_method_linked ? 'Linked' : 'Not linked'}
+                {typedSubscription.payment_method_linked ? t('billing.linked') : t('billing.notLinked')}
               </p>
             </div>
           </div>
@@ -279,10 +280,10 @@ export default async function BillingSettingsPage({
           {isTrial && remainingTrialDays !== null && (
             <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-900">
               <p className="font-medium">
-                Trial period: {remainingTrialDays} day{remainingTrialDays === 1 ? '' : 's'} remaining
+                {t('billing.trialRemaining', { count: remainingTrialDays })}
               </p>
               <p className="mt-1 text-sm">
-                After the free trial, the account should move to Professional if a payment method is linked.
+                {t('billing.trialAfter')}
               </p>
             </div>
           )}
@@ -307,10 +308,10 @@ export default async function BillingSettingsPage({
       <PaymentMethods className="justify-center" />
 
       <p className="text-center text-xs text-muted-foreground">
-        Subscriptions renew automatically. Cancel anytime — you keep access until the end of your
-        paid period. See our{' '}
-        <a href="/refund" className="underline">Refund Policy</a> and{' '}
-        <a href="/terms" className="underline">Terms</a>.
+        {t.rich('billing.renewNote', {
+          refund: (c) => <a href="/refund" className="underline">{c}</a>,
+          terms: (c) => <a href="/terms" className="underline">{c}</a>,
+        })}
       </p>
 
       {typedSubscription.plan_code === 'trial' && (
@@ -323,14 +324,14 @@ export default async function BillingSettingsPage({
 
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground">
-                  Unlock more capacity
+                  {t('billing.unlockCapacity')}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Upgrade to Individual or Organization to manage more vacancies and candidates.
+                  {t('billing.upgradeDesc')}
                 </p>
               </div>
 
-              <Button>Upgrade now</Button>
+              <Button>{t('billing.upgradeNow')}</Button>
             </div>
           </CardContent>
         </Card>

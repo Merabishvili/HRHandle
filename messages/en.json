@@ -1866,6 +1866,63 @@
     "stageNamePlaceholder": "e.g. Technical Interview",
     "stageTypeHint": "— determines what actions appear on the candidate profile"
   },
+  "billing": {
+    "subtitle": "Manage your subscription and billing.",
+    "checkoutThanks": "Thanks — we're confirming your payment.",
+    "checkoutDesc": "Your plan updates automatically once the payment is confirmed (usually within a moment). Refresh this page if it still shows your previous plan.",
+    "currentPlan": "Current plan",
+    "currentPlanDesc": "Your active subscription details",
+    "status": {
+      "active": "active",
+      "trial": "trial",
+      "past_due": "past due",
+      "expired": "expired",
+      "canceled": "canceled"
+    },
+    "planIndividual": "Individual",
+    "planOrganization": "Organization",
+    "planTrial": "Free Trial",
+    "perMoAnnual": "{price}/mo billed annually",
+    "perMonth": "{price}/month",
+    "vacanciesUsed": "Vacancies used",
+    "candidatesUsed": "Candidates used",
+    "paymentMethod": "Payment method",
+    "linked": "Linked",
+    "notLinked": "Not linked",
+    "trialRemaining": "Trial period: {count, plural, one {# day remaining} other {# days remaining}}",
+    "trialAfter": "After the free trial, the account should move to Professional if a payment method is linked.",
+    "renewNote": "Subscriptions renew automatically. Cancel anytime — you keep access until the end of your paid period. See our <refund>Refund Policy</refund> and <terms>Terms</terms>.",
+    "unlockCapacity": "Unlock more capacity",
+    "upgradeDesc": "Upgrade to Individual or Organization to manage more vacancies and candidates.",
+    "upgradeNow": "Upgrade now"
+  },
+  "billingCtl": {
+    "currencyUpdated": "Billing currency updated.",
+    "cancelled": "Auto-renewal canceled — you keep access until your period ends.",
+    "billingCurrency": "Billing currency",
+    "autoRenewOff": "Auto-renew off",
+    "cancelSub": "Cancel subscription"
+  },
+  "payMethods": {
+    "secure": "Secure payments by Flitt · We accept"
+  },
+  "planCards": {
+    "availablePlans": "Available plans",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "campaignBanner": "🌸 {name} — special pricing until {date}",
+    "mostPopular": "Most Popular",
+    "current": "Current",
+    "free": "Free",
+    "per7days": " / 7 days",
+    "noCard": "No credit card required",
+    "perMo": "/mo",
+    "billedAnnually": "billed annually",
+    "billedMonthly": "billed monthly",
+    "currentPlan": "Current Plan",
+    "trialPlan": "Trial Plan",
+    "upgrade": "Upgrade"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

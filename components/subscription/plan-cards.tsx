@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ interface PlanCardsProps {
 }
 
 export function PlanCards({ plans, currentPlanCode, currency, campaign, campaignActive }: PlanCardsProps) {
+  const t = useTranslations()
   const [billing, setBilling] = useState<BillingCycle>('monthly')
   const [pendingCode, setPendingCode] = useState<PlanCode | null>(null)
   const [, startTransition] = useTransition()
@@ -47,7 +49,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Available plans</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('planCards.availablePlans')}</h2>
 
         <div className="inline-flex items-center rounded-full border border-border bg-muted p-1">
           <button
@@ -58,7 +60,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Monthly
+            {t('planCards.monthly')}
             {campaignActive && (
               <span className="ml-1.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                 -{monthlyDiscount}%
@@ -73,7 +75,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Annual
+            {t('planCards.annual')}
             <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white ${
               campaignActive ? 'bg-orange-500' : 'bg-green-500'
             }`}>
@@ -86,11 +88,9 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
       {campaignActive && (
         <div className="mb-4 flex items-center gap-2 rounded-lg bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700">
           <Zap className="h-4 w-4 shrink-0" />
-          🌸 {campaign.name} — special pricing until{' '}
-          {new Date(campaign.endDate).toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
+          {t('planCards.campaignBanner', {
+            name: campaign.name,
+            date: new Date(campaign.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
           })}
         </div>
       )}
@@ -115,24 +115,24 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                  Most Popular
+                  {t('planCards.mostPopular')}
                 </div>
               )}
 
               <CardContent className="p-6">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
-                  {isCurrent && <Badge variant="secondary">Current</Badge>}
+                  {isCurrent && <Badge variant="secondary">{t('planCards.current')}</Badge>}
                 </div>
 
                 <div className="mb-6 min-h-[60px]">
                   {isTrial ? (
                     <>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-bold text-foreground">Free</span>
-                        <span className="text-muted-foreground"> / 7 days</span>
+                        <span className="text-3xl font-bold text-foreground">{t('planCards.free')}</span>
+                        <span className="text-muted-foreground">{t('planCards.per7days')}</span>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">No credit card required</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{t('planCards.noCard')}</p>
                     </>
                   ) : (
                     <>
@@ -140,7 +140,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
                         <span className="text-3xl font-bold text-foreground">
                           {symbol}{displayPrice}
                         </span>
-                        <span className="text-muted-foreground">/mo</span>
+                        <span className="text-muted-foreground">{t('planCards.perMo')}</span>
                         {campaignActive && originalPrice && (
                           <span className="text-sm text-muted-foreground line-through">
                             {symbol}{originalPrice}
@@ -148,7 +148,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
                         )}
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {billing === 'annual' ? 'billed annually' : 'billed monthly'}
+                        {billing === 'annual' ? t('planCards.billedAnnually') : t('planCards.billedMonthly')}
                       </p>
                     </>
                   )}
@@ -172,7 +172,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
                   {pendingCode === plan.code && (
                     <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden />
                   )}
-                  {isCurrent ? 'Current Plan' : isTrial ? 'Trial Plan' : 'Upgrade'}
+                  {isCurrent ? t('planCards.currentPlan') : isTrial ? t('planCards.trialPlan') : t('planCards.upgrade')}
                 </Button>
               </CardContent>
             </Card>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -36,6 +37,7 @@ export function BillingControls({
   showCancel,
   autoRenewOff,
 }: BillingControlsProps) {
+  const t = useTranslations()
   const [pending, startTransition] = useTransition()
   const [cancelling, setCancelling] = useState(false)
 
@@ -44,7 +46,7 @@ export function BillingControls({
   const onCurrencyChange = (value: string) => {
     startTransition(async () => {
       const res = await setBillingCurrency(value as Currency)
-      if (res.success) toast.success('Billing currency updated.')
+      if (res.success) toast.success(t('billingCtl.currencyUpdated'))
       else toast.error(res.error)
     })
   }
@@ -54,7 +56,7 @@ export function BillingControls({
     startTransition(async () => {
       const res = await cancelSubscription()
       if (res.success) {
-        toast.success('Auto-renewal canceled — you keep access until your period ends.')
+        toast.success(t('billingCtl.cancelled'))
       } else {
         toast.error(res.error)
       }
@@ -66,7 +68,7 @@ export function BillingControls({
     <Card className="border-border">
       <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-foreground">Billing currency</p>
+          <p className="text-sm font-medium text-foreground">{t('billingCtl.billingCurrency')}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -86,12 +88,12 @@ export function BillingControls({
           {showCancel &&
             (autoRenewOff ? (
               <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
-                Auto-renew off
+                {t('billingCtl.autoRenewOff')}
               </span>
             ) : (
               <Button variant="outline" size="sm" onClick={onCancel} disabled={pending}>
                 {cancelling && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />}
-                Cancel subscription
+                {t('billingCtl.cancelSub')}
               </Button>
             ))}
         </div>

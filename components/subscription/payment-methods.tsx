@@ -1,3 +1,7 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
+
 import { cn } from '@/lib/utils'
 
 /**
@@ -7,9 +11,10 @@ import { cn } from '@/lib/utils'
  * swap for official brand assets any time.
  */
 export function PaymentMethods({ className }: { className?: string }) {
+  const t = useTranslations()
   return (
     <div className={cn('flex flex-wrap items-center gap-2.5', className)}>
-      <span className="text-xs text-muted-foreground">Secure payments by Flitt · We accept</span>
+      <span className="text-xs text-muted-foreground">{t('payMethods.secure')}</span>
 
       {/* Visa */}
       <svg width="40" height="26" viewBox="0 0 40 26" role="img" aria-label="Visa" className="shrink-0">

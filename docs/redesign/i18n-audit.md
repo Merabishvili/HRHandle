@@ -21,7 +21,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (13) components/candidates/wizard/step-experience-education.tsx
 - [x] (13) components/candidates/ai-notes-extractor.tsx
 - [x] (13) components/settings/rejection-templates-manager.tsx
-- [ ] (12) app/(dashboard)/settings/billing/page.tsx
+- [x] (12) app/(dashboard)/settings/billing/page.tsx
 - [x] (12) components/candidates/experience-section.tsx
 - [x] (12) components/vacancies/detail/settings-tab.tsx
 - [x] (12) components/vacancies/detail/overview-tab.tsx
@@ -61,7 +61,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (7) components/pipeline/list-view.tsx
 - [x] (7) components/global-search/global-search-dialog.tsx
 - [ ] (6) components/settings/rejection-reasons-manager.tsx
-- [ ] (6) components/subscription/plan-cards.tsx
+- [x] (6) components/subscription/plan-cards.tsx
 - [ ] (6) components/vacancies/batch-rejection-dialog.tsx
 - [ ] (5) app/(dashboard)/vacancies/[id]/pipeline/page.tsx
 - [ ] (5, partial) app/(dashboard)/vacancies/page.tsx
@@ -71,13 +71,13 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (5) components/settings/default-meeting-provider-select.tsx
 - [ ] (5) components/settings/change-password-form.tsx
 - [ ] (5) components/settings/danger-zone.tsx
-- [ ] (5) components/subscription/payment-methods.tsx
+- [x] (5) components/subscription/payment-methods.tsx
 - [x] (5) components/dashboard/notifications-bell.tsx
 - [ ] (5) components/vacancies/add-candidate-to-vacancy-dialog.tsx
 - [ ] (4) app/(dashboard)/settings/integrations/page.tsx
 - [ ] (4) components/candidates/metadata-footer.tsx
 - [ ] (4) components/candidates/profile/recent-merge-banner.tsx
-- [ ] (4) components/subscription/billing-controls.tsx
+- [x] (4) components/subscription/billing-controls.tsx
 - [ ] (4) components/vacancies/vacancy-form.tsx
 - [ ] (4) components/vacancies/vacancy-applications-list.tsx
 - [ ] (3) app/(dashboard)/candidates/[id]/edit/page.tsx
