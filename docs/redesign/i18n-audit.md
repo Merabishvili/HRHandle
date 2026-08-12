@@ -78,8 +78,8 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (4) components/candidates/metadata-footer.tsx
 - [x] (4) components/candidates/profile/recent-merge-banner.tsx
 - [x] (4) components/subscription/billing-controls.tsx
-- [ ] (4) components/vacancies/vacancy-form.tsx
-- [ ] (4) components/vacancies/vacancy-applications-list.tsx
+- [x] (4) components/vacancies/vacancy-form.tsx
+- [x] (4) components/vacancies/vacancy-applications-list.tsx
 - [ ] (3) app/(dashboard)/candidates/[id]/edit/page.tsx
 - [ ] (3) app/(dashboard)/candidates/import/page.tsx
 - [ ] (3) app/(dashboard)/interviews/new/page.tsx

@@ -2253,6 +2253,16 @@
     "willSaveMust": "Will be saved as must-have",
     "willSaveNice": "Will be saved as nice-to-have"
   },
+  "vacAppsList": {
+    "selectAllVisible": "Select all visible",
+    "rejectSelected": "Reject selected"
+  },
+  "vacForm": {
+    "customFieldsDesc": "Custom fields defined for vacancies.",
+    "discard": "Discard",
+    "creating": "Creating…",
+    "updateVacancy": "Update vacancy"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

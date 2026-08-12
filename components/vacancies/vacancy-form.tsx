@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useForm, type SubmitHandler, type FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -77,6 +78,7 @@ export function VacancyForm({
   orgLocales = { default: DEFAULT_LOCALE, enabled: [DEFAULT_LOCALE] },
   initialI18n,
 }: VacancyFormProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -264,8 +266,8 @@ export function VacancyForm({
       {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Additional information</CardTitle>
-            <CardDescription>Custom fields defined for vacancies.</CardDescription>
+            <CardTitle>{t('profile.additionalInfo')}</CardTitle>
+            <CardDescription>{t('vacForm.customFieldsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <CustomFieldsForm
@@ -292,7 +294,7 @@ export function VacancyForm({
               router.push('/vacancies')
             }}
           >
-            Discard
+            {t('vacForm.discard')}
           </Button>
         ) : (
           <Button
@@ -301,7 +303,7 @@ export function VacancyForm({
             onClick={() => router.push(vacancy ? `/vacancies/${vacancy.id}` : '/vacancies')}
             disabled={isLoading}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
         )}
 
@@ -309,14 +311,14 @@ export function VacancyForm({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isDuplicated ? 'Saving…' : vacancy ? 'Updating…' : 'Creating…'}
+              {isDuplicated ? t('common.saving') : vacancy ? t('candidateForm.updating') : t('vacForm.creating')}
             </>
           ) : isDuplicated ? (
-            'Save'
+            t('common.save')
           ) : vacancy ? (
-            'Update vacancy'
+            t('vacForm.updateVacancy')
           ) : (
-            'Create vacancy'
+            t('wizard.createVacancy')
           )}
         </Button>
       </div>

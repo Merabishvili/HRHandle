@@ -2010,6 +2010,14 @@
   "vacQ.willSaveMust": { "en": "Will be saved as must-have", "ru": "Будет сохранено как обязательное", "ka": "შეინახება როგორც სავალდებულო" },
   "vacQ.willSaveNice": { "en": "Will be saved as nice-to-have", "ru": "Будет сохранено как желательное", "ka": "შეინახება როგორც სასურველი" },
 
+  "vacAppsList.selectAllVisible": { "en": "Select all visible", "ru": "Выбрать все видимые", "ka": "ყველა ხილულის არჩევა" },
+  "vacAppsList.rejectSelected": { "en": "Reject selected", "ru": "Отклонить выбранные", "ka": "არჩეულების უარყოფა" },
+
+  "vacForm.customFieldsDesc": { "en": "Custom fields defined for vacancies.", "ru": "Пользовательские поля для вакансий.", "ka": "ვაკანსიებისთვის განსაზღვრული მორგებული ველები." },
+  "vacForm.discard": { "en": "Discard", "ru": "Отменить", "ka": "გაუქმება" },
+  "vacForm.creating": { "en": "Creating…", "ru": "Создание…", "ka": "იქმნება…" },
+  "vacForm.updateVacancy": { "en": "Update vacancy", "ru": "Обновить вакансию", "ka": "ვაკანსიის განახლება" },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },

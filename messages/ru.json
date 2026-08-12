@@ -2253,6 +2253,16 @@
     "willSaveMust": "Будет сохранено как обязательное",
     "willSaveNice": "Будет сохранено как желательное"
   },
+  "vacAppsList": {
+    "selectAllVisible": "Выбрать все видимые",
+    "rejectSelected": "Отклонить выбранные"
+  },
+  "vacForm": {
+    "customFieldsDesc": "Пользовательские поля для вакансий.",
+    "discard": "Отменить",
+    "creating": "Создание…",
+    "updateVacancy": "Обновить вакансию"
+  },
   "apply": {
     "applyForPosition": "Откликнуться на вакансию",
     "allOpenPositions": "Все открытые вакансии",

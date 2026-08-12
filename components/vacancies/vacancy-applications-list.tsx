@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -15,6 +16,7 @@ import {
 import { VacancyApplicationRow } from './vacancy-application-row'
 import { BatchRejectionDialog } from './batch-rejection-dialog'
 import { BulkMoveDialog } from './bulk-move-dialog'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import type {
   RejectionReason,
   RejectionTemplate,
@@ -66,6 +68,7 @@ export function VacancyApplicationsList({
   vacancyId,
   questions,
 }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const [applications, setApplications] = useState(initial)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -149,15 +152,15 @@ export function VacancyApplicationsList({
         <div
           className="sticky top-0 z-10 mb-3 flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm"
           role="region"
-          aria-label="Bulk actions"
+          aria-label={t('pipeline.bulk.regionAria')}
         >
           <Checkbox
             checked={allSelected}
             onCheckedChange={(v) => toggleAll(v === true)}
-            aria-label={allSelected ? 'Clear selection' : 'Select all visible'}
+            aria-label={allSelected ? t('pipeline.bulk.clearSelection') : t('vacAppsList.selectAllVisible')}
           />
           <span className="text-sm font-medium text-foreground">
-            {selectedCount} selected
+            {t('common.selectedCount', { count: selectedCount })}
           </span>
           <div className="ml-auto flex items-center gap-2">
             <Button
@@ -166,13 +169,13 @@ export function VacancyApplicationsList({
               onClick={() => setSelected(new Set())}
             >
               <X className="mr-1.5 h-3.5 w-3.5" />
-              Clear
+              {t('common.clear')}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
                   <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
-                  Move to stage
+                  {t('pipeline.bulk.moveToStage')}
                   <ChevronDown className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -182,7 +185,7 @@ export function VacancyApplicationsList({
                     key={s.id}
                     onClick={() => setMoveTargetStatus(s)}
                   >
-                    {s.name}
+                    {statusLabel(t, s.code, s.name)}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -193,7 +196,7 @@ export function VacancyApplicationsList({
               onClick={() => setBatchDialogOpen(true)}
             >
               <Ban className="mr-1.5 h-3.5 w-3.5" />
-              Reject selected
+              {t('vacAppsList.rejectSelected')}
             </Button>
           </div>
         </div>

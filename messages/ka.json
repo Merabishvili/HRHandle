@@ -2253,6 +2253,16 @@
     "willSaveMust": "შეინახება როგორც სავალდებულო",
     "willSaveNice": "შეინახება როგორც სასურველი"
   },
+  "vacAppsList": {
+    "selectAllVisible": "ყველა ხილულის არჩევა",
+    "rejectSelected": "არჩეულების უარყოფა"
+  },
+  "vacForm": {
+    "customFieldsDesc": "ვაკანსიებისთვის განსაზღვრული მორგებული ველები.",
+    "discard": "გაუქმება",
+    "creating": "იქმნება…",
+    "updateVacancy": "ვაკანსიის განახლება"
+  },
   "apply": {
     "applyForPosition": "განაცხადის გაგზავნა ამ პოზიციაზე",
     "allOpenPositions": "ყველა ღია პოზიცია",
