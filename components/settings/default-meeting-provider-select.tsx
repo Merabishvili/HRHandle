@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Video } from 'lucide-react'
 
@@ -34,6 +35,7 @@ interface Props {
  * "Automatic" restores the built-in Google > Zoom > Teams precedence.
  */
 export function DefaultMeetingProviderSelect({ current, hasGoogle, hasZoom, hasTeams }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const [value, setValue] = useState<string>(current ?? AUTO)
   const [isPending, startTransition] = useTransition()
@@ -48,7 +50,7 @@ export function DefaultMeetingProviderSelect({ current, hasGoogle, hasZoom, hasT
         setValue(current ?? AUTO)
         return
       }
-      toast.success('Default meeting provider saved.')
+      toast.success(t('meetProvider.saved'))
       router.refresh()
     })
   }
@@ -58,22 +60,21 @@ export function DefaultMeetingProviderSelect({ current, hasGoogle, hasZoom, hasT
       <div className="flex items-center gap-2">
         <Video className="h-4 w-4 text-muted-foreground" aria-hidden />
         <Label htmlFor="default-meeting-provider" className="text-sm font-medium">
-          Default for video interviews
+          {t('meetProvider.title')}
         </Label>
       </div>
       <p className="mt-1 mb-3 text-sm text-muted-foreground">
-        You&apos;ve connected more than one meeting tool. Choose which one the Schedule
-        Interview flow creates a link with by default.
+        {t('meetProvider.desc')}
       </p>
       <Select value={value} onValueChange={onChange} disabled={isPending}>
         <SelectTrigger id="default-meeting-provider" className="w-full sm:w-72">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={AUTO}>Automatic (Google → Zoom → Teams)</SelectItem>
+          <SelectItem value={AUTO}>{t('meetProvider.auto')}</SelectItem>
           {hasGoogle && <SelectItem value="google_meet">Google Meet</SelectItem>}
           {hasZoom && <SelectItem value="zoom">Zoom</SelectItem>}
-          {hasTeams && <SelectItem value="teams">Microsoft Teams</SelectItem>}
+          {hasTeams && <SelectItem value="teams">{t('webhooks.teams')}</SelectItem>}
         </SelectContent>
       </Select>
     </div>

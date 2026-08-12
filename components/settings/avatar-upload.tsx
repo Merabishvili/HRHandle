@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Loader2, Upload } from 'lucide-react'
 
@@ -17,6 +18,7 @@ interface Props {
 /** #1 — profile avatar upload. Shows the current photo (or initials) and a
  * "Change photo" picker that uploads via the uploadAvatar server action. */
 export function AvatarUpload({ currentUrl, fullName }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isPending, startTransition] = useTransition()
@@ -45,7 +47,7 @@ export function AvatarUpload({ currentUrl, fullName }: Props) {
         setPreview(null)
         return
       }
-      toast.success('Photo updated.')
+      toast.success(t('avatar.updated'))
       router.refresh()
     })
   }
@@ -66,9 +68,9 @@ export function AvatarUpload({ currentUrl, fullName }: Props) {
           className="gap-1.5"
         >
           {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-          Change photo
+          {t('avatar.change')}
         </Button>
-        <p className="text-xs text-muted-foreground">JPG, PNG, or WebP · up to 2 MB.</p>
+        <p className="text-xs text-muted-foreground">{t('avatar.hint')}</p>
         <input
           ref={inputRef}
           type="file"

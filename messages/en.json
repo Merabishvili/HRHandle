@@ -1977,6 +1977,61 @@
     "noLiveHint": "No live applications yet. Use <b>Add to vacancy</b> in the header to put this candidate in a pipeline.",
     "added": "Added"
   },
+  "sessions": {
+    "revokedOne": "Signed that session out",
+    "noneActive": "No other sessions were active",
+    "revokedN": "Signed out {count, plural, one {# other session} other {# other sessions}}",
+    "title": "Active sessions",
+    "subtitle": "Devices currently signed in to your account.",
+    "signOutEverywhere": "Sign out everywhere",
+    "noneToShow": "No active sessions to show.",
+    "thisDevice": "This device",
+    "activeNow": "active now",
+    "lastActive": "last active {time}",
+    "signOut": "Sign out",
+    "signOutOthersTitle": "Sign out of every other session?",
+    "signOutOthersDesc": "{count, plural, one {# other session} other {# other sessions}} will be ended immediately. This device stays signed in.",
+    "signingOut": "Signing out…",
+    "signOutOthers": "Sign out others"
+  },
+  "changePw": {
+    "oauthOnly": "Your account uses Google or Microsoft sign-in. Password change is not available for social login accounts.",
+    "allRequired": "All fields are required.",
+    "minLength": "New password must be at least 8 characters.",
+    "mustDiffer": "New password must be different from your current password.",
+    "noMatch": "New passwords do not match.",
+    "wrongCurrent": "Current password is incorrect.",
+    "genericError": "Something went wrong. Please try again.",
+    "success": "Password updated successfully. Other devices have been signed out.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "min8": "Minimum 8 characters.",
+    "confirmPassword": "Confirm new password",
+    "updating": "Updating…",
+    "updatePassword": "Update password"
+  },
+  "dangerZone": {
+    "subtitle": "Irreversible actions that affect your entire organization and all team members.",
+    "deleteOrg": "Delete this organization",
+    "deleteOrgDesc": "Schedules <b>{name}</b> and all of its candidate data, documents, applications, interviews, and notes for permanent deletion. Team members will lose access. You will have <d>30 days</d> to email us to cancel before the data is irreversibly removed.",
+    "deleteOrgButton": "Delete organization…",
+    "deleteConfirmTitle": "Delete {name}?",
+    "deleteConfirmDesc": "This schedules the entire organization for permanent deletion after a 30-day grace period. After 30 days, all candidate data, documents, applications, interviews, and team-member accounts will be irreversibly removed. To cancel during the grace period, email <b>hrhandle26@gmail.com</b>.",
+    "typeToConfirm": "Type <b>{name}</b> to confirm",
+    "scheduling": "Scheduling…",
+    "permanentlyDelete": "Permanently delete"
+  },
+  "meetProvider": {
+    "saved": "Default meeting provider saved.",
+    "title": "Default for video interviews",
+    "desc": "You've connected more than one meeting tool. Choose which one the Schedule Interview flow creates a link with by default.",
+    "auto": "Automatic (Google → Zoom → Teams)"
+  },
+  "avatar": {
+    "updated": "Photo updated.",
+    "change": "Change photo",
+    "hint": "JPG, PNG, or WebP · up to 2 MB."
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

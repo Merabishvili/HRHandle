@@ -51,7 +51,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (8) app/(dashboard)/settings/ai-fit/page.tsx
 - [x] (8) app/(dashboard)/vacancies/[id]/page.tsx
 - [x] (8) components/candidates/profile/rail-sections.tsx
-- [ ] (8) components/settings/active-sessions-card.tsx
+- [x] (8) components/settings/active-sessions-card.tsx
 - [x] (8) components/scorecards/share-scorecard-dialog.tsx
 - [x] (7) components/candidates/profile/profile-shell.tsx
 - [x] (7) components/settings/zoom-connect.tsx
@@ -68,9 +68,9 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (5) components/candidates/add-application-dialog.tsx
 - [ ] (5) components/candidates/wizard/candidate-create-wizard.tsx
 - [ ] (5) components/candidates/candidate-table-row.tsx
-- [ ] (5) components/settings/default-meeting-provider-select.tsx
-- [ ] (5) components/settings/change-password-form.tsx
-- [ ] (5) components/settings/danger-zone.tsx
+- [x] (5) components/settings/default-meeting-provider-select.tsx
+- [x] (5) components/settings/change-password-form.tsx
+- [x] (5) components/settings/danger-zone.tsx
 - [x] (5) components/subscription/payment-methods.tsx
 - [x] (5) components/dashboard/notifications-bell.tsx
 - [ ] (5) components/vacancies/add-candidate-to-vacancy-dialog.tsx
@@ -99,7 +99,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (2) components/guide/guide-shell.tsx
 - [ ] (2) components/candidates/delete-candidate-dialog.tsx
 - [ ] (2) components/apply/job-description-block.tsx
-- [ ] (2) components/settings/avatar-upload.tsx
+- [x] (2) components/settings/avatar-upload.tsx
 - [ ] (2, partial) components/pipeline/review-mode.tsx
 - [ ] (2, partial) components/dashboard/sidebar.tsx
 - [ ] (2) components/custom-fields/custom-fields-form.tsx

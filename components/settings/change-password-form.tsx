@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +15,7 @@ interface ChangePasswordFormProps {
 }
 
 export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFormProps) {
+  const t = useTranslations()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -24,7 +26,7 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
   if (isOAuthOnly) {
     return (
       <p className="text-sm text-muted-foreground">
-        Your account uses Google or Microsoft sign-in. Password change is not available for social login accounts.
+        {t('changePw.oauthOnly')}
       </p>
     )
   }
@@ -36,22 +38,22 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
 
     // Client-side validation — do all checks before any network call
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('All fields are required.')
+      setError(t('changePw.allRequired'))
       return
     }
 
     if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters.')
+      setError(t('changePw.minLength'))
       return
     }
 
     if (newPassword === currentPassword) {
-      setError('New password must be different from your current password.')
+      setError(t('changePw.mustDiffer'))
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match.')
+      setError(t('changePw.noMatch'))
       return
     }
 
@@ -69,7 +71,7 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
       })
 
       if (verifyError) {
-        setError('Current password is incorrect.')
+        setError(t('changePw.wrongCurrent'))
         setIsLoading(false)
         return
       }
@@ -92,7 +94,7 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
       setConfirmPassword('')
       setSuccess(true)
     } catch {
-      setError('Something went wrong. Please try again.')
+      setError(t('changePw.genericError'))
     } finally {
       setIsLoading(false)
     }
@@ -110,13 +112,13 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
         <Alert className="border-green-200 bg-green-50 text-green-800">
           <CheckCircle2 className="h-4 w-4" />
           <AlertDescription>
-            Password updated successfully. Other devices have been signed out.
+            {t('changePw.success')}
           </AlertDescription>
         </Alert>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="current-password">Current password</Label>
+        <Label htmlFor="current-password">{t('changePw.currentPassword')}</Label>
         <Input
           id="current-password"
           type="password"
@@ -129,7 +131,7 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="new-password">New password</Label>
+        <Label htmlFor="new-password">{t('changePw.newPassword')}</Label>
         <Input
           id="new-password"
           type="password"
@@ -140,11 +142,11 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
           disabled={isLoading}
           minLength={8}
         />
-        <p className="text-xs text-muted-foreground">Minimum 8 characters.</p>
+        <p className="text-xs text-muted-foreground">{t('changePw.min8')}</p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="confirm-password">Confirm new password</Label>
+        <Label htmlFor="confirm-password">{t('changePw.confirmPassword')}</Label>
         <Input
           id="confirm-password"
           type="password"
@@ -161,10 +163,10 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Updating…
+            {t('changePw.updating')}
           </>
         ) : (
-          'Update password'
+          t('changePw.updatePassword')
         )}
       </Button>
     </form>

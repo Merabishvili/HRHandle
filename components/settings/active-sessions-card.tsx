@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { formatDistanceToNow } from 'date-fns'
 import {
   Loader2,
@@ -50,6 +51,7 @@ const ICON_BY_DEVICE: Record<DeviceKind, React.ElementType> = {
  * button revokes every session except the current one.
  */
 export function ActiveSessionsCard({ sessions: initial, currentSessionId }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const [sessions, setSessions] = useState(initial)
   const [otherOpen, setOtherOpen] = useState(false)
@@ -66,7 +68,7 @@ export function ActiveSessionsCard({ sessions: initial, currentSessionId }: Prop
         return
       }
       setSessions((prev) => prev.filter((s) => s.id !== id))
-      toast.success('Signed that session out')
+      toast.success(t('sessions.revokedOne'))
     })
   }
 
@@ -81,11 +83,7 @@ export function ActiveSessionsCard({ sessions: initial, currentSessionId }: Prop
       setOtherOpen(false)
       router.refresh()
       const n = result.data.revoked
-      toast.success(
-        n === 0
-          ? 'No other sessions were active'
-          : `Signed out ${n} other session${n === 1 ? '' : 's'}`,
-      )
+      toast.success(n === 0 ? t('sessions.noneActive') : t('sessions.revokedN', { count: n }))
     })
   }
 
@@ -97,8 +95,8 @@ export function ActiveSessionsCard({ sessions: initial, currentSessionId }: Prop
     <Card className="border-border">
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
         <div>
-          <CardTitle>Active sessions</CardTitle>
-          <CardDescription>Devices currently signed in to your account.</CardDescription>
+          <CardTitle>{t('sessions.title')}</CardTitle>
+          <CardDescription>{t('sessions.subtitle')}</CardDescription>
         </div>
         {otherCount > 0 && (
           <Button
@@ -109,14 +107,14 @@ export function ActiveSessionsCard({ sessions: initial, currentSessionId }: Prop
             onClick={() => setOtherOpen(true)}
             disabled={pending}
           >
-            Sign out everywhere
+            {t('sessions.signOutEverywhere')}
           </Button>
         )}
       </CardHeader>
       <CardContent className="space-y-2">
         {sessions.length === 0 && (
           <p className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
-            No active sessions to show.
+            {t('sessions.noneToShow')}
           </p>
         )}
         {sessions.map((s) => {
@@ -140,15 +138,15 @@ export function ActiveSessionsCard({ sessions: initial, currentSessionId }: Prop
                       variant="secondary"
                       className="border-transparent bg-emerald-50 text-emerald-700"
                     >
-                      This device
+                      {t('sessions.thisDevice')}
                     </Badge>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {s.ip ? `${s.ip} · ` : ''}
                   {isCurrent
-                    ? 'active now'
-                    : `last active ${formatDistanceToNow(new Date(lastSeen), { addSuffix: true })}`}
+                    ? t('sessions.activeNow')
+                    : t('sessions.lastActive', { time: formatDistanceToNow(new Date(lastSeen), { addSuffix: true }) })}
                 </p>
               </div>
               {!isCurrent && (
@@ -165,7 +163,7 @@ export function ActiveSessionsCard({ sessions: initial, currentSessionId }: Prop
                   ) : (
                     <LogOut className="h-3 w-3" aria-hidden />
                   )}
-                  Sign out
+                  {t('sessions.signOut')}
                 </Button>
               )}
             </div>
@@ -176,13 +174,13 @@ export function ActiveSessionsCard({ sessions: initial, currentSessionId }: Prop
       <AlertDialog open={otherOpen} onOpenChange={(v) => !pending && setOtherOpen(v)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Sign out of every other session?</AlertDialogTitle>
+            <AlertDialogTitle>{t('sessions.signOutOthersTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {otherCount} other {otherCount === 1 ? 'session' : 'sessions'} will be ended immediately. This device stays signed in.
+              {t('sessions.signOutOthersDesc', { count: otherCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()
@@ -193,10 +191,10 @@ export function ActiveSessionsCard({ sessions: initial, currentSessionId }: Prop
               {pending ? (
                 <>
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />
-                  Signing out…
+                  {t('sessions.signingOut')}
                 </>
               ) : (
-                'Sign out others'
+                t('sessions.signOutOthers')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
