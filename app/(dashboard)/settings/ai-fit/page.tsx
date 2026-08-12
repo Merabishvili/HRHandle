@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Sparkles } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -10,6 +11,7 @@ import { getAiFitOversight } from '@/lib/actions/ai-fit'
  * log with reasons. Renders nothing sensitive — no candidate PII, no scores.
  */
 export default async function AiFitOversightPage() {
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -33,43 +35,40 @@ export default async function AiFitOversightPage() {
       <div>
         <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Sparkles className="h-5 w-5" />
-          AI oversight
+          {t('aiFitPage.title')}
         </h2>
         <p className="text-sm text-muted-foreground">
-          AI Fit Analysis is advisory only — every result is reviewed by a person who records an assessment. This page
-          tracks usage and the override log so you can watch for skew. A rising override rate can signal the model is
-          out of step with your judgement. Read-only.
+          {t('aiFitPage.desc')}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Used this month" value={`${data.usedThisMonth} / ${data.monthlyCap}`} />
-        <Stat label="Agreed" value={String(data.agreeCount)} />
-        <Stat label="Overridden" value={String(data.overrideCount)} />
-        <Stat label="Override rate" value={`${overrideRate}%`} />
+        <Stat label={t('aiFitPage.usedThisMonth')} value={`${data.usedThisMonth} / ${data.monthlyCap}`} />
+        <Stat label={t('aiFitPage.agreed')} value={String(data.agreeCount)} />
+        <Stat label={t('aiFitPage.overridden')} value={String(data.overrideCount)} />
+        <Stat label={t('aiFitPage.overrideRate')} value={`${overrideRate}%`} />
       </div>
 
       {data.pendingCount > 0 && (
         <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-          {data.pendingCount} {data.pendingCount === 1 ? 'analysis is' : 'analyses are'} awaiting a reviewer&apos;s
-          assessment. AI results carry no weight until a person signs off.
+          {t('aiFitPage.pending', { count: data.pendingCount })}
         </p>
       )}
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-foreground">Override log</h3>
+        <h3 className="mb-2 text-sm font-semibold text-foreground">{t('aiFitPage.overrideLog')}</h3>
         {data.recentOverrides.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-            No overrides recorded yet.
+            {t('aiFitPage.noOverrides')}
           </p>
         ) : (
           <ul className="divide-y divide-border rounded-lg border border-border">
             {data.recentOverrides.map((o) => (
               <li key={o.id} className="flex items-start justify-between gap-4 px-4 py-3">
                 <div className="min-w-0">
-                  <p className="text-sm text-foreground">{o.reason || <span className="italic text-muted-foreground">No reason recorded</span>}</p>
+                  <p className="text-sm text-foreground">{o.reason || <span className="italic text-muted-foreground">{t('aiFitPage.noReason')}</span>}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Analysis met {o.meets_count} of {o.must_have_total} must-haves
+                    {t('aiFitPage.metCount', { n: o.meets_count, m: o.must_have_total })}
                   </p>
                 </div>
                 <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
@@ -82,8 +81,7 @@ export default async function AiFitOversightPage() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Every run, agreement and override is also recorded in the{' '}
-        <a href="/settings/audit-log" className="underline">audit log</a> with the full actor and timestamp.
+        {t.rich('aiFitPage.auditNote', { link: (c) => <a href="/settings/audit-log" className="underline">{c}</a> })}
       </p>
     </div>
   )

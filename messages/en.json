@@ -2064,6 +2064,33 @@
     "customFieldsSub": "Define custom fields for candidates and vacancies. Up to 20 fields per entity type.",
     "backToIntegrations": "Back to integrations"
   },
+  "aiFitPage": {
+    "title": "AI oversight",
+    "desc": "AI Fit Analysis is advisory only — every result is reviewed by a person who records an assessment. This page tracks usage and the override log so you can watch for skew. A rising override rate can signal the model is out of step with your judgement. Read-only.",
+    "usedThisMonth": "Used this month",
+    "agreed": "Agreed",
+    "overridden": "Overridden",
+    "overrideRate": "Override rate",
+    "pending": "{count, plural, one {# analysis is} other {# analyses are}} awaiting a reviewer's assessment. AI results carry no weight until a person signs off.",
+    "overrideLog": "Override log",
+    "noOverrides": "No overrides recorded yet.",
+    "noReason": "No reason recorded",
+    "metCount": "Analysis met {n} of {m} must-haves",
+    "auditNote": "Every run, agreement and override is also recorded in the <link>audit log</link> with the full actor and timestamp."
+  },
+  "calendly": {
+    "subtitle": "Connect your Calendly account so candidates can book interviews directly. When they book, HRHandle creates the interview record and links it to the candidate's application.",
+    "connectedAlert": "Calendly connected. Pick an event type below.",
+    "loadFailed": "Could not load integration status.",
+    "notConfigured": "Calendly OAuth secrets are not configured on this HRHandle instance. Ask your administrator to set them on the deployment.",
+    "notConnected": "No Calendly account connected",
+    "signInHint": "Sign in with Calendly to get started.",
+    "connect": "Connect Calendly",
+    "connectedAs": "Connected as {name}",
+    "calendlyUser": "Calendly user",
+    "webhookHint": "HRHandle will receive webhook events when candidates book or cancel.",
+    "eventTypeLabel": "Event type used for candidate interviews"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",
