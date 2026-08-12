@@ -86,7 +86,7 @@ export function EnrollTotpDialog({ open, onOpenChange, onEnrolled }: Props) {
           <div className="space-y-4">
             <div
               role="img"
-              aria-label="Two-factor authentication QR code"
+              aria-label={t('mfaEnroll.qrAria')}
               className="mx-auto h-48 w-48 rounded-md border bg-white p-2"
               dangerouslySetInnerHTML={{ __html: enrollment.qrCodeSvg }}
             />

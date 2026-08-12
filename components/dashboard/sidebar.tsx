@@ -75,7 +75,7 @@ export function DashboardSidebar({
 
       <aside
         id="dashboard-sidebar"
-        aria-label="Primary navigation"
+        aria-label={t('sidebar.primaryNav')}
         className={cn(
           'fixed top-0 left-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar transition-transform lg:translate-x-0',
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
@@ -141,10 +141,12 @@ export function DashboardSidebar({
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-xs text-sidebar-foreground/60">{t('sidebar.status')}</span>
                   <span className="text-xs font-medium text-sidebar-foreground">
-                    {(() => {
-                      const s = subscription.status.replace('_', ' ')
-                      return s.charAt(0).toUpperCase() + s.slice(1)
-                    })()}
+                    {t.has(`billing.status.${subscription.status}`)
+                      ? t(`billing.status.${subscription.status}`)
+                      : (() => {
+                          const s = subscription.status.replace('_', ' ')
+                          return s.charAt(0).toUpperCase() + s.slice(1)
+                        })()}
                   </span>
                 </div>
               )}

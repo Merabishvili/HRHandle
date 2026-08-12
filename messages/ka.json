@@ -241,7 +241,8 @@
     "status": "სტატუსი",
     "terms": "წესები",
     "privacy": "კონფიდენციალურობა",
-    "refund": "დაბრუნება"
+    "refund": "დაბრუნება",
+    "primaryNav": "ძირითადი ნავიგაცია"
   },
   "plan": {
     "trial": "საცდელი",
@@ -477,7 +478,8 @@
     "scheduleInterview": "გასაუბრების დაგეგმვა",
     "loadingScheduler": "დამგეგმავი იტვირთება…",
     "schedulerFailed": "დამგეგმავის გახსნა ვერ მოხერხდა. სცადეთ თავიდან.",
-    "cvOpenFailed": "CV-ის გახსნა ვერ მოხერხდა."
+    "cvOpenFailed": "CV-ის გახსნა ვერ მოხერხდა.",
+    "reviewModeAria": "განხილვის რეჟიმი"
   },
   "candidates": {
     "title": "კანდიდატები",
@@ -1327,6 +1329,7 @@
     "copied": "დაკოპირდა",
     "copyLink": "შეთავაზების ბმულის კოპირება",
     "withdraw": "გაუქმება",
+    "detailsHeading": "შეთავაზების დეტალები",
     "eyebrow": "შეთავაზება {company}-სგან",
     "hiringTeam": "დაქირავების გუნდი",
     "greeting": "გამარჯობა, {name}, აი, თქვენი შეთავაზება",
@@ -2370,6 +2373,26 @@
   },
   "mention": {
     "membersAria": "მოსახსენიებელი წევრები"
+  },
+  "guide": {
+    "shellTitle": "HRHandle-ის სახელმძღვანელოები",
+    "backToHome": "მთავარზე დაბრუნება",
+    "comingSoon": "მალე"
+  },
+  "layout": {
+    "skipToMain": "ძირითად შინაარსზე გადასვლა"
+  },
+  "jobDesc": {
+    "showMore": "მეტის ჩვენება"
+  },
+  "langSwitch": {
+    "aria": "ენის შეცვლა"
+  },
+  "kanban": {
+    "updateFailed": "ეტაპის განახლება ვერ მოხერხდა. გთხოვთ, სცადოთ თავიდან."
+  },
+  "mfaEnroll": {
+    "qrAria": "ორფაქტორიანი ავთენტიფიკაციის QR კოდი"
   },
   "apply": {
     "applyForPosition": "განაცხადის გაგზავნა ამ პოზიციაზე",

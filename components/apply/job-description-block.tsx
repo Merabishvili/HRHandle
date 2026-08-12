@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
  * > 320 chars OR > 4 newlines.
  */
 export function JobDescriptionBlock({ title, body }: Props) {
+  const t = useTranslations()
   const [expanded, setExpanded] = useState(false)
 
   // Empty / whitespace-only sections render nothing — never a bare heading
@@ -51,11 +53,11 @@ export function JobDescriptionBlock({ title, body }: Props) {
         >
           {expanded ? (
             <>
-              Show less <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+              {t('offer.showLess')} <ChevronUp className="h-3.5 w-3.5" aria-hidden />
             </>
           ) : (
             <>
-              Show more <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+              {t('jobDesc.showMore')} <ChevronDown className="h-3.5 w-3.5" aria-hidden />
             </>
           )}
         </button>

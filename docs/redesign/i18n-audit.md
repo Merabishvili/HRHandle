@@ -96,12 +96,12 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (2) app/(dashboard)/settings/layout.tsx
 - [x] (2) app/(dashboard)/settings/notifications/page.tsx
 - [x] (2) app/(dashboard)/settings/rejection-reasons/page.tsx
-- [ ] (2) components/guide/guide-shell.tsx
+- [x] (2) components/guide/guide-shell.tsx
 - [x] (2) components/candidates/delete-candidate-dialog.tsx
-- [ ] (2) components/apply/job-description-block.tsx
+- [x] (2) components/apply/job-description-block.tsx
 - [x] (2) components/settings/avatar-upload.tsx
-- [ ] (2, partial) components/pipeline/review-mode.tsx
-- [ ] (2, partial) components/dashboard/sidebar.tsx
+- [x] (2, partial) components/pipeline/review-mode.tsx
+- [x] (2, partial) components/dashboard/sidebar.tsx
 - [x] (2) components/custom-fields/custom-fields-form.tsx
 - [x] (2) components/interviews/interview-form-parts.tsx
 - [x] (2) components/vacancies/vacancy-questions.tsx
@@ -113,23 +113,23 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (1) app/(dashboard)/settings/trash/page.tsx
 - [x] (1) app/(dashboard)/settings/integrations/webhooks/page.tsx
 - [x] (1) app/(dashboard)/settings/custom-fields/page.tsx
-- [ ] (1) app/(dashboard)/layout.tsx
+- [x] (1) app/(dashboard)/layout.tsx
 - [x] (1) app/(dashboard)/vacancies/[id]/edit/page.tsx
-- [ ] (1) components/guide/guide-card.tsx
+- [x] (1) components/guide/guide-card.tsx
 - [x] (1) components/candidates/delete-candidate-button.tsx
 - [x] (1) components/candidates/profile/application-history.tsx
 - [x] (1) components/candidates/profile/repeat-applicant-banner.tsx
 - [x] (1) components/candidates/profile/stage-tracker.tsx
 - [x] (1) components/candidates/candidate-applications-list.tsx
 - [x] (1) components/candidates/candidate-status-actions.tsx
-- [ ] (1, partial) components/offers/offer-body.tsx
+- [x] (1, partial) components/offers/offer-body.tsx
 - [x] (1) components/pipeline/cross-vacancy-card.tsx
 - [x] (1) components/pipeline/tinted-kanban-column.tsx
-- [ ] (1, partial) components/pipeline/bulk-bar.tsx
-- [ ] (1) components/pipeline/kanban-board.tsx
-- [ ] (1) components/landing/language-switcher.tsx
-- [ ] (1, partial) components/mfa/enroll-totp-dialog.tsx
-- [ ] (1, partial) components/dashboard/header.tsx
+- [x] (1, partial) components/pipeline/bulk-bar.tsx
+- [x] (1) components/pipeline/kanban-board.tsx
+- [x] (1) components/landing/language-switcher.tsx
+- [x] (1, partial) components/mfa/enroll-totp-dialog.tsx
+- [x] (1, partial) components/dashboard/header.tsx
 - [x] (1) components/integrations/calendly-event-type-picker.tsx
 - [x] (1) components/notes/mention-textarea.tsx
 - [x] (1) components/scorecards/share-scorecard-button.tsx

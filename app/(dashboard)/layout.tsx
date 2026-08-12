@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { runOnboarding } from '@/lib/onboarding'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
@@ -60,6 +61,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -290,7 +292,7 @@ export default async function DashboardLayout({
         href="#dashboard-main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       >
-        Skip to main content
+        {t('layout.skipToMain')}
       </a>
 
       <DashboardSidebar

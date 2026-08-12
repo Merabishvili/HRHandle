@@ -241,7 +241,8 @@
     "status": "Статус",
     "terms": "Условия",
     "privacy": "Конфиденциальность",
-    "refund": "Возврат"
+    "refund": "Возврат",
+    "primaryNav": "Основная навигация"
   },
   "plan": {
     "trial": "Пробный",
@@ -477,7 +478,8 @@
     "scheduleInterview": "Запланировать собеседование",
     "loadingScheduler": "Загрузка планировщика…",
     "schedulerFailed": "Не удалось открыть планировщик. Попробуйте ещё раз.",
-    "cvOpenFailed": "Не удалось открыть CV."
+    "cvOpenFailed": "Не удалось открыть CV.",
+    "reviewModeAria": "Режим просмотра"
   },
   "candidates": {
     "title": "Кандидаты",
@@ -1327,6 +1329,7 @@
     "copied": "Скопировано",
     "copyLink": "Скопировать ссылку на оффер",
     "withdraw": "Отозвать",
+    "detailsHeading": "Детали оффера",
     "eyebrow": "Оффер от {company}",
     "hiringTeam": "команды найма",
     "greeting": "Здравствуйте, {name}! Вот ваш оффер",
@@ -2370,6 +2373,26 @@
   },
   "mention": {
     "membersAria": "Участники для упоминания"
+  },
+  "guide": {
+    "shellTitle": "Руководства HRHandle",
+    "backToHome": "На главную",
+    "comingSoon": "Скоро"
+  },
+  "layout": {
+    "skipToMain": "Перейти к основному содержимому"
+  },
+  "jobDesc": {
+    "showMore": "Показать больше"
+  },
+  "langSwitch": {
+    "aria": "Сменить язык"
+  },
+  "kanban": {
+    "updateFailed": "Не удалось обновить этап. Пожалуйста, попробуйте снова."
+  },
+  "mfaEnroll": {
+    "qrAria": "QR-код двухфакторной аутентификации"
   },
   "apply": {
     "applyForPosition": "Откликнуться на вакансию",

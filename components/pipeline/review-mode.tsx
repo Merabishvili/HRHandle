@@ -252,7 +252,7 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Review mode"
+      aria-label={t('review.reviewModeAria')}
       className="fixed inset-0 z-50 flex flex-col bg-[oklch(0.22_0.02_250)]"
     >
       {/* Top bar */}

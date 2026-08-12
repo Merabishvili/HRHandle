@@ -51,11 +51,10 @@ const PAGE_LABEL_KEY: Record<string, string> = {
   '/settings': 'nav.settings',
 }
 
-function getPlanLabel(subscription?: Subscription | null): string {
-  if (!subscription) return 'Trial'
-  if (subscription.plan_code === 'individual') return 'Individual'
-  if (subscription.plan_code === 'organization') return 'Organization'
-  return 'Trial'
+function getPlanKey(subscription?: Subscription | null): string {
+  if (subscription?.plan_code === 'individual') return 'plan.individual'
+  if (subscription?.plan_code === 'organization') return 'plan.organization'
+  return 'plan.trial'
 }
 
 export function DashboardHeader({
@@ -82,7 +81,7 @@ export function DashboardHeader({
   }
 
   const initials = getInitials(profile, user)
-  const planLabel = getPlanLabel(subscription)
+  const planLabel = t(getPlanKey(subscription))
 
   return (
     <header className="sticky top-0 z-30 h-14 border-b border-border bg-card">

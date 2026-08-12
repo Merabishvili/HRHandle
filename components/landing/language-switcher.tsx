@@ -2,6 +2,7 @@
 
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ChevronDown } from 'lucide-react'
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ const ONE_YEAR = 60 * 60 * 24 * 365
  */
 export function LanguageSwitcher({ current }: { current: Locale }) {
   const router = useRouter()
+  const t = useTranslations()
   const [isPending, startTransition] = useTransition()
 
   const choose = (locale: Locale) => {
@@ -35,7 +37,7 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
       <DropdownMenuTrigger
         disabled={isPending}
         className="flex items-center gap-1 rounded-md border border-border px-2 py-1.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-60"
-        aria-label="Change language"
+        aria-label={t('langSwitch.aria')}
       >
         <span className="uppercase">{active}</span>
         <ChevronDown className="h-3 w-3 text-muted-foreground" aria-hidden />

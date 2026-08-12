@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { ApplicationStatus } from '@/lib/types/application'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { cn } from '@/lib/utils'
 
 interface BulkBarProps {
@@ -119,7 +120,7 @@ export function BulkBar({
           <SelectContent>
             {moveableStages.map((s) => (
               <SelectItem key={s.id} value={s.id} className="text-xs">
-                {s.name}
+                {statusLabel(t, s.code, s.name)}
               </SelectItem>
             ))}
           </SelectContent>

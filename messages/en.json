@@ -241,7 +241,8 @@
     "status": "Status",
     "terms": "Terms",
     "privacy": "Privacy",
-    "refund": "Refund"
+    "refund": "Refund",
+    "primaryNav": "Primary navigation"
   },
   "plan": {
     "trial": "Trial",
@@ -477,7 +478,8 @@
     "scheduleInterview": "Schedule interview",
     "loadingScheduler": "Loading scheduler…",
     "schedulerFailed": "Could not open the scheduler. Please try again.",
-    "cvOpenFailed": "Could not open the CV."
+    "cvOpenFailed": "Could not open the CV.",
+    "reviewModeAria": "Review mode"
   },
   "candidates": {
     "title": "Candidates",
@@ -1327,6 +1329,7 @@
     "copied": "Copied",
     "copyLink": "Copy offer link",
     "withdraw": "Withdraw",
+    "detailsHeading": "Offer details",
     "eyebrow": "Offer from {company}",
     "hiringTeam": "the hiring team",
     "greeting": "Hi {name}, here's your offer",
@@ -2370,6 +2373,26 @@
   },
   "mention": {
     "membersAria": "Members to mention"
+  },
+  "guide": {
+    "shellTitle": "HRHandle Guides",
+    "backToHome": "Back to home",
+    "comingSoon": "Coming soon"
+  },
+  "layout": {
+    "skipToMain": "Skip to main content"
+  },
+  "jobDesc": {
+    "showMore": "Show more"
+  },
+  "langSwitch": {
+    "aria": "Change language"
+  },
+  "kanban": {
+    "updateFailed": "Failed to update stage. Please try again."
+  },
+  "mfaEnroll": {
+    "qrAria": "Two-factor authentication QR code"
   },
   "apply": {
     "applyForPosition": "Apply for this position",

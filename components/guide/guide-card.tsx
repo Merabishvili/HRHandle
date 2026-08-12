@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { GuideMeta } from '@/lib/guides/registry'
@@ -8,7 +9,8 @@ interface GuideCardProps {
   exists: boolean
 }
 
-export function GuideCard({ guide, exists }: GuideCardProps) {
+export async function GuideCard({ guide, exists }: GuideCardProps) {
+  const t = await getTranslations()
   // Design fix: "Coming soon" cards use a dashed border + muted bg so they
   // read as deliberately deferred rather than broken links. Live guides keep
   // the solid border and hover affordance.
@@ -28,7 +30,7 @@ export function GuideCard({ guide, exists }: GuideCardProps) {
         <p className="text-sm text-muted-foreground">{guide.summary}</p>
         {!exists && (
           <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
-            Coming soon
+            {t('guide.comingSoon')}
           </p>
         )}
       </CardContent>

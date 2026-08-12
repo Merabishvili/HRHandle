@@ -2108,6 +2108,25 @@
 
   "mention.membersAria": { "en": "Members to mention", "ru": "Участники для упоминания", "ka": "მოსახსენიებელი წევრები" },
 
+  "guide.shellTitle": { "en": "HRHandle Guides", "ru": "Руководства HRHandle", "ka": "HRHandle-ის სახელმძღვანელოები" },
+  "guide.backToHome": { "en": "Back to home", "ru": "На главную", "ka": "მთავარზე დაბრუნება" },
+  "guide.comingSoon": { "en": "Coming soon", "ru": "Скоро", "ka": "მალე" },
+
+  "sidebar.primaryNav": { "en": "Primary navigation", "ru": "Основная навигация", "ka": "ძირითადი ნავიგაცია" },
+  "layout.skipToMain": { "en": "Skip to main content", "ru": "Перейти к основному содержимому", "ka": "ძირითად შინაარსზე გადასვლა" },
+
+  "jobDesc.showMore": { "en": "Show more", "ru": "Показать больше", "ka": "მეტის ჩვენება" },
+
+  "langSwitch.aria": { "en": "Change language", "ru": "Сменить язык", "ka": "ენის შეცვლა" },
+
+  "kanban.updateFailed": { "en": "Failed to update stage. Please try again.", "ru": "Не удалось обновить этап. Пожалуйста, попробуйте снова.", "ka": "ეტაპის განახლება ვერ მოხერხდა. გთხოვთ, სცადოთ თავიდან." },
+
+  "review.reviewModeAria": { "en": "Review mode", "ru": "Режим просмотра", "ka": "განხილვის რეჟიმი" },
+
+  "offer.detailsHeading": { "en": "Offer details", "ru": "Детали оффера", "ka": "შეთავაზების დეტალები" },
+
+  "mfaEnroll.qrAria": { "en": "Two-factor authentication QR code", "ru": "QR-код двухфакторной аутентификации", "ka": "ორფაქტორიანი ავთენტიფიკაციის QR კოდი" },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },

@@ -27,7 +27,7 @@ export function OfferBody({ body }: Props) {
   return (
     <div>
       <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-        Offer details
+        {t('offer.detailsHeading')}
       </h2>
       <p
         className={

@@ -12,6 +12,7 @@ import {
   type DragOverEvent,
 } from '@dnd-kit/core'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { KanbanColumn, type PipelineColumn } from './kanban-column'
 import { CandidateCard } from './candidate-card'
 import { RejectionDialog, type RejectionReason, type RejectionTemplate } from './rejection-dialog'
@@ -65,6 +66,7 @@ export function KanbanBoard({
   rejectionTemplates,
   rejectedStatusId,
 }: KanbanBoardProps) {
+  const t = useTranslations()
   const [applications, setApplications] = useState(initialApplications)
   const [activeApp, setActiveApp] = useState<PipelineApplication | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
@@ -151,7 +153,7 @@ export function KanbanBoard({
     const result = await updateApplicationPipelineStage(activeId, targetColumnId)
     if (!result.success) {
       setApplications(initialApplications)
-      toast.error('Failed to update stage. Please try again.')
+      toast.error(t('kanban.updateFailed'))
     }
   }
 
