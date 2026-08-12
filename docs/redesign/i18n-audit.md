@@ -89,8 +89,8 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (3) components/pipeline/view-mode-toggle.tsx
 - [x] (3) components/pipeline/terminal-rail.tsx
 - [ ] (3) components/integrations/calendly-link-button.tsx
-- [ ] (3) components/vacancies/detail/vacancy-header.tsx
-- [ ] (3) components/vacancies/screening-questions-card.tsx
+- [x] (3) components/vacancies/detail/vacancy-header.tsx
+- [x] (3) components/vacancies/screening-questions-card.tsx
 - [x] (2) app/(dashboard)/settings/audit-log/page.tsx
 - [x] (2) app/(dashboard)/settings/team/page.tsx
 - [x] (2) app/(dashboard)/settings/layout.tsx
@@ -104,7 +104,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (2, partial) components/dashboard/sidebar.tsx
 - [ ] (2) components/custom-fields/custom-fields-form.tsx
 - [ ] (2) components/interviews/interview-form-parts.tsx
-- [ ] (2) components/vacancies/vacancy-questions.tsx
+- [x] (2) components/vacancies/vacancy-questions.tsx
 - [x] (2) components/vacancies/copy-apply-link-button.tsx
 - [x] (2) components/vacancies/vacancy-applications-toolbar.tsx
 - [x] (2) components/vacancies/delete-vacancy-button.tsx

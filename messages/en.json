@@ -2203,6 +2203,56 @@
   "appToolbar": {
     "allStatuses": "All statuses"
   },
+  "vacStatus": {
+    "open": "Open",
+    "on_hold": "On hold",
+    "closed": "Closed",
+    "draft": "Draft"
+  },
+  "vacHeader": {
+    "openedAgo": "opened {days}d ago",
+    "ends": "ends {date}",
+    "viewPipeline": "View pipeline →"
+  },
+  "screenQ": {
+    "aria": "Screening questions",
+    "title": "Screening questions",
+    "desc": "Asked on the public apply form. Knockout answers flag the application internally — they don't block the candidate from submitting.",
+    "typeYesNo": "Yes / No",
+    "typeShortText": "Short text",
+    "typeNumber": "Number",
+    "typeSelect": "Select",
+    "knockoutMust": "Knockout · must = {answer}",
+    "informational": "Informational",
+    "options": "Options: {list}",
+    "remove": "Remove {label}",
+    "empty": "No screening questions yet.",
+    "emptyAdd": " Add one below to surface it on the apply form.",
+    "labelPlaceholder": "e.g. Eligible to work here?",
+    "answerTypeAria": "Answer type",
+    "optionsPlaceholder": "Options, comma-separated — e.g. Citizen, Permanent Resident, Visa needed",
+    "selectOptionsAria": "Select options",
+    "titleAutoFlag": "Will auto-flag if answer is wrong",
+    "titleInfoOnly": "Informational only",
+    "titleKnockoutApplies": "Knockout only applies to Yes/No and Select",
+    "knockout": "Knockout",
+    "footer": "Answers feed into the candidate profile as screening flags; knockout wrong-answers light up the screening gate before the recruiter advances the candidate."
+  },
+  "vacQ": {
+    "phText": "e.g. Describe your approach to problem solving",
+    "phScore": "e.g. Communication skills",
+    "emptyText": "No questionary items yet.",
+    "emptyScore": "No evaluation criteria yet.",
+    "addOneBelow": " Add one below.",
+    "labelRequired": "Label is required",
+    "markNice": "Mark nice-to-have",
+    "markMust": "Mark must-have",
+    "mustHave": "Must-have",
+    "niceToHave": "Nice-to-have",
+    "removeQuestion": "Remove question",
+    "willSaveMust": "Will be saved as must-have",
+    "willSaveNice": "Will be saved as nice-to-have"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

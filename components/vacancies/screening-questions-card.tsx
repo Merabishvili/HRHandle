@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { AlertTriangle, Loader2, Plus, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -30,11 +31,11 @@ interface ScreeningQuestionsCardProps {
   canEdit: boolean
 }
 
-const TYPE_LABELS: Record<AnswerType, string> = {
-  yes_no: 'Yes / No',
-  short_text: 'Short text',
-  number: 'Number',
-  select: 'Select',
+const TYPE_LABEL_KEYS: Record<AnswerType, string> = {
+  yes_no: 'screenQ.typeYesNo',
+  short_text: 'screenQ.typeShortText',
+  number: 'screenQ.typeNumber',
+  select: 'screenQ.typeSelect',
 }
 
 const supportsKnockout = (t: AnswerType) => t === 'yes_no' || t === 'select'
@@ -52,6 +53,7 @@ export function ScreeningQuestionsCard({
   initialQuestions,
   canEdit,
 }: ScreeningQuestionsCardProps) {
+  const tr = useTranslations()
   const [questions, setQuestions] = useState(initialQuestions)
   const [label, setLabel] = useState('')
   const [answerType, setAnswerType] = useState<AnswerType>('yes_no')
@@ -124,17 +126,16 @@ export function ScreeningQuestionsCard({
   return (
     <section
       className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]"
-      aria-label="Screening questions"
+      aria-label={tr('screenQ.aria')}
     >
       <header className="mb-1 flex items-center gap-2">
-        <h2 className="text-[15px] font-bold text-foreground">Screening questions</h2>
+        <h2 className="text-[15px] font-bold text-foreground">{tr('screenQ.title')}</h2>
         <span className="rounded bg-[oklch(0.93_0.07_155)] px-1.5 py-0.5 text-[10px] font-bold uppercase text-[oklch(0.36_0.14_150)]">
-          NEW
+          {tr('pipeline.newBadge')}
         </span>
       </header>
       <p className="mb-3 text-[12.5px] text-muted-foreground">
-        Asked on the public apply form. Knockout answers flag the application internally — they
-        don&apos;t block the candidate from submitting.
+        {tr('screenQ.desc')}
       </p>
 
       {questions.length > 0 ? (
@@ -148,7 +149,7 @@ export function ScreeningQuestionsCard({
                 <div className="flex items-center gap-2">
                   <p className="flex-1 text-[12.5px] font-medium text-foreground">{q.label}</p>
                   <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                    {TYPE_LABELS[q.answer_type]}
+                    {tr(TYPE_LABEL_KEYS[q.answer_type])}
                   </span>
                 </div>
                 <p
@@ -158,15 +159,15 @@ export function ScreeningQuestionsCard({
                   {q.is_knockout ? (
                     <span className="inline-flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" aria-hidden />
-                      Knockout · must = {q.knockout_answer ?? '—'}
+                      {tr('screenQ.knockoutMust', { answer: q.knockout_answer ?? '—' })}
                     </span>
                   ) : (
-                    'Informational'
+                    tr('screenQ.informational')
                   )}
                 </p>
                 {q.answer_type === 'select' && q.options && q.options.length > 0 && (
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    Options: {q.options.join(' · ')}
+                    {tr('screenQ.options', { list: q.options.join(' · ') })}
                   </p>
                 )}
               </div>
@@ -175,7 +176,7 @@ export function ScreeningQuestionsCard({
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                  aria-label={`Remove ${q.label}`}
+                  aria-label={tr('screenQ.remove', { label: q.label })}
                   onClick={() => handleRemove(q.id)}
                   disabled={pending}
                 >
@@ -187,15 +188,15 @@ export function ScreeningQuestionsCard({
         </ul>
       ) : (
         <p className="rounded-[9px] border border-dashed border-border bg-muted/30 px-3 py-2.5 text-[12.5px] text-muted-foreground">
-          No screening questions yet.
-          {canEdit ? ' Add one below to surface it on the apply form.' : ''}
+          {tr('screenQ.empty')}
+          {canEdit ? tr('screenQ.emptyAdd') : ''}
         </p>
       )}
 
       {canEdit && (
         <div className="mt-3 flex flex-col gap-2 rounded-[9px] border border-dashed border-[oklch(0.88_0.01_250)] p-2.5">
           <Input
-            placeholder="e.g. Eligible to work here?"
+            placeholder={tr('screenQ.labelPlaceholder')}
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             onKeyDown={(e) => {
@@ -210,26 +211,26 @@ export function ScreeningQuestionsCard({
           />
 
           {/* Type picker */}
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Answer type">
-            {(['yes_no', 'short_text', 'number', 'select'] as const).map((t) => (
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={tr('screenQ.answerTypeAria')}>
+            {(['yes_no', 'short_text', 'number', 'select'] as const).map((at) => (
               <button
-                key={t}
+                key={at}
                 type="button"
                 role="radio"
-                aria-checked={answerType === t}
+                aria-checked={answerType === at}
                 onClick={() => {
-                  setAnswerType(t)
-                  if (!supportsKnockout(t)) setKnockout(false)
+                  setAnswerType(at)
+                  if (!supportsKnockout(at)) setKnockout(false)
                 }}
                 disabled={pending}
                 className={cn(
                   'rounded-md border px-2.5 py-1 text-[11.5px] font-semibold transition-colors',
-                  answerType === t
+                  answerType === at
                     ? 'border-[oklch(0.55_0.18_250)] bg-[oklch(0.98_0.015_250)] text-[oklch(0.2_0.16_250)]'
                     : 'border-[oklch(0.9_0.01_250)] text-foreground/75 hover:bg-muted/40',
                 )}
               >
-                {TYPE_LABELS[t]}
+                {tr(TYPE_LABEL_KEYS[at])}
               </button>
             ))}
           </div>
@@ -239,10 +240,10 @@ export function ScreeningQuestionsCard({
             <Input
               value={optionsInput}
               onChange={(e) => setOptionsInput(e.target.value)}
-              placeholder="Options, comma-separated — e.g. Citizen, Permanent Resident, Visa needed"
+              placeholder={tr('screenQ.optionsPlaceholder')}
               disabled={pending}
               className="text-sm"
-              aria-label="Select options"
+              aria-label={tr('screenQ.selectOptionsAria')}
             />
           )}
 
@@ -261,12 +262,12 @@ export function ScreeningQuestionsCard({
               title={
                 supportsKnockout(answerType)
                   ? knockout
-                    ? 'Will auto-flag if answer is wrong'
-                    : 'Informational only'
-                  : 'Knockout only applies to Yes/No and Select'
+                    ? tr('screenQ.titleAutoFlag')
+                    : tr('screenQ.titleInfoOnly')
+                  : tr('screenQ.titleKnockoutApplies')
               }
             >
-              {knockout ? 'Knockout' : 'Informational'}
+              {knockout ? tr('screenQ.knockout') : tr('screenQ.informational')}
             </button>
             <Button
               onClick={handleAdd}
@@ -282,7 +283,7 @@ export function ScreeningQuestionsCard({
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  <Plus className="h-3.5 w-3.5" aria-hidden /> Add
+                  <Plus className="h-3.5 w-3.5" aria-hidden /> {tr('addCandVac.addBtn')}
                 </>
               )}
             </Button>
@@ -291,8 +292,7 @@ export function ScreeningQuestionsCard({
       )}
 
       <p className="mt-3 text-[11.5px] text-muted-foreground">
-        Answers feed into the candidate profile as screening flags; knockout wrong-answers light up
-        the screening gate before the recruiter advances the candidate.
+        {tr('screenQ.footer')}
       </p>
     </section>
   )

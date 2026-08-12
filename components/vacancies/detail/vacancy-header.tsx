@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { Briefcase, ChevronRight, MoreHorizontal } from 'lucide-react'
 
 import {
@@ -40,13 +41,14 @@ interface VacancyHeaderProps {
  *      badge + meta line + actions cluster (Copy apply link / View
  *      pipeline filled brand-blue / ⋯ menu with Duplicate + Delete).
  */
-export function VacancyHeader({
+export async function VacancyHeader({
   vacancyId,
   title,
   status,
   meta,
   applicationFormToken,
 }: VacancyHeaderProps) {
+  const t = await getTranslations()
   return (
     <header>
       {/* Breadcrumb bar */}
@@ -55,7 +57,7 @@ export function VacancyHeader({
           href="/vacancies"
           className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
         >
-          Vacancies
+          {t('nav.vacancies')}
         </Link>
         <ChevronRight className="h-3 w-3 text-muted-foreground/50" aria-hidden />
         <span className="truncate text-[13px] font-semibold text-foreground">{title}</span>
@@ -76,7 +78,7 @@ export function VacancyHeader({
                 className="rounded-md px-2 py-0.5 text-[11.5px] font-semibold"
                 style={getStatusStyle(status.code)}
               >
-                {status.name}
+                {t.has(`vacStatus.${status.code}`) ? t(`vacStatus.${status.code}`) : status.name}
               </span>
             )}
           </div>
@@ -85,8 +87,8 @@ export function VacancyHeader({
               meta.employmentLabel,
               meta.department,
               meta.location,
-              `opened ${meta.openedDaysAgo}d ago`,
-              meta.endDate ? `ends ${meta.endDate}` : null,
+              t('vacHeader.openedAgo', { days: meta.openedDaysAgo }),
+              meta.endDate ? t('vacHeader.ends', { date: meta.endDate }) : null,
             ]
               .filter(Boolean)
               .join(' · ')}
@@ -102,7 +104,7 @@ export function VacancyHeader({
             className="h-9 gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
           >
             <Link href={`/vacancies/${vacancyId}/pipeline`}>
-              View pipeline →
+              {t('vacHeader.viewPipeline')}
             </Link>
           </Button>
           <DropdownMenu>
@@ -111,14 +113,14 @@ export function VacancyHeader({
                 variant="outline"
                 size="icon"
                 className="h-9 w-9"
-                aria-label="More actions"
+                aria-label={t('profile.moreActions')}
               >
                 <MoreHorizontal className="h-4 w-4" aria-hidden />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem asChild>
-                <Link href={`/vacancies/${vacancyId}/edit`}>Edit vacancy</Link>
+                <Link href={`/vacancies/${vacancyId}/edit`}>{t('vacancies.editVacancy')}</Link>
               </DropdownMenuItem>
               {/* preventDefault keeps the menu open so the nested button's
                   own click reliably fires (and its loading/error state is

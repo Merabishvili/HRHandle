@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Plus, Trash2, Loader2, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,7 @@ interface VacancyQuestionsProps {
 }
 
 export function VacancyQuestions({ vacancyId, initialQuestions, questionType, canEdit }: VacancyQuestionsProps) {
+  const t = useTranslations()
   const [questions, setQuestions] = useState(initialQuestions)
   const [label, setLabel] = useState('')
   const [mustHaveDraft, setMustHaveDraft] = useState(false)
@@ -42,13 +44,13 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
   const [isPending, startTransition] = useTransition()
 
   const placeholder = questionType === 'text'
-    ? 'e.g. Describe your approach to problem solving'
-    : 'e.g. Communication skills'
+    ? t('vacQ.phText')
+    : t('vacQ.phScore')
 
-  const emptyText = questionType === 'text' ? 'No questionary items yet.' : 'No evaluation criteria yet.'
+  const emptyText = questionType === 'text' ? t('vacQ.emptyText') : t('vacQ.emptyScore')
 
   const handleAdd = () => {
-    if (!label.trim()) { setError('Label is required'); return }
+    if (!label.trim()) { setError(t('vacQ.labelRequired')); return }
     setError(null)
     const draftLabel = label.trim()
     const draftMustHave = questionType === 'score' && mustHaveDraft
@@ -109,7 +111,7 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
                       onClick={() => handleToggleMustHave(q.id, !q.must_have)}
                       disabled={isPending}
                       aria-pressed={Boolean(q.must_have)}
-                      aria-label={q.must_have ? 'Mark nice-to-have' : 'Mark must-have'}
+                      aria-label={q.must_have ? t('vacQ.markNice') : t('vacQ.markMust')}
                       className="h-7 gap-1 px-2 text-[11px] font-bold uppercase"
                       style={
                         q.must_have
@@ -122,7 +124,7 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
                         fill={q.must_have ? 'oklch(0.5 0.19 27)' : 'none'}
                         aria-hidden
                       />
-                      {q.must_have ? 'Must-have' : 'Nice-to-have'}
+                      {q.must_have ? t('vacQ.mustHave') : t('vacQ.niceToHave')}
                     </Button>
                   ) : q.must_have ? (
                     <span
@@ -130,7 +132,7 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
                       style={{ background: 'oklch(0.96 0.05 27)', color: 'oklch(0.5 0.19 27)' }}
                     >
                       <Star className="h-3 w-3" fill="oklch(0.5 0.19 27)" aria-hidden />
-                      Must-have
+                      {t('vacQ.mustHave')}
                     </span>
                   ) : null
                 )}
@@ -139,7 +141,7 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    aria-label="Remove question"
+                    aria-label={t('vacQ.removeQuestion')}
                     onClick={() => handleRemove(q.id)}
                     disabled={isPending}
                   >
@@ -151,7 +153,7 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">{emptyText}{canEdit ? ' Add one below.' : ''}</p>
+        <p className="text-sm text-muted-foreground">{emptyText}{canEdit ? t('vacQ.addOneBelow') : ''}</p>
       )}
 
       {canEdit && (
@@ -178,14 +180,14 @@ export function VacancyQuestions({ vacancyId, initialQuestions, questionType, ca
                   ? { background: 'oklch(0.96 0.05 27)', color: 'oklch(0.5 0.19 27)' }
                   : { color: 'oklch(0.5 0.02 250)' }
               }
-              title={mustHaveDraft ? 'Will be saved as must-have' : 'Will be saved as nice-to-have'}
+              title={mustHaveDraft ? t('vacQ.willSaveMust') : t('vacQ.willSaveNice')}
             >
               <Star
                 className="h-3 w-3"
                 fill={mustHaveDraft ? 'oklch(0.5 0.19 27)' : 'none'}
                 aria-hidden
               />
-              {mustHaveDraft ? 'Must-have' : 'Nice-to-have'}
+              {mustHaveDraft ? t('vacQ.mustHave') : t('vacQ.niceToHave')}
             </Button>
           )}
           <Button onClick={handleAdd} disabled={isPending || !label.trim()} size="sm">
