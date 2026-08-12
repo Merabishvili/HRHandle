@@ -2035,6 +2035,46 @@
   "editVac.dupSubtitle": { "en": "Review and save your duplicated vacancy.", "ru": "Проверьте и сохраните дублированную вакансию.", "ka": "გადახედეთ და შეინახეთ დუბლირებული ვაკანსია." },
   "editVac.subtitle": { "en": "Update the job posting details.", "ru": "Обновите детали вакансии.", "ka": "განაახლეთ ვაკანსიის დეტალები." },
 
+  "activity.title": { "en": "Activity", "ru": "Активность", "ka": "აქტივობა" },
+  "activity.filterStage": { "en": "Stage changes", "ru": "Смена этапов", "ka": "ეტაპის ცვლილებები" },
+  "activity.filterOffers": { "en": "Offers", "ru": "Офферы", "ka": "შეთავაზებები" },
+  "activity.empty": { "en": "No activity yet.", "ru": "Активности пока нет.", "ka": "აქტივობა ჯერ არ არის." },
+  "activity.noteAdded": { "en": "Note added", "ru": "Заметка добавлена", "ka": "შენიშვნა დაემატა" },
+  "activity.notePlaceholder": { "en": "Add a note about this candidate… Type @ to mention a teammate.", "ru": "Добавьте заметку об этом кандидате… Введите @, чтобы упомянуть коллегу.", "ka": "დაამატეთ შენიშვნა ამ კანდიდატზე… აკრიფეთ @ კოლეგის მოსახსენიებლად." },
+  "activity.willNotify": { "en": "{count, plural, one {Will notify # teammate.} other {Will notify # teammates.}}", "ru": "{count, plural, one {Уведомит # коллегу.} few {Уведомит # коллег.} many {Уведомит # коллег.} other {Уведомит # коллег.}}", "ka": "{count, plural, one {შეატყობინებს # კოლეგას.} other {შეატყობინებს # კოლეგას.}}" },
+
+  "delCand.toastDeleted": { "en": "Candidate \"{name}\" deleted.", "ru": "Кандидат «{name}» удалён.", "ka": "კანდიდატი „{name}“ წაიშალა." },
+  "delCand.confirmTitle": { "en": "Delete candidate?", "ru": "Удалить кандидата?", "ka": "წავშალოთ კანდიდატი?" },
+  "delCand.checking": { "en": "Checking active applications…", "ru": "Проверка активных заявок…", "ka": "აქტიური განაცხადების შემოწმება…" },
+  "delCand.impactUnknown": { "en": "<b>{name}</b> and any active applications they have will be removed. Evaluation history and documents are kept until the 30-day grace period expires, after which everything is permanently deleted. An admin can restore the candidate before then.", "ru": "<b>{name}</b> и все его активные заявки будут удалены. История оценок и документы сохраняются до истечения 30-дневного льготного периода, после чего всё удаляется безвозвратно. Администратор может восстановить кандидата до этого момента.", "ka": "<b>{name}</b> და მისი ყველა აქტიური განაცხადი წაიშლება. შეფასების ისტორია და დოკუმენტები ინახება 30-დღიანი საშეღავათო პერიოდის ამოწურვამდე, რის შემდეგაც ყველაფერი სამუდამოდ წაიშლება. ადმინისტრატორს შეუძლია კანდიდატის აღდგენა მანამდე." },
+  "delCand.impactZero": { "en": "<b>{name}</b> will be removed. Documents and history are kept until the 30-day grace period expires, after which everything is permanently deleted. An admin can restore the candidate before then.", "ru": "<b>{name}</b> будет удалён. Документы и история сохраняются до истечения 30-дневного льготного периода, после чего всё удаляется безвозвратно. Администратор может восстановить кандидата до этого момента.", "ka": "<b>{name}</b> წაიშლება. დოკუმენტები და ისტორია ინახება 30-დღიანი საშეღავათო პერიოდის ამოწურვამდე, რის შემდეგაც ყველაფერი სამუდამოდ წაიშლება. ადმინისტრატორს შეუძლია კანდიდატის აღდგენა მანამდე." },
+  "delCand.impactCount": { "en": "<b>{name}</b> and their <b>{count, plural, one {# active application} other {# active applications}}</b> will be removed. Evaluation history and documents are kept until the 30-day grace period expires, after which everything is permanently deleted. An admin can restore the candidate before then.", "ru": "<b>{name}</b> и его <b>{count, plural, one {# активная заявка} few {# активные заявки} many {# активных заявок} other {# активной заявки}}</b> будут удалены. История оценок и документы сохраняются до истечения 30-дневного льготного периода, после чего всё удаляется безвозвратно. Администратор может восстановить кандидата до этого момента.", "ka": "<b>{name}</b> და მისი <b>{count, plural, one {# აქტიური განაცხადი} other {# აქტიური განაცხადი}}</b> წაიშლება. შეფასების ისტორია და დოკუმენტები ინახება 30-დღიანი საშეღავათო პერიოდის ამოწურვამდე, რის შემდეგაც ყველაფერი სამუდამოდ წაიშლება. ადმინისტრატორს შეუძლია კანდიდატის აღდგენა მანამდე." },
+  "delCand.ariaDelete": { "en": "Delete {name}", "ru": "Удалить {name}", "ka": "წაშლა: {name}" },
+
+  "repeatBanner.label": { "en": "Repeat candidate.", "ru": "Повторный кандидат.", "ka": "განმეორებითი კანდიდატი." },
+  "repeatBanner.appliedTo": { "en": "Applied to {count, plural, one {# previous vacancy} other {# previous vacancies}} here — {rejected} rejected, {withdrawn} withdrawn.", "ru": "Откликался на {count, plural, one {# предыдущую вакансию} few {# предыдущие вакансии} many {# предыдущих вакансий} other {# предыдущей вакансии}} здесь — {rejected} отклонено, {withdrawn} отозвано.", "ka": "აქ განაცხადი გააკეთა {count, plural, one {# წინა ვაკანსიაზე} other {# წინა ვაკანსიაზე}} — {rejected} უარყოფილი, {withdrawn} გატანილი." },
+  "repeatBanner.mostRecent": { "en": " Most recent: <b>{title}</b>, {outcome} {relative}{reason}.", "ru": " Последний: <b>{title}</b>, {outcome} {relative}{reason}.", "ka": " ბოლო: <b>{title}</b>, {outcome} {relative}{reason}." },
+  "repeatBanner.reasonSuffix": { "en": " (reason: {reason})", "ru": " (причина: {reason})", "ka": " (მიზეზი: {reason})" },
+  "repeatBanner.hideHistory": { "en": "Hide history ▴", "ru": "Скрыть историю ▴", "ka": "ისტორიის დამალვა ▴" },
+  "repeatBanner.viewHistory": { "en": "View history ▾", "ru": "Показать историю ▾", "ka": "ისტორიის ნახვა ▾" },
+
+  "appHistory.aria": { "en": "Application history", "ru": "История заявок", "ka": "განაცხადების ისტორია" },
+  "appHistory.title": { "en": "Application history", "ru": "История заявок", "ka": "განაცხადების ისტორია" },
+  "appHistory.closedCount": { "en": "{count} closed", "ru": "{count} закрыто", "ka": "{count} დახურული" },
+  "appHistory.rejectedSuffix": { "en": " · {count} rejected", "ru": " · {count} отклонено", "ka": " · {count} უარყოფილი" },
+  "appHistory.withdrawnSuffix": { "en": " · {count} withdrawn", "ru": " · {count} отозвано", "ka": " · {count} გატანილი" },
+  "appHistory.hiredSuffix": { "en": " · {count} hired", "ru": " · {count} нанято", "ka": " · {count} დაქირავებული" },
+  "appHistory.candidateWithdrew": { "en": "Candidate withdrew", "ru": "Кандидат отозвал заявку", "ka": "კანდიდატმა გაიტანა განაცხადი" },
+  "appHistory.reachedSuffix": { "en": " · reached {stage}", "ru": " · дошёл до {stage}", "ka": " · მიაღწია {stage}-ს" },
+
+  "stageTracker.aria": { "en": "Application stages", "ru": "Этапы заявки", "ka": "განაცხადის ეტაპები" },
+
+  "candAppsList.empty": { "en": "Not added to any vacancies yet", "ru": "Пока не добавлен ни в одну вакансию", "ka": "ჯერ არცერთ ვაკანსიაზე არ არის დამატებული" },
+
+  "activeApp.label": { "en": "Active application", "ru": "Активная заявка", "ka": "აქტიური განაცხადი" },
+  "activeApp.switchAria": { "en": "Switch active application", "ru": "Переключить активную заявку", "ka": "აქტიური განაცხადის გადართვა" },
+  "activeApp.hint": { "en": "Only live applications appear here. Closed ones live in History above.", "ru": "Здесь показаны только активные заявки. Закрытые — в истории выше.", "ka": "აქ მხოლოდ აქტიური განაცხადები ჩანს. დახურულები — ზემოთ ისტორიაში." },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },

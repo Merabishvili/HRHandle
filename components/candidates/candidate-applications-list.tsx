@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Briefcase } from 'lucide-react'
 import { ApplicationEvaluation } from './application-evaluation'
 import type { RejectionReason, RejectionTemplate } from '@/components/pipeline/rejection-dialog'
@@ -61,6 +62,7 @@ export function CandidateApplicationsList({
   rejectionReasons,
   rejectionTemplates,
 }: Props) {
+  const t = useTranslations()
   const [applications, setApplications] = useState(initialApplications)
 
   // Re-sync local state when the server prop changes. Without this, a
@@ -75,7 +77,7 @@ export function CandidateApplicationsList({
     return (
       <div className="py-8 text-center">
         <Briefcase className="mx-auto h-8 w-8 text-muted-foreground/50" />
-        <p className="mt-2 text-sm text-muted-foreground">Not added to any vacancies yet</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t('candAppsList.empty')}</p>
       </div>
     )
   }

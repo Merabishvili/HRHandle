@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { createNote, deleteNote, listMentionableMembers } from '@/lib/actions/notes'
 import { Briefcase, FileText, ArrowRight, MessageSquare, Calendar, Loader2, Send, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -52,13 +53,13 @@ const KIND_STYLE: Record<ActivityKind, string> = {
   offer:       'bg-[oklch(0.6_0.12_210/0.15)]   text-[oklch(0.4_0.12_210)]',
 }
 
-const FILTER_OPTIONS: { label: string; value: ActivityKind | 'all' }[] = [
-  { label: 'All',           value: 'all' },
-  { label: 'Notes',         value: 'note' },
-  { label: 'Interviews',    value: 'interview' },
-  { label: 'Stage changes', value: 'stage' },
-  { label: 'Offers',        value: 'offer' },
-  { label: 'Documents',     value: 'document' },
+const FILTER_OPTIONS: { labelKey: string; value: ActivityKind | 'all' }[] = [
+  { labelKey: 'candidates.allTab', value: 'all' },
+  { labelKey: 'notes.title',       value: 'note' },
+  { labelKey: 'nav.interviews',    value: 'interview' },
+  { labelKey: 'activity.filterStage', value: 'stage' },
+  { labelKey: 'activity.filterOffers', value: 'offer' },
+  { labelKey: 'documents.title',   value: 'document' },
 ]
 
 function ActivityIcon({ kind }: { kind: ActivityKind }) {
@@ -76,6 +77,7 @@ export function ActivityFeed({
   initialItems,
   initialMembers = [],
 }: ActivityFeedProps) {
+  const t = useTranslations()
   const [items, setItems]     = useState<ActivityItem[]>(initialItems)
   const [filter, setFilter]   = useState<ActivityKind | 'all'>('all')
   const [noteText, setNoteText] = useState('')
@@ -110,7 +112,7 @@ export function ActivityFeed({
       const newItem: ActivityItem = {
         id: result.data.id,
         kind: 'note',
-        headline: 'Note added',
+        headline: t('activity.noteAdded'),
         body: text,
         meta: null,
         actor_name: currentUserName,
@@ -157,14 +159,14 @@ export function ActivityFeed({
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          <span className="text-[15px] font-bold text-foreground">Activity</span>
+          <span className="text-[15px] font-bold text-foreground">{t('activity.title')}</span>
           {items.length > 0 && <span className="text-[12px] text-muted-foreground">({items.length})</span>}
         </div>
       </div>
 
       {/* Filter chips */}
       <div className="mb-4 flex flex-wrap gap-1.5">
-        {FILTER_OPTIONS.map(({ label, value }) => (
+        {FILTER_OPTIONS.map(({ labelKey, value }) => (
           <button
             key={value}
             onClick={() => setFilter(value)}
@@ -175,14 +177,14 @@ export function ActivityFeed({
                 : 'border border-border bg-white text-muted-foreground hover:border-foreground/30'
             )}
           >
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
 
       {/* Feed */}
       {filtered.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">No activity yet.</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t('activity.empty')}</p>
       ) : (
         <div className="space-y-0">
           {filtered.map((item, idx) => (
@@ -225,7 +227,7 @@ export function ActivityFeed({
                   <p className="mt-0.5 text-[12px] text-muted-foreground">{item.meta}</p>
                 )}
                 <p className="mt-1 text-[11.5px] text-muted-foreground">
-                  {item.actor_name ?? 'System'} · {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                  {item.actor_name ?? t('auditTable.system')} · {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                 </p>
               </div>
             </div>
@@ -247,7 +249,7 @@ export function ActivityFeed({
                 setNoteMentions(ids)
               }}
               members={members}
-              placeholder="Add a note about this candidate… Type @ to mention a teammate."
+              placeholder={t('activity.notePlaceholder')}
               rows={1}
               maxLength={5000}
               disabled={isPending}
@@ -255,7 +257,7 @@ export function ActivityFeed({
             />
             {noteMentions.length > 0 && (
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Will notify {noteMentions.length} teammate{noteMentions.length === 1 ? '' : 's'}.
+                {t('activity.willNotify', { count: noteMentions.length })}
               </p>
             )}
           </div>

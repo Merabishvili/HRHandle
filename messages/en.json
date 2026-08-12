@@ -2281,6 +2281,53 @@
     "dupSubtitle": "Review and save your duplicated vacancy.",
     "subtitle": "Update the job posting details."
   },
+  "activity": {
+    "title": "Activity",
+    "filterStage": "Stage changes",
+    "filterOffers": "Offers",
+    "empty": "No activity yet.",
+    "noteAdded": "Note added",
+    "notePlaceholder": "Add a note about this candidate… Type @ to mention a teammate.",
+    "willNotify": "{count, plural, one {Will notify # teammate.} other {Will notify # teammates.}}"
+  },
+  "delCand": {
+    "toastDeleted": "Candidate \"{name}\" deleted.",
+    "confirmTitle": "Delete candidate?",
+    "checking": "Checking active applications…",
+    "impactUnknown": "<b>{name}</b> and any active applications they have will be removed. Evaluation history and documents are kept until the 30-day grace period expires, after which everything is permanently deleted. An admin can restore the candidate before then.",
+    "impactZero": "<b>{name}</b> will be removed. Documents and history are kept until the 30-day grace period expires, after which everything is permanently deleted. An admin can restore the candidate before then.",
+    "impactCount": "<b>{name}</b> and their <b>{count, plural, one {# active application} other {# active applications}}</b> will be removed. Evaluation history and documents are kept until the 30-day grace period expires, after which everything is permanently deleted. An admin can restore the candidate before then.",
+    "ariaDelete": "Delete {name}"
+  },
+  "repeatBanner": {
+    "label": "Repeat candidate.",
+    "appliedTo": "Applied to {count, plural, one {# previous vacancy} other {# previous vacancies}} here — {rejected} rejected, {withdrawn} withdrawn.",
+    "mostRecent": " Most recent: <b>{title}</b>, {outcome} {relative}{reason}.",
+    "reasonSuffix": " (reason: {reason})",
+    "hideHistory": "Hide history ▴",
+    "viewHistory": "View history ▾"
+  },
+  "appHistory": {
+    "aria": "Application history",
+    "title": "Application history",
+    "closedCount": "{count} closed",
+    "rejectedSuffix": " · {count} rejected",
+    "withdrawnSuffix": " · {count} withdrawn",
+    "hiredSuffix": " · {count} hired",
+    "candidateWithdrew": "Candidate withdrew",
+    "reachedSuffix": " · reached {stage}"
+  },
+  "stageTracker": {
+    "aria": "Application stages"
+  },
+  "candAppsList": {
+    "empty": "Not added to any vacancies yet"
+  },
+  "activeApp": {
+    "label": "Active application",
+    "switchAria": "Switch active application",
+    "hint": "Only live applications appear here. Closed ones live in History above."
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

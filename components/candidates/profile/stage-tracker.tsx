@@ -1,5 +1,10 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
+
 import { cn } from '@/lib/utils'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import type { ApplicationStatus } from '@/lib/types/application'
 
 interface StageTrackerProps {
@@ -24,6 +29,7 @@ interface StageTrackerProps {
  * outline with neutral text.
  */
 export function StageTracker({ stages, currentCode, compact = false }: StageTrackerProps) {
+  const t = useTranslations()
   // Callers pass only the active (non-terminal) stages, so the terminal "Hired"
   // node is missing. The confirmed design always shows the full 5-node path
   // ending in Hired — append it here so every tracker renders it (it's always a
@@ -40,7 +46,7 @@ export function StageTracker({ stages, currentCode, compact = false }: StageTrac
         compact ? 'gap-1.5 text-[10.5px]' : 'gap-1.5 text-[11.5px]',
       )}
       role="list"
-      aria-label="Application stages"
+      aria-label={t('stageTracker.aria')}
     >
       {renderStages.map((stage, idx) => {
         const isCurrent = idx === currentIdx
@@ -69,7 +75,7 @@ export function StageTracker({ stages, currentCode, compact = false }: StageTrac
               style={pillStyle}
               aria-current={isCurrent ? 'step' : undefined}
             >
-              {stage.name}
+              {statusLabel(t, stage.code, stage.name)}
             </span>
             {!isLast && (
               <span

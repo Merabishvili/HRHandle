@@ -83,9 +83,9 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (3) app/(dashboard)/candidates/[id]/edit/page.tsx
 - [ ] (3) app/(dashboard)/candidates/import/page.tsx
 - [ ] (3) app/(dashboard)/interviews/new/page.tsx
-- [ ] (3) components/candidates/activity-feed.tsx
+- [x] (3) components/candidates/activity-feed.tsx
 - [x] (3) components/candidates/wizard/step-path-select.tsx
-- [ ] (3) components/candidates/profile/active-application-selector.tsx
+- [x] (3) components/candidates/profile/active-application-selector.tsx
 - [x] (3) components/pipeline/view-mode-toggle.tsx
 - [x] (3) components/pipeline/terminal-rail.tsx
 - [ ] (3) components/integrations/calendly-link-button.tsx
@@ -97,7 +97,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (2) app/(dashboard)/settings/notifications/page.tsx
 - [x] (2) app/(dashboard)/settings/rejection-reasons/page.tsx
 - [ ] (2) components/guide/guide-shell.tsx
-- [ ] (2) components/candidates/delete-candidate-dialog.tsx
+- [x] (2) components/candidates/delete-candidate-dialog.tsx
 - [ ] (2) components/apply/job-description-block.tsx
 - [x] (2) components/settings/avatar-upload.tsx
 - [ ] (2, partial) components/pipeline/review-mode.tsx
@@ -116,11 +116,11 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (1) app/(dashboard)/layout.tsx
 - [x] (1) app/(dashboard)/vacancies/[id]/edit/page.tsx
 - [ ] (1) components/guide/guide-card.tsx
-- [ ] (1) components/candidates/delete-candidate-button.tsx
-- [ ] (1) components/candidates/profile/application-history.tsx
-- [ ] (1) components/candidates/profile/repeat-applicant-banner.tsx
-- [ ] (1) components/candidates/profile/stage-tracker.tsx
-- [ ] (1) components/candidates/candidate-applications-list.tsx
+- [x] (1) components/candidates/delete-candidate-button.tsx
+- [x] (1) components/candidates/profile/application-history.tsx
+- [x] (1) components/candidates/profile/repeat-applicant-banner.tsx
+- [x] (1) components/candidates/profile/stage-tracker.tsx
+- [x] (1) components/candidates/candidate-applications-list.tsx
 - [x] (1) components/candidates/candidate-status-actions.tsx
 - [ ] (1, partial) components/offers/offer-body.tsx
 - [x] (1) components/pipeline/cross-vacancy-card.tsx

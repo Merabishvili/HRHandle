@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import {
@@ -34,6 +35,7 @@ export function DeleteCandidateDialog({
   onOpenChange,
   onDeleted,
 }: DeleteCandidateDialogProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [impactLoading, setImpactLoading] = useState(false)
   const [activeApplicationCount, setActiveApplicationCount] = useState<number | null>(null)
@@ -67,7 +69,7 @@ export function DeleteCandidateDialog({
     setIsPending(true)
     const result = await deleteCandidate(candidateId)
     if (result.success) {
-      toast.success(`Candidate "${candidateName}" deleted.`)
+      toast.success(t('delCand.toastDeleted', { name: candidateName }))
       onOpenChange(false)
       if (onDeleted) {
         onDeleted()
@@ -81,46 +83,30 @@ export function DeleteCandidateDialog({
   }
 
   const renderImpactCopy = () => {
+    const bold = { b: (c: React.ReactNode) => <strong>{c}</strong> }
     if (impactLoading || activeApplicationCount === null) {
-      return (
-        <>
-          <strong>{candidateName}</strong> and any active applications they have will be
-          removed. Evaluation history and documents are kept until the 30-day grace
-          period expires, after which everything is permanently deleted. An admin can
-          restore the candidate before then.
-        </>
-      )
+      return t.rich('delCand.impactUnknown', { name: candidateName, ...bold })
     }
     if (activeApplicationCount === 0) {
-      return (
-        <>
-          <strong>{candidateName}</strong> will be removed. Documents and history are
-          kept until the 30-day grace period expires, after which everything is
-          permanently deleted. An admin can restore the candidate before then.
-        </>
-      )
+      return t.rich('delCand.impactZero', { name: candidateName, ...bold })
     }
-    const noun = activeApplicationCount === 1 ? 'active application' : 'active applications'
-    return (
-      <>
-        <strong>{candidateName}</strong> and their <strong>{activeApplicationCount} {noun}</strong>{' '}
-        will be removed. Evaluation history and documents are kept until the 30-day
-        grace period expires, after which everything is permanently deleted. An admin
-        can restore the candidate before then.
-      </>
-    )
+    return t.rich('delCand.impactCount', {
+      name: candidateName,
+      count: activeApplicationCount,
+      ...bold,
+    })
   }
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete candidate?</AlertDialogTitle>
+          <AlertDialogTitle>{t('delCand.confirmTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
             {impactLoading ? (
               <span className="inline-flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Checking active applications…
+                {t('delCand.checking')}
               </span>
             ) : (
               renderImpactCopy()
@@ -128,13 +114,13 @@ export function DeleteCandidateDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t('common.cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={isPending || impactLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isPending ? 'Deleting…' : 'Delete candidate'}
+            {isPending ? t('offer.deleting') : t('candidates.deleteCandidate')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -1,10 +1,12 @@
 'use client'
 
 import { Briefcase, ChevronDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import type { ApplicationStatus } from '@/lib/types/application'
 
 export interface ActiveApplicationOption {
@@ -40,6 +42,7 @@ export function ActiveApplicationSelector({
   selectedId,
   onSelect,
 }: ActiveApplicationSelectorProps) {
+  const t = useTranslations()
   const selected = options.find((o) => o.applicationId === selectedId) ?? options[0] ?? null
   if (!selected) return null
 
@@ -59,7 +62,7 @@ export function ActiveApplicationSelector({
           className="rounded px-1.5 py-0.5 text-[10.5px] font-semibold"
           style={{ background: stageStyle.pillBg, color: stageStyle.pillText }}
         >
-          {selected.stage.name}
+          {statusLabel(t, selected.stage.code, selected.stage.name)}
         </span>
       )}
       {options.length > 1 && (
@@ -71,7 +74,7 @@ export function ActiveApplicationSelector({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[oklch(0.45_0.16_250)]">
-        Active application
+        {t('activeApp.label')}
       </span>
 
       {options.length === 1 ? (
@@ -79,7 +82,7 @@ export function ActiveApplicationSelector({
       ) : (
         <Popover>
           <PopoverTrigger asChild>
-            <button type="button" aria-label="Switch active application" className="cursor-pointer">
+            <button type="button" aria-label={t('activeApp.switchAria')} className="cursor-pointer">
               {triggerContent}
             </button>
           </PopoverTrigger>
@@ -105,7 +108,7 @@ export function ActiveApplicationSelector({
                           className="rounded px-1.5 py-0.5 text-[10.5px] font-semibold"
                           style={{ background: optionStageStyle.pillBg, color: optionStageStyle.pillText }}
                         >
-                          {option.stage.name}
+                          {statusLabel(t, option.stage.code, option.stage.name)}
                         </span>
                       )}
                     </button>
@@ -118,7 +121,7 @@ export function ActiveApplicationSelector({
       )}
 
       <span className="text-[12px] text-muted-foreground">
-        Only live applications appear here. Closed ones live in History above.
+        {t('activeApp.hint')}
       </span>
     </div>
   )
