@@ -66,7 +66,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (5) app/(dashboard)/vacancies/[id]/pipeline/page.tsx
 - [ ] (5, partial) app/(dashboard)/vacancies/page.tsx
 - [x] (5) components/candidates/add-application-dialog.tsx
-- [ ] (5) components/candidates/wizard/candidate-create-wizard.tsx
+- [x] (5) components/candidates/wizard/candidate-create-wizard.tsx
 - [x] (5) components/candidates/candidate-table-row.tsx
 - [x] (5) components/settings/default-meeting-provider-select.tsx
 - [x] (5) components/settings/change-password-form.tsx
@@ -75,8 +75,8 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (5) components/dashboard/notifications-bell.tsx
 - [x] (5) components/vacancies/add-candidate-to-vacancy-dialog.tsx
 - [ ] (4) app/(dashboard)/settings/integrations/page.tsx
-- [ ] (4) components/candidates/metadata-footer.tsx
-- [ ] (4) components/candidates/profile/recent-merge-banner.tsx
+- [x] (4) components/candidates/metadata-footer.tsx
+- [x] (4) components/candidates/profile/recent-merge-banner.tsx
 - [x] (4) components/subscription/billing-controls.tsx
 - [ ] (4) components/vacancies/vacancy-form.tsx
 - [ ] (4) components/vacancies/vacancy-applications-list.tsx
@@ -84,7 +84,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (3) app/(dashboard)/candidates/import/page.tsx
 - [ ] (3) app/(dashboard)/interviews/new/page.tsx
 - [ ] (3) components/candidates/activity-feed.tsx
-- [ ] (3) components/candidates/wizard/step-path-select.tsx
+- [x] (3) components/candidates/wizard/step-path-select.tsx
 - [ ] (3) components/candidates/profile/active-application-selector.tsx
 - [x] (3) components/pipeline/view-mode-toggle.tsx
 - [x] (3) components/pipeline/terminal-rail.tsx

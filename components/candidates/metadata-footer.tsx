@@ -1,4 +1,5 @@
 import { formatDistanceToNow, format } from 'date-fns'
+import { getTranslations } from 'next-intl/server'
 
 interface MetadataFooterProps {
   source: string | null
@@ -22,16 +23,17 @@ function MetaItem({ label, value, mono }: MetaItemProps) {
   )
 }
 
-export function MetadataFooter({ source, createdAt, updatedAt, candidateId }: MetadataFooterProps) {
+export async function MetadataFooter({ source, createdAt, updatedAt, candidateId }: MetadataFooterProps) {
+  const t = await getTranslations()
   const shortId = candidateId.slice(0, 8).toUpperCase()
 
   return (
     <div className="rounded-lg border border-border/60 bg-muted px-5 py-3.5">
       <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-        <MetaItem label="Source"       value={source || '—'} />
-        <MetaItem label="Added"        value={formatDistanceToNow(new Date(createdAt), { addSuffix: true })} />
-        <MetaItem label="Last updated" value={format(new Date(updatedAt), 'MMM d, yyyy')} />
-        <MetaItem label="Candidate ID" value={shortId} mono />
+        <MetaItem label={t('candWizard.application.sourceLabel')} value={source || '—'} />
+        <MetaItem label={t('profile.fact.added')}        value={formatDistanceToNow(new Date(createdAt), { addSuffix: true })} />
+        <MetaItem label={t('profile.meta.lastUpdated')} value={format(new Date(updatedAt), 'MMM d, yyyy')} />
+        <MetaItem label={t('profile.meta.candidateId')} value={shortId} mono />
       </div>
     </div>
   )

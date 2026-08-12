@@ -1037,6 +1037,31 @@
       "roles": "{count, plural, one {# role} other {# roles}}",
       "entries": "{count, plural, one {# entry} other {# entries}}",
       "noneAdded": "None added"
+    },
+    "wizard": {
+      "stepStatus": "Step {current} of {total}",
+      "back": "← Back",
+      "saveAddAnother": "Save & add another",
+      "nextLabel": "Next: {label}",
+      "railHint": "Adding a batch? <b>Save & add another</b> resets the form so you can keep going.",
+      "errNamesRequired": "First name and last name are required.",
+      "warnCvAttach": "Candidate saved, but the CV file could not be attached.",
+      "savedAddNext": "Candidate added. Start the next one.",
+      "saved": "Candidate added.",
+      "stepPath": "Choose path",
+      "stepPersonal": "Personal",
+      "stepBackground": "Experience & education",
+      "stepApplication": "Application & notes",
+      "stepReview": "Review",
+      "tagManual": "Manual",
+      "tagAiPrefill": "AI prefill"
+    },
+    "path": {
+      "question": "How would you like to add this candidate?",
+      "cvTitle": "Upload CV first",
+      "cvBody": "Upload a PDF/Word CV — AI fills name, contact, experience & education for review.",
+      "manualTitle": "Fill manually",
+      "manualBody": "Enter details by hand. You can still attach a CV as a document."
     }
   },
   "candidateForm": {
@@ -2138,6 +2163,21 @@
     "actions": "Candidate actions",
     "editCandidate": "Edit candidate",
     "thisCandidate": "this candidate"
+  },
+  "mergeBanner": {
+    "restored": "Restored {name}",
+    "aria": "Recent merge",
+    "mergedWith": "Merged with {name}",
+    "by": " by {name}",
+    "today": "today",
+    "yesterday": "yesterday",
+    "daysAgo": "{count, plural, one {# day ago} other {# days ago}}",
+    "daysLeft": "{count, plural, one {# day left to split back} other {# days left to split back}}",
+    "splitBack": "Split back",
+    "confirmTitle": "Split back the merge?",
+    "confirmBody1": "<b>{name}</b> will be restored as a separate candidate. The old ID will stop redirecting here.",
+    "confirmBody2": "Applications, notes, documents, activity and scorecards that were combined into this candidate during the merge <b>stay here</b> — they won't be moved back. Re-attach them manually if needed.",
+    "splitting": "Splitting…"
   },
   "apply": {
     "applyForPosition": "Apply for this position",

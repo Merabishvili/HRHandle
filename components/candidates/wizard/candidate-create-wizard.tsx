@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ArrowRight, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -84,6 +85,7 @@ export function CandidateCreateWizard({
   defaultVacancyId,
   startingStages,
 }: CandidateCreateWizardProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState<StepId>('path')
   const [pending, startTransition] = useTransition()
@@ -104,7 +106,7 @@ export function CandidateCreateWizard({
     { candidateId: string; candidateName: string } | null
   >(null)
 
-  const STEPS = useStepDefs(entryMode)
+  const STEPS = useStepDefs(entryMode, t)
   const stepIdx = STEPS.findIndex((s) => s.id === currentStep)
   const isFirstStep = stepIdx === 0
   const isLastStep = stepIdx === STEPS.length - 1
@@ -203,7 +205,7 @@ export function CandidateCreateWizard({
 
   const submit = (addAnother: boolean) => {
     if (!isPersonalValid) {
-      toast.error('First name and last name are required.')
+      toast.error(t('candWizard.wizard.errNamesRequired'))
       setCurrentStep('personal')
       return
     }
@@ -253,7 +255,7 @@ export function CandidateCreateWizard({
         const upload = await uploadDocument(candidateId, fd)
         if (!upload.success) {
           console.error('[wizard] CV document upload failed:', upload.error)
-          toast.warning('Candidate saved, but the CV file could not be attached.')
+          toast.warning(t('candWizard.wizard.warnCvAttach'))
         }
       }
 
@@ -270,29 +272,25 @@ export function CandidateCreateWizard({
       }
 
       if (addAnother) {
-        toast.success('Candidate added. Start the next one.')
+        toast.success(t('candWizard.wizard.savedAddNext'))
         resetForAnother()
         return
       }
 
-      toast.success('Candidate added.')
+      toast.success(t('candWizard.wizard.saved'))
       router.push(`/candidates/${candidateId}`)
       router.refresh()
     })
   }
 
-  const railHint = (
-    <>
-      Adding a batch?{' '}
-      <strong className="text-foreground">Save &amp; add another</strong> resets
-      the form so you can keep going.
-    </>
-  )
+  const railHint = t.rich('candWizard.wizard.railHint', {
+    b: (c) => <strong className="text-foreground">{c}</strong>,
+  })
 
   return (
     <WizardShell
-      title="Add candidate"
-      stepStatusLabel={`Step ${stepIdx + 1} of ${STEPS.length}`}
+      title={t('candidateForm.addCandidate')}
+      stepStatusLabel={t('candWizard.wizard.stepStatus', { current: stepIdx + 1, total: STEPS.length })}
       steps={STEPS.map((s) => ({ ...s }))}
       currentStepId={currentStep}
       closeHref="/candidates"
@@ -308,7 +306,7 @@ export function CandidateCreateWizard({
               disabled={pending}
               className="h-9"
             >
-              ← Back
+              {t('candWizard.wizard.back')}
             </Button>
           )}
 
@@ -325,7 +323,7 @@ export function CandidateCreateWizard({
                 {pending ? (
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />
                 ) : null}
-                Save &amp; add another
+                {t('candWizard.wizard.saveAddAnother')}
               </Button>
               <Button
                 type="button"
@@ -337,7 +335,7 @@ export function CandidateCreateWizard({
                 {pending ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
                 ) : null}
-                Add candidate
+                {t('candidateForm.addCandidate')}
               </Button>
             </>
           ) : (
@@ -352,7 +350,7 @@ export function CandidateCreateWizard({
               }
               className="ml-auto h-9 gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
             >
-              Next: {STEPS[stepIdx + 1]?.label}{' '}
+              {t('candWizard.wizard.nextLabel', { label: STEPS[stepIdx + 1]?.label ?? '' })}{' '}
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </Button>
           )}
@@ -410,13 +408,18 @@ export function CandidateCreateWizard({
  * (Manual / AI prefill); the final Review step is where the candidate is
  * committed.
  */
-function useStepDefs(entryMode: EntryMode | null) {
-  const tagForPath = entryMode === 'cv' ? 'AI prefill' : entryMode === 'manual' ? 'Manual' : undefined
+function useStepDefs(entryMode: EntryMode | null, t: ReturnType<typeof useTranslations>) {
+  const tagForPath =
+    entryMode === 'cv'
+      ? t('candWizard.wizard.tagAiPrefill')
+      : entryMode === 'manual'
+        ? t('candWizard.wizard.tagManual')
+        : undefined
   return [
-    { id: 'path' as const, number: 1, label: 'Choose path', tag: tagForPath },
-    { id: 'personal' as const, number: 2, label: 'Personal' },
-    { id: 'background' as const, number: 3, label: 'Experience & education' },
-    { id: 'application' as const, number: 4, label: 'Application & notes' },
-    { id: 'review' as const, number: 5, label: 'Review' },
+    { id: 'path' as const, number: 1, label: t('candWizard.wizard.stepPath'), tag: tagForPath },
+    { id: 'personal' as const, number: 2, label: t('candWizard.wizard.stepPersonal') },
+    { id: 'background' as const, number: 3, label: t('candWizard.wizard.stepBackground') },
+    { id: 'application' as const, number: 4, label: t('candWizard.wizard.stepApplication') },
+    { id: 'review' as const, number: 5, label: t('candWizard.wizard.stepReview') },
   ]
 }

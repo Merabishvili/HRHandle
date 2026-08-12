@@ -1,6 +1,7 @@
 'use client'
 
 import { Sparkles, Pencil } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
 
@@ -24,24 +25,25 @@ interface StepPathSelectProps {
  * the candidate's details in hand already.
  */
 export function StepPathSelect({ value, onChange }: StepPathSelectProps) {
+  const t = useTranslations()
   return (
     <div className="flex flex-col gap-3">
       <p className="text-[13px] text-muted-foreground">
-        How would you like to add this candidate?
+        {t('candWizard.path.question')}
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <PathTile
           icon={Sparkles}
-          title="Upload CV first"
-          body="Upload a PDF/Word CV — AI fills name, contact, experience & education for review."
+          title={t('candWizard.path.cvTitle')}
+          body={t('candWizard.path.cvBody')}
           selected={value === 'cv'}
           onClick={() => onChange('cv')}
         />
         <PathTile
           icon={Pencil}
-          title="Fill manually"
-          body="Enter details by hand. You can still attach a CV as a document."
+          title={t('candWizard.path.manualTitle')}
+          body={t('candWizard.path.manualBody')}
           selected={value === 'manual'}
           onClick={() => onChange('manual')}
           subdued
