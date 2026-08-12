@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { GoogleCalendarConnect } from '@/components/settings/google-calendar-connect'
@@ -13,6 +14,7 @@ import Link from 'next/link'
 import { Bell, Calendar as CalendarIcon } from 'lucide-react'
 
 export default async function IntegrationsSettingsPage() {
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -37,8 +39,8 @@ export default async function IntegrationsSettingsPage() {
     <div className="max-w-2xl">
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Integrations</CardTitle>
-          <CardDescription>Connect external services to enhance your workflow.</CardDescription>
+          <CardTitle>{t('settings.nav.integrations')}</CardTitle>
+          <CardDescription>{t('intPage.desc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
@@ -78,15 +80,16 @@ export default async function IntegrationsSettingsPage() {
                 <div className="flex items-start gap-3">
                   <Bell className="mt-0.5 h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="font-medium">Slack &amp; Microsoft Teams notifications</p>
+                    <p className="font-medium">{t('intPage.slackTeamsTitle')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Send messages to your team when applications, offers, and interviews change.
-                      This is a separate connection from <span className="font-medium">Microsoft (Calendar + Teams)</span> above —
-                      that one creates Teams <em>meetings</em>; this one posts team <em>notifications</em>.
+                      {t.rich('intPage.slackTeamsDesc', {
+                        b: (c) => <span className="font-medium">{c}</span>,
+                        em: (c) => <em>{c}</em>,
+                      })}
                     </p>
                   </div>
                 </div>
-                <span className="text-sm font-medium text-primary">Configure →</span>
+                <span className="text-sm font-medium text-primary">{t('intPage.configure')}</span>
               </Link>
             </div>
             <div className="border-t border-border pt-6">
@@ -99,11 +102,11 @@ export default async function IntegrationsSettingsPage() {
                   <div>
                     <p className="font-medium">Calendly</p>
                     <p className="text-sm text-muted-foreground">
-                      Let candidates self-schedule interviews directly from your Calendly link.
+                      {t('intPage.calendlyDesc')}
                     </p>
                   </div>
                 </div>
-                <span className="text-sm font-medium text-primary">Configure →</span>
+                <span className="text-sm font-medium text-primary">{t('intPage.configure')}</span>
               </Link>
             </div>
           </div>

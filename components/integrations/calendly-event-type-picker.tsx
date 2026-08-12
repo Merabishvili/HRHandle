@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   Select,
   SelectContent,
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function CalendlyEventTypePicker({ selectedUri, eventTypes }: Props) {
+  const tr = useTranslations()
   const router = useRouter()
   const [uri, setUri] = useState(selectedUri ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -27,16 +29,16 @@ export function CalendlyEventTypePicker({ selectedUri, eventTypes }: Props) {
   const [isPending, startTransition] = useTransition()
 
   function onSave() {
-    const found = eventTypes.find((t) => t.uri === uri)
+    const found = eventTypes.find((et) => et.uri === uri)
     if (!found) {
-      setError('Pick an event type first.')
+      setError(tr('calPicker.pickFirst'))
       return
     }
     startTransition(async () => {
       const res = await selectCalendlyEventType(found.uri, found.name)
       if (res.success) {
         setError(null)
-        setNotice('Saved.')
+        setNotice(tr('calPicker.saved'))
         router.refresh()
       } else {
         setError(res.error)
@@ -48,7 +50,7 @@ export function CalendlyEventTypePicker({ selectedUri, eventTypes }: Props) {
     return (
       <Alert variant="destructive">
         <AlertDescription>
-          No active event types found in your Calendly account. Create one in Calendly, then refresh this page.
+          {tr('calPicker.noEventTypes')}
         </AlertDescription>
       </Alert>
     )
@@ -58,12 +60,12 @@ export function CalendlyEventTypePicker({ selectedUri, eventTypes }: Props) {
     <div className="space-y-3">
       <Select value={uri} onValueChange={setUri}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an event type" />
+          <SelectValue placeholder={tr('calPicker.placeholder')} />
         </SelectTrigger>
         <SelectContent>
-          {eventTypes.map((t) => (
-            <SelectItem key={t.uri} value={t.uri}>
-              {t.name} · {t.duration} min
+          {eventTypes.map((et) => (
+            <SelectItem key={et.uri} value={et.uri}>
+              {tr('calPicker.eventOption', { name: et.name, duration: et.duration })}
             </SelectItem>
           ))}
         </SelectContent>
@@ -81,7 +83,7 @@ export function CalendlyEventTypePicker({ selectedUri, eventTypes }: Props) {
       )}
 
       <Button onClick={onSave} disabled={isPending || !uri || uri === (selectedUri ?? '')}>
-        {isPending ? 'Saving…' : 'Save'}
+        {isPending ? tr('common.saving') : tr('common.save')}
       </Button>
     </div>
   )

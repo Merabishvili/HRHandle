@@ -2075,6 +2075,24 @@
   "activeApp.switchAria": { "en": "Switch active application", "ru": "Переключить активную заявку", "ka": "აქტიური განაცხადის გადართვა" },
   "activeApp.hint": { "en": "Only live applications appear here. Closed ones live in History above.", "ru": "Здесь показаны только активные заявки. Закрытые — в истории выше.", "ka": "აქ მხოლოდ აქტიური განაცხადები ჩანს. დახურულები — ზემოთ ისტორიაში." },
 
+  "intPage.desc": { "en": "Connect external services to enhance your workflow.", "ru": "Подключайте внешние сервисы, чтобы улучшить рабочий процесс.", "ka": "დააკავშირეთ გარე სერვისები სამუშაო პროცესის გასაუმჯობესებლად." },
+  "intPage.slackTeamsTitle": { "en": "Slack & Microsoft Teams notifications", "ru": "Уведомления Slack и Microsoft Teams", "ka": "Slack და Microsoft Teams შეტყობინებები" },
+  "intPage.slackTeamsDesc": { "en": "Send messages to your team when applications, offers, and interviews change. This is a separate connection from <b>Microsoft (Calendar + Teams)</b> above — that one creates Teams <em>meetings</em>; this one posts team <em>notifications</em>.", "ru": "Отправляйте сообщения команде при изменениях в заявках, офферах и собеседованиях. Это отдельное подключение от <b>Microsoft (Календарь + Teams)</b> выше — то создаёт <em>встречи</em> Teams; это публикует командные <em>уведомления</em>.", "ka": "გაუგზავნეთ შეტყობინებები გუნდს, როცა განაცხადები, შეთავაზებები და გასაუბრებები იცვლება. ეს ცალკე კავშირია ზემოთ მოცემული <b>Microsoft-ისგან (კალენდარი + Teams)</b> — ის ქმნის Teams-ის <em>შეხვედრებს</em>; ეს კი აქვეყნებს გუნდურ <em>შეტყობინებებს</em>." },
+  "intPage.configure": { "en": "Configure →", "ru": "Настроить →", "ka": "კონფიგურაცია →" },
+  "intPage.calendlyDesc": { "en": "Let candidates self-schedule interviews directly from your Calendly link.", "ru": "Позвольте кандидатам самостоятельно назначать собеседования прямо по вашей ссылке Calendly.", "ka": "მიეცით კანდიდატებს საშუალება თავად დანიშნონ გასაუბრებები პირდაპირ თქვენი Calendly-ის ბმულიდან." },
+
+  "calLink.copyFailed": { "en": "Copy failed — select and copy manually.", "ru": "Не удалось скопировать — выделите и скопируйте вручную.", "ka": "კოპირება ვერ მოხერხდა — მონიშნეთ და დააკოპირეთ ხელით." },
+  "calLink.button": { "en": "Calendly link", "ru": "Ссылка Calendly", "ka": "Calendly ბმული" },
+  "calLink.title": { "en": "Calendly scheduling link", "ru": "Ссылка для записи Calendly", "ka": "Calendly-ის დაჯავშნის ბმული" },
+  "calLink.desc": { "en": "Send this to the candidate. When they book, HRHandle will create the interview record automatically.", "ru": "Отправьте это кандидату. Когда он забронирует, HRHandle автоматически создаст запись о собеседовании.", "ka": "გაუგზავნეთ ეს კანდიდატს. როცა ის დაჯავშნის, HRHandle ავტომატურად შექმნის გასაუბრების ჩანაწერს." },
+  "calLink.generating": { "en": "Generating link…", "ru": "Создание ссылки…", "ka": "ბმულის შექმნა…" },
+
+  "calPicker.pickFirst": { "en": "Pick an event type first.", "ru": "Сначала выберите тип события.", "ka": "ჯერ აირჩიეთ მოვლენის ტიპი." },
+  "calPicker.saved": { "en": "Saved.", "ru": "Сохранено.", "ka": "შენახულია." },
+  "calPicker.noEventTypes": { "en": "No active event types found in your Calendly account. Create one in Calendly, then refresh this page.", "ru": "В вашем аккаунте Calendly нет активных типов событий. Создайте один в Calendly, затем обновите эту страницу.", "ka": "თქვენს Calendly ანგარიშში აქტიური მოვლენის ტიპები ვერ მოიძებნა. შექმენით ერთი Calendly-ში და განაახლეთ ეს გვერდი." },
+  "calPicker.placeholder": { "en": "Select an event type", "ru": "Выберите тип события", "ka": "აირჩიეთ მოვლენის ტიპი" },
+  "calPicker.eventOption": { "en": "{name} · {duration} min", "ru": "{name} · {duration} мин", "ka": "{name} · {duration} წთ" },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },

@@ -74,7 +74,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (5) components/subscription/payment-methods.tsx
 - [x] (5) components/dashboard/notifications-bell.tsx
 - [x] (5) components/vacancies/add-candidate-to-vacancy-dialog.tsx
-- [ ] (4) app/(dashboard)/settings/integrations/page.tsx
+- [x] (4) app/(dashboard)/settings/integrations/page.tsx
 - [x] (4) components/candidates/metadata-footer.tsx
 - [x] (4) components/candidates/profile/recent-merge-banner.tsx
 - [x] (4) components/subscription/billing-controls.tsx
@@ -88,7 +88,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (3) components/candidates/profile/active-application-selector.tsx
 - [x] (3) components/pipeline/view-mode-toggle.tsx
 - [x] (3) components/pipeline/terminal-rail.tsx
-- [ ] (3) components/integrations/calendly-link-button.tsx
+- [x] (3) components/integrations/calendly-link-button.tsx
 - [x] (3) components/vacancies/detail/vacancy-header.tsx
 - [x] (3) components/vacancies/screening-questions-card.tsx
 - [x] (2) app/(dashboard)/settings/audit-log/page.tsx
@@ -130,7 +130,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (1) components/landing/language-switcher.tsx
 - [ ] (1, partial) components/mfa/enroll-totp-dialog.tsx
 - [ ] (1, partial) components/dashboard/header.tsx
-- [ ] (1) components/integrations/calendly-event-type-picker.tsx
+- [x] (1) components/integrations/calendly-event-type-picker.tsx
 - [ ] (1) components/notes/mention-textarea.tsx
 - [x] (1) components/scorecards/share-scorecard-button.tsx
 - [x] (1) components/vacancies/bulk-move-dialog.tsx

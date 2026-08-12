@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Calendar as CalendarIcon, Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function CalendlyLinkButton({ applicationId }: Props) {
+  const t = useTranslations()
   const [open, setOpen] = useState(false)
   const [url, setUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -44,7 +46,7 @@ export function CalendlyLinkButton({ applicationId }: Props) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      setError('Copy failed — select and copy manually.')
+      setError(t('calLink.copyFailed'))
     }
   }
 
@@ -52,19 +54,19 @@ export function CalendlyLinkButton({ applicationId }: Props) {
     <>
       <Button variant="outline" size="sm" onClick={onOpen} className="gap-2">
         <CalendarIcon className="h-3.5 w-3.5" />
-        Calendly link
+        {t('calLink.button')}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Calendly scheduling link</DialogTitle>
+            <DialogTitle>{t('calLink.title')}</DialogTitle>
             <DialogDescription>
-              Send this to the candidate. When they book, HRHandle will create the interview record automatically.
+              {t('calLink.desc')}
             </DialogDescription>
           </DialogHeader>
 
-          {isPending && <p className="text-sm text-muted-foreground">Generating link…</p>}
+          {isPending && <p className="text-sm text-muted-foreground">{t('calLink.generating')}</p>}
 
           {error && (
             <Alert variant="destructive">
@@ -77,13 +79,13 @@ export function CalendlyLinkButton({ applicationId }: Props) {
               <Input id="calendly-link-url" readOnly value={url} className="font-mono text-xs" />
               <Button onClick={onCopy} className="gap-2">
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? 'Copied' : 'Copy link'}
+                {copied ? t('offer.copied') : t('applyForm.copyLink')}
               </Button>
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>Close</Button>
+            <Button variant="ghost" onClick={() => setOpen(false)}>{t('common.close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

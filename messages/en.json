@@ -2328,6 +2328,27 @@
     "switchAria": "Switch active application",
     "hint": "Only live applications appear here. Closed ones live in History above."
   },
+  "intPage": {
+    "desc": "Connect external services to enhance your workflow.",
+    "slackTeamsTitle": "Slack & Microsoft Teams notifications",
+    "slackTeamsDesc": "Send messages to your team when applications, offers, and interviews change. This is a separate connection from <b>Microsoft (Calendar + Teams)</b> above — that one creates Teams <em>meetings</em>; this one posts team <em>notifications</em>.",
+    "configure": "Configure →",
+    "calendlyDesc": "Let candidates self-schedule interviews directly from your Calendly link."
+  },
+  "calLink": {
+    "copyFailed": "Copy failed — select and copy manually.",
+    "button": "Calendly link",
+    "title": "Calendly scheduling link",
+    "desc": "Send this to the candidate. When they book, HRHandle will create the interview record automatically.",
+    "generating": "Generating link…"
+  },
+  "calPicker": {
+    "pickFirst": "Pick an event type first.",
+    "saved": "Saved.",
+    "noEventTypes": "No active event types found in your Calendly account. Create one in Calendly, then refresh this page.",
+    "placeholder": "Select an event type",
+    "eventOption": "{name} · {duration} min"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",
