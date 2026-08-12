@@ -60,7 +60,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (7) components/settings/google-calendar-connect.tsx
 - [ ] (7) components/pipeline/list-view.tsx
 - [x] (7) components/global-search/global-search-dialog.tsx
-- [ ] (6) components/settings/rejection-reasons-manager.tsx
+- [x] (6) components/settings/rejection-reasons-manager.tsx
 - [x] (6) components/subscription/plan-cards.tsx
 - [ ] (6) components/vacancies/batch-rejection-dialog.tsx
 - [ ] (5) app/(dashboard)/vacancies/[id]/pipeline/page.tsx
@@ -91,11 +91,11 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (3) components/integrations/calendly-link-button.tsx
 - [ ] (3) components/vacancies/detail/vacancy-header.tsx
 - [ ] (3) components/vacancies/screening-questions-card.tsx
-- [ ] (2) app/(dashboard)/settings/audit-log/page.tsx
-- [ ] (2) app/(dashboard)/settings/team/page.tsx
-- [ ] (2) app/(dashboard)/settings/layout.tsx
-- [ ] (2) app/(dashboard)/settings/notifications/page.tsx
-- [ ] (2) app/(dashboard)/settings/rejection-reasons/page.tsx
+- [x] (2) app/(dashboard)/settings/audit-log/page.tsx
+- [x] (2) app/(dashboard)/settings/team/page.tsx
+- [x] (2) app/(dashboard)/settings/layout.tsx
+- [x] (2) app/(dashboard)/settings/notifications/page.tsx
+- [x] (2) app/(dashboard)/settings/rejection-reasons/page.tsx
 - [ ] (2) components/guide/guide-shell.tsx
 - [ ] (2) components/candidates/delete-candidate-dialog.tsx
 - [ ] (2) components/apply/job-description-block.tsx
@@ -108,11 +108,11 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (2) components/vacancies/copy-apply-link-button.tsx
 - [ ] (2) components/vacancies/vacancy-applications-toolbar.tsx
 - [ ] (2) components/vacancies/delete-vacancy-button.tsx
-- [ ] (1) app/(dashboard)/settings/security/page.tsx
-- [ ] (1) app/(dashboard)/settings/email-templates/page.tsx
-- [ ] (1) app/(dashboard)/settings/trash/page.tsx
-- [ ] (1) app/(dashboard)/settings/integrations/webhooks/page.tsx
-- [ ] (1) app/(dashboard)/settings/custom-fields/page.tsx
+- [x] (1) app/(dashboard)/settings/security/page.tsx
+- [x] (1) app/(dashboard)/settings/email-templates/page.tsx
+- [x] (1) app/(dashboard)/settings/trash/page.tsx
+- [x] (1) app/(dashboard)/settings/integrations/webhooks/page.tsx
+- [x] (1) app/(dashboard)/settings/custom-fields/page.tsx
 - [ ] (1) app/(dashboard)/layout.tsx
 - [ ] (1) app/(dashboard)/vacancies/[id]/edit/page.tsx
 - [ ] (1) components/guide/guide-card.tsx

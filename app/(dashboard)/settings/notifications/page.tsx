@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { NotificationPreferencesForm } from '@/components/settings/notification-preferences-form'
 import {
@@ -18,6 +19,7 @@ import {
  * org-level `enabled_events` filter.
  */
 export default async function NotificationsSettingsPage() {
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -46,9 +48,9 @@ export default async function NotificationsSettingsPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Notifications</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('settings.nav.notifications')}</h2>
         <p className="text-sm text-muted-foreground">
-          Per-user preferences. Choose how you hear about each event.
+          {t('notifPrefs.subtitle')}
         </p>
       </div>
       <NotificationPreferencesForm initial={initial} slackAvailable={slackAvailable} />

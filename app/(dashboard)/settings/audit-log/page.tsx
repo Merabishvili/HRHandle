@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { Download } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -26,6 +27,7 @@ export default async function AuditLogPage({
 }: {
   searchParams: SearchParams
 }) {
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -66,15 +68,15 @@ export default async function AuditLogPage({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Audit log</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('settingsPage.auditLog')}</h2>
           <p className="text-sm text-muted-foreground">
-            Every meaningful action in your workspace — status changes, AI invocations, OAuth connects, deletes, offers — captured here for compliance and incident review. Read-only.
+            {t('settingsPage.auditLogSub')}
           </p>
         </div>
         <Button variant="outline" size="sm" asChild>
           <Link href={exportHref}>
             <Download className="mr-2 h-3.5 w-3.5" />
-            Export CSV
+            {t('settingsPage.exportCsv')}
           </Link>
         </Button>
       </div>

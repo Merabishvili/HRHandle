@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -32,6 +33,7 @@ function ReasonRow({
   onUpdated: (r: RejectionReason) => void
   onDeleted: (id: string) => void
 }) {
+  const t = useTranslations()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(reason.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -95,18 +97,18 @@ function ReasonRow({
         <a
           href="/settings/email-templates"
           className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 hover:underline"
-          title="This reason has a linked email template"
+          title={t('rejectReasons.templateLinkedTitle')}
         >
           <Check className="h-3 w-3" aria-hidden />
-          Template configured
+          {t('rejectReasons.templateConfigured')}
         </a>
       ) : (
         <a
           href="/settings/email-templates"
           className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground hover:underline"
-          title="No template linked — the default rejection copy is used"
+          title={t('rejectReasons.noTemplateTitle')}
         >
-          No template · default copy
+          {t('rejectReasons.noTemplateCopy')}
         </a>
       )}
       <span className="flex-1" />
@@ -121,11 +123,11 @@ function ReasonRow({
         </Button>
         {confirmDelete ? (
           <>
-            <span className="text-xs text-destructive">Delete?</span>
+            <span className="text-xs text-destructive">{t('rejectTpl.deleteConfirm')}</span>
             <Button size="sm" variant="destructive" onClick={handleDelete} disabled={isPending} className="h-7 px-2 text-xs">
-              {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Yes'}
+              {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : t('rejectTpl.yes')}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} className="h-7 px-2 text-xs">No</Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} className="h-7 px-2 text-xs">{t('rejectTpl.no')}</Button>
           </>
         ) : (
           <Button
@@ -141,6 +143,7 @@ function ReasonRow({
 }
 
 export function RejectionReasonsManager({ initialReasons, reasonIdsWithTemplate = [] }: Props) {
+  const t = useTranslations()
   const [reasons, setReasons] = useState<RejectionReason[]>(initialReasons)
   const templateSet = new Set(reasonIdsWithTemplate)
   const [newName, setNewName] = useState('')
@@ -163,7 +166,7 @@ export function RejectionReasonsManager({ initialReasons, reasonIdsWithTemplate 
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        These reasons appear when moving a candidate to a rejected stage. During rejection, you can choose whether to send an email to the candidate.
+        {t('rejectReasons.intro')}
       </p>
 
       {error && (
@@ -185,7 +188,7 @@ export function RejectionReasonsManager({ initialReasons, reasonIdsWithTemplate 
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground italic">No rejection reasons yet.</p>
+        <p className="text-sm text-muted-foreground italic">{t('rejectReasons.empty')}</p>
       )}
 
       {!atLimit && (
@@ -194,19 +197,19 @@ export function RejectionReasonsManager({ initialReasons, reasonIdsWithTemplate 
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-            placeholder="e.g. Overqualified, Salary mismatch, No response…"
+            placeholder={t('rejectReasons.placeholder')}
             disabled={isPending}
             maxLength={200}
             className="text-sm"
           />
           <Button size="sm" onClick={handleAdd} disabled={isPending || !newName.trim()}>
             {isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Plus className="mr-2 h-3.5 w-3.5" />}
-            Add
+            {t('wizard.add')}
           </Button>
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">{reasons.length} / {MAX_REASONS} reasons</p>
+      <p className="text-xs text-muted-foreground">{t('rejectReasons.count', { count: reasons.length, max: MAX_REASONS })}</p>
     </div>
   )
 }

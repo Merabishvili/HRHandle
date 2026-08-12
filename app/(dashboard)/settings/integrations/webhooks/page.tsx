@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import { WebhooksManager } from '@/components/integrations/webhooks-manager'
 export const metadata = { title: 'Slack & Teams notifications — HRHandle' }
 
 export default async function WebhooksSettingsPage() {
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -31,14 +33,14 @@ export default async function WebhooksSettingsPage() {
     <div className="max-w-3xl space-y-6">
       <Button asChild variant="ghost" size="sm" className="gap-2">
         <Link href="/settings/integrations">
-          <ArrowLeft className="h-4 w-4" /> Back to integrations
+          <ArrowLeft className="h-4 w-4" /> {t('settingsPage.backToIntegrations')}
         </Link>
       </Button>
 
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Slack &amp; Microsoft Teams notifications</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('settingsPage.webhooksTitle')}</h1>
         <p className="text-sm text-muted-foreground">
-          Add an incoming webhook URL from Slack or Teams, choose which events to receive, and HRHandle will POST messages to that channel.
+          {t('settingsPage.webhooksSub')}
         </p>
       </div>
 

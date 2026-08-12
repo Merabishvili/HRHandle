@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChangePasswordForm } from '@/components/settings/change-password-form'
@@ -22,6 +23,7 @@ import { listMyActiveSessions } from '@/lib/actions/active-sessions'
  * 058's SECURITY DEFINER wrappers around auth.sessions.
  */
 export default async function SecuritySettingsPage() {
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -85,11 +87,11 @@ export default async function SecuritySettingsPage() {
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Password</CardTitle>
+            <CardTitle>{t('settingsPage.password')}</CardTitle>
             <CardDescription>
               {isOAuthOnly
-                ? 'Managed by your social sign-in provider.'
-                : 'You will remain signed in on this device after updating.'}
+                ? t('settingsPage.passwordOAuth')
+                : t('settingsPage.passwordDefault')}
             </CardDescription>
           </CardHeader>
           <CardContent>

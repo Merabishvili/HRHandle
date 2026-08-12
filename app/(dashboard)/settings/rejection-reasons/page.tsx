@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { RejectionReasonsManager } from '@/components/settings/rejection-reasons-manager'
 import { getRejectionReasons } from '@/lib/actions/rejection-reasons'
 import { getRejectionTemplates } from '@/lib/actions/rejection-templates'
 
 export default async function RejectionReasonsSettingsPage() {
+  const tr = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -36,14 +38,11 @@ export default async function RejectionReasonsSettingsPage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-foreground">Rejection reasons</h2>
+        <h2 className="text-lg font-semibold text-foreground">{tr('settingsPage.rejectionReasons')}</h2>
         <p className="text-sm text-muted-foreground">
-          Define the reasons used when a candidate is not moving forward. Up to 50 reasons.
-          Configure the email templates for each reason in{' '}
-          <a href="/settings/email-templates" className="underline underline-offset-2 hover:text-foreground">
-            Email templates
-          </a>
-          .
+          {tr.rich('settingsPage.rejectionReasonsSub', {
+            link: (c) => <a href="/settings/email-templates" className="underline underline-offset-2 hover:text-foreground">{c}</a>,
+          })}
         </p>
       </div>
       <RejectionReasonsManager

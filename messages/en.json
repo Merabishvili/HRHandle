@@ -2032,6 +2032,38 @@
     "change": "Change photo",
     "hint": "JPG, PNG, or WebP · up to 2 MB."
   },
+  "rejectReasons": {
+    "templateLinkedTitle": "This reason has a linked email template",
+    "templateConfigured": "Template configured",
+    "noTemplateTitle": "No template linked — the default rejection copy is used",
+    "noTemplateCopy": "No template · default copy",
+    "intro": "These reasons appear when moving a candidate to a rejected stage. During rejection, you can choose whether to send an email to the candidate.",
+    "empty": "No rejection reasons yet.",
+    "placeholder": "e.g. Overqualified, Salary mismatch, No response…",
+    "count": "{count} / {max} reasons"
+  },
+  "settingsPage": {
+    "settings": "Settings",
+    "settingsSub": "Manage your account and organization settings.",
+    "auditLog": "Audit log",
+    "auditLogSub": "Every meaningful action in your workspace — status changes, AI invocations, OAuth connects, deletes, offers — captured here for compliance and incident review. Read-only.",
+    "exportCsv": "Export CSV",
+    "teamSub": "Manage team members and send invitations.",
+    "rejectionReasons": "Rejection reasons",
+    "rejectionReasonsSub": "Define the reasons used when a candidate is not moving forward. Up to 50 reasons. Configure the email templates for each reason in <link>Email templates</link>.",
+    "password": "Password",
+    "passwordOAuth": "Managed by your social sign-in provider.",
+    "passwordDefault": "You will remain signed in on this device after updating.",
+    "emailTemplates": "Email templates",
+    "emailTemplatesSub": "Customise the emails sent to candidates. Use variables to personalise the content.",
+    "trash": "Trash",
+    "trashSub": "Soft-deleted candidates and vacancies stay here for 30 days. After that, the daily purge cron irreversibly removes them. Restore brings them back into the dashboard; for candidates, any applications that were cascade-deleted with them are restored too.",
+    "webhooksTitle": "Slack & Microsoft Teams notifications",
+    "webhooksSub": "Add an incoming webhook URL from Slack or Teams, choose which events to receive, and HRHandle will POST messages to that channel.",
+    "customFields": "Custom fields",
+    "customFieldsSub": "Define custom fields for candidates and vacancies. Up to 20 fields per entity type.",
+    "backToIntegrations": "Back to integrations"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",
