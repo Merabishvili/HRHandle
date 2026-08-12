@@ -58,11 +58,11 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (7) components/settings/audit-log-table.tsx
 - [x] (7) components/settings/microsoft-connect.tsx
 - [x] (7) components/settings/google-calendar-connect.tsx
-- [ ] (7) components/pipeline/list-view.tsx
+- [x] (7) components/pipeline/list-view.tsx
 - [x] (7) components/global-search/global-search-dialog.tsx
 - [x] (6) components/settings/rejection-reasons-manager.tsx
 - [x] (6) components/subscription/plan-cards.tsx
-- [ ] (6) components/vacancies/batch-rejection-dialog.tsx
+- [x] (6) components/vacancies/batch-rejection-dialog.tsx
 - [ ] (5) app/(dashboard)/vacancies/[id]/pipeline/page.tsx
 - [ ] (5, partial) app/(dashboard)/vacancies/page.tsx
 - [ ] (5) components/candidates/add-application-dialog.tsx
@@ -73,7 +73,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (5) components/settings/danger-zone.tsx
 - [x] (5) components/subscription/payment-methods.tsx
 - [x] (5) components/dashboard/notifications-bell.tsx
-- [ ] (5) components/vacancies/add-candidate-to-vacancy-dialog.tsx
+- [x] (5) components/vacancies/add-candidate-to-vacancy-dialog.tsx
 - [ ] (4) app/(dashboard)/settings/integrations/page.tsx
 - [ ] (4) components/candidates/metadata-footer.tsx
 - [ ] (4) components/candidates/profile/recent-merge-banner.tsx

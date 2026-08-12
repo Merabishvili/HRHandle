@@ -2,11 +2,13 @@
 
 import { Fragment, useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { ChevronRight } from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { getStageStyle, isTerminalStage, STALE_TEXT } from '@/lib/pipeline/stage-style'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { timeInStage } from '@/lib/pipeline/time-in-stage'
 import { toDisplayName } from '@/lib/format-name'
 import { cn } from '@/lib/utils'
@@ -36,6 +38,7 @@ export function ListView({
   onToggleSelect,
   onToggleAll,
 }: ListViewProps) {
+  const t = useTranslations()
   const [closedOpen, setClosedOpen] = useState(false)
 
   // `statuses` arrives sorted by sort_order. Split active vs terminal so the
@@ -65,14 +68,14 @@ export function ListView({
                 <Checkbox
                   checked={allSelected}
                   onCheckedChange={(v) => onToggleAll(v === true)}
-                  aria-label="Select all candidates"
+                  aria-label={t('listView.selectAll')}
                 />
               </th>
-              <th className="px-3 py-2.5">Candidate</th>
-              <th className="px-3 py-2.5">Vacancy</th>
-              <th className="px-3 py-2.5">In stage</th>
-              <th className="px-3 py-2.5">Fit</th>
-              <th className="px-3 py-2.5">Source</th>
+              <th className="px-3 py-2.5">{t('listView.candidate')}</th>
+              <th className="px-3 py-2.5">{t('candWizard.review.vacancy')}</th>
+              <th className="px-3 py-2.5">{t('listView.inStage')}</th>
+              <th className="px-3 py-2.5">{t('listView.fit')}</th>
+              <th className="px-3 py-2.5">{t('candWizard.application.sourceLabel')}</th>
             </tr>
           </thead>
           <tbody>
@@ -88,7 +91,7 @@ export function ListView({
                           className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
                           style={{ background: style.pillBg, color: style.pillText }}
                         >
-                          {stage.name}
+                          {statusLabel(t, stage.code, stage.name)}
                         </span>
                         <span className="text-xs font-semibold tabular-nums text-muted-foreground">
                           {rows.length}
@@ -99,7 +102,7 @@ export function ListView({
                   {rows.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-3 py-3 text-center text-xs text-muted-foreground/60">
-                        No candidates
+                        {t('pipeline.noCandidates')}
                       </td>
                     </tr>
                   ) : (
@@ -133,10 +136,10 @@ export function ListView({
               className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', closedOpen && 'rotate-90')}
               aria-hidden
             />
-            <span className="text-sm font-bold text-foreground">Closed</span>
+            <span className="text-sm font-bold text-foreground">{t('pipeline.closed')}</span>
             <span className="text-xs text-muted-foreground">
               {terminalStages
-                .map((s) => `${s.name} ${byCode.get(s.code)?.length ?? 0}`)
+                .map((s) => `${statusLabel(t, s.code, s.name)} ${byCode.get(s.code)?.length ?? 0}`)
                 .join(' · ')}
             </span>
           </button>
@@ -162,11 +165,17 @@ export function ListView({
                           className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                           style={{ background: style.pillBg, color: style.pillText }}
                         >
-                          {terminalStages.find((s) => s.code === card.stageCode)?.name ?? card.stageCode}
+                          {statusLabel(
+                            t,
+                            card.stageCode,
+                            terminalStages.find((s) => s.code === card.stageCode)?.name ?? card.stageCode,
+                          )}
                         </span>
                       </td>
                       <td className="px-3 py-2 text-xs text-muted-foreground">
-                        {card.rejectionReason ? `Reason: ${card.rejectionReason}` : `${time.label} ago`}
+                        {card.rejectionReason
+                          ? t('listView.reason', { reason: card.rejectionReason })
+                          : t('pipeline.timeAgo', { time: time.label })}
                       </td>
                     </tr>
                   )
@@ -189,6 +198,7 @@ function CandidateRow({
   selected: boolean
   onToggleSelect: (id: string, next: boolean) => void
 }) {
+  const t = useTranslations()
   const time = timeInStage(card.inStageSince)
   const isStale = time.isStale && !isTerminalStage(card.stageCode)
   const fitLabel = card.fitScore === null ? '—' : card.fitScore.toFixed(1)
@@ -202,7 +212,7 @@ function CandidateRow({
         <Checkbox
           checked={selected}
           onCheckedChange={(v) => onToggleSelect(card.applicationId, v === true)}
-          aria-label={`Select ${card.firstName} ${card.lastName}`}
+          aria-label={t('pipeline.selectNamed', { name: `${card.firstName} ${card.lastName}` })}
         />
       </td>
       <td className="px-3 py-2">
@@ -215,7 +225,7 @@ function CandidateRow({
           </Link>
           {isFresh && (
             <span className="shrink-0 rounded bg-[oklch(0.93_0.05_250)] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-[oklch(0.42_0.16_250)]">
-              New
+              {t('pipeline.newBadge')}
             </span>
           )}
         </span>
@@ -230,7 +240,7 @@ function CandidateRow({
           style={{ color: isStale ? STALE_TEXT : undefined, fontWeight: isStale ? 600 : undefined }}
         >
           {time.label}
-          {isStale ? ' · stale' : ''}
+          {isStale ? t('listView.staleSuffix') : ''}
         </span>
       </td>
       <td className="px-3 py-2 text-xs font-semibold tabular-nums text-foreground">{fitLabel}</td>

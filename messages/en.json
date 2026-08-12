@@ -2091,6 +2091,32 @@
     "webhookHint": "HRHandle will receive webhook events when candidates book or cancel.",
     "eventTypeLabel": "Event type used for candidate interviews"
   },
+  "listView": {
+    "selectAll": "Select all candidates",
+    "candidate": "Candidate",
+    "inStage": "In stage",
+    "fit": "Fit",
+    "reason": "Reason: {reason}",
+    "staleSuffix": " · stale"
+  },
+  "batchReject": {
+    "title": "Reject {count, plural, one {# candidate} other {# candidates}}",
+    "description": "Marks each selected application as rejected. If \"Send rejection email\" is on, each candidate receives a personalised email using the template below.",
+    "sendEmailEach": "Send rejection email to each candidate",
+    "rejecting": "Rejecting…",
+    "confirm": "Reject {count}",
+    "toastSuccess": "Rejected {count, plural, one {# candidate} other {# candidates}}.",
+    "toastNone": "Could not reject any of the {count} selected candidates.",
+    "toastPartial": "Rejected {succeeded}; {failed} failed. Try the failed ones individually to see why."
+  },
+  "addCandVac": {
+    "title": "Add candidate to vacancy",
+    "searchPlaceholder": "Search by name or email…",
+    "noMatch": "No candidates match your search.",
+    "noneAvailable": "No candidates available to add.",
+    "addBtn": "Add",
+    "cantFind": "Can't find who you're looking for?"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

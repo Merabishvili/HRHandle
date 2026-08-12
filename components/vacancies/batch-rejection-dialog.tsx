@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -54,6 +55,7 @@ export function BatchRejectionDialog({
   templates,
   onSuccess,
 }: BatchRejectionDialogProps) {
+  const tr = useTranslations()
   const [reasonId, setReasonId] = useState<string>(reasons[0]?.id ?? '')
   const [templateId, setTemplateId] = useState<string>(NO_TEMPLATE)
   const [sendEmail, setSendEmail] = useState(true)
@@ -97,15 +99,11 @@ export function BatchRejectionDialog({
 
       const { succeeded, failed } = result.data
       if (failed === 0) {
-        toast.success(
-          `Rejected ${succeeded} ${succeeded === 1 ? 'candidate' : 'candidates'}.`,
-        )
+        toast.success(tr('batchReject.toastSuccess', { count: succeeded }))
       } else if (succeeded === 0) {
-        toast.error(`Could not reject any of the ${count} selected candidates.`)
+        toast.error(tr('batchReject.toastNone', { count }))
       } else {
-        toast.warning(
-          `Rejected ${succeeded}; ${failed} failed. Try the failed ones individually to see why.`,
-        )
+        toast.warning(tr('batchReject.toastPartial', { succeeded, failed }))
       }
 
       onOpenChange(false)
@@ -117,31 +115,25 @@ export function BatchRejectionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            Reject {count} {count === 1 ? 'candidate' : 'candidates'}
-          </DialogTitle>
-          <DialogDescription>
-            Marks each selected application as rejected. If &quot;Send rejection email&quot; is
-            on, each candidate receives a personalised email using the template below.
-          </DialogDescription>
+          <DialogTitle>{tr('batchReject.title', { count })}</DialogTitle>
+          <DialogDescription>{tr('batchReject.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label>Rejection reason</Label>
+            <Label>{tr('rejectDialog.reason')}</Label>
             {reasons.length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                No rejection reasons configured. You can still reject — add reasons in
-                Settings → Rejection reasons.
+                {tr('rejectDialog.noReasons')}
               </p>
             ) : (
               <SearchableSelect
                 value={reasonId}
                 onValueChange={setReasonId}
                 disabled={isPending}
-                placeholder="Select a reason…"
-                searchPlaceholder="Search reasons…"
-                emptyText="No reasons match your search."
+                placeholder={tr('rejectDialog.selectReason')}
+                searchPlaceholder={tr('rejectDialog.searchReasons')}
+                emptyText={tr('rejectDialog.noReasonsMatch')}
                 options={reasons.map((r) => ({
                   value: r.id,
                   label: r.name,
@@ -153,7 +145,7 @@ export function BatchRejectionDialog({
 
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <Label htmlFor="batch-send-email" className="cursor-pointer font-medium">
-              Send rejection email to each candidate
+              {tr('batchReject.sendEmailEach')}
             </Label>
             <Switch
               id="batch-send-email"
@@ -165,22 +157,21 @@ export function BatchRejectionDialog({
 
           {sendEmail && (
             <div className="space-y-1.5">
-              <Label>Email template</Label>
+              <Label>{tr('rejectDialog.emailTemplate')}</Label>
               {templates.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  No templates configured. A default email will be sent. Configure
-                  templates in Settings → Email templates.
+                  {tr('rejectDialog.noTemplates')}
                 </p>
               ) : (
                 <SearchableSelect
                   value={templateId}
                   onValueChange={setTemplateId}
                   disabled={isPending}
-                  placeholder="Select a template…"
-                  searchPlaceholder="Search templates…"
-                  emptyText="No templates match your search."
+                  placeholder={tr('rejectDialog.selectTemplate')}
+                  searchPlaceholder={tr('rejectDialog.searchTemplates')}
+                  emptyText={tr('rejectDialog.noTemplatesMatch')}
                   options={[
-                    { value: NO_TEMPLATE, label: '— No template (use default) —' },
+                    { value: NO_TEMPLATE, label: tr('rejectDialog.noTemplateOption') },
                     ...templates.map((t) => ({
                       value: t.id,
                       label: t.reason_id === reasonId && reasonId ? `${t.name} ✓` : t.name,
@@ -195,7 +186,7 @@ export function BatchRejectionDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Cancel
+            {tr('common.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -205,10 +196,10 @@ export function BatchRejectionDialog({
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Rejecting…
+                {tr('batchReject.rejecting')}
               </>
             ) : (
-              `Reject ${count}`
+              tr('batchReject.confirm', { count })
             )}
           </Button>
         </DialogFooter>
