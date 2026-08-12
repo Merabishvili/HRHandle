@@ -1945,6 +1945,25 @@
   "mergeBanner.confirmBody2": { "en": "Applications, notes, documents, activity and scorecards that were combined into this candidate during the merge <b>stay here</b> — they won't be moved back. Re-attach them manually if needed.", "ru": "Заявки, заметки, документы, активность и оценочные листы, объединённые с этим кандидатом при слиянии, <b>останутся здесь</b> — они не будут перемещены обратно. При необходимости прикрепите их вручную.", "ka": "განაცხადები, შენიშვნები, დოკუმენტები, აქტივობა და შეფასების ბარათები, რომლებიც გაერთიანებისას ამ კანდიდატს დაუკავშირდა, <b>აქ დარჩება</b> — ისინი უკან არ გადავა. საჭიროების შემთხვევაში ხელით მიამაგრეთ." },
   "mergeBanner.splitting": { "en": "Splitting…", "ru": "Разъединение…", "ka": "მიმდინარეობს გაყოფა…" },
 
+  "copyLink.button": { "en": "Copy apply link", "ru": "Копировать ссылку для отклика", "ka": "განაცხადის ბმულის კოპირება" },
+  "copyLink.copied": { "en": "Apply link copied to clipboard.", "ru": "Ссылка для отклика скопирована.", "ka": "განაცხადის ბმული დაკოპირდა." },
+  "copyLink.failed": { "en": "Could not copy — your browser blocked clipboard access.", "ru": "Не удалось скопировать — браузер заблокировал доступ к буферу обмена.", "ka": "კოპირება ვერ მოხერხდა — თქვენმა ბრაუზერმა დაბლოკა ბუფერზე წვდომა." },
+
+  "delVac.deleted": { "en": "Vacancy \"{title}\" deleted.", "ru": "Вакансия «{title}» удалена.", "ka": "ვაკანსია „{title}“ წაიშალა." },
+  "delVac.confirmTitle": { "en": "Delete vacancy?", "ru": "Удалить вакансию?", "ka": "წავშალოთ ვაკანსია?" },
+  "delVac.confirmBody": { "en": "<b>{title}</b> will be removed from the list. Existing applications stay on the candidate records. This action can be reversed by an admin.", "ru": "<b>{title}</b> будет удалена из списка. Существующие заявки останутся в записях кандидатов. Это действие может отменить администратор.", "ka": "<b>{title}</b> წაიშლება სიიდან. არსებული განაცხადები დარჩება კანდიდატების ჩანაწერებში. ამ მოქმედების გაუქმება ადმინისტრატორს შეუძლია." },
+  "delVac.confirmAction": { "en": "Delete vacancy", "ru": "Удалить вакансию", "ka": "ვაკანსიის წაშლა" },
+
+  "liShare.button": { "en": "Share on LinkedIn", "ru": "Поделиться в LinkedIn", "ka": "LinkedIn-ზე გაზიარება" },
+
+  "bulkMove.thisStage": { "en": "this stage", "ru": "этот этап", "ka": "ამ ეტაპზე" },
+  "bulkMove.title": { "en": "Move {count, plural, one {# application} other {# applications}} to <stage>{name}</stage>?", "ru": "Переместить {count, plural, one {# заявку} few {# заявки} many {# заявок} other {# заявки}} на <stage>{name}</stage>?", "ka": "გადავიტანოთ {count, plural, one {# განაცხადი} other {# განაცხადი}} <stage>{name}</stage>-ზე?" },
+  "bulkMove.description": { "en": "Each application's status will change, an audit-log entry will be written, and (if your org has opted in) a status-change email will be sent to the candidate. Rows already at this stage are skipped.", "ru": "Статус каждой заявки изменится, будет записана запись в журнал аудита, и (если ваша организация подключила это) кандидату будет отправлено письмо об изменении статуса. Строки, уже находящиеся на этом этапе, пропускаются.", "ka": "თითოეული განაცხადის სტატუსი შეიცვლება, დაიწერება აუდიტის ჟურნალის ჩანაწერი და (თუ თქვენი ორგანიზაცია ჩართულია) კანდიდატს გაეგზავნება სტატუსის ცვლილების იმეილი. სტრიქონები, რომლებიც უკვე ამ ეტაპზეა, გამოტოვდება." },
+  "bulkMove.moving": { "en": "Moving…", "ru": "Перемещение…", "ka": "მიმდინარეობს გადატანა…" },
+  "bulkMove.move": { "en": "Move", "ru": "Переместить", "ka": "გადატანა" },
+
+  "appToolbar.allStatuses": { "en": "All statuses", "ru": "Все статусы", "ka": "ყველა სტატუსი" },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },

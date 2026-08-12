@@ -2179,6 +2179,30 @@
     "confirmBody2": "Applications, notes, documents, activity and scorecards that were combined into this candidate during the merge <b>stay here</b> — they won't be moved back. Re-attach them manually if needed.",
     "splitting": "Splitting…"
   },
+  "copyLink": {
+    "button": "Copy apply link",
+    "copied": "Apply link copied to clipboard.",
+    "failed": "Could not copy — your browser blocked clipboard access."
+  },
+  "delVac": {
+    "deleted": "Vacancy \"{title}\" deleted.",
+    "confirmTitle": "Delete vacancy?",
+    "confirmBody": "<b>{title}</b> will be removed from the list. Existing applications stay on the candidate records. This action can be reversed by an admin.",
+    "confirmAction": "Delete vacancy"
+  },
+  "liShare": {
+    "button": "Share on LinkedIn"
+  },
+  "bulkMove": {
+    "thisStage": "this stage",
+    "title": "Move {count, plural, one {# application} other {# applications}} to <stage>{name}</stage>?",
+    "description": "Each application's status will change, an audit-log entry will be written, and (if your org has opted in) a status-change email will be sent to the candidate. Rows already at this stage are skipped.",
+    "moving": "Moving…",
+    "move": "Move"
+  },
+  "appToolbar": {
+    "allStatuses": "All statuses"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

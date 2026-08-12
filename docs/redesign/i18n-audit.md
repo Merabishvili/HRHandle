@@ -105,9 +105,9 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (2) components/custom-fields/custom-fields-form.tsx
 - [ ] (2) components/interviews/interview-form-parts.tsx
 - [ ] (2) components/vacancies/vacancy-questions.tsx
-- [ ] (2) components/vacancies/copy-apply-link-button.tsx
-- [ ] (2) components/vacancies/vacancy-applications-toolbar.tsx
-- [ ] (2) components/vacancies/delete-vacancy-button.tsx
+- [x] (2) components/vacancies/copy-apply-link-button.tsx
+- [x] (2) components/vacancies/vacancy-applications-toolbar.tsx
+- [x] (2) components/vacancies/delete-vacancy-button.tsx
 - [x] (1) app/(dashboard)/settings/security/page.tsx
 - [x] (1) app/(dashboard)/settings/email-templates/page.tsx
 - [x] (1) app/(dashboard)/settings/trash/page.tsx
@@ -133,5 +133,5 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (1) components/integrations/calendly-event-type-picker.tsx
 - [ ] (1) components/notes/mention-textarea.tsx
 - [x] (1) components/scorecards/share-scorecard-button.tsx
-- [ ] (1) components/vacancies/bulk-move-dialog.tsx
-- [ ] (1) components/vacancies/linkedin-share-button.tsx
+- [x] (1) components/vacancies/bulk-move-dialog.tsx
+- [x] (1) components/vacancies/linkedin-share-button.tsx

@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { Button } from '@/components/ui/button'
 import { Linkedin } from 'lucide-react'
 
@@ -60,14 +61,15 @@ function buildShareUrl(props: LinkedInShareButtonProps): string {
   return `https://www.linkedin.com/feed/?shareActive=true&text=${text}`
 }
 
-export function LinkedInShareButton(props: LinkedInShareButtonProps) {
+export async function LinkedInShareButton(props: LinkedInShareButtonProps) {
+  const t = await getTranslations()
   const href = buildShareUrl(props)
 
   return (
     <Button variant="outline" asChild>
       <a href={href} target="_blank" rel="noopener noreferrer">
         <Linkedin className="mr-2 h-4 w-4 text-[#0A66C2]" />
-        Share on LinkedIn
+        {t('liShare.button')}
       </a>
     </Button>
   )

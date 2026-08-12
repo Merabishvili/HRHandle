@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Loader2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,7 @@ export function DeleteVacancyButton({
   vacancyId: string
   vacancyTitle: string
 }) {
+  const t = useTranslations()
   const router = useRouter()
   const [isPending, setIsPending] = useState(false)
 
@@ -32,7 +34,7 @@ export function DeleteVacancyButton({
     setIsPending(true)
     const result = await deleteVacancy(vacancyId)
     if (result.success) {
-      toast.success(`Vacancy "${vacancyTitle}" deleted.`)
+      toast.success(t('delVac.deleted', { title: vacancyTitle }))
       router.push('/vacancies')
     } else {
       toast.error(result.error)
@@ -49,26 +51,24 @@ export function DeleteVacancyButton({
           ) : (
             <Trash2 className="mr-2 h-4 w-4" />
           )}
-          Delete
+          {t('common.delete')}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete vacancy?</AlertDialogTitle>
+          <AlertDialogTitle>{t('delVac.confirmTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            <strong>{vacancyTitle}</strong> will be removed from the list. Existing
-            applications stay on the candidate records. This action can be reversed
-            by an admin.
+            {t.rich('delVac.confirmBody', { title: vacancyTitle, b: (c) => <strong>{c}</strong> })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t('common.cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isPending ? 'Deleting…' : 'Delete vacancy'}
+            {isPending ? t('offer.deleting') : t('delVac.confirmAction')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

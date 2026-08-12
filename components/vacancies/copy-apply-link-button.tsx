@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Check, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ interface CopyApplyLinkButtonProps {
  * inside the apply-form configuration tab instead.
  */
 export function CopyApplyLinkButton({ token }: CopyApplyLinkButtonProps) {
+  const t = useTranslations()
   const [copied, setCopied] = useState(false)
 
   const onClick = async () => {
@@ -30,11 +32,11 @@ export function CopyApplyLinkButton({ token }: CopyApplyLinkButtonProps) {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
-      toast.success('Apply link copied to clipboard.')
+      toast.success(t('copyLink.copied'))
       setTimeout(() => setCopied(false), 2000)
     } catch {
       // Browsers without clipboard access in iframes or insecure contexts.
-      toast.error('Could not copy — your browser blocked clipboard access.')
+      toast.error(t('copyLink.failed'))
     }
   }
 
@@ -51,7 +53,7 @@ export function CopyApplyLinkButton({ token }: CopyApplyLinkButtonProps) {
       ) : (
         <Copy className="h-3.5 w-3.5" />
       )}
-      Copy apply link
+      {t('copyLink.button')}
     </Button>
   )
 }
