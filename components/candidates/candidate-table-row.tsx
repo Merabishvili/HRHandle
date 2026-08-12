@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -38,7 +39,7 @@ interface CandidateTableRowProps {
  * (A-002). Renders the fixed columns (name / status / linked vacancy), the
  * active optional columns via <CandidateOptionalCell>, and the row actions.
  */
-export function CandidateTableRow({
+export async function CandidateTableRow({
   candidate,
   applications,
   vacancyMap,
@@ -48,6 +49,7 @@ export function CandidateTableRow({
   fit,
   customFieldValueMap,
 }: CandidateTableRowProps) {
+  const t = await getTranslations()
   // Display casing only — some records are stored ALL-CAPS (CV/import). The
   // stored value is untouched; see lib/format-name.
   const fullName = toDisplayFullName(candidate.first_name, candidate.last_name)
@@ -74,7 +76,7 @@ export function CandidateTableRow({
           <div>
             <p className="font-medium text-foreground">{fullName}</p>
             {candidate.source && (
-              <p className="text-xs text-muted-foreground">via {candidate.source}</p>
+              <p className="text-xs text-muted-foreground">{t('candTable.via', { source: candidate.source })}</p>
             )}
           </div>
         </Link>
@@ -87,10 +89,10 @@ export function CandidateTableRow({
             variant="secondary"
             className={CANDIDATE_GENERAL_STATUS_COLORS[status.code]}
           >
-            {status.name}
+            {t.has(`candStatus.${status.code}`) ? t(`candStatus.${status.code}`) : status.name}
           </Badge>
         ) : (
-          <span className="text-sm text-muted-foreground">Not set</span>
+          <span className="text-sm text-muted-foreground">{t('candTable.notSet')}</span>
         )}
       </TableCell>
 
@@ -98,13 +100,13 @@ export function CandidateTableRow({
       <TableCell>
         {applications.length > 0 ? (
           <div className="space-y-0.5">
-            <p className="text-sm text-foreground">{firstVacancyTitle || 'Unknown vacancy'}</p>
+            <p className="text-sm text-foreground">{firstVacancyTitle || t('interviews.unknownVacancy')}</p>
             {extraCount > 0 && (
-              <p className="text-xs text-muted-foreground">+{extraCount} more</p>
+              <p className="text-xs text-muted-foreground">{t('candTable.moreCount', { count: extraCount })}</p>
             )}
           </div>
         ) : (
-          <span className="text-sm text-muted-foreground">Not linked</span>
+          <span className="text-sm text-muted-foreground">{t('billing.notLinked')}</span>
         )}
       </TableCell>
 
@@ -123,20 +125,20 @@ export function CandidateTableRow({
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Candidate actions">
+            <Button variant="ghost" size="icon" aria-label={t('candTable.actions')}>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/candidates/${candidate.id}`}>View details</Link>
+              <Link href={`/candidates/${candidate.id}`}>{t('vacancies.viewDetails')}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/candidates/${candidate.id}/edit`}>Edit candidate</Link>
+              <Link href={`/candidates/${candidate.id}/edit`}>{t('candTable.editCandidate')}</Link>
             </DropdownMenuItem>
             <CandidateStatusActions
               candidateId={candidate.id}
-              candidateName={`${candidate.first_name} ${candidate.last_name}`.trim() || 'this candidate'}
+              candidateName={`${candidate.first_name} ${candidate.last_name}`.trim() || t('candTable.thisCandidate')}
             />
           </DropdownMenuContent>
         </DropdownMenu>

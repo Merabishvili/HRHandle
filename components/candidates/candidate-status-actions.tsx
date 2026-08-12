@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { DeleteCandidateDialog } from '@/components/candidates/delete-candidate-dialog'
 
@@ -20,6 +21,7 @@ export function CandidateStatusActions({
   candidateId,
   candidateName,
 }: CandidateStatusActionsProps) {
+  const t = useTranslations()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   return (
@@ -35,7 +37,7 @@ export function CandidateStatusActions({
         }}
         className="text-destructive"
       >
-        Delete candidate
+        {t('candidates.deleteCandidate')}
       </DropdownMenuItem>
       <DeleteCandidateDialog
         candidateId={candidateId}

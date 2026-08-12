@@ -2117,6 +2117,28 @@
     "addBtn": "Add",
     "cantFind": "Can't find who you're looking for?"
   },
+  "addApp": {
+    "title": "Add to Vacancy",
+    "apply": "Apply",
+    "selectVacancy": "Please select a vacancy.",
+    "selectPlaceholder": "Select a vacancy…",
+    "noOpenVacancies": "No open vacancies available to apply to.",
+    "tooltipLimit": "Active on {max} vacancies — move one to Hired or Rejected, or archive it, before adding a new one.",
+    "atLimit": "This candidate is already active on {max} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one."
+  },
+  "candStatus": {
+    "active": "Active",
+    "hired": "Hired",
+    "archived": "Archived"
+  },
+  "candTable": {
+    "via": "via {source}",
+    "notSet": "Not set",
+    "moreCount": "+{count} more",
+    "actions": "Candidate actions",
+    "editCandidate": "Edit candidate",
+    "thisCandidate": "this candidate"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

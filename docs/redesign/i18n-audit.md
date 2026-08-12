@@ -65,9 +65,9 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (6) components/vacancies/batch-rejection-dialog.tsx
 - [ ] (5) app/(dashboard)/vacancies/[id]/pipeline/page.tsx
 - [ ] (5, partial) app/(dashboard)/vacancies/page.tsx
-- [ ] (5) components/candidates/add-application-dialog.tsx
+- [x] (5) components/candidates/add-application-dialog.tsx
 - [ ] (5) components/candidates/wizard/candidate-create-wizard.tsx
-- [ ] (5) components/candidates/candidate-table-row.tsx
+- [x] (5) components/candidates/candidate-table-row.tsx
 - [x] (5) components/settings/default-meeting-provider-select.tsx
 - [x] (5) components/settings/change-password-form.tsx
 - [x] (5) components/settings/danger-zone.tsx
@@ -121,7 +121,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (1) components/candidates/profile/repeat-applicant-banner.tsx
 - [ ] (1) components/candidates/profile/stage-tracker.tsx
 - [ ] (1) components/candidates/candidate-applications-list.tsx
-- [ ] (1) components/candidates/candidate-status-actions.tsx
+- [x] (1) components/candidates/candidate-status-actions.tsx
 - [ ] (1, partial) components/offers/offer-body.tsx
 - [x] (1) components/pipeline/cross-vacancy-card.tsx
 - [x] (1) components/pipeline/tinted-kanban-column.tsx

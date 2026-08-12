@@ -1889,6 +1889,25 @@
   "addCandVac.addBtn": { "en": "Add", "ru": "Добавить", "ka": "დამატება" },
   "addCandVac.cantFind": { "en": "Can't find who you're looking for?", "ru": "Не нашли нужного человека?", "ka": "ვერ პოულობთ ვისაც ეძებთ?" },
 
+  "addApp.title": { "en": "Add to Vacancy", "ru": "Добавить в вакансию", "ka": "ვაკანსიაზე დამატება" },
+  "addApp.apply": { "en": "Apply", "ru": "Добавить", "ka": "დამატება" },
+  "addApp.selectVacancy": { "en": "Please select a vacancy.", "ru": "Пожалуйста, выберите вакансию.", "ka": "გთხოვთ, აირჩიოთ ვაკანსია." },
+  "addApp.selectPlaceholder": { "en": "Select a vacancy…", "ru": "Выберите вакансию…", "ka": "აირჩიეთ ვაკანსია…" },
+  "addApp.noOpenVacancies": { "en": "No open vacancies available to apply to.", "ru": "Нет открытых вакансий для отклика.", "ka": "ღია ვაკანსიები, რომლებზეც განაცხადის გაგზავნაა შესაძლებელი, არ არის." },
+  "addApp.tooltipLimit": { "en": "Active on {max} vacancies — move one to Hired or Rejected, or archive it, before adding a new one.", "ru": "Активен на {max} вакансиях — переведите одну в «Нанят» или «Отклонён» либо заархивируйте, прежде чем добавлять новую.", "ka": "აქტიურია {max} ვაკანსიაზე — ახლის დამატებამდე ერთი გადაიტანეთ «დაქირავებულში» ან «უარყოფილში», ან დაარქივეთ." },
+  "addApp.atLimit": { "en": "This candidate is already active on {max} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one.", "ru": "Этот кандидат уже активен на {max} вакансиях. Переведите одну в «Нанят» или «Отклонён» либо заархивируйте, прежде чем добавлять новую.", "ka": "ეს კანდიდატი უკვე აქტიურია {max} ვაკანსიაზე. ახლის დამატებამდე ერთი გადაიტანეთ «დაქირავებულში» ან «უარყოფილში», ან დაარქივეთ." },
+
+  "candStatus.active": { "en": "Active", "ru": "Активный", "ka": "აქტიური" },
+  "candStatus.hired": { "en": "Hired", "ru": "Нанят", "ka": "დაქირავებული" },
+  "candStatus.archived": { "en": "Archived", "ru": "В архиве", "ka": "დაარქივებული" },
+
+  "candTable.via": { "en": "via {source}", "ru": "через {source}", "ka": "{source}-დან" },
+  "candTable.notSet": { "en": "Not set", "ru": "Не задан", "ka": "მითითებული არ არის" },
+  "candTable.moreCount": { "en": "+{count} more", "ru": "+ ещё {count}", "ka": "+ კიდევ {count}" },
+  "candTable.actions": { "en": "Candidate actions", "ru": "Действия с кандидатом", "ka": "კანდიდატის მოქმედებები" },
+  "candTable.editCandidate": { "en": "Edit candidate", "ru": "Редактировать кандидата", "ka": "კანდიდატის რედაქტირება" },
+  "candTable.thisCandidate": { "en": "this candidate", "ru": "этого кандидата", "ka": "ეს კანდიდატი" },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },
