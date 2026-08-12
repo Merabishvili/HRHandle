@@ -80,9 +80,9 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (4) components/subscription/billing-controls.tsx
 - [x] (4) components/vacancies/vacancy-form.tsx
 - [x] (4) components/vacancies/vacancy-applications-list.tsx
-- [ ] (3) app/(dashboard)/candidates/[id]/edit/page.tsx
-- [ ] (3) app/(dashboard)/candidates/import/page.tsx
-- [ ] (3) app/(dashboard)/interviews/new/page.tsx
+- [x] (3) app/(dashboard)/candidates/[id]/edit/page.tsx
+- [x] (3) app/(dashboard)/candidates/import/page.tsx
+- [x] (3) app/(dashboard)/interviews/new/page.tsx
 - [x] (3) components/candidates/activity-feed.tsx
 - [x] (3) components/candidates/wizard/step-path-select.tsx
 - [x] (3) components/candidates/profile/active-application-selector.tsx
@@ -102,8 +102,8 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (2) components/settings/avatar-upload.tsx
 - [ ] (2, partial) components/pipeline/review-mode.tsx
 - [ ] (2, partial) components/dashboard/sidebar.tsx
-- [ ] (2) components/custom-fields/custom-fields-form.tsx
-- [ ] (2) components/interviews/interview-form-parts.tsx
+- [x] (2) components/custom-fields/custom-fields-form.tsx
+- [x] (2) components/interviews/interview-form-parts.tsx
 - [x] (2) components/vacancies/vacancy-questions.tsx
 - [x] (2) components/vacancies/copy-apply-link-button.tsx
 - [x] (2) components/vacancies/vacancy-applications-toolbar.tsx
@@ -131,7 +131,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [ ] (1, partial) components/mfa/enroll-totp-dialog.tsx
 - [ ] (1, partial) components/dashboard/header.tsx
 - [x] (1) components/integrations/calendly-event-type-picker.tsx
-- [ ] (1) components/notes/mention-textarea.tsx
+- [x] (1) components/notes/mention-textarea.tsx
 - [x] (1) components/scorecards/share-scorecard-button.tsx
 - [x] (1) components/vacancies/bulk-move-dialog.tsx
 - [x] (1) components/vacancies/linkedin-share-button.tsx

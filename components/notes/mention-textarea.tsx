@@ -9,6 +9,7 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
 } from 'react'
+import { useTranslations } from 'next-intl'
 
 import { Textarea } from '@/components/ui/textarea'
 import type { MentionableMember } from '@/lib/notes/mentions'
@@ -41,6 +42,7 @@ export function MentionTextarea({
   className,
   id,
 }: MentionTextareaProps) {
+  const t = useTranslations()
   const ref = useRef<HTMLTextAreaElement | null>(null)
   const [trigger, setTrigger] = useState<{ start: number; query: string } | null>(null)
   const [hover, setHover] = useState(0)
@@ -159,7 +161,7 @@ export function MentionTextarea({
       {trigger && matches.length > 0 && (
         <ul
           role="listbox"
-          aria-label="Members to mention"
+          aria-label={t('mention.membersAria')}
           className="absolute left-0 right-0 z-20 mt-1 max-h-56 overflow-auto rounded-md border border-border bg-popover py-1 shadow-md"
         >
           {matches.map((m, i) => (

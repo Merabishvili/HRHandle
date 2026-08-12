@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -72,6 +73,7 @@ export default async function EditCandidatePage({
   params: Promise<PageParams>
 }) {
   const { id } = await params
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -184,14 +186,14 @@ const { data: vacanciesRaw } = await supabase
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/candidates/${id}`} aria-label="Back to candidate">
+          <Link href={`/candidates/${id}`} aria-label={t('editCand.back')}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit candidate</h1>
-          <p className="text-muted-foreground">Update candidate information.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('candTable.editCandidate')}</h1>
+          <p className="text-muted-foreground">{t('editCand.subtitle')}</p>
         </div>
       </div>
 

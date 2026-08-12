@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -56,6 +57,7 @@ export default async function NewInterviewPage({
   searchParams: Promise<SearchParams>
 }) {
   const { candidate: candidateId, vacancy: vacancyId } = await searchParams
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -140,14 +142,14 @@ export default async function NewInterviewPage({
     <div className="mx-auto max-w-[920px] space-y-6">
       <div className="flex items-start gap-3">
         <Button variant="ghost" size="icon" asChild className="mt-0.5">
-          <Link href="/interviews" aria-label="Back to interviews">
+          <Link href="/interviews" aria-label={t('newInt.back')}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Schedule interview</h1>
-          <p className="text-muted-foreground">Set up an interview with a candidate.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('interviews.scheduleInterview')}</h1>
+          <p className="text-muted-foreground">{t('newInt.subtitle')}</p>
         </div>
       </div>
 

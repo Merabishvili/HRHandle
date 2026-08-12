@@ -2349,6 +2349,28 @@
     "placeholder": "Select an event type",
     "eventOption": "{name} · {duration} min"
   },
+  "editCand": {
+    "back": "Back to candidate",
+    "subtitle": "Update candidate information."
+  },
+  "importCand": {
+    "back": "Back to candidates",
+    "title": "Bulk import candidates",
+    "subtitle": "Upload a CSV. Duplicates (by email) are skipped automatically."
+  },
+  "newInt": {
+    "back": "Back to interviews",
+    "subtitle": "Set up an interview with a candidate."
+  },
+  "cff": {
+    "required": "(required)",
+    "pickDate": "Pick a date",
+    "selectPlaceholder": "Select...",
+    "none": "— None —"
+  },
+  "mention": {
+    "membersAria": "Members to mention"
+  },
   "apply": {
     "applyForPosition": "Apply for this position",
     "allOpenPositions": "All open positions",

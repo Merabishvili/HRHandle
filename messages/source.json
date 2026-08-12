@@ -2093,6 +2093,21 @@
   "calPicker.placeholder": { "en": "Select an event type", "ru": "Выберите тип события", "ka": "აირჩიეთ მოვლენის ტიპი" },
   "calPicker.eventOption": { "en": "{name} · {duration} min", "ru": "{name} · {duration} мин", "ka": "{name} · {duration} წთ" },
 
+  "editCand.back": { "en": "Back to candidate", "ru": "Назад к кандидату", "ka": "კანდიდატთან დაბრუნება" },
+  "editCand.subtitle": { "en": "Update candidate information.", "ru": "Обновите информацию о кандидате.", "ka": "განაახლეთ კანდიდატის ინფორმაცია." },
+  "importCand.back": { "en": "Back to candidates", "ru": "Назад к кандидатам", "ka": "კანდიდატებთან დაბრუნება" },
+  "importCand.title": { "en": "Bulk import candidates", "ru": "Массовый импорт кандидатов", "ka": "კანდიდატების მასობრივი იმპორტი" },
+  "importCand.subtitle": { "en": "Upload a CSV. Duplicates (by email) are skipped automatically.", "ru": "Загрузите CSV. Дубликаты (по эл. почте) пропускаются автоматически.", "ka": "ატვირთეთ CSV. დუბლიკატები (იმეილით) ავტომატურად გამოტოვდება." },
+  "newInt.back": { "en": "Back to interviews", "ru": "Назад к собеседованиям", "ka": "გასაუბრებებთან დაბრუნება" },
+  "newInt.subtitle": { "en": "Set up an interview with a candidate.", "ru": "Назначьте собеседование с кандидатом.", "ka": "დანიშნეთ გასაუბრება კანდიდატთან." },
+
+  "cff.required": { "en": "(required)", "ru": "(обязательно)", "ka": "(სავალდებულო)" },
+  "cff.pickDate": { "en": "Pick a date", "ru": "Выберите дату", "ka": "აირჩიეთ თარიღი" },
+  "cff.selectPlaceholder": { "en": "Select...", "ru": "Выберите...", "ka": "აირჩიეთ..." },
+  "cff.none": { "en": "— None —", "ru": "— Нет —", "ka": "— არცერთი —" },
+
+  "mention.membersAria": { "en": "Members to mention", "ru": "Участники для упоминания", "ka": "მოსახსენიებელი წევრები" },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },

@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -20,6 +22,7 @@ interface Props {
 }
 
 export function CustomFieldsForm({ groups, values, onChange }: Props) {
+  const t = useTranslations()
   const visibleGroups = groups.filter((g) => g.fields.length > 0)
   if (visibleGroups.length === 0) return null
 
@@ -43,7 +46,7 @@ export function CustomFieldsForm({ groups, values, onChange }: Props) {
                   <Label htmlFor={`cf-${field.id}`} className="text-sm">
                     {field.name}
                     {field.is_required && (
-                      <span className="ml-1 text-xs text-muted-foreground">(required)</span>
+                      <span className="ml-1 text-xs text-muted-foreground">{t('cff.required')}</span>
                     )}
                   </Label>
 
@@ -72,7 +75,7 @@ export function CustomFieldsForm({ groups, values, onChange }: Props) {
                     <DatePicker
                       value={val || null}
                       onChange={(v) => onChange(field.id, v ?? '')}
-                      placeholder="Pick a date"
+                      placeholder={t('cff.pickDate')}
                       fromYear={1900}
                       toYear={new Date().getFullYear() + 10}
                     />
@@ -94,10 +97,10 @@ export function CustomFieldsForm({ groups, values, onChange }: Props) {
                       onValueChange={(v) => onChange(field.id, v === '__none__' ? '' : v)}
                     >
                       <SelectTrigger id={`cf-${field.id}`}>
-                        <SelectValue placeholder="Select..." />
+                        <SelectValue placeholder={t('cff.selectPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">— None —</SelectItem>
+                        <SelectItem value="__none__">{t('cff.none')}</SelectItem>
                         {(field.options || []).map((opt) => (
                           <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                         ))}
@@ -111,12 +114,12 @@ export function CustomFieldsForm({ groups, values, onChange }: Props) {
                       onValueChange={(v) => onChange(field.id, v === '__none__' ? '' : v)}
                     >
                       <SelectTrigger id={`cf-${field.id}`}>
-                        <SelectValue placeholder="Select..." />
+                        <SelectValue placeholder={t('cff.selectPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">— None —</SelectItem>
-                        <SelectItem value="true">Yes</SelectItem>
-                        <SelectItem value="false">No</SelectItem>
+                        <SelectItem value="__none__">{t('cff.none')}</SelectItem>
+                        <SelectItem value="true">{t('common.yes')}</SelectItem>
+                        <SelectItem value="false">{t('common.no')}</SelectItem>
                       </SelectContent>
                     </Select>
                   )}

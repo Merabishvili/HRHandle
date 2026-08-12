@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -11,6 +12,7 @@ export const metadata = {
 }
 
 export default async function ImportCandidatesPage() {
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -35,15 +37,15 @@ export default async function ImportCandidatesPage() {
         <Button asChild variant="ghost" size="sm" className="gap-2">
           <Link href="/candidates">
             <ArrowLeft className="h-4 w-4" />
-            Back to candidates
+            {t('importCand.back')}
           </Link>
         </Button>
       </div>
 
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Bulk import candidates</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('importCand.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          Upload a CSV. Duplicates (by email) are skipped automatically.
+          {t('importCand.subtitle')}
         </p>
       </div>
 
