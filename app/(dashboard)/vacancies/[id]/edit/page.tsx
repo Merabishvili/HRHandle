@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -64,6 +65,7 @@ export default async function EditVacancyPage({
   const { id } = await params
   const { duplicated } = await searchParams
   const isDuplicated = duplicated === 'true'
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -169,17 +171,17 @@ export default async function EditVacancyPage({
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/vacancies/${id}`} aria-label="Back to vacancy">
+          <Link href={`/vacancies/${id}`} aria-label={t('vacPipe.backToVacancy')}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
 
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            {isDuplicated ? 'New vacancy (duplicated)' : 'Edit vacancy'}
+            {isDuplicated ? t('editVac.dupTitle') : t('vacancies.editVacancy')}
           </h1>
           <p className="text-muted-foreground">
-            {isDuplicated ? 'Review and save your duplicated vacancy.' : 'Update the job posting details.'}
+            {isDuplicated ? t('editVac.dupSubtitle') : t('editVac.subtitle')}
           </p>
         </div>
       </div>

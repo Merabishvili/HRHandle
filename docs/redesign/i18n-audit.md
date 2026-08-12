@@ -63,8 +63,8 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (6) components/settings/rejection-reasons-manager.tsx
 - [x] (6) components/subscription/plan-cards.tsx
 - [x] (6) components/vacancies/batch-rejection-dialog.tsx
-- [ ] (5) app/(dashboard)/vacancies/[id]/pipeline/page.tsx
-- [ ] (5, partial) app/(dashboard)/vacancies/page.tsx
+- [x] (5) app/(dashboard)/vacancies/[id]/pipeline/page.tsx
+- [x] (5, partial) app/(dashboard)/vacancies/page.tsx
 - [x] (5) components/candidates/add-application-dialog.tsx
 - [x] (5) components/candidates/wizard/candidate-create-wizard.tsx
 - [x] (5) components/candidates/candidate-table-row.tsx
@@ -114,7 +114,7 @@ Generated 2026-08-10. 133 files, 862 candidate strings (heuristic; some are prop
 - [x] (1) app/(dashboard)/settings/integrations/webhooks/page.tsx
 - [x] (1) app/(dashboard)/settings/custom-fields/page.tsx
 - [ ] (1) app/(dashboard)/layout.tsx
-- [ ] (1) app/(dashboard)/vacancies/[id]/edit/page.tsx
+- [x] (1) app/(dashboard)/vacancies/[id]/edit/page.tsx
 - [ ] (1) components/guide/guide-card.tsx
 - [ ] (1) components/candidates/delete-candidate-button.tsx
 - [ ] (1) components/candidates/profile/application-history.tsx

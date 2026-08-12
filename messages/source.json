@@ -2018,6 +2018,23 @@
   "vacForm.creating": { "en": "Creating…", "ru": "Создание…", "ka": "იქმნება…" },
   "vacForm.updateVacancy": { "en": "Update vacancy", "ru": "Обновить вакансию", "ka": "ვაკანსიის განახლება" },
 
+  "vacPipe.backToVacancy": { "en": "Back to vacancy", "ru": "Назад к вакансии", "ka": "ვაკანსიაზე დაბრუნება" },
+  "vacPipe.inPipeline": { "en": "{count, plural, one {# candidate in pipeline} other {# candidates in pipeline}}", "ru": "{count, plural, one {# кандидат в воронке} few {# кандидата в воронке} many {# кандидатов в воронке} other {# кандидата в воронке}}", "ka": "{count, plural, one {# კანდიდატი ვორონკაში} other {# კანდიდატი ვორონკაში}}" },
+  "vacPipe.noCandidatesHint": { "en": "Add candidates to this vacancy to see them in the pipeline.", "ru": "Добавьте кандидатов на эту вакансию, чтобы увидеть их в воронке.", "ka": "დაამატეთ კანდიდატები ამ ვაკანსიაზე, რომ ისინი ვორონკაში დაინახოთ." },
+
+  "common.yes": { "en": "Yes", "ru": "Да", "ka": "დიახ" },
+  "vacancies.publicJobsPage": { "en": "Your public jobs page:", "ru": "Ваша публичная страница вакансий:", "ka": "თქვენი საჯარო ვაკანსიების გვერდი:" },
+  "vacancies.salaryFrom": { "en": "From {amount}", "ru": "От {amount}", "ka": "{amount}-დან" },
+  "vacancies.countLabel": { "en": "{count, plural, one {# vacancy} other {# vacancies}}", "ru": "{count, plural, one {# вакансия} few {# вакансии} many {# вакансий} other {# вакансии}}", "ka": "{count, plural, one {# ვაკანსია} other {# ვაკანსია}}" },
+  "vacancies.searchSuffix": { "en": " · \"{search}\"", "ru": " · «{search}»", "ka": " · „{search}“" },
+  "vacancies.pageSuffix": { "en": " · page {page} of {total}", "ru": " · страница {page} из {total}", "ka": " · გვერდი {page} / {total}" },
+  "vacancies.paginationAria": { "en": "Vacancy list pagination", "ru": "Пагинация списка вакансий", "ka": "ვაკანსიების სიის გვერდები" },
+  "vacancies.rowActions": { "en": "Vacancy actions", "ru": "Действия с вакансией", "ka": "ვაკანსიის მოქმედებები" },
+
+  "editVac.dupTitle": { "en": "New vacancy (duplicated)", "ru": "Новая вакансия (дубликат)", "ka": "ახალი ვაკანსია (დუბლიკატი)" },
+  "editVac.dupSubtitle": { "en": "Review and save your duplicated vacancy.", "ru": "Проверьте и сохраните дублированную вакансию.", "ka": "გადახედეთ და შეინახეთ დუბლირებული ვაკანსია." },
+  "editVac.subtitle": { "en": "Update the job posting details.", "ru": "Обновите детали вакансии.", "ka": "განაახლეთ ვაკანსიის დეტალები." },
+
   "apply.applyForPosition": { "en": "Apply for this position", "ru": "Откликнуться на вакансию", "ka": "განაცხადის გაგზავნა ამ პოზიციაზე" },
   "apply.allOpenPositions": { "en": "All open positions", "ru": "Все открытые вакансии", "ka": "ყველა ღია პოზიცია" },
   "apply.viewAllAt": { "en": "View all open positions at {company}", "ru": "Все открытые вакансии в {company}", "ka": "ყველა ღია პოზიცია — {company}" },

@@ -274,7 +274,8 @@
     "status": "Status",
     "notSpecified": "Not specified",
     "unknown": "Unknown",
-    "no": "No"
+    "no": "No",
+    "yes": "Yes"
   },
   "settings": {
     "section": {
@@ -606,7 +607,14 @@
     "archiveVacancy": "Archive Vacancy",
     "duplicating": "Duplicating…",
     "deleteVacancy": "Delete Vacancy",
-    "deleteConfirm": "Are you sure you want to delete this vacancy? This action cannot be undone."
+    "deleteConfirm": "Are you sure you want to delete this vacancy? This action cannot be undone.",
+    "publicJobsPage": "Your public jobs page:",
+    "salaryFrom": "From {amount}",
+    "countLabel": "{count, plural, one {# vacancy} other {# vacancies}}",
+    "searchSuffix": " · \"{search}\"",
+    "pageSuffix": " · page {page} of {total}",
+    "paginationAria": "Vacancy list pagination",
+    "rowActions": "Vacancy actions"
   },
   "vacancy": {
     "form": {
@@ -2262,6 +2270,16 @@
     "discard": "Discard",
     "creating": "Creating…",
     "updateVacancy": "Update vacancy"
+  },
+  "vacPipe": {
+    "backToVacancy": "Back to vacancy",
+    "inPipeline": "{count, plural, one {# candidate in pipeline} other {# candidates in pipeline}}",
+    "noCandidatesHint": "Add candidates to this vacancy to see them in the pipeline."
+  },
+  "editVac": {
+    "dupTitle": "New vacancy (duplicated)",
+    "dupSubtitle": "Review and save your duplicated vacancy.",
+    "subtitle": "Update the job posting details."
   },
   "apply": {
     "applyForPosition": "Apply for this position",

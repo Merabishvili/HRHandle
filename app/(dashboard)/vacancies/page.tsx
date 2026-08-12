@@ -79,22 +79,22 @@ interface VacancyRow {
   sectors: { name: string } | { name: string }[] | null
 }
 
-function formatEmploymentType(value: VacancyRow['employment_type']): string {
+function employmentTypeKey(value: VacancyRow['employment_type']): string {
   switch (value) {
-    case 'full_time': return 'Full-time'
-    case 'part_time': return 'Part-time'
-    case 'contract': return 'Contract'
-    case 'internship': return 'Internship'
-    default: return 'Not specified'
+    case 'full_time': return 'enum.employment.fullTime'
+    case 'part_time': return 'enum.employment.partTime'
+    case 'contract': return 'enum.employment.contract'
+    case 'internship': return 'enum.employment.internship'
+    default: return 'common.notSpecified'
   }
 }
 
-function formatWorkMode(value: VacancyRow['work_mode']): string {
+function workModeKey(value: VacancyRow['work_mode']): string | null {
   switch (value) {
-    case 'remote': return 'Remote'
-    case 'hybrid': return 'Hybrid'
-    case 'onsite': return 'On-site'
-    default: return '—'
+    case 'remote': return 'enum.workMode.remote'
+    case 'hybrid': return 'enum.workMode.hybrid'
+    case 'onsite': return 'enum.workMode.onsite'
+    default: return null
   }
 }
 
@@ -264,7 +264,7 @@ export default async function VacanciesPage({
       const type = customFieldTypeById.get(v.field_id)
       let display: string | null = null
       if (type === 'number') display = v.value_number != null ? String(v.value_number) : null
-      else if (type === 'checkbox') display = v.value_boolean == null ? null : v.value_boolean ? 'Yes' : 'No'
+      else if (type === 'checkbox') display = v.value_boolean == null ? null : v.value_boolean ? t('common.yes') : t('common.no')
       else if (type === 'dropdown') display = v.value_option
       else display = v.value_text
       if (display != null && display !== '') {
@@ -295,7 +295,7 @@ export default async function VacanciesPage({
         <Button asChild>
           <Link href="/vacancies/new">
             <Plus className="mr-2 h-4 w-4" />
-            Create vacancy
+            {t('wizard.createVacancy')}
           </Link>
         </Button>
       </div>
@@ -303,7 +303,7 @@ export default async function VacanciesPage({
       {publicPageSlug && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
           <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="text-muted-foreground">Your public jobs page:</span>
+          <span className="text-muted-foreground">{t('vacancies.publicJobsPage')}</span>
           <Link
             href={`/jobs/${publicPageSlug}`}
             target="_blank"
@@ -324,16 +324,19 @@ export default async function VacanciesPage({
       <div className="flex items-center justify-between gap-4">
         <FilterPillTabs
           tabs={[
-            { value: 'all', label: 'All' },
-            ...statusOptions.map((s) => ({ value: s.id, label: s.name })),
+            { value: 'all', label: t('candidates.allTab') },
+            ...statusOptions.map((s) => ({
+              value: s.id,
+              label: t.has(`vacStatus.${s.code}`) ? t(`vacStatus.${s.code}`) : s.name,
+            })),
           ]}
           paramKey="status"
           activeValue={statusFilter || ''}
         />
         <p className="text-sm text-muted-foreground shrink-0">
-          {totalCount ?? 0} {(totalCount ?? 0) === 1 ? 'vacancy' : 'vacancies'}
-          {search && ` · "${search}"`}
-          {totalPages > 1 && ` · page ${page} of ${totalPages}`}
+          {t('vacancies.countLabel', { count: totalCount ?? 0 })}
+          {search && t('vacancies.searchSuffix', { search })}
+          {totalPages > 1 && t('vacancies.pageSuffix', { page, total: totalPages })}
         </p>
       </div>
 
@@ -375,7 +378,7 @@ export default async function VacanciesPage({
                             <div>
                               <p className="font-medium text-foreground">{vacancy.title}</p>
                               <p className="text-xs text-muted-foreground">
-                                {formatEmploymentType(vacancy.employment_type)} ·{' '}
+                                {t(employmentTypeKey(vacancy.employment_type))} ·{' '}
                                 {vacancyRecencyLabel(
                                   vacancy.created_at,
                                   status?.code === 'draft',
@@ -389,7 +392,7 @@ export default async function VacanciesPage({
                         <TableCell>
                           {status ? (
                             <Badge variant="secondary" className={VACANCY_STATUS_COLORS[status.code]}>
-                              {status.name}
+                              {t.has(`vacStatus.${status.code}`) ? t(`vacStatus.${status.code}`) : status.name}
                             </Badge>
                           ) : (
                             <Badge variant="secondary">{t('common.unknown')}</Badge>
@@ -418,7 +421,7 @@ export default async function VacanciesPage({
                                 <TableCell key={col}>
                                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                     <MapPin className="h-3.5 w-3.5" />
-                                    {vacancy.location || 'Remote'}
+                                    {vacancy.location || t('enum.workMode.remote')}
                                   </div>
                                 </TableCell>
                               )
@@ -433,15 +436,17 @@ export default async function VacanciesPage({
                             case 'employment_type':
                               return (
                                 <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {formatEmploymentType(vacancy.employment_type)}
+                                  {t(employmentTypeKey(vacancy.employment_type))}
                                 </TableCell>
                               )
-                            case 'work_mode':
+                            case 'work_mode': {
+                              const wmKey = workModeKey(vacancy.work_mode)
                               return (
                                 <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {formatWorkMode(vacancy.work_mode)}
+                                  {wmKey ? t(wmKey) : '—'}
                                 </TableCell>
                               )
+                            }
                             case 'start_date':
                               return (
                                 <TableCell key={col} className="text-sm text-muted-foreground whitespace-nowrap">
@@ -477,9 +482,9 @@ export default async function VacanciesPage({
                                 lo != null && hi != null
                                   ? `${fmt(lo)}–${fmt(hi)} ${cur}`
                                   : lo != null
-                                    ? `From ${fmt(lo)} ${cur}`
+                                    ? t('vacancies.salaryFrom', { amount: `${fmt(lo)} ${cur}` })
                                     : hi != null
-                                      ? `Up to ${fmt(hi)} ${cur}`
+                                      ? t('wizard.upTo', { amount: `${fmt(hi)} ${cur}` })
                                       : '—'
                               return (
                                 <TableCell key={col} className="text-sm tabular-nums text-muted-foreground whitespace-nowrap">
@@ -498,9 +503,9 @@ export default async function VacanciesPage({
                                   ? 'stale'
                                   : 'watch'
                               const meta = {
-                                good: { label: 'Good', cls: 'bg-emerald-100 text-emerald-800' },
-                                watch: { label: 'Watch', cls: 'bg-amber-100 text-amber-800' },
-                                stale: { label: 'Stale', cls: 'bg-red-100 text-red-800' },
+                                good: { label: t('vacOverview.healthGood'), cls: 'bg-emerald-100 text-emerald-800' },
+                                watch: { label: t('vacOverview.healthWatch'), cls: 'bg-amber-100 text-amber-800' },
+                                stale: { label: t('vacOverview.healthStale'), cls: 'bg-red-100 text-red-800' },
                               }[health]
                               return (
                                 <TableCell key={col}>
@@ -527,16 +532,16 @@ export default async function VacanciesPage({
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" aria-label="Vacancy actions">
+                              <Button variant="ghost" size="icon" aria-label={t('vacancies.rowActions')}>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link href={`/vacancies/${vacancy.id}`}>View details</Link>
+                                <Link href={`/vacancies/${vacancy.id}`}>{t('vacancies.viewDetails')}</Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <Link href={`/vacancies/${vacancy.id}/edit`}>Edit vacancy</Link>
+                                <Link href={`/vacancies/${vacancy.id}/edit`}>{t('vacancies.editVacancy')}</Link>
                               </DropdownMenuItem>
                               <VacancyActions
                                 vacancyId={vacancy.id}
@@ -559,7 +564,7 @@ export default async function VacanciesPage({
                 pageSize={pageSize}
                 basePath="/vacancies"
                 preservedParams={paginationPreserved}
-                ariaLabel="Vacancy list pagination"
+                ariaLabel={t('vacancies.paginationAria')}
               />
             </div>
           ) : (
@@ -577,7 +582,7 @@ export default async function VacanciesPage({
                 <Button className="mt-4" asChild>
                   <Link href="/vacancies/new">
                     <Plus className="mr-2 h-4 w-4" />
-                    Create vacancy
+                    {t('wizard.createVacancy')}
                   </Link>
                 </Button>
               )}

@@ -274,7 +274,8 @@
     "status": "Статус",
     "notSpecified": "Не указано",
     "unknown": "Неизвестно",
-    "no": "Нет"
+    "no": "Нет",
+    "yes": "Да"
   },
   "settings": {
     "section": {
@@ -606,7 +607,14 @@
     "archiveVacancy": "Архивировать вакансию",
     "duplicating": "Дублирование…",
     "deleteVacancy": "Удалить вакансию",
-    "deleteConfirm": "Вы уверены, что хотите удалить эту вакансию? Это действие нельзя отменить."
+    "deleteConfirm": "Вы уверены, что хотите удалить эту вакансию? Это действие нельзя отменить.",
+    "publicJobsPage": "Ваша публичная страница вакансий:",
+    "salaryFrom": "От {amount}",
+    "countLabel": "{count, plural, one {# вакансия} few {# вакансии} many {# вакансий} other {# вакансии}}",
+    "searchSuffix": " · «{search}»",
+    "pageSuffix": " · страница {page} из {total}",
+    "paginationAria": "Пагинация списка вакансий",
+    "rowActions": "Действия с вакансией"
   },
   "vacancy": {
     "form": {
@@ -2262,6 +2270,16 @@
     "discard": "Отменить",
     "creating": "Создание…",
     "updateVacancy": "Обновить вакансию"
+  },
+  "vacPipe": {
+    "backToVacancy": "Назад к вакансии",
+    "inPipeline": "{count, plural, one {# кандидат в воронке} few {# кандидата в воронке} many {# кандидатов в воронке} other {# кандидата в воронке}}",
+    "noCandidatesHint": "Добавьте кандидатов на эту вакансию, чтобы увидеть их в воронке."
+  },
+  "editVac": {
+    "dupTitle": "Новая вакансия (дубликат)",
+    "dupSubtitle": "Проверьте и сохраните дублированную вакансию.",
+    "subtitle": "Обновите детали вакансии."
   },
   "apply": {
     "applyForPosition": "Откликнуться на вакансию",

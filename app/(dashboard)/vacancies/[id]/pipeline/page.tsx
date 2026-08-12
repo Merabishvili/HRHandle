@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft, LayoutGrid } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -42,6 +43,7 @@ export default async function VacancyPipelinePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -154,7 +156,7 @@ export default async function VacancyPipelinePage({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href={`/vacancies/${id}`} aria-label="Back to vacancy">
+            <Link href={`/vacancies/${id}`} aria-label={t('vacPipe.backToVacancy')}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -164,25 +166,25 @@ export default async function VacancyPipelinePage({
               <h1 className="text-2xl font-bold text-foreground">{vacancy.title}</h1>
             </div>
             <p className="text-sm text-muted-foreground">
-              {applications.length} candidate{applications.length !== 1 ? 's' : ''} in pipeline
+              {t('vacPipe.inPipeline', { count: applications.length })}
             </p>
           </div>
         </div>
 
         <Button variant="outline" asChild>
-          <Link href={`/vacancies/${id}`}>View details</Link>
+          <Link href={`/vacancies/${id}`}>{t('vacancies.viewDetails')}</Link>
         </Button>
       </div>
 
       {applications.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
           <LayoutGrid className="h-10 w-10 text-muted-foreground/40" />
-          <h3 className="mt-4 text-lg font-medium text-foreground">No candidates yet</h3>
+          <h3 className="mt-4 text-lg font-medium text-foreground">{t('candidates.emptyTitle')}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Add candidates to this vacancy to see them in the pipeline.
+            {t('vacPipe.noCandidatesHint')}
           </p>
           <Button className="mt-6" asChild>
-            <Link href={`/candidates/new?vacancy=${id}`}>Add candidate</Link>
+            <Link href={`/candidates/new?vacancy=${id}`}>{t('pipeline.addCandidate')}</Link>
           </Button>
         </div>
       ) : (
