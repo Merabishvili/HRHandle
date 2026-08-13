@@ -9,6 +9,7 @@ import { writeAuditLog } from '@/lib/audit-log'
 import { dispatchWebhookNotification } from '@/lib/notifications/webhook-dispatcher'
 import { offerSentCtx } from '@/lib/notifications/event-builders'
 import { sendOfferEmail } from '@/lib/email'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { canEdit, canSend, canWithdraw } from '@/lib/offers/state'
 import { isOfferExpired } from '@/lib/offers/expiry'
 
@@ -276,6 +277,7 @@ export async function sendOffer(offerId: string): Promise<ActionResult<{ token: 
         offerUrl: `${baseUrl}/offer/${token}`,
         customSubject: templateRow?.subject || undefined,
         customBody: templateRow?.body || undefined,
+        contentLocale: await fetchOrgContentLocale(ctx.supabase, ctx.orgId),
       })
     } catch (err) {
       console.error('[offers] email send failed (non-fatal):', err)

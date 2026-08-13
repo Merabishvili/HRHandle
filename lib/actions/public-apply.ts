@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendApplicationConfirmationEmail } from '@/lib/email'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { dispatchWebhookNotification } from '@/lib/notifications/webhook-dispatcher'
 import { applicationReceivedCtx } from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
@@ -522,6 +523,7 @@ export async function submitPublicApplication(
       organizationName: org?.name || 'the company',
       customSubject: templateRow?.subject,
       customBody: templateRow?.body,
+      contentLocale: await fetchOrgContentLocale(supabase, orgId),
       statusUrl: `${baseUrl}/status/${newApp.public_token}`,
     })
   } catch {

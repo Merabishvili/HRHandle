@@ -4,12 +4,13 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 import { isOrgAdmin } from '@/lib/permissions'
 import {
-  DEFAULT_TEMPLATES,
+  defaultTemplate,
   resolveTemplate,
   isOptInTemplate,
   type TemplateType,
   type EmailTemplate,
 } from '@/lib/email-template-utils'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 
 export async function getEmailTemplates(): Promise<
   ActionResult<Record<TemplateType, EmailTemplate>>
@@ -17,10 +18,13 @@ export async function getEmailTemplates(): Promise<
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  const { data } = await ctx.supabase
-    .from('email_templates')
-    .select('template_type, subject, body, is_enabled')
-    .eq('organization_id', ctx.orgId)
+  const [{ data }, contentLocale] = await Promise.all([
+    ctx.supabase
+      .from('email_templates')
+      .select('template_type, subject, body, is_enabled')
+      .eq('organization_id', ctx.orgId),
+    fetchOrgContentLocale(ctx.supabase, ctx.orgId),
+  ])
 
   const saved: Partial<Record<TemplateType, EmailTemplate>> = {}
   for (const row of data || []) {
@@ -30,10 +34,11 @@ export async function getEmailTemplates(): Promise<
   // For the always-on legacy template types, missing rows fall back to default
   // and is_enabled defaults to true. For opt-IN types (status_change_*),
   // missing rows return the default body but is_enabled defaults to false so
-  // the UI shows the feature as off until the admin toggles it on.
+  // the UI shows the feature as off until the admin toggles it on. Defaults
+  // resolve in the org's content locale.
   const resolveWithFlag = (type: TemplateType): EmailTemplate => {
     const row = saved[type]
-    const base = resolveTemplate(row ?? null, type)
+    const base = resolveTemplate(row ?? null, type, contentLocale)
     const isEnabled =
       typeof row?.is_enabled === 'boolean' ? row.is_enabled : !isOptInTemplate(type)
     return { ...base, is_enabled: isEnabled }
@@ -135,7 +140,7 @@ export async function setEmailTemplateEnabled(
     .eq('template_type', templateType)
     .maybeSingle()
 
-  const fallback = DEFAULT_TEMPLATES[templateType]
+  const fallback = defaultTemplate(templateType, await fetchOrgContentLocale(ctx.supabase, ctx.orgId))
   const subject = existing?.subject ?? fallback.subject
   const body = existing?.body ?? fallback.body
 
@@ -175,6 +180,7 @@ export async function resetEmailTemplate(
     .eq('organization_id', ctx.orgId)
     .eq('template_type', templateType)
 
+  const contentLocale = await fetchOrgContentLocale(ctx.supabase, ctx.orgId)
   revalidatePath('/settings/email-templates')
-  return { success: true, data: DEFAULT_TEMPLATES[templateType] }
+  return { success: true, data: defaultTemplate(templateType, contentLocale) }
 }

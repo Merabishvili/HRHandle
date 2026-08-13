@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Noto_Sans_Georgian } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
@@ -15,6 +15,16 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   subsets: ['latin'],
   variable: '--font-geist-mono',
+})
+
+// Geist ships no Georgian glyphs, so Georgian text falls back to a system
+// font — and bold Georgian gets a faux-bold/different fallback face, making
+// mixed bold+regular Georgian look like two typefaces. Noto Sans Georgian is
+// a variable font (all weights) that we append to the sans stack: Latin keeps
+// Geist, Georgian glyphs resolve to Noto Sans Georgian at every weight.
+const notoGeorgian = Noto_Sans_Georgian({
+  subsets: ['georgian'],
+  variable: '--font-noto-georgian',
 })
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hrhandle.com'
@@ -109,7 +119,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} bg-background`}
+      className={`${geistSans.variable} ${geistMono.variable} ${notoGeorgian.variable} bg-background`}
     >
       <body className="min-h-screen font-sans antialiased">
         <NextIntlClientProvider locale={locale} messages={messages}>

@@ -21,6 +21,7 @@ import {
   type RejectionTemplate,
 } from '@/lib/actions/rejection-templates'
 import type { RejectionReason } from '@/lib/actions/rejection-reasons'
+import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 import { DEFAULT_REJECTION_SUBJECT, DEFAULT_REJECTION_BODY } from '@/lib/email-template-utils'
 import { Plus, Trash2, Loader2, Pencil, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -136,7 +137,7 @@ function TemplateRow({
               <SelectContent>
                 <SelectItem value={NO_REASON}>{tr('rejectTpl.noneUnlinked')}</SelectItem>
                 {reasons.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                  <SelectItem key={r.id} value={r.id}>{rejectionReasonLabel(tr, r.name)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -170,10 +171,10 @@ function TemplateRow({
           className="flex-1 flex items-center gap-2 text-left"
           onClick={() => setExpanded((v) => !v)}
         >
-          <span className="text-sm font-medium text-foreground">{template.name}</span>
+          <span className="text-sm font-medium text-foreground">{rejectionReasonLabel(tr, template.name)}</span>
           {linkedReason && (
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              {tr('rejectTpl.reasonLabel', { name: linkedReason.name })}
+              {tr('rejectTpl.reasonLabel', { name: rejectionReasonLabel(tr, linkedReason.name) })}
             </span>
           )}
           {expanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -301,7 +302,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
                 <SelectContent>
                   <SelectItem value={NO_REASON}>{tr('rejectTpl.noneUnlinked')}</SelectItem>
                   {reasons.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    <SelectItem key={r.id} value={r.id}>{rejectionReasonLabel(tr, r.name)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

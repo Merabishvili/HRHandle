@@ -68,7 +68,9 @@ plus `vacancies.posting_locales text[]` for which locales this vacancy is publis
 Rationale: vacancies are read as a whole document, not queried by content field, so the join cost of a child table buys nothing. The one real downside — types flip from `string` — is contained by `LocalizedText` + a single `pickLocale()` helper. **Migration is two-step and reversible** (add `*_i18n` JSONB alongside, backfill, cut readers over, drop old columns in a later migration) so no big-bang cutover.
 
 ### 2.6 What is NOT translated
-Candidate-typed data (notes, CV text, screening *answers*), the candidate `languages` field (unrelated — it's what the candidate speaks), and historical audit/log rows. Only **product chrome** (§1) and **org content surfaces** (§2/§3) are localised.
+Candidate-typed data (notes, CV text, screening *answers*) and the candidate `languages` field (unrelated — it's what the candidate speaks). Only **product chrome** (§1) and **org content surfaces** (§2/§3) are localised.
+
+The **audit log** stores an English `message` per row at write time; that historical string is never re-translated, but the **display** of the Entity + Details columns *is* localized at render time (`lib/audit-log/message-i18n.ts`) by re-deriving a phrase from the row's stable `action` code + structured `details` (e.g. `status_changed` → localized `applied → screening`, `ai_assist` by `details.feature`). Unmapped/legacy actions fall back to the stored English message. The Action badge stays the raw code. Default **pipeline stage names** and the seeded **"General"** rejection reason are likewise localized on display when they match the canonical default; custom entries render as typed.
 
 ---
 
@@ -237,7 +239,7 @@ This is the architectural piece. Sub-steps, in order:
 
 5. **hreflang + sitemap.** Each public page's `generateMetadata` emits `alternates.languages` for the org's enabled locales. `app/sitemap.ts` gains per-locale entries — and **starts listing job pages at all** (they aren't in the sitemap today; this is the SEO win the path-segment decision is for).
 
-6. **Candidate emails.** Make `DEFAULT_TEMPLATES` locale-aware from `messages/emails.source.json` (a `Record<Locale, …>`); the dispatcher picks the org's `default_content_locale`. This is separate from next-intl (Handlebars `{{role}}`/`{{company}}` untouched).
+6. **Candidate emails.** ✅ **Done.** `lib/email-template-utils.ts` `defaultTemplate(type, locale)` sources localized default subject/body from `messages/emails.source.json` (English base fallback via `pickLocale`); `resolveTemplate(saved, type, locale)` returns the saved custom (as-is, single language) or the localized default. The 5 senders in `lib/email.ts` take a `contentLocale` param, and each caller passes `fetchOrgContentLocale(client, orgId)`. The settings manager (`getEmailTemplates`/`resetEmailTemplate`/`setEmailTemplateEnabled`) resolves defaults in the org content locale too. The seeded-in-onboarding "General" rejection template is detected via `isDefaultTemplateContent()` and swapped for the localized default until an admin edits it. Handlebars `{{role}}`/`{{company}}` untouched (separate from next-intl).
 
 7. **Landing switcher tie-in.** On sign-up, pre-fill the new account's `profiles.language` from the visitor's `NEXT_LOCALE` cookie (design §3b), then it's independently changeable.
 

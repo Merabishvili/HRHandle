@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from '../index'
 import { sendApplicationStatusChangedEmail } from '@/lib/email'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { shouldEmailForTransition } from '@/lib/applications-status-emails'
 import { writeAuditLog } from '@/lib/audit-log'
 import { dispatchWebhookNotification } from '@/lib/notifications/webhook-dispatcher'
@@ -320,6 +321,7 @@ export async function updateApplicationStatus(
             statusUrl: publicToken ? `${baseUrl}/status/${publicToken}` : undefined,
             customSubject: templateRow.subject || undefined,
             customBody: templateRow.body || undefined,
+            contentLocale: await fetchOrgContentLocale(ctx.supabase, ctx.orgId),
           })
 
           void writeAuditLog({

@@ -2,9 +2,11 @@
 
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { useTranslations } from 'next-intl'
 import { CandidateCard } from './candidate-card'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
+import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
 import { cn } from '@/lib/utils'
 
 interface PipelineApplication {
@@ -40,6 +42,7 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({ column, applications, isOver }: KanbanColumnProps) {
+  const t = useTranslations()
   const { setNodeRef } = useDroppable({ id: column.id })
 
   const canonicalCode = mapPipelineStageToBucket({
@@ -58,7 +61,7 @@ export function KanbanColumn({ column, applications, isOver }: KanbanColumnProps
               APPLICATION_STATUS_COLORS[canonicalCode]
             )}
           >
-            {column.name}
+            {pipelineStageLabel(t, column.name)}
           </span>
           <span className="text-xs text-muted-foreground">{applications.length}</span>
         </div>

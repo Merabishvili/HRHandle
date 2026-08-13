@@ -374,7 +374,6 @@ export default async function CandidatesPage({
                 pageSize={pageSize}
                 basePath="/candidates"
                 preservedParams={paginationPreserved}
-                ariaLabel="Candidate list pagination"
               />
             </div>
           ) : (

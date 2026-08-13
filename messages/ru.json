@@ -1851,9 +1851,7 @@
     "entity": "Объект",
     "details": "Детали",
     "system": "Система",
-    "openRecord": "Открыть запись {type}",
-    "hideJson": "Скрыть JSON",
-    "showJson": "Показать JSON"
+    "openRecord": "Открыть запись {type}"
   },
   "liPost": {
     "copyFailed": "Не удалось скопировать — выделите текст вручную.",
@@ -2393,6 +2391,79 @@
   },
   "mfaEnroll": {
     "qrAria": "QR-код двухфакторной аутентификации"
+  },
+  "pager": {
+    "nav": "Постраничная навигация",
+    "showing": "Показаны {from}–{to} из {total}",
+    "results0": "0 результатов",
+    "perPage": "На странице",
+    "rowsPerPage": "Строк на странице",
+    "prev": "Предыдущая страница",
+    "next": "Следующая страница",
+    "pageAria": "Страница {page}",
+    "pageOf": "Страница {current} из {total}"
+  },
+  "auditEntity": {
+    "application": "Заявка",
+    "candidate": "Кандидат",
+    "candidate_evaluation": "Оценка",
+    "integration": "Интеграция",
+    "offer": "Оффер",
+    "organization": "Организация",
+    "profile": "Профиль",
+    "vacancy": "Вакансия",
+    "webhook_notification": "Вебхук"
+  },
+  "auditMsg": {
+    "statusChanged": "{from} → {to}",
+    "statusEmailSent": "Письмо об изменении статуса отправлено для «{stage}»",
+    "contentLocale": "Язык контента — по умолчанию={default}, включены={enabled}",
+    "candidatesImported": "{count, plural, one {Импортирован # кандидат из CSV} few {Импортировано # кандидата из CSV} many {Импортировано # кандидатов из CSV} other {Импортировано # кандидата из CSV}}",
+    "integrationConnected": "Интеграция {provider} подключена",
+    "integrationDisconnected": "Интеграция {provider} отключена",
+    "aiFit": "Запущен AI-анализ соответствия",
+    "ai_assist": {
+      "candidate_summary": "Запрошено резюме кандидата",
+      "jd_generator": "Сгенерирован раздел описания вакансии",
+      "bias_check": "Запущена проверка инклюзивности языка",
+      "assessment_suggester": "Сгенерированы предложения по оценке",
+      "note_extractor": "Структурированы заметки собеседования",
+      "generic": "Использована помощь AI"
+    },
+    "action": {
+      "application_withdrawn": "Заявка отозвана кандидатом",
+      "billing_checkout_started": "Оформление оплаты начато",
+      "billing_subscription_canceled": "Автопродление отменено",
+      "calendly_connected": "Аккаунт Calendly подключён",
+      "calendly_disconnected": "Calendly отключён",
+      "calendly_link_generated": "Ссылка Calendly создана",
+      "candidate_deleted": "Кандидат удалён",
+      "candidate_hard_deleted": "Кандидат окончательно удалён из корзины",
+      "candidate_restored": "Кандидат восстановлен",
+      "deletion_scheduled": "Удаление организации запланировано",
+      "interview_scheduled": "Собеседование запланировано через Calendly",
+      "interview_canceled": "Собеседование отменено через Calendly",
+      "mfa_admin_reset": "Сброшены факторы MFA участника",
+      "mfa_enrolled": "Добавлен TOTP-аутентификатор",
+      "mfa_policy_updated": "Политика MFA обновлена",
+      "mfa_removed": "TOTP-аутентификатор удалён",
+      "offer_accepted": "Оффер принят кандидатом",
+      "offer_created": "Создан черновик оффера",
+      "offer_declined": "Оффер отклонён кандидатом",
+      "offer_sent": "Оффер отправлен кандидату",
+      "offer_withdrawn": "Оффер отозван",
+      "scorecard_revoked": "Ссылка на оценочный лист отозвана",
+      "scorecard_shared": "Создана ссылка на оценочный лист",
+      "vacancy_hard_deleted": "Вакансия окончательно удалена из корзины",
+      "vacancy_restored": "Вакансия восстановлена",
+      "webhook_notification_created": "Вебхук добавлен",
+      "webhook_notification_deleted": "Вебхук удалён",
+      "webhook_notification_dispatched": "Вебхук отправлен",
+      "webhook_notification_updated": "Подписки вебхука обновлены"
+    }
+  },
+  "rejectReason": {
+    "general": "Общая"
   },
   "apply": {
     "applyForPosition": "Откликнуться на вакансию",

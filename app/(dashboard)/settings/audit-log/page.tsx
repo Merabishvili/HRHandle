@@ -95,7 +95,6 @@ export default async function AuditLogPage({
         pageSize={pageSize}
         basePath="/settings/audit-log"
         preservedParams={paginationPreserved}
-        ariaLabel="Audit log pagination"
       />
     </div>
   )

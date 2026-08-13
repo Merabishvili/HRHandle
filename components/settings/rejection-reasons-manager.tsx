@@ -11,6 +11,7 @@ import {
   deleteRejectionReason,
   type RejectionReason,
 } from '@/lib/actions/rejection-reasons'
+import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 import { Plus, Trash2, Loader2, Pencil, Check, X } from 'lucide-react'
 
 const MAX_REASONS = 50
@@ -92,7 +93,7 @@ function ReasonRow({
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5">
-      <span className="text-sm text-foreground">{reason.name}</span>
+      <span className="text-sm text-foreground">{rejectionReasonLabel(t, reason.name)}</span>
       {hasTemplate ? (
         <a
           href="/settings/email-templates"

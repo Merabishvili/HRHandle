@@ -23,3 +23,26 @@ export function statusLabel(
   const key = APP_STATUS_I18N_KEY[code]
   return key ? t(key) : fallback
 }
+
+/**
+ * The 7 default per-vacancy pipeline stages are seeded with these exact English
+ * names (Migration 046 / `defaultStageNameForCode`). Reverse-map a stage name
+ * back to its canonical code so a *default* stage renders localized while a
+ * custom stage ("Technical Interview") keeps its as-typed name.
+ */
+const DEFAULT_STAGE_NAME_TO_CODE: Record<string, string> = {
+  applied: 'applied',
+  screening: 'screening',
+  interview: 'interview',
+  offer: 'offer',
+  hired: 'hired',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+}
+
+/** Localize a pipeline-stage name when it's one of the seeded defaults; custom
+ * names pass through unchanged. */
+export function pipelineStageLabel(t: (key: string) => string, name: string): string {
+  const code = DEFAULT_STAGE_NAME_TO_CODE[name.trim().toLowerCase()]
+  return code ? statusLabel(t, code, name) : name
+}

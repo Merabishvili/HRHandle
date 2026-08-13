@@ -1171,7 +1171,7 @@
     "autoOnDesc": "კანდიდატები ავტომატურად მიიღებენ ამ იმეილს, როცა განაცხადი ამ ეტაპზე გადავა.",
     "autoOffDesc": "ამ გადასვლისთვის იმეილი არ გაიგზავნება. რეკრუტერებს მაინც შეუძლიათ კანდიდატებს ხელით მისწერონ.",
     "enableAria": "ავტო-იმეილის ჩართვა ამ სტატუსის ცვლილებისთვის",
-    "subjectLine": "თემის ხაზი",
+    "subjectLine": "თემა",
     "subjectPlaceholder": "იმეილის თემა...",
     "messageBody": "შეტყობინების ტექსტი",
     "bodyPlaceholder": "შეტყობინების ძირითადი შინაარსი...",
@@ -1851,9 +1851,7 @@
     "entity": "ერთეული",
     "details": "დეტალები",
     "system": "სისტემა",
-    "openRecord": "{type} ჩანაწერის გახსნა",
-    "hideJson": "JSON-ის დამალვა",
-    "showJson": "JSON-ის ჩვენება"
+    "openRecord": "{type} ჩანაწერის გახსნა"
   },
   "liPost": {
     "copyFailed": "კოპირება ვერ მოხერხდა — გთხოვთ, ხელით მონიშნოთ ტექსტი.",
@@ -2393,6 +2391,79 @@
   },
   "mfaEnroll": {
     "qrAria": "ორფაქტორიანი ავთენტიფიკაციის QR კოდი"
+  },
+  "pager": {
+    "nav": "გვერდების ნავიგაცია",
+    "showing": "ნაჩვენებია {from}–{to} / {total}",
+    "results0": "0 შედეგი",
+    "perPage": "თითო გვერდზე",
+    "rowsPerPage": "სტრიქონი გვერდზე",
+    "prev": "წინა გვერდი",
+    "next": "შემდეგი გვერდი",
+    "pageAria": "გვერდი {page}",
+    "pageOf": "გვერდი {current} / {total}"
+  },
+  "auditEntity": {
+    "application": "განაცხადი",
+    "candidate": "კანდიდატი",
+    "candidate_evaluation": "შეფასება",
+    "integration": "ინტეგრაცია",
+    "offer": "შეთავაზება",
+    "organization": "ორგანიზაცია",
+    "profile": "პროფილი",
+    "vacancy": "ვაკანსია",
+    "webhook_notification": "ვებჰუკი"
+  },
+  "auditMsg": {
+    "statusChanged": "{from} → {to}",
+    "statusEmailSent": "სტატუსის ცვლილების იმეილი გაიგზავნა «{stage}»-სთვის",
+    "contentLocale": "კონტენტის ენა — ნაგულისხმევი={default}, ჩართული={enabled}",
+    "candidatesImported": "{count, plural, one {იმპორტირდა # კანდიდატი CSV-დან} other {იმპორტირდა # კანდიდატი CSV-დან}}",
+    "integrationConnected": "{provider}-ის ინტეგრაცია დაკავშირდა",
+    "integrationDisconnected": "{provider}-ის ინტეგრაცია გაითიშა",
+    "aiFit": "AI შესაბამისობის ანალიზი შესრულდა",
+    "ai_assist": {
+      "candidate_summary": "მოთხოვნილია კანდიდატის შეჯამება",
+      "jd_generator": "დაგენერირდა ვაკანსიის აღწერის სექცია",
+      "bias_check": "შესრულდა ინკლუზიური ენის შემოწმება",
+      "assessment_suggester": "დაგენერირდა შეფასების შემოთავაზებები",
+      "note_extractor": "გასაუბრების ჩანაწერები დასტრუქტურდა",
+      "generic": "გამოყენებულია AI დახმარება"
+    },
+    "action": {
+      "application_withdrawn": "განაცხადი გაიტანა კანდიდატმა",
+      "billing_checkout_started": "გადახდის გაფორმება დაიწყო",
+      "billing_subscription_canceled": "ავტოგანახლება გაუქმდა",
+      "calendly_connected": "Calendly ანგარიში დაკავშირდა",
+      "calendly_disconnected": "Calendly გაითიშა",
+      "calendly_link_generated": "Calendly-ის ბმული შეიქმნა",
+      "candidate_deleted": "კანდიდატი წაიშალა",
+      "candidate_hard_deleted": "კანდიდატი სამუდამოდ წაიშალა სანაგვედან",
+      "candidate_restored": "კანდიდატი აღდგა",
+      "deletion_scheduled": "ორგანიზაციის წაშლა დაიგეგმა",
+      "interview_scheduled": "გასაუბრება დაიგეგმა Calendly-ით",
+      "interview_canceled": "გასაუბრება გაუქმდა Calendly-ით",
+      "mfa_admin_reset": "გასუფთავდა გუნდის წევრის MFA ფაქტორები",
+      "mfa_enrolled": "დაემატა TOTP ავთენტიფიკატორი",
+      "mfa_policy_updated": "MFA პოლიტიკა განახლდა",
+      "mfa_removed": "TOTP ავთენტიფიკატორი წაიშალა",
+      "offer_accepted": "შეთავაზება მიიღო კანდიდატმა",
+      "offer_created": "შეიქმნა შეთავაზების მონახაზი",
+      "offer_declined": "შეთავაზება უარყო კანდიდატმა",
+      "offer_sent": "შეთავაზება გაეგზავნა კანდიდატს",
+      "offer_withdrawn": "შეთავაზება გაუქმდა",
+      "scorecard_revoked": "შეფასების ბარათის ბმული გაუქმდა",
+      "scorecard_shared": "შეიქმნა შეფასების ბარათის ბმული",
+      "vacancy_hard_deleted": "ვაკანსია სამუდამოდ წაიშალა სანაგვედან",
+      "vacancy_restored": "ვაკანსია აღდგა",
+      "webhook_notification_created": "ვებჰუკი დაემატა",
+      "webhook_notification_deleted": "ვებჰუკი წაიშალა",
+      "webhook_notification_dispatched": "ვებჰუკი გაიგზავნა",
+      "webhook_notification_updated": "ვებჰუკის გამოწერები განახლდა"
+    }
+  },
+  "rejectReason": {
+    "general": "ზოგადი"
   },
   "apply": {
     "applyForPosition": "განაცხადის გაგზავნა ამ პოზიციაზე",

@@ -43,6 +43,7 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
+import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
 import { APPLICATION_STATUS_COLORS } from '@/lib/types/application'
 import {
   createPipelineStage,
@@ -358,7 +359,7 @@ function SortableStageRow({
             className="h-6 bg-white text-[12px]"
           />
         ) : (
-          stage.name
+          pipelineStageLabel(tr, stage.name)
         )}
       </span>
 

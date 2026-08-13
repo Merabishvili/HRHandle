@@ -13,7 +13,11 @@ describe('messages/source.json integrity', () => {
 
   it('is non-empty and uses flat dotted keys', () => {
     expect(entries.length).toBeGreaterThan(0)
-    for (const [key] of entries) expect(key).toMatch(/^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9]+)+$/)
+    // Underscores are allowed inside a segment: many keys mirror a canonical DB
+    // enum code (e.g. `vacStatus.on_hold`, `auditEntity.webhook_notification`,
+    // `aiBias.cat.gender_coded`) so a dynamic `t.has(`prefix.${code}`)` lookup
+    // resolves with the raw code verbatim.
+    for (const [key] of entries) expect(key).toMatch(/^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9_]+)+$/)
   })
 
   it('every key has a non-empty value in every locale (en/ru/ka)', () => {

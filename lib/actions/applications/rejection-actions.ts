@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from '../index'
 import { sendApplicationRejectionEmail } from '@/lib/email'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
+import { isDefaultTemplateContent } from '@/lib/email-template-utils'
 import { APPLICATION_STATUS, CANDIDATE_STATUS } from '@/lib/types/constants'
 import {
   resolvePipelineStageId,
@@ -168,6 +170,14 @@ export async function rejectApplication(input: {
         }
       }
 
+      // If the resolved subject/body are still the built-in English default —
+      // i.e. the untouched seeded "General" template — drop them so the sender
+      // falls back to the localized default for the org's content language.
+      if (finalSubject && finalBody && isDefaultTemplateContent('rejection', finalSubject, finalBody)) {
+        finalSubject = undefined
+        finalBody = undefined
+      }
+
       if (candidateData?.email && vacancyData && orgData) {
         await sendApplicationRejectionEmail({
           to: candidateData.email,
@@ -178,6 +188,7 @@ export async function rejectApplication(input: {
           senderEmail: profileData?.email ?? '',
           customSubject: finalSubject,
           customBody: finalBody,
+          contentLocale: await fetchOrgContentLocale(ctx.supabase, ctx.orgId),
         })
       }
     } catch (err) {

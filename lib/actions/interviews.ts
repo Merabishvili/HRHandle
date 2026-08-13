@@ -8,6 +8,7 @@ import { getValidAccessToken, createCalendarEventWithMeet, deleteCalendarEvent }
 import { getValidZoomAccessToken, createZoomMeeting, deleteZoomMeeting, parseZoomMeetingIdFromJoinUrl } from '@/lib/zoom/meetings'
 import { getValidMicrosoftAccessToken, createTeamsMeeting } from '@/lib/microsoft/graph'
 import { sendInterviewInvitationEmail } from '@/lib/email'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 
 export async function updateInterviewStatus(
@@ -131,6 +132,7 @@ export async function rescheduleInterview(
           meetingLink: meetLink,
           rescheduled: true,
           timezone,
+          contentLocale: await fetchOrgContentLocale(ctx.supabase, ctx.orgId),
         })
       }
     } catch (err) {
@@ -381,6 +383,7 @@ export async function createInterview(
           interviewType: parsed.data.type,
           meetingLink: meetLink,
           timezone: options.timezone,
+          contentLocale: await fetchOrgContentLocale(ctx.supabase, ctx.orgId),
         })
       } catch (err) {
         console.error('[interviews] email send failed:', err)

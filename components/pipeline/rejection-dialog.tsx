@@ -15,6 +15,7 @@ import {
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Loader2 } from 'lucide-react'
 import { rejectApplication } from '@/lib/actions/applications'
+import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 
 export interface RejectionReason {
   id: string
@@ -137,8 +138,8 @@ export function RejectionDialog({
                 emptyText={tr('rejectDialog.noReasonsMatch')}
                 options={reasons.map((r) => ({
                   value: r.id,
-                  label: r.name,
-                  searchText: r.name,
+                  label: rejectionReasonLabel(tr, r.name),
+                  searchText: rejectionReasonLabel(tr, r.name),
                 }))}
               />
             )}
@@ -174,11 +175,14 @@ export function RejectionDialog({
                     emptyText={tr('rejectDialog.noTemplatesMatch')}
                     options={[
                       { value: NO_TEMPLATE, label: tr('rejectDialog.noTemplateOption') },
-                      ...templates.map((t) => ({
-                        value: t.id,
-                        label: t.reason_id === reasonId && reasonId ? `${t.name} ✓` : t.name,
-                        searchText: `${t.name} ${t.subject}`,
-                      })),
+                      ...templates.map((t) => {
+                        const tName = rejectionReasonLabel(tr, t.name)
+                        return {
+                          value: t.id,
+                          label: t.reason_id === reasonId && reasonId ? `${tName} ✓` : tName,
+                          searchText: `${tName} ${t.subject}`,
+                        }
+                      }),
                     ]}
                   />
                 )}

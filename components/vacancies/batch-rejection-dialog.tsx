@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Loader2 } from 'lucide-react'
 import { rejectApplicationsBatch } from '@/lib/actions/applications'
+import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 import type {
   RejectionReason,
   RejectionTemplate,
@@ -136,8 +137,8 @@ export function BatchRejectionDialog({
                 emptyText={tr('rejectDialog.noReasonsMatch')}
                 options={reasons.map((r) => ({
                   value: r.id,
-                  label: r.name,
-                  searchText: r.name,
+                  label: rejectionReasonLabel(tr, r.name),
+                  searchText: rejectionReasonLabel(tr, r.name),
                 }))}
               />
             )}
@@ -172,11 +173,14 @@ export function BatchRejectionDialog({
                   emptyText={tr('rejectDialog.noTemplatesMatch')}
                   options={[
                     { value: NO_TEMPLATE, label: tr('rejectDialog.noTemplateOption') },
-                    ...templates.map((t) => ({
-                      value: t.id,
-                      label: t.reason_id === reasonId && reasonId ? `${t.name} ✓` : t.name,
-                      searchText: `${t.name} ${t.subject}`,
-                    })),
+                    ...templates.map((t) => {
+                      const tName = rejectionReasonLabel(tr, t.name)
+                      return {
+                        value: t.id,
+                        label: t.reason_id === reasonId && reasonId ? `${tName} ✓` : tName,
+                        searchText: `${tName} ${t.subject}`,
+                      }
+                    }),
                   ]}
                 />
               )}

@@ -1,3 +1,6 @@
+import { DEFAULT_LOCALE, pickLocale, type Locale } from '@/lib/i18n/locales'
+import emailsSource from '@/messages/emails.source.json'
+
 export type TemplateType =
   | 'application_received'
   | 'interview_invitation'
@@ -62,11 +65,51 @@ export const DEFAULT_TEMPLATES: Record<TemplateType, EmailTemplate> = {
   },
 }
 
+// Localized default subject/body live in the reviewable `messages/emails.source.json`
+// catalog (org-content-language, {{handlebars}} vars — deliberately kept out of the
+// next-intl ICU catalog). Map each TemplateType to its `email.*` key prefix there.
+const EMAIL_SOURCE = emailsSource as Record<string, Partial<Record<Locale, string>>>
+const EMAIL_SOURCE_KEY: Record<TemplateType, string> = {
+  application_received: 'applicationReceived',
+  interview_invitation: 'interviewInvitation',
+  rejection: 'rejection',
+  status_change_screening: 'statusChangeScreening',
+  status_change_interview: 'statusChangeInterview',
+  offer_sent: 'offerSent',
+}
+
+/** The default template for a type in the given content locale, sourced from
+ * `emails.source.json` (English base when a locale value is missing). */
+export function defaultTemplate(
+  type: TemplateType,
+  locale: Locale = DEFAULT_LOCALE
+): EmailTemplate {
+  const base = DEFAULT_TEMPLATES[type]
+  const k = EMAIL_SOURCE_KEY[type]
+  const subject = pickLocale(EMAIL_SOURCE[`email.${k}.subject`], locale) || base.subject
+  const body = pickLocale(EMAIL_SOURCE[`email.${k}.body`], locale) || base.body
+  return { ...base, subject, body }
+}
+
 export function resolveTemplate(
   saved: EmailTemplate | null,
-  type: TemplateType
+  type: TemplateType,
+  locale: Locale = DEFAULT_LOCALE
 ): EmailTemplate {
-  return saved ?? DEFAULT_TEMPLATES[type]
+  return saved ?? defaultTemplate(type, locale)
+}
+
+/** True when the given subject+body still match a built-in English default —
+ * i.e. the org has never customized this template. Used to decide whether a
+ * seeded/legacy row can be safely swapped for the localized default at send
+ * time. */
+export function isDefaultTemplateContent(
+  type: TemplateType,
+  subject: string,
+  body: string
+): boolean {
+  const base = DEFAULT_TEMPLATES[type]
+  return subject.trim() === base.subject && body.trim() === base.body
 }
 
 export function escapeHtml(str: string): string {

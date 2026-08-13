@@ -1,12 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { ChevronRight, ChevronDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import type { AuditLogRow } from '@/lib/actions/audit-log'
+import { auditEntityLabel, auditMessage } from '@/lib/audit-log/message-i18n'
 
 interface AuditLogTableProps {
   rows: AuditLogRow[]
@@ -63,13 +62,9 @@ export function AuditLogTable({ rows }: AuditLogTableProps) {
 
 function Row({ row }: { row: AuditLogRow }) {
   const t = useTranslations()
-  const [open, setOpen] = useState(false)
-  const detailsString = row.details ? JSON.stringify(row.details, null, 2) : null
-  const hasDetails = !!detailsString && detailsString !== '{}'
 
   return (
-    <>
-      <tr className="hover:bg-muted/30">
+    <tr className="hover:bg-muted/30">
         <td className="whitespace-nowrap px-4 py-2.5 text-xs text-muted-foreground">
           {format(new Date(row.created_at), 'MMM d, yyyy HH:mm')}
         </td>
@@ -87,7 +82,7 @@ function Row({ row }: { row: AuditLogRow }) {
         </td>
         <td className="px-4 py-2.5">
           <div className="text-xs text-muted-foreground">
-            {row.entity_type}
+            {auditEntityLabel(t, row.entity_type)}
             {row.entity_id && (
               <>
                 <br />
@@ -98,7 +93,7 @@ function Row({ row }: { row: AuditLogRow }) {
                     <Link
                       href={href}
                       className="font-mono text-[10px] text-primary underline-offset-2 hover:underline"
-                      title={t('auditTable.openRecord', { type: row.entity_type ?? '' })}
+                      title={t('auditTable.openRecord', { type: auditEntityLabel(t, row.entity_type) })}
                     >
                       {short}
                     </Link>
@@ -111,32 +106,8 @@ function Row({ row }: { row: AuditLogRow }) {
           </div>
         </td>
         <td className="px-4 py-2.5">
-          {row.message && <p className="text-xs text-foreground">{row.message}</p>}
-          {hasDetails && (
-            <button
-              type="button"
-              onClick={() => setOpen((o) => !o)}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-            >
-              {open ? (
-                <ChevronDown className="h-3 w-3" />
-              ) : (
-                <ChevronRight className="h-3 w-3" />
-              )}
-              {open ? t('auditTable.hideJson') : t('auditTable.showJson')}
-            </button>
-          )}
+          <p className="text-xs text-foreground">{auditMessage(t, row)}</p>
         </td>
-      </tr>
-      {open && hasDetails && (
-        <tr className="bg-muted/20">
-          <td colSpan={5} className="px-4 py-3">
-            <pre className="overflow-x-auto rounded-md bg-background p-3 text-[11px] leading-relaxed text-foreground">
-              {detailsString}
-            </pre>
-          </td>
-        </tr>
-      )}
-    </>
+    </tr>
   )
 }

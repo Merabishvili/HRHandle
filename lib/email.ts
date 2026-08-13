@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
-import { applyVariables, escapeHtml, DEFAULT_TEMPLATES } from '@/lib/email-template-utils'
+import { applyVariables, escapeHtml, defaultTemplate } from '@/lib/email-template-utils'
+import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY
@@ -79,6 +80,7 @@ export async function sendInterviewInvitationEmail({
   meetingLink,
   customSubject,
   customBody,
+  contentLocale,
   rescheduled = false,
   timezone,
 }: {
@@ -94,6 +96,7 @@ export async function sendInterviewInvitationEmail({
   meetingLink: string | null
   customSubject?: string | undefined
   customBody?: string | undefined
+  contentLocale?: Locale | undefined
   rescheduled?: boolean
   timezone?: string | undefined
 }) {
@@ -116,7 +119,7 @@ export async function sendInterviewInvitationEmail({
     meeting_link: meetingLink ?? '',
     interviewer_name: senderName,
   }
-  const defaults = DEFAULT_TEMPLATES.interview_invitation
+  const defaults = defaultTemplate('interview_invitation', contentLocale ?? DEFAULT_LOCALE)
   const subject = rescheduled
     ? `Interview Rescheduled: ${vacancyTitle}`
     : applyVariables(customSubject ?? defaults.subject, vars)
@@ -196,6 +199,7 @@ export async function sendApplicationConfirmationEmail({
   organizationName,
   customSubject,
   customBody,
+  contentLocale,
   statusUrl,
 }: {
   to: string
@@ -204,6 +208,7 @@ export async function sendApplicationConfirmationEmail({
   organizationName: string
   customSubject?: string
   customBody?: string
+  contentLocale?: Locale
   /** Public candidate-facing status URL (G-016). When provided, rendered as a
    * CTA button under the body. Omitting it keeps the legacy template intact. */
   statusUrl?: string
@@ -214,7 +219,7 @@ export async function sendApplicationConfirmationEmail({
     company: organizationName,
     status_url: statusUrl ?? '',
   }
-  const defaults = DEFAULT_TEMPLATES.application_received
+  const defaults = defaultTemplate('application_received', contentLocale ?? DEFAULT_LOCALE)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
@@ -269,6 +274,7 @@ export async function sendApplicationStatusChangedEmail({
   statusUrl,
   customSubject,
   customBody,
+  contentLocale,
 }: {
   to: string
   candidateName: string
@@ -278,6 +284,7 @@ export async function sendApplicationStatusChangedEmail({
   statusUrl?: string | undefined
   customSubject?: string | undefined
   customBody?: string | undefined
+  contentLocale?: Locale | undefined
 }) {
   const vars = {
     candidate_name: candidateName,
@@ -287,8 +294,8 @@ export async function sendApplicationStatusChangedEmail({
   }
   const defaults =
     stage === 'screening'
-      ? DEFAULT_TEMPLATES.status_change_screening
-      : DEFAULT_TEMPLATES.status_change_interview
+      ? defaultTemplate('status_change_screening', contentLocale ?? DEFAULT_LOCALE)
+      : defaultTemplate('status_change_interview', contentLocale ?? DEFAULT_LOCALE)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
@@ -339,6 +346,7 @@ export async function sendOfferEmail({
   offerUrl,
   customSubject,
   customBody,
+  contentLocale,
 }: {
   to: string
   candidateName: string
@@ -347,6 +355,7 @@ export async function sendOfferEmail({
   offerUrl: string
   customSubject?: string
   customBody?: string
+  contentLocale?: Locale
 }) {
   const vars = {
     candidate_name: candidateName,
@@ -354,7 +363,7 @@ export async function sendOfferEmail({
     company: organizationName,
     offer_url: offerUrl,
   }
-  const defaults = DEFAULT_TEMPLATES.offer_sent
+  const defaults = defaultTemplate('offer_sent', contentLocale ?? DEFAULT_LOCALE)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
@@ -398,6 +407,7 @@ export async function sendApplicationRejectionEmail({
   senderEmail,
   customSubject,
   customBody,
+  contentLocale,
 }: {
   to: string
   candidateName: string
@@ -407,9 +417,10 @@ export async function sendApplicationRejectionEmail({
   senderEmail: string
   customSubject?: string | undefined
   customBody?: string | undefined
+  contentLocale?: Locale | undefined
 }) {
   const vars = { candidate_name: candidateName, role: vacancyTitle, company: organizationName }
-  const defaults = DEFAULT_TEMPLATES.rejection
+  const defaults = defaultTemplate('rejection', contentLocale ?? DEFAULT_LOCALE)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)

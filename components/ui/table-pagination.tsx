@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -43,8 +44,9 @@ export function TablePagination({
   pageSize,
   basePath,
   preservedParams,
-  ariaLabel = 'Pagination',
+  ariaLabel,
 }: TablePaginationProps) {
+  const t = useTranslations()
   const buildHref = (opts: { page?: number; pageSize?: PageSize }): string => {
     const params = new URLSearchParams(preservedParams)
     const effectivePageSize = opts.pageSize ?? pageSize
@@ -64,8 +66,8 @@ export function TablePagination({
   const pages = getPageWindow(safeCurrent, totalPages)
   const showingLabel =
     totalCount === 0
-      ? '0 results'
-      : `Showing ${from}–${to} of ${totalCount}`
+      ? t('pager.results0')
+      : t('pager.showing', { from, to, total: totalCount })
 
   const handlePageSizeChange = (value: string) => {
     const next = parseInt(value, 10) as PageSize
@@ -89,15 +91,15 @@ export function TablePagination({
 
   return (
     <nav
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? t('pager.nav')}
       className="flex flex-col gap-3 border-t border-border px-2 pt-4 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex items-center gap-4">
         <p className="text-sm text-muted-foreground">{showingLabel}</p>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">Per page</span>
+          <span className="text-xs text-muted-foreground">{t('pager.perPage')}</span>
           <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
-            <SelectTrigger className="h-8 w-[72px] text-xs" aria-label="Rows per page">
+            <SelectTrigger className="h-8 w-[72px] text-xs" aria-label={t('pager.rowsPerPage')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -118,7 +120,7 @@ export function TablePagination({
             size="sm"
             asChild={safeCurrent > 1}
             disabled={safeCurrent === 1}
-            aria-label="Previous page"
+            aria-label={t('pager.prev')}
             className="h-8 px-2"
           >
             {safeCurrent > 1 ? (
@@ -154,7 +156,7 @@ export function TablePagination({
                     variant={isCurrent ? 'default' : 'ghost'}
                     size="sm"
                     asChild={!isCurrent}
-                    aria-label={`Page ${p}`}
+                    aria-label={t('pager.pageAria', { page: p })}
                     aria-current={isCurrent ? 'page' : undefined}
                     className="h-8 min-w-[2rem] px-2 text-sm"
                   >
@@ -167,7 +169,7 @@ export function TablePagination({
 
           {/* Compact "page N of M" shown only on narrow screens to replace the page list. */}
           <span className="px-2 text-xs text-muted-foreground sm:hidden">
-            Page {safeCurrent} of {totalPages}
+            {t('pager.pageOf', { current: safeCurrent, total: totalPages })}
           </span>
 
           <Button
@@ -175,7 +177,7 @@ export function TablePagination({
             size="sm"
             asChild={safeCurrent < totalPages}
             disabled={safeCurrent === totalPages}
-            aria-label="Next page"
+            aria-label={t('pager.next')}
             className="h-8 px-2"
           >
             {safeCurrent < totalPages ? (

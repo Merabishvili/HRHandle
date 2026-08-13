@@ -1851,9 +1851,7 @@
     "entity": "Entity",
     "details": "Details",
     "system": "System",
-    "openRecord": "Open {type} record",
-    "hideJson": "Hide JSON",
-    "showJson": "Show JSON"
+    "openRecord": "Open {type} record"
   },
   "liPost": {
     "copyFailed": "Could not copy — please select the text manually.",
@@ -2393,6 +2391,79 @@
   },
   "mfaEnroll": {
     "qrAria": "Two-factor authentication QR code"
+  },
+  "pager": {
+    "nav": "Pagination",
+    "showing": "Showing {from}–{to} of {total}",
+    "results0": "0 results",
+    "perPage": "Per page",
+    "rowsPerPage": "Rows per page",
+    "prev": "Previous page",
+    "next": "Next page",
+    "pageAria": "Page {page}",
+    "pageOf": "Page {current} of {total}"
+  },
+  "auditEntity": {
+    "application": "Application",
+    "candidate": "Candidate",
+    "candidate_evaluation": "Evaluation",
+    "integration": "Integration",
+    "offer": "Offer",
+    "organization": "Organization",
+    "profile": "Profile",
+    "vacancy": "Vacancy",
+    "webhook_notification": "Webhook"
+  },
+  "auditMsg": {
+    "statusChanged": "{from} → {to}",
+    "statusEmailSent": "Status-change email sent for {stage}",
+    "contentLocale": "Content language — default={default}, enabled={enabled}",
+    "candidatesImported": "{count, plural, one {Imported # candidate from CSV} other {Imported # candidates from CSV}}",
+    "integrationConnected": "{provider} integration connected",
+    "integrationDisconnected": "{provider} integration disconnected",
+    "aiFit": "AI fit analysis run",
+    "ai_assist": {
+      "candidate_summary": "Candidate summary requested",
+      "jd_generator": "JD section generated",
+      "bias_check": "Inclusive-language check run",
+      "assessment_suggester": "Assessment suggestions generated",
+      "note_extractor": "Interview notes structured",
+      "generic": "AI assistance used"
+    },
+    "action": {
+      "application_withdrawn": "Application withdrawn by candidate",
+      "billing_checkout_started": "Checkout started",
+      "billing_subscription_canceled": "Auto-renewal canceled",
+      "calendly_connected": "Calendly account connected",
+      "calendly_disconnected": "Calendly disconnected",
+      "calendly_link_generated": "Calendly link generated",
+      "candidate_deleted": "Candidate deleted",
+      "candidate_hard_deleted": "Candidate permanently deleted from trash",
+      "candidate_restored": "Candidate restored",
+      "deletion_scheduled": "Organization deletion scheduled",
+      "interview_scheduled": "Interview scheduled via Calendly",
+      "interview_canceled": "Interview canceled via Calendly",
+      "mfa_admin_reset": "Cleared a teammate's MFA factors",
+      "mfa_enrolled": "TOTP authenticator enrolled",
+      "mfa_policy_updated": "MFA policy updated",
+      "mfa_removed": "TOTP authenticator removed",
+      "offer_accepted": "Offer accepted by candidate",
+      "offer_created": "Offer draft created",
+      "offer_declined": "Offer declined by candidate",
+      "offer_sent": "Offer sent to candidate",
+      "offer_withdrawn": "Offer withdrawn",
+      "scorecard_revoked": "Scorecard share link revoked",
+      "scorecard_shared": "Scorecard share link generated",
+      "vacancy_hard_deleted": "Vacancy permanently deleted from trash",
+      "vacancy_restored": "Vacancy restored",
+      "webhook_notification_created": "Webhook added",
+      "webhook_notification_deleted": "Webhook deleted",
+      "webhook_notification_dispatched": "Webhook dispatched",
+      "webhook_notification_updated": "Webhook subscriptions updated"
+    }
+  },
+  "rejectReason": {
+    "general": "General"
   },
   "apply": {
     "applyForPosition": "Apply for this position",
