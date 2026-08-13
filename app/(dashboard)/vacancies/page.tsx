@@ -379,10 +379,10 @@ export default async function VacanciesPage({
                               <p className="font-medium text-foreground">{vacancy.title}</p>
                               <p className="text-xs text-muted-foreground">
                                 {t(employmentTypeKey(vacancy.employment_type))} ·{' '}
-                                {vacancyRecencyLabel(
-                                  vacancy.created_at,
-                                  status?.code === 'draft',
-                                )}
+                                {(() => {
+                                  const r = vacancyRecencyLabel(vacancy.created_at, status?.code === 'draft')
+                                  return t(r.key, { days: r.days })
+                                })()}
                               </p>
                             </div>
                           </Link>

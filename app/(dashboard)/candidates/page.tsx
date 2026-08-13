@@ -320,7 +320,10 @@ export default async function CandidatesPage({
         <FilterPillTabs
           tabs={[
             { value: 'all', label: t('candidates.allTab') },
-            ...candidateStatuses.map((s) => ({ value: s.id, label: s.name })),
+            ...candidateStatuses.map((s) => ({
+              value: s.id,
+              label: t.has(`candStatus.${s.code}`) ? t(`candStatus.${s.code}`) : s.name,
+            })),
           ]}
           paramKey="status"
           activeValue={statusFilter || ''}

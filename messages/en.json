@@ -1942,6 +1942,11 @@
   },
   "planCards": {
     "availablePlans": "Available plans",
+    "name": {
+      "trial": "Free Trial",
+      "individual": "Individual",
+      "organization": "Organization"
+    },
     "monthly": "Monthly",
     "annual": "Annual",
     "campaignBanner": "🌸 {name} — special pricing until {date}",
@@ -1956,6 +1961,23 @@
     "currentPlan": "Current Plan",
     "trialPlan": "Trial Plan",
     "upgrade": "Upgrade"
+  },
+  "planFeat": {
+    "freeTrial": "7-day free trial",
+    "vacancies": "Up to {count, number} vacancies",
+    "candidates": "Up to {count, number} candidates",
+    "teamMembers": "Up to {count, number} team members",
+    "basicAts": "Basic ATS features",
+    "fullTracking": "Full candidate tracking",
+    "interviewScheduling": "Interview scheduling",
+    "advancedFiltering": "Advanced filtering",
+    "teamCollaboration": "Team collaboration"
+  },
+  "vacAge": {
+    "openedToday": "opened today",
+    "createdToday": "created today",
+    "openedAgo": "opened {days}d ago",
+    "createdAgo": "created {days}d ago"
   },
   "pricing": {
     "promotion": "Promotion",

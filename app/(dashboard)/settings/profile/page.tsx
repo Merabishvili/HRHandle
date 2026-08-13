@@ -51,7 +51,9 @@ export default async function ProfileSettingsPage() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">{t('settings.profile.role')}</span>
-            <span className="text-sm font-medium capitalize">{profile.role}</span>
+            <span className="text-sm font-medium">
+              {t(`team.role${profile.role.charAt(0).toUpperCase()}${profile.role.slice(1)}`)}
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">{t('settings.profile.memberSince')}</span>

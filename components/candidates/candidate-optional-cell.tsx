@@ -1,5 +1,5 @@
 import { Mail, Phone } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
+import { getFormatter } from 'next-intl/server'
 import { TableCell } from '@/components/ui/table'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
 import type { CandidateRow, DerivedStage } from '@/lib/candidates/list-derivation'
@@ -17,13 +17,14 @@ interface CandidateOptionalCellProps {
  * Candidates list. Extracted from `candidates/page.tsx` (A-002) so the page
  * body reads as orchestration rather than a 130-line inline switch.
  */
-export function CandidateOptionalCell({
+export async function CandidateOptionalCell({
   col,
   candidate,
   stage,
   fit,
   customFieldValueMap,
 }: CandidateOptionalCellProps) {
+  const format = await getFormatter()
   switch (col) {
     case 'current_position':
       return (
@@ -45,7 +46,7 @@ export function CandidateOptionalCell({
     case 'created_at':
       return (
         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-          {formatDistanceToNow(new Date(candidate.created_at), { addSuffix: true })}
+          {format.relativeTime(new Date(candidate.created_at))}
         </TableCell>
       )
     case 'email':

@@ -4,9 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { getRequestCountry } from '@/lib/sanctions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Zap } from 'lucide-react'
 import { PRICING_PLANS, getPlanMonthly } from '@/lib/types/subscription'
 import { resolveBillingCurrency, CURRENCY_SYMBOL } from '@/lib/pricing/currency'
 import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
@@ -64,11 +62,7 @@ function getSubscriptionBadgeClass(status: SubscriptionRow['status']) {
 }
 
 function getPlanDisplayNameKey(planCode: 'trial' | 'individual' | 'organization') {
-  switch (planCode) {
-    case 'individual': return 'billing.planIndividual'
-    case 'organization': return 'billing.planOrganization'
-    default: return 'billing.planTrial'
-  }
+  return `planCards.name.${planCode}`
 }
 
 function getRemainingTrialDays(trialEndAt: string | null): number | null {
@@ -313,29 +307,6 @@ export default async function BillingSettingsPage({
           terms: (c) => <a href="/terms" className="underline">{c}</a>,
         })}
       </p>
-
-      {typedSubscription.plan_code === 'trial' && (
-        <Card className="border-primary bg-primary/5">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Zap className="h-6 w-6 text-primary" />
-              </div>
-
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground">
-                  {t('billing.unlockCapacity')}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t('billing.upgradeDesc')}
-                </p>
-              </div>
-
-              <Button>{t('billing.upgradeNow')}</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

@@ -11,6 +11,7 @@ import { CheckCircle, Zap } from 'lucide-react'
 import type { PricingPlan, PlanCode, BillingCycle } from '@/lib/types/subscription'
 import { getPlanMonthly } from '@/lib/types/subscription'
 import { CURRENCY_SYMBOL, type Currency } from '@/lib/pricing/currency'
+import { planName, planFeatures } from '@/lib/pricing/plan-i18n'
 import { startPlanCheckout } from '@/lib/actions/billing'
 import type { Campaign } from '@/lib/campaign'
 import { getCampaignPrice } from '@/lib/campaign'
@@ -121,7 +122,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
 
               <CardContent className="p-6">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
+                  <h3 className="text-xl font-semibold text-foreground">{planName(t, plan.code)}</h3>
                   {isCurrent && <Badge variant="secondary">{t('planCards.current')}</Badge>}
                 </div>
 
@@ -155,7 +156,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
                 </div>
 
                 <ul className="mb-6 space-y-3">
-                  {plan.features.map((feature) => (
+                  {planFeatures(t, plan).map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
                       <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                       <span className="text-sm text-muted-foreground">{feature}</span>

@@ -247,7 +247,7 @@
   "plan": {
     "trial": "Пробный",
     "individual": "Индивидуальный",
-    "organization": "Организация"
+    "organization": "Корпоративный"
   },
   "common": {
     "save": "Сохранить",
@@ -1942,6 +1942,11 @@
   },
   "planCards": {
     "availablePlans": "Доступные планы",
+    "name": {
+      "trial": "Пробный",
+      "individual": "Индивидуальный",
+      "organization": "Корпоративный"
+    },
     "monthly": "Ежемесячно",
     "annual": "Ежегодно",
     "campaignBanner": "🌸 {name} — специальные цены до {date}",
@@ -1956,6 +1961,23 @@
     "currentPlan": "Текущий план",
     "trialPlan": "Пробный план",
     "upgrade": "Перейти"
+  },
+  "planFeat": {
+    "freeTrial": "7-дневный пробный период",
+    "vacancies": "До {count, number} вакансий",
+    "candidates": "До {count, number} кандидатов",
+    "teamMembers": "До {count, number} участников команды",
+    "basicAts": "Базовые функции ATS",
+    "fullTracking": "Полное отслеживание кандидатов",
+    "interviewScheduling": "Планирование собеседований",
+    "advancedFiltering": "Расширенная фильтрация",
+    "teamCollaboration": "Командная работа"
+  },
+  "vacAge": {
+    "openedToday": "открыта сегодня",
+    "createdToday": "создана сегодня",
+    "openedAgo": "открыта {days} дн. назад",
+    "createdAgo": "создана {days} дн. назад"
   },
   "pricing": {
     "promotion": "Акция",

@@ -15,10 +15,12 @@ export const CURRENCIES: readonly Currency[] = ['GEL', 'EUR', 'USD'] as const
 export const CURRENCY_SYMBOL: Record<Currency, string> = { GEL: '₾', EUR: '€', USD: '$' }
 
 /** Human label for a currency selector. */
+// Compact symbol + ISO code — universal, needs no translation, and keeps the
+// currency picker small (per staging design feedback).
 export const CURRENCY_LABEL: Record<Currency, string> = {
-  GEL: '₾ GEL (Georgian Lari)',
-  EUR: '€ EUR (Euro)',
-  USD: '$ USD (US Dollar)',
+  GEL: '₾ GEL',
+  EUR: '€ EUR',
+  USD: '$ USD',
 }
 
 export function isCurrency(v: unknown): v is Currency {

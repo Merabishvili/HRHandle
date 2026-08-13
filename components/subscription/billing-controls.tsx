@@ -66,14 +66,11 @@ export function BillingControls({
 
   return (
     <Card className="border-border">
-      <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-foreground">{t('billingCtl.billingCurrency')}</p>
-        </div>
-
-        <div className="flex items-center gap-3">
+      <CardContent className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{t('billingCtl.billingCurrency')}</span>
           <Select value={currency} onValueChange={onCurrencyChange} disabled={pending}>
-            <SelectTrigger className="w-[220px]">
+            <SelectTrigger className="h-8 w-auto min-w-[88px] gap-1.5 text-sm font-medium">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -84,19 +81,19 @@ export function BillingControls({
               ))}
             </SelectContent>
           </Select>
-
-          {showCancel &&
-            (autoRenewOff ? (
-              <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
-                {t('billingCtl.autoRenewOff')}
-              </span>
-            ) : (
-              <Button variant="outline" size="sm" onClick={onCancel} disabled={pending}>
-                {cancelling && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />}
-                {t('billingCtl.cancelSub')}
-              </Button>
-            ))}
         </div>
+
+        {showCancel &&
+          (autoRenewOff ? (
+            <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
+              {t('billingCtl.autoRenewOff')}
+            </span>
+          ) : (
+            <Button variant="outline" size="sm" onClick={onCancel} disabled={pending}>
+              {cancelling && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />}
+              {t('billingCtl.cancelSub')}
+            </Button>
+          ))}
       </CardContent>
     </Card>
   )

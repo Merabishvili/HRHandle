@@ -28,7 +28,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import type { ColumnDef } from '@/lib/types/columns'
-import { MAX_OPTIONAL_COLUMNS } from '@/lib/types/columns'
+import { MAX_OPTIONAL_COLUMNS, COLUMN_I18N_KEY } from '@/lib/types/columns'
 
 interface SortableItemProps {
   id: string
@@ -87,6 +87,13 @@ export function ColumnManagerDialog({
   const t = useTranslations()
   const [selected, setSelected] = useState<string[]>(initialSelected)
   const [saving, setSaving] = useState(false)
+
+  // Localize a column's label when it maps to a known default column; custom-
+  // field columns (key `cf_<id>`) keep their org-defined name.
+  const columnLabel = (col: ColumnDef) => {
+    const key = COLUMN_I18N_KEY[col.key]
+    return key ? t(key) : col.label
+  }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -170,7 +177,7 @@ export function ColumnManagerDialog({
                       <SortableItem
                         key={col.key}
                         id={col.key}
-                        label={col.label}
+                        label={columnLabel(col)}
                         onRemove={removeColumn}
                       />
                     ))}
@@ -198,7 +205,7 @@ export function ColumnManagerDialog({
                     className="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                   >
                     <Plus className="h-3 w-3" />
-                    {col.label}
+                    {columnLabel(col)}
                   </button>
                 ))}
               </div>

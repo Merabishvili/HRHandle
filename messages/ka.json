@@ -247,7 +247,7 @@
   "plan": {
     "trial": "საცდელი",
     "individual": "ინდივიდუალური",
-    "organization": "ორგანიზაცია"
+    "organization": "კორპორატიული"
   },
   "common": {
     "save": "შენახვა",
@@ -1942,6 +1942,11 @@
   },
   "planCards": {
     "availablePlans": "ხელმისაწვდომი გეგმები",
+    "name": {
+      "trial": "საცდელი",
+      "individual": "ინდივიდუალური",
+      "organization": "კორპორატიული"
+    },
     "monthly": "ყოველთვიური",
     "annual": "წლიური",
     "campaignBanner": "🌸 {name} — სპეციალური ფასები {date}-მდე",
@@ -1956,6 +1961,23 @@
     "currentPlan": "მიმდინარე გეგმა",
     "trialPlan": "საცდელი გეგმა",
     "upgrade": "გადასვლა"
+  },
+  "planFeat": {
+    "freeTrial": "7-დღიანი უფასო საცდელი პერიოდი",
+    "vacancies": "{count, number}-მდე ვაკანსია",
+    "candidates": "{count, number}-მდე კანდიდატი",
+    "teamMembers": "{count, number}-მდე გუნდის წევრი",
+    "basicAts": "ATS-ის საბაზისო ფუნქციები",
+    "fullTracking": "კანდიდატების სრული თვალყურის დევნება",
+    "interviewScheduling": "გასაუბრებების დაგეგმვა",
+    "advancedFiltering": "გაფართოებული ფილტრაცია",
+    "teamCollaboration": "გუნდური თანამშრომლობა"
+  },
+  "vacAge": {
+    "openedToday": "გაიხსნა დღეს",
+    "createdToday": "შეიქმნა დღეს",
+    "openedAgo": "გაიხსნა {days} დღის წინ",
+    "createdAgo": "შეიქმნა {days} დღის წინ"
   },
   "pricing": {
     "promotion": "აქცია",

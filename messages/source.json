@@ -233,7 +233,7 @@
 
   "plan.trial": { "en": "Trial", "ru": "Пробный", "ka": "საცდელი" },
   "plan.individual": { "en": "Individual", "ru": "Индивидуальный", "ka": "ინდივიდუალური" },
-  "plan.organization": { "en": "Organization", "ru": "Организация", "ka": "ორგანიზაცია" },
+  "plan.organization": { "en": "Organization", "ru": "Корпоративный", "ka": "კორპორატიული" },
 
   "common.save": { "en": "Save", "ru": "Сохранить", "ka": "შენახვა" },
   "common.saveChanges": { "en": "Save changes", "ru": "Сохранить изменения", "ka": "ცვლილებების შენახვა" },
@@ -1696,6 +1696,25 @@
   "payMethods.secure": { "en": "Secure payments by Flitt · We accept", "ru": "Безопасные платежи через Flitt · Мы принимаем", "ka": "უსაფრთხო გადახდები Flitt-ით · ჩვენ ვიღებთ" },
 
   "planCards.availablePlans": { "en": "Available plans", "ru": "Доступные планы", "ka": "ხელმისაწვდომი გეგმები" },
+
+  "planCards.name.trial": { "en": "Free Trial", "ru": "Пробный", "ka": "საცდელი" },
+  "planCards.name.individual": { "en": "Individual", "ru": "Индивидуальный", "ka": "ინდივიდუალური" },
+  "planCards.name.organization": { "en": "Organization", "ru": "Корпоративный", "ka": "კორპორატიული" },
+
+  "planFeat.freeTrial": { "en": "7-day free trial", "ru": "7-дневный пробный период", "ka": "7-დღიანი უფასო საცდელი პერიოდი" },
+  "planFeat.vacancies": { "en": "Up to {count, number} vacancies", "ru": "До {count, number} вакансий", "ka": "{count, number}-მდე ვაკანსია" },
+  "planFeat.candidates": { "en": "Up to {count, number} candidates", "ru": "До {count, number} кандидатов", "ka": "{count, number}-მდე კანდიდატი" },
+  "planFeat.teamMembers": { "en": "Up to {count, number} team members", "ru": "До {count, number} участников команды", "ka": "{count, number}-მდე გუნდის წევრი" },
+  "planFeat.basicAts": { "en": "Basic ATS features", "ru": "Базовые функции ATS", "ka": "ATS-ის საბაზისო ფუნქციები" },
+  "planFeat.fullTracking": { "en": "Full candidate tracking", "ru": "Полное отслеживание кандидатов", "ka": "კანდიდატების სრული თვალყურის დევნება" },
+  "planFeat.interviewScheduling": { "en": "Interview scheduling", "ru": "Планирование собеседований", "ka": "გასაუბრებების დაგეგმვა" },
+  "planFeat.advancedFiltering": { "en": "Advanced filtering", "ru": "Расширенная фильтрация", "ka": "გაფართოებული ფილტრაცია" },
+  "planFeat.teamCollaboration": { "en": "Team collaboration", "ru": "Командная работа", "ka": "გუნდური თანამშრომლობა" },
+
+  "vacAge.openedToday": { "en": "opened today", "ru": "открыта сегодня", "ka": "გაიხსნა დღეს" },
+  "vacAge.createdToday": { "en": "created today", "ru": "создана сегодня", "ka": "შეიქმნა დღეს" },
+  "vacAge.openedAgo": { "en": "opened {days}d ago", "ru": "открыта {days} дн. назад", "ka": "გაიხსნა {days} დღის წინ" },
+  "vacAge.createdAgo": { "en": "created {days}d ago", "ru": "создана {days} дн. назад", "ka": "შეიქმნა {days} დღის წინ" },
   "planCards.monthly": { "en": "Monthly", "ru": "Ежемесячно", "ka": "ყოველთვიური" },
   "planCards.annual": { "en": "Annual", "ru": "Ежегодно", "ka": "წლიური" },
   "planCards.campaignBanner": { "en": "🌸 {name} — special pricing until {date}", "ru": "🌸 {name} — специальные цены до {date}", "ka": "🌸 {name} — სპეციალური ფასები {date}-მდე" },
