@@ -51,6 +51,9 @@ interface CrossVacancyCardProps {
   data: CrossVacancyCardData
   selected: boolean
   onToggleSelect: (id: string, next: boolean) => void
+  /** Show the bulk-select checkbox. Off on surfaces without a bulk bar (the
+   * per-vacancy board). Defaults to on. */
+  selectable?: boolean
 }
 
 /** Avatar background hue, deterministic per first letter. The design
@@ -82,6 +85,7 @@ export function CrossVacancyCard({
   data,
   selected,
   onToggleSelect,
+  selectable = true,
 }: CrossVacancyCardProps) {
   const t = useTranslations()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -138,12 +142,14 @@ export function CrossVacancyCard({
         style={{ borderLeft: `3px solid ${spine}` }}
       >
         <div className="flex items-start gap-2">
-          <Checkbox
-            checked={selected}
-            onCheckedChange={(v) => onToggleSelect(data.applicationId, v === true)}
-            aria-label={t('pipeline.selectNamed', { name: `${data.firstName} ${data.lastName}` })}
-            className="mt-1"
-          />
+          {selectable && (
+            <Checkbox
+              checked={selected}
+              onCheckedChange={(v) => onToggleSelect(data.applicationId, v === true)}
+              aria-label={t('pipeline.selectNamed', { name: `${data.firstName} ${data.lastName}` })}
+              className="mt-1"
+            />
+          )}
           <button
             type="button"
             {...attributes}

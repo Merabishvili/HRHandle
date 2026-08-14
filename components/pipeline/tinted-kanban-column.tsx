@@ -5,17 +5,26 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useTranslations } from 'next-intl'
 
 import { CrossVacancyCard, type CrossVacancyCardData } from './cross-vacancy-card'
-import type { ApplicationStatus } from '@/lib/types/application'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { cn } from '@/lib/utils'
 
 interface TintedKanbanColumnProps {
-  status: ApplicationStatus
+  /** Minimal column descriptor. `id` is the droppable target, `code` drives
+   * the tint/spine palette (a canonical bucket code), `name` the fallback
+   * label. The per-vacancy board reuses this with custom-stage columns. */
+  status: { id: string; code: string; name: string }
   cards: CrossVacancyCardData[]
   isOver: boolean
   selectedIds: Set<string>
   onToggleSelect: (id: string, next: boolean) => void
+  /** Header label override — used for custom pipeline stages whose name isn't
+   * derivable from the canonical `code`. Defaults to the code's localized
+   * status label. */
+  label?: string
+  /** Whether cards show the bulk-select checkbox. Off on the per-vacancy
+   * board (no bulk bar there yet). Defaults to on. */
+  selectable?: boolean
 }
 
 /**
@@ -33,6 +42,8 @@ export function TintedKanbanColumn({
   isOver,
   selectedIds,
   onToggleSelect,
+  label,
+  selectable = true,
 }: TintedKanbanColumnProps) {
   const t = useTranslations()
   const { setNodeRef } = useDroppable({ id: status.id })
@@ -52,7 +63,7 @@ export function TintedKanbanColumn({
           className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
           style={{ background: style.pillBg, color: style.pillText }}
         >
-          {statusLabel(t, status.code, status.name)}
+          {label ?? statusLabel(t, status.code, status.name)}
         </span>
         <span
           className="text-[13px] font-semibold tabular-nums"
@@ -76,6 +87,7 @@ export function TintedKanbanColumn({
               data={card}
               selected={selectedIds.has(card.applicationId)}
               onToggleSelect={onToggleSelect}
+              selectable={selectable}
             />
           ))}
         </SortableContext>

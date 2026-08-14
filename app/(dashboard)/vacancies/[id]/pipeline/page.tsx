@@ -4,8 +4,10 @@ import { getTranslations } from 'next-intl/server'
 import { ArrowLeft, LayoutGrid } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { KanbanBoard } from '@/components/pipeline/kanban-board'
-import type { PipelineColumn } from '@/components/pipeline/kanban-column'
+import {
+  VacancyPipelineBoard,
+  type PipelineColumn,
+} from '@/components/pipeline/vacancy-pipeline-board'
 import { getApplicationStatuses } from '@/lib/cache/lookups'
 import type { ApplicationStatus } from '@/lib/types/application'
 
@@ -188,7 +190,7 @@ export default async function VacancyPipelinePage({
           </Button>
         </div>
       ) : (
-        <KanbanBoard
+        <VacancyPipelineBoard
           columns={columns}
           initialApplications={applications}
           rejectionReasons={rejectionReasonsRaw ?? []}
