@@ -1,18 +1,26 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { CheckCircle, Zap } from 'lucide-react'
 import type { PricingPlan, PlanCode, BillingCycle } from '@/lib/types/subscription'
 import { getPlanMonthly } from '@/lib/types/subscription'
-import { CURRENCY_SYMBOL, type Currency } from '@/lib/pricing/currency'
+import { CURRENCIES, CURRENCY_LABEL, CURRENCY_SYMBOL, type Currency } from '@/lib/pricing/currency'
 import { planName, planFeatures } from '@/lib/pricing/plan-i18n'
-import { startPlanCheckout } from '@/lib/actions/billing'
+import { startPlanCheckout, setBillingCurrency } from '@/lib/actions/billing'
 import type { Campaign } from '@/lib/campaign'
 import { getCampaignPrice } from '@/lib/campaign'
 
@@ -26,9 +34,19 @@ interface PlanCardsProps {
 
 export function PlanCards({ plans, currentPlanCode, currency, campaign, campaignActive }: PlanCardsProps) {
   const t = useTranslations()
+  const router = useRouter()
   const [billing, setBilling] = useState<BillingCycle>('monthly')
   const [pendingCode, setPendingCode] = useState<PlanCode | null>(null)
   const [, startTransition] = useTransition()
+  const [currencyPending, startCurrencyTransition] = useTransition()
+
+  const onCurrencyChange = (value: string) => {
+    startCurrencyTransition(async () => {
+      const res = await setBillingCurrency(value as Currency)
+      if (res.success) router.refresh()
+      else toast.error(res.error)
+    })
+  }
 
   const symbol = CURRENCY_SYMBOL[currency]
   const annualDiscount = Math.round(campaign.discounts.annual * 100)
@@ -49,9 +67,10 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold text-foreground">{t('planCards.availablePlans')}</h2>
 
+        <div className="flex flex-wrap items-center gap-2">
         <div className="inline-flex items-center rounded-full border border-border bg-muted p-1">
           <button
             onClick={() => setBilling('monthly')}
@@ -83,6 +102,18 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
               -{campaignActive ? annualDiscount : 20}%
             </span>
           </button>
+        </div>
+
+        <Select value={currency} onValueChange={onCurrencyChange} disabled={currencyPending}>
+          <SelectTrigger className="h-8 w-auto min-w-[88px] gap-1.5 text-sm font-medium" aria-label={t('billingCtl.billingCurrency')}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CURRENCIES.map((c) => (
+              <SelectItem key={c} value={c}>{CURRENCY_LABEL[c]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         </div>
       </div>
 

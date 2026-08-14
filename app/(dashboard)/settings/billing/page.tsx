@@ -3,8 +3,8 @@ import { headers } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { getRequestCountry } from '@/lib/sanctions'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { CreditCard } from 'lucide-react'
 import { PRICING_PLANS, getPlanMonthly } from '@/lib/types/subscription'
 import { resolveBillingCurrency, CURRENCY_SYMBOL } from '@/lib/pricing/currency'
 import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
@@ -195,11 +195,6 @@ export default async function BillingSettingsPage({
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{t('settings.nav.billing')}</h1>
-        <p className="text-muted-foreground">{t('billing.subtitle')}</p>
-      </div>
-
       {checkout === 'return' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
           <p className="font-medium">{t('billing.checkoutThanks')}</p>
@@ -209,87 +204,47 @@ export default async function BillingSettingsPage({
         </div>
       )}
 
-      <Card className="border-border">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{t('billing.currentPlan')}</CardTitle>
-              <CardDescription>{t('billing.currentPlanDesc')}</CardDescription>
-            </div>
-
-            <Badge
-              variant="secondary"
-              className={getSubscriptionBadgeClass(typedSubscription.status)}
-            >
-              {t(`billing.status.${typedSubscription.status}`)}
-            </Badge>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <div className="mb-6 flex items-baseline gap-2">
-            <span className="text-4xl font-bold text-foreground">
-              {t(getPlanDisplayNameKey(typedSubscription.plan_code))}
-            </span>
-
+      {/* Current plan — slim header ("Current plan / {plan}" + trial/status
+          badge) with a compact usage row below. */}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold text-foreground">
+            {t('billing.currentPlan')} / {t(getPlanDisplayNameKey(typedSubscription.plan_code))}
             {typedSubscription.plan_code !== 'trial' && currentMonthly !== null && (
-              <span className="text-muted-foreground">
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
                 {currentCycle === 'annual'
                   ? t('billing.perMoAnnual', { price: `${CURRENCY_SYMBOL[currency]}${currentMonthly}` })
                   : t('billing.perMonth', { price: `${CURRENCY_SYMBOL[currency]}${currentMonthly}` })}
               </span>
             )}
-          </div>
+          </h2>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg bg-muted/50 p-4">
-              <p className="text-sm text-muted-foreground">{t('billing.vacanciesUsed')}</p>
-              <p className="text-2xl font-bold text-foreground">
-                {vacancyCount || 0} / {typedSubscription.vacancy_limit}
-              </p>
-            </div>
-
-            <div className="rounded-lg bg-muted/50 p-4">
-              <p className="text-sm text-muted-foreground">{t('billing.candidatesUsed')}</p>
-              <p className="text-2xl font-bold text-foreground">
-                {candidateCount || 0} / {typedSubscription.candidate_limit}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">{t('billing.planOrganization')}</p>
-              <p className="font-medium text-foreground">{typedOrganization.name}</p>
-            </div>
-
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">{t('billing.paymentMethod')}</p>
-              <p className="font-medium text-foreground">
-                {typedSubscription.payment_method_linked ? t('billing.linked') : t('billing.notLinked')}
-              </p>
-            </div>
-          </div>
-
-          {isTrial && remainingTrialDays !== null && (
-            <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-900">
-              <p className="font-medium">
-                {t('billing.trialRemaining', { count: remainingTrialDays })}
-              </p>
-              <p className="mt-1 text-sm">
-                {t('billing.trialAfter')}
-              </p>
-            </div>
+          {isTrial && remainingTrialDays !== null ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[oklch(0.72_0.15_300)] to-[oklch(0.62_0.17_250)] px-3 py-1 text-xs font-semibold text-white">
+              {t(getPlanDisplayNameKey('trial'))} · {t('billing.trialDaysLeft', { count: remainingTrialDays })}
+            </span>
+          ) : (
+            <Badge variant="secondary" className={getSubscriptionBadgeClass(typedSubscription.status)}>
+              {t(`billing.status.${typedSubscription.status}`)}
+            </Badge>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      <BillingControls
-        currency={currency}
-        canManage={typedProfile.role === 'owner' || typedProfile.role === 'admin'}
-        showCancel={isPaidActive}
-        autoRenewOff={isPaidActive && !typedSubscription.next_billing_at}
-      />
+        <div className="flex items-stretch divide-x divide-border rounded-xl border border-border">
+          <div className="flex-1 px-5 py-3.5 text-sm">
+            <span className="font-semibold tabular-nums text-foreground">
+              {vacancyCount || 0} / {typedSubscription.vacancy_limit}
+            </span>{' '}
+            <span className="text-muted-foreground">{t('billing.usageVacancies')}</span>
+          </div>
+          <div className="flex-1 px-5 py-3.5 text-sm">
+            <span className="font-semibold tabular-nums text-foreground">
+              {candidateCount || 0} / {typedSubscription.candidate_limit}
+            </span>{' '}
+            <span className="text-muted-foreground">{t('billing.usageCandidates')}</span>
+          </div>
+        </div>
+      </section>
 
       <PlanCards
         plans={PRICING_PLANS}
@@ -299,7 +254,26 @@ export default async function BillingSettingsPage({
         campaignActive={isCampaignActive()}
       />
 
-      <PaymentMethods className="justify-center" />
+      <BillingControls
+        canManage={typedProfile.role === 'owner' || typedProfile.role === 'admin'}
+        showCancel={isPaidActive}
+        autoRenewOff={isPaidActive && !typedSubscription.next_billing_at}
+      />
+
+      {/* Payment method — status + accepted brands (saved-card last4 + change/
+          delete are a separate Flitt feature; not stored yet). */}
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border px-5 py-4">
+        <div className="flex items-center gap-3">
+          <CreditCard className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <div className="text-sm">
+            <p className="text-muted-foreground">{t('billing.paymentMethod')}</p>
+            <p className="font-medium text-foreground">
+              {typedSubscription.payment_method_linked ? t('billing.cardOnFile') : t('billing.notLinked')}
+            </p>
+          </div>
+        </div>
+        <PaymentMethods />
+      </section>
 
       <p className="text-center text-xs text-muted-foreground">
         {t.rich('billing.renewNote', {
