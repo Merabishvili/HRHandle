@@ -13,6 +13,7 @@ import {
 } from '@/components/pipeline/cross-vacancy-board'
 import type { RoleOption } from '@/components/pipeline/role-filter-pills'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
+import { shortSourceLabel } from '@/lib/pipeline/source-label'
 
 /**
  * Top-level `/pipeline` route — Wave 2.1 Version B.
@@ -32,20 +33,6 @@ const TERMINAL_CODES: ReadonlySet<ApplicationStatus['code']> = new Set([
   'rejected',
   'withdrawn',
 ])
-
-/** Map the raw values stored in candidates.source to a short label that
- * fits the card design ("1d · LinkedIn", "2d · Apply link"). */
-function shortSourceLabel(raw: string | null): string | null {
-  if (!raw) return null
-  const trimmed = raw.trim()
-  if (!trimmed) return null
-  if (/^public apply/i.test(trimmed)) return 'Apply link'
-  if (/^company website/i.test(trimmed)) return 'Website'
-  if (/^job board/i.test(trimmed)) return 'Job board'
-  if (/^csv import/i.test(trimmed)) return 'CSV'
-  if (/^manual/i.test(trimmed)) return 'Manual'
-  return trimmed
-}
 
 export default async function PipelinePage() {
   const t = await getTranslations()

@@ -9,6 +9,7 @@ import {
   type PipelineColumn,
 } from '@/components/pipeline/vacancy-pipeline-board'
 import { getApplicationStatuses } from '@/lib/cache/lookups'
+import { shortSourceLabel } from '@/lib/pipeline/source-label'
 import type { ApplicationStatus } from '@/lib/types/application'
 
 interface PipelineApplicationRow {
@@ -25,6 +26,7 @@ interface PipelineCandidateRow {
   last_name: string
   current_position: string | null
   current_company: string | null
+  source: string | null
 }
 
 /**
@@ -119,12 +121,33 @@ export default async function VacancyPipelinePage({
   if (candidateIds.length > 0) {
     const { data: candidatesRaw } = await supabase
       .from('candidates')
-      .select('id, first_name, last_name, current_position, current_company')
+      .select('id, first_name, last_name, current_position, current_company, source')
       .in('id', candidateIds)
       .is('deleted_at', null)
     for (const c of (candidatesRaw || []) as PipelineCandidateRow[]) {
       candidateMap.set(c.id, c)
     }
+  }
+
+  // Fit score = average of *submitted* reviewer cards per application, on the
+  // 0–10 pill scale (matches the cross-vacancy board). Null when unrated.
+  const fitScoreMap = new Map<string, number>()
+  if (applicationsData.length > 0) {
+    const { data: evalRows } = await supabase
+      .from('candidate_evaluations')
+      .select('application_id, score')
+      .eq('submitted', true)
+      .in('application_id', applicationsData.map((a) => a.id))
+    const agg = new Map<string, { total: number; count: number }>()
+    for (const row of (evalRows ?? []) as { application_id: string; score: number | null }[]) {
+      if (typeof row.score === 'number') {
+        const cur = agg.get(row.application_id) ?? { total: 0, count: 0 }
+        cur.total += row.score
+        cur.count += 1
+        agg.set(row.application_id, cur)
+      }
+    }
+    for (const [appId, { total, count }] of agg) fitScoreMap.set(appId, Math.round(total / count))
   }
 
   // The rejection dialog still keys off canonical status_id, so resolve
@@ -140,6 +163,7 @@ export default async function VacancyPipelinePage({
 
   const applications = applicationsData.map((app) => {
     const candidate = candidateMap.get(app.candidate_id)
+    const rawScore = fitScoreMap.get(app.id)
     return {
       id: app.id,
       candidate_id: app.candidate_id,
@@ -148,6 +172,8 @@ export default async function VacancyPipelinePage({
       last_name: candidate?.last_name ?? '',
       current_position: candidate?.current_position ?? null,
       current_company: candidate?.current_company ?? null,
+      source: shortSourceLabel(candidate?.source ?? null),
+      fit_score: typeof rawScore === 'number' ? Math.round(rawScore) / 10 : null,
       last_status_changed_at: app.last_status_changed_at,
       applied_at: app.applied_at,
     }

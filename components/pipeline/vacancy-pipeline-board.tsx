@@ -44,6 +44,10 @@ export interface VacancyPipelineApplication {
   last_name: string
   current_position: string | null
   current_company: string | null
+  /** Short source label ("LinkedIn", "Apply link", …) or null. */
+  source: string | null
+  /** 0–10 fit score from submitted reviewer cards, or null. */
+  fit_score: number | null
   last_status_changed_at: string | null
   applied_at: string
 }
@@ -119,11 +123,11 @@ export function VacancyPipelineBoard({
         // candidate's current position as the card subtitle instead.
         vacancyTitle: app.current_position ?? '',
         currentPosition: app.current_position,
-        source: null,
+        source: app.source,
         inStageSince: app.last_status_changed_at ?? app.applied_at,
         appliedAt: app.applied_at,
         stageCode: (columnId && bucketByColumnId.get(columnId)) ?? 'applied',
-        fitScore: null,
+        fitScore: app.fit_score,
         rejectionReason: null,
       }
     },
