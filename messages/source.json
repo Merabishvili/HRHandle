@@ -1431,7 +1431,7 @@
   "vacOverview.nothingAria": { "en": "Nothing demands attention", "ru": "Ничего не требует внимания", "ka": "არაფერი საჭიროებს ყურადღებას" },
   "vacOverview.nothingBlocking": { "en": "Nothing's blocking you on this role right now. Open the pipeline below to drive next moves.", "ru": "Сейчас ничто не блокирует вас по этой роли. Откройте пайплайн ниже, чтобы двигаться дальше.", "ka": "ამ როლზე ამჟამად არაფერი გაფერხებთ. გახსენით პაიპლაინი ქვემოთ შემდეგი ნაბიჯებისთვის." },
   "vacOverview.pipeline": { "en": "Pipeline", "ru": "Пайплайн", "ka": "პაიპლაინი" },
-  "vacOverview.openBoard": { "en": "Open board →", "ru": "Открыть доску →", "ka": "დაფის გახსნა →" },
+  "vacOverview.openBoard": { "en": "Open pipeline →", "ru": "Открыть пайплайн →", "ka": "პაიპლაინის გახსნა →" },
   "vacOverview.atAGlance": { "en": "At a glance", "ru": "Кратко", "ka": "მოკლედ" },
   "vacOverview.timeOpen": { "en": "Time open", "ru": "Открыта", "ka": "ღიაა" },
   "vacOverview.days": { "en": "{count, plural, one {# day} other {# days}}", "ru": "{count, plural, one {# день} few {# дня} many {# дней} other {# дня}}", "ka": "{count, plural, one {# დღე} other {# დღე}}" },
@@ -1989,7 +1989,7 @@
 
   "vacHeader.openedAgo": { "en": "opened {days}d ago", "ru": "открыта {days} дн. назад", "ka": "გაიხსნა {days} დღის წინ" },
   "vacHeader.ends": { "en": "ends {date}", "ru": "завершается {date}", "ka": "სრულდება {date}" },
-  "vacHeader.viewPipeline": { "en": "View pipeline →", "ru": "Открыть воронку →", "ka": "ვორონკის ნახვა →" },
+  "vacHeader.viewPipeline": { "en": "View pipeline →", "ru": "Открыть пайплайн →", "ka": "პაიპლაინის ნახვა →" },
 
   "screenQ.aria": { "en": "Screening questions", "ru": "Отборочные вопросы", "ka": "შესარჩევი კითხვები" },
   "screenQ.title": { "en": "Screening questions", "ru": "Отборочные вопросы", "ka": "შესარჩევი კითხვები" },
@@ -2037,8 +2037,8 @@
   "vacForm.updateVacancy": { "en": "Update vacancy", "ru": "Обновить вакансию", "ka": "ვაკანსიის განახლება" },
 
   "vacPipe.backToVacancy": { "en": "Back to vacancy", "ru": "Назад к вакансии", "ka": "ვაკანსიაზე დაბრუნება" },
-  "vacPipe.inPipeline": { "en": "{count, plural, one {# candidate in pipeline} other {# candidates in pipeline}}", "ru": "{count, plural, one {# кандидат в воронке} few {# кандидата в воронке} many {# кандидатов в воронке} other {# кандидата в воронке}}", "ka": "{count, plural, one {# კანდიდატი ვორონკაში} other {# კანდიდატი ვორონკაში}}" },
-  "vacPipe.noCandidatesHint": { "en": "Add candidates to this vacancy to see them in the pipeline.", "ru": "Добавьте кандидатов на эту вакансию, чтобы увидеть их в воронке.", "ka": "დაამატეთ კანდიდატები ამ ვაკანსიაზე, რომ ისინი ვორონკაში დაინახოთ." },
+  "vacPipe.inPipeline": { "en": "{count, plural, one {# candidate in pipeline} other {# candidates in pipeline}}", "ru": "{count, plural, one {# кандидат в пайплайне} few {# кандидата в пайплайне} many {# кандидатов в пайплайне} other {# кандидата в пайплайне}}", "ka": "{count, plural, one {# კანდიდატი პაიპლაინში} other {# კანდიდატი პაიპლაინში}}" },
+  "vacPipe.noCandidatesHint": { "en": "Add candidates to this vacancy to see them in the pipeline.", "ru": "Добавьте кандидатов на эту вакансию, чтобы увидеть их в пайплайне.", "ka": "დაამატეთ კანდიდატები ამ ვაკანსიაზე, რომ ისინი პაიპლაინში დაინახოთ." },
 
   "common.yes": { "en": "Yes", "ru": "Да", "ka": "დიახ" },
   "vacancies.publicJobsPage": { "en": "Your public jobs page:", "ru": "Ваша публичная страница вакансий:", "ka": "თქვენი საჯარო ვაკანსიების გვერდი:" },

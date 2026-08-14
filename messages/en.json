@@ -1641,7 +1641,7 @@
     "nothingAria": "Nothing demands attention",
     "nothingBlocking": "Nothing's blocking you on this role right now. Open the pipeline below to drive next moves.",
     "pipeline": "Pipeline",
-    "openBoard": "Open board →",
+    "openBoard": "Open pipeline →",
     "atAGlance": "At a glance",
     "timeOpen": "Time open",
     "days": "{count, plural, one {# day} other {# days}}",
