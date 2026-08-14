@@ -29,6 +29,9 @@ interface BulkBarProps {
   onMove: (statusId: string) => Promise<void> | void
   onReject: () => void
   onClear: () => void
+  /** Label for a move-target stage. Defaults to the canonical status label;
+   * the per-vacancy board overrides it to show custom stage names. */
+  stageLabelFor?: (status: ApplicationStatus) => string
 }
 
 /**
@@ -52,6 +55,7 @@ export function BulkBar({
   onMove,
   onReject,
   onClear,
+  stageLabelFor,
 }: BulkBarProps) {
   const router = useRouter()
   const t = useTranslations()
@@ -120,7 +124,7 @@ export function BulkBar({
           <SelectContent>
             {moveableStages.map((s) => (
               <SelectItem key={s.id} value={s.id} className="text-xs">
-                {statusLabel(t, s.code, s.name)}
+                {stageLabelFor ? stageLabelFor(s) : statusLabel(t, s.code, s.name)}
               </SelectItem>
             ))}
           </SelectContent>

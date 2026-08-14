@@ -21,9 +21,12 @@ import {
   type RejectionReason,
   type RejectionTemplate,
 } from './rejection-dialog'
+import { BulkBar } from './bulk-bar'
+import { BatchRejectionDialog } from '@/components/vacancies/batch-rejection-dialog'
 import { updateApplicationPipelineStage } from '@/lib/actions/applications'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
+import type { ApplicationStatus } from '@/lib/types/application'
 import type { PipelineStageType } from '@/lib/pipeline-stage-templates/types'
 
 /** One of the vacancy's `pipeline_stages` rows — the columns of this board. */
@@ -48,6 +51,8 @@ export interface VacancyPipelineApplication {
   source: string | null
   /** 0–10 fit score from submitted reviewer cards, or null. */
   fit_score: number | null
+  /** Candidate email — for the bulk Email action. */
+  email: string | null
   last_status_changed_at: string | null
   applied_at: string
 }
@@ -78,9 +83,9 @@ interface PendingRejection {
  * identical. Each custom stage bucket-maps to a canonical code for its tint /
  * card spine, while the column header keeps the stage's real (custom) name.
  *
- * v1 scope: tinted columns, colour-spine cards, drag-to-move, reject-on-drop
- * dialog. Bulk select, review mode, list/density toggles and the terminal
- * rail from the cross-vacancy board are intentionally out (single-vacancy).
+ * Matches the cross-vacancy board's tinted columns, colour-spine cards, bulk
+ * bar and drag-to-move; the review mode / list toggle / terminal rail from the
+ * home surface are still out (single-vacancy).
  */
 export function VacancyPipelineBoard({
   columns,
@@ -94,6 +99,8 @@ export function VacancyPipelineBoard({
   const [activeApp, setActiveApp] = useState<VacancyPipelineApplication | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
   const [pendingRejection, setPendingRejection] = useState<PendingRejection | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -110,6 +117,29 @@ export function VacancyPipelineBoard({
   }, [columns])
 
   const firstColumnId = columns[0]?.id ?? null
+
+  // The vacancy's rejected-bucket stage — target for optimistic bulk-reject
+  // moves (the server resolves the same default stage).
+  const rejectedColumnId = useMemo(
+    () => columns.find((c) => bucketByColumnId.get(c.id) === 'rejected')?.id ?? null,
+    [columns, bucketByColumnId],
+  )
+
+  // Synthetic ApplicationStatus[] built from the columns so the shared BulkBar
+  // (which is typed against the canonical status model) can drive per-vacancy
+  // stage moves. `id` is the pipeline_stage id (unique, used for targeting);
+  // `code` is the bucket (used only for BulkBar's terminal filter).
+  const syntheticStatuses = useMemo<ApplicationStatus[]>(
+    () =>
+      columns.map((c) => ({
+        id: c.id,
+        name: c.name,
+        code: (bucketByColumnId.get(c.id) ?? 'applied') as ApplicationStatus['code'],
+        is_active: true,
+        sort_order: c.sort_order,
+      })),
+    [columns, bucketByColumnId],
+  )
 
   const toCardData = useCallback(
     (app: VacancyPipelineApplication): CrossVacancyCardData => {
@@ -226,8 +256,49 @@ export function VacancyPipelineBoard({
     setPendingRejection(null)
   }
 
-  const noop = useCallback(() => {}, [])
-  const emptySelection = useMemo(() => new Set<string>(), [])
+  const handleToggleSelect = useCallback((id: string, next: boolean) => {
+    setSelectedIds((prev) => {
+      const copy = new Set(prev)
+      if (next) copy.add(id)
+      else copy.delete(id)
+      return copy
+    })
+  }, [])
+
+  const handleBulkMove = async (targetColumnId: string) => {
+    if (selectedIds.size === 0) return
+    const ids = Array.from(selectedIds)
+    setApplications((prev) =>
+      prev.map((a) =>
+        ids.includes(a.id)
+          ? { ...a, pipeline_stage_id: targetColumnId, last_status_changed_at: new Date().toISOString() }
+          : a,
+      ),
+    )
+    const results = await Promise.all(ids.map((id) => updateApplicationPipelineStage(id, targetColumnId)))
+    const failed = results.filter((r) => !r.success).length
+    if (failed > 0) {
+      setApplications(initialApplications)
+      toast.error(t('pipeline.toast.moveFailedSome', { failed, total: ids.length }))
+    } else {
+      toast.success(t('pipeline.toast.moved', { count: ids.length }))
+    }
+    setSelectedIds(new Set())
+  }
+
+  const handleBulkRejectSuccess = () => {
+    const ids = new Set(selectedIds)
+    if (rejectedColumnId) {
+      setApplications((prev) =>
+        prev.map((a) =>
+          ids.has(a.id)
+            ? { ...a, pipeline_stage_id: rejectedColumnId, last_status_changed_at: new Date().toISOString() }
+            : a,
+        ),
+      )
+    }
+    setSelectedIds(new Set())
+  }
 
   return (
     <>
@@ -249,9 +320,8 @@ export function VacancyPipelineBoard({
               label={pipelineStageLabel(t, column.name)}
               cards={cardsByColumnId.get(column.id) ?? []}
               isOver={overId === column.id}
-              selectedIds={emptySelection}
-              onToggleSelect={noop}
-              selectable={false}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
             />
           ))}
         </div>
@@ -262,7 +332,7 @@ export function VacancyPipelineBoard({
               <CrossVacancyCard
                 data={toCardData(activeApp)}
                 selected={false}
-                onToggleSelect={noop}
+                onToggleSelect={() => {}}
                 selectable={false}
               />
             </div>
@@ -281,6 +351,32 @@ export function VacancyPipelineBoard({
           templates={rejectionTemplates}
           onSuccess={handleRejectionSuccess}
           onCancel={() => setPendingRejection(null)}
+        />
+      )}
+
+      {selectedIds.size > 0 && (
+        <BulkBar
+          selectedCount={selectedIds.size}
+          statuses={syntheticStatuses}
+          selected={applications
+            .filter((a) => selectedIds.has(a.id))
+            .map((a) => ({ applicationId: a.id, candidateId: a.candidate_id, email: a.email }))}
+          onMove={handleBulkMove}
+          onReject={() => rejectedStatusId && setBulkRejectOpen(true)}
+          onClear={() => setSelectedIds(new Set())}
+          stageLabelFor={(s) => pipelineStageLabel(t, s.name)}
+        />
+      )}
+
+      {rejectedStatusId && (
+        <BatchRejectionDialog
+          open={bulkRejectOpen}
+          onOpenChange={setBulkRejectOpen}
+          applicationIds={Array.from(selectedIds)}
+          rejectedStatusId={rejectedStatusId}
+          reasons={rejectionReasons}
+          templates={rejectionTemplates}
+          onSuccess={handleBulkRejectSuccess}
         />
       )}
     </>

@@ -27,6 +27,7 @@ interface PipelineCandidateRow {
   current_position: string | null
   current_company: string | null
   source: string | null
+  email: string | null
 }
 
 /**
@@ -121,7 +122,7 @@ export default async function VacancyPipelinePage({
   if (candidateIds.length > 0) {
     const { data: candidatesRaw } = await supabase
       .from('candidates')
-      .select('id, first_name, last_name, current_position, current_company, source')
+      .select('id, first_name, last_name, current_position, current_company, source, email')
       .in('id', candidateIds)
       .is('deleted_at', null)
     for (const c of (candidatesRaw || []) as PipelineCandidateRow[]) {
@@ -174,6 +175,7 @@ export default async function VacancyPipelinePage({
       current_company: candidate?.current_company ?? null,
       source: shortSourceLabel(candidate?.source ?? null),
       fit_score: typeof rawScore === 'number' ? Math.round(rawScore) / 10 : null,
+      email: candidate?.email ?? null,
       last_status_changed_at: app.last_status_changed_at,
       applied_at: app.applied_at,
     }
