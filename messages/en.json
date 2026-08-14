@@ -2238,7 +2238,8 @@
     "open": "Open",
     "on_hold": "On hold",
     "closed": "Closed",
-    "draft": "Draft"
+    "draft": "Draft",
+    "archived": "Archived"
   },
   "vacHeader": {
     "openedAgo": "opened {days}d ago",

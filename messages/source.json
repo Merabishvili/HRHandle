@@ -1985,6 +1985,7 @@
   "vacStatus.on_hold": { "en": "On hold", "ru": "Приостановлена", "ka": "შეჩერებული" },
   "vacStatus.closed": { "en": "Closed", "ru": "Закрыта", "ka": "დახურული" },
   "vacStatus.draft": { "en": "Draft", "ru": "Черновик", "ka": "მონახაზი" },
+  "vacStatus.archived": { "en": "Archived", "ru": "В архиве", "ka": "დაარქივებული" },
 
   "vacHeader.openedAgo": { "en": "opened {days}d ago", "ru": "открыта {days} дн. назад", "ka": "გაიხსნა {days} დღის წინ" },
   "vacHeader.ends": { "en": "ends {date}", "ru": "завершается {date}", "ka": "სრულდება {date}" },
