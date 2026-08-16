@@ -22,7 +22,11 @@ import {
   type RejectionTemplate,
 } from './rejection-dialog'
 import { BulkBar } from './bulk-bar'
+import { ReviewMode } from './review-mode'
+import { type CrossVacancyApplication, TERMINAL_CODES } from './cross-vacancy-derivation'
 import { BatchRejectionDialog } from '@/components/vacancies/batch-rejection-dialog'
+import { Button } from '@/components/ui/button'
+import { Zap } from 'lucide-react'
 import { updateApplicationPipelineStage } from '@/lib/actions/applications'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
@@ -67,6 +71,8 @@ interface VacancyPipelineBoardProps {
    * dialog still keys off the legacy status id even though placement lives on
    * pipeline_stage_id. */
   rejectedStatusId: string | null
+  vacancyId: string
+  vacancyTitle: string
 }
 
 interface PendingRejection {
@@ -93,6 +99,8 @@ export function VacancyPipelineBoard({
   rejectionReasons,
   rejectionTemplates,
   rejectedStatusId,
+  vacancyId,
+  vacancyTitle,
 }: VacancyPipelineBoardProps) {
   const t = useTranslations()
   const [applications, setApplications] = useState(initialApplications)
@@ -101,6 +109,7 @@ export function VacancyPipelineBoard({
   const [pendingRejection, setPendingRejection] = useState<PendingRejection | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
+  const [reviewing, setReviewing] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -139,6 +148,48 @@ export function VacancyPipelineBoard({
         sort_order: c.sort_order,
       })),
     [columns, bucketByColumnId],
+  )
+
+  // Non-terminal stages in order — the review-mode advance path steps through
+  // these.
+  const activeSyntheticStatuses = useMemo(
+    () =>
+      syntheticStatuses
+        .filter((s) => !TERMINAL_CODES.has(s.code))
+        .sort((a, b) => a.sort_order - b.sort_order),
+    [syntheticStatuses],
+  )
+
+  // "Review new" queue — untouched applicants (never moved stage) sitting in a
+  // non-terminal stage, oldest first. Mapped to the cross-vacancy shape the
+  // shared ReviewMode expects (status_id = pipeline_stage_id for this board).
+  const reviewQueue = useMemo<CrossVacancyApplication[]>(
+    () =>
+      applications
+        .filter((a) => {
+          const columnId = a.pipeline_stage_id ?? firstColumnId
+          const bucket = columnId ? bucketByColumnId.get(columnId) : null
+          return !a.last_status_changed_at && !!bucket && !TERMINAL_CODES.has(bucket as ApplicationStatus['code'])
+        })
+        .sort((a, b) => new Date(a.applied_at).getTime() - new Date(b.applied_at).getTime())
+        .map((a) => ({
+          id: a.id,
+          candidate_id: a.candidate_id,
+          status_id: a.pipeline_stage_id ?? firstColumnId,
+          first_name: a.first_name,
+          last_name: a.last_name,
+          email: a.email,
+          current_position: a.current_position,
+          current_company: a.current_company,
+          last_status_changed_at: a.last_status_changed_at,
+          applied_at: a.applied_at,
+          vacancy_id: vacancyId,
+          vacancy_title: vacancyTitle,
+          source: a.source,
+          fit_score: a.fit_score,
+          rejection_reason: null,
+        })),
+    [applications, firstColumnId, bucketByColumnId, vacancyId, vacancyTitle],
   )
 
   const toCardData = useCallback(
@@ -300,8 +351,69 @@ export function VacancyPipelineBoard({
     setSelectedIds(new Set())
   }
 
+  // Review-mode "advance": move the candidate to the next non-terminal stage.
+  const handleAdvance = useCallback(
+    async (appId: string) => {
+      const app = applications.find((a) => a.id === appId)
+      if (!app) return
+      const curId = app.pipeline_stage_id ?? firstColumnId
+      const curIdx = activeSyntheticStatuses.findIndex((s) => s.id === curId)
+      const next = activeSyntheticStatuses[curIdx + 1] ?? activeSyntheticStatuses[curIdx]
+      if (!next || next.id === app.pipeline_stage_id) {
+        toast.info(t('pipeline.toast.finalStage'))
+        return
+      }
+      setApplications((prev) =>
+        prev.map((a) =>
+          a.id === appId
+            ? { ...a, pipeline_stage_id: next.id, last_status_changed_at: new Date().toISOString() }
+            : a,
+        ),
+      )
+      const result = await updateApplicationPipelineStage(appId, next.id)
+      if (!result.success) {
+        setApplications(initialApplications)
+        toast.error(t('pipeline.toast.advanceFailed'))
+      }
+    },
+    [applications, activeSyntheticStatuses, firstColumnId, initialApplications, t],
+  )
+
+  const handleReviewReject = useCallback(
+    (appId: string) => {
+      const app = applications.find((a) => a.id === appId)
+      if (!app || !rejectedStatusId || !rejectedColumnId) return
+      setPendingRejection({
+        applicationId: appId,
+        statusId: rejectedStatusId,
+        targetPipelineStageId: rejectedColumnId,
+        candidateName: `${app.first_name} ${app.last_name}`.trim(),
+      })
+    },
+    [applications, rejectedStatusId, rejectedColumnId],
+  )
+
   return (
     <>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5"
+          onClick={() => setReviewing(true)}
+          disabled={reviewQueue.length === 0}
+          aria-label={t('pipeline.enterReviewMode')}
+        >
+          <Zap className="h-3.5 w-3.5" aria-hidden />
+          {t('pipeline.reviewNew')}
+          {reviewQueue.length > 0 && (
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-foreground">
+              {reviewQueue.length}
+            </span>
+          )}
+        </Button>
+      </div>
+
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
@@ -377,6 +489,16 @@ export function VacancyPipelineBoard({
           reasons={rejectionReasons}
           templates={rejectionTemplates}
           onSuccess={handleBulkRejectSuccess}
+        />
+      )}
+
+      {reviewing && (
+        <ReviewMode
+          queue={reviewQueue}
+          activeStatuses={activeSyntheticStatuses}
+          onClose={() => setReviewing(false)}
+          onAdvance={handleAdvance}
+          onReject={handleReviewReject}
         />
       )}
     </>

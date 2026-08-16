@@ -224,6 +224,8 @@ export default async function VacancyPipelinePage({
           rejectionReasons={rejectionReasonsRaw ?? []}
           rejectionTemplates={rejectionTemplatesRaw ?? []}
           rejectedStatusId={rejectedStatusId}
+          vacancyId={id}
+          vacancyTitle={vacancy.title}
         />
       )}
     </div>
