@@ -25,6 +25,7 @@ import { BulkBar } from './bulk-bar'
 import { ReviewMode } from './review-mode'
 import { ListView } from './list-view'
 import { ViewModeToggle, type ViewMode } from './view-mode-toggle'
+import { TerminalRail, type TerminalCount, type ClosedCandidate } from './terminal-rail'
 import { type CrossVacancyApplication, TERMINAL_CODES } from './cross-vacancy-derivation'
 import { BatchRejectionDialog } from '@/components/vacancies/batch-rejection-dialog'
 import { Button } from '@/components/ui/button'
@@ -234,6 +235,48 @@ export function VacancyPipelineBoard({
   // Flat card list for the List view.
   const allCards = useMemo(() => applications.map(toCardData), [applications, toCardData])
 
+  // Rejected/Withdrawn stages collapse into the terminal rail (Hired-bucket
+  // stays a normal column, matching the cross-vacancy board); the rest are
+  // board columns.
+  const isRailBucket = useCallback(
+    (columnId: string) => {
+      const b = bucketByColumnId.get(columnId)
+      return b === 'rejected' || b === 'withdrawn'
+    },
+    [bucketByColumnId],
+  )
+  const boardColumns = useMemo(() => columns.filter((c) => !isRailBucket(c.id)), [columns, isRailBucket])
+  const railColumns = useMemo(() => columns.filter((c) => isRailBucket(c.id)), [columns, isRailBucket])
+
+  const terminalCounts = useMemo<TerminalCount[]>(
+    () =>
+      railColumns.map((c) => ({
+        statusId: c.id,
+        code: (bucketByColumnId.get(c.id) ?? 'rejected') as ApplicationStatus['code'],
+        name: c.name,
+        count: applications.filter((a) => (a.pipeline_stage_id ?? firstColumnId) === c.id).length,
+      })),
+    [railColumns, applications, bucketByColumnId, firstColumnId],
+  )
+
+  const closedCandidates = useMemo<ClosedCandidate[]>(() => {
+    const railIds = new Set(railColumns.map((c) => c.id))
+    return applications
+      .filter((a) => railIds.has(a.pipeline_stage_id ?? firstColumnId ?? ''))
+      .map((a) => {
+        const colId = a.pipeline_stage_id ?? firstColumnId
+        return {
+          applicationId: a.id,
+          candidateId: a.candidate_id,
+          name: `${a.first_name} ${a.last_name}`.trim(),
+          vacancyTitle: a.current_position ?? '',
+          code: (colId ? bucketByColumnId.get(colId) : 'rejected') as ApplicationStatus['code'],
+          reason: null,
+          inStageSince: a.last_status_changed_at ?? a.applied_at,
+        }
+      })
+  }, [railColumns, applications, firstColumnId, bucketByColumnId])
+
   const getColumnId = useCallback(
     (appId: string) => {
       const app = applications.find((a) => a.id === appId)
@@ -435,7 +478,7 @@ export function VacancyPipelineBoard({
           onDragEnd={handleDragEnd}
         >
           <div className="flex items-stretch gap-3 overflow-x-auto pb-2">
-            {columns.map((column) => (
+            {boardColumns.map((column) => (
               <TintedKanbanColumn
                 key={column.id}
                 status={{
@@ -450,6 +493,17 @@ export function VacancyPipelineBoard({
                 onToggleSelect={handleToggleSelect}
               />
             ))}
+
+            {terminalCounts.length > 0 && (
+              <TerminalRail
+                terminals={terminalCounts}
+                closed={closedCandidates}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
+                overStatusId={overId}
+                isDragging={!!activeApp}
+              />
+            )}
           </div>
 
           <DragOverlay>
