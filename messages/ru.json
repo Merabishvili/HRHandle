@@ -513,6 +513,7 @@
     "email": "Эл. почта",
     "phone": "Телефон",
     "experience": "Опыт",
+    "yearsValue": "{count, plural, one {# год} few {# года} many {# лет} other {# года}}",
     "location": "Локация",
     "salaryExpectation": "Ожидаемая зарплата",
     "noticePeriod": "Срок уведомления",

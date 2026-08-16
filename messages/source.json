@@ -446,6 +446,7 @@
   "columns.email": { "en": "Email", "ru": "Эл. почта", "ka": "იმეილი" },
   "columns.phone": { "en": "Phone", "ru": "Телефон", "ka": "ტელეფონი" },
   "columns.experience": { "en": "Experience", "ru": "Опыт", "ka": "გამოცდილება" },
+  "columns.yearsValue": { "en": "{count, plural, one {# yr} other {# yrs}}", "ru": "{count, plural, one {# год} few {# года} many {# лет} other {# года}}", "ka": "{count} წელი" },
   "columns.location": { "en": "Location", "ru": "Локация", "ka": "მდებარეობა" },
   "columns.salaryExpectation": { "en": "Salary expectation", "ru": "Ожидаемая зарплата", "ka": "სასურველი ხელფასი" },
   "columns.noticePeriod": { "en": "Notice period", "ru": "Срок уведомления", "ka": "გაფრთხილების ვადა" },

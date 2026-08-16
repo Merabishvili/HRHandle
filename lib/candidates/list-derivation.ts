@@ -160,13 +160,22 @@ export function deriveStageAndFit(
  * Format a single custom-field value row for display, keyed off the field's
  * type. Returns null for empty / unset values (so the caller can skip them).
  */
+/** Localized labels for boolean (checkbox) custom-field values. Defaults to
+ * English so pure/unit callers stay stable; the candidates page passes the
+ * translated `common.yes` / `common.no`. */
+export interface BoolLabels {
+  yes: string
+  no: string
+}
+
 export function formatCustomFieldValue(
   type: FieldType | undefined,
   row: Pick<CustomFieldValueRow, 'value_text' | 'value_number' | 'value_boolean' | 'value_option'>,
+  labels: BoolLabels = { yes: 'Yes', no: 'No' },
 ): string | null {
   let display: string | null
   if (type === 'number') display = row.value_number != null ? String(row.value_number) : null
-  else if (type === 'checkbox') display = row.value_boolean == null ? null : row.value_boolean ? 'Yes' : 'No'
+  else if (type === 'checkbox') display = row.value_boolean == null ? null : row.value_boolean ? labels.yes : labels.no
   else if (type === 'dropdown') display = row.value_option
   else display = row.value_text // text / long_text / date
   if (display != null && display !== '') return display
@@ -179,10 +188,11 @@ export function formatCustomFieldValue(
 export function buildCustomFieldValueMap(
   rows: CustomFieldValueRow[],
   typeByFieldId: Map<string, FieldType>,
+  labels?: BoolLabels,
 ): Map<string, string> {
   const map = new Map<string, string>()
   for (const v of rows) {
-    const display = formatCustomFieldValue(typeByFieldId.get(v.field_id), v)
+    const display = formatCustomFieldValue(typeByFieldId.get(v.field_id), v, labels)
     if (display != null) map.set(`${v.entity_id}:${v.field_id}`, display)
   }
   return map

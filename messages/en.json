@@ -513,6 +513,7 @@
     "email": "Email",
     "phone": "Phone",
     "experience": "Experience",
+    "yearsValue": "{count, plural, one {# yr} other {# yrs}}",
     "location": "Location",
     "salaryExpectation": "Salary expectation",
     "noticePeriod": "Notice period",

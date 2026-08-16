@@ -249,6 +249,7 @@ export default async function CandidatesPage({
     customFieldValueMap = buildCustomFieldValueMap(
       (cfValues ?? []) as CustomFieldValueRow[],
       customFieldTypeById,
+      { yes: t('common.yes'), no: t('common.no') },
     )
   }
 

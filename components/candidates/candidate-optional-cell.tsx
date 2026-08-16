@@ -1,7 +1,8 @@
 import { Mail, Phone } from 'lucide-react'
-import { getFormatter } from 'next-intl/server'
+import { getFormatter, getTranslations } from 'next-intl/server'
 import { TableCell } from '@/components/ui/table'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
+import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
 import type { CandidateRow, DerivedStage } from '@/lib/candidates/list-derivation'
 
 interface CandidateOptionalCellProps {
@@ -25,6 +26,7 @@ export async function CandidateOptionalCell({
   customFieldValueMap,
 }: CandidateOptionalCellProps) {
   const format = await getFormatter()
+  const t = await getTranslations()
   switch (col) {
     case 'current_position':
       return (
@@ -79,7 +81,7 @@ export async function CandidateOptionalCell({
       return (
         <TableCell className="text-sm text-muted-foreground">
           {candidate.years_of_experience != null
-            ? `${candidate.years_of_experience} yr${candidate.years_of_experience === 1 ? '' : 's'}`
+            ? t('columns.yearsValue', { count: candidate.years_of_experience })
             : '—'}
         </TableCell>
       )
@@ -100,7 +102,7 @@ export async function CandidateOptionalCell({
             className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
             style={{ background: style.pillBg, color: style.pillText }}
           >
-            {stage.name}
+            {pipelineStageLabel(t, stage.name)}
           </span>
         </TableCell>
       )

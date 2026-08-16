@@ -513,6 +513,7 @@
     "email": "იმეილი",
     "phone": "ტელეფონი",
     "experience": "გამოცდილება",
+    "yearsValue": "{count} წელი",
     "location": "მდებარეობა",
     "salaryExpectation": "სასურველი ხელფასი",
     "noticePeriod": "გაფრთხილების ვადა",
