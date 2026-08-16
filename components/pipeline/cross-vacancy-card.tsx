@@ -39,6 +39,10 @@ export interface CrossVacancyCardData {
   appliedAt: string
   /** Code of the stage the card sits in. Drives the spine color. */
   stageCode: string
+  /** Unique stage id (per-vacancy board only) — lets the List view group by
+   * the real custom stage instead of the collapsed bucket `stageCode`. Absent
+   * on the cross-vacancy board, which groups by code. */
+  stageId?: string | undefined
   /** 0–10 fit score from the most recent candidate_evaluation. Optional;
    * surfaced when present, hidden otherwise. */
   fitScore: number | null

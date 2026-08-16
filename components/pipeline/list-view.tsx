@@ -20,6 +20,9 @@ interface ListViewProps {
   selectedIds: Set<string>
   onToggleSelect: (id: string, next: boolean) => void
   onToggleAll: (allSelected: boolean) => void
+  /** Stage-header label override (per-vacancy custom stage names). Defaults to
+   * the canonical status label. */
+  stageLabelFor?: (status: ApplicationStatus) => string
 }
 
 /**
@@ -37,20 +40,30 @@ export function ListView({
   selectedIds,
   onToggleSelect,
   onToggleAll,
+  stageLabelFor,
 }: ListViewProps) {
   const t = useTranslations()
   const [closedOpen, setClosedOpen] = useState(false)
+
+  // Per-vacancy cards carry a unique `stageId`; group by it so custom stages
+  // sharing a canonical bucket don't merge. The cross-vacancy board omits
+  // stageId → we fall back to grouping by `stageCode` (unchanged behaviour).
+  const useStageId = cards.some((c) => c.stageId != null)
+  const cardKey = (c: CrossVacancyCardData) => (useStageId ? c.stageId ?? c.stageCode : c.stageCode)
+  const statusKey = (s: ApplicationStatus) => (useStageId ? s.id : s.code)
+  const label = (s: ApplicationStatus) => (stageLabelFor ? stageLabelFor(s) : statusLabel(t, s.code, s.name))
 
   // `statuses` arrives sorted by sort_order. Split active vs terminal so the
   // active groups mirror the Board columns and closed outcomes stay separate.
   const activeStages = statuses.filter((s) => !isTerminalStage(s.code))
   const terminalStages = statuses.filter((s) => isTerminalStage(s.code))
 
-  const byCode = new Map<string, CrossVacancyCardData[]>()
+  const byKey = new Map<string, CrossVacancyCardData[]>()
   for (const c of cards) {
-    const arr = byCode.get(c.stageCode) ?? []
+    const k = cardKey(c)
+    const arr = byKey.get(k) ?? []
     arr.push(c)
-    byCode.set(c.stageCode, arr)
+    byKey.set(k, arr)
   }
 
   const activeCards = cards.filter((c) => !isTerminalStage(c.stageCode))
@@ -80,7 +93,7 @@ export function ListView({
           </thead>
           <tbody>
             {activeStages.map((stage) => {
-              const rows = byCode.get(stage.code) ?? []
+              const rows = byKey.get(statusKey(stage)) ?? []
               const style = getStageStyle(stage.code)
               return (
                 <Fragment key={stage.id}>
@@ -91,7 +104,7 @@ export function ListView({
                           className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
                           style={{ background: style.pillBg, color: style.pillText }}
                         >
-                          {statusLabel(t, stage.code, stage.name)}
+                          {label(stage)}
                         </span>
                         <span className="text-xs font-semibold tabular-nums text-muted-foreground">
                           {rows.length}
@@ -139,7 +152,7 @@ export function ListView({
             <span className="text-sm font-bold text-foreground">{t('pipeline.closed')}</span>
             <span className="text-xs text-muted-foreground">
               {terminalStages
-                .map((s) => `${statusLabel(t, s.code, s.name)} ${byCode.get(s.code)?.length ?? 0}`)
+                .map((s) => `${label(s)} ${byKey.get(statusKey(s))?.length ?? 0}`)
                 .join(' · ')}
             </span>
           </button>
@@ -165,11 +178,12 @@ export function ListView({
                           className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                           style={{ background: style.pillBg, color: style.pillText }}
                         >
-                          {statusLabel(
-                            t,
-                            card.stageCode,
-                            terminalStages.find((s) => s.code === card.stageCode)?.name ?? card.stageCode,
-                          )}
+                          {(() => {
+                            const s = terminalStages.find((x) =>
+                              useStageId ? x.id === card.stageId : x.code === card.stageCode,
+                            )
+                            return s ? label(s) : statusLabel(t, card.stageCode, card.stageCode)
+                          })()}
                         </span>
                       </td>
                       <td className="px-3 py-2 text-xs text-muted-foreground">

@@ -23,6 +23,8 @@ import {
 } from './rejection-dialog'
 import { BulkBar } from './bulk-bar'
 import { ReviewMode } from './review-mode'
+import { ListView } from './list-view'
+import { ViewModeToggle, type ViewMode } from './view-mode-toggle'
 import { type CrossVacancyApplication, TERMINAL_CODES } from './cross-vacancy-derivation'
 import { BatchRejectionDialog } from '@/components/vacancies/batch-rejection-dialog'
 import { Button } from '@/components/ui/button'
@@ -110,6 +112,7 @@ export function VacancyPipelineBoard({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
   const [reviewing, setReviewing] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('board')
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -208,6 +211,7 @@ export function VacancyPipelineBoard({
         inStageSince: app.last_status_changed_at ?? app.applied_at,
         appliedAt: app.applied_at,
         stageCode: (columnId && bucketByColumnId.get(columnId)) ?? 'applied',
+        stageId: columnId ?? undefined,
         fitScore: app.fit_score,
         rejectionReason: null,
       }
@@ -226,6 +230,9 @@ export function VacancyPipelineBoard({
     }
     return m
   }, [applications, columns, firstColumnId, toCardData])
+
+  // Flat card list for the List view.
+  const allCards = useMemo(() => applications.map(toCardData), [applications, toCardData])
 
   const getColumnId = useCallback(
     (appId: string) => {
@@ -316,6 +323,11 @@ export function VacancyPipelineBoard({
     })
   }, [])
 
+  const handleToggleAll = useCallback(
+    (allSelected: boolean) => setSelectedIds(allSelected ? new Set() : new Set(allCards.map((c) => c.applicationId))),
+    [allCards],
+  )
+
   const handleBulkMove = async (targetColumnId: string) => {
     if (selectedIds.size === 0) return
     const ids = Array.from(selectedIds)
@@ -396,6 +408,7 @@ export function VacancyPipelineBoard({
   return (
     <>
       <div className="flex flex-wrap items-center justify-end gap-2">
+        <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
         <Button
           size="sm"
           variant="outline"
@@ -414,43 +427,54 @@ export function VacancyPipelineBoard({
         </Button>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex items-stretch gap-3 overflow-x-auto pb-2">
-          {columns.map((column) => (
-            <TintedKanbanColumn
-              key={column.id}
-              status={{
-                id: column.id,
-                code: bucketByColumnId.get(column.id) ?? 'applied',
-                name: column.name,
-              }}
-              label={pipelineStageLabel(t, column.name)}
-              cards={cardsByColumnId.get(column.id) ?? []}
-              isOver={overId === column.id}
-              selectedIds={selectedIds}
-              onToggleSelect={handleToggleSelect}
-            />
-          ))}
-        </div>
-
-        <DragOverlay>
-          {activeApp && (
-            <div className="rotate-2 opacity-90">
-              <CrossVacancyCard
-                data={toCardData(activeApp)}
-                selected={false}
-                onToggleSelect={() => {}}
-                selectable={false}
+      {viewMode === 'board' ? (
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex items-stretch gap-3 overflow-x-auto pb-2">
+            {columns.map((column) => (
+              <TintedKanbanColumn
+                key={column.id}
+                status={{
+                  id: column.id,
+                  code: bucketByColumnId.get(column.id) ?? 'applied',
+                  name: column.name,
+                }}
+                label={pipelineStageLabel(t, column.name)}
+                cards={cardsByColumnId.get(column.id) ?? []}
+                isOver={overId === column.id}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
               />
-            </div>
-          )}
-        </DragOverlay>
-      </DndContext>
+            ))}
+          </div>
+
+          <DragOverlay>
+            {activeApp && (
+              <div className="rotate-2 opacity-90">
+                <CrossVacancyCard
+                  data={toCardData(activeApp)}
+                  selected={false}
+                  onToggleSelect={() => {}}
+                  selectable={false}
+                />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      ) : (
+        <ListView
+          cards={allCards}
+          statuses={syntheticStatuses}
+          selectedIds={selectedIds}
+          onToggleSelect={handleToggleSelect}
+          onToggleAll={handleToggleAll}
+          stageLabelFor={(s) => pipelineStageLabel(t, s.name)}
+        />
+      )}
 
       {pendingRejection && (
         <RejectionDialog
