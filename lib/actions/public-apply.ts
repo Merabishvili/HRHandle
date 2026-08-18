@@ -3,8 +3,14 @@
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendApplicationConfirmationEmail } from '@/lib/email'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
+import { dispatchWebhookNotification } from '@/lib/notifications/webhook-dispatcher'
+import { applicationReceivedCtx } from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { verifyCaptcha } from '@/lib/turnstile'
+import { computeIsKnockoutFlag } from '@/lib/screening-questions/compute-flag'
+import { resolvePipelineStageId } from '@/lib/pipeline-stages/resolve'
+import { justCrossedLimit } from '@/lib/plan-limits'
 import { headers } from 'next/headers'
 
 const MAX_SUBMISSIONS_PER_IP_PER_HOUR = 5
@@ -35,7 +41,11 @@ function toDateString(date: string | null): string | null {
 }
 
 export type PublicApplyResult =
-  | { success: true }
+  // statusToken is optional because two success paths don't surface a
+  // tracker link: the silent honeypot drop (bot — no application created)
+  // and any path where we don't want to expose the existing application
+  // to a re-submitter.
+  | { success: true; statusToken?: string }
   | { success: false; error: string }
 
 export async function submitPublicApplication(
@@ -77,6 +87,10 @@ export async function submitPublicApplication(
   const cvFile = formData.get('cv') as File | null
   const experienceJson = (formData.get('experience_json') as string | null) || '[]'
   const educationJson = (formData.get('education_json') as string | null) || '[]'
+  // Wave 2.5 Slice 2b — recruiter-defined screening questions. The form
+  // posts an array of { question_id, answer_value } objects.
+  const screeningAnswersJson =
+    (formData.get('screening_answers_json') as string | null) || '[]'
 
   // ── 3. Basic validation ────────────────────────────────────────────────────
   if (!token) return { success: false, error: 'Invalid form link.' }
@@ -227,26 +241,32 @@ export async function submitPublicApplication(
     isNewCandidate = true
   }
 
-  // ── 11. Find "applied" application status ──────────────────────────────────
-  const { data: appliedStatus } = await supabase
-    .from('application_statuses')
-    .select('id')
-    .eq('code', 'applied')
-    .single()
-
-  // ── 12. Create application ─────────────────────────────────────────────────
-  const { error: appError } = await supabase
+  // ── 11. Create application ─────────────────────────────────────────────────
+  // public_token is the candidate-facing status page key (G-016). Generated
+  // here at INSERT time so the link goes into the confirmation email below.
+  // Wave 2.6 Slice 4 — only pipeline_stage_id is set now (status_id is gone);
+  // resolve the vacancy's per-vacancy "Applied" stage via the shared helper.
+  const pipelineStageId = await resolvePipelineStageId(
+    supabase,
+    vacancy.id as string,
+    'applied',
+  )
+  const publicToken = crypto.randomUUID().replace(/-/g, '')
+  const { data: newApp, error: appError } = await supabase
     .from('applications')
     .insert({
       organization_id: orgId,
       candidate_id: candidateId,
       vacancy_id: vacancy.id,
-      status_id: appliedStatus?.id || null,
+      pipeline_stage_id: pipelineStageId,
       ip_address: ipRaw !== 'unknown' ? ipRaw : null,
       source_type: 'public_form',
+      public_token: publicToken,
     })
+    .select('id, public_token')
+    .single()
 
-  if (appError) {
+  if (appError || !newApp) {
     // Roll back newly-created candidate to avoid orphaned records
     if (isNewCandidate) {
       await supabase.from('candidates').delete().eq('id', candidateId)
@@ -320,6 +340,77 @@ export async function submitPublicApplication(
     }
   }
 
+  // ── 14. Persist screening answers (best-effort, non-fatal) ─────────────────
+  // Match each submitted answer to a question in the same vacancy and
+  // pre-compute the knockout flag using the shared helper. Rows whose
+  // question_id doesn't belong to this vacancy are dropped silently — the
+  // form should never send unknown ids, but if the questions were edited
+  // between the page render and submit we'd rather drop the answer than
+  // attach it to the wrong question.
+  try {
+    const ScreeningAnswerItem = z.object({
+      question_id: z.string().uuid(),
+      answer_value: z.string().max(500),
+    })
+    const parsed = z.array(ScreeningAnswerItem).safeParse(JSON.parse(screeningAnswersJson))
+    if (parsed.success && parsed.data.length > 0) {
+      const submittedIds = parsed.data.map((a) => a.question_id)
+      const { data: matchedQuestions } = await supabase
+        .from('vacancy_screening_questions')
+        .select('id, is_knockout, knockout_answer, answer_type')
+        .eq('vacancy_id', vacancy.id)
+        .in('id', submittedIds)
+
+      const questionById = new Map(
+        (matchedQuestions ?? []).map((q) => [q.id as string, q]),
+      )
+
+      const rows = parsed.data
+        .map((a) => {
+          const q = questionById.get(a.question_id)
+          if (!q) return null
+          const answerValue = a.answer_value.trim() || null
+          return {
+            organization_id: orgId,
+            application_id: newApp.id as string,
+            question_id: q.id as string,
+            answer_value: answerValue,
+            is_knockout_flag: computeIsKnockoutFlag(
+              {
+                is_knockout: q.is_knockout as boolean,
+                knockout_answer: (q.knockout_answer as string | null) ?? null,
+                answer_type:
+                  (q.answer_type as
+                    | 'yes_no'
+                    | 'short_text'
+                    | 'number'
+                    | 'select'
+                    | undefined) ?? 'yes_no',
+              },
+              answerValue,
+            ),
+          }
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null)
+
+      if (rows.length > 0) {
+        const { error: answersErr } = await supabase
+          .from('application_screening_answers')
+          .insert(rows)
+        if (answersErr) {
+          console.error('[public-apply] screening answers insert failed:', answersErr)
+        }
+      }
+    } else if (!parsed.success) {
+      console.warn(
+        '[public-apply] screening_answers JSON failed validation:',
+        parsed.error.issues[0]?.message,
+      )
+    }
+  } catch (err) {
+    console.error('[public-apply] screening answers block error:', err)
+  }
+
   // ── 15. Upload CV (optional) ───────────────────────────────────────────────
   if (cvFile && cvFile.size > 0 && fileBytes) {
     try {
@@ -373,6 +464,45 @@ export async function submitPublicApplication(
     console.error('[public-apply] new-application notification failed:', err)
   }
 
+  // ── 16b. Soft plan-limit flag (BL-203) ─────────────────────────────────────
+  // Public applications are NEVER blocked (turning away a real applicant over a
+  // billing cap is the wrong trade). But when a NEW candidate created via the
+  // public form pushes the org past its `candidate_limit`, notify owners/admins
+  // ONCE — at the crossing — so they can upgrade. Best-effort + non-fatal;
+  // mirrors how `checkPlanLimit` counts (non-deleted candidates vs the sub cap).
+  if (isNewCandidate) {
+    try {
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('candidate_limit')
+        .eq('organization_id', orgId)
+        .single()
+      if (sub?.candidate_limit) {
+        const { count } = await supabase
+          .from('candidates')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .is('deleted_at', null)
+        if (justCrossedLimit(count ?? 0, sub.candidate_limit)) {
+          const { data: owners } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('organization_id', orgId)
+            .in('role', ['owner', 'admin'])
+          const ownerIds = (owners ?? []).map((m) => m.id as string)
+          await createOrgNotifications(orgId, ownerIds, {
+            type: 'plan_limit_reached',
+            title: `Over your candidate limit (${sub.candidate_limit})`,
+            body: 'Public applications are still being accepted, but you are over your plan limit — upgrade to keep adding candidates.',
+            link: '/subscription',
+          })
+        }
+      }
+    } catch (err) {
+      console.error('[public-apply] plan-limit flag failed:', err)
+    }
+  }
+
   // ── 17. Send confirmation email ────────────────────────────────────────────
   try {
     const [{ data: org }, { data: templateRow }] = await Promise.all([
@@ -385,6 +515,7 @@ export async function submitPublicApplication(
         .maybeSingle(),
     ])
 
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     await sendApplicationConfirmationEmail({
       to: email,
       candidateName: `${firstName} ${lastName}`,
@@ -392,10 +523,25 @@ export async function submitPublicApplication(
       organizationName: org?.name || 'the company',
       customSubject: templateRow?.subject,
       customBody: templateRow?.body,
+      contentLocale: await fetchOrgContentLocale(supabase, orgId),
+      statusUrl: `${baseUrl}/status/${newApp.public_token}`,
     })
   } catch {
     // Email failure is non-fatal
   }
 
-  return { success: true }
+  // Fire-and-forget webhook notification (Slack/Teams)
+  await dispatchWebhookNotification(
+    orgId,
+    'application_received',
+    applicationReceivedCtx({
+      applicationId: newApp.id as string,
+      candidateId,
+      candidateName: `${firstName} ${lastName}`.trim(),
+      vacancyTitle: vacancy.title,
+      source: 'Public apply form',
+    })
+  )
+
+  return { success: true, statusToken: newApp.public_token as string }
 }

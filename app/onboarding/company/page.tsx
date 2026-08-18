@@ -23,7 +23,7 @@ export default async function CompanyOnboardingPage() {
     .maybeSingle()
 
   if (profile?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const defaultFullName =

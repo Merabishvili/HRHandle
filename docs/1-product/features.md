@@ -1,9 +1,11 @@
 # HRHandle — Features
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
+- 🆕 **(2026-07-20 audit) Major features shipped since 2026-05-08:** Offers (G-018, incl. candidate `/offer/<token>`); Reports (G-029: conversion / time-to-hire / source); Slack+Teams webhooks (G-030) + Calendly (G-031); 2FA/TOTP (G-032); CSV candidate import (G-028); cmd-K global search (G-023); scorecard sharing (G-025); custom per-vacancy pipeline stages (Wave 2.6); multi-reviewer scorecards; vacancy work mode; profile language + avatar upload; @-mentions in notes (G-021); candidate self-withdraw (G-022); audit-log viewer (G-019) + trash restore (G-020).
+- 🔄 **Pipeline replaced the Dashboard as the home surface (redesign A-1)** — `/dashboard` redirects to `/pipeline` (cross-vacancy kanban). The vacancy + candidate edit forms migrated to react-hook-form (A-005).
 - 🆕 CV parsing on both internal "New Candidate" form and public apply form (Gemini Flash; PDF/DOCX → structured fields)
 - 🆕 Candidate Experience & Education sections on candidate detail page (CRUD with timeline UI)
 - 🆕 Activity Feed on candidate detail (`candidate_activity` view: applications, notes, documents, interviews)
@@ -36,7 +38,7 @@ _Last updated: 2026-05-08_
 | Status management | Inline status select dropdown | `components/vacancies/vacancy-status-select.tsx` |
 | Vacancy list | Filterable, sortable list with status badges | `app/(dashboard)/vacancies/page.tsx`, `components/vacancies/vacancies-toolbar.tsx` |
 | Vacancy detail | Info, applications list, application form tab, custom fields | `app/(dashboard)/vacancies/[id]/page.tsx` |
-| Kanban pipeline | Per-vacancy Kanban board with drag-and-drop status changes | `app/(dashboard)/vacancies/[id]/pipeline/page.tsx`, `components/pipeline/kanban-board.tsx` |
+| Kanban pipeline | Per-vacancy Kanban board with drag-and-drop stage moves. Shares the cross-vacancy board's visual design (`TintedKanbanColumn` + `CrossVacancyCard`) but shows the vacancy's **custom** `pipeline_stages` as columns (each bucket-mapped to a canonical code for its tint/spine). | `app/(dashboard)/vacancies/[id]/pipeline/page.tsx`, `components/pipeline/vacancy-pipeline-board.tsx` |
 | Public page toggle | `show_on_public_page` flag; generates `application_form_token` if not yet set | `lib/actions/vacancies.ts` |
 | LinkedIn share | 🔄 Share single vacancy to LinkedIn profile (deep-link) | `components/vacancies/linkedin-share-button.tsx` |
 | 🆕 LinkedIn post-as-page | Post a vacancy to the org's connected LinkedIn company page | `components/vacancies/linkedin-post-job-button.tsx`, `app/api/integrations/linkedin/save/route.ts` |
@@ -54,7 +56,7 @@ _Last updated: 2026-05-08_
 | Candidate list | Filterable list with search, status tabs | `app/(dashboard)/candidates/page.tsx`, `components/candidates/candidates-toolbar.tsx` |
 | Candidate detail | Profile info, experience, education, applications, notes, documents, custom fields, evaluations | `app/(dashboard)/candidates/[id]/page.tsx` |
 | Experience & education | Inline add/edit/delete from candidate detail page | `components/candidates/experience-section.tsx`, `components/candidates/education-section.tsx`, `lib/actions/candidate-background.ts` |
-| Candidate notes | Add, view, delete time-stamped notes | `components/candidates/candidate-notes.tsx`, `lib/actions/notes.ts` |
+| Candidate notes | Add, view, delete time-stamped notes; @-mention typeahead in the composer fires in-app notifications to tagged teammates | `components/candidates/activity-feed.tsx`, `components/notes/mention-textarea.tsx`, `components/notes/note-display.tsx`, `lib/actions/notes.ts`, `lib/notes/mentions.ts` |
 | Candidate documents | Upload PDF/Word (max 10 MB), magic-byte validation, download via signed URLs | `components/candidates/candidate-documents.tsx`, `lib/actions/documents.ts` |
 | General status | Owner/admin can mark candidate as Active, Hired, Archived | `components/candidates/candidate-status-select.tsx`, `components/candidates/candidate-status-actions.tsx` |
 | Status sync | When application moves to Hired, candidate status syncs to Hired automatically; reverts to Active when de-hired | `lib/actions/applications.ts` |
@@ -71,6 +73,21 @@ _Last updated: 2026-05-08_
 | Reject application | Select reason + template, optional rejection email | `lib/actions/applications.ts#rejectApplication`, `components/pipeline/rejection-dialog.tsx` |
 | Remove application | Soft-delete application | `lib/actions/applications.ts#removeApplication` |
 | Application row | Shows candidate info, status, actions per application | `components/vacancies/vacancy-application-row.tsx` |
+| 🆕 Status auto-emails | Per-org opt-in transactional emails when an application moves into Screening or Interview | `lib/actions/applications.ts#updateApplicationStatus`, `lib/applications-status-emails.ts` |
+| 🆕 Bulk move-to-stage | Vacancy applications toolbar "Move to stage ▾" dropdown lets recruiters move multiple selected applications to a chosen status at once; 50-row cap; skips rows already at the target | `components/vacancies/bulk-move-dialog.tsx`, `components/vacancies/vacancy-applications-list.tsx`, `lib/actions/applications.ts#moveApplicationsBatch`, `lib/applications/batch.ts` |
+| 🆕 Scorecard sharing | Token-gated public page at `/scorecard/<token>` lets owners/admins share a candidate's evaluation answers + scores with a non-HRHandle stakeholder; lazy token generation; revocable; stable first-sharer attribution across revoke/re-share; hides contact info / status / notes / AI / offer details / audit | `app/scorecard/[token]/page.tsx`, `components/scorecards/share-scorecard-dialog.tsx`, `components/scorecards/share-scorecard-button.tsx`, `lib/actions/scorecards.ts`, `lib/scorecards/projection.ts` |
+| 🆕 Saved filter views | Per-user, per-list-kind saved filter combinations on the candidates and vacancies list pages; loaded from a dropdown; inline Update / Rename / Delete on the active view; "Modified" badge when filters diverge | `components/saved-views/saved-views-menu.tsx`, `lib/actions/saved-views.ts`, `lib/saved-views/filter-encoding.ts`, `lib/saved-views/list-kinds.ts` |
+
+## Offers
+
+| Feature | Description | Files |
+|---------|-------------|-------|
+| 🆕 Create offer | Per-application offer draft with optional structured fields (compensation amount + currency + period, start date, respond-by date) and required free-text body + role title; owner/admin only | `lib/actions/offers.ts#createOffer`, `components/offers/offer-form.tsx` |
+| 🆕 Send offer | Generates a public token, marks the offer `sent`, fires an email to the candidate with a link to the offer page; uses the `offer_sent` template (editable in settings) | `lib/actions/offers.ts#sendOffer`, `lib/email.ts#sendOfferEmail` |
+| 🆕 Withdraw offer | Owner/admin can pull a sent offer back; candidate page shows withdrawn state | `lib/actions/offers.ts#withdrawOffer` |
+| 🆕 Auto-expire | Daily cron flips sent offers past their `expiry_date` to `expired` so the recruiter UI and reporting stay accurate | `app/api/cron/purge-deleted/route.ts` |
+| 🆕 Candidate accept/decline | Token-gated `/offer/<token>` page; Accept moves the application to `hired` via the existing pipeline path (candidate status syncs to `hired`); Decline accepts an optional free-text reason | `app/offer/[token]/page.tsx`, `components/offers/offer-respond-form.tsx`, `lib/actions/offers.ts#acceptOfferByToken`, `lib/actions/offers.ts#declineOfferByToken` |
+| 🆕 Recruiter panel | Inside each application row, shows the active offer's state + summary + action buttons (Send / Edit / Delete for drafts; Copy link / Withdraw for sent); collapsible "previous offers" history | `components/offers/offer-panel.tsx` |
 
 ## Public Application Form
 
@@ -91,6 +108,15 @@ _Last updated: 2026-05-08_
 | Organisation job board | Lists all open vacancies for an org by public slug | `app/jobs/[slug]/page.tsx` |
 | Vacancy listing | Title, location, department, employment type, apply link | `app/jobs/[slug]/page.tsx` |
 
+## Candidate Status Page
+
+| Feature | Description | Files |
+|---------|-------------|-------|
+| 🆕 Status page | Token-gated `/status/<token>` showing abstracted Applied/In review/Interview/Decision/Closed bucket, role, employer, applied date, last update; robots-noindex | `app/status/[token]/page.tsx`, `components/status/status-stepper.tsx`, `lib/application-status-bucket.ts` |
+| 🆕 Tracking-link CTA | Confirmation email includes a "Track your application" button pointing at the candidate's status URL | `lib/email.ts#sendApplicationConfirmationEmail` |
+| 🆕 Status-change auto-emails | Per-org opt-in transactional emails on Screening / Interview transitions, all linking back to the status page | `lib/actions/applications.ts#updateApplicationStatus`, `lib/applications-status-emails.ts` |
+| 🆕 Candidate self-withdraw | Withdraw button on non-terminal applications; confirm dialog with optional reason; cancels any active offer; notifies recruiter owners + admins | `components/status/withdraw-button.tsx`, `lib/actions/applications.ts#withdrawApplicationByToken` |
+
 ## Interviews
 
 | Feature | Description | Files |
@@ -105,6 +131,12 @@ _Last updated: 2026-05-08_
 | Update status | Mark as Completed, Cancelled, No-show | `lib/actions/interviews.ts#updateInterviewStatus` |
 | Interview list | Upcoming and past interviews, filterable | `app/(dashboard)/interviews/page.tsx` |
 | In-app notification | Creator and interviewer notified on schedule | `lib/actions/interviews.ts` |
+
+## Global Search
+
+| Feature | Description | Files |
+|---------|-------------|-------|
+| 🆕 Cmd-K palette | Header pill + Cmd-K (Mac) / Ctrl-K + "/" keyboard shortcuts open a command palette that searches candidates, vacancies, and notes in parallel. Org-scoped, soft-deleted rows excluded, capped at 5 per group | `components/global-search/global-search-dialog.tsx`, `components/global-search/search-trigger.tsx`, `lib/actions/search.ts`, `lib/search/query.ts` |
 
 ## Settings
 
@@ -121,6 +153,8 @@ _Last updated: 2026-05-08_
 | Zoom | Connect/disconnect Zoom for meeting creation | `components/settings/zoom-connect.tsx` |
 | Microsoft | Connect/disconnect Microsoft/Teams | `components/settings/microsoft-connect.tsx` |
 | Column preferences | Choose which columns appear in candidate/vacancy lists | `components/shared/column-manager-dialog.tsx`, `lib/actions/preferences.ts` |
+| 🆕 Audit log | Owner/admin read-only viewer over `activity_log` with action/entity/user/date filters, paginated, with CSV export | `app/(dashboard)/settings/audit-log/page.tsx`, `components/settings/audit-log-table.tsx`, `components/settings/audit-log-filters.tsx`, `app/api/export/audit-log/route.ts`, `lib/actions/audit-log.ts`, `lib/audit-log/filter.ts` |
+| 🆕 Trash | Owner/admin page listing soft-deleted candidates and vacancies; per-row Restore (cascade-undeletes the candidate's applications using BL-007's audit row) and Delete-now (skips the 30-day grace) | `app/(dashboard)/settings/trash/page.tsx`, `components/settings/trash-list.tsx`, `lib/actions/restore.ts`, `lib/trash/impact.ts` |
 
 ## Notifications
 
@@ -139,7 +173,7 @@ _Last updated: 2026-05-08_
 | Usage display | Shows vacancies used / limit, candidates used / limit | `app/(dashboard)/subscription/page.tsx` |
 | Trial banner | Shows days remaining in trial, expired state | `components/dashboard/trial-banner.tsx` |
 | Expired redirect | When trial ends (or status=expired), auto-redirects to `/subscription` | `app/(dashboard)/layout.tsx` |
-| Payment wiring | **Not implemented** — buttons display but no payment provider connected (LemonSqueezy planned) | `components/subscription/plan-cards.tsx` |
+| Payment wiring | **Built (Flitt)** — Upgrade → hosted checkout, auto-recurring, signed callback grants the plan; multi-currency GEL/EUR/USD. Pending live switch. | `lib/actions/billing.ts`, `app/api/payments/flitt/callback/route.ts`, `components/subscription/plan-cards.tsx` |
 
 ## Guides
 

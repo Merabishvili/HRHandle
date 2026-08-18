@@ -92,11 +92,13 @@ describe('POST /api/parse-cv', () => {
     expect(body.reason).toBe('schema_invalid')
   })
 
-  it('rate-limits the 11th request from the same IP within the hour', async () => {
+  it('rate-limits the 31st request from the same IP within the hour', async () => {
     setIp('10.0.0.99')
     parseCVFileMock.mockResolvedValue({ success: true, parsed: {} })
 
-    for (let i = 0; i < 10; i++) {
+    // Limit bumped to 30/hr (G-009) — see the comment in route.ts. The
+    // first 30 succeed, the 31st gets a 429.
+    for (let i = 0; i < 30; i++) {
       const fd = new FormData()
       fd.set('file', new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' }))
       const res = await POST(makeReq(fd))

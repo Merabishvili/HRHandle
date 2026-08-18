@@ -38,7 +38,7 @@ export async function createExperienceEntry(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = ExperienceEntrySchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const { data, error } = await ctx.supabase
     .from('candidate_experience')
@@ -70,7 +70,7 @@ export async function updateExperienceEntry(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = ExperienceEntrySchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const { error } = await ctx.supabase
     .from('candidate_experience')
@@ -171,7 +171,7 @@ export async function createEducationEntry(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = EducationEntrySchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const { data, error } = await ctx.supabase
     .from('candidate_education')
@@ -203,7 +203,7 @@ export async function updateEducationEntry(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = EducationEntrySchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const { error } = await ctx.supabase
     .from('candidate_education')

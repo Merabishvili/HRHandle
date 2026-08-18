@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { VacancySchema } from '@/lib/validations/vacancy'
+import { VacancySchema, VacancyFormSchema, WORK_MODE_NONE } from '@/lib/validations/vacancy'
 
 // Future date helpers
 const tomorrow = new Date(Date.now() + 86_400_000).toISOString().split('T')[0]
@@ -257,5 +257,102 @@ describe('VacancySchema — salary_currency', () => {
   it('rejects a currency code that is not 3 characters', () => {
     const result = VacancySchema.safeParse({ ...base, salary_currency: 'US' })
     expect(result.success).toBe(false)
+  })
+})
+
+// ─── VacancyFormSchema (react-hook-form edit form) ────────────────────────────
+
+// The form schema treats optional text/select fields as ''-based strings and
+// additionally requires sector + status (the UI enforces both).
+const formBase = {
+  title: 'Software Engineer',
+  sector_id: '11111111-1111-1111-1111-111111111111',
+  status_id: '22222222-2222-2222-2222-222222222222',
+  department: '',
+  location: '',
+  employment_type: 'full_time' as const,
+  work_mode: WORK_MODE_NONE,
+  hiring_manager_name: '',
+  salary_min: null,
+  salary_max: null,
+  salary_currency: 'USD',
+  openings_count: 1,
+  start_date: tomorrow,
+  end_date: null,
+  description: 'Build great things.',
+  responsibilities: '',
+  requirements: '',
+  show_on_public_page: false,
+}
+
+describe('VacancyFormSchema — required fields', () => {
+  it('accepts a minimal valid form', () => {
+    expect(VacancyFormSchema.safeParse(formBase).success).toBe(true)
+  })
+
+  it('requires a sector (rejects empty sector_id)', () => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, sector_id: '' }).success).toBe(false)
+  })
+
+  it('requires a status (rejects empty status_id)', () => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, status_id: '' }).success).toBe(false)
+  })
+
+  it('rejects an empty title', () => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, title: '' }).success).toBe(false)
+  })
+
+  it('rejects a whitespace-only title (trimmed to empty)', () => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, title: '   ' }).success).toBe(false)
+  })
+
+  it('rejects an empty start_date', () => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, start_date: '' }).success).toBe(false)
+  })
+
+  it('rejects an empty description', () => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, description: '' }).success).toBe(false)
+  })
+
+  it('trims the title on parse', () => {
+    const result = VacancyFormSchema.safeParse({ ...formBase, title: '  Engineer  ' })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.title).toBe('Engineer')
+  })
+})
+
+describe('VacancyFormSchema — work_mode', () => {
+  it('accepts the "none" sentinel', () => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, work_mode: WORK_MODE_NONE }).success).toBe(true)
+  })
+
+  it.each(['remote', 'hybrid', 'onsite'])('accepts %s', (mode) => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, work_mode: mode }).success).toBe(true)
+  })
+
+  it('rejects an unknown work mode', () => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, work_mode: 'anywhere' }).success).toBe(false)
+  })
+})
+
+describe('VacancyFormSchema — refinements carried over', () => {
+  it('rejects salary_max < salary_min on the salary_max path', () => {
+    const result = VacancyFormSchema.safeParse({ ...formBase, salary_min: 5000, salary_max: 4000 })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map((i) => i.path.join('.'))).toContain('salary_max')
+    }
+  })
+
+  it('rejects end_date before start_date on the end_date path', () => {
+    const result = VacancyFormSchema.safeParse({ ...formBase, start_date: tomorrow, end_date: yesterday })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map((i) => i.path.join('.'))).toContain('end_date')
+    }
+  })
+
+  it('rejects openings_count below 1', () => {
+    expect(VacancyFormSchema.safeParse({ ...formBase, openings_count: 0 }).success).toBe(false)
   })
 })

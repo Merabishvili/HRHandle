@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -8,7 +9,6 @@ import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
-import { getCandidateStatuses } from '@/lib/cache/lookups'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 
 interface PageParams {
@@ -66,8 +66,6 @@ interface VacancyRow {
   }[] | null
 }
 
-import type { CandidateStatusOption as CandidateStatusRow } from '@/lib/types/database'
-
 
 export default async function EditCandidatePage({
   params,
@@ -75,6 +73,7 @@ export default async function EditCandidatePage({
   params: Promise<PageParams>
 }) {
   const { id } = await params
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -92,7 +91,7 @@ export default async function EditCandidatePage({
     .single()
 
   if (!profile?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organizationId = profile.organization_id
@@ -129,8 +128,6 @@ export default async function EditCandidatePage({
   if (!candidate) {
     notFound()
   }
-
-  const candidateStatuses = (await getCandidateStatuses()) as CandidateStatusRow[]
 
 const { data: vacanciesRaw } = await supabase
   .from('vacancies')
@@ -189,21 +186,20 @@ const { data: vacanciesRaw } = await supabase
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/candidates/${id}`}>
+          <Link href={`/candidates/${id}`} aria-label={t('editCand.back')}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit Candidate</h1>
-          <p className="text-muted-foreground">Update candidate information.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('candTable.editCandidate')}</h1>
+          <p className="text-muted-foreground">{t('editCand.subtitle')}</p>
         </div>
       </div>
 
       <CandidateForm
         candidate={candidate}
         vacancies={vacancies}
-        candidateStatuses={candidateStatuses}
         customFieldGroups={customFieldGroups}
         customFieldValues={customFieldValues}
         extraSections={

@@ -40,10 +40,78 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if ((pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding')) && !user) {
+  if (
+    (pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/pipeline') ||
+      pathname.startsWith('/onboarding')) &&
+    !user
+  ) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
+  }
+
+  // MFA (G-032) — gate dashboard routes when the user has enrolled but the
+  // session is still AAL1, or when org policy requires enrollment and the
+  // user hasn't enrolled. Excludes the security + challenge surfaces so the
+  // user can actually reach the pages that resolve the redirect.
+  const isDashboardPath =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/pipeline') ||
+    pathname.startsWith('/vacancies') ||
+    pathname.startsWith('/candidates') ||
+    pathname.startsWith('/interviews') ||
+    pathname.startsWith('/reports') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/subscription')
+
+  const isExemptMfaPath =
+    pathname === '/settings/profile' ||
+    pathname.startsWith('/settings/profile/') ||
+    pathname === '/auth/mfa-challenge' ||
+    pathname.startsWith('/api/') ||
+    pathname === '/auth/logout'
+
+  if (user && isDashboardPath && !isExemptMfaPath) {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id, role, mfa_enrolled')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.organization_id) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('require_mfa, require_mfa_for_admins')
+          .eq('id', profile.organization_id)
+          .single()
+
+        const role = profile.role as 'owner' | 'admin' | 'member'
+        const isAdmin = role === 'owner' || role === 'admin'
+        const requireForUser = !!org?.require_mfa || (!!org?.require_mfa_for_admins && isAdmin)
+
+        if (!profile.mfa_enrolled && requireForUser) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/settings/profile'
+          url.searchParams.set('enforce', 'mfa')
+          return NextResponse.redirect(url)
+        }
+
+        if (profile.mfa_enrolled) {
+          const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+          if (aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2') {
+            const url = request.nextUrl.clone()
+            url.pathname = '/auth/mfa-challenge'
+            url.searchParams.set('next', pathname + request.nextUrl.search)
+            return NextResponse.redirect(url)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[middleware] mfa gate failed:', err)
+      // Don't block on policy lookup failure.
+    }
   }
 
   return response

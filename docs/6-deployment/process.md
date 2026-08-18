@@ -1,11 +1,12 @@
 # Deployment Process
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
+- 🔄 (2026-07-20 audit) Verified current: the staging→main flow, two-env table, and Supabase-config-sync rules still match. The Vercel env-var set has grown considerably since — the canonical list is now `docs/5-environment/variables.md` (Calendly, Sentry org/project, Turnstile secret, etc.).
 - 🔄 No structural changes to the staging→main deploy flow
-- 🆕 New env vars to set on Vercel before deploy if you want the relevant features: `GOOGLE_GEMINI_API_KEY` (CV parsing), `CRON_SECRET` (cron auth)
+- 🆕 New env vars to set on Vercel before deploy if you want the relevant features: `GOOGLE_GEMINI_API_KEY` (CV parsing + AI features), `CRON_SECRET` (cron auth), `CALENDLY_CLIENT_ID`/`SECRET` (Calendly), `TURNSTILE_SECRET_KEY` (apply-form CAPTCHA)
 
 ---
 

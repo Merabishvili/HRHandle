@@ -2,33 +2,32 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useForm, type SubmitHandler, type FieldErrors } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import { createVacancy, updateVacancy, deleteVacancy } from '@/lib/actions/vacancies'
 import { saveCustomFieldValues } from '@/lib/actions/custom-fields'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Switch } from '@/components/ui/switch'
-import { DatePicker } from '@/components/ui/date-picker'
 import { Loader2 } from 'lucide-react'
 import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
-import type {
-  Vacancy,
-  VacancyFormData,
-  EmploymentType,
-  Sector,
-  VacancyStatus,
-} from '@/lib/types'
+import { BasicInfoSection } from '@/components/vacancies/form/basic-info-section'
+import { DatesCompensationSection } from '@/components/vacancies/form/dates-compensation-section'
+import { DetailsSection } from '@/components/vacancies/form/details-section'
+import {
+  VacancyFormSchema,
+  WORK_MODE_NONE,
+  type VacancyFormValues,
+} from '@/lib/validations/vacancy'
+import { DEFAULT_LOCALE, type Locale, type LocalizedText } from '@/lib/i18n/locales'
+import type { Vacancy, Sector, VacancyStatus } from '@/lib/types'
 import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
+
+/** Per-locale body content for the locales OTHER than the org default (the
+ * default locale is edited through the RHF fields). i18n Slice 4. */
+export type BodyTranslations = Record<string, { description: string; responsibilities: string; requirements: string }>
 
 interface VacancyFormProps {
   vacancy?: Vacancy
@@ -37,13 +36,36 @@ interface VacancyFormProps {
   customFieldGroups?: CustomFieldGroupWithFields[]
   customFieldValues?: CustomFieldValue[]
   isDuplicated?: boolean
+  /** Org content-language settings — drives the per-language JD tabs. */
+  orgLocales?: { default: Locale; enabled: Locale[] }
+  /** Existing per-locale JD content (edit mode). */
+  initialI18n?: { description: LocalizedText; responsibilities: LocalizedText; requirements: LocalizedText }
 }
 
-const employmentTypes: { value: EmploymentType; label: string }[] = [
-  { value: 'full_time', label: 'Full-time' },
-  { value: 'part_time', label: 'Part-time' },
-  { value: 'contract', label: 'Contract' },
-  { value: 'internship', label: 'Internship' },
+// Maps each RHF field name to the DOM id used for scroll-to-error on submit.
+// DatePicker wrappers carry the id on their surrounding div (field-*), native
+// inputs / SelectTriggers carry it directly.
+const FIELD_IDS: Record<string, string> = {
+  title: 'title',
+  start_date: 'field-start_date',
+  description: 'description',
+  sector_id: 'sector_id',
+  status_id: 'status_id',
+  openings_count: 'openings_count',
+  salary_max: 'salary_max',
+  end_date: 'field-end_date',
+}
+// Priority mirrors the old hand-written validateForm order, so the user lands
+// on the same "first" problem field they did before the RHF migration.
+const ERROR_PRIORITY = [
+  'title',
+  'start_date',
+  'description',
+  'sector_id',
+  'status_id',
+  'openings_count',
+  'salary_max',
+  'end_date',
 ]
 
 export function VacancyForm({
@@ -53,7 +75,10 @@ export function VacancyForm({
   customFieldGroups = [],
   customFieldValues = [],
   isDuplicated = false,
+  orgLocales = { default: DEFAULT_LOCALE, enabled: [DEFAULT_LOCALE] },
+  initialI18n,
 }: VacancyFormProps) {
+  const t = useTranslations()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -61,86 +86,124 @@ export function VacancyForm({
     () => valuesToMap(customFieldValues)
   )
 
-  const [formData, setFormData] = useState<VacancyFormData>({
-    title: vacancy?.title || '',
-    sector_id: vacancy?.sector_id || null,
-    status_id: vacancy?.status_id || null,
-    department: vacancy?.department || '',
-    location: vacancy?.location || '',
-    employment_type: vacancy?.employment_type || 'full_time',
-    hiring_manager_name: vacancy?.hiring_manager_name || '',
-    salary_min: vacancy?.salary_min ?? null,
-    salary_max: vacancy?.salary_max ?? null,
-    salary_currency: vacancy?.salary_currency || 'USD',
-    openings_count: vacancy?.openings_count || 1,
-    start_date: vacancy?.start_date || '',
-    end_date: vacancy?.end_date || null,
-    description: vacancy?.description || '',
-    responsibilities: vacancy?.responsibilities || '',
-    requirements: vacancy?.requirements || '',
-    show_on_public_page: vacancy?.show_on_public_page ?? false,
+  // i18n Slice 4 — locales other than the org default get their own JD content
+  // via the language tabs; the default locale is edited through the RHF fields.
+  const extraLocales = orgLocales.enabled.filter((l) => l !== orgLocales.default)
+  const [translations, setTranslations] = useState<BodyTranslations>(() => {
+    const seed: BodyTranslations = {}
+    for (const l of extraLocales) {
+      seed[l] = {
+        description: initialI18n?.description?.[l] ?? '',
+        responsibilities: initialI18n?.responsibilities?.[l] ?? '',
+        requirements: initialI18n?.requirements?.[l] ?? '',
+      }
+    }
+    return seed
   })
 
-  const validateForm = (): string | null => {
-    if (!formData.title.trim()) return 'Job title is required.'
-    if (!formData.start_date) return 'Start date is required.'
-    if (!formData.description.trim()) return 'About the job is required.'
-    if (!formData.sector_id) return 'Sector is required.'
-    if (!formData.status_id) return 'Status is required.'
+  const form = useForm<VacancyFormValues>({
+    resolver: zodResolver(VacancyFormSchema),
+    defaultValues: {
+      title: vacancy?.title ?? '',
+      sector_id: vacancy?.sector_id ?? '',
+      status_id: vacancy?.status_id ?? '',
+      department: vacancy?.department ?? '',
+      location: vacancy?.location ?? '',
+      employment_type: vacancy?.employment_type ?? 'full_time',
+      work_mode: vacancy?.work_mode ?? WORK_MODE_NONE,
+      hiring_manager_name: vacancy?.hiring_manager_name ?? '',
+      salary_min: vacancy?.salary_min ?? null,
+      salary_max: vacancy?.salary_max ?? null,
+      salary_currency: vacancy?.salary_currency ?? 'USD',
+      openings_count: vacancy?.openings_count ?? 1,
+      start_date: vacancy?.start_date ?? '',
+      end_date: vacancy?.end_date ?? null,
+      description: vacancy?.description ?? '',
+      responsibilities: vacancy?.responsibilities ?? '',
+      requirements: vacancy?.requirements ?? '',
+      show_on_public_page: vacancy?.show_on_public_page ?? false,
+    },
+  })
 
-    if ((formData.openings_count || 0) < 1) {
-      return 'Openings count must be at least 1.'
-    }
-
-    if (
-      formData.salary_min != null &&
-      formData.salary_max != null &&
-      formData.salary_max < formData.salary_min
-    ) {
-      return 'Maximum salary must be greater than or equal to minimum salary.'
-    }
-
-    if (
-      formData.end_date &&
-      formData.start_date &&
-      new Date(formData.end_date) < new Date(formData.start_date)
-    ) {
-      return 'End date cannot be earlier than start date.'
-    }
-
-    return null
+  /**
+   * On a validation failure: show a toast (visible regardless of scroll
+   * position), set the persistent error Alert at the top, and scroll the
+   * offending field into view + focus it so the user lands directly on the
+   * problem. Preserves the pre-RHF UX.
+   */
+  const reportValidationError = (message: string, fieldId: string | undefined) => {
+    setError(message)
+    toast.error(message)
+    if (typeof window === 'undefined' || !fieldId) return
+    const el = document.getElementById(fieldId)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => {
+      const focusable = el.matches('input, textarea, button, select')
+        ? (el as HTMLElement)
+        : el.querySelector<HTMLElement>('input, textarea, button, select')
+      focusable?.focus({ preventScroll: true })
+    }, 350)
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError(null)
-
-    const validationError = validateForm()
-    if (validationError) {
-      setError(validationError)
-      return
+  const onInvalid = (errors: FieldErrors<VacancyFormValues>) => {
+    for (const key of ERROR_PRIORITY) {
+      const fieldError = errors[key as keyof VacancyFormValues]
+      if (fieldError?.message) {
+        reportValidationError(String(fieldError.message), FIELD_IDS[key])
+        return
+      }
     }
+  }
 
+  const onValid: SubmitHandler<VacancyFormValues> = async (values) => {
+    setError(null)
     setIsLoading(true)
 
+    // i18n Slice 4 — assemble the per-locale JD objects: the default locale
+    // comes from the RHF field, the other locales from `translations`. Empty
+    // strings are omitted so pickLocale falls back cleanly.
+    const buildI18n = (field: 'description' | 'responsibilities' | 'requirements'): Record<string, string> => {
+      const out: Record<string, string> = {}
+      const def = (values[field] ?? '').trim()
+      if (def) out[orgLocales.default] = def
+      for (const l of extraLocales) {
+        const v = (translations[l]?.[field] ?? '').trim()
+        if (v) out[l] = v
+      }
+      return out
+    }
+    const description_i18n = buildI18n('description')
+    const responsibilities_i18n = buildI18n('responsibilities')
+    const requirements_i18n = buildI18n('requirements')
+    const posting_locales = [
+      orgLocales.default,
+      ...extraLocales.filter((l) => description_i18n[l] || responsibilities_i18n[l] || requirements_i18n[l]),
+    ]
+
     const payload = {
-      title: formData.title.trim(),
-      sector_id: formData.sector_id,
-      status_id: formData.status_id,
-      department: formData.department?.trim() || null,
-      location: formData.location?.trim() || null,
-      employment_type: formData.employment_type || null,
-      hiring_manager_name: formData.hiring_manager_name?.trim() || null,
-      salary_min: formData.salary_min ?? null,
-      salary_max: formData.salary_max ?? null,
-      salary_currency: formData.salary_currency || 'USD',
-      openings_count: formData.openings_count || 1,
-      start_date: formData.start_date,
-      end_date: formData.end_date || null,
-      description: formData.description.trim(),
-      responsibilities: formData.responsibilities?.trim() || null,
-      requirements: formData.requirements?.trim() || null,
-      show_on_public_page: formData.show_on_public_page ?? false,
+      title: values.title, // schema trims
+      sector_id: values.sector_id,
+      status_id: values.status_id,
+      department: values.department.trim() || null,
+      location: values.location.trim() || null,
+      employment_type: values.employment_type,
+      work_mode: values.work_mode === WORK_MODE_NONE ? null : values.work_mode,
+      hiring_manager_name: values.hiring_manager_name.trim() || null,
+      salary_min: values.salary_min,
+      salary_max: values.salary_max,
+      salary_currency: values.salary_currency || 'USD',
+      openings_count: values.openings_count || 1,
+      start_date: values.start_date,
+      end_date: values.end_date || null,
+      description: values.description, // schema trims
+      responsibilities: values.responsibilities.trim() || null,
+      requirements: values.requirements.trim() || null,
+      show_on_public_page: values.show_on_public_page,
+      description_i18n,
+      responsibilities_i18n,
+      requirements_i18n,
+      posting_locales,
     }
 
     let entityId: string | undefined
@@ -148,6 +211,7 @@ export function VacancyForm({
       const result = await updateVacancy(vacancy.id, payload)
       if (!result.success) {
         setError(result.error)
+        toast.error(result.error)
         setIsLoading(false)
         return
       }
@@ -156,6 +220,7 @@ export function VacancyForm({
       const result = await createVacancy(payload)
       if (!result.success) {
         setError(result.error)
+        toast.error(result.error)
         setIsLoading(false)
         return
       }
@@ -174,333 +239,35 @@ export function VacancyForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onValid, onInvalid)} className="space-y-6">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
-          <CardDescription>The main details about this vacancy.</CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Position Title *</Label>
-            <Input
-              id="title"
-              placeholder="e.g. Senior Software Engineer"
-              value={formData.title}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="sector_id">Sector *</Label>
-              <Select
-                value={formData.sector_id || ''}
-                onValueChange={(value: string) =>
-                  setFormData({ ...formData, sector_id: value || null })
-                }
-                disabled={isLoading}
-              >
-                <SelectTrigger id="sector_id">
-                  <SelectValue placeholder="Select sector" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sectors.map((sector) => (
-                    <SelectItem key={sector.id} value={sector.id}>
-                      {sector.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status_id">Status *</Label>
-              <Select
-                value={formData.status_id || ''}
-                onValueChange={(value: string) =>
-                  setFormData({ ...formData, status_id: value || null })
-                }
-                disabled={isLoading}
-              >
-                <SelectTrigger id="status_id">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((status) => (
-                    <SelectItem key={status.id} value={status.id}>
-                      {status.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Input
-                id="department"
-                placeholder="e.g. Engineering"
-                value={formData.department || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, department: e.target.value })
-                }
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                placeholder="e.g. Tbilisi or Remote"
-                value={formData.location || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="employment_type">Employment Type</Label>
-              <Select
-                value={formData.employment_type || 'full_time'}
-                onValueChange={(value: string) =>
-                  setFormData({ ...formData, employment_type: value as EmploymentType })
-                }
-                disabled={isLoading}
-              >
-                <SelectTrigger id="employment_type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {employmentTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="openings_count">Openings Count</Label>
-              <Input
-                id="openings_count"
-                type="number"
-                min={1}
-                value={formData.openings_count ?? 1}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({
-                    ...formData,
-                    openings_count: e.target.value ? Number(e.target.value) : 1,
-                  })
-                }
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="hiring_manager_name">Hiring Manager</Label>
-              <Input
-                id="hiring_manager_name"
-                placeholder="e.g. Nino Beridze"
-                value={formData.hiring_manager_name || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, hiring_manager_name: e.target.value })
-                }
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>Dates and Compensation</CardTitle>
-          <CardDescription>Vacancy timeline and salary range.</CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Start Date *</Label>
-              <DatePicker
-                value={formData.start_date || null}
-                onChange={(v) => setFormData({ ...formData, start_date: v ?? '' })}
-                placeholder="Select start date"
-                disabled={isLoading}
-                fromYear={2020}
-                toYear={2035}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>End Date</Label>
-              <DatePicker
-                value={formData.end_date ?? null}
-                onChange={(v) => setFormData({ ...formData, end_date: v })}
-                placeholder="Select end date"
-                disabled={isLoading}
-                fromYear={2020}
-                toYear={2035}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="salary_min">Minimum Salary</Label>
-              <Input
-                id="salary_min"
-                type="number"
-                placeholder="50000"
-                value={formData.salary_min ?? ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({
-                    ...formData,
-                    salary_min: e.target.value ? Number(e.target.value) : null,
-                  })
-                }
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="salary_max">Maximum Salary</Label>
-              <Input
-                id="salary_max"
-                type="number"
-                placeholder="80000"
-                value={formData.salary_max ?? ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({
-                    ...formData,
-                    salary_max: e.target.value ? Number(e.target.value) : null,
-                  })
-                }
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="salary_currency">Currency</Label>
-              <Select
-                value={formData.salary_currency || 'USD'}
-                onValueChange={(value: string) =>
-                  setFormData({ ...formData, salary_currency: value })
-                }
-                disabled={isLoading}
-              >
-                <SelectTrigger id="salary_currency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                  <SelectItem value="GEL">GEL</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>Vacancy Details</CardTitle>
-          <CardDescription>Shown on the public jobs page and included when sharing on LinkedIn.</CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="description">About the Job *</Label>
-            <Textarea
-              id="description"
-              placeholder="Give an overview of the role — what the team does, what success looks like, and why someone would want to join..."
-              value={formData.description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              disabled={isLoading}
-              rows={5}
-              maxLength={5000}
-            />
-            <p className="text-xs text-muted-foreground text-right">{(formData.description || '').length} / 5000</p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="responsibilities">Responsibilities</Label>
-            <Textarea
-              id="responsibilities"
-              placeholder="• Lead backend architecture decisions&#10;• Collaborate with product and design&#10;• Mentor junior engineers..."
-              value={formData.responsibilities || ''}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setFormData({ ...formData, responsibilities: e.target.value })
-              }
-              disabled={isLoading}
-              rows={5}
-              maxLength={5000}
-            />
-            <p className="text-xs text-muted-foreground text-right">{(formData.responsibilities || '').length} / 5000</p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="requirements">Requirements</Label>
-            <Textarea
-              id="requirements"
-              placeholder="• 5+ years of experience with TypeScript&#10;• Strong understanding of distributed systems&#10;• Experience with cloud infrastructure..."
-              value={formData.requirements || ''}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setFormData({ ...formData, requirements: e.target.value })
-              }
-              disabled={isLoading}
-              rows={5}
-              maxLength={5000}
-            />
-            <p className="text-xs text-muted-foreground text-right">{(formData.requirements || '').length} / 5000</p>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-border p-4">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_on_public_page" className="text-sm font-medium">Show on public jobs page</Label>
-              <p className="text-xs text-muted-foreground">Candidates can discover and apply to this vacancy from your public jobs page.</p>
-            </div>
-            <Switch
-              id="show_on_public_page"
-              checked={formData.show_on_public_page ?? false}
-              onCheckedChange={(checked) =>
-                setFormData({ ...formData, show_on_public_page: checked })
-              }
-              disabled={isLoading}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <BasicInfoSection form={form} sectors={sectors} statusOptions={statusOptions} disabled={isLoading} />
+      <DatesCompensationSection form={form} disabled={isLoading} />
+      <DetailsSection
+        form={form}
+        sectors={sectors}
+        disabled={isLoading}
+        orgLocales={orgLocales}
+        translations={translations}
+        onTranslationChange={(locale, field, value) =>
+          setTranslations((prev) => ({
+            ...prev,
+            [locale]: { ...prev[locale], [field]: value } as BodyTranslations[string],
+          }))
+        }
+      />
 
       {/* Custom Fields */}
       {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Additional Information</CardTitle>
-            <CardDescription>Custom fields defined for vacancies.</CardDescription>
+            <CardTitle>{t('profile.additionalInfo')}</CardTitle>
+            <CardDescription>{t('vacForm.customFieldsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <CustomFieldsForm
@@ -527,16 +294,16 @@ export function VacancyForm({
               router.push('/vacancies')
             }}
           >
-            Discard
+            {t('vacForm.discard')}
           </Button>
         ) : (
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={() => router.push(vacancy ? `/vacancies/${vacancy.id}` : '/vacancies')}
             disabled={isLoading}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
         )}
 
@@ -544,14 +311,14 @@ export function VacancyForm({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isDuplicated ? 'Saving...' : vacancy ? 'Updating...' : 'Creating...'}
+              {isDuplicated ? t('common.saving') : vacancy ? t('candidateForm.updating') : t('vacForm.creating')}
             </>
           ) : isDuplicated ? (
-            'Save'
+            t('common.save')
           ) : vacancy ? (
-            'Update Vacancy'
+            t('vacForm.updateVacancy')
           ) : (
-            'Create Vacancy'
+            t('wizard.createVacancy')
           )}
         </Button>
       </div>

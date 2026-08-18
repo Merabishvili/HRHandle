@@ -18,7 +18,9 @@ export interface Application {
 
   candidate_id: UUID
   vacancy_id: UUID
-  status_id: UUID | null
+  /** Wave 2.6 Slice 4 — replaces the legacy status_id column.
+   * References pipeline_stages(id). */
+  pipeline_stage_id: UUID | null
 
   applied_at: ISODateTimeString
   last_status_changed_at: ISODateTimeString | null
@@ -32,13 +34,12 @@ export interface Application {
   // joined fields
   candidate?: Candidate | null
   vacancy?: Vacancy | null
-  status?: ApplicationStatus | null
 }
 
 export interface ApplicationFormData {
   candidate_id: UUID
   vacancy_id: UUID
-  status_id?: UUID | null
+  pipeline_stage_id?: UUID | null
   notes?: string | null
 }
 
@@ -46,7 +47,7 @@ export interface ApplicationFilters {
   search?: string
   vacancy_id?: UUID
   candidate_id?: UUID
-  status_id?: UUID
+  pipeline_stage_id?: UUID
   sector_id?: UUID
   applied_from?: ISODateString
   applied_to?: ISODateString

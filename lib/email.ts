@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
-import { applyVariables, escapeHtml, DEFAULT_TEMPLATES } from '@/lib/email-template-utils'
+import { applyVariables, escapeHtml, defaultTemplate } from '@/lib/email-template-utils'
+import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY
@@ -79,6 +80,7 @@ export async function sendInterviewInvitationEmail({
   meetingLink,
   customSubject,
   customBody,
+  contentLocale,
   rescheduled = false,
   timezone,
 }: {
@@ -87,15 +89,16 @@ export async function sendInterviewInvitationEmail({
   senderName: string
   senderEmail: string
   vacancyTitle: string
-  organizationName?: string
+  organizationName?: string | undefined
   scheduledAt: string
   durationMinutes: number
   interviewType: 'video' | 'phone' | 'onsite'
   meetingLink: string | null
-  customSubject?: string
-  customBody?: string
+  customSubject?: string | undefined
+  customBody?: string | undefined
+  contentLocale?: Locale | undefined
   rescheduled?: boolean
-  timezone?: string
+  timezone?: string | undefined
 }) {
   const tz = timezone || 'UTC'
   const d = new Date(scheduledAt)
@@ -116,7 +119,7 @@ export async function sendInterviewInvitationEmail({
     meeting_link: meetingLink ?? '',
     interviewer_name: senderName,
   }
-  const defaults = DEFAULT_TEMPLATES.interview_invitation
+  const defaults = defaultTemplate('interview_invitation', contentLocale ?? DEFAULT_LOCALE)
   const subject = rescheduled
     ? `Interview Rescheduled: ${vacancyTitle}`
     : applyVariables(customSubject ?? defaults.subject, vars)
@@ -196,6 +199,8 @@ export async function sendApplicationConfirmationEmail({
   organizationName,
   customSubject,
   customBody,
+  contentLocale,
+  statusUrl,
 }: {
   to: string
   candidateName: string
@@ -203,12 +208,32 @@ export async function sendApplicationConfirmationEmail({
   organizationName: string
   customSubject?: string
   customBody?: string
+  contentLocale?: Locale
+  /** Public candidate-facing status URL (G-016). When provided, rendered as a
+   * CTA button under the body. Omitting it keeps the legacy template intact. */
+  statusUrl?: string
 }) {
-  const vars = { candidate_name: candidateName, role: vacancyTitle, company: organizationName }
-  const defaults = DEFAULT_TEMPLATES.application_received
+  const vars = {
+    candidate_name: candidateName,
+    role: vacancyTitle,
+    company: organizationName,
+    status_url: statusUrl ?? '',
+  }
+  const defaults = defaultTemplate('application_received', contentLocale ?? DEFAULT_LOCALE)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
+  const safeStatusUrl = statusUrl ? escapeHtml(statusUrl) : null
+
+  const statusCta = safeStatusUrl
+    ? `
+    <p style="margin: 0 0 24px;">
+      <a href="${safeStatusUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">Track your application</a>
+    </p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 16px;">
+      Keep this link private — it's the only way to view your status without contacting the recruiter.
+    </p>`
+    : ''
 
   return getResend().emails.send({
     from: FROM,
@@ -224,6 +249,146 @@ export async function sendApplicationConfirmationEmail({
     <p style="color: #6b7280; margin: 0 0 24px;">
       Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
       ${body}
+    </p>
+    ${statusCta}
+    <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
+  </div>
+</body>
+</html>`,
+  })
+}
+
+export type StatusChangeStage = 'screening' | 'interview'
+
+/** Auto-email fired by `updateApplicationStatus` when an application moves to
+ * the screening or interview stage and the org has opted in. Body falls back
+ * to the stage's default template if no custom body is set. Status URL is
+ * always appended as a CTA so the candidate has a place to come back to. */
+export async function sendApplicationStatusChangedEmail({
+  to,
+  candidateName,
+  vacancyTitle,
+  organizationName,
+  stage,
+  statusUrl,
+  customSubject,
+  customBody,
+  contentLocale,
+}: {
+  to: string
+  candidateName: string
+  vacancyTitle: string
+  organizationName: string
+  stage: StatusChangeStage
+  statusUrl?: string | undefined
+  customSubject?: string | undefined
+  customBody?: string | undefined
+  contentLocale?: Locale | undefined
+}) {
+  const vars = {
+    candidate_name: candidateName,
+    role: vacancyTitle,
+    company: organizationName,
+    status_url: statusUrl ?? '',
+  }
+  const defaults =
+    stage === 'screening'
+      ? defaultTemplate('status_change_screening', contentLocale ?? DEFAULT_LOCALE)
+      : defaultTemplate('status_change_interview', contentLocale ?? DEFAULT_LOCALE)
+  const subject = applyVariables(customSubject ?? defaults.subject, vars)
+  const body = applyVariables(customBody ?? defaults.body, vars)
+  const safeCandidate = escapeHtml(candidateName)
+  const safeStatusUrl = statusUrl ? escapeHtml(statusUrl) : null
+
+  const heading = stage === 'screening' ? 'Your application is under review' : 'Moving to the interview stage'
+
+  const statusCta = safeStatusUrl
+    ? `
+    <p style="margin: 0 0 16px;">
+      <a href="${safeStatusUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">Track your application</a>
+    </p>`
+    : ''
+
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${heading}</h1>
+    <p style="color: #6b7280; margin: 0 0 24px;">
+      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
+      ${body}
+    </p>
+    ${statusCta}
+    <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
+  </div>
+</body>
+</html>`,
+  })
+}
+
+/** Auto-email fired by `sendOffer` when the recruiter transitions an offer
+ * from draft → sent. The body is intentionally generic — the offer page at
+ * `offerUrl` shows the structured details (compensation, dates) and the
+ * full markdown body. This email is purely the doorbell. */
+export async function sendOfferEmail({
+  to,
+  candidateName,
+  vacancyTitle,
+  organizationName,
+  offerUrl,
+  customSubject,
+  customBody,
+  contentLocale,
+}: {
+  to: string
+  candidateName: string
+  vacancyTitle: string
+  organizationName: string
+  offerUrl: string
+  customSubject?: string
+  customBody?: string
+  contentLocale?: Locale
+}) {
+  const vars = {
+    candidate_name: candidateName,
+    role: vacancyTitle,
+    company: organizationName,
+    offer_url: offerUrl,
+  }
+  const defaults = defaultTemplate('offer_sent', contentLocale ?? DEFAULT_LOCALE)
+  const subject = applyVariables(customSubject ?? defaults.subject, vars)
+  const body = applyVariables(customBody ?? defaults.body, vars)
+  const safeCandidate = escapeHtml(candidateName)
+  const safeOfferUrl = escapeHtml(offerUrl)
+
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">You have an offer</h1>
+    <p style="color: #6b7280; margin: 0 0 24px;">
+      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
+      ${body}
+    </p>
+    <p style="margin: 0 0 16px;">
+      <a href="${safeOfferUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">View your offer</a>
+    </p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 16px;">
+      Keep this link private — it's the only way to view and respond to this offer.
     </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
@@ -242,6 +407,7 @@ export async function sendApplicationRejectionEmail({
   senderEmail,
   customSubject,
   customBody,
+  contentLocale,
 }: {
   to: string
   candidateName: string
@@ -249,11 +415,12 @@ export async function sendApplicationRejectionEmail({
   organizationName: string
   senderName: string
   senderEmail: string
-  customSubject?: string
-  customBody?: string
+  customSubject?: string | undefined
+  customBody?: string | undefined
+  contentLocale?: Locale | undefined
 }) {
   const vars = { candidate_name: candidateName, role: vacancyTitle, company: organizationName }
-  const defaults = DEFAULT_TEMPLATES.rejection
+  const defaults = defaultTemplate('rejection', contentLocale ?? DEFAULT_LOCALE)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)

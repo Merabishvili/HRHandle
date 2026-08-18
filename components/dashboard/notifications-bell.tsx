@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,12 +13,33 @@ import {
   markAllNotificationsRead,
   type Notification,
 } from '@/lib/actions/notifications'
+import { getNotificationPreferences } from '@/lib/actions/notification-preferences'
 
 export function NotificationsBell() {
+  const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [showBadge, setShowBadge] = useState(true)
+  const [autoMarkRead, setAutoMarkRead] = useState(true)
   const panelRef = useRef<HTMLDivElement>(null)
+
+  // Load prefs once on mount — respects Personal → Notifications toggles
+  // (Wave 1.2 / Phase 0.7). On failure or pre-Migration-045 profile, the
+  // defaults (true/true) stand so the bell never silently disappears.
+  useEffect(() => {
+    let cancelled = false
+    getNotificationPreferences().then((result) => {
+      if (cancelled) return
+      if (result.success && result.data) {
+        setShowBadge(result.data.in_product.show_bell_badge)
+        setAutoMarkRead(result.data.in_product.auto_mark_read)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -46,7 +68,7 @@ export function NotificationsBell() {
   const unreadCount = notifications.filter((n) => !n.read_at).length
 
   const handleClick = async (n: Notification) => {
-    if (!n.read_at) {
+    if (!n.read_at && autoMarkRead) {
       try {
         await markNotificationRead(n.id)
         setNotifications((prev) =>
@@ -54,7 +76,7 @@ export function NotificationsBell() {
         )
       } catch (err) {
         console.error('[notifications-bell] mark-read failed:', err)
-        toast.error('Could not mark notification as read.')
+        toast.error(t('notifications.errMarkRead'))
       }
     }
     setOpen(false)
@@ -67,7 +89,7 @@ export function NotificationsBell() {
       setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })))
     } catch (err) {
       console.error('[notifications-bell] mark-all-read failed:', err)
-      toast.error('Could not mark notifications as read.')
+      toast.error(t('notifications.errMarkAll'))
     }
   }
 
@@ -77,12 +99,19 @@ export function NotificationsBell() {
         variant="ghost"
         size="icon"
         className="relative h-9 w-9"
-        aria-label="Notifications"
+        aria-label={
+          showBadge && unreadCount > 0
+            ? t('notifications.ariaUnread', { count: unreadCount })
+            : t('notifications.title')
+        }
         onClick={() => setOpen((v) => !v)}
       >
-        <Bell className="h-4 w-4" />
-        {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white">
+        <Bell className="h-4 w-4" aria-hidden />
+        {showBadge && unreadCount > 0 && (
+          <span
+            className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white"
+            aria-hidden
+          >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -96,13 +125,13 @@ export function NotificationsBell() {
           {/* Panel */}
           <div className="absolute right-0 top-10 z-40 w-80 rounded-lg border border-border bg-card shadow-lg">
             <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-              <span className="text-sm font-semibold text-foreground">Notifications</span>
+              <span className="text-sm font-semibold text-foreground">{t('notifications.title')}</span>
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
                   className="text-xs text-primary hover:underline"
                 >
-                  Mark all read
+                  {t('notifications.markAllRead')}
                 </button>
               )}
             </div>
@@ -110,7 +139,7 @@ export function NotificationsBell() {
             <div className="max-h-[420px] overflow-y-auto">
               {notifications.length === 0 ? (
                 <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  No notifications yet
+                  {t('notifications.empty')}
                 </p>
               ) : (
                 notifications.map((n) => (

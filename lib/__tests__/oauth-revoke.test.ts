@@ -63,7 +63,7 @@ describe('revokeGoogleToken', () => {
     await revokeGoogleToken('the-token')
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    const [url, init] = fetchMock.mock.calls[0]
+    const [url, init] = fetchMock.mock.calls[0]!
     expect(url).toBe('https://oauth2.googleapis.com/revoke')
     expect(init.method).toBe('POST')
     expect(init.headers['Content-Type']).toBe('application/x-www-form-urlencoded')
@@ -108,7 +108,7 @@ describe('revokeZoomToken', () => {
     await revokeZoomToken('the-token')
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    const [url, init] = fetchMock.mock.calls[0]
+    const [url, init] = fetchMock.mock.calls[0]!
     expect(url).toBe('https://zoom.us/oauth/revoke')
     expect(init.method).toBe('POST')
     expect(init.headers['Content-Type']).toBe('application/x-www-form-urlencoded')

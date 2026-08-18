@@ -41,6 +41,7 @@ interface PurgeCounts {
   vacancies_skipped_due_to_restrict: number
   storage_files_deleted: number
   storage_errors: number
+  offers_expired: number
 }
 
 export async function GET(req: NextRequest) {
@@ -64,6 +65,7 @@ export async function GET(req: NextRequest) {
     vacancies_skipped_due_to_restrict: 0,
     storage_files_deleted: 0,
     storage_errors: 0,
+    offers_expired: 0,
   }
 
   // Collected across multiple steps below; deleted from the candidate-documents
@@ -327,6 +329,28 @@ export async function GET(req: NextRequest) {
     } else {
       counts.storage_files_deleted = data?.length ?? paths.length
     }
+  }
+
+  // ── Step N: auto-expire sent offers past their expiry_date (G-018). ─────
+  // The candidate-facing page also runs a view-time check; this just keeps
+  // the persistent `status` field truthful for the recruiter UI + reporting.
+  try {
+    const todayYmd = new Date().toISOString().slice(0, 10)
+    const { data: expired, error: expireErr } = await supabase
+      .from('offers')
+      .update({ status: 'expired', responded_at: new Date().toISOString() })
+      .eq('status', 'sent')
+      .lt('expiry_date', todayYmd)
+      .is('deleted_at', null)
+      .select('id')
+
+    if (expireErr) {
+      console.error('[cron/purge-deleted] offers expire failed:', expireErr.message)
+    } else {
+      counts.offers_expired = expired?.length ?? 0
+    }
+  } catch (err) {
+    console.error('[cron/purge-deleted] offers expire threw:', err)
   }
 
   console.log('[cron/purge-deleted] done:', counts)

@@ -4,10 +4,68 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext, checkPlanLimit, type ActionResult } from './index'
 import { CandidateSchema, type CandidateInput } from '@/lib/validations/candidate'
 import { ApplicationSchema } from '@/lib/validations/application'
+import { writeAuditLog } from '@/lib/audit-log'
+import { buildCandidateDeleteAuditDetails } from '@/lib/candidate-delete-cascade'
+import {
+  resolvePipelineStageId,
+  type LegacyStatusCode,
+} from '@/lib/pipeline-stages/resolve'
+
+/**
+ * Org-scoped lookup for an existing candidate with the same email.
+ *
+ * Drives the duplicate-detection banner in the Wave 2.7 Add candidate
+ * wizard (Step 3 per Create Candidate Steps.dc.html). Case-insensitive
+ * match; trims whitespace. Returns null on empty/invalid input.
+ */
+export async function findCandidateByEmail(email: string): Promise<
+  ActionResult<{
+    candidateId: string
+    candidateName: string
+  } | null>
+> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const trimmed = email.trim().toLowerCase()
+  if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    return { success: true, data: null }
+  }
+
+  const { data, error } = await ctx.supabase
+    .from('candidates')
+    .select('id, first_name, last_name')
+    .eq('organization_id', ctx.orgId)
+    .ilike('email', trimmed)
+    .is('deleted_at', null)
+    .limit(1)
+    .maybeSingle()
+
+  if (error) return { success: false, error: 'Failed to check existing candidates' }
+  if (!data) return { success: true, data: null }
+
+  return {
+    success: true,
+    data: {
+      candidateId: data.id as string,
+      candidateName: `${data.first_name} ${data.last_name}`.trim() || 'Existing candidate',
+    },
+  }
+}
 
 export async function createCandidate(
   input: CandidateInput,
-  linkedVacancyId?: string | null
+  linkedVacancyId?: string | null,
+  /**
+   * Wave 2.7 — Starting stage override for the Add candidate wizard. When
+   * the recruiter sources a warm candidate, they can drop them straight
+   * into screening / interview etc. instead of the default `applied`.
+   * Passing a status id here makes the linked-vacancy application be
+   * inserted at that stage from the start, so the audit/webhook/auto-
+   * email machinery (which fires on transitions) doesn't spuriously
+   * record an "applied → screening" move that never happened.
+   */
+  startingStatusId?: string | null
 ): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
@@ -16,9 +74,22 @@ export async function createCandidate(
   if (limitError) return { success: false, error: limitError }
 
   const parsed = CandidateSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const { linked_vacancy_ids: _, ...candidateData } = parsed.data
+
+  // Wave 1.1 — general_status is no longer user-editable; the form
+  // doesn't supply it. Stamp 'active' server-side so the cached value
+  // exists for the read-only badge / filter / sort surfaces on the
+  // candidates index. Subsequent transitions (→ hired on offer accept,
+  // → active on rejection of the last hired app) are driven by the
+  // app-level code in updateApplicationStatus / rejectApplication /
+  // offers.ts.
+  const { data: activeCandidateStatus } = await ctx.supabase
+    .from('candidate_statuses')
+    .select('id')
+    .eq('code', 'active')
+    .single()
 
   const { data, error } = await ctx.supabase
     .from('candidates')
@@ -27,6 +98,7 @@ export async function createCandidate(
       email: candidateData.email || null,
       linkedin_profile_url: candidateData.linkedin_profile_url || null,
       organization_id: ctx.orgId,
+      general_status_id: activeCandidateStatus?.id ?? null,
       created_by: ctx.userId,
     })
     .select('id')
@@ -44,24 +116,50 @@ export async function createCandidate(
       .single()
 
     if (vacancyCheck) {
-      const { data: appliedStatus } = await ctx.supabase
-        .from('application_statuses')
-        .select('id')
-        .eq('code', 'applied')
-        .single()
+      // Wave 2.6 Slice 4 — applications.status_id is gone. We now only
+      // resolve the per-vacancy pipeline_stages row for the chosen
+      // starting bucket and set pipeline_stage_id on the insert. The
+      // wizard's starting-stage picker still passes a canonical
+      // application_statuses.id so we look up its code to drive the
+      // bucket resolution.
+      let statusCodeForStage: LegacyStatusCode = 'applied'
+      if (startingStatusId) {
+        const { data: stagedRow } = await ctx.supabase
+          .from('application_statuses')
+          .select('code')
+          .eq('id', startingStatusId)
+          .single()
+        if (stagedRow?.code) statusCodeForStage = stagedRow.code as LegacyStatusCode
+      }
+
+      const pipelineStageId = await resolvePipelineStageId(
+        ctx.supabase,
+        linkedVacancyId,
+        statusCodeForStage,
+      )
 
       const appParsed = ApplicationSchema.safeParse({
         candidate_id: data.id,
         vacancy_id: linkedVacancyId,
       })
       if (appParsed.success) {
-        await ctx.supabase.from('applications').insert({
+        // Surface the error if the linked-vacancy application insert fails.
+        // Previously the error was swallowed — that masked the G-034
+        // source_type CHECK-constraint regression where every recruiter-
+        // created application failed silently.
+        const { error: appErr } = await ctx.supabase.from('applications').insert({
           ...appParsed.data,
           organization_id: ctx.orgId,
           created_by: ctx.userId,
-          status_id: appliedStatus?.id ?? null,
+          pipeline_stage_id: pipelineStageId,
           applied_at: new Date().toISOString(),
+          // Candidate-facing status page token (G-016) — same as other insert paths.
+          public_token: crypto.randomUUID().replace(/-/g, ''),
+          source_type: 'manual',
         })
+        if (appErr) {
+          console.error('[candidates] linked-vacancy application insert failed:', appErr.message)
+        }
       }
     }
   }
@@ -78,7 +176,7 @@ export async function updateCandidate(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = CandidateSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const { linked_vacancy_ids: _, ...candidateData } = parsed.data
 
@@ -100,41 +198,78 @@ export async function updateCandidate(
   return { success: true, data: undefined }
 }
 
-export async function updateCandidateStatus(
-  id: string,
-  generalStatusId: string
-): Promise<ActionResult<void>> {
+/** Lightweight pre-confirm read used by the delete dialog so the recruiter
+ * sees the impact before they click. Returns the count of non-deleted
+ * applications attached to the candidate, org-scoped. */
+export async function getCandidateDeleteImpact(
+  candidateId: string,
+): Promise<ActionResult<{ activeApplicationCount: number }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  const { error } = await ctx.supabase
-    .from('candidates')
-    .update({ general_status_id: generalStatusId })
-    .eq('id', id)
+  const { count, error } = await ctx.supabase
+    .from('applications')
+    .select('id', { count: 'exact', head: true })
+    .eq('candidate_id', candidateId)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
 
-  if (error) return { success: false, error: 'Failed to update status' }
+  if (error) return { success: false, error: 'Failed to load delete impact' }
 
-  revalidatePath('/candidates')
-  revalidatePath(`/candidates/${id}`)
-  return { success: true, data: undefined }
+  return { success: true, data: { activeApplicationCount: count ?? 0 } }
 }
 
 export async function deleteCandidate(id: string): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
+  const now = new Date().toISOString()
+
+  // Cascade-soft-delete the candidate's active applications FIRST. If we
+  // soft-delete the candidate first and the application UPDATE fails, the
+  // vacancy pipelines briefly show "Unknown candidate" zombie rows (BL-007).
+  // The UPDATE ... RETURNING gives us the IDs that were actually changed,
+  // which we record in the audit log so a future restore action can put them
+  // back. Filtering on `deleted_at IS NULL` makes the action idempotent — a
+  // second invocation does not double-count.
+  const { data: cascadedApps, error: appsError } = await ctx.supabase
+    .from('applications')
+    .update({ deleted_at: now })
+    .eq('candidate_id', id)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .select('id')
+
+  if (appsError) {
+    return { success: false, error: 'Failed to delete candidate applications' }
+  }
+
   const { error } = await ctx.supabase
     .from('candidates')
-    .update({ deleted_at: new Date().toISOString() })
+    .update({ deleted_at: now })
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
 
   if (error) return { success: false, error: 'Failed to delete candidate' }
 
+  const applicationIds = (cascadedApps ?? []).map((a) => a.id as string)
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'candidate',
+    entityId: id,
+    action: 'candidate_deleted',
+    message:
+      applicationIds.length === 0
+        ? 'candidate soft-deleted'
+        : `candidate soft-deleted with ${applicationIds.length} application(s)`,
+    details: buildCandidateDeleteAuditDetails(applicationIds),
+  })
+
   revalidatePath('/candidates')
+  // Vacancy pipelines may show the candidate's applications — refresh those too.
+  revalidatePath('/vacancies/[id]', 'page')
   return { success: true, data: undefined }
 }
 

@@ -1,9 +1,11 @@
 # HRHandle — Business Processes & Rules
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
+- 🔄 **(2026-07-20 audit) Pipeline is the home surface** (`/dashboard` → `/pipeline`; redesign A-1). Onboarding still runs in the `(dashboard)` route-group layout, which now wraps `/pipeline`.
+- 🆕 **(2026-07-20 audit)** Offer lifecycle (draft → sent → accepted/declined/withdrawn; accept auto-advances to Hired), 2FA enrollment + org policy, Reports, and CSV import processes shipped since 2026-05-08 — see `docs/1-product/roadmap.md` for the full G-0xx list.
 - 🔄 Trial `member_limit` corrected from **3 → 2** (matches `lib/onboarding.ts:111` and `lib/types/subscription.ts`)
 - 🆕 Custom fields cap documented: max 20 per entity type (`lib/actions/custom-fields.ts:202`)
 - 🆕 Rejection reasons cap documented: max 50 per org (`lib/actions/rejection-reasons.ts:12`)
@@ -40,6 +42,7 @@ _Last updated: 2026-05-08_
 - `checkPlanLimit(ctx, 'candidate')` counts non-deleted candidates.
 - `checkPlanLimit(ctx, 'member')` counts all profiles in the org.
 - Returns error string if at or above limit; null if under.
+- **Public applications: soft candidate-limit cap** (BL-203, 2026-07-22). Public applies are **never blocked** (turning away a real applicant over a billing cap is the wrong trade) — abuse is controlled by Turnstile CAPTCHA + per-IP (5/hr) + per-vacancy (500) limits. But when a **new** candidate created via the public form pushes the org **past** its `candidate_limit`, the owners/admins get a one-time "over your candidate limit — upgrade" notification (fired exactly at the crossing via `justCrossedLimit`, so it isn't noisy). The **hard** cap still gates recruiter-initiated `createCandidate` + CSV import via `checkPlanLimit`.
 - Applied before: `createVacancy`, `duplicateVacancy`, `createCandidate`, `inviteTeamMember`.
 
 ### Expiry

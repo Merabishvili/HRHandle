@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Briefcase, AlertTriangle, ArrowLeft } from 'lucide-react'
@@ -10,6 +11,7 @@ export default async function AuthErrorPage({
   searchParams: Promise<{ message?: string }>
 }) {
   const { message } = await searchParams
+  const t = await getTranslations()
   const isEmailMismatch = message?.toLowerCase().includes('different email')
   const isAlreadyInOrg = message?.toLowerCase().includes('already belongs')
 
@@ -31,21 +33,21 @@ export default async function AuthErrorPage({
               <AlertTriangle className="w-8 h-8 text-destructive" />
             </div>
             <CardTitle className="text-2xl">
-              {isEmailMismatch ? 'Wrong account' : isAlreadyInOrg ? 'Already in an organization' : 'Authentication Error'}
+              {isEmailMismatch ? t('auth.errorWrongAccount') : isAlreadyInOrg ? t('auth.errorAlreadyInOrg') : t('auth.errorTitle')}
             </CardTitle>
             <CardDescription className="text-base">
-              {message ?? 'Something went wrong during the authentication process.'}
+              {message ?? t('auth.errorGeneric')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {isEmailMismatch && (
               <p className="text-sm text-muted-foreground text-center">
-                Sign out below, then open the invitation link again and sign in with the correct account.
+                {t('auth.errorEmailMismatchBody')}
               </p>
             )}
             {isAlreadyInOrg && (
               <p className="text-sm text-muted-foreground text-center">
-                Each account can only belong to one organization. Contact your current organization&apos;s owner if you need to switch.
+                {t('auth.errorAlreadyInOrgBody')}
               </p>
             )}
             <div className="flex flex-col gap-2">
@@ -53,18 +55,18 @@ export default async function AuthErrorPage({
                 <SignOutButton />
               ) : (
                 <Button className="w-full" asChild>
-                  <Link href="/auth/login">Try signing in</Link>
+                  <Link href="/auth/login">{t('auth.trySigningIn')}</Link>
                 </Button>
               )}
               {isAlreadyInOrg && (
                 <Button className="w-full" asChild>
-                  <Link href="/dashboard">Go to dashboard</Link>
+                  <Link href="/pipeline">{t('auth.goToPipeline')}</Link>
                 </Button>
               )}
               <Button variant="outline" className="w-full" asChild>
                 <Link href="/">
                   <ArrowLeft className="mr-2 w-4 h-4" />
-                  Back to home
+                  {t('auth.backToHome')}
                 </Link>
               </Button>
             </div>

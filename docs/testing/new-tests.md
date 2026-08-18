@@ -51,3 +51,56 @@ npx vitest run lib/__tests__/campaign.test.ts  # single file
 - No global setup file yet — see `S-fewer-permission-prompts` note about adding `vitest.setup.ts` for shared mocks (localStorage, fetch, Supabase)
 - Path alias `@/` works via `vite-tsconfig-paths`
 - All new mocks use `vi.mock(...)` with closures captured at module level.
+
+---
+
+## Re-audit 2026-07-20 — new test files
+
+Added during the deep re-audit. All pure-logic (no mocks needed).
+
+| Test file | Covers | Cases |
+|---|---|---|
+| `lib/candidates/__tests__/list-derivation.test.ts` | Candidates-list shaping (`groupApplicationsByCandidate`, `aggregateFitScores`, `deriveStageAndFit`, `formatCustomFieldValue`, `buildCustomFieldValueMap`, `stageOf`, `getVacancyTitle`) | 28 |
+| `lib/pipeline/__tests__/stage-style.test.ts` | `getStageStyle` (known/unknown/null fallbacks), `isTerminalStage`, `TERMINAL_STAGE_CODES`, `STALE_DAYS` | 19 (shared file below) |
+| `lib/pipeline-stages/__tests__/bucket.test.ts` | `mapPipelineStageToBucket` (type mapping + terminal-by-name incl. "Re-hired"→hired, "Withdrew"→withdrawn, custom→rejected, case-insensitivity) | (part of the 19) |
+| `lib/validations/__tests__/vacancy.test.ts` (extended) | `VacancyFormSchema` — required sector/status, work_mode sentinel, salary/date refinements, trim | +14 |
+| `lib/validations/__tests__/candidate.test.ts` (extended) | `CandidateFormSchema` — required names, optional email/linkedin format, languages array | +15 |
+
+### Recommended next test targets (untested pure helpers — not yet written)
+
+High-value pure modules currently without tests; good candidates for the next testing pass (skip the `lib/types/*` files — they're type-only):
+
+`lib/permissions.ts`, `lib/offers/state.ts`, `lib/offers/expiry.ts`, `lib/screening-questions/knockout-condition.ts`, `lib/screening-questions/compute-flag.ts`, `lib/candidate-merge/defaults.ts`, `lib/audit-log/filter.ts`, `lib/trash/impact.ts`, `lib/mfa/policy.ts`, `lib/mfa/recovery-codes.ts`, `lib/notes/mentions.ts`, `lib/search/query.ts`, `lib/candidate-import/validation.ts`, `lib/candidate-import/parsing.ts`, `lib/vacancy-questions/normalize.ts`, `lib/guides/loader.ts`.
+
+### Re-audit 2026-07-21 — Phase 4 helper tests (batch 2)
+
+Added 7 pure-helper test files (58 tests):
+
+| Test file | Covers |
+|---|---|
+| `lib/__tests__/permissions.test.ts` | `isOrgAdmin` |
+| `lib/offers/__tests__/state.test.ts` | offer state machine (`isTerminal`, `canEdit/Send/Withdraw/Respond`) |
+| `lib/offers/__tests__/expiry.test.ts` | `isOfferExpired`, `offerCountdown` (YMD-stable boundaries + urgency) |
+| `lib/mfa/__tests__/policy.test.ts` | `evaluatePolicy`, `needsChallenge` (org-wide vs admin-only, AAL) |
+| `lib/screening-questions/__tests__/knockout-condition.test.ts` | `evaluateKnockoutPass`, `encodeKnockoutAnswer`, `describeKnockoutAnswer` (yes_no/number/select) |
+| `lib/screening-questions/__tests__/compute-flag.test.ts` | `computeIsKnockoutFlag` (guards + delegation) |
+| `lib/notes/__tests__/mentions.test.ts` | `extractMentionIds`, `tokenizeNoteForDisplay` (longest-match, coalescing) |
+| `lib/__tests__/csv.test.ts` (Phase 2) | `csvCell` — formula-injection guard + RFC-4180 quoting (S-202) |
+
+**Remaining untested helpers:** `lib/candidate-merge/defaults.ts`, `lib/audit-log/filter.ts`, `lib/trash/impact.ts`, `lib/mfa/recovery-codes.ts`, `lib/search/query.ts`, `lib/candidate-import/{validation,parsing}.ts`, `lib/vacancy-questions/normalize.ts`, `lib/guides/loader.ts`.
+
+### Re-audit 2026-07-21 — Phase 4 helper tests (batch 3)
+
++5 files: `lib/audit-log/__tests__/filter.test.ts` (parse/isActive/toSearchParams), `lib/search/__tests__/query.test.ts` (normalize/escapeForIlike/toIlikePattern), `lib/candidate-merge/__tests__/defaults.test.ts` (defaultMergeChoice), `lib/trash/__tests__/impact.test.ts` (extractRestoreImpact/daysUntilPurge), `lib/candidate-import/__tests__/validation.test.ts` (validateRow — coerce + schema; confirmed parsing.ts normalises empty cells → null).
+
+**Remaining untested:** `lib/candidate-import/parsing.ts` (inferMapping), `lib/vacancy-questions/normalize.ts`, `lib/mfa/recovery-codes.ts`, `lib/guides/loader.ts`.
+
+### Re-audit 2026-07-21 — Phase 4 helper tests (batch 4)
+
++2 files: `lib/candidate-import/__tests__/parsing.test.ts` (normalizeHeader / inferMapping / missingRequiredFields / pickCell — surfaced + fixed the dead `e-mail` alias, B-202) and `lib/vacancy-questions/__tests__/normalize.test.ts` (label trim/length + must-have rules).
+
+**Remaining untested (low priority):** `lib/mfa/recovery-codes.ts` (crypto), `lib/guides/loader.ts` (fs/mdx). These aren't pure-logic — best covered by integration tests.
+
+### Re-audit 2026-07-21 — Phase 4 (deep tail)
+
++1 file: `lib/mfa/__tests__/recovery-codes.test.ts` (`generateRecoveryCodes` format/uniqueness/ambiguity-free alphabet; `hashRecoveryCode` deterministic sha256 + dash/space/case normalisation). Turned out unit-testable (node:crypto works in vitest) — the pure-helper backlog is now **fully cleared**. `lib/guides/loader.ts` remains the only untested lib helper (fs/MDX — integration-only).

@@ -272,6 +272,6 @@ describe('ParsedCVSchema — graceful handling of invalid values', () => {
       education: [{ institution: 'MIT', degree: null, field_of_study: null, start_year: 'invalid', end_year: null, is_ongoing: false }],
     })
     expect(result.success).toBe(true)
-    if (result.success) expect(result.data.education[0].start_year).toBeNull()
+    if (result.success) expect(result.data.education[0]!.start_year).toBeNull()
   })
 })

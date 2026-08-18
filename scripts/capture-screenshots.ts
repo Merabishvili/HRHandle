@@ -285,12 +285,14 @@ async function main(): Promise<void> {
     browser = await chromium.launch({ headless: true })
     const context = await browser.newContext({
       viewport: VIEWPORT,
-      extraHTTPHeaders: VERCEL_BYPASS
+      ...(VERCEL_BYPASS
         ? {
-            'x-vercel-protection-bypass': VERCEL_BYPASS,
-            'x-vercel-set-bypass-cookie': 'true',
+            extraHTTPHeaders: {
+              'x-vercel-protection-bypass': VERCEL_BYPASS,
+              'x-vercel-set-bypass-cookie': 'true',
+            },
           }
-        : undefined,
+        : {}),
     })
 
     console.log(`Authenticating with Supabase as ${EMAIL}…`)

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { SUPPORT_PHONE, BUSINESS_ADDRESS } from '@/lib/legal/contact'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — HRHandle',
@@ -82,9 +83,78 @@ export default function PrivacyPage() {
               </li>
             </ul>
             <p className="mt-3">
-              Some of this data may be imported by your recruiters directly from LinkedIn. You
-              are responsible for ensuring you have a lawful basis to collect and store this
-              data under applicable law.
+              Some of this data may be imported by your recruiters directly from LinkedIn, or
+              bulk-imported by an organisation owner or admin via the CSV import feature at
+              <span className="font-mono"> /candidates/import</span>. You are responsible for
+              ensuring you have a lawful basis to collect and store this data under applicable
+              law, regardless of the entry path.
+            </p>
+
+            <h3 className="mb-2 mt-4 font-medium">2.5 Candidate status page</h3>
+            <p className="mb-2">
+              When a candidate applies for a role, we create a private, token-gated status page
+              at <span className="font-mono text-sm">/status/&lt;token&gt;</span> on this Service
+              that shows only that candidate&apos;s own application status. The token is an
+              opaque 32-character random string and is the only credential to the page — there
+              is no login. The page does <strong>not</strong> show recruiter notes, evaluation
+              scores, internal pipeline stage names, or any other recruiter-internal data; it
+              shows the role title, employer (the recruiting organisation&apos;s name), the date
+              the candidate applied, the date of the last status change, and a simplified
+              status bucket (Applied / In review / Interview / Decision / Closed). Candidates
+              receive the link in the application-confirmation email; recruiters can also
+              re-share it from inside HRHandle. The link can be revoked by the recruiter at
+              any time by removing the application; the token is also deleted by our 30-day
+              purge ([G-003](https://github.com/Merabishvili/HRHandle/blob/main/docs/issues-found.md))
+              if the application is soft-deleted.
+            </p>
+            <p className="mt-2">
+              In addition, recruiters can opt their organisation in to two automatic
+              status-change emails: one when an application moves to the &quot;Under review&quot;
+              stage and one when it moves to the &quot;Interview&quot; stage. Each email
+              contains the role title, employer, and the candidate&apos;s status page link.
+              These emails are off by default and only fire when an admin saves a template
+              and toggles them on in HRHandle&apos;s settings; no other status transitions
+              produce automatic emails (offers, hires, rejections, and withdrawals are
+              handled by the recruiter directly).
+            </p>
+            <p className="mt-2">
+              The status page also lets the candidate withdraw their application
+              directly. Clicking <strong>Withdraw application</strong> opens a
+              confirmation prompt with an optional free-text reason that only the
+              recruiter sees. On confirm, the application&apos;s status is set to
+              &quot;withdrawn&quot;, any active offer attached to it is automatically
+              withdrawn so a stale accept button never reappears, and the
+              recruiter is notified. The page does not allow a candidate to undo
+              the withdrawal — the candidate can contact the recruiter directly
+              to be re-added.
+            </p>
+            <p className="mt-2">
+              When the recruiter sends an offer, we create a separate token-gated offer
+              page at <span className="font-mono text-sm">/offer/&lt;token&gt;</span> on
+              this Service. Like the status page, the token is the only credential — there
+              is no login. The page shows the role title, employer name, the structured
+              terms the recruiter entered (compensation, currency, period, start date,
+              respond-by date — any of which may be blank), the recruiter&apos;s
+              plain-text offer details, and an optional personal note. The candidate can
+              accept or decline directly from the page; declining accepts an optional free-
+              text reason which only the recruiter sees. The offer page does not show any
+              other candidate&apos;s data and does not show recruiter-internal notes,
+              evaluation scores, or audit trail.
+            </p>
+            <p className="mt-2">
+              When a recruiter chooses to share a candidate&apos;s evaluation
+              scorecard with someone outside HRHandle (typically a hiring manager
+              or executive who does not have an account), we generate a separate
+              token-gated page at <span className="font-mono text-sm">/scorecard/&lt;token&gt;</span> on
+              this Service. The page shows only the candidate&apos;s full name,
+              the role title, the recruiting organisation&apos;s name, the
+              evaluation answers and per-question scores entered by the
+              recruiter, and the name + date of the recruiter who first shared
+              it. It does <strong>not</strong> show the candidate&apos;s email,
+              phone, LinkedIn, application status, recruiter notes, AI-generated
+              content, offer terms, or any other recruiter-internal data. The
+              recruiter can revoke the link at any time, at which point the URL
+              stops working immediately.
             </p>
           </section>
 
@@ -179,24 +249,109 @@ export default function PrivacyPage() {
               and to maintain appropriate security measures.
             </p>
 
-            <h3 className="mb-2 mt-4 font-medium">5.1 AI features (CV parsing)</h3>
+            <h3 className="mb-2 mt-4 font-medium">5.1 AI-assisted features</h3>
             <p>
-              When you or a candidate uploads a CV (PDF or Word document), the file is sent to
-              Google&apos;s Gemini API to extract structured fields — name, contact details, work
-              experience, and education — so they can be pre-filled into the candidate record.
-              This is the only purpose for which CVs are sent to Google.
+              HRHandle includes a small number of AI-assisted features that send candidate or
+              vacancy data to Google&apos;s Gemini API to help the recruiter — never to replace
+              their judgement. Each feature is opt-in per request: nothing is generated
+              automatically, and the recruiter must explicitly click a button to invoke it.
             </p>
             <p className="mt-3">
-              The extraction is informational only. It does not make any automated decision
-              about a candidate. Every hiring decision (advancing, rejecting, hiring) is taken
-              by a human recruiter on your team. Article 22 GDPR (automated decision-making with
-              legal or similarly significant effect) therefore does not apply to this feature.
+              Current AI-assisted features:
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>
+                <strong>CV parsing</strong> — when a CV (PDF or Word document) is uploaded, the
+                file is sent to Gemini to extract structured fields (name, contact details, work
+                experience, education) so they can be pre-filled into the application form.
+              </li>
+              <li>
+                <strong>Candidate summary</strong> — when a recruiter clicks the
+                &quot;Generate summary&quot; button on a candidate record, a short factual
+                summary of the candidate&apos;s public/professional background is generated and
+                displayed to the recruiter. The summary is not saved to the candidate record
+                unless the recruiter chooses to save it as a note.
+              </li>
+              <li>
+                <strong>Job-description suggestions</strong> — when a recruiter clicks
+                a &quot;Generate&quot; button while creating or editing a vacancy, the AI
+                suggests one or more sections (About the job, Responsibilities,
+                Requirements) based on the recruiter-provided role data (title, department,
+                location, employment type, sector, and any optional context the recruiter
+                typed). No candidate data is sent to the AI for this feature. The suggestions
+                are not added to the vacancy unless the recruiter explicitly clicks
+                &quot;Apply all to form&quot; or copies a section manually.
+              </li>
+              <li>
+                <strong>Interview question suggestions</strong> — when a recruiter clicks
+                the &quot;Generate questions&quot; button on a vacancy&apos;s Interview
+                Questions tab, the AI suggests four categories of questions (behavioural,
+                technical, situational, closing) based on the vacancy fields (title,
+                description, responsibilities, requirements, department, location,
+                employment type, sector, and any optional context the recruiter typed).
+                No candidate data is sent to the AI for this feature. The suggestions are
+                advisory; the recruiter chooses whether to save them to the vacancy
+                (overwriting the previously-saved set) or copy individual questions.
+              </li>
+              <li>
+                <strong>Interview-note structuring</strong> — when a recruiter pastes their
+                free-text interview notes and clicks &quot;Extract structure&quot; on the
+                candidate detail page, the AI returns a structured view (summary,
+                strengths, concerns, skills demonstrated, follow-ups). The notes the
+                recruiter pasted are sent to Google&apos;s Gemini API along with the
+                candidate&apos;s name and the title of the role they are being considered
+                for. The AI is explicitly instructed not to make any hiring
+                recommendation, not to include the candidate&apos;s salary expectations
+                in the structured output, and not to infer protected characteristics
+                (age, gender, race, religion, family or marital status, disability, etc.)
+                even if the notes hint at them. The structured output is not saved
+                anywhere unless the recruiter clicks &quot;Save as note&quot;, which
+                creates a single candidate note prefixed with &quot;AI interview notes
+                (not reviewed by recruiter)&quot; so it is clearly traceable.
+              </li>
+              <li>
+                <strong>Inclusive-language check</strong> — when a recruiter clicks
+                &quot;Run check&quot; on a vacancy form, the AI scans the vacancy&apos;s
+                description, responsibilities, and requirements fields for phrases that
+                may deter underrepresented candidates (gender-coded, age-coded,
+                culture-coded, pronoun bias, potentially discriminatory phrasing,
+                vague cultural-fit requirements). It returns a list of flagged
+                passages with the reason and a suggested neutral replacement. Only the
+                vacancy text is sent to the AI for this feature; no candidate data is
+                involved. The form is never modified by the AI; the recruiter chooses
+                whether to apply any of the suggestions.
+              </li>
+              <li>
+                <strong>Assessment suggester</strong> — when a recruiter clicks
+                &quot;Generate suggestions&quot; on a vacancy&apos;s Assessment tab,
+                the AI proposes evaluation criteria (skill labels scored 1–5) and
+                open-ended prompts based on the vacancy&apos;s text. Only the vacancy
+                text is sent to the AI for this feature; no candidate data is
+                involved. Each suggestion is added to the vacancy only when the
+                recruiter explicitly clicks the &quot;Add&quot; button next to it.
+              </li>
+            </ul>
+            <p className="mt-3">
+              The AI output is informational only. No AI feature in HRHandle makes any automated
+              decision about a candidate — no automatic ranking, no automatic rejection, no
+              automatic advancement. Every hiring decision (advancing, rejecting, hiring) is
+              taken by a human recruiter on your team. Article 22 GDPR (automated decision-making
+              with legal or similarly significant effect) therefore does not apply.
             </p>
             <p className="mt-3">
-              We use Google&apos;s paid Gemini API, under terms which prohibit Google from using
-              customer prompt content to train their models. If the extraction fails or is
-              unavailable, the application still proceeds and the recruiter (or candidate) can
-              fill in the fields manually.
+              We record an internal log entry each time an AI feature is invoked (recruiter,
+              candidate, feature name, timestamp) for traceability under the EU AI Act&apos;s
+              high-risk-AI logging requirements. We do not log the AI output itself.
+            </p>
+            <p className="mt-3">
+              We use Google&apos;s paid Gemini API for all of these features. Under Google&apos;s
+              paid-services terms, Google is not permitted to use customer prompt content or
+              responses to train or improve their models. Google retains prompts and responses
+              briefly only for abuse detection.
+            </p>
+            <p className="mt-3">
+              If an AI feature is unavailable or fails for any reason, the workflow proceeds
+              normally and the recruiter completes the task manually.
             </p>
           </section>
 
@@ -331,8 +486,10 @@ export default function PrivacyPage() {
             <h2 className="mb-3 text-lg font-semibold">13. Contact</h2>
             <p>
               Data controller: Aleksandre Merabishvili, Individual Entrepreneur<br />
-              Tbilisi, Georgia<br />
-              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a>
+              Identification number: 01019062001<br />
+              {BUSINESS_ADDRESS}<br />
+              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a><br />
+              Phone: {SUPPORT_PHONE}
             </p>
           </section>
 

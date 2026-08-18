@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { updateOrganization } from '@/lib/actions/settings'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 export function OrganizationForm({ organization }: OrganizationFormProps) {
   const router = useRouter()
+  const t = useTranslations()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [isLoading, setIsLoading] = useState(false)
@@ -38,11 +40,11 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
     if (!file) return
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError('Please upload a JPEG, PNG, WebP, or GIF image.')
+      setError(t('settings.org.errLogoType'))
       return
     }
     if (file.size > MAX_SIZE_BYTES) {
-      setError('Image must be smaller than 2 MB.')
+      setError(t('settings.org.errLogoSize'))
       return
     }
 
@@ -77,7 +79,7 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
         .upload(path, logoFile, { upsert: true, contentType: logoFile.type })
 
       if (uploadError) {
-        setError('Failed to upload logo. Please try again.')
+        setError(t('settings.org.errLogoUpload'))
         setIsLoading(false)
         return
       }
@@ -119,13 +121,13 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
       {success && (
         <Alert className="border-green-200 bg-green-50 text-green-800">
           <CheckCircle className="h-4 w-4" />
-          <AlertDescription>Organization updated successfully!</AlertDescription>
+          <AlertDescription>{t('settings.org.updated')}</AlertDescription>
         </Alert>
       )}
 
       {/* Logo upload */}
       <div className="space-y-3">
-        <Label>Organization Logo</Label>
+        <Label>{t('settings.org.logo')}</Label>
         <div className="flex items-center gap-4">
           {/* Preview */}
           <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-border bg-muted overflow-hidden">
@@ -140,9 +142,10 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
                   type="button"
                   onClick={handleRemoveLogo}
                   disabled={isLoading}
+                  aria-label={t('settings.org.removeLogo')}
                   className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white shadow-sm hover:bg-destructive/90"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3 w-3" aria-hidden />
                 </button>
               </>
             ) : (
@@ -162,10 +165,10 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="mr-2 h-4 w-4" />
-              {logoPreview ? 'Replace logo' : 'Upload logo'}
+              {logoPreview ? t('settings.org.replaceLogo') : t('settings.org.uploadLogo')}
             </Button>
             <p className="text-xs text-muted-foreground">
-              JPEG, PNG, WebP or GIF · max 2 MB
+              {t('settings.org.logoHint')}
             </p>
           </div>
         </div>
@@ -181,19 +184,19 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
 
       {/* Name */}
       <div className="space-y-2">
-        <Label htmlFor="orgName">Organization Name</Label>
+        <Label htmlFor="orgName">{t('settings.org.name')}</Label>
         <Input
           id="orgName"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Your company name"
+          placeholder={t('settings.org.namePlaceholder')}
           disabled={isLoading}
         />
       </div>
 
       {/* Public jobs page URL */}
       <div className="space-y-2">
-        <Label htmlFor="publicSlug">Public Jobs Page URL</Label>
+        <Label htmlFor="publicSlug">{t('settings.org.publicUrl')}</Label>
         <div className="flex items-center gap-0 rounded-lg border border-input overflow-hidden focus-within:ring-1 focus-within:ring-ring">
           <span className="shrink-0 bg-muted px-3 py-2 text-sm text-muted-foreground border-r border-input">
             /jobs/
@@ -203,19 +206,19 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
             type="text"
             value={publicSlug}
             onChange={(e) => setPublicSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-            placeholder="your-company"
+            placeholder={t('settings.org.publicUrlPlaceholder')}
             maxLength={60}
             disabled={isLoading}
             className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Lowercase letters, numbers, and hyphens only. This is the link you share with job seekers.
+          {t('settings.org.publicUrlHint')}
         </p>
       </div>
 
       <Button type="submit" disabled={isLoading}>
-        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Changes'}
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('common.saving')}</> : t('common.saveChanges')}
       </Button>
     </form>
   )

@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { runOnboarding } from '@/lib/onboarding'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/header'
-import { TrialBanner } from '@/components/dashboard/trial-banner'
+import { NavigationLoader } from '@/components/navigation/navigation-loader'
 import { SessionGuard } from '@/components/auth/session-guard'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
 
@@ -60,6 +61,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -101,7 +103,7 @@ export default async function DashboardLayout({
       is_active,
       created_at,
       updated_at,
-      organizations (
+      organizations!organization_id (
         id,
         name,
         slug,
@@ -157,7 +159,22 @@ export default async function DashboardLayout({
     const hasCompanyName =
       typeof metadataCompanyName === 'string' && metadataCompanyName.trim().length > 0
     if (!hasCompanyName) {
-      redirect('/onboarding/company')
+      // Guard against a redirect loop: a regular-client read can momentarily miss
+      // a freshly-committed onboarding write, and this branch would then bounce a
+      // just-onboarded user to /onboarding/company (which redirects back to
+      // /pipeline once the org is visible → ping-pong). Confirm with the
+      // service-role client that the user truly has no org before redirecting.
+      const { createAdminClient: adminOrgCheck } = await import('@/lib/supabase/admin')
+      const { data: adminOrgRow } = await adminOrgCheck()
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (!adminOrgRow?.organization_id) {
+        redirect('/onboarding/company')
+      }
+      // Org already exists — fall through to runOnboarding (idempotent) + the
+      // admin refetch + redirect below, which resolves the stale read.
     }
 
     const result = await runOnboarding(user)
@@ -180,7 +197,7 @@ export default async function DashboardLayout({
         is_active,
         created_at,
         updated_at,
-        organizations (
+        organizations!organization_id (
           id,
           name,
           slug,
@@ -207,7 +224,7 @@ export default async function DashboardLayout({
     // may query organization_id before the onboarding write is visible to the
     // regular Supabase client. Redirecting forces a fresh request where both
     // the layout and page read the fully committed state.
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organization = profile.organizations?.[0] || null
@@ -260,8 +277,12 @@ export default async function DashboardLayout({
       !!subscription.trial_end_at &&
       new Date(subscription.trial_end_at) < new Date())
 
-  if (isExpired && !pathname.includes('/subscription')) {
-    redirect('/subscription')
+  // Expired trial: send them to the canonical billing page. The legacy
+  // /subscription route still redirects to /settings/billing, so the
+  // includes() check covers both URLs and avoids a redirect loop if the
+  // user lands on /subscription themselves.
+  if (isExpired && !pathname.includes('/subscription') && !pathname.includes('/settings/billing')) {
+    redirect('/settings/billing')
   }
 
   return (
@@ -271,7 +292,7 @@ export default async function DashboardLayout({
         href="#dashboard-main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       >
-        Skip to main content
+        {t('layout.skipToMain')}
       </a>
 
       <DashboardSidebar
@@ -281,7 +302,12 @@ export default async function DashboardLayout({
         subscription={subscription}
       />
 
-      <div className="flex flex-1 flex-col lg:ml-64">
+      {/* min-w-0 is load-bearing: the sidebar is position:fixed and this
+          column is the only in-flow flex child. Without min-w-0 the column's
+          flex-basis defaults to its min-content width, so wide children (the
+          pipeline board) push it past the viewport and clip instead of
+          letting overflow-x-auto scroll. */}
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
         <DashboardHeader
           user={user}
           profile={profile}
@@ -289,11 +315,9 @@ export default async function DashboardLayout({
           subscription={subscription}
         />
 
-        <TrialBanner
-          trialEndAt={subscription?.trial_end_at ?? null}
-          isExpired={isExpired}
-        />
-        <main id="dashboard-main" tabIndex={-1} className="flex-1 p-4 lg:p-8">{children}</main>
+        <main id="dashboard-main" tabIndex={-1} className="min-w-0 flex-1 p-4 lg:p-8">
+          <NavigationLoader>{children}</NavigationLoader>
+        </main>
         <SessionGuard />
         <PostHogIdentify userId={user.id} orgId={profile.organization_id} role={profile.role} />
       </div>

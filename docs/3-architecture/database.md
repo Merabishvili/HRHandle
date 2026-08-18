@@ -1,8 +1,21 @@
 # Database Schema
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
+
+> **Reconciliation status (2026-07-22 audit).** The live **staging** schema (36 public tables) was pulled via the Supabase Management API and reconciled: **all 6 previously-undocumented tables now have sections** (`offers`, `webhook_notifications`, `pipeline_stages`, `org_pipeline_stage_templates`, `vacancy_screening_questions`, `application_screening_answers`, `candidate_merges`, `mfa_recovery_codes`) and `candidate_evaluations` gained its reviewer + scorecard-sharing columns. **No documented section maps to a dropped table.** The *original* per-table sections (candidates/vacancies/applications/etc.) were not re-diffed column-by-column against live in this pass — trust the live schema on any specific column dispute.
 
 ## Changelog
+
+- 🆕 **2026-07 batch (`supabase/migrations/20260704_*`)**:
+  - `vacancies.work_mode text` (`remote|hybrid|onsite|NULL`) — `20260704_vacancy_work_mode.sql`.
+  - `profiles.language text` — `20260704_profile_language.sql`.
+  - `candidate_evaluations` gains `reviewer_id` (FK `profiles`, ON DELETE SET NULL) + `submitted boolean` for the multi-reviewer scorecard; `UNIQUE(application_id, reviewer_id)`; recommendation CHECK widened to `strong_yes|yes|lean_no|no` — `20260704_scorecard_multi_reviewer.sql`.
+  - `avatars` public Storage bucket (2 MB, jpg/png/webp) — `20260704_avatars_bucket.sql`.
+  - `candidate_activity` view rebuilt to also union **stage-change** + **offer** events — `20260704_candidate_activity_stage_offer_events.sql`.
+  - Default meeting provider field — `20260704_default_meeting_provider.sql`.
+  - ❌ `saved_views` table dropped — `20260704_drop_saved_views.sql`.
+  - ❌ `vacancies.interview_questions` column dropped — `20260704_drop_vacancy_interview_questions.sql`.
+- 🆕 **Feature tables/columns added mid-2026 (documented in `docs/1-product/roadmap.md`, not all migrations in-repo):** `offers` table (G-018); per-vacancy `pipeline_stages` + `applications.pipeline_stage_id` with `applications.status_id` **dropped** (Wave 2.6, Migration 051); `applications.source_type` DEFAULT `'manual'` (G-029, Migration 039); `webhook_notifications` table + Calendly fields on `organization_integrations` (G-030/G-031, Migrations 040/041); `organizations.require_mfa` + `require_mfa_for_admins` + `profiles.mfa_enrolled` (G-032, Migration 042); `profiles.notification_preferences jsonb` (Migration 045); custom-fields tables.
 
 - 🔄 (2026-05-23) `activity_log` table is now actively written to via `lib/audit-log.ts` (helper added). Wired call sites: vacancy status change, application status change, LinkedIn integration connect/disconnect. The table itself was always present in the schema (`001_create_schema.sql`) but had zero writers and zero rows until this change.
 - 🆕 `candidate_experience` table — work history (migration `20260514_candidate_background.sql`). RLS enabled.
@@ -76,7 +89,7 @@ Links a candidate to a vacancy. Tracks pipeline status.
 | organization_id | uuid | NOT NULL | — | FK → organizations |
 | candidate_id | uuid | NOT NULL | — | FK → candidates |
 | vacancy_id | uuid | NOT NULL | — | FK → vacancies |
-| status_id | uuid | NULL | — | FK → application_statuses |
+| pipeline_stage_id | uuid | NULL | — | 🔄 FK → `pipeline_stages` (per-vacancy). **Replaced `status_id`** (dropped in Wave 2.6, Migration 051); the canonical bucket is derived via `mapPipelineStageToBucket`. |
 | applied_at | timestamptz | NULL | now() | |
 | last_status_changed_at | timestamptz | NULL | — | |
 | notes | text | NULL | — | max 2000 chars |
@@ -88,6 +101,7 @@ Links a candidate to a vacancy. Tracks pipeline status.
 | source_type | text | NULL | 'internal' | 'internal' or 'public_form' |
 | rejection_reason_id | uuid | NULL | — | FK → rejection_reasons |
 | rejection_template_id | uuid | NULL | — | FK → rejection_templates |
+| public_token | text | NULL | — | 🆕 candidate-facing `/status/<token>` credential (G-016) |
 
 ---
 
@@ -141,8 +155,17 @@ A scoring/evaluation record for a candidate's application.
 | vacancy_id | uuid | NOT NULL | — | |
 | is_active | bool | NULL | true | |
 | score | smallint | NULL | — | Overall percentage score (0–100) |
+| reviewer_id | uuid | NULL | — | 🆕 FK → profiles (ON DELETE SET NULL). Multi-reviewer model — `20260704_scorecard_multi_reviewer.sql`. |
+| submitted | bool | NOT NULL | false | 🆕 draft vs submitted card (anti-anchoring: others' cards revealed only after you submit). |
+| recommendation | text | NULL | — | 🆕 `strong_yes\|yes\|lean_no\|no` (CHECK). |
+| recommendation_reason | text | NULL | — | 🆕 free-text rationale. |
+| scorecard_token | text | NULL | — | 🆕 token for the shared `/scorecard/<token>` page (G-025). |
+| scorecard_revoked_at | timestamptz | NULL | — | 🆕 revokes a shared scorecard. |
+| shared_by / shared_at | uuid / timestamptz | NULL | — | 🆕 who shared + when. |
 | created_at | timestamptz | NULL | — | |
 | updated_at | timestamptz | NULL | — | |
+
+_🆕 Constraint: `UNIQUE(application_id, reviewer_id)` (was `UNIQUE(application_id)`) — one card per reviewer per application._
 
 ---
 
@@ -506,17 +529,46 @@ Billing/plan state for an organization.
 | current_period_start_at | timestamptz | NULL | — | |
 | current_period_end_at | timestamptz | NULL | — | |
 | next_billing_at | timestamptz | NULL | — | |
-| payment_method_linked | bool | NULL | false | |
-| payment_provider_customer_ref | text | NULL | — | LemonSqueezy customer ID (planned) |
-| payment_provider_subscription_ref | text | NULL | — | LemonSqueezy subscription ID (planned) |
-| last_payment_status | text | NULL | — | |
+| payment_method_linked | bool | NULL | false | Set true on first successful Flitt charge |
+| payment_provider_customer_ref | text | NULL | — | Reserved (unused by Flitt) |
+| payment_provider_subscription_ref | text | NULL | — | Flitt order_id — used to stop the recurring on cancel |
+| last_payment_status | text | NULL | — | Latest Flitt callback status |
 | vacancy_limit | int | NULL | 5 | 5 trial, 500 individual, 1000 org |
 | candidate_limit | int | NULL | 100 | 100 trial, 10000 individual, 20000 org |
 | member_limit | int | NULL | 2 | 2 trial, 3 individual, 50 org |
 | created_at | timestamptz | NULL | — | |
 | updated_at | timestamptz | NULL | — | |
 
-When `status === 'expired'` or trial has ended, users are redirected to `/subscription`.
+Written by the Flitt callback route (via the admin client) on `approved` — see
+[`docs/4-integrations/flitt.md`](../4-integrations/flitt.md). When `status ===
+'expired'` or trial has ended, users are redirected to `/subscription`.
+
+---
+
+### `payment_orders`
+Ledger of Flitt checkout attempts (migration `20260804_flitt_billing.sql`). One
+row per checkout; correlates the signed callback to an org + plan and enforces
+idempotency + anti-tamper. **Writes are service-role only** (checkout action +
+callback route use the admin client); RLS gives org members read access to their
+own rows.
+
+| Column | Type | Nullable | Default | Notes |
+|---|---|---|---|---|
+| id | uuid | NOT NULL | gen_random_uuid() | PK |
+| organization_id | uuid | NOT NULL | — | → organizations, ON DELETE CASCADE |
+| order_id | text | NOT NULL | — | UNIQUE — correlation key + recurring handle |
+| plan_code | text | NOT NULL | — | 'individual' \| 'organization' |
+| billing_cycle | text | NOT NULL | — | 'monthly' \| 'annual' |
+| currency | text | NOT NULL | — | 'GEL' \| 'EUR' \| 'USD' |
+| amount_minor | int | NOT NULL | — | tetri / cents |
+| status | text | NOT NULL | 'pending' | pending\|approved\|declined\|expired\|processing\|reversed |
+| flitt_payment_id | text | NULL | — | |
+| flitt_rectoken | text | NULL | — | Recurring token once tokenized |
+| created_by | uuid | NULL | — | → profiles, ON DELETE SET NULL |
+| created_at / updated_at | timestamptz | NOT NULL | now() | |
+
+**`organizations.billing_currency`** (same migration) — manual currency override;
+`NULL` → derived from `billing_country` (GE→GEL, EU/EEA→EUR, else→USD).
 
 ---
 
@@ -656,3 +708,169 @@ Global lookup. Status of a vacancy.
 | vacancies | created_by | profiles |
 | vacancy_questions | organization_id | organizations |
 | vacancy_questions | vacancy_id | vacancies |
+
+## Recent additions (2026-06-18 redesign session)
+
+### 🆕 Live-verified additions (2026-07-22 audit)
+
+_Pulled from the live **staging** DB (36 public tables) via the Supabase Management API — the tables below were missing from the sections above; columns/types/nullability are as live._
+
+#### `offers` (G-018)
+An offer extended to a candidate for a specific application. State machine in `lib/offers/state.ts`.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| application_id | uuid | NOT NULL | FK → applications |
+| role_title | text | NOT NULL | |
+| body | text | NOT NULL | offer letter body (≤20 000 chars) |
+| recruiter_message | text | NULL | optional cover note (≤2000) |
+| compensation_amount | numeric | NULL | |
+| compensation_currency | text | NULL | 3–4 uppercase letters |
+| compensation_period | text | NULL | `annual\|monthly\|hourly\|project\|other` |
+| start_date | date | NULL | |
+| expiry_date | date | NULL | drives `expired` via the daily cron + view-time check (`lib/offers/expiry.ts`) |
+| status | text | NOT NULL | `draft\|sent\|accepted\|declined\|expired\|withdrawn` (default `draft`) |
+| public_token | text | NULL | candidate-facing `/offer/<token>` credential |
+| sent_at | timestamptz | NULL | set when the offer is sent |
+| responded_at | timestamptz | NULL | set on accept/decline/withdraw |
+| decline_reason | text | NULL | candidate's optional decline reason |
+| created_by | uuid | NULL | FK → profiles |
+| created_at / updated_at | timestamptz | NOT NULL | |
+| deleted_at | timestamptz | NULL | soft delete |
+
+#### `webhook_notifications` (G-030)
+Per-org outgoing Slack/Teams webhook config.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| channel_type | text | NOT NULL | `slack\|teams` |
+| webhook_url | text | NOT NULL | the incoming-webhook URL (customer-provided) |
+| name | text | NULL | label |
+| enabled_events | text[] | NOT NULL | subset of the 8 event types |
+| is_active | bool | NOT NULL | per-webhook on/off |
+| created_by | uuid | NULL | FK → profiles |
+| created_at / updated_at | timestamptz | NOT NULL | |
+
+#### `pipeline_stages` (Wave 2.6) & `org_pipeline_stage_templates`
+Per-vacancy custom stages, and the org-level templates new vacancies clone.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| vacancy_id | uuid | NOT NULL | *(pipeline_stages only; templates have no vacancy_id)* |
+| name | text | NOT NULL | e.g. "Sourced", "Closed - not a fit" |
+| type | text | NOT NULL | `standard\|review\|interview\|offer` (bucket-mapped via `mapPipelineStageToBucket`) |
+| sort_order | integer | NOT NULL | column order |
+| is_terminal | bool | NOT NULL | default false |
+| created_by | uuid | NULL | |
+| created_at / updated_at | timestamptz | NOT NULL | |
+
+#### `vacancy_screening_questions` & `application_screening_answers`
+Apply-form screening question definitions (per vacancy) + the candidate's answers (per application). Knockout logic in `lib/screening-questions/`.
+
+`vacancy_screening_questions`: id, organization_id, vacancy_id, `label` text, `answer_type` text (`yes_no\|short_text\|number\|select`, default `yes_no`), `options` jsonb, `is_knockout` bool, `knockout_answer` text (encoded per answer_type — see `knockout-condition.ts`), `sort_order` int, timestamps.
+
+`application_screening_answers`: id, organization_id, application_id, question_id, `answer_value` text, `is_knockout_flag` bool (computed via `compute-flag.ts`), created_at.
+
+#### `candidate_merges` (A-3)
+Audit + revert record for a candidate merge.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| winner_id / loser_id | uuid | NOT NULL | surviving vs absorbed candidate |
+| merged_by | uuid | NULL | FK → profiles |
+| loser_snapshot | jsonb | NOT NULL | full loser record for revert |
+| field_choices | jsonb | NOT NULL | per-field winner/loser resolution |
+| reverted_at / reverted_by | timestamptz / uuid | NULL | set if the merge was undone |
+| merged_at | timestamptz | NOT NULL | |
+
+#### `mfa_recovery_codes` (G-032)
+SHA-256-hashed single-use 2FA recovery codes (raw codes never stored — see `lib/mfa/recovery-codes.ts`).
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| user_id | uuid | NOT NULL | FK → profiles (per-user, not org-scoped) |
+| code_hash | text | NOT NULL | sha256-hex of the normalised code |
+| consumed_at | timestamptz | NULL | set when the code is used |
+| created_at | timestamptz | NOT NULL | |
+
+_MFA policy columns also live on `organizations` (`require_mfa`, `require_mfa_for_admins`) and `profiles` (`mfa_enrolled`); Calendly fields are on `organization_integrations` (G-031) — see the changelog at the top._
+
+#### `ai_fit_analyses` (Wave 3.1 — S11 AI Fit Analysis)
+One append-only provenance row per AI Fit Analysis run. Migration `20260722_ai_fit_analysis.sql`. RLS: org-scoped via `profiles`. **No overall score is ever stored** — only the factual `meets_count` / `must_have_total`.
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| id | uuid | NOT NULL | PK |
+| organization_id | uuid | NOT NULL | tenant |
+| application_id | uuid | NOT NULL | FK → applications |
+| criteria_snapshot | jsonb | NOT NULL | the vacancy scorecard criteria at run time (provenance) |
+| cv_snapshot_hash | text | NOT NULL | sha256 of the sanitized input (reproducibility, no PII) |
+| redacted_categories | jsonb | NOT NULL | protected categories stripped before the model (e.g. `["name","contact_details"]`) |
+| screening_answers_snapshot | jsonb | NULL | job-relevant answers sent |
+| meets_count / must_have_total | int | NOT NULL | "Meets N of M must-haves" — computed server-side, not by the model |
+| confidence | text | NOT NULL | `low\|medium\|high` |
+| rendered_analysis | jsonb | NOT NULL | the full advisory result shown in the card (per-criterion match, strengths, gaps, questions) |
+| model_name / model_version / prompt_version | text | model_name NOT NULL | provenance; `prompt_version` = `FIT_PROMPT_VERSION` |
+| raw_response | text | NULL | raw model text (debugging) |
+| assessment | text | NULL | mandatory human sign-off: `agree\|override` (null until reviewed) |
+| assessment_reason | text | NULL | required when `assessment = 'override'` |
+| assessed_by / assessed_at | uuid / timestamptz | NULL | who reviewed + when |
+| created_by / created_at | uuid / timestamptz | NOT NULL | |
+
+#### `ai_fit_bias_reviews` (Wave 3.1)
+Record of periodic manual bias reviews of the feature (oversight artefact). Org-scoped, RLS on. Columns: id, organization_id, `period_start` / `period_end` date, `reviewed_by` uuid, `notes` text, `created_at`. The live admin surface (Settings → Data → AI oversight) reads aggregates + the override log directly from `ai_fit_analyses`; this table is for signed-off periodic reviews.
+
+**`organizations` opt-in columns (same migration):** `ai_fit_enabled` bool NOT NULL default FALSE, `ai_fit_enabled_at` timestamptz, `ai_fit_enabled_by` uuid → profiles, `ai_fit_eu_acknowledged` bool NOT NULL default FALSE, `billing_country` text. Only an owner can flip `ai_fit_enabled`; enabling stamps `_at`/`_by` and sets `ai_fit_eu_acknowledged` (see `setAiFitEnabled` + `canEnableAiFit`).
+
+---
+
+### Migration 044 — fix `sync_candidate_status_on_application_change()` trigger
+
+Migration 022 introduced a trigger that auto-syncs `candidates.general_status_id` when all of a candidate's applications close. It looked up `candidate_statuses.code = 'inactive'`, but Migration 009 had simplified the codes to `'active' | 'hired' | 'archived'` — the lookup silently returned NULL and the trigger was a no-op for every close-out since June 2024. Migration 044 replaces the lookup with `'archived'` via `CREATE OR REPLACE FUNCTION`. Discovered during the redesign audit ([`audit.md` §2.4](../redesign/audit.md#0-status--decisions-locked)).
+
+### Migration 045 — `profiles.notification_preferences` JSONB
+
+Adds per-user notification preferences as a JSONB column. Default value matches `DEFAULT_NOTIFICATION_PREFERENCES` in `lib/types/notification-preferences.ts`. Shape:
+
+```json
+{
+  "email": {
+    "new_applicant": true, "interview_scheduled": true,
+    "offer_awaiting_response": true, "mention": true,
+    "team_invite_update": true, "weekly_digest": false
+  },
+  "in_product": { "show_bell_badge": true, "auto_mark_read": true },
+  "quiet_hours": null
+}
+```
+
+The in-product half is live — `NotificationsBell` reads it on mount and hides the unread badge if `show_bell_badge=false`, skips auto-mark-read if `auto_mark_read=false`. The email half is collected but not yet read by the dispatcher (most email events go to candidates/invitees external to the system; the recruiter-facing email surface is sparse today). `quiet_hours` is reserved for v1.1.
+
+### Migration 046 — `pipeline_stages` table foundation
+
+Per-vacancy custom stages, locked by [`audit.md` Q3](../redesign/audit.md#0-status--decisions-locked):
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `organization_id` | UUID NOT NULL FK organizations | RLS scope |
+| `vacancy_id` | UUID NOT NULL FK vacancies | |
+| `name` | TEXT NOT NULL | free text, any language |
+| `type` | TEXT NOT NULL CHECK in (`standard`, `interview`, `offer`, `review`) | behavior keys off type, never name |
+| `sort_order` | INTEGER NOT NULL | unique per vacancy |
+| `is_terminal` | BOOLEAN NOT NULL DEFAULT FALSE | e.g. Hired / Rejected / Withdrawn |
+| `created_by` | UUID FK profiles | nullable for cascade |
+| `created_at`, `updated_at` | TIMESTAMPTZ | |
+
+Plus a `BEFORE INSERT` trigger enforcing the cap of 10 stages per vacancy, RLS that lets every org member view stages but restricts manage to owner+admin, and a `seed_default_pipeline_stages(vacancy_id, org_id, created_by)` helper mirroring the legacy 7-stage seed (Applied → Screening → Interview → Offer → Hired + Rejected + Withdrawn).
+
+**Status:** schema lives but has no readers yet. The coordinated swap on `applications` (drop `status_id` → add `pipeline_stage_id`) is deferred to a follow-up migration so the ~20 call sites currently reading `applications.status_id` keep working. Wave 2.6 implementation finishes the cutover.

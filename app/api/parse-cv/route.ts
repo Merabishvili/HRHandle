@@ -6,7 +6,11 @@ import { parseCVFile } from '@/lib/cv-parser'
 export const preferredRegion = 'fra1'
 export const maxDuration = 90
 
-const MAX_PARSE_REQUESTS_PER_IP_PER_HOUR = 10
+// Bumped from 10 → 30 (2026-06-05): real applicant traffic from a single
+// network (corporate VPN, mobile carrier IP, university) can easily hit
+// 10/hr at peak. 30/hr gives ~3× headroom for normal use while still
+// throttling automated abuse. See S-005 for the in-memory tradeoff.
+const MAX_PARSE_REQUESTS_PER_IP_PER_HOUR = 30
 const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_MIME_TYPES = [
   'application/pdf',

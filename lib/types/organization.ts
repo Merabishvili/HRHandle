@@ -19,6 +19,10 @@ export interface Profile {
   email: string | null
   avatar_url: string | null
   phone: string | null
+  /** Optional: only the Profile settings page selects this column. Kept
+   * optional so other Profile consumers (e.g. the dashboard layout) don't have
+   * to read it — and so the type is safe before the migration lands. */
+  language?: string | null
   role: UserRole
   is_active: boolean
   created_at: ISODateTimeString

@@ -17,7 +17,7 @@ export default async function AccountDeletionScheduledPage() {
 
   // Public-readable page: unauthenticated visitors get a generic message
   // explaining what this URL is for. Authenticated users with an active org
-  // (deleted_at IS NULL) shouldn't be here — bounce them back to the dashboard.
+  // (deleted_at IS NULL) shouldn't be here — bounce them back to the app.
   let orgName: string | null = null
   let scheduledAt: Date | null = null
   let daysRemaining: number | null = null
@@ -41,7 +41,7 @@ export default async function AccountDeletionScheduledPage() {
         if (!organization.deleted_at) {
           // Org isn't scheduled for deletion — this page is the wrong place
           // for this user. Send them home.
-          redirect('/dashboard')
+          redirect('/pipeline')
         }
         orgName = organization.name as string
         scheduledAt = new Date(organization.deleted_at as string)
@@ -98,7 +98,7 @@ export default async function AccountDeletionScheduledPage() {
             <div>
               <h3 className="font-semibold text-foreground">What happens during this period</h3>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
-                <li>The dashboard and all settings are not accessible.</li>
+                <li>The pipeline and all settings are not accessible.</li>
                 <li>You can request an export of your data by email.</li>
                 <li>You can cancel the deletion by email if this was unintended.</li>
                 <li>Team members of the organization see this same page.</li>

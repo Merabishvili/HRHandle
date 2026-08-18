@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,6 +26,7 @@ export interface DangerZoneProps {
 }
 
 export function DangerZone({ organizationName }: DangerZoneProps) {
+  const t = useTranslations()
   const [confirmName, setConfirmName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
@@ -52,20 +54,21 @@ export function DangerZone({ organizationName }: DangerZoneProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
           <AlertTriangle className="h-5 w-5" />
-          Danger zone
+          {t('vacSettings.dangerZone')}
         </CardTitle>
         <CardDescription>
-          Irreversible actions that affect your entire organization and all team members.
+          {t('dangerZone.subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border border-red-200 dark:border-red-900 p-4">
-          <h3 className="font-semibold">Delete this organization</h3>
+          <h3 className="font-semibold">{t('dangerZone.deleteOrg')}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Schedules <strong>{organizationName}</strong> and all of its candidate data,
-            documents, applications, interviews, and notes for permanent deletion. Team
-            members will lose access. You will have <strong>30 days</strong> to email us
-            to cancel before the data is irreversibly removed.
+            {t.rich('dangerZone.deleteOrgDesc', {
+              name: organizationName,
+              b: (c) => <strong>{c}</strong>,
+              d: (c) => <strong>{c}</strong>,
+            })}
           </p>
 
           {error && (
@@ -86,23 +89,19 @@ export function DangerZone({ organizationName }: DangerZoneProps) {
               }}
             >
               <AlertDialogTrigger asChild>
-                <Button variant="destructive">Delete organization…</Button>
+                <Button variant="destructive">{t('dangerZone.deleteOrgButton')}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete {organizationName}?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('dangerZone.deleteConfirmTitle', { name: organizationName })}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This schedules the entire organization for permanent deletion after a
-                    30-day grace period. After 30 days, all candidate data, documents,
-                    applications, interviews, and team-member accounts will be irreversibly
-                    removed. To cancel during the grace period, email{' '}
-                    <strong>hrhandle26@gmail.com</strong>.
+                    {t.rich('dangerZone.deleteConfirmDesc', { b: (c) => <strong>{c}</strong> })}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
                 <div className="space-y-2 py-2">
                   <Label htmlFor="confirmName">
-                    Type <strong>{organizationName}</strong> to confirm
+                    {t.rich('dangerZone.typeToConfirm', { name: organizationName, b: (c) => <strong>{c}</strong> })}
                   </Label>
                   <Input
                     id="confirmName"
@@ -117,7 +116,7 @@ export function DangerZone({ organizationName }: DangerZoneProps) {
                 </div>
 
                 <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel disabled={isPending}>{t('common.cancel')}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={(e) => {
                       // Prevent the dialog's auto-close on action; we let
@@ -132,10 +131,10 @@ export function DangerZone({ organizationName }: DangerZoneProps) {
                     {isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Scheduling…
+                        {t('dangerZone.scheduling')}
                       </>
                     ) : (
-                      'Permanently delete'
+                      t('dangerZone.permanentlyDelete')
                     )}
                   </AlertDialogAction>
                 </AlertDialogFooter>

@@ -71,6 +71,7 @@ describe('guide MDX files', () => {
       const raw = fs.readFileSync(path.join(CONTENT_DIR, file), 'utf8')
       const srcs = Array.from(raw.matchAll(/<Screenshot[^>]*\bsrc="([^"]+)"/g)).map((m) => m[1])
       for (const src of srcs) {
+        if (!src) continue
         const abs = path.join(publicDir, src.startsWith('/') ? src.slice(1) : src)
         expect(fs.existsSync(abs), `screenshot ${src} referenced from ${file} does not exist`).toBe(true)
       }

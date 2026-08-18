@@ -7,7 +7,20 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git push *)",
-      "Bash(git merge *)"
+      "Bash(git merge *)",
+      "Bash(diff /Users/sophiamumladze/Documents/projects/HRHandle/app/auth/login/page.tsx /Users/sophiamumladze/Documents/projects/HRHandle-staging/app/auth/login/page.tsx 2>/dev/null | head -20 || echo \"file missing in HRHandle\")",
+      "Read(//Users/sophiamumladze/Documents/projects/HRHandle/app/auth/login/**)",
+      "Bash(git -C /Users/sophiamumladze/Documents/projects/HRHandle fetch origin)",
+      "Bash(git -C /Users/sophiamumladze/Documents/projects/HRHandle log --oneline origin/staging -10)",
+      "Bash(cp /Users/sophiamumladze/Documents/projects/HRHandle-staging/app/auth/callback/route.ts /Users/sophiamumladze/Documents/projects/HRHandle/app/auth/callback/route.ts)",
+      "Bash(cp /Users/sophiamumladze/Documents/projects/HRHandle-staging/app/auth/login/page.tsx /Users/sophiamumladze/Documents/projects/HRHandle/app/auth/login/page.tsx)",
+      "Bash(git -C /Users/sophiamumladze/Documents/projects/HRHandle diff --stat)",
+      "Bash(git -C /Users/sophiamumladze/Documents/projects/HRHandle add app/auth/callback/route.ts app/auth/login/page.tsx)",
+      "Bash(git -C /Users/sophiamumladze/Documents/projects/HRHandle commit -m ' *)",
+      "Bash(git -C /Users/sophiamumladze/Documents/projects/HRHandle push origin staging)",
+      "Read(//Users/sophiamumladze/Documents/projects/HRHandle/**)",
+      "Bash(npm install *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps=d.get\\('dependencies',{}\\); print\\(deps.get\\('@google/generative-ai'\\)\\); print\\(deps.get\\('pdfjs-dist'\\)\\); print\\(deps.get\\('mammoth'\\)\\)\")"
     ]
   }
 }

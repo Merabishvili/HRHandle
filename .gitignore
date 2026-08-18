@@ -21,3 +21,7 @@ tsconfig.tsbuildinfo
 playwright-report/
 test-results/
 playwright/.cache/
+
+# Redesign source materials (extracted from Redisign New.zip)
+# Root-anchored so docs/redesign/ (the canonical design docs) stays tracked.
+/redesign/

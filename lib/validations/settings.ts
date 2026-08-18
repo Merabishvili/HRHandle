@@ -3,6 +3,7 @@ import { z } from 'zod'
 export const ProfileSchema = z.object({
   full_name: z.string().min(1, 'Full name is required').max(100),
   phone: z.string().max(30).nullable().optional(),
+  language: z.string().max(10).nullable().optional(),
 })
 
 export const OrganizationSchema = z.object({

@@ -1,4 +1,5 @@
 import type { UUID, ISODateTimeString } from './common'
+import type { Currency } from '@/lib/pricing/currency'
 
 export type PlanCode = 'trial' | 'individual' | 'organization'
 export type BillingCycle = 'monthly' | 'annual'
@@ -41,11 +42,18 @@ export interface PlanUsage {
   payment_method_linked: boolean
 }
 
+/** Per-currency price points. `annual` is the PER-MONTH price when billed
+ * annually (the yearly charge is `annual * 12`). */
+export interface PlanPrice {
+  monthly: number
+  annual: number
+}
+
 export interface PricingPlan {
   name: string
   code: PlanCode
-  price_monthly?: number | null
-  price_annual?: number | null
+  /** Prices in every supported currency; `null` for the free trial. */
+  prices: Record<Currency, PlanPrice> | null
   features: string[]
   vacancy_limit: number
   candidate_limit: number
@@ -57,8 +65,7 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     name: 'Free Trial',
     code: 'trial',
-    price_monthly: null,
-    price_annual: null,
+    prices: null,
     vacancy_limit: 5,
     candidate_limit: 100,
     member_limit: 2,
@@ -73,8 +80,11 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     name: 'Individual',
     code: 'individual',
-    price_monthly: 20,
-    price_annual: 16,
+    prices: {
+      GEL: { monthly: 49, annual: 39 },
+      EUR: { monthly: 19, annual: 15 },
+      USD: { monthly: 20, annual: 16 },
+    },
     vacancy_limit: 500,
     candidate_limit: 10000,
     member_limit: 3,
@@ -90,8 +100,11 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     name: 'Organization',
     code: 'organization',
-    price_monthly: 40,
-    price_annual: 32,
+    prices: {
+      GEL: { monthly: 99, annual: 79 },
+      EUR: { monthly: 39, annual: 31 },
+      USD: { monthly: 40, annual: 32 },
+    },
     vacancy_limit: 1000,
     candidate_limit: 20000,
     member_limit: 50,
@@ -107,3 +120,25 @@ export const PRICING_PLANS: PricingPlan[] = [
     ],
   },
 ]
+
+/** Per-month price for a plan in a currency + cycle (null for the free trial). */
+export function getPlanMonthly(
+  plan: PricingPlan,
+  currency: Currency,
+  cycle: BillingCycle,
+): number | null {
+  if (!plan.prices) return null
+  const p = plan.prices[currency]
+  return cycle === 'annual' ? p.annual : p.monthly
+}
+
+/** Total amount charged per billing period (monthly = 1×, annual = 12×). */
+export function getPlanChargeTotal(
+  plan: PricingPlan,
+  currency: Currency,
+  cycle: BillingCycle,
+): number | null {
+  const monthly = getPlanMonthly(plan, currency, cycle)
+  if (monthly === null) return null
+  return cycle === 'annual' ? monthly * 12 : monthly
+}

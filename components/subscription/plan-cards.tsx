@@ -1,32 +1,76 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { CheckCircle, Zap } from 'lucide-react'
-import type { PricingPlan } from '@/lib/types/subscription'
+import type { PricingPlan, PlanCode, BillingCycle } from '@/lib/types/subscription'
+import { getPlanMonthly } from '@/lib/types/subscription'
+import { CURRENCIES, CURRENCY_LABEL, CURRENCY_SYMBOL, type Currency } from '@/lib/pricing/currency'
+import { planName, planFeatures } from '@/lib/pricing/plan-i18n'
+import { startPlanCheckout, setBillingCurrency } from '@/lib/actions/billing'
 import type { Campaign } from '@/lib/campaign'
 import { getCampaignPrice } from '@/lib/campaign'
 
 interface PlanCardsProps {
   plans: PricingPlan[]
   currentPlanCode: string
+  currency: Currency
   campaign: Campaign
   campaignActive: boolean
 }
 
-export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: PlanCardsProps) {
-  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
+export function PlanCards({ plans, currentPlanCode, currency, campaign, campaignActive }: PlanCardsProps) {
+  const t = useTranslations()
+  const router = useRouter()
+  const [billing, setBilling] = useState<BillingCycle>('monthly')
+  const [pendingCode, setPendingCode] = useState<PlanCode | null>(null)
+  const [, startTransition] = useTransition()
+  const [currencyPending, startCurrencyTransition] = useTransition()
 
+  const onCurrencyChange = (value: string) => {
+    startCurrencyTransition(async () => {
+      const res = await setBillingCurrency(value as Currency)
+      if (res.success) router.refresh()
+      else toast.error(res.error)
+    })
+  }
+
+  const symbol = CURRENCY_SYMBOL[currency]
   const annualDiscount = Math.round(campaign.discounts.annual * 100)
   const monthlyDiscount = Math.round(campaign.discounts.monthly * 100)
 
+  const handleUpgrade = (code: PlanCode) => {
+    setPendingCode(code)
+    startTransition(async () => {
+      const res = await startPlanCheckout({ planCode: code, cycle: billing })
+      if (res.success) {
+        window.location.href = res.data.checkoutUrl
+      } else {
+        toast.error(res.error)
+        setPendingCode(null)
+      }
+    })
+  }
+
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Available Plans</h2>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold text-foreground">{t('planCards.availablePlans')}</h2>
 
+        <div className="flex flex-wrap items-center gap-2">
         <div className="inline-flex items-center rounded-full border border-border bg-muted p-1">
           <button
             onClick={() => setBilling('monthly')}
@@ -36,7 +80,7 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Monthly
+            {t('planCards.monthly')}
             {campaignActive && (
               <span className="ml-1.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                 -{monthlyDiscount}%
@@ -51,7 +95,7 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Annual
+            {t('planCards.annual')}
             <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white ${
               campaignActive ? 'bg-orange-500' : 'bg-green-500'
             }`}>
@@ -59,16 +103,26 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
             </span>
           </button>
         </div>
+
+        <Select value={currency} onValueChange={onCurrencyChange} disabled={currencyPending}>
+          <SelectTrigger className="h-8 w-auto min-w-[88px] gap-1.5 text-sm font-medium" aria-label={t('billingCtl.billingCurrency')}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CURRENCIES.map((c) => (
+              <SelectItem key={c} value={c}>{CURRENCY_LABEL[c]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        </div>
       </div>
 
       {campaignActive && (
         <div className="mb-4 flex items-center gap-2 rounded-lg bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700">
           <Zap className="h-4 w-4 shrink-0" />
-          🌸 {campaign.name} — special pricing until{' '}
-          {new Date(campaign.endDate).toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
+          {t('planCards.campaignBanner', {
+            name: campaign.name,
+            date: new Date(campaign.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
           })}
         </div>
       )}
@@ -78,7 +132,7 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
           const isCurrent = plan.code === currentPlanCode
           const isTrial = plan.code === 'trial'
 
-          const basePrice = billing === 'annual' ? plan.price_annual : plan.price_monthly
+          const basePrice = getPlanMonthly(plan, currency, billing)
           const displayPrice = campaignActive && basePrice
             ? getCampaignPrice(basePrice, billing)
             : basePrice
@@ -93,47 +147,47 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                  Most Popular
+                  {t('planCards.mostPopular')}
                 </div>
               )}
 
               <CardContent className="p-6">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
-                  {isCurrent && <Badge variant="secondary">Current</Badge>}
+                  <h3 className="text-xl font-semibold text-foreground">{planName(t, plan.code)}</h3>
+                  {isCurrent && <Badge variant="secondary">{t('planCards.current')}</Badge>}
                 </div>
 
                 <div className="mb-6 min-h-[60px]">
                   {isTrial ? (
                     <>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-bold text-foreground">Free</span>
-                        <span className="text-muted-foreground"> / 7 days</span>
+                        <span className="text-3xl font-bold text-foreground">{t('planCards.free')}</span>
+                        <span className="text-muted-foreground">{t('planCards.per7days')}</span>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">No credit card required</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{t('planCards.noCard')}</p>
                     </>
                   ) : (
                     <>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-foreground">
-                          ${displayPrice}
+                          {symbol}{displayPrice}
                         </span>
-                        <span className="text-muted-foreground">/mo</span>
+                        <span className="text-muted-foreground">{t('planCards.perMo')}</span>
                         {campaignActive && originalPrice && (
                           <span className="text-sm text-muted-foreground line-through">
-                            ${originalPrice}
+                            {symbol}{originalPrice}
                           </span>
                         )}
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {billing === 'annual' ? 'billed annually' : 'billed monthly'}
+                        {billing === 'annual' ? t('planCards.billedAnnually') : t('planCards.billedMonthly')}
                       </p>
                     </>
                   )}
                 </div>
 
                 <ul className="mb-6 space-y-3">
-                  {plan.features.map((feature) => (
+                  {planFeatures(t, plan).map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
                       <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                       <span className="text-sm text-muted-foreground">{feature}</span>
@@ -144,9 +198,13 @@ export function PlanCards({ plans, currentPlanCode, campaign, campaignActive }: 
                 <Button
                   className="w-full"
                   variant={isCurrent ? 'outline' : plan.popular ? 'default' : 'outline'}
-                  disabled={isCurrent || isTrial}
+                  disabled={isCurrent || isTrial || pendingCode !== null}
+                  onClick={() => !isCurrent && !isTrial && handleUpgrade(plan.code)}
                 >
-                  {isCurrent ? 'Current Plan' : isTrial ? 'Trial Plan' : 'Upgrade'}
+                  {pendingCode === plan.code && (
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden />
+                  )}
+                  {isCurrent ? t('planCards.currentPlan') : isTrial ? t('planCards.trialPlan') : t('planCards.upgrade')}
                 </Button>
               </CardContent>
             </Card>

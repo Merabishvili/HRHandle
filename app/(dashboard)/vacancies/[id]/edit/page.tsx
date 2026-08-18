@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -7,6 +8,8 @@ import { VacancyForm } from '@/components/vacancies/vacancy-form'
 import { Button } from '@/components/ui/button'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { getVacancyStatuses } from '@/lib/cache/lookups'
+import { orgDefaultLocale, orgEnabledLocales } from '@/lib/i18n/org-locale'
+import { type LocalizedText } from '@/lib/i18n/locales'
 
 interface VacancyRow {
   id: string
@@ -17,6 +20,7 @@ interface VacancyRow {
   department: string | null
   location: string | null
   employment_type: 'full_time' | 'part_time' | 'contract' | 'internship' | null
+  work_mode: 'remote' | 'hybrid' | 'onsite' | null
   hiring_manager_name: string | null
   salary_min: number | null
   salary_max: number | null
@@ -61,6 +65,7 @@ export default async function EditVacancyPage({
   const { id } = await params
   const { duplicated } = await searchParams
   const isDuplicated = duplicated === 'true'
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -78,7 +83,7 @@ export default async function EditVacancyPage({
     .single()
 
   if (!profile?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organizationId = profile.organization_id
@@ -96,6 +101,7 @@ export default async function EditVacancyPage({
           department,
           location,
           employment_type,
+          work_mode,
           hiring_manager_name,
           salary_min,
           salary_max,
@@ -140,21 +146,42 @@ export default async function EditVacancyPage({
     getCustomFieldValues(id),
   ])
 
+  // i18n Slice 4 — org content languages + this vacancy's per-locale JD content.
+  // Separate graceful reads (unmigrated → org falls back to English-only, and
+  // the _i18n columns come back null → seeded from the legacy text).
+  const { data: orgLangRow } = await supabase
+    .from('organizations')
+    .select('default_content_locale, enabled_content_locales')
+    .eq('id', organizationId)
+    .single()
+  const orgLocales = { default: orgDefaultLocale(orgLangRow), enabled: orgEnabledLocales(orgLangRow) }
+
+  const { data: vi18n } = await supabase
+    .from('vacancies')
+    .select('description_i18n, responsibilities_i18n, requirements_i18n')
+    .eq('id', id)
+    .single()
+  const initialI18n = {
+    description: (vi18n?.description_i18n as LocalizedText | null) ?? { [orgLocales.default]: vacancy.description },
+    responsibilities: (vi18n?.responsibilities_i18n as LocalizedText | null) ?? {},
+    requirements: (vi18n?.requirements_i18n as LocalizedText | null) ?? {},
+  }
+
   return (
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/vacancies/${id}`}>
+          <Link href={`/vacancies/${id}`} aria-label={t('vacPipe.backToVacancy')}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
 
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            {isDuplicated ? 'New Vacancy (Duplicated)' : 'Edit Vacancy'}
+            {isDuplicated ? t('editVac.dupTitle') : t('vacancies.editVacancy')}
           </h1>
           <p className="text-muted-foreground">
-            {isDuplicated ? 'Review and save your duplicated vacancy.' : 'Update the job posting details.'}
+            {isDuplicated ? t('editVac.dupSubtitle') : t('editVac.subtitle')}
           </p>
         </div>
       </div>
@@ -166,6 +193,8 @@ export default async function EditVacancyPage({
         customFieldGroups={customFieldGroups}
         customFieldValues={customFieldValues}
         isDuplicated={isDuplicated}
+        orgLocales={orgLocales}
+        initialI18n={initialI18n}
       />
     </div>
   )

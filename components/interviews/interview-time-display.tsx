@@ -22,7 +22,7 @@ export function InterviewTimeDisplay({ scheduledAt, durationMinutes }: Interview
   const timeStr = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 
   return (
-    <div className="text-right">
+    <div className="text-left sm:text-right">
       <p className="text-sm font-medium text-foreground">{dateLabel}</p>
       <p className="text-xs text-muted-foreground">{timeStr} ({durationMinutes} min)</p>
     </div>

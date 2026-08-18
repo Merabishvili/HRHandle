@@ -1,48 +1,50 @@
 # CI/CD
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
-- 🔄 No structural deployment changes since previous audit
-- 🔄 Added note that `vercel.json` defines the daily expire-vacancies cron (`0 1 * * *`) — previously docs said cron was only configured in Vercel dashboard
+- 🔄 **(2026-07-20 audit) Corrected: a GitHub Actions CI workflow now exists** (`.github/workflows/ci.yml`) and runs **lint + tests + build** on every push/PR to `main` and `staging`. The previous version of this doc claimed there was no CI workflow and that lint/tests were not run in CI — both are now false.
+- 🔄 Added note that `vercel.json` defines the daily expire-vacancies cron (`0 1 * * *`).
 
 ---
 
 ## Overview
 
-Continuous deployment is handled by Vercel. There is no separate CI workflow file (e.g. GitHub Actions) in the repository — Vercel's build serves as the CI gate.
+- **CI** — GitHub Actions (`.github/workflows/ci.yml`) gates every push/PR to `main` and `staging` on lint + tests + build.
+- **CD** — Vercel auto-deploys: `main` → `hrhandle.com`, `staging` → `staging.hrhandle.com`.
 
-## Vercel Auto-Deploy
+## GitHub Actions CI (`.github/workflows/ci.yml`)
 
-- Push to `staging` branch → deploys to `staging.hrhandle.com`
-- Merge to `main` branch (via PR) → deploys to `hrhandle.com`
-- Preview deployments are created for all other branches/PRs
+Triggers: `push` and `pull_request` on `main` and `staging`. Node.js `20`, npm cache. Two jobs:
+
+1. **`lint-and-test` (Lint & Test)** — `npm ci` → `npm run lint` → `npm run test` (Vitest). A lint error or a failing test fails the job.
+2. **`build` (Build check)** — `needs: lint-and-test`. `npm ci` → `npm run build`. Runs with **placeholder** Supabase env vars (falls back to `https://placeholder.supabase.co` / placeholder keys when the repo secrets aren't set) and `NEXT_PUBLIC_SITE_URL=https://hrhandle.com`, so the build validates without real secrets.
+
+This matches the deploy process in `CLAUDE.md`: open a PR `staging → main`, CI must pass (lint + tests + build), then merge.
+
+## Vercel Auto-Deploy (CD)
+
+- Push to `staging` → deploys to `staging.hrhandle.com`
+- Merge to `main` (via PR) → deploys to `hrhandle.com`
+- Preview deployments are created for other branches/PRs
 
 ## Build Process
 
-Vercel runs `next build` which:
-1. Runs TypeScript type checking (`tsc`) — fails on any type error (`ignoreBuildErrors: false`)
-2. Bundles the application using the Next.js bundler
-3. Generates static pages where possible
-4. Runs `withSentryConfig` to wrap the Next.js config (source maps uploaded if `NEXT_PUBLIC_SENTRY_DSN` is set)
+Vercel (and the CI `build` job) runs `next build`, which:
+1. Runs TypeScript type checking (`tsc`) — fails on any type error (`ignoreBuildErrors: false`).
+2. Bundles via the Next.js bundler; generates static pages where possible.
+3. Runs `withSentryConfig` (source maps uploaded when `NEXT_PUBLIC_SENTRY_DSN` + `SENTRY_AUTH_TOKEN` are set).
 
-## ESLint
+## Lint & Tests in CI
 
-ESLint is **not run during the CI build**. It was removed due to incompatibilities with ESLint 9. The `eslint` and `eslint-config-next` packages are still in `devDependencies` and `npm run lint` can be run locally, but it is not part of the build pipeline.
-
-## Hardcoded Placeholder Env Vars
-
-The Vercel build environment uses hardcoded placeholder values for env vars that are required at build time but not needed for static analysis. This allows the build to pass without real secrets being available in every CI context. The actual values are set as Vercel environment secrets and used at runtime.
+- **ESLint** — `npm run lint` runs in the `lint-and-test` job. (It is **not** part of `next build`, so the Vercel build itself doesn't lint; the GitHub Actions job does.)
+- **Tests** — `npm run test` (Vitest) runs in the `lint-and-test` job. Still worth running locally before pushing.
 
 ## TypeScript
 
-TypeScript version: `^5.7.3`. All `.ts`/`.tsx` files are checked. No `// @ts-ignore` or `ts-nocheck` patterns should be introduced.
-
-## No Test Run in CI
-
-Tests (`npm test` via Vitest) are not run as part of the Vercel build. Tests should be run locally before pushing. A dedicated CI workflow for tests (e.g. GitHub Actions) would need to be added separately.
+TypeScript `^5.7.3`. All `.ts`/`.tsx` files are checked (`strict`, `noUncheckedIndexedAccess`, and — since the 2026-07 tech-debt pass — `exactOptionalPropertyTypes`). No `@ts-ignore` / `ts-nocheck` should be introduced.
 
 ## Next.js Version
 
-Next.js `^16.2.0` as declared in `package.json`. The exact version installed is resolved by npm at install time. Build logs from Vercel show the resolved version.
+Next.js `^16.2.0` (per `package.json`); exact installed version resolved by npm at install time.

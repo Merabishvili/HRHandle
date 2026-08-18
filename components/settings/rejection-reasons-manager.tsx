@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -10,23 +11,30 @@ import {
   deleteRejectionReason,
   type RejectionReason,
 } from '@/lib/actions/rejection-reasons'
+import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 import { Plus, Trash2, Loader2, Pencil, Check, X } from 'lucide-react'
 
 const MAX_REASONS = 50
 
 interface Props {
   initialReasons: RejectionReason[]
+  /** IDs of reasons that have a linked email template — drives the per-reason
+   * "Template configured" vs "Default copy" indicator. */
+  reasonIdsWithTemplate?: string[]
 }
 
 function ReasonRow({
   reason,
+  hasTemplate,
   onUpdated,
   onDeleted,
 }: {
   reason: RejectionReason
+  hasTemplate: boolean
   onUpdated: (r: RejectionReason) => void
   onDeleted: (id: string) => void
 }) {
+  const t = useTranslations()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(reason.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -85,7 +93,26 @@ function ReasonRow({
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5">
-      <span className="flex-1 text-sm text-foreground">{reason.name}</span>
+      <span className="text-sm text-foreground">{rejectionReasonLabel(t, reason.name)}</span>
+      {hasTemplate ? (
+        <a
+          href="/settings/email-templates"
+          className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 hover:underline"
+          title={t('rejectReasons.templateLinkedTitle')}
+        >
+          <Check className="h-3 w-3" aria-hidden />
+          {t('rejectReasons.templateConfigured')}
+        </a>
+      ) : (
+        <a
+          href="/settings/email-templates"
+          className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground hover:underline"
+          title={t('rejectReasons.noTemplateTitle')}
+        >
+          {t('rejectReasons.noTemplateCopy')}
+        </a>
+      )}
+      <span className="flex-1" />
       {error && <span className="text-xs text-destructive">{error}</span>}
       <div className="flex items-center gap-1 shrink-0">
         <Button
@@ -97,11 +124,11 @@ function ReasonRow({
         </Button>
         {confirmDelete ? (
           <>
-            <span className="text-xs text-destructive">Delete?</span>
+            <span className="text-xs text-destructive">{t('rejectTpl.deleteConfirm')}</span>
             <Button size="sm" variant="destructive" onClick={handleDelete} disabled={isPending} className="h-7 px-2 text-xs">
-              {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Yes'}
+              {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : t('rejectTpl.yes')}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} className="h-7 px-2 text-xs">No</Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} className="h-7 px-2 text-xs">{t('rejectTpl.no')}</Button>
           </>
         ) : (
           <Button
@@ -116,8 +143,10 @@ function ReasonRow({
   )
 }
 
-export function RejectionReasonsManager({ initialReasons }: Props) {
+export function RejectionReasonsManager({ initialReasons, reasonIdsWithTemplate = [] }: Props) {
+  const t = useTranslations()
   const [reasons, setReasons] = useState<RejectionReason[]>(initialReasons)
+  const templateSet = new Set(reasonIdsWithTemplate)
   const [newName, setNewName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -138,7 +167,7 @@ export function RejectionReasonsManager({ initialReasons }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        These reasons appear when moving a candidate to a rejected stage. During rejection, you can choose whether to send an email to the candidate.
+        {t('rejectReasons.intro')}
       </p>
 
       {error && (
@@ -153,13 +182,14 @@ export function RejectionReasonsManager({ initialReasons }: Props) {
             <ReasonRow
               key={r.id}
               reason={r}
+              hasTemplate={templateSet.has(r.id)}
               onUpdated={(updated) => setReasons((prev) => prev.map((x) => x.id === updated.id ? updated : x))}
               onDeleted={(id) => setReasons((prev) => prev.filter((x) => x.id !== id))}
             />
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground italic">No rejection reasons yet.</p>
+        <p className="text-sm text-muted-foreground italic">{t('rejectReasons.empty')}</p>
       )}
 
       {!atLimit && (
@@ -168,19 +198,19 @@ export function RejectionReasonsManager({ initialReasons }: Props) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-            placeholder="e.g. Overqualified, Salary mismatch, No response…"
+            placeholder={t('rejectReasons.placeholder')}
             disabled={isPending}
             maxLength={200}
             className="text-sm"
           />
           <Button size="sm" onClick={handleAdd} disabled={isPending || !newName.trim()}>
             {isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Plus className="mr-2 h-3.5 w-3.5" />}
-            Add
+            {t('wizard.add')}
           </Button>
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">{reasons.length} / {MAX_REASONS} reasons</p>
+      <p className="text-xs text-muted-foreground">{t('rejectReasons.count', { count: reasons.length, max: MAX_REASONS })}</p>
     </div>
   )
 }

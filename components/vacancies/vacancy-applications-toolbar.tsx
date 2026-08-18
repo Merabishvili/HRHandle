@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
 import {
   Select,
   SelectContent,
@@ -29,6 +31,7 @@ export function VacancyApplicationsToolbar({
   initialStatus,
   appStatuses,
 }: VacancyApplicationsToolbarProps) {
+  const t = useTranslations()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -64,7 +67,7 @@ export function VacancyApplicationsToolbar({
       <div className="relative min-w-[180px] flex-1">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search candidates..."
+          placeholder={t('candidates.searchPlaceholder')}
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           className="pl-9 h-9"
@@ -72,12 +75,12 @@ export function VacancyApplicationsToolbar({
       </div>
       <Select value={initialStatus || 'all'} onValueChange={handleStatusChange}>
         <SelectTrigger className="w-[160px] h-9">
-          <SelectValue placeholder="All statuses" />
+          <SelectValue placeholder={t('appToolbar.allStatuses')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
+          <SelectItem value="all">{t('appToolbar.allStatuses')}</SelectItem>
           {appStatuses.map((s) => (
-            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            <SelectItem key={s.id} value={s.id}>{statusLabel(t, s.code, s.name)}</SelectItem>
           ))}
         </SelectContent>
       </Select>

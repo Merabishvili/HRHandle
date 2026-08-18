@@ -3,6 +3,8 @@ exists in /docs from a previous audit. Your job now is to:
 1. Update existing docs to reflect current code state
 2. Find new issues, improvements, and missing pieces
 3. Add missing unit tests for new code
+4. Audit mobile/responsive compatibility across all pages
+5. Clean up unnecessary code, docs, files, and tests
 
 Be exhaustive — this is a deep review meant to last for months.
 
@@ -131,6 +133,26 @@ Find and document EVERY issue across these categories:
 - Poor keyboard navigation
 - Color contrast issues visible in CSS
 
+### 📱 Mobile & Responsive Compatibility Issues
+- Go through EVERY page/screen/route in the app individually
+- For each page, check behavior at common breakpoints
+  (e.g., mobile ~375px, small tablet ~768px, desktop ~1280px+)
+- Flag layout breakage: overflow, overlapping elements, cut-off text,
+  content not reflowing
+- Flag touch-target issues: buttons/links too small or too close together
+  for touch input
+- Flag fixed-width elements, fixed pixel values, or non-responsive units
+  that block proper scaling
+- Flag missing or incorrect viewport meta configuration
+- Flag horizontal scrolling that shouldn't exist
+- Flag modals, dropdowns, tables, and navigation menus that don't adapt
+  to small screens
+- Flag images/media that aren't responsive
+- Note which pages were tested and which breakpoints were used
+- Output findings into docs/issues-found.md using the same table format
+  (prefix: MO- mobile), AND summarize page-by-page compatibility status
+  in docs/mobile-compatibility.md (Page | Mobile OK? | Issues | Notes)
+
 ---
 
 ## PHASE 3 — Issue Output Format
@@ -149,7 +171,7 @@ Status: Open / In Progress / Fixed / Won't Fix
 Repeat the same table structure for each category
 (prefix IDs: S- security, B- bugs, M- missing, F- features,
 U- unnecessary, P- performance, A- architecture, BL- business,
-C- config, AC- accessibility)
+C- config, AC- accessibility, MO- mobile)
 
 At the top of the file include a summary:
 - Total issues found
@@ -179,13 +201,50 @@ At the top of the file include a summary:
 - Do NOT modify existing passing tests
 - For each new test file created, list it in docs/testing/new-tests.md
 
+### Remove Unnecessary Unit Tests
+- Identify tests that are duplicates, obsolete, testing removed/dead code,
+  or testing implementation details rather than behavior
+- Identify empty/skipped/always-passing tests that provide no real coverage
+- Before removing anything, list candidates in docs/testing/tests-to-remove.md
+  with: file + test name, reason for removal, and whether it's safe to
+  delete outright or needs confirmation
+- Only actually delete tests that are clearly safe (e.g., duplicate of
+  another test, or testing code that no longer exists)
+- If unsure whether a test is still needed, flag it for my review instead
+  of deleting it
+
+---
+
+## PHASE 5 — Cleanup: Unnecessary Code, Docs & Files
+
+Goal: reduce clutter without breaking anything.
+
+- Identify unused files, dead code, unused exports, unused dependencies,
+  commented-out blocks, and leftover console.logs
+- Identify outdated or duplicate documentation files in /docs (superseded
+  content, stale drafts, docs describing removed features)
+- Identify orphaned assets (images, styles, configs) not referenced
+  anywhere in the codebase
+- Before deleting anything, list all candidates in docs/cleanup-candidates.md
+  with: path, reason for removal, confidence level (Safe to remove /
+  Needs review)
+- Only delete items marked "Safe to remove" (clear, verifiable dead code/
+  files with no references anywhere in the codebase)
+- Leave "Needs review" items untouched and wait for my confirmation
+- Log everything actually deleted in docs/cleanup-log.md (path, reason,
+  date)
+
 ---
 
 ## OUTPUT RULES
-- Do NOT fix any issues — only document them
-- Do NOT delete or refactor code — only flag in issues-found.md
+- Do NOT fix functional issues or refactor working code — only document
+  them in issues-found.md
+- Cleanup (Phase 5) and unnecessary-test removal (Phase 4) are the only
+  exceptions where deletion is allowed, and only for items confidently
+  marked "Safe to remove" — everything else gets flagged for review, not
+  deleted
 - Write only verified facts from the actual code, no assumptions
-- If something is unclear, ask me before guessing
+- If something is unclear, ask me before guessing or before deleting
 - All file paths must be relative to project root
 - Include line numbers where possible
 
@@ -197,5 +256,9 @@ After completing all phases, output:
 - New issues found: [count by severity]
 - New tests written: [count]
 - New test cases documented: [count]
+- Mobile compatibility: pages tested, pages with issues, breakdown of
+  mobile issues by severity
+- Unnecessary tests removed: [count] (+ count flagged for review)
+- Files/code cleaned up: [count] (+ count flagged for review)
 - Top 5 most urgent action items
 - Estimated effort to address Critical + High issues

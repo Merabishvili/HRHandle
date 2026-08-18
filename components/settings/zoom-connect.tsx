@@ -1,6 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -11,6 +12,7 @@ interface ZoomConnectProps {
 }
 
 export function ZoomConnect({ isConnected }: ZoomConnectProps) {
+  const t = useTranslations()
   const params = useSearchParams()
   const status = params.get('zoom')
 
@@ -19,12 +21,12 @@ export function ZoomConnect({ isConnected }: ZoomConnectProps) {
       {status === 'connected' && (
         <Alert>
           <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>Zoom connected successfully.</AlertDescription>
+          <AlertDescription>{t('zoomConnect.connected')}</AlertDescription>
         </Alert>
       )}
       {status === 'disconnected' && (
         <Alert>
-          <AlertDescription>Zoom disconnected.</AlertDescription>
+          <AlertDescription>{t('zoomConnect.disconnected')}</AlertDescription>
         </Alert>
       )}
       {(status === 'error' || status === 'not_configured') && (
@@ -32,8 +34,8 @@ export function ZoomConnect({ isConnected }: ZoomConnectProps) {
           <XCircle className="h-4 w-4" />
           <AlertDescription>
             {status === 'not_configured'
-              ? 'Zoom OAuth credentials are not configured on the server.'
-              : 'Failed to connect Zoom. Please try again.'}
+              ? t('zoomConnect.notConfigured')
+              : t('zoomConnect.errFailed')}
           </AlertDescription>
         </Alert>
       )}
@@ -43,27 +45,27 @@ export function ZoomConnect({ isConnected }: ZoomConnectProps) {
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Zoom</span>
             {isConnected ? (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">Connected</Badge>
+              <Badge variant="secondary" className="bg-green-100 text-green-800">{t('integrations.connected')}</Badge>
             ) : (
-              <Badge variant="secondary" className="bg-slate-100 text-slate-600">Not connected</Badge>
+              <Badge variant="secondary" className="bg-slate-100 text-slate-600">{t('integrations.notConnected')}</Badge>
             )}
           </div>
           <p className="text-sm text-muted-foreground">
             {isConnected
-              ? 'Video interviews can auto-create Zoom meetings with a join link.'
-              : 'Connect to auto-create Zoom meetings when scheduling video interviews.'}
+              ? t('zoomConnect.descConnected')
+              : t('zoomConnect.descDisconnected')}
           </p>
         </div>
 
         {isConnected ? (
           <form action="/api/auth/zoom/disconnect" method="POST">
             <Button type="submit" variant="outline" size="sm">
-              Disconnect
+              {t('integrations.disconnect')}
             </Button>
           </form>
         ) : (
           <Button asChild size="sm">
-            <a href="/api/auth/zoom">Connect Zoom</a>
+            <a href="/api/auth/zoom">{t('zoomConnect.connect')}</a>
           </Button>
         )}
       </div>

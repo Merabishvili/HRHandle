@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { CustomFieldsManager } from '@/components/settings/custom-fields-manager'
 import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
 
 export default async function CustomFieldsSettingsPage() {
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -14,7 +16,7 @@ export default async function CustomFieldsSettingsPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile) redirect('/dashboard')
+  if (!profile) redirect('/pipeline')
   const isAdmin = profile.role === 'owner' || profile.role === 'admin'
   if (!isAdmin) redirect('/settings/profile')
 
@@ -26,9 +28,9 @@ export default async function CustomFieldsSettingsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-foreground">Custom Fields</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('settingsPage.customFields')}</h2>
         <p className="text-sm text-muted-foreground">
-          Define custom fields for candidates and vacancies. Up to 20 fields per entity type.
+          {t('settingsPage.customFieldsSub')}
         </p>
       </div>
       <CustomFieldsManager

@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: ['/', '/terms', '/privacy', '/refund', '/guide'],
-        disallow: ['/dashboard', '/vacancies', '/candidates', '/interviews', '/settings', '/subscription', '/api/', '/auth/'],
+        disallow: ['/dashboard', '/pipeline', '/vacancies', '/candidates', '/interviews', '/reports', '/settings', '/subscription', '/api/', '/auth/'],
       },
     ],
     sitemap: 'https://hrhandle.com/sitemap.xml',

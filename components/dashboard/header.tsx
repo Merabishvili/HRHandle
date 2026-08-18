@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import type { User } from '@supabase/supabase-js'
 import type { Profile, Organization, Subscription } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
@@ -17,7 +18,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { LogOut, User as UserIcon, Settings, CreditCard, ChevronRight } from 'lucide-react'
 import { NotificationsBell } from '@/components/dashboard/notifications-bell'
+import { SearchTrigger } from '@/components/global-search/search-trigger'
 import { HelpLink } from '@/components/dashboard/help-link'
+import { TrialPill } from '@/components/dashboard/trial-pill'
 
 interface DashboardHeaderProps {
   user: User
@@ -39,20 +42,19 @@ function getInitials(profile: Profile, user: User): string {
   return user.email?.slice(0, 2).toUpperCase() || 'U'
 }
 
-const PAGE_LABELS: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/vacancies': 'Vacancies',
-  '/candidates': 'Candidates',
-  '/interviews': 'Interviews',
-  '/settings': 'Settings',
-  '/subscription': 'Subscription',
+const PAGE_LABEL_KEY: Record<string, string> = {
+  '/pipeline': 'nav.pipeline',
+  '/vacancies': 'nav.vacancies',
+  '/candidates': 'nav.candidates',
+  '/interviews': 'nav.interviews',
+  '/reports': 'nav.reports',
+  '/settings': 'nav.settings',
 }
 
-function getPlanLabel(subscription?: Subscription | null): string {
-  if (!subscription) return 'Trial'
-  if (subscription.plan_code === 'individual') return 'Individual'
-  if (subscription.plan_code === 'organization') return 'Organization'
-  return 'Trial'
+function getPlanKey(subscription?: Subscription | null): string {
+  if (subscription?.plan_code === 'individual') return 'plan.individual'
+  if (subscription?.plan_code === 'organization') return 'plan.organization'
+  return 'plan.trial'
 }
 
 export function DashboardHeader({
@@ -61,12 +63,14 @@ export function DashboardHeader({
   organization: _organization,
   subscription,
 }: DashboardHeaderProps) {
+  const t = useTranslations()
   const router = useRouter()
   const pathname = usePathname()
 
-  const pageLabel = Object.entries(PAGE_LABELS).find(([key]) =>
+  const pageLabelKey = Object.entries(PAGE_LABEL_KEY).find(([key]) =>
     pathname === key || pathname.startsWith(key + '/')
   )?.[1] ?? ''
+  const pageLabel = pageLabelKey ? t(pageLabelKey) : ''
 
   const handleSignOut = async () => {
     clearSessionTracking()
@@ -77,48 +81,53 @@ export function DashboardHeader({
   }
 
   const initials = getInitials(profile, user)
-  const planLabel = getPlanLabel(subscription)
-  const statusLabel = subscription?.status
-    ? subscription.status.replace('_', ' ')
-    : 'active'
+  const planLabel = t(getPlanKey(subscription))
 
   return (
     <header className="sticky top-0 z-30 h-14 border-b border-border bg-card">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         <div className="w-10 lg:hidden" />
 
-        {/* Breadcrumb */}
-        <div className="hidden lg:flex items-center gap-1.5 text-sm">
+        {/* Breadcrumb — left cluster truncates so it can never push the
+            right-hand controls off-screen. */}
+        <div className="hidden min-w-0 lg:flex items-center gap-1.5 text-sm">
           <span className="text-muted-foreground">HRHandle</span>
           {pageLabel && (
             <>
-              <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-              <span className="font-medium text-foreground">{pageLabel}</span>
+              <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+              <span className="truncate font-medium text-foreground">{pageLabel}</span>
             </>
           )}
         </div>
 
-        {/* User area */}
-        <div className="flex items-center gap-1.5">
+        {/* User area — pinned right, never shrinks. */}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <TrialPill
+            trialEndAt={subscription?.trial_end_at ?? null}
+            status={subscription?.status ?? null}
+          />
+          <SearchTrigger />
           <HelpLink />
           <NotificationsBell />
 
-          <div className="hidden text-right md:block">
-            <p className="text-sm font-medium leading-tight text-foreground">
-              {profile.full_name || user.email?.split('@')[0] || 'User'}
-            </p>
-            <p className="text-xs leading-tight text-muted-foreground capitalize">
-              {planLabel} · {statusLabel}
-            </p>
-          </div>
+          {/* Username text removed from the header per the redesign — it
+              was clipping on narrow viewports and the avatar dropdown
+              already surfaces the full name + email + plan inside.
+              `planLabel` is kept as an sr-only read so the variable
+              stays referenced. */}
+          <span className="sr-only">{planLabel}</span>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Button
+                variant="ghost"
+                className="relative h-9 w-9 rounded-full"
+                aria-label={t('header.accountMenu', { name: profile.full_name || user.email || 'user' })}
+              >
                 <Avatar className="h-9 w-9">
                   <AvatarImage
                     src={profile.avatar_url || undefined}
-                    alt={profile.full_name || 'User'}
+                    alt=""
                   />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                     {initials}
@@ -131,7 +140,7 @@ export function DashboardHeader({
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">
-                  {profile.full_name || 'User'}
+                  {profile.full_name || t('header.user')}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user.email}
@@ -143,24 +152,24 @@ export function DashboardHeader({
 
             <DropdownMenuItem onClick={() => router.push('/settings')}>
               <UserIcon className="mr-2 h-4 w-4" />
-              Profile
+              {t('header.profile')}
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={() => router.push('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              {t('nav.settings')}
             </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={() => router.push('/subscription')}>
+            <DropdownMenuItem onClick={() => router.push('/settings/billing')}>
               <CreditCard className="mr-2 h-4 w-4" />
-              Subscription
+              {t('header.billing')}
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
             <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
-              Sign out
+              {t('header.signOut')}
             </DropdownMenuItem>
           </DropdownMenuContent>
           </DropdownMenu>

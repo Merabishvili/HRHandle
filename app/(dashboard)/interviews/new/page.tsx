@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { ArrowLeft } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
@@ -47,6 +48,7 @@ interface ApplicationRow {
 interface TeamMemberRow {
   id: string
   full_name: string
+  email: string | null
 }
 
 export default async function NewInterviewPage({
@@ -55,6 +57,7 @@ export default async function NewInterviewPage({
   searchParams: Promise<SearchParams>
 }) {
   const { candidate: candidateId, vacancy: vacancyId } = await searchParams
+  const t = await getTranslations()
   const supabase = await createClient()
 
   const {
@@ -67,12 +70,12 @@ export default async function NewInterviewPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('organization_id, google_refresh_token, zoom_refresh_token, microsoft_refresh_token')
+    .select('organization_id, google_refresh_token, zoom_refresh_token, microsoft_refresh_token, default_meeting_provider')
     .eq('id', user.id)
     .single()
 
   if (!profile?.organization_id) {
-    redirect('/dashboard')
+    redirect('/pipeline')
   }
 
   const organizationId = profile.organization_id
@@ -129,24 +132,24 @@ export default async function NewInterviewPage({
 
   const { data: teamMembersRaw } = await supabase
     .from('profiles')
-    .select('id, full_name')
+    .select('id, full_name, email')
     .eq('organization_id', organizationId)
     .order('full_name', { ascending: true })
 
   const teamMembers = (teamMembersRaw || []) as TeamMemberRow[]
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/interviews">
+    <div className="mx-auto max-w-[920px] space-y-6">
+      <div className="flex items-start gap-3">
+        <Button variant="ghost" size="icon" asChild className="mt-0.5">
+          <Link href="/interviews" aria-label={t('newInt.back')}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
 
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Schedule Interview</h1>
-          <p className="text-muted-foreground">Set up an interview with a candidate.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('interviews.scheduleInterview')}</h1>
+          <p className="text-muted-foreground">{t('newInt.subtitle')}</p>
         </div>
       </div>
 
@@ -157,9 +160,13 @@ export default async function NewInterviewPage({
         teamMembers={teamMembers}
         defaultCandidateId={candidateId}
         defaultVacancyId={vacancyId}
+        defaultInterviewerId={user.id}
         hasGoogleCalendar={!!profile.google_refresh_token}
         hasZoom={!!profile.zoom_refresh_token}
         hasMicrosoft={!!profile.microsoft_refresh_token}
+        defaultMeetingProvider={
+          (profile.default_meeting_provider as 'google_meet' | 'zoom' | 'teams' | null) ?? null
+        }
       />
     </div>
   )

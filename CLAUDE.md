@@ -30,7 +30,8 @@
 
 ### Onboarding
 - Dashboard layout (`app/(dashboard)/layout.tsx`) calls `runOnboarding(user)` from `lib/onboarding.ts` directly when no `organization_id` is on the profile — **but only after** the OAuth company-name redirect: if `user_metadata.company_name` is missing the layout sends the user to `/onboarding/company` first
-- The page `/onboarding/company` collects name + company and submits to the server action `completeCompanyOnboarding` (in `lib/actions/onboarding.ts`), which calls `runOnboarding(user, { fullName, companyName })` and redirects to `/dashboard`
+- The page `/onboarding/company` collects name + company and submits to the server action `completeCompanyOnboarding` (in `lib/actions/onboarding.ts`), which calls `runOnboarding(user, { fullName, companyName })`, **stamps `company_name` + `full_name` into auth metadata**, then redirects to `/pipeline`
+- **The metadata stamp is load-bearing — do not remove it.** The layout treats "no `user_metadata.company_name`" as a first-time OAuth user and redirects to `/onboarding/company`. Without stamping it after onboarding, a brief regular-client read gap on the freshly-committed `organization_id` makes the layout bounce a just-onboarded user to onboarding → which redirects back to `/pipeline` → **onboarding⇄pipeline loop / white screen.** The layout also double-checks org existence via the admin client before that redirect as a belt-and-suspenders guard.
 - `runOnboarding` accepts an optional `{ fullName?, companyName? }` arg that overrides `user_metadata` lookups; falls back to "New User" / "New Organization" only when neither source has a value
 - **Do NOT revert to HTTP self-fetch** — the old approach called `/api/onboarding` via `fetch()` with forwarded cookies; Supabase SSR does not recognise the session that way and returns 401
 - The `/api/onboarding` route still exists for external use and delegates to the same `lib/onboarding.ts`. Optional JSON body `{ fullName?, companyName? }` overrides `user_metadata`
@@ -56,6 +57,13 @@ When adding inline `<script>` tags in server components, **always** stamp the no
 - `NEXT_PUBLIC_SITE_URL` — optional but must be a valid URL if set; **never set to empty string** — t3-oss/env-nextjs will throw at build time
 - `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` — local `.env.local` only, overrides `emailRedirectTo` in sign-up; **must NOT be added to Vercel**
 - `TURNSTILE_SECRET_KEY` — server-only secret for Cloudflare Turnstile verification on the public apply form (`lib/turnstile.ts`). **Never** prefix `NEXT_PUBLIC_`. When unset, the apply form fails-open with a server warning; set on Vercel to activate enforcement. Distinct from the Supabase CAPTCHA secret used for login/sign-up (which lives in the Supabase dashboard).
+- `FLITT_MERCHANT_ID` / `FLITT_SECRET_KEY` — Flitt payment gateway, server-only (**never** `NEXT_PUBLIC_`). Set on **both** Vercel environments. Use a **sandbox merchant on staging** so test clicks never charge real cards once the live merchant is active. Unset → checkout fails soft. Full detail in `docs/4-integrations/flitt.md`.
+
+### Payments (Flitt) — critical gotchas
+- **Multi-currency, one processor.** Flitt charges GEL/EUR/USD; currency is resolved per org (`billing_country` → GE=GEL, EU=EUR, else USD, with a `billing_currency` override). Georgian customers **must** see GEL by law — the public landing pricing defaults to GEL for the same reason. Don't hardcode `$`.
+- **The signed server callback (`/api/payments/flitt/callback`) is the source of truth**, not the browser return URL. It verifies the signature, matches the stored `payment_orders` amount/currency (anti-tamper), and grants the plan via the admin client. Writes to `payment_orders`/`subscriptions` are service-role only.
+- **Recurring uses the SDK's `Subscription()` (protocol 2.0)** so nested `recurring_data` is signed correctly. Trust the SDK source over Flitt's web-doc signature examples (those are unreliable when paraphrased).
+- The migration `20260804_flitt_billing.sql` must be applied on **both** Supabase projects. Contact details (name, ID, address, email, phone) are set in `lib/legal/contact.ts`. The merchant is on Flitt's **test** environment until the remaining pre-production steps are done (test the 3 payment methods; request the live switch) and live creds are set on both Vercel envs.
 
 ### Google OAuth Configuration
 
@@ -85,4 +93,8 @@ Full detail in `docs/claude-code-workflow.md`. Summary:
 
 ## What's left to build
 
+See [`docs/1-product/roadmap.md`](docs/1-product/roadmap.md) — single index of planned features, tracked open items, ATS gaps not yet filed, and accepted tech debt. Update it when scoping new work.
+
 ## Things that went wrong before — don't repeat
+
+- **PostgREST embed ambiguity (`profiles` ⇄ `organizations`).** `organizations.ai_fit_enabled_by` references `profiles(id)`, so there are TWO FK relationships between the tables. A plain embed like `.from('profiles').select('… organizations ( … )')` fails with *"Could not embed because more than one relationship was found"* → the dashboard layout's profile read errors → "Something went wrong" for every user. **Always hint the relationship: `organizations!organization_id ( … )`.** The same applies to any new `profiles`↔`organizations` (or other double-FK pair, e.g. `ai_fit_analyses`↔`profiles` via `created_by`/`assessed_by`) embed. Applies to admin-client reads too — it's a schema-level ambiguity, not RLS.

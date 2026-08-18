@@ -40,7 +40,7 @@ describe('verifyCaptcha', () => {
     expect(ok).toBe(true)
 
     // Verify the secret + token + remoteip were forwarded
-    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]!
     expect(call[0]).toBe('https://challenges.cloudflare.com/turnstile/v0/siteverify')
     const body = call[1].body as URLSearchParams
     expect(body.get('secret')).toBe('test-secret')

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { uploadDocument, deleteDocument, getDocumentSignedUrl } from '@/lib/actions/documents'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,10 +30,10 @@ interface CandidateDocumentsProps {
   initialDocuments: Document[]
 }
 
-const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  cv: 'CV / Resume',
-  cover_letter: 'Cover Letter',
-  other: 'Other',
+const DOCUMENT_TYPE_I18N_KEY: Record<string, string> = {
+  cv: 'documents.typeCv',
+  cover_letter: 'documents.typeCoverLetter',
+  other: 'documents.typeOther',
 }
 
 function formatBytes(bytes: number): string {
@@ -42,6 +43,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function CandidateDocuments({ candidateId, initialDocuments }: CandidateDocumentsProps) {
+  const t = useTranslations()
   const [documents, setDocuments] = useState<Document[]>(initialDocuments)
   const [documentType, setDocumentType] = useState('cv')
   const [error, setError] = useState<string | null>(null)
@@ -104,7 +106,7 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
   return (
     <Card className="border-border">
       <CardHeader>
-        <CardTitle>Documents</CardTitle>
+        <CardTitle>{t('documents.title')}</CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -120,9 +122,9 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="cv">CV / Resume</SelectItem>
-              <SelectItem value="cover_letter">Cover Letter</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="cv">{t('documents.typeCv')}</SelectItem>
+              <SelectItem value="cover_letter">{t('documents.typeCoverLetter')}</SelectItem>
+              <SelectItem value="other">{t('documents.typeOther')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -137,7 +139,7 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
             ) : (
               <Paperclip className="mr-2 h-4 w-4" />
             )}
-            Upload
+            {t('common.upload')}
           </Button>
 
           <input
@@ -152,10 +154,10 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
           />
         </div>
 
-        <p className="text-xs text-muted-foreground">PDF or Word · max 10 MB</p>
+        <p className="text-xs text-muted-foreground">{t('documents.hint')}</p>
 
         {documents.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">No documents uploaded.</p>
+          <p className="py-4 text-center text-sm text-muted-foreground">{t('documents.empty')}</p>
         ) : (
           <ul className="space-y-2">
             {documents.map((doc) => (
@@ -168,7 +170,7 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{doc.file_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {DOCUMENT_TYPE_LABELS[doc.document_type] ?? doc.document_type} ·{' '}
+                      {DOCUMENT_TYPE_I18N_KEY[doc.document_type] ? t(DOCUMENT_TYPE_I18N_KEY[doc.document_type]!) : doc.document_type} ·{' '}
                       {formatBytes(doc.file_size)} ·{' '}
                       {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
                     </p>
@@ -180,7 +182,8 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                    title="Open in new tab"
+                    title={t('documents.openNewTab')}
+                    aria-label={t('documents.openAria')}
                     onClick={() => handleOpen(doc.id, doc.mime_type)}
                     disabled={isPending}
                   >
@@ -190,6 +193,7 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    aria-label={t('documents.deleteAria')}
                     onClick={() => handleDelete(doc.id)}
                     disabled={isPending}
                   >

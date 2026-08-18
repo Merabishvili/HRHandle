@@ -28,7 +28,7 @@ export async function inviteTeamMember(
   }
 
   const parsed = InviteSchema.safeParse({ email, role })
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const limitError = await checkPlanLimit(ctx, 'member')
   if (limitError) return { success: false, error: limitError }
@@ -152,6 +152,124 @@ export async function revokeInvitation(invitationId: string): Promise<ActionResu
     .eq('status', 'pending')
 
   if (error) return { success: false, error: 'Failed to revoke invitation' }
+
+  revalidatePath('/settings')
+  return { success: true, data: undefined }
+}
+
+export async function resendInvitation(invitationId: string): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!isOrgAdmin(ctx.role)) {
+    return { success: false, error: 'Only owners and admins can resend invitations' }
+  }
+
+  const admin = createAdminClient()
+
+  const { data: invite } = await admin
+    .from('team_invitations')
+    .select('id, email, role, token, status')
+    .eq('id', invitationId)
+    .eq('organization_id', ctx.orgId)
+    .single()
+
+  if (!invite || invite.status !== 'pending') {
+    return { success: false, error: 'Invitation not found or no longer pending.' }
+  }
+
+  const [{ data: inviterProfile }, { data: org }] = await Promise.all([
+    admin.from('profiles').select('full_name').eq('id', ctx.userId).single(),
+    admin.from('organizations').select('name').eq('id', ctx.orgId).single(),
+  ])
+
+  // Refresh the expiry window so a resent invite isn't already near-dead.
+  const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  try {
+    await sendTeamInviteEmail({
+      to: invite.email as string,
+      inviterName: inviterProfile?.full_name || 'A team member',
+      organizationName: org?.name || 'your organization',
+      role: invite.role as 'admin' | 'member',
+      token: invite.token as string,
+    })
+  } catch {
+    return { success: false, error: 'Failed to resend invitation email. Please try again.' }
+  }
+
+  await admin
+    .from('team_invitations')
+    .update({ expires_at: newExpiry })
+    .eq('id', invite.id)
+
+  revalidatePath('/settings')
+  return { success: true, data: undefined }
+}
+
+export async function updateMemberRole(
+  memberId: string,
+  role: 'admin' | 'member',
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!isOrgAdmin(ctx.role)) {
+    return { success: false, error: 'Only owners and admins can change roles' }
+  }
+  if (memberId === ctx.userId) {
+    return { success: false, error: 'You cannot change your own role.' }
+  }
+
+  const admin = createAdminClient()
+  const { data: target } = await admin
+    .from('profiles')
+    .select('id, role, organization_id')
+    .eq('id', memberId)
+    .single()
+
+  if (!target || target.organization_id !== ctx.orgId) {
+    return { success: false, error: 'Member not found.' }
+  }
+  if (target.role === 'owner') {
+    return { success: false, error: 'The owner role cannot be changed.' }
+  }
+
+  const { error } = await admin.from('profiles').update({ role }).eq('id', memberId)
+  if (error) return { success: false, error: 'Failed to update role.' }
+
+  revalidatePath('/settings')
+  return { success: true, data: undefined }
+}
+
+export async function removeMember(memberId: string): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!isOrgAdmin(ctx.role)) {
+    return { success: false, error: 'Only owners and admins can remove members' }
+  }
+  if (memberId === ctx.userId) {
+    return { success: false, error: 'You cannot remove yourself.' }
+  }
+
+  const admin = createAdminClient()
+  const { data: target } = await admin
+    .from('profiles')
+    .select('id, role, organization_id')
+    .eq('id', memberId)
+    .single()
+
+  if (!target || target.organization_id !== ctx.orgId) {
+    return { success: false, error: 'Member not found.' }
+  }
+  if (target.role === 'owner') {
+    return { success: false, error: 'The organization owner cannot be removed.' }
+  }
+
+  // Detach from the org (keeps their auth account; they lose org access).
+  const { error } = await admin
+    .from('profiles')
+    .update({ organization_id: null, is_active: false })
+    .eq('id', memberId)
+  if (error) return { success: false, error: 'Failed to remove member.' }
 
   revalidatePath('/settings')
   return { success: true, data: undefined }

@@ -14,7 +14,7 @@ export async function createVacancy(input: VacancyInput): Promise<ActionResult<{
   if (limitError) return { success: false, error: limitError }
 
   const parsed = VacancySchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const tokenForInsert = parsed.data.show_on_public_page
     ? Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url')
@@ -33,6 +33,22 @@ export async function createVacancy(input: VacancyInput): Promise<ActionResult<{
 
   if (error) return { success: false, error: 'Failed to create vacancy' }
 
+  // Wave 2.6 Slice 1 — seed the per-vacancy default pipeline_stages set
+  // (Applied / Screening / Interview / Offer / Hired / Rejected /
+  // Withdrawn). Best-effort: failures are logged but don't fail the
+  // vacancy insert, because Slice 1 still has the legacy status_id path
+  // working underneath. Slice 2's read cutover relies on these rows
+  // existing, so the helper falls back to the legacy join only when this
+  // seed is missing.
+  const { error: seedErr } = await ctx.supabase.rpc('seed_default_pipeline_stages', {
+    p_vacancy_id: data.id,
+    p_org_id: ctx.orgId,
+    p_created_by: ctx.userId,
+  })
+  if (seedErr) {
+    console.error('[vacancies] seed_default_pipeline_stages failed:', seedErr.message)
+  }
+
   revalidatePath('/vacancies')
   return { success: true, data: { id: data.id } }
 }
@@ -45,7 +61,7 @@ export async function updateVacancy(
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
   const parsed = VacancySchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
+  if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
   const updatePayload: Record<string, unknown> = { ...parsed.data }
 
@@ -137,7 +153,7 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
 
   const { data: orig } = await ctx.supabase
     .from('vacancies')
-    .select('title, sector_id, status_id, department, location, employment_type, hiring_manager_name, salary_min, salary_max, salary_currency, openings_count, start_date, end_date, description, responsibilities, requirements')
+    .select('title, sector_id, status_id, department, location, employment_type, work_mode, hiring_manager_name, salary_min, salary_max, salary_currency, openings_count, start_date, end_date, description, responsibilities, requirements')
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
@@ -157,14 +173,14 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
     )
     const endDate = new Date(today)
     endDate.setDate(endDate.getDate() + diffDays)
-    newEndDate = endDate.toISOString().split('T')[0]
+    newEndDate = endDate.toISOString().split('T')[0] ?? null
   } else {
     // BL-012: if the original was open-ended (no end_date), default the
     // duplicate to today + 90 days so it doesn't silently inherit a null
     // deadline. The user can still clear it on the edit page.
     const fallbackEnd = new Date(today)
     fallbackEnd.setDate(fallbackEnd.getDate() + 90)
-    newEndDate = fallbackEnd.toISOString().split('T')[0]
+    newEndDate = fallbackEnd.toISOString().split('T')[0] ?? null
   }
 
   const { data: draftStatus } = await ctx.supabase
@@ -184,6 +200,7 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
       department: orig.department,
       location: orig.location,
       employment_type: orig.employment_type,
+      work_mode: orig.work_mode,
       hiring_manager_name: orig.hiring_manager_name,
       salary_min: orig.salary_min,
       salary_max: orig.salary_max,
@@ -202,10 +219,43 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
 
   if (vacancyError || !newVacancy) return { success: false, error: 'Failed to duplicate vacancy' }
 
-  // Copy assessment questions
+  // Wave 2.6 Slice 1 — copy the source vacancy's pipeline_stages onto
+  // the duplicate so any custom stages the recruiter set up are carried
+  // forward. If the source has none (shouldn't happen after Migration
+  // 049's backfill) fall back to the seeder so the duplicate at least
+  // has the default 7-stage set.
+  const { data: srcStages } = await ctx.supabase
+    .from('pipeline_stages')
+    .select('name, type, sort_order, is_terminal')
+    .eq('vacancy_id', id)
+    .order('sort_order', { ascending: true })
+
+  if (srcStages && srcStages.length > 0) {
+    await ctx.supabase.from('pipeline_stages').insert(
+      srcStages.map((s) => ({
+        vacancy_id: newVacancy.id,
+        organization_id: ctx.orgId,
+        name: s.name,
+        type: s.type,
+        sort_order: s.sort_order,
+        is_terminal: s.is_terminal,
+        created_by: ctx.userId,
+      })),
+    )
+  } else {
+    await ctx.supabase.rpc('seed_default_pipeline_stages', {
+      p_vacancy_id: newVacancy.id,
+      p_org_id: ctx.orgId,
+      p_created_by: ctx.userId,
+    })
+  }
+
+  // Copy assessment questions — including the Wave 2.5 must_have flag so
+  // duplicated roles inherit the original's hard-requirement attributes
+  // and recruiters don't have to re-toggle them.
   const { data: questions } = await ctx.supabase
     .from('vacancy_questions')
-    .select('label, type, sort_order')
+    .select('label, type, sort_order, must_have')
     .eq('vacancy_id', id)
     .eq('organization_id', ctx.orgId)
     .order('sort_order', { ascending: true })
@@ -218,6 +268,7 @@ export async function duplicateVacancy(id: string): Promise<ActionResult<{ id: s
         label: q.label,
         type: q.type,
         sort_order: q.sort_order,
+        must_have: q.must_have ?? false,
       }))
     )
   }

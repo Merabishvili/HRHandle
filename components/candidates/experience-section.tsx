@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   createExperienceEntry,
   updateExperienceEntry,
@@ -40,6 +41,7 @@ interface EntryFormProps {
 }
 
 function EntryForm({ value, onChange, onSave, onCancel, isPending, error }: EntryFormProps) {
+  const t = useTranslations()
   return (
     <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
       {error && (
@@ -49,48 +51,48 @@ function EntryForm({ value, onChange, onSave, onCancel, isPending, error }: Entr
       )}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
-          <Label className="text-xs">Company *</Label>
-          <Input value={value.company} onChange={(e) => onChange({ ...value, company: e.target.value })} placeholder="Company name" maxLength={200} disabled={isPending} />
+          <Label className="text-xs">{t('candWizard.background.company')} *</Label>
+          <Input value={value.company} onChange={(e) => onChange({ ...value, company: e.target.value })} placeholder={t('candidateForm.phCompanyName')} maxLength={200} disabled={isPending} />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Title *</Label>
-          <Input value={value.title} onChange={(e) => onChange({ ...value, title: e.target.value })} placeholder="Job title" maxLength={200} disabled={isPending} />
+          <Label className="text-xs">{t('candWizard.background.title')} *</Label>
+          <Input value={value.title} onChange={(e) => onChange({ ...value, title: e.target.value })} placeholder={t('candidateForm.phJobTitle')} maxLength={200} disabled={isPending} />
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
-          <Label className="text-xs">Start date</Label>
+          <Label className="text-xs">{t('candidateForm.startDate')}</Label>
           <Input type="month" value={value.start_date ?? ''} onChange={(e) => onChange({ ...value, start_date: e.target.value || null })} disabled={isPending} />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">End date</Label>
+          <Label className="text-xs">{t('candidateForm.endDate')}</Label>
           <Input type="month" value={value.end_date ?? ''} onChange={(e) => onChange({ ...value, end_date: e.target.value || null })} disabled={isPending || value.is_current} />
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm cursor-pointer">
         <input type="checkbox" checked={value.is_current} onChange={(e) => onChange({ ...value, is_current: e.target.checked, end_date: e.target.checked ? null : value.end_date })} disabled={isPending} className="rounded" />
-        Currently working here
+        {t('candidateForm.currentlyWorking')}
       </label>
       <div className="space-y-1">
-        <Label className="text-xs">Description</Label>
-        <Textarea value={value.description ?? ''} onChange={(e) => onChange({ ...value, description: e.target.value || null })} placeholder="Role description (optional)" rows={2} maxLength={1000} disabled={isPending} />
+        <Label className="text-xs">{t('bgSection.description')}</Label>
+        <Textarea value={value.description ?? ''} onChange={(e) => onChange({ ...value, description: e.target.value || null })} placeholder={t('bgSection.descPlaceholder')} rows={2} maxLength={1000} disabled={isPending} />
       </div>
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" size="sm" onClick={onCancel} disabled={isPending}>
-          <X className="h-4 w-4 mr-1" />Cancel
+          <X className="h-4 w-4 mr-1" />{t('common.cancel')}
         </Button>
         <Button size="sm" onClick={onSave} disabled={isPending || !value.company.trim() || !value.title.trim()}>
-          {isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}Save
+          {isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}{t('common.save')}
         </Button>
       </div>
     </div>
   )
 }
 
-function formatDateRange(entry: CandidateExperience): string | null {
+function formatDateRange(entry: CandidateExperience, t: (key: string) => string): string | null {
   const fmt = (d: string) => d.slice(0, 7)
   const start = entry.start_date ? fmt(entry.start_date) : null
-  const end   = entry.is_current ? 'Present' : entry.end_date ? fmt(entry.end_date) : null
+  const end   = entry.is_current ? t('bgSection.presentShort') : entry.end_date ? fmt(entry.end_date) : null
   if (!start && !end) return null
 
   // duration in months
@@ -101,13 +103,16 @@ function formatDateRange(entry: CandidateExperience): string | null {
     const months = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth())
     const yrs = Math.floor(months / 12)
     const mos = months % 12
-    duration = yrs > 0 ? `${yrs}y ${mos > 0 ? mos + 'mo' : ''}`.trim() : `${mos}mo`
+    duration = yrs > 0
+      ? `${yrs}${t('bgSection.yShort')} ${mos > 0 ? mos + t('bgSection.moShort') : ''}`.trim()
+      : `${mos}${t('bgSection.moShort')}`
   }
 
   return [start && end ? `${start} — ${end}` : start ?? end, duration].filter(Boolean).join(' · ')
 }
 
 export function ExperienceSection({ candidateId, initialEntries }: ExperienceSectionProps) {
+  const t = useTranslations()
   const [entries, setEntries]     = useState<CandidateExperience[]>(initialEntries)
   const [adding, setAdding]       = useState(false)
   const [addForm, setAddForm]     = useState<ExperienceEntryInput>(BLANK)
@@ -116,6 +121,11 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set(initialEntries[0] ? [initialEntries[0].id] : []))
   const [error, setError]         = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  // A-12c — Collapse the section body on mobile by default so the page
+  // doesn't dwarf the user with a long timeline. Always expanded on
+  // sm+. The `Add` button takes priority over the collapse toggle when
+  // both could appear (only the toggle is gated by sm:hidden anyway).
+  const [collapsedOnMobile, setCollapsedOnMobile] = useState(true)
 
   const toggleExpand = (id: string) =>
     setExpandedIds((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
@@ -145,7 +155,7 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
     startTransition(async () => {
       const result = await updateExperienceEntry(editingId, candidateId, editForm)
       if (!result.success) { setError(result.error); return }
-      setEntries((prev) => prev.map((e) => e.id === editingId ? { ...e, ...editForm } : e))
+      setEntries((prev) => prev.map((e) => e.id === editingId ? ({ ...e, ...editForm } as CandidateExperience) : e))
       setEditingId(null)
     })
   }
@@ -161,19 +171,35 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      {/* Header */}
+      {/* Header — clicking the title row toggles collapse on mobile;
+          inert on sm+ (sm:cursor-default sm:pointer-events-none on the
+          chevron — but the whole row stays harmless because the body
+          is always rendered on sm+ anyway). */}
       <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setCollapsedOnMobile((v) => !v)}
+          className="flex items-center gap-2 text-left sm:cursor-default"
+          aria-expanded={!collapsedOnMobile}
+        >
           <Briefcase className="h-4 w-4 text-muted-foreground" />
-          <span className="text-[15px] font-bold text-foreground">Experience</span>
+          <span className="text-[15px] font-bold text-foreground">{t('candWizard.background.experience')}</span>
           {entries.length > 0 && <span className="text-[12px] text-muted-foreground">({entries.length})</span>}
-        </div>
+          <ChevronDown
+            className={`h-3.5 w-3.5 text-muted-foreground transition-transform sm:hidden ${!collapsedOnMobile ? 'rotate-180' : ''}`}
+            aria-hidden
+          />
+        </button>
         {!adding && (
-          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => { setAdding(true); setAddForm(BLANK); setError(null) }} disabled={isPending}>
-            <Plus className="h-3.5 w-3.5" />Add
+          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => { setAdding(true); setAddForm(BLANK); setError(null); setCollapsedOnMobile(false) }} disabled={isPending}>
+            <Plus className="h-3.5 w-3.5" />{t('wizard.add')}
           </Button>
         )}
       </div>
+
+      {/* Body — visible on sm+ always; on mobile only when expanded.
+          Add-form auto-expands the body via the Add button handler. */}
+      <div className={collapsedOnMobile ? 'hidden sm:block' : 'block'}>
 
       {error && !adding && !editingId && (
         <Alert variant="destructive" className="mb-3 py-2">
@@ -188,7 +214,7 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
       )}
 
       {entries.length === 0 && !adding && (
-        <p className="py-4 text-center text-sm text-muted-foreground">No experience added yet.</p>
+        <p className="py-4 text-center text-sm text-muted-foreground">{t('candidateForm.noExpAdded')}</p>
       )}
 
       {/* Timeline */}
@@ -201,7 +227,7 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
             const isFirst    = idx === 0
             const isExpanded = expandedIds.has(entry.id)
             const isEditing  = editingId === entry.id
-            const dateRange  = formatDateRange(entry)
+            const dateRange  = formatDateRange(entry, t)
 
             return (
               <div key={entry.id} className="relative mb-2 last:mb-0">
@@ -239,14 +265,14 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
                         {entry.description ? (
                           <p className="text-[12.5px] leading-[1.55] text-muted-foreground">{entry.description}</p>
                         ) : (
-                          <p className="text-[12px] italic text-muted-foreground/60">No description.</p>
+                          <p className="text-[12px] italic text-muted-foreground/60">{t('bgSection.noDescription')}</p>
                         )}
                         <div className="mt-3 flex gap-2">
                           <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => handleEdit(entry)} disabled={isPending}>
-                            <Pencil className="h-3 w-3" />Edit
+                            <Pencil className="h-3 w-3" />{t('common.edit')}
                           </Button>
                           <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-destructive hover:text-destructive" onClick={() => handleDelete(entry.id)} disabled={isPending}>
-                            {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}Delete
+                            {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}{t('common.delete')}
                           </Button>
                         </div>
                       </div>
@@ -258,6 +284,7 @@ export function ExperienceSection({ candidateId, initialEntries }: ExperienceSec
           })}
         </div>
       )}
+      </div>
     </div>
   )
 }

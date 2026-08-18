@@ -4,6 +4,7 @@ _Last updated: 2026-05-08_
 
 ## Changelog
 
+- 🆕 `components/candidates/candidate-table-row.tsx` & `candidate-optional-cell.tsx` — the Candidates list page (`app/(dashboard)/candidates/page.tsx`) was split (A-002): row + optional-column rendering extracted into these server components, and the fit-score / stage / custom-field shaping moved to the pure `lib/candidates/list-derivation.ts` (unit-tested). The page keeps only the queries + orchestration.
 - 🆕 `components/candidates/experience-section.tsx` & `education-section.tsx` — timeline-style editors on candidate detail page
 - 🆕 `components/candidates/activity-feed.tsx` — reads the rebuilt `candidate_activity` view (kind/headline/body/meta/actor_name)
 - 🆕 `components/vacancies/linkedin-post-job-button.tsx` — uses the saved LinkedIn page ID
@@ -126,6 +127,16 @@ HRHandle does not use a global client-side state manager (no Redux, Zustand, etc
 - **Feature components**: `components/[domain]/` — compose UI primitives, call server actions.
 - **cn() utility**: `lib/utils.ts` — combines `clsx` + `tailwind-merge` for conditional class names.
 
+### Forms — react-hook-form + zod (A-005)
+
+Larger edit forms use **react-hook-form** with a **zodResolver**, not hand-rolled `useState` + manual `validateForm`. Adopted on the vacancy and candidate forms:
+
+- `components/vacancies/vacancy-form.tsx` — owns `useForm`, the submit/`onInvalid` handlers, and the server-action call. Splits its cards into section components under `components/vacancies/form/` (`basic-info-section`, `dates-compensation-section`, `details-section`), each receiving the `UseFormReturn` and rendering fields via `register` (native inputs/textareas) or `Controller` (Select / DatePicker / Switch / numeric inputs that need `null`-vs-number semantics).
+- `components/candidates/candidate-form.tsx` — RHF owns the ~11 core profile fields (`CandidateFormSchema`); the rest stays local `useState` because it's orchestration, not form data: CV-parse state, the two-path entry mode, pending experience/education, queued documents, the initial note, custom fields. Split into `components/candidates/form/` — `personal-info-section` + `recruitment-details-section` (RHF), and `pending-experience-card` + `pending-education-card` (create-only editors that own their own draft state and commit entries via `onAdd`/`onRemove`).
+- **Two schemas per form.** The server-payload schema (e.g. `VacancySchema`) is nullable; the form-facing schema (`VacancyFormSchema`) is `''`/sentinel-based to match what the controls emit, and additionally requires fields the UI enforces (sector + status). The submit handler converts the form values (`''` / `WORK_MODE_NONE` → `null`) into the server payload. This split is intentional — the live form and the DB payload genuinely have different shapes.
+- Scroll-to-first-error on submit is preserved via an `onInvalid` handler that maps the first error field (by a fixed priority) to a DOM id and scrolls + focuses it.
+- Non-form orchestration state (custom-field values, loading, server error) stays in `useState` alongside the form.
+
 ## Guide pattern (`content/guides/*.mdx` + `lib/guides/`)
 
 Guides are static MDX files in `content/guides/`, registered in `lib/guides/registry.ts` (slug, title, summary, category, order). The `[slug]` route uses `next-mdx-remote/rsc` to compile MDX server-side at request time and `generateStaticParams` to prerender every guide that has an MDX file. `remark-gfm` is passed in `MDXRemote` options so GitHub-flavored markdown tables render. Custom `<Screenshot>` is the only authoring component required; styled defaults for headings, lists, links, and GFM tables live in `components/guide/mdx-components.tsx`.
@@ -143,7 +154,49 @@ Annotated screenshots are produced by `scripts/capture-screenshots.ts` (Playwrig
 | `metadata-footer.tsx` | Server | 2-col grid: Source, Added (relative), Last Updated, Candidate ID (short, monospace). |
 | `activity-feed.tsx` | Client | Unified activity feed consuming `candidate_activity` view rows. Filter chips (All / Notes / Interviews / Stage changes / Documents). Inline note composer (Enter to post). Delete on note items. |
 | `experience-section.tsx` | Client | Timeline with absolute left rail + dots. First entry expanded by default; others collapsed. Each entry expandable/collapsible. Edit/Delete buttons in expanded body. |
+| `candidate-table-row.tsx` | Server | One row of the `/candidates` list — fixed columns (name / status / linked vacancy) + active optional columns (via `candidate-optional-cell.tsx`) + row actions menu. |
+| `candidate-optional-cell.tsx` | Server | Renders the correct `<TableCell>` for one optional/custom column key (position, email, stage badge, fit %, custom fields, …). |
+
+`lib/candidates/list-derivation.ts` holds the page's pure shaping helpers (`groupApplicationsByCandidate`, `aggregateFitScores`, `deriveStageAndFit`, `formatCustomFieldValue`, `buildCustomFieldValueMap`) plus the shared row types — unit-tested in `lib/candidates/__tests__/`.
 
 ## `components/ui/status-pill.tsx`
 
 Shared status pill used across candidates and applications. `PILL_STYLES` maps status codes to `oklch()`-based Tailwind background + text colour pairs.
+
+## Recent additions (2026-06-18 redesign session)
+
+Shipped as Wave 1 / Wave 2 partials of the [redesign](../redesign/) corpus.
+
+### New components
+
+| File | Type | Purpose |
+|---|---|---|
+| `components/ui/ai-draft-tag.tsx` | Server | Calm-blue Sparkles + label pill on AI-generated output. Replaces the pre-S10 alarm-orange "AI-GENERATED — RECRUITER HAS NOT REVIEWED OR EDITED" stamp. Default label "AI draft"; alternatives "AI suggestion" (bias-check, assessment-suggester), "AI-filled · review" (CV parse), "AI-assisted" (persisted provenance). |
+| `components/ui/ai-draft-panel.tsx` | Client | Shared shell for the invoke → draft → review → confirm pattern (S10 §2.3). 4-state status prop (`idle` / `generating` / `ready` / `error`). Forward-looking for new AI surfaces (AI Fit Analysis, future scorecard-from-notes UIs). |
+| `components/dashboard/trial-pill.tsx` | Server | Compact amber pill in the header right cluster, replacing the deleted full-width `TrialBanner`. Renders only when `subscription.status === 'trial'` and `trial_end_at` is set. `daysRemaining()` helper exported for unit tests. |
+| `components/vacancies/copy-apply-link-button.tsx` | Client | Header-level "Copy apply link" — clipboard write + sonner toast + brief Check icon swap + graceful error if blocked. Renders only when `vacancy.application_form_token` is set. |
+| `components/settings/notification-preferences-form.tsx` | Client | Switch-based form for `profiles.notification_preferences` JSONB. 6 email events + 2 in-product toggles; whole-object replace on save. |
+
+### Settings nav restructure
+
+`components/settings/settings-nav.tsx` rewritten from a flat 10-item array to a grouped `NAV_SECTIONS` array of 4 sections: **Personal** (Profile / Notifications / Security) · **Organization** (Organization / Team / Billing) · **Hiring workflow** (Custom fields / Email templates / Rejection reasons / Integrations) · **Data** (Audit log / Trash). Section labels in small-caps muted text; section hidden if every item filters out by role. See [`docs/redesign/flows/S07-settings.md`](../redesign/flows/S07-settings.md) §2.1.
+
+### Removed components
+
+| File | Replacement |
+|---|---|
+| `components/dashboard/trial-banner.tsx` | `components/dashboard/trial-pill.tsx`. The expired-trial branch was unreachable dead code (the layout redirects to `/settings/billing` before render). |
+| `components/candidates/candidate-status-select.tsx` | None — candidate status is derived from applications via the Migration 022 sync trigger (fixed in 044). The `general_status_id` column stays as the trigger's cache; the editable dropdown is gone per Q1. |
+
+### New routes
+
+| Route | Notes |
+|---|---|
+| `/pipeline` | Wave 2.1 scaffolding. Has vacancy → redirect to most-recently-created open (then draft, then any) vacancy's `/vacancies/[id]/pipeline`. Zero vacancies → welcome card with "Create your first vacancy" + "Import candidates" + 3-step orientation strip (locked Q-S01-e). Replaced by the real cross-vacancy kanban in Wave 2.1 full. |
+| `/settings/notifications` | Personal → Notifications. Renders `NotificationPreferencesForm`. |
+| `/settings/security` | Personal → Security. Composes `ChangePasswordForm` + `TwoFactorSection` lifted out of `/settings/profile`. Per-user MFA only — org-wide MFA policy stays on `/settings/organization` per locked Q8. |
+| `/settings/billing` | Was a 5-line redirect to `/subscription`; now hosts the 277-LOC billing UI. The legacy `/subscription` route is the redirect (kept ~6 months per Q-S7-g). |
+
+### Sidebar nav
+
+`components/dashboard/sidebar.tsx`: removed the standalone "Subscription" entry (under Settings → Organization → Billing now); added "Pipeline" (KanbanSquare icon) between Dashboard and Vacancies. Dashboard stays until the full Wave 2.1 kanban replaces it as the post-login landing.

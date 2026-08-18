@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { UserPlus, Loader2, Search, UserCircle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ interface Candidate {
 }
 
 export function AddCandidateToVacancyDialog({ vacancyId }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -91,12 +93,12 @@ export function AddCandidateToVacancyDialog({ vacancyId }: Props) {
       <DialogTrigger asChild>
         <Button size="sm">
           <UserPlus className="mr-2 h-3.5 w-3.5" />
-          Add Candidate
+          {t('pipeline.addCandidate')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Candidate to Vacancy</DialogTitle>
+          <DialogTitle>{t('addCandVac.title')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-1">
@@ -104,7 +106,7 @@ export function AddCandidateToVacancyDialog({ vacancyId }: Props) {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name or email…"
+              placeholder={t('addCandVac.searchPlaceholder')}
               value={query}
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-9"
@@ -124,7 +126,7 @@ export function AddCandidateToVacancyDialog({ vacancyId }: Props) {
               <div className="flex flex-col items-center py-8 text-center px-4">
                 <UserCircle className="h-8 w-8 text-muted-foreground/40" />
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {query ? 'No candidates match your search.' : 'No candidates available to add.'}
+                  {query ? t('addCandVac.noMatch') : t('addCandVac.noneAvailable')}
                 </p>
               </div>
             ) : (
@@ -153,7 +155,7 @@ export function AddCandidateToVacancyDialog({ vacancyId }: Props) {
                     {isAdding && addingId === c.id ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
                     ) : (
-                      'Add'
+                      t('addCandVac.addBtn')
                     )}
                   </Button>
                 </div>
@@ -163,11 +165,11 @@ export function AddCandidateToVacancyDialog({ vacancyId }: Props) {
 
           {/* Create new candidate */}
           <div className="flex items-center justify-between border-t border-border pt-3">
-            <span className="text-sm text-muted-foreground">Can't find who you're looking for?</span>
+            <span className="text-sm text-muted-foreground">{t('addCandVac.cantFind')}</span>
             <Button size="sm" variant="outline" asChild onClick={() => setOpen(false)}>
               <Link href={`/candidates/new?vacancy=${vacancyId}`}>
                 <Plus className="mr-1.5 h-3.5 w-3.5" />
-                New Candidate
+                {t('candWizard.review.newCandidate')}
               </Link>
             </Button>
           </div>

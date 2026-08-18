@@ -1,57 +1,50 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { updateCandidateStatus, deleteCandidate } from '@/lib/actions/candidates'
+import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
-
-interface CandidateGeneralStatusOption {
-  id: string
-  name: string
-  code: 'new' | 'active' | 'in_process' | 'hired' | 'rejected' | 'archived'
-}
+import { DeleteCandidateDialog } from '@/components/candidates/delete-candidate-dialog'
 
 interface CandidateStatusActionsProps {
   candidateId: string
-  currentStatusId: string | null
-  statusOptions: CandidateGeneralStatusOption[]
+  candidateName: string
 }
 
+/**
+ * Wave 1.1 — General Status is no longer user-editable; the "Move to
+ * Active / Hired / Archived" items are gone. Candidate status is now
+ * derived from the application stage(s) and synced by the app-level
+ * code on stage transitions. This component now hosts just the Delete
+ * affordance on the candidates-index row ⋮ menu.
+ */
 export function CandidateStatusActions({
   candidateId,
-  currentStatusId,
-  statusOptions,
+  candidateName,
 }: CandidateStatusActionsProps) {
-  const router = useRouter()
-
-  const handleStatusChange = async (generalStatusId: string) => {
-    await updateCandidateStatus(candidateId, generalStatusId)
-    router.refresh()
-  }
-
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this candidate? This action cannot be undone.')) {
-      return
-    }
-    const result = await deleteCandidate(candidateId)
-    if (result.success) {
-      router.push('/candidates')
-    }
-  }
+  const t = useTranslations()
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   return (
     <>
       <DropdownMenuSeparator />
-      {statusOptions
-        .filter((status) => status.id !== currentStatusId)
-        .map((status) => (
-          <DropdownMenuItem key={status.id} onClick={() => handleStatusChange(status.id)}>
-            Move to {status.name}
-          </DropdownMenuItem>
-        ))}
-      <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-        Delete candidate
+      <DropdownMenuItem
+        // The dropdown menu would otherwise close before the dialog mounts,
+        // so we prevent the default close behaviour and open the dialog
+        // ourselves. Pattern recommended by Radix for "menu item opens dialog".
+        onSelect={(e) => {
+          e.preventDefault()
+          setDeleteOpen(true)
+        }}
+        className="text-destructive"
+      >
+        {t('candidates.deleteCandidate')}
       </DropdownMenuItem>
+      <DeleteCandidateDialog
+        candidateId={candidateId}
+        candidateName={candidateName}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
     </>
   )
 }

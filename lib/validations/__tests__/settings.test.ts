@@ -19,7 +19,7 @@ describe('ProfileSchema', () => {
   it('rejects empty full_name', () => {
     const r = ProfileSchema.safeParse({ full_name: '' })
     expect(r.success).toBe(false)
-    if (!r.success) expect(r.error.issues[0].message).toBe('Full name is required')
+    if (!r.success) expect(r.error.issues[0]!.message).toBe('Full name is required')
   })
 
   it('rejects full_name longer than 100 chars', () => {
@@ -53,7 +53,7 @@ describe('OrganizationSchema', () => {
   it('rejects empty name', () => {
     const r = OrganizationSchema.safeParse({ name: '' })
     expect(r.success).toBe(false)
-    if (!r.success) expect(r.error.issues[0].message).toBe('Organization name is required')
+    if (!r.success) expect(r.error.issues[0]!.message).toBe('Organization name is required')
   })
 
   it('rejects name longer than 200 chars', () => {

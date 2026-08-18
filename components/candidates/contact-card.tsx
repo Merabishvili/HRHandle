@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Mail, Phone, Linkedin, Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -11,6 +12,7 @@ interface ContactCardProps {
 }
 
 function CopyButton({ value }: { value: string }) {
+  const t = useTranslations()
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -28,7 +30,7 @@ function CopyButton({ value }: { value: string }) {
       <button
         onClick={handleCopy}
         className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        aria-label={copied ? 'Copied to clipboard' : 'Copy'}
+        aria-label={copied ? t('common.copied') : t('common.copy')}
       >
         {copied
           ? <Check className="h-3.5 w-3.5 text-[oklch(0.65_0.17_145)]" aria-hidden="true" />
@@ -37,7 +39,7 @@ function CopyButton({ value }: { value: string }) {
       </button>
       {/* Live region announces the copy action for screen readers (audit AC-003) */}
       <span className="sr-only" role="status" aria-live="polite">
-        {copied ? 'Copied to clipboard' : ''}
+        {copied ? t('common.copied') : ''}
       </span>
     </>
   )
@@ -53,6 +55,7 @@ interface ContactRowProps {
 }
 
 function ContactRow({ icon, label, value, href, isLink, last }: ContactRowProps) {
+  const t = useTranslations()
   return (
     <div className={cn('flex items-center gap-3 py-2', !last && 'border-b border-border/50')}>
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
@@ -70,7 +73,7 @@ function ContactRow({ icon, label, value, href, isLink, last }: ContactRowProps)
               isLink ? 'text-[oklch(0.55_0.18_250)] hover:underline' : 'text-foreground hover:underline'
             )}
           >
-            {isLink ? 'View Profile' : value}
+            {isLink ? t('contact.viewProfile') : value}
           </a>
         ) : (
           <p className="truncate text-[12.5px] text-foreground">{value}</p>
@@ -86,17 +89,18 @@ function normalizeUrl(url: string): string {
 }
 
 export function ContactCard({ email, phone, linkedinUrl }: ContactCardProps) {
+  const t = useTranslations()
   const rows = [
-    email       && { icon: <Mail className="h-4 w-4" />,     label: 'Email',    value: email,       href: `mailto:${email}` },
-    phone       && { icon: <Phone className="h-4 w-4" />,    label: 'Phone',    value: phone,       href: `tel:${phone}` },
-    linkedinUrl && { icon: <Linkedin className="h-4 w-4" />, label: 'LinkedIn', value: linkedinUrl, href: normalizeUrl(linkedinUrl), isLink: true },
+    email       && { icon: <Mail className="h-4 w-4" />,     label: t('columns.email'),   value: email,       href: `mailto:${email}` },
+    phone       && { icon: <Phone className="h-4 w-4" />,    label: t('columns.phone'),   value: phone,       href: `tel:${phone}` },
+    linkedinUrl && { icon: <Linkedin className="h-4 w-4" />, label: t('contact.linkedin'), value: linkedinUrl, href: normalizeUrl(linkedinUrl), isLink: true },
   ].filter(Boolean) as ContactRowProps[]
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      <h3 className="mb-1 text-[14px] font-bold text-foreground">Contact</h3>
+      <h3 className="mb-1 text-[14px] font-bold text-foreground">{t('profile.contact')}</h3>
       {rows.length === 0 ? (
-        <p className="py-2 text-[12.5px] text-muted-foreground">No contact information available.</p>
+        <p className="py-2 text-[12.5px] text-muted-foreground">{t('contact.noInfo')}</p>
       ) : (
         <div>
           {rows.map((row, i) => (

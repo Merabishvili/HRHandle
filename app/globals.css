@@ -15,7 +15,8 @@
   --secondary: oklch(0.96 0.01 250);
   --secondary-foreground: oklch(0.25 0.02 250);
   --muted: oklch(0.95 0.01 250);
-  --muted-foreground: oklch(0.5 0.02 250);
+  /* Darkened from 0.5 → 0.45 for WCAG AA contrast on normal-weight body text (AC-012). */
+  --muted-foreground: oklch(0.45 0.02 250);
   --accent: oklch(0.7 0.15 165);
   --accent-foreground: oklch(0.15 0.02 165);
   --destructive: oklch(0.577 0.245 27.325);
@@ -83,7 +84,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans), 'Geist', 'Geist Fallback';
+  --font-sans: var(--font-geist-sans), var(--font-noto-georgian), 'Noto Sans Georgian', 'Geist', 'Geist Fallback';
   --font-mono: var(--font-geist-mono), 'Geist Mono', 'Geist Mono Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -140,4 +141,34 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* A-10b — Subtle pulse for time-sensitive countdown text (e.g. the
+ * Public Offer page when the urgency tier is `urgent`). Per the
+ * mobile design doc: "Pulse only on the final 2 hours; constant
+ * flashing is hostile." Our offer countdown is YMD-granular so we
+ * apply this only when `urgency === 'urgent'` (≤1 day left).
+ *
+ * Opacity-only animation so it doesn't compete with the page's
+ * brand-amber colour itself; reduced-motion users opt out entirely. */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-soft {
+    animation: none;
+  }
+}
+
+/* Global route-transition bar (NavigationLoader) — a 1/3-width segment that
+ * slides across, giving an indeterminate progress feel. */
+@keyframes nav-loading {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(420%); }
 }

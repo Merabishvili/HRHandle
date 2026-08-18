@@ -27,7 +27,10 @@ export async function exchangeMicrosoftCode(code: string): Promise<{
   refresh_token: string
   expires_in: number
 } | null> {
-  if (!env.MICROSOFT_CLIENT_ID || !env.MICROSOFT_CLIENT_SECRET) return null
+  if (!env.MICROSOFT_CLIENT_ID || !env.MICROSOFT_CLIENT_SECRET) {
+    console.error('[microsoft/graph] exchangeMicrosoftCode: MICROSOFT_CLIENT_ID or MICROSOFT_CLIENT_SECRET not configured')
+    return null
+  }
 
   const res = await fetch(`${AUTH_BASE}/token`, {
     method: 'POST',
@@ -42,7 +45,23 @@ export async function exchangeMicrosoftCode(code: string): Promise<{
     }),
   })
 
-  if (!res.ok) return null
+  if (!res.ok) {
+    // Surface the real Azure error (AADSTS…) instead of swallowing it — the
+    // most common causes here are an invalid/expired client secret and a
+    // redirect_uri that isn't registered on the Azure app. See the operator
+    // checklist in docs/4-integrations/microsoft.md.
+    let bodyExcerpt = ''
+    try {
+      bodyExcerpt = (await res.text()).slice(0, 500)
+    } catch {
+      /* swallow */
+    }
+    console.error(
+      `[microsoft/graph] exchangeMicrosoftCode failed: ${res.status} ${res.statusText} (redirect_uri=${getMicrosoftRedirectUri()})`,
+      bodyExcerpt,
+    )
+    return null
+  }
   return res.json()
 }
 
@@ -63,7 +82,19 @@ async function refreshMicrosoftToken(
     }),
   })
 
-  if (!res.ok) return null
+  if (!res.ok) {
+    let bodyExcerpt = ''
+    try {
+      bodyExcerpt = (await res.text()).slice(0, 500)
+    } catch {
+      /* swallow */
+    }
+    console.error(
+      `[microsoft/graph] refreshMicrosoftToken failed: ${res.status} ${res.statusText}`,
+      bodyExcerpt,
+    )
+    return null
+  }
   const data = await res.json()
   return {
     access_token: data.access_token,

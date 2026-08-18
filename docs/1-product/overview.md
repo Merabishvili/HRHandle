@@ -1,12 +1,15 @@
 # HRHandle — Product Overview
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
-- 🆕 AI-assisted CV parsing surfaces structured candidate fields on both public-apply and internal "New Candidate" forms
-- 🆕 Candidate background (work history + education) is now first-class
-- 🆕 LinkedIn integration (manual page-ID) lets owners/admins re-post vacancies from within the app
+- 🔄 **Pipeline is now the home surface (redesign A-1).** The old `/dashboard` was retired; `/dashboard` redirects to `/pipeline`, a cross-vacancy kanban that is the default landing after login/onboarding.
+- 🆕 **Offers** (G-018) — structured offer flow with a candidate-facing `/offer/<token>` Accept/Decline page.
+- 🆕 **Reports** (G-029) — pipeline conversion, time-to-hire, source effectiveness at `/reports`.
+- 🆕 **Integrations** — Slack/Teams webhooks (G-030) + Calendly (G-031), alongside Google/Zoom/Teams meeting creation.
+- 🆕 **2FA/TOTP** (G-032), **CSV candidate import** (G-028), **global cmd-K search** (G-023), **scorecard sharing** (G-025), **custom per-vacancy pipeline stages** (Wave 2.6), **multi-reviewer scorecards**, vacancy **work mode**, profile **language + avatar upload**.
+- 🆕 AI-assisted CV parsing on public-apply + internal forms; candidate background (work history + education); LinkedIn page-ID integration.
 
 ---
 
@@ -27,7 +30,10 @@ HRHandle is a SaaS applicant tracking system (ATS) for small-to-medium businesse
 | **Vacancies** | Create and manage job postings with status tracking (Draft, Open, On Hold, Closed, Archived). Supports public job listing page and application form link. |
 | **Candidates** | Central talent pool. Stores professional details, documents, notes, status, custom fields. |
 | **Applications** | Links candidates to vacancies. Tracks pipeline stage (Applied → Screening → Interview → Offer → Hired / Rejected). |
-| **Pipeline** | Kanban-style board per vacancy. Drag-and-drop application stage movement. |
+| **Pipeline** | The home surface (`/pipeline`) — a cross-vacancy kanban across all open vacancies, plus a per-vacancy board. Drag-and-drop stage movement, Quick Review mode, bulk actions. |
+| **Offers** | Structured offer records per application; recruiter panel + candidate-facing `/offer/<token>` Accept/Decline page (accept flows into Hired). |
+| **Reports** | Pipeline-conversion funnel, time-to-hire, and source-effectiveness at `/reports`. |
+| **Scorecards** | Configurable per-vacancy interview scorecards; multi-reviewer evaluations; token-shared `/scorecard/<token>`. |
 | **Interviews** | Schedule video/phone/on-site interviews. Integrates Google Meet, Zoom, and Microsoft Teams for meeting creation. Sends email invitations to candidates. |
 | **Notifications** | In-app bell notifications for interview schedules and new public-form applications. |
 | **Team** | Invite colleagues as Admin or Member. Role-based access controls. |
@@ -43,7 +49,7 @@ HRHandle is a SaaS applicant tracking system (ATS) for small-to-medium businesse
 1. User registers at `/auth/sign-up` with name, company name, email, password.
 2. Confirms email via link → `/auth/confirm?token_hash=…&type=signup`.
 3. First dashboard hit triggers `runOnboarding()`: creates organisation, profile (role=owner), 7-day trial subscription, seed rejection reason and template.
-4. User lands on `/dashboard`.
+4. User lands on `/pipeline` (the home surface; `/dashboard` redirects there).
 
 ### 2. Post a Vacancy & Receive Applications
 1. Owner/admin creates vacancy at `/vacancies/new` (title, description, start date required).
@@ -71,5 +77,5 @@ HRHandle is a SaaS applicant tracking system (ATS) for small-to-medium businesse
 
 ### 6. Subscription Upgrade
 1. User visits `/subscription` (trial users auto-redirected there when trial expires).
-2. Views plan cards: Trial, Individual ($20/mo), Organization ($40/mo).
-3. Clicks "Upgrade" — **payment wiring is not yet implemented** (LemonSqueezy planned).
+2. Views plan cards in their local currency (Trial; Individual; Organization) — GEL for Georgia, EUR in the EU, otherwise USD.
+3. Clicks "Upgrade" → **Flitt hosted checkout** (card / Google Pay / Apple Pay); a signed callback activates the plan. Auto-recurring. (Live switch pending Flitt's pre-production checklist.)

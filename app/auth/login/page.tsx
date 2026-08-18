@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
@@ -37,6 +38,7 @@ function MicrosoftIcon() {
 }
 
 function LoginForm() {
+  const t = useTranslations()
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
@@ -50,7 +52,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
 
   const rawNext = searchParams.get('next') ?? ''
-  const safeNext = rawNext.startsWith('/') ? rawNext : '/dashboard'
+  const safeNext = rawNext.startsWith('/') ? rawNext : '/pipeline'
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -58,7 +60,7 @@ function LoginForm() {
     setIsLoading(true)
 
     if (!captchaToken) {
-      setError('Security check not complete. Please wait a moment and try again.')
+      setError(t('auth.errCaptcha'))
       setIsLoading(false)
       return
     }
@@ -75,7 +77,7 @@ function LoginForm() {
       router.push(safeNext)
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in.')
+      setError(err instanceof Error ? err.message : t('auth.errSignInFailed'))
       turnstileRef.current?.reset()
       setCaptchaToken(null)
       setIsLoading(false)
@@ -88,7 +90,7 @@ function LoginForm() {
     setSessionPreference(rememberMe)
     try {
       const supabase = createClient()
-      const callbackUrl = safeNext !== '/dashboard'
+      const callbackUrl = safeNext !== '/pipeline'
         ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
         : `${window.location.origin}/auth/callback`
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -101,7 +103,7 @@ function LoginForm() {
       })
       if (oauthError) throw new Error(oauthError.message)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in with Google.')
+      setError(err instanceof Error ? err.message : t('auth.errGoogleFailed'))
       setIsGoogleLoading(false)
     }
   }
@@ -112,7 +114,7 @@ function LoginForm() {
     setSessionPreference(rememberMe)
     try {
       const supabase = createClient()
-      const callbackUrl = safeNext !== '/dashboard'
+      const callbackUrl = safeNext !== '/pipeline'
         ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
         : `${window.location.origin}/auth/callback`
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -124,7 +126,7 @@ function LoginForm() {
       })
       if (oauthError) throw new Error(oauthError.message)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in with Microsoft.')
+      setError(err instanceof Error ? err.message : t('auth.errMicrosoftFailed'))
       setIsMicrosoftLoading(false)
     }
   }
@@ -132,8 +134,8 @@ function LoginForm() {
   return (
     <Card className="border-border">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Sign in to your account to continue</CardDescription>
+        <CardTitle className="text-2xl">{t('auth.welcomeBack')}</CardTitle>
+        <CardDescription>{t('auth.signInSubtitle')}</CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -146,12 +148,12 @@ function LoginForm() {
         <div className="flex flex-col gap-2">
           <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || isMicrosoftLoading || isLoading}>
             {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-            <span className="ml-2">Continue with Google</span>
+            <span className="ml-2">{t('auth.continueGoogle')}</span>
           </Button>
 
           <Button variant="outline" className="w-full" onClick={handleMicrosoftSignIn} disabled={isGoogleLoading || isMicrosoftLoading || isLoading}>
             {isMicrosoftLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MicrosoftIcon />}
-            <span className="ml-2">Continue with Microsoft</span>
+            <span className="ml-2">{t('auth.continueMicrosoft')}</span>
           </Button>
         </div>
 
@@ -160,17 +162,19 @@ function LoginForm() {
             <span className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">or</span>
+            <span className="bg-card px-2 text-muted-foreground">{t('auth.or')}</span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('auth.email')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@company.com"
+              autoComplete="email"
+              inputMode="email"
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -180,15 +184,16 @@ function LoginForm() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <Link href="/auth/forgot-password" className="text-xs font-medium text-primary hover:underline">
-                Forgot password?
+                {t('auth.forgotPassword')}
               </Link>
             </div>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              autoComplete="current-password"
+              placeholder={t('auth.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -206,7 +211,7 @@ function LoginForm() {
               className="h-4 w-4 rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
             <label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer select-none">
-              Keep me signed in
+              {t('auth.keepSignedIn')}
             </label>
           </div>
 
@@ -214,10 +219,10 @@ function LoginForm() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
+                {t('auth.signingIn')}
               </>
             ) : (
-              'Sign in'
+              t('auth.signIn')
             )}
           </Button>
 
@@ -232,12 +237,12 @@ function LoginForm() {
         </form>
 
         <div className="mt-6 text-center text-sm">
-          <span className="text-muted-foreground">{"Don't have an account?"} </span>
+          <span className="text-muted-foreground">{t('auth.noAccount')} </span>
           <Link
-            href={safeNext !== '/dashboard' ? `/auth/sign-up?next=${encodeURIComponent(safeNext)}` : '/auth/sign-up'}
+            href={safeNext !== '/pipeline' ? `/auth/sign-up?next=${encodeURIComponent(safeNext)}` : '/auth/sign-up'}
             className="font-medium text-primary hover:underline"
           >
-            Sign up
+            {t('auth.signUp')}
           </Link>
         </div>
       </CardContent>

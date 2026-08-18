@@ -1,8 +1,12 @@
 # Backend Architecture
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
+
+- 🔄 **Action-file inventory reconciled (2026-07-20 audit).** ~20 action files added since the last refresh were missing from the table below (offers, calendly, mfa, scorecards, restore, candidate-merge, candidate-import, search, review-mode, pipeline-stages, organization, screening-questions, webhook-notifications, active-sessions, …) — now listed.
+- 🔄 **`applications.ts` and `offers.ts` are now barrels (A-201 split).** Each re-exports its actions from cohesive `'use server'` concern files (`applications/{status,rejection,lifecycle}-actions.ts` + `applications-shared.ts`; `offers/{offer-management,offer-token}.ts`). Import paths for callers are unchanged.
+- ❌ `LINKEDIN_CLIENT_ID`/`SECRET` env vars removed from `lib/env.ts` (the earlier changelog note about adding them is now historical — LinkedIn is manual page-ID only).
 
 - 🆕 `lib/actions/candidate-background.ts` — CRUD for candidate work experience and education (8 exported functions)
 - 🆕 `lib/actions/integrations.ts` — `getLinkedInIntegration()` reader for the new `organization_integrations` table
@@ -66,7 +70,8 @@ Error codes: `NOT_AUTHENTICATED`, `PLAN_LIMIT`, `VALIDATION`, `NOT_FOUND`, `FORB
 | `lib/audit-log.ts` (helper, not a `'use server'` action) | `writeAuditLog` — best-effort insert into `activity_log` via admin client. Called from `updateVacancyStatus`, `updateApplicationStatus`, LinkedIn save/disconnect routes. See [docs/2-business/processes.md](../2-business/processes.md) "Audit Log". |
 | `lib/actions/candidates.ts` | `createCandidate`, `updateCandidate`, `updateCandidateStatus`, `deleteCandidate`, `searchCandidatesForVacancy` |
 | `lib/actions/vacancies.ts` | `createVacancy`, `updateVacancy`, `updateVacancyStatus`, `duplicateVacancy`, `deleteVacancy` |
-| `lib/actions/applications.ts` | `updateApplicationStatus`, `createApplication`, `removeApplication`, `rejectApplication` |
+| `lib/actions/applications.ts` **(barrel, A-201)** | `updateApplicationStatus`, `updateApplicationPipelineStage`, `moveApplicationsBatch` (→ `applications/status-actions.ts`); `rejectApplication`, `rejectApplicationsBatch` (→ `rejection-actions.ts`); `createApplication`, `withdrawApplicationByToken`, `removeApplication` (→ `lifecycle-actions.ts`). Shared helpers in `applications-shared.ts`. |
+| `lib/actions/offers.ts` **(barrel, A-201)** | `createOffer`, `updateOffer`, `sendOffer`, `withdrawOffer`, `deleteOffer` (→ `offers/offer-management.ts`); `getOfferByToken`, `acceptOfferByToken`, `declineOfferByToken` (→ `offers/offer-token.ts`, candidate-facing/token-gated) |
 | `lib/actions/interviews.ts` | `createInterview`, `rescheduleInterview`, `updateInterviewStatus` |
 | `lib/actions/invitations.ts` | `inviteTeamMember`, `revokeInvitation`, `acceptInvitation` |
 | `lib/actions/documents.ts` | `uploadDocument`, `getDocumentSignedUrl`, `deleteDocument` |
@@ -83,6 +88,23 @@ Error codes: `NOT_AUTHENTICATED`, `PLAN_LIMIT`, `VALIDATION`, `NOT_FOUND`, `FORB
 | `lib/actions/application-form.ts` | (manages vacancy application form / questions) |
 | 🆕 `lib/actions/candidate-background.ts` | `getCandidateExperience`, `createExperienceEntry`, `updateExperienceEntry`, `deleteExperienceEntry`, `getCandidateEducation`, `createEducationEntry`, `updateEducationEntry`, `deleteEducationEntry` — uses `ExperienceEntrySchema`/`EducationEntrySchema`, pads `YYYY-MM` → `YYYY-MM-DD` on save |
 | 🆕 `lib/actions/integrations.ts` | `getLinkedInIntegration()` — reads single row from `organization_integrations` for caller's org |
+| 🆕 `lib/actions/offers.ts` | See barrel row above (offer lifecycle + candidate-facing token flows) |
+| 🆕 `lib/actions/calendly.ts`, `calendly-link.ts` | Calendly OAuth connect/disconnect (G-031); per-candidate UTM scheduling-link generation |
+| 🆕 `lib/actions/mfa.ts`, `mfa-recovery-codes.ts` | 2FA/TOTP enrollment + challenge + admin reset (G-032); recovery-code generation/verification |
+| 🆕 `lib/actions/scorecards.ts` | Scorecard sharing via token-gated `/scorecard/<token>` (G-025) |
+| 🆕 `lib/actions/evaluations.ts` | Candidate scorecard evaluations (multi-reviewer model; `saveEvaluation`, `getScorecardData`) |
+| 🆕 `lib/actions/screening-questions.ts` | `bulkCreateScreeningQuestions` + screening-question CRUD (per-vacancy apply-form knockouts) |
+| 🆕 `lib/actions/pipeline-stages.ts`, `org-pipeline-stage-templates.ts` | Per-vacancy pipeline-stage CRUD + org-level stage templates (Wave 2.6) |
+| 🆕 `lib/actions/restore.ts` | Trash restore + hard-delete-now for soft-deleted candidates/vacancies (G-020) |
+| 🆕 `lib/actions/candidate-merge.ts` | Merge duplicate candidate records |
+| 🆕 `lib/actions/candidate-import.ts` | Bulk CSV candidate import (G-028) |
+| 🆕 `lib/actions/search.ts` | Global cmd-K search across candidates / vacancies / notes (G-023) |
+| 🆕 `lib/actions/review-mode.ts` | Quick Review Mode data (`getReviewCandidateDetail`, `getInterviewFormData`) |
+| 🆕 `lib/actions/organization.ts` | Organization management (self-serve delete, MFA policy) |
+| 🆕 `lib/actions/active-sessions.ts` | List/revoke the caller's auth sessions (Settings → Security) |
+| 🆕 `lib/actions/webhook-notifications.ts` | Slack/Teams incoming-webhook config + test (G-030) |
+| 🆕 `lib/actions/onboarding.ts` | `completeCompanyOnboarding` — first-run name + org capture (delegates to `lib/onboarding.ts`) |
+| `lib/actions/applications-shared.ts` (helper, not `'use server'`) | Pure `unwrapRelation` + `StageRelation` shared by the applications barrel |
 
 ## API Route Handlers (`app/api/`)
 
@@ -184,3 +206,26 @@ The CSP allows `unsafe-inline` and `unsafe-eval` for scripts (needed by Next.js)
 ## TypeScript Configuration
 
 `next.config.mjs` sets `typescript.ignoreBuildErrors: false` — TypeScript errors fail the build.
+
+## Recent additions (2026-06-18 redesign session)
+
+### `lib/actions/notification-preferences.ts`
+
+Two server actions wired into the new Personal → Notifications sub-page (per [`docs/redesign/flows/S07-settings.md`](../redesign/flows/S07-settings.md) §2.4 + Phase 0.7 in the kickoff playbook):
+
+- `getNotificationPreferences(): Result<NotificationPreferences>` — reads the recipient's preferences via the regular Supabase server client. Falls back to `DEFAULT_NOTIFICATION_PREFERENCES` if the column is NULL or the row pre-dates Migration 045 (defensive). Returns `{ success: false, error }` on auth failure.
+- `updateNotificationPreferences(prefs)` — whole-object replace so partial updates can't drift the JSONB shape over time. The client form is the canonical builder; the action just writes what it's given.
+
+Type definitions live in `lib/types/notification-preferences.ts` alongside `EMAIL_EVENT_LABELS` / `IN_PRODUCT_LABELS` (the form copy registry) and `DEFAULT_NOTIFICATION_PREFERENCES` (the runtime default that matches Migration 045's column DEFAULT). Pinned by `lib/__tests__/notification-preferences-shape.test.ts` to catch drift between the two.
+
+### Consumer wiring — `NotificationsBell`
+
+`components/dashboard/notifications-bell.tsx` reads `notification_preferences.in_product` once on mount and respects:
+- `show_bell_badge=false` → hides the unread count badge (bell icon stays visible — user can still open and read)
+- `auto_mark_read=false` → clicking a notification opens its link but does NOT call `markNotificationRead`; user has to use "Mark all read" explicitly
+
+Failure paths (fetch error, missing column, network) silently keep the defaults (true/true) so the bell never silently regresses.
+
+### Deferred — email dispatcher wiring
+
+The 6 email events in the preferences form (`new_applicant`, `interview_scheduled`, `offer_awaiting_response`, `mention`, `team_invite_update`, `weekly_digest`) are collected but not yet read by the email dispatcher. The audit found that most existing email sends in `lib/email.ts` go to candidates / invitees (external addresses), not to recruiters who would opt out. When the internal-email surface grows, the helper goes in `lib/actions/notifications.ts` near `createOrgNotifications` — filter `recipientIds` against the relevant email pref before delivery.

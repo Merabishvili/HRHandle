@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { MoreHorizontal, Calendar, XCircle, UserX, Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { MoreHorizontal, Calendar, XCircle, UserX, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,11 +25,11 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { updateInterviewStatus, rescheduleInterview } from '@/lib/actions/interviews'
 
 const durationOptions = [
-  { value: 30, label: '30 minutes' },
-  { value: 45, label: '45 minutes' },
-  { value: 60, label: '1 hour' },
-  { value: 90, label: '1.5 hours' },
-  { value: 120, label: '2 hours' },
+  { value: 30, key: 'interviews.dur30m' },
+  { value: 45, key: 'interviews.dur45m' },
+  { value: 60, key: 'interviews.dur1h' },
+  { value: 90, key: 'interviews.dur90m' },
+  { value: 120, key: 'interviews.dur2h' },
 ]
 
 interface InterviewActionsProps {
@@ -47,8 +48,9 @@ export function InterviewActions({
   candidateHasEmail,
 }: InterviewActionsProps) {
   const router = useRouter()
+  const t = useTranslations()
   const [isPending, startTransition] = useTransition()
-  const [confirmAction, setConfirmAction] = useState<'cancel' | 'no_show' | null>(null)
+  const [confirmAction, setConfirmAction] = useState<'cancel' | 'no_show' | 'complete' | null>(null)
   const [showReschedule, setShowReschedule] = useState(false)
 
   // Convert UTC ISO to local date/time for form fields
@@ -65,7 +67,7 @@ export function InterviewActions({
 
   const isPast = currentStatus !== 'cancelled' && currentStatus !== 'no_show'
 
-  const handleStatusChange = (status: 'cancelled' | 'no_show') => {
+  const handleStatusChange = (status: 'cancelled' | 'no_show' | 'completed') => {
     startTransition(async () => {
       await updateInterviewStatus(interviewId, status)
       setConfirmAction(null)
@@ -75,7 +77,7 @@ export function InterviewActions({
 
   const handleReschedule = () => {
     setRescheduleError(null)
-    if (!newDate || !newTime) { setRescheduleError('Date and time are required.'); return }
+    if (!newDate || !newTime) { setRescheduleError(t('interviews.dateTimeRequired')); return }
     const iso = new Date(`${newDate}T${newTime}`).toISOString()
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
     startTransition(async () => {
@@ -87,19 +89,29 @@ export function InterviewActions({
   }
 
   if (confirmAction) {
-    const label = confirmAction === 'cancel' ? 'Cancel' : 'No Show'
-    const status = confirmAction === 'cancel' ? 'cancelled' : 'no_show'
+    const label =
+      confirmAction === 'cancel'
+        ? t('interviews.action.cancel')
+        : confirmAction === 'no_show'
+          ? t('interviews.action.noShow')
+          : t('interviews.action.complete')
+    const status: 'cancelled' | 'no_show' | 'completed' =
+      confirmAction === 'cancel'
+        ? 'cancelled'
+        : confirmAction === 'no_show'
+          ? 'no_show'
+          : 'completed'
     return (
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Mark as {label}?</span>
+        <span className="text-xs text-muted-foreground">{t('interviews.markAsConfirm', { action: label })}</span>
         <Button
           size="sm"
-          variant="destructive"
+          variant={confirmAction === 'complete' ? 'default' : 'destructive'}
           disabled={isPending}
           onClick={() => handleStatusChange(status)}
           className="h-7 px-2 text-xs"
         >
-          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Confirm'}
+          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : t('common.confirm')}
         </Button>
         <Button
           size="sm"
@@ -107,7 +119,7 @@ export function InterviewActions({
           onClick={() => setConfirmAction(null)}
           className="h-7 px-2 text-xs"
         >
-          No
+          {t('common.no')}
         </Button>
       </div>
     )
@@ -117,10 +129,13 @@ export function InterviewActions({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowReschedule(false)}>
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('interviews.reschedule')}
           className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <h3 className="mb-4 text-base font-semibold text-foreground">Reschedule Interview</h3>
+          <h3 className="mb-4 text-base font-semibold text-foreground">{t('interviews.reschedule')}</h3>
 
           {rescheduleError && (
             <p className="mb-3 rounded bg-red-50 px-3 py-2 text-xs text-red-700">{rescheduleError}</p>
@@ -129,7 +144,7 @@ export function InterviewActions({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Date *</Label>
+                <Label className="text-xs">{t('interviews.date')} *</Label>
                 <DatePicker
                   value={newDate}
                   onChange={(v) => setNewDate(v ?? '')}
@@ -139,7 +154,7 @@ export function InterviewActions({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs" htmlFor="reschedule-time">Time *</Label>
+                <Label className="text-xs" htmlFor="reschedule-time">{t('interviews.time')} *</Label>
                 <Input
                   id="reschedule-time"
                   type="time"
@@ -151,7 +166,7 @@ export function InterviewActions({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Duration</Label>
+              <Label className="text-xs">{t('interviews.duration')}</Label>
               <Select
                 value={newDuration.toString()}
                 onValueChange={(v) => setNewDuration(parseInt(v, 10))}
@@ -160,7 +175,7 @@ export function InterviewActions({
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {durationOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value.toString()}>{o.label}</SelectItem>
+                    <SelectItem key={o.value} value={o.value.toString()}>{t(o.key)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -179,19 +194,19 @@ export function InterviewActions({
                 htmlFor="reschedule-email"
                 className={`text-sm ${candidateHasEmail ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
               >
-                Send updated invite to candidate
-                {!candidateHasEmail && <span className="ml-1 text-xs text-muted-foreground">(no email)</span>}
+                {t('interviews.sendInvite')}
+                {!candidateHasEmail && <span className="ml-1 text-xs text-muted-foreground">{t('interviews.noEmail')}</span>}
               </label>
             </div>
           </div>
 
           <div className="mt-5 flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowReschedule(false)} disabled={isPending}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button size="sm" onClick={handleReschedule} disabled={isPending}>
               {isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
-              Save Changes
+              {t('common.saveChanges')}
             </Button>
           </div>
         </div>
@@ -204,14 +219,20 @@ export function InterviewActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('interviews.actionsAria')}>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setShowReschedule(true)}>
           <Calendar className="mr-2 h-4 w-4" />
-          Reschedule
+          {t('interviews.reschedule')}
+        </DropdownMenuItem>
+        {/* A-11c — Mark complete is available for any scheduled interview;
+            the past-due card prompt also routes here. */}
+        <DropdownMenuItem onClick={() => setConfirmAction('complete')}>
+          <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" />
+          {t('interviews.markComplete')}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -219,14 +240,14 @@ export function InterviewActions({
           onClick={() => setConfirmAction('cancel')}
         >
           <XCircle className="mr-2 h-4 w-4" />
-          Cancel interview
+          {t('interviews.cancelInterview')}
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
           onClick={() => setConfirmAction('no_show')}
         >
           <UserX className="mr-2 h-4 w-4" />
-          Mark as no show
+          {t('interviews.markNoShow')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,10 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import * as Sentry from '@sentry/nextjs'
 import { ParsedCVSchema, type ParsedCVInput } from '@/lib/validations/candidate-background'
 
 const PARSE_TIMEOUT_MS = 25_000
 const MIN_TEXT_LENGTH = 100
 const RETRY_DELAY_MS = 2_000
-const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash']
+// gemini-2.0-flash was retired by Google in mid-2026; replaced with
+// gemini-2.5-flash-lite (same family, stable, cheaper than 2.5-flash).
+const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite']
 
 const CV_PROMPT = `You are a CV/resume parser. Extract structured information from the CV text below.
 
@@ -128,7 +131,7 @@ export async function parseCV(text: string): Promise<CVParseResult> {
   const genAI = new GoogleGenerativeAI(apiKey)
 
   for (let modelIdx = 0; modelIdx < MODELS.length; modelIdx++) {
-    const model = genAI.getGenerativeModel({ model: MODELS[modelIdx] })
+    const model = genAI.getGenerativeModel({ model: MODELS[modelIdx]! })
 
     if (modelIdx > 0) {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
@@ -168,12 +171,14 @@ export async function parseCV(text: string): Promise<CVParseResult> {
       if (err instanceof Error && err.message === 'timeout') {
         if (modelIdx < MODELS.length - 1) continue
         console.error('[cv-parser] Gemini timed out on all models')
+        Sentry.captureException(err, { tags: { feature: 'cv_parser', reason: 'timeout' } })
         return { success: false, reason: 'timeout' }
       }
       if (isRetryable(err) && modelIdx < MODELS.length - 1) {
         continue
       }
       console.error('[cv-parser] Gemini call threw:', err)
+      Sentry.captureException(err, { tags: { feature: 'cv_parser' } })
       return { success: false, reason: 'parse_failed' }
     }
   }

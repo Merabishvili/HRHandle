@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { TeamInvitations } from '@/components/settings/team-invitations'
 
 export default async function TeamSettingsPage() {
+  const t = await getTranslations()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -14,14 +16,14 @@ export default async function TeamSettingsPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile) redirect('/dashboard')
+  if (!profile) redirect('/pipeline')
   const isAdmin = profile.role === 'owner' || profile.role === 'admin'
   if (!isAdmin) redirect('/settings/profile')
 
   const [{ data: membersRaw }, { data: invitesRaw }] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, full_name, email, role')
+      .select('id, full_name, email, role, mfa_enrolled')
       .eq('organization_id', profile.organization_id)
       .eq('is_active', true)
       .order('full_name'),
@@ -37,8 +39,8 @@ export default async function TeamSettingsPage() {
     <div className="max-w-2xl">
       <Card className="border-border">
         <CardHeader>
-          <CardTitle>Team</CardTitle>
-          <CardDescription>Manage team members and send invitations.</CardDescription>
+          <CardTitle>{t('settings.nav.team')}</CardTitle>
+          <CardDescription>{t('settingsPage.teamSub')}</CardDescription>
         </CardHeader>
         <CardContent>
           <TeamInvitations

@@ -197,7 +197,7 @@ describe('GET /api/cron/purge-deleted', () => {
     const res = await GET(makeReq(`Bearer ${SECRET}`))
     expect(res.status).toBe(200)
     expect(storageRemoveMock).toHaveBeenCalledTimes(1)
-    const calledPaths = storageRemoveMock.mock.calls[0][0] as string[]
+    const calledPaths = storageRemoveMock.mock.calls[0]![0] as string[]
     expect(calledPaths).toContain('org-x/cv-direct.pdf')
     expect(calledPaths).toContain('org-x/cv-cascade-a.pdf')
     expect(calledPaths).toContain('org-x/cv-cascade-b.pdf')
@@ -257,7 +257,7 @@ describe('GET /api/cron/purge-deleted', () => {
 
     // Storage cleanup picked up the org's docs.
     expect(storageRemoveMock).toHaveBeenCalledTimes(1)
-    const calledPaths = storageRemoveMock.mock.calls[0][0] as string[]
+    const calledPaths = storageRemoveMock.mock.calls[0]![0] as string[]
     expect(calledPaths).toContain('org-1/cv1.pdf')
     expect(calledPaths).toContain('org-1/cv2.pdf')
   })

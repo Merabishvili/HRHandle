@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Search, SlidersHorizontal, Columns3 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -18,28 +19,28 @@ import {
   OPTIONAL_VACANCY_COLUMNS,
   DEFAULT_VACANCY_COLUMNS,
   VACANCY_SORT_OPTIONS,
+  SORT_I18N_KEY,
+  type ColumnDef,
 } from '@/lib/types/columns'
 
 interface VacanciesToolbarProps {
   initialSearch: string
   initialSort: string
   selectedColumns: string[]
+  /** Org custom fields, surfaced as addable columns alongside the built-in set. */
+  extraColumns?: ColumnDef[]
 }
-
-const FIXED_COLUMNS = [
-  { label: 'Position' },
-  { label: 'Status' },
-  { label: 'Candidates' },
-]
 
 export function VacanciesToolbar({
   initialSearch,
   initialSort,
   selectedColumns: initialColumns,
+  extraColumns = [],
 }: VacanciesToolbarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const t = useTranslations()
   const [, startTransition] = useTransition()
 
   const [searchValue, setSearchValue] = useState(initialSearch)
@@ -81,7 +82,7 @@ export function VacanciesToolbar({
         <div className="relative min-w-[200px] flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search vacancies..."
+            placeholder={t('pipeline.filter.searchPlaceholder')}
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             className="pl-9"
@@ -91,28 +92,35 @@ export function VacanciesToolbar({
         <Select value={initialSort || 'created_desc'} onValueChange={handleSortChange}>
           <SelectTrigger className="w-[200px]">
             <SlidersHorizontal className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
-            <SelectValue placeholder="Sort by" />
+            <SelectValue placeholder={t('candidates.sortBy')} />
           </SelectTrigger>
           <SelectContent>
-            {VACANCY_SORT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
+            {VACANCY_SORT_OPTIONS.map((opt) => {
+              const sortKey = SORT_I18N_KEY[opt.value]
+              return (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {sortKey ? t(sortKey) : opt.label}
+                </SelectItem>
+              )
+            })}
           </SelectContent>
         </Select>
 
         <Button variant="outline" size="sm" className="gap-2 h-10 px-4" onClick={() => setColDialogOpen(true)}>
           <Columns3 className="h-4 w-4" />
-          Columns
+          {t('candidates.columns')}
         </Button>
       </div>
 
       <ColumnManagerDialog
         open={colDialogOpen}
         onOpenChange={setColDialogOpen}
-        allColumns={OPTIONAL_VACANCY_COLUMNS}
-        fixedColumns={FIXED_COLUMNS}
+        allColumns={[...OPTIONAL_VACANCY_COLUMNS, ...extraColumns]}
+        fixedColumns={[
+          { label: t('vacancies.colVacancy') },
+          { label: t('common.status') },
+          { label: t('vacancies.colCandidates') },
+        ]}
         selectedColumns={activeColumns}
         onSave={handleSaveColumns}
       />

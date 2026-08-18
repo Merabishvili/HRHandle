@@ -1,9 +1,10 @@
 # HRHandle — Roles & Permissions
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-07-20_
 
 ## Changelog
 
+- 🆕 **(2026-07-20 audit) Additional owner/admin-gated surfaces:** org-wide 2FA policy (`require_mfa`) — owner only; CSV candidate import (`/candidates/import`) — owner+admin; integrations (Slack/Teams webhooks, Calendly) — owner+admin; per-vacancy pipeline-stage management — owner+admin; self-serve org delete — owner. The dominant gate helper is `isOrgAdmin(ctx)` (~63 call sites); `role === 'owner'` guards ownership-only actions. Member-only redirects now target `/pipeline` (was `/dashboard`).
 - 🔄 (revised 2026-05-08) Live-DB verification confirms RLS is enabled on every public table — earlier "RLS gaps" claim retracted. See "Supabase RLS" section below.
 - 🆕 LinkedIn-integration management (save / disconnect) gated to owner+admin via `organization_integrations` RLS.
 - 🆕 Custom field management gated to owner+admin (`lib/actions/custom-fields.ts:104`).
