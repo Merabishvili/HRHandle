@@ -62,6 +62,18 @@ export function PersonalInfoSection({ form, disabled }: PersonalInfoSectionProps
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
+            <Label htmlFor="current_position">{t('candWizard.personal.currentPosition')}</Label>
+            <Input id="current_position" placeholder={t('candWizard.personal.phCurrentPosition')} disabled={disabled} {...register('current_position')} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="current_company">{t('candWizard.personal.currentCompany')}</Label>
+            <Input id="current_company" placeholder={t('candWizard.personal.phCurrentCompany')} disabled={disabled} {...register('current_company')} />
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
             <Label htmlFor="location">{t('candWizard.personal.location')}</Label>
             <Input id="location" placeholder={t('candWizard.personal.phLocation')} disabled={disabled} {...register('location')} />
           </div>

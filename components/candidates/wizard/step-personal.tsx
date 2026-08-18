@@ -17,6 +17,8 @@ export interface PersonalState {
   lastName: string
   email: string
   phone: string
+  currentPosition: string
+  currentCompany: string
   location: string
   timezone: string
   salaryExpectation: string
@@ -92,6 +94,8 @@ export function StepPersonal({
           lastName: data.last_name ?? value.lastName,
           email: data.email ?? value.email,
           phone: data.phone ?? value.phone,
+          currentPosition: data.current_position ?? value.currentPosition,
+          currentCompany: data.current_company ?? value.currentCompany,
           location: data.location ?? value.location,
           timezone: value.timezone,
           salaryExpectation: value.salaryExpectation,
@@ -205,6 +209,29 @@ export function StepPersonal({
             onChange={(e) => set('phone', e.target.value)}
             placeholder="+1 555 123 4567"
             maxLength={30}
+          />
+        </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field id="current_position" label={t('candWizard.personal.currentPosition')}>
+          <Input
+            id="current_position"
+            autoComplete="organization-title"
+            value={value.currentPosition}
+            onChange={(e) => set('currentPosition', e.target.value)}
+            placeholder={t('candWizard.personal.phCurrentPosition')}
+            maxLength={200}
+          />
+        </Field>
+        <Field id="current_company" label={t('candWizard.personal.currentCompany')}>
+          <Input
+            id="current_company"
+            autoComplete="organization"
+            value={value.currentCompany}
+            onChange={(e) => set('currentCompany', e.target.value)}
+            placeholder={t('candWizard.personal.phCurrentCompany')}
+            maxLength={200}
           />
         </Field>
       </div>

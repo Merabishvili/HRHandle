@@ -121,6 +121,8 @@ export function CandidateForm({
       email: candidate?.email ?? '',
       phone: candidate?.phone ?? '',
       linkedin_profile_url: candidate?.linkedin_profile_url ?? '',
+      current_position: (candidate as { current_position?: string | null })?.current_position ?? '',
+      current_company: (candidate as { current_company?: string | null })?.current_company ?? '',
       location: (candidate as { location?: string | null })?.location ?? '',
       timezone: (candidate as { timezone?: string | null })?.timezone ?? '',
       languages: (candidate as { languages?: string[] })?.languages ?? [],
@@ -171,6 +173,8 @@ export function CandidateForm({
         form.setValue('email', data.email || cur.email)
         form.setValue('phone', data.phone || cur.phone)
         form.setValue('linkedin_profile_url', data.linkedin_profile_url || cur.linkedin_profile_url)
+        form.setValue('current_position', data.current_position || cur.current_position)
+        form.setValue('current_company', data.current_company || cur.current_company)
         form.setValue('location', data.location || cur.location)
         form.setValue('timezone', data.timezone || cur.timezone)
         form.setValue('languages', data.languages?.length ? data.languages : cur.languages)
@@ -237,6 +241,8 @@ export function CandidateForm({
       email: values.email || null,
       phone: values.phone || null,
       linkedin_profile_url: values.linkedin_profile_url || null,
+      current_position: values.current_position || null,
+      current_company: values.current_company || null,
       location: values.location || null,
       timezone: values.timezone || null,
       languages: values.languages ?? [],

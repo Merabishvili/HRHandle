@@ -16,6 +16,8 @@ export const CandidateSchema = z.object({
     .nullable()
     .optional()
     .or(z.literal('').transform(() => null)),
+  current_position:   z.string().max(200).nullable().optional(),
+  current_company:    z.string().max(200).nullable().optional(),
   location:           z.string().max(200).nullable().optional(),
   timezone:           z.string().max(100).nullable().optional(),
   languages:          z.array(z.string()).optional(),
@@ -48,6 +50,8 @@ export const CandidateFormSchema = z.object({
     .string()
     .trim()
     .refine((v) => v === '' || z.string().url().safeParse(v).success, 'Invalid LinkedIn URL'),
+  current_position: z.string().max(200),
+  current_company: z.string().max(200),
   location: z.string().max(200),
   timezone: z.string().max(100),
   languages: z.array(z.string()),

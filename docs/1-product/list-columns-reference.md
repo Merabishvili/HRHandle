@@ -20,7 +20,7 @@ Optional columns (Manage columns):
 |---|---|---|---|
 | **Stage** | Current **pipeline stage** on the candidate's active application (Applied→…→Hired/Rejected/Withdrawn, incl. custom) | Derived from the application's `pipeline_stage_id` | **Fixed →** now localized (default stages translated, custom names kept) |
 | **Fit score** | Avg of **submitted scorecards** on the active application, as `N%` | Filled only when reviewers submit scorecards → "—" until then | Numeric (`N%`) |
-| **Current position / company** | Candidate's current job/company | **CSV import only** (⚠️ gap: the AI CV parser extracts a current role but the wizard discards it; no manual field in the create wizard or edit form; the apply form doesn't collect it — so non-imported candidates always show "—") | Data |
+| **Current position / company** | Candidate's current job/company | Create wizard (Personal step), candidate edit form, CV parse (auto-fills), and CSV import. (Apply form still doesn't collect it.) | Data |
 | **Added date** | When the candidate was created | `created_at`, shown as relative time | Localized (locale-aware relative time) |
 | **Email / Phone** | Contact details | Candidate fields | Data |
 | **Experience** | `years_of_experience` (a single number) | **Only set via CSV import** (and read by AI Fit/summary). Not captured in the create wizard → usually "—". Note: this is *not* the work-history entries from the wizard's Experience step. | **Fixed →** now localized (`N yr(s)` / `N წელი`) |

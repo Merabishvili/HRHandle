@@ -276,6 +276,8 @@ const formBase = {
   email: '',
   phone: '',
   linkedin_profile_url: '',
+  current_position: '',
+  current_company: '',
   location: '',
   timezone: '',
   languages: [] as string[],

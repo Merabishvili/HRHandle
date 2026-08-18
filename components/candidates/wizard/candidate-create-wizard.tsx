@@ -44,6 +44,8 @@ const BLANK_PERSONAL: PersonalState = {
   lastName: '',
   email: '',
   phone: '',
+  currentPosition: '',
+  currentCompany: '',
   location: '',
   timezone: '',
   salaryExpectation: '',
@@ -226,6 +228,8 @@ export function CandidateCreateWizard({
           last_name: personal.lastName.trim(),
           email: personal.email.trim() || null,
           phone: personal.phone.trim() || null,
+          current_position: personal.currentPosition.trim() || null,
+          current_company: personal.currentCompany.trim() || null,
           location: personal.location.trim() || null,
           timezone: personal.timezone.trim() || null,
           languages: personal.languages.trim()
