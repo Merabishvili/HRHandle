@@ -102,7 +102,7 @@ export function BasicInfoSection({ form, sectors, statusOptions, disabled }: Bas
                   <SelectContent>
                     {statusOptions.map((status) => (
                       <SelectItem key={status.id} value={status.id}>
-                        {status.name}
+                        {t.has(`vacStatus.${status.code}`) ? t(`vacStatus.${status.code}`) : status.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
