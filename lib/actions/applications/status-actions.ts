@@ -217,6 +217,7 @@ export async function updateApplicationStatus(
             title: `Candidate hired: ${candidate.first_name} ${candidate.last_name}`,
             body: vacRow?.title ? `For ${vacRow.title}` : undefined,
             link: vacRow?.id ? `/vacancies/${vacRow.id}?tab=applications` : undefined,
+            data: { name: `${candidate.first_name} ${candidate.last_name}`, ...(vacRow?.title ? { vacancy: vacRow.title } : {}) },
           })
         }
       } catch (err) {

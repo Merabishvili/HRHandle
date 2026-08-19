@@ -413,6 +413,7 @@ export async function createInterview(
       title: `Interview scheduled: ${candidate.first_name} ${candidate.last_name}`,
       body: vacancy?.title ? `For ${vacancy.title}` : undefined,
       link: `/interviews`,
+      data: { name: `${candidate.first_name} ${candidate.last_name}`, ...(vacancy?.title ? { vacancy: vacancy.title } : {}) },
     })
     if (!notifyResult.success) warnings.push('notification_failed')
   } catch (err) {

@@ -789,6 +789,38 @@
     "errMarkRead": "Could not mark notification as read.",
     "errMarkAll": "Could not mark notifications as read."
   },
+  "notif": {
+    "forVacancy": "For {vacancy}",
+    "newApplication": {
+      "title": "New application: {name}"
+    },
+    "interviewScheduled": {
+      "title": "Interview scheduled: {name}"
+    },
+    "candidateHired": {
+      "title": "Candidate hired: {name}"
+    },
+    "teamInvite": {
+      "title": "Team invite sent to {email}",
+      "body": "{inviter} invited a new {role}"
+    },
+    "planLimit": {
+      "title": "Over your candidate limit ({limit})",
+      "body": "Public applications are still being accepted, but you are over your plan limit — upgrade to keep adding candidates."
+    },
+    "noteMention": {
+      "title": "{author} mentioned you on {candidate}"
+    },
+    "offerAccepted": {
+      "title": "Offer accepted"
+    },
+    "offerDeclined": {
+      "title": "Offer declined"
+    },
+    "applicationWithdrawn": {
+      "title": "A candidate withdrew their application"
+    }
+  },
   "source": {
     "publicForm": "Public Form",
     "linkedin": "LinkedIn",

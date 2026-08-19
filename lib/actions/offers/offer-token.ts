@@ -262,6 +262,7 @@ export async function acceptOfferByToken(token: string): Promise<ActionResult<vo
         title: 'Offer accepted',
         body: undefined,
         link: undefined,
+        data: {},
       })
     }
   } catch (err) {
@@ -367,6 +368,7 @@ export async function declineOfferByToken(
         title: 'Offer declined',
         body: undefined,
         link: undefined,
+        data: {},
       })
     }
   } catch (err) {
