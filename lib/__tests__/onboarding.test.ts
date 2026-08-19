@@ -137,3 +137,36 @@ describe('runOnboarding name resolution', () => {
     expect(calls.profileUpserts[0]?.full_name).toBe('Meta Name')
   })
 })
+
+describe('runOnboarding public_page_slug generation', () => {
+  beforeEach(() => {
+    calls.organizationInserts = []
+    calls.profileUpserts = []
+  })
+
+  it('transliterates a Georgian company name into a Latin slug', async () => {
+    const user = makeUser({ company_name: 'კომპანია' })
+    const result = await runOnboarding(user)
+
+    expect(result.success).toBe(true)
+    // The org name is preserved verbatim; only the URL slug is romanized.
+    expect(calls.organizationInserts[0]?.name).toBe('კომპანია')
+    expect(calls.organizationInserts[0]?.public_page_slug).toBe('kompania')
+  })
+
+  it('transliterates a Russian company name into a Latin slug', async () => {
+    const user = makeUser({ company_name: 'Компания' })
+    const result = await runOnboarding(user)
+
+    expect(result.success).toBe(true)
+    expect(calls.organizationInserts[0]?.public_page_slug).toBe('kompaniya')
+  })
+
+  it('never produces a lone "-" slug for a spaced non-Latin name (regression)', async () => {
+    const user = makeUser({ company_name: 'ჰრ ჰენდლი' })
+    const result = await runOnboarding(user)
+
+    expect(result.success).toBe(true)
+    expect(calls.organizationInserts[0]?.public_page_slug).toBe('hr-hendli')
+  })
+})
