@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import { toast } from 'sonner'
 import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ import { renderNotification } from '@/lib/notifications/render'
 
 export function NotificationsBell() {
   const t = useTranslations()
+  const dfLocale = dateFnsLocale(useLocale())
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -166,7 +168,7 @@ export function NotificationsBell() {
                           <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{rendered.body}</p>
                         )}
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: dfLocale })}
                         </p>
                       </div>
                     </div>

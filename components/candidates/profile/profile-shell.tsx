@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { sourceLabel } from '@/lib/pipeline/source-i18n'
 import { Pencil, MoreHorizontal, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -502,7 +503,7 @@ export function CandidateProfileShell({
                 { label: t('candWizard.personal.location'), value: candidate.location ?? '—' },
                 { label: t('candWizard.personal.timezone'), value: candidate.timezone ?? '—' },
                 { label: t('candWizard.personal.languages'), value: candidate.languages.join(', ') || '—' },
-                { label: t('candWizard.application.sourceLabel'), value: candidate.source ?? '—' },
+                { label: t('candWizard.application.sourceLabel'), value: sourceLabel(t, candidate.source) || '—' },
                 { label: t('profileShell.added'), value: new Date(candidate.addedAt).toLocaleDateString() },
               ]}
             />

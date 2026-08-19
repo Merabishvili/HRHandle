@@ -84,16 +84,17 @@ export function EnrollTotpDialog({ open, onOpenChange, onEnrolled }: Props) {
 
         {enrollment && (
           <div className="space-y-4">
-            <div
-              role="img"
-              aria-label={t('mfaEnroll.qrAria')}
-              className="mx-auto h-48 w-48 rounded-md border bg-white p-2 [&_svg]:h-full [&_svg]:w-full"
-              // Supabase returns qr_code as a data URI ("data:image/svg+xml;utf-8,<svg…>"),
-              // not raw SVG. Strip the prefix so we inject only the <svg> markup —
-              // otherwise the "data:image/svg+xml…" text renders on top of the QR.
-              dangerouslySetInnerHTML={{
-                __html: enrollment.qrCodeSvg.replace(/^data:image\/svg\+xml[^,]*,/i, ''),
-              }}
+            {/* Supabase returns qr_code as a data URI whose raw SVG (unencoded '#'
+                fills, ';utf-8' charset) doesn't reliably load as an <img src> and
+                overflowed when injected as HTML. Re-encode the SVG markup into a
+                clean data URI so <img> renders a crisp, scannable QR. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`data:image/svg+xml,${encodeURIComponent(
+                enrollment.qrCodeSvg.replace(/^data:image\/svg\+xml[^,]*,/i, ''),
+              )}`}
+              alt={t('mfaEnroll.qrAria')}
+              className="mx-auto h-48 w-48 rounded-md border bg-white object-contain p-2"
             />
             <details className="text-xs text-muted-foreground">
               <summary className="cursor-pointer">{t('mfa.cantScan')}</summary>

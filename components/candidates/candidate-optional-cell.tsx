@@ -3,6 +3,7 @@ import { getFormatter, getTranslations } from 'next-intl/server'
 import { TableCell } from '@/components/ui/table'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
 import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
+import { sourceLabel } from '@/lib/pipeline/source-i18n'
 import type { CandidateRow, DerivedStage } from '@/lib/candidates/list-derivation'
 
 interface CandidateOptionalCellProps {
@@ -88,7 +89,7 @@ export async function CandidateOptionalCell({
     case 'source':
       return (
         <TableCell className="text-sm text-muted-foreground">
-          {candidate.source || '—'}
+          {sourceLabel(t, candidate.source) || '—'}
         </TableCell>
       )
     case 'stage': {

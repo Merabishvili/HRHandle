@@ -9,6 +9,6 @@ import type { Locale } from '@/lib/i18n/locales'
  */
 const DATE_FNS_LOCALES: Record<Locale, DateFnsLocale> = { en: enUS, ka, ru }
 
-export function dateFnsLocale(locale: Locale): DateFnsLocale {
-  return DATE_FNS_LOCALES[locale] ?? enUS
+export function dateFnsLocale(locale: string): DateFnsLocale {
+  return DATE_FNS_LOCALES[locale as Locale] ?? enUS
 }
