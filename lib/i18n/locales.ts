@@ -49,6 +49,23 @@ export function isLocale(value: unknown): value is Locale {
 }
 
 /**
+ * Effective locale for a next-intl request (i18n/request.ts). Priority:
+ *   1. explicitly requested locale — set by `getTranslations({ locale })` /
+ *      `getMessages({ locale })` on public pages that render in the ORG content
+ *      locale (status / apply / offer). Must win over the visitor's cookie.
+ *   2. the `NEXT_LOCALE` cookie — the dashboard UI language.
+ *   3. English.
+ */
+export function resolveRequestLocale(
+  requested: string | null | undefined,
+  cookieLocale: string | null | undefined,
+): Locale {
+  if (isLocale(requested)) return requested
+  if (isLocale(cookieLocale)) return cookieLocale
+  return DEFAULT_LOCALE
+}
+
+/**
  * Localised text stored per-locale on org content (vacancy bodies, screening +
  * scorecard labels). See docs/redesign/i18n-plan.md §2.5. `pickLocale` reads one
  * with a fallback chain: requested → default → first available → ''.
