@@ -1,10 +1,12 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { runOnboarding } from '@/lib/onboarding'
+import { isLocale } from '@/lib/i18n/locales'
 
 const CompanyOnboardingSchema = z.object({
   fullName: z.string().trim().min(1, 'Please enter your name').max(100, 'Name is too long'),
@@ -47,9 +49,15 @@ export async function completeCompanyOnboarding(input: {
     redirect('/pipeline')
   }
 
+  // OAuth signups have no locale in metadata (they never hit the sign-up form),
+  // so seed the org's content locale from the onboarding page's UI language.
+  const cookieLocale = (await cookies()).get('NEXT_LOCALE')?.value
+  const locale = isLocale(cookieLocale) ? cookieLocale : undefined
+
   const result = await runOnboarding(user, {
     fullName: parsed.data.fullName,
     companyName: parsed.data.companyName,
+    ...(locale ? { locale } : {}),
   })
 
   if (!result.success) {

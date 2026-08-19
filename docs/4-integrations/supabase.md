@@ -17,7 +17,7 @@ _Last updated: 2026-05-08_
 3. Email link uses `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`
 4. `app/auth/confirm/route.ts` (GET) receives `token_hash` and calls `supabase.auth.verifyOtp({ token_hash, type })`
 5. On success, redirects to `next` (defaults to `/dashboard`)
-6. Dashboard layout detects no `organization_id` and runs `runOnboarding()`
+6. Dashboard layout detects no `organization_id` and runs `runOnboarding()`. Onboarding seeds the new org's `default_content_locale` from the signup language (`user_metadata.locale` for email signups; the `NEXT_LOCALE` cookie for OAuth via `completeCompanyOnboarding`), so candidate-facing emails + public pages default to the org's language instead of English. Falls back to `en` when no locale is known.
 
 ### Email/Password Sign-in
 1. Login form calls `supabase.auth.signInWithPassword({ email, password, options: { captchaToken } })`
