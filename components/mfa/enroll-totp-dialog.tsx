@@ -87,8 +87,13 @@ export function EnrollTotpDialog({ open, onOpenChange, onEnrolled }: Props) {
             <div
               role="img"
               aria-label={t('mfaEnroll.qrAria')}
-              className="mx-auto h-48 w-48 rounded-md border bg-white p-2"
-              dangerouslySetInnerHTML={{ __html: enrollment.qrCodeSvg }}
+              className="mx-auto h-48 w-48 rounded-md border bg-white p-2 [&_svg]:h-full [&_svg]:w-full"
+              // Supabase returns qr_code as a data URI ("data:image/svg+xml;utf-8,<svg…>"),
+              // not raw SVG. Strip the prefix so we inject only the <svg> markup —
+              // otherwise the "data:image/svg+xml…" text renders on top of the QR.
+              dangerouslySetInnerHTML={{
+                __html: enrollment.qrCodeSvg.replace(/^data:image\/svg\+xml[^,]*,/i, ''),
+              }}
             />
             <details className="text-xs text-muted-foreground">
               <summary className="cursor-pointer">{t('mfa.cantScan')}</summary>
