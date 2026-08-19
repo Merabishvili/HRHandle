@@ -25,6 +25,8 @@ import {
 import { JdTab } from '@/components/vacancies/detail/jd-tab'
 import { SettingsTab } from '@/components/vacancies/detail/settings-tab'
 import type { ApplicationStatus } from '@/lib/types/application'
+import { mapPipelineStageToBucket, type PipelineStageRowForBucket } from '@/lib/pipeline-stages/bucket'
+import type { LegacyStatusCode } from '@/lib/pipeline-stages/resolve'
 
 /**
  * Wave 2.4 vacancy detail rebuild per `redesign/Vacancy Detail.dc.html`.
@@ -99,6 +101,7 @@ interface ApplicationRow {
   id: string
   candidate_id: string
   status_id: string | null
+  pipeline_stage_id: string | null
   applied_at: string
   last_status_changed_at: string | null
 }
@@ -222,7 +225,6 @@ export default async function VacancyDetailPage({
     .filter((s) => s.is_active && !['rejected', 'withdrawn', 'hired'].includes(s.code))
     .sort((a, b) => a.sort_order - b.sort_order)
   const statusByCode = new Map(appStatuses.map((s) => [s.code, s]))
-  const statusById = new Map(appStatuses.map((s) => [s.id, s]))
 
   const [
     { data: applicationsRaw },
@@ -232,7 +234,7 @@ export default async function VacancyDetailPage({
   ] = await Promise.all([
     supabase
       .from('applications')
-      .select('id, candidate_id, status_id, applied_at, last_status_changed_at')
+      .select('id, candidate_id, status_id, pipeline_stage_id, applied_at, last_status_changed_at')
       .eq('organization_id', organizationId)
       .eq('vacancy_id', id)
       .is('deleted_at', null)
@@ -291,12 +293,25 @@ export default async function VacancyDetailPage({
     for (const c of (candidatesRaw || []) as CandidateRow[]) candidateMap.set(c.id, c)
   }
 
+  // Applications now carry `pipeline_stage_id` (the per-vacancy stage), not the
+  // legacy `status_id` (null on every current application). Collapse each app's
+  // stage back to its canonical bucket so the funnel + attention metrics count
+  // real applications instead of always reading 0.
+  const stageBucketById = new Map<string, LegacyStatusCode>(
+    ((pipelineStagesRaw || []) as (PipelineStageRowForBucket & { id: string })[]).map((st) => [
+      st.id,
+      mapPipelineStageToBucket(st),
+    ]),
+  )
+  const bucketOf = (a: ApplicationRow): LegacyStatusCode | null =>
+    a.pipeline_stage_id ? (stageBucketById.get(a.pipeline_stage_id) ?? null) : null
+
   // Funnel counts in stage sort order
   const funnel = activeAppStatuses.map((s) => ({
     statusId: s.id,
     code: s.code,
     name: s.name,
-    count: allApplications.filter((a) => a.status_id === s.id).length,
+    count: allApplications.filter((a) => bucketOf(a) === s.code).length,
   }))
   const hiredStatus = statusByCode.get('hired')
   if (hiredStatus) {
@@ -304,21 +319,18 @@ export default async function VacancyDetailPage({
       statusId: hiredStatus.id,
       code: hiredStatus.code,
       name: hiredStatus.name,
-      count: allApplications.filter((a) => a.status_id === hiredStatus.id).length,
+      count: allApplications.filter((a) => bucketOf(a) === 'hired').length,
     })
   }
 
   const activeCandidateCount = allApplications.filter((a) => {
-    const status = a.status_id ? statusById.get(a.status_id) : null
-    return status && !['rejected', 'withdrawn', 'hired'].includes(status.code)
+    const b = bucketOf(a)
+    return b !== null && !['rejected', 'withdrawn', 'hired'].includes(b)
   }).length
 
-  // Pending offers (status = offer, awaiting candidate response) — days
+  // Pending offers (bucket = offer, awaiting candidate response) — days
   // since the application reached the offer stage drives the urgency.
-  const offerStatusId = statusByCode.get('offer')?.id ?? null
-  const pendingOfferApps = offerStatusId
-    ? allApplications.filter((a) => a.status_id === offerStatusId)
-    : []
+  const pendingOfferApps = allApplications.filter((a) => bucketOf(a) === 'offer')
   const now = Date.now()
   const pendingOffers = pendingOfferApps.map((a) => {
     const candidate = candidateMap.get(a.candidate_id)
@@ -365,11 +377,10 @@ export default async function VacancyDetailPage({
     }
   }
 
-  // New applicants — applications in 'applied' status with no movement
-  const appliedStatusId = statusByCode.get('applied')?.id ?? null
-  const newApplicantCount = appliedStatusId
-    ? allApplications.filter((a) => a.status_id === appliedStatusId && !a.last_status_changed_at).length
-    : 0
+  // New applicants — applications in the 'applied' bucket with no movement
+  const newApplicantCount = allApplications.filter(
+    (a) => bucketOf(a) === 'applied' && !a.last_status_changed_at,
+  ).length
 
   const t = await getTranslations()
   const attention = buildAttentionList({
