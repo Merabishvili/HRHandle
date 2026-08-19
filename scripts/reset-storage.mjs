@@ -1,106 +1,100 @@
 // ============================================================================
-// reset-storage.mjs — empties the HRHandle storage buckets (test-data reset)
+// HRHandle — RESET STORAGE (empty the app's buckets) — REUSABLE (any project)
 // ============================================================================
-// Companion to scripts/reset-test-data.sql. That SQL can't touch storage
-// (Supabase blocks direct DELETE on storage.objects), so this empties the
-// candidate-documents and org-logos buckets via the Storage API using the
-// service-role key.
+//  Companion to scripts/reset-data.sql. Supabase blocks deleting
+//  storage.objects from SQL, so files are cleared here via the Storage API.
 //
-//   node scripts/reset-storage.mjs            # DRY RUN — lists what it'd delete
-//   node scripts/reset-storage.mjs --apply    # actually empties the buckets
+//  This version targets WHICHEVER project the supplied creds point at, and
+//  forces you to TYPE that project's ref to proceed — so you can't wipe the
+//  wrong environment by muscle memory.
 //
-// Reads NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY from the
-// environment, falling back to .env.local. Guards on the staging project ref.
+//  RUN (Node 20.6+; reads creds from the env file you pass):
+//    Staging:     node --env-file=.env.local     scripts/reset-storage.mjs --confirm quotchdymcnjlnwtjmgu
+//    Production:  node --env-file=.env.production scripts/reset-storage.mjs --confirm fnpyfwhvgzoxgyjafbsg
+//
+//  It prints the target URL + ref first, then refuses unless --confirm <ref>
+//  exactly matches the ref embedded in NEXT_PUBLIC_SUPABASE_URL.
 // ============================================================================
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
+import { createClient } from '@supabase/supabase-js'
 
-const STAGING_HOST = 'quotchdymcnjlnwtjmgu.supabase.co' // never production
-const BUCKETS = ['candidate-documents', 'org-logos']
-const APPLY = process.argv.includes('--apply')
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+const BUCKETS = ['avatars', 'candidate-documents', 'org-logos']
 
-function loadEnv() {
-  const env = { ...process.env }
-  try {
-    const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-    for (const line of readFileSync(join(root, '.env.local'), 'utf8').split('\n')) {
-      const t = line.trim()
-      if (!t || t.startsWith('#') || !t.includes('=')) continue
-      const i = t.indexOf('=')
-      const k = t.slice(0, i).trim()
-      if (env[k] === undefined) env[k] = t.slice(i + 1).trim()
-    }
-  } catch {
-    /* no .env.local — rely on process.env */
-  }
-  return env
+// Known projects — for a friendly label only; the guard works for any ref.
+const KNOWN = {
+  quotchdymcnjlnwtjmgu: 'STAGING (hrhandle-staging)',
+  fnpyfwhvgzoxgyjafbsg: 'PRODUCTION (hrhandle-production)',
 }
 
-const env = loadEnv()
-const url = env.NEXT_PUBLIC_SUPABASE_URL
-const key = env.SUPABASE_SERVICE_ROLE_KEY
 if (!url || !key) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-  process.exit(1)
-}
-if (new URL(url).host !== STAGING_HOST) {
-  console.error(`Refusing to run: ${new URL(url).host} is not the staging project (${STAGING_HOST}).`)
+  console.error(
+    'Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY.\n' +
+      'Run with:  node --env-file=<env-file> scripts/reset-storage.mjs --confirm <project-ref>',
+  )
   process.exit(1)
 }
 
-const h = { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }
+// Extract the project ref from https://<ref>.supabase.co
+const ref = (url.match(/https?:\/\/([a-z0-9]+)\.supabase\.co/i) || [])[1] || null
+const label = ref && KNOWN[ref] ? KNOWN[ref] : 'UNKNOWN project'
 
-// Recursively list every object path under a bucket (folders come back as rows
-// with no id; files have an id).
-async function listAll(bucket, prefix = '') {
-  const out = []
-  let offset = 0
-  for (;;) {
-    const res = await fetch(`${url}/storage/v1/object/list/${bucket}`, {
-      method: 'POST',
-      headers: h,
-      body: JSON.stringify({ prefix, limit: 1000, offset, sortBy: { column: 'name', order: 'asc' } }),
-    })
-    if (!res.ok) throw new Error(`list ${bucket}/${prefix}: ${res.status} ${await res.text()}`)
-    const rows = await res.json()
-    if (rows.length === 0) break
-    for (const r of rows) {
-      const path = prefix ? `${prefix}/${r.name}` : r.name
-      if (r.id === null || r.id === undefined) {
-        out.push(...(await listAll(bucket, path))) // folder → recurse
-      } else {
-        out.push(path)
-      }
+console.log(`Target URL: ${url}`)
+console.log(`Target ref: ${ref ?? '(could not parse)'}  ->  ${label}`)
+
+if (!ref) {
+  console.error('\nCould not parse the project ref from the URL. Aborting.')
+  process.exit(1)
+}
+
+// --confirm <ref> must match the URL's ref exactly.
+const confirmIdx = process.argv.indexOf('--confirm')
+const confirmed = confirmIdx !== -1 ? process.argv[confirmIdx + 1] : null
+if (confirmed !== ref) {
+  console.error(
+    `\nRefusing. This will PERMANENTLY EMPTY these buckets: ${BUCKETS.join(', ')}` +
+      `\nTo proceed, re-run with:  --confirm ${ref}`,
+  )
+  process.exit(1)
+}
+
+const supabase = createClient(url, key, { auth: { persistSession: false } })
+
+/** Recursively delete every object in a bucket (folders have id === null). */
+async function emptyBucket(bucket) {
+  let removed = 0
+  async function walk(prefix) {
+    const { data, error } = await supabase.storage.from(bucket).list(prefix, { limit: 1000 })
+    if (error) {
+      if (/not found|does not exist/i.test(error.message)) return
+      throw error
     }
-    if (rows.length < 1000) break
-    offset += rows.length
+    const files = []
+    for (const item of data ?? []) {
+      const path = prefix ? `${prefix}/${item.name}` : item.name
+      if (item.id === null) await walk(path) // sub-folder
+      else files.push(path)
+    }
+    if (files.length) {
+      const { error: rmErr } = await supabase.storage.from(bucket).remove(files)
+      if (rmErr) throw rmErr
+      removed += files.length
+    }
   }
-  return out
+  await walk('')
+  return removed
 }
 
-async function removeAll(bucket, paths) {
-  for (let i = 0; i < paths.length; i += 1000) {
-    const chunk = paths.slice(i, i + 1000)
-    const res = await fetch(`${url}/storage/v1/object/${bucket}`, {
-      method: 'DELETE',
-      headers: h,
-      body: JSON.stringify({ prefixes: chunk }),
-    })
-    if (!res.ok) throw new Error(`delete ${bucket}: ${res.status} ${await res.text()}`)
-  }
-}
-
-let total = 0
+console.log(`\nConfirmed ${ref}. Emptying buckets…`)
+let failed = false
 for (const bucket of BUCKETS) {
-  const paths = await listAll(bucket)
-  total += paths.length
-  console.log(`${bucket}: ${paths.length} object(s)`)
-  for (const p of paths) console.log(`  ${p}`)
-  if (APPLY && paths.length) {
-    await removeAll(bucket, paths)
-    console.log(`  → deleted ${paths.length}`)
+  try {
+    const n = await emptyBucket(bucket)
+    console.log(`✓ ${bucket}: removed ${n} file(s)`)
+  } catch (e) {
+    failed = true
+    console.error(`✗ ${bucket}: ${e.message}`)
   }
 }
-console.log('-'.repeat(46))
-console.log(APPLY ? `Emptied buckets — ${total} object(s) removed.` : `DRY RUN — ${total} object(s) would be removed. Re-run with --apply.`)
+console.log(failed ? 'Done with errors.' : 'Done — buckets emptied.')
+process.exit(failed ? 1 : 0)
