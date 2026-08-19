@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/ui/searchable-select'
+import { sectorLabel } from '@/lib/vacancies/sector-i18n'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { WORK_MODE_NONE, type VacancyFormValues } from '@/lib/validations/vacancy'
 import type { EmploymentType, Sector, VacancyStatus, WorkMode } from '@/lib/types'
@@ -80,8 +81,9 @@ export function BasicInfoSection({ form, sectors, statusOptions, disabled }: Bas
                   emptyText={t('vacancy.form.noSectors')}
                   options={sectors.map((sector) => ({
                     value: sector.id,
-                    label: sector.name,
-                    searchText: sector.name,
+                    label: sectorLabel(t, sector.name),
+                    // Keep the English name searchable too, so typing either works.
+                    searchText: `${sectorLabel(t, sector.name)} ${sector.name}`,
                   }))}
                 />
               )}

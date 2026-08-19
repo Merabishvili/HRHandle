@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { sectorLabel } from '@/lib/vacancies/sector-i18n'
 import {
   Select,
   SelectContent,
@@ -76,7 +77,7 @@ export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
               <SelectItem value="__none__">{t('wizard.noSector')}</SelectItem>
               {sectors.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
-                  {s.name}
+                  {sectorLabel(t, s.name)}
                 </SelectItem>
               ))}
             </SelectContent>

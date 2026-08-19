@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Briefcase, Pencil, ChevronRight, Check, AlertTriangle, Star } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { sectorLabel } from '@/lib/vacancies/sector-i18n'
 import type { BasicsState } from './step-basics'
 import type { DatesCompState } from './step-dates-comp'
 import type { DescriptionState } from './step-description'
@@ -47,7 +48,7 @@ export function StepReview({
 }: StepReviewProps) {
   const t = useTranslations()
   const [descOpen, setDescOpen] = useState(false)
-  const sectorName = sectors.find((s) => s.id === basics.sectorId)?.name ?? null
+  const sectorName = sectorLabel(t, sectors.find((s) => s.id === basics.sectorId)?.name) || null
   const descriptionComplete = description.description.trim().length > 0
   const mustHaveCount = scorecard.attributes.filter((a) => a.mustHave).length
 
