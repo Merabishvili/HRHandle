@@ -1,5 +1,6 @@
 import { env } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { siteBaseUrl } from '@/lib/site-url'
 
 const OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
@@ -22,8 +23,9 @@ export function getGoogleOAuthUrl(state: string): string {
 }
 
 export function getRedirectUri(): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
-  return `${base}/api/auth/google/callback`
+  // siteBaseUrl() strips trailing slashes so a "https://host.com/" env value
+  // can't produce a double-slash redirect URI (Google → redirect_uri_mismatch).
+  return `${siteBaseUrl()}/api/auth/google/callback`
 }
 
 export async function exchangeCodeForTokens(code: string): Promise<{
