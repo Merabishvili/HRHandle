@@ -128,6 +128,7 @@ export async function inviteTeamMember(
         title: `Team invite sent to ${parsed.data.email}`,
         body: `${inviterProfile?.full_name || 'A team member'} invited a new ${parsed.data.role}`,
         link: '/settings/team',
+        data: { email: parsed.data.email, inviter: inviterProfile?.full_name || 'A team member', role: parsed.data.role },
       })
     }
   } catch (err) {

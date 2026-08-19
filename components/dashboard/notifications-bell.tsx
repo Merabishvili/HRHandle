@@ -14,6 +14,7 @@ import {
   type Notification,
 } from '@/lib/actions/notifications'
 import { getNotificationPreferences } from '@/lib/actions/notification-preferences'
+import { renderNotification } from '@/lib/notifications/render'
 
 export function NotificationsBell() {
   const t = useTranslations()
@@ -142,7 +143,9 @@ export function NotificationsBell() {
                   {t('notifications.empty')}
                 </p>
               ) : (
-                notifications.map((n) => (
+                notifications.map((n) => {
+                  const rendered = renderNotification(t, n)
+                  return (
                   <button
                     key={n.id}
                     onClick={() => handleClick(n)}
@@ -158,9 +161,9 @@ export function NotificationsBell() {
                         <div className="mt-1.5 h-2 w-2 shrink-0" />
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium leading-snug text-foreground">{n.title}</p>
-                        {n.body && (
-                          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{n.body}</p>
+                        <p className="text-sm font-medium leading-snug text-foreground">{rendered.title}</p>
+                        {rendered.body && (
+                          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{rendered.body}</p>
                         )}
                         <p className="mt-1 text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
@@ -168,7 +171,8 @@ export function NotificationsBell() {
                       </div>
                     </div>
                   </button>
-                ))
+                  )
+                })
               )}
             </div>
           </div>

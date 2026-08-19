@@ -457,6 +457,7 @@ export async function submitPublicApplication(
       type: 'new_application',
       title: `New application: ${firstName} ${lastName}`,
       body: `Applied for ${vacancy.title}`,
+      data: { name: `${firstName} ${lastName}`, vacancy: vacancy.title },
       link: `/vacancies/${vacancy.id}?tab=applications`,
     })
   } catch (err) {
@@ -495,6 +496,7 @@ export async function submitPublicApplication(
             title: `Over your candidate limit (${sub.candidate_limit})`,
             body: 'Public applications are still being accepted, but you are over your plan limit — upgrade to keep adding candidates.',
             link: '/subscription',
+            data: { limit: sub.candidate_limit },
           })
         }
       }

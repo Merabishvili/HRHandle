@@ -98,6 +98,7 @@ export async function createNote(
       title: `${authorLabel} mentioned you on ${candidateName}`,
       body: preview,
       link: `/candidates/${candidateId}?note=${data.id}`,
+      data: { author: authorLabel, candidate: candidateName },
     })
   }
 

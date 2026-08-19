@@ -789,6 +789,38 @@
     "errMarkRead": "შეტყობინების წაკითხულად მონიშვნა ვერ მოხერხდა.",
     "errMarkAll": "შეტყობინებების წაკითხულად მონიშვნა ვერ მოხერხდა."
   },
+  "notif": {
+    "forVacancy": "პოზიციაზე: {vacancy}",
+    "newApplication": {
+      "title": "ახალი განაცხადი: {name}"
+    },
+    "interviewScheduled": {
+      "title": "დაინიშნა გასაუბრება: {name}"
+    },
+    "candidateHired": {
+      "title": "კანდიდატი დაქირავდა: {name}"
+    },
+    "teamInvite": {
+      "title": "მოწვევა გაიგზავნა: {email}",
+      "body": "{inviter}-მ მოიწვია ახალი {role}"
+    },
+    "planLimit": {
+      "title": "გადააჭარბეთ კანდიდატების ლიმიტს ({limit})",
+      "body": "საჯარო განაცხადები კვლავ მიიღება, თუმცა თქვენ გადააჭარბეთ გეგმის ლიმიტს — განაახლეთ გეგმა კანდიდატების დასამატებლად."
+    },
+    "noteMention": {
+      "title": "{author}-მ მოგიხსენიათ {candidate}-ზე"
+    },
+    "offerAccepted": {
+      "title": "შეთავაზება მიღებულია"
+    },
+    "offerDeclined": {
+      "title": "შეთავაზება უარყოფილია"
+    },
+    "applicationWithdrawn": {
+      "title": "კანდიდატმა გაიხმო თავისი განაცხადი"
+    }
+  },
   "source": {
     "publicForm": "საჯარო ფორმა",
     "linkedin": "LinkedIn",

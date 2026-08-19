@@ -22,11 +22,20 @@ describe('emailChrome', () => {
   it('every locale defines every chrome field (no missing translations)', () => {
     for (const loc of LOCALES) {
       const c = emailChrome(loc)
-      expect(c.thanksForApplying).toBeTruthy()
-      expect(c.trackApplication).toBeTruthy()
-      expect(c.keepLinkPrivate).toBeTruthy()
-      expect(c.sentViaNoReply).toBeTruthy()
+      for (const key of [
+        'sentVia', 'sentViaNoReply', 'thanksForApplying', 'trackApplication', 'keepLinkPrivate',
+        'underReview', 'movingToInterview', 'youHaveOffer', 'viewOffer', 'keepLinkPrivateOffer',
+        'hiringUpdate', 'interviewInvitation', 'interviewRescheduled', 'joinMeeting',
+        'labelDate', 'labelTime', 'labelDuration', 'labelFormat', 'labelMeetingLink',
+        'typeVideo', 'typePhone', 'typeOnsite', 'dateTag',
+      ] as const) {
+        expect(c[key], `${loc}.${key}`).toBeTruthy()
+      }
       expect(c.dear('X')).toContain('X')
+      expect(c.minutes(30)).toContain('30')
+      expect(c.interviewRescheduledSubject('Dev')).toContain('Dev')
+      expect(c.contactReply('N', 'E')).toContain('N')
+      expect(c.contactWelcome('N', 'E')).toContain('E')
     }
   })
 })

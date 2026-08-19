@@ -789,6 +789,38 @@
     "errMarkRead": "Не удалось отметить уведомление как прочитанное.",
     "errMarkAll": "Не удалось отметить уведомления как прочитанные."
   },
+  "notif": {
+    "forVacancy": "На {vacancy}",
+    "newApplication": {
+      "title": "Новый отклик: {name}"
+    },
+    "interviewScheduled": {
+      "title": "Собеседование назначено: {name}"
+    },
+    "candidateHired": {
+      "title": "Кандидат нанят: {name}"
+    },
+    "teamInvite": {
+      "title": "Приглашение отправлено: {email}",
+      "body": "{inviter} пригласил(а) нового участника: {role}"
+    },
+    "planLimit": {
+      "title": "Превышен лимит кандидатов ({limit})",
+      "body": "Публичные отклики всё ещё принимаются, но вы превысили лимит тарифа — обновите план, чтобы продолжить добавлять кандидатов."
+    },
+    "noteMention": {
+      "title": "{author} упомянул(а) вас в {candidate}"
+    },
+    "offerAccepted": {
+      "title": "Оффер принят"
+    },
+    "offerDeclined": {
+      "title": "Оффер отклонён"
+    },
+    "applicationWithdrawn": {
+      "title": "Кандидат отозвал заявку"
+    }
+  },
   "source": {
     "publicForm": "Публичная форма",
     "linkedin": "LinkedIn",

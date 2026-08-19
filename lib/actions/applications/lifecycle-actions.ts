@@ -232,6 +232,7 @@ export async function withdrawApplicationByToken(
         title: 'A candidate withdrew their application',
         body: undefined,
         link: app.candidate_id ? `/candidates/${app.candidate_id as string}` : undefined,
+        data: {},
       })
     }
   } catch (err) {
