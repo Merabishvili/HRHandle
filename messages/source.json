@@ -539,7 +539,6 @@
   "vacancies.viewDetails": { "en": "View details", "ru": "Подробнее", "ka": "დეტალების ნახვა" },
   "vacancies.editVacancy": { "en": "Edit vacancy", "ru": "Редактировать вакансию", "ka": "ვაკანსიის რედაქტირება" },
   "vacancies.duplicate": { "en": "Duplicate vacancy", "ru": "Дублировать вакансию", "ka": "ვაკანსიის დუბლირება" },
-  "vacancies.duplicating": { "en": "Duplicating…", "ru": "Дублирование…", "ka": "დუბლირდება…" },
   "vacancies.duplicateFailed": { "en": "Could not duplicate this vacancy.", "ru": "Не удалось дублировать вакансию.", "ka": "ვაკანსიის დუბლირება ვერ მოხერხდა." },
   "vacancies.duplicateVacancy": { "en": "Duplicate vacancy", "ru": "Дублировать вакансию", "ka": "ვაკანსიის დუბლირება" },
   "vacancies.setOpen": { "en": "Set as Open", "ru": "Сделать открытой", "ka": "გახსნა" },
