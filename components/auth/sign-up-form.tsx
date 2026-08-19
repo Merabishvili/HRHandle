@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import Link from 'next/link'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
@@ -45,6 +45,7 @@ export interface SignUpFormProps {
 
 export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFormProps) {
   const t = useTranslations()
+  const locale = useLocale()
   const [fullName, setFullName] = useState<string>('')
   const [companyName, setCompanyName] = useState<string>('')
   const [email, setEmail] = useState<string>(inviteEmail ?? '')
@@ -102,6 +103,9 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
           emailRedirectTo: buildEmailRedirectTo(),
           data: {
             full_name: fullName.trim(),
+            // Exposed to the Supabase "Confirm signup" email template as
+            // {{ .Data.locale }} so the confirmation email matches the UI language.
+            locale,
             ...(isInviteFlow
               ? { invite_token: resolvedInviteToken }
               : { company_name: companyName.trim() }),

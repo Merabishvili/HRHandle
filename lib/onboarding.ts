@@ -1,13 +1,15 @@
 import type { User } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { transliterate } from '@/lib/i18n/transliterate'
 
 function slugify(value: string): string {
-  return value
+  return transliterate(value)
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '') // never emit a leading/trailing (or lone) hyphen
 }
 
 export type OnboardingResult =

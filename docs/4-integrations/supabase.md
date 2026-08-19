@@ -12,8 +12,8 @@ _Last updated: 2026-05-08_
 ## Auth Flows
 
 ### Email/Password Sign-up
-1. `SignUpForm` calls `supabase.auth.signUp()` with `emailRedirectTo` pointing to `{origin}/dashboard` (or the `next` param if present)
-2. Supabase sends a confirmation email using the configured template
+1. `SignUpForm` calls `supabase.auth.signUp()` with `emailRedirectTo` pointing to `{origin}/dashboard` (or the `next` param if present). It also passes the visitor's chosen UI locale in `options.data.locale` (from `useLocale()`), which surfaces in the email template as `{{ .Data.locale }}`.
+2. Supabase sends a confirmation email using the configured template. **The "Confirm signup" template is trilingual** — it branches on `{{ .Data.locale }}` (`ka` / `ru` / else English) so the email matches the sign-up UI language. Template source + paste instructions: [`email-templates.md`](./email-templates.md). Must be configured identically on **both** Supabase projects.
 3. Email link uses `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`
 4. `app/auth/confirm/route.ts` (GET) receives `token_hash` and calls `supabase.auth.verifyOtp({ token_hash, type })`
 5. On success, redirects to `next` (defaults to `/dashboard`)
