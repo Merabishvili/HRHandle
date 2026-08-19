@@ -613,6 +613,8 @@
     "colCandidates": "Candidates",
     "viewDetails": "View details",
     "editVacancy": "Edit vacancy",
+    "duplicate": "Duplicate vacancy",
+    "duplicateFailed": "Could not duplicate this vacancy.",
     "duplicateVacancy": "Duplicate vacancy",
     "setOpen": "Set as Open",
     "putOnHold": "Put On Hold",

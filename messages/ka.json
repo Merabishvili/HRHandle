@@ -613,6 +613,8 @@
     "colCandidates": "კანდიდატები",
     "viewDetails": "დეტალების ნახვა",
     "editVacancy": "ვაკანსიის რედაქტირება",
+    "duplicate": "ვაკანსიის დუბლირება",
+    "duplicateFailed": "ვაკანსიის დუბლირება ვერ მოხერხდა.",
     "duplicateVacancy": "ვაკანსიის დუბლირება",
     "setOpen": "გახსნა",
     "putOnHold": "შეჩერება",

@@ -613,6 +613,8 @@
     "colCandidates": "Кандидаты",
     "viewDetails": "Подробнее",
     "editVacancy": "Редактировать вакансию",
+    "duplicate": "Дублировать вакансию",
+    "duplicateFailed": "Не удалось дублировать вакансию.",
     "duplicateVacancy": "Дублировать вакансию",
     "setOpen": "Сделать открытой",
     "putOnHold": "Поставить на паузу",

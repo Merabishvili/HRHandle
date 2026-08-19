@@ -3,8 +3,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { updateOrganization } from '@/lib/actions/settings'
-import { createClient } from '@/lib/supabase/client'
+import { updateOrganization, uploadOrgLogo } from '@/lib/actions/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -69,24 +68,19 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
     let finalLogoUrl: string | null | undefined = undefined // undefined = don't change
 
     if (logoFile) {
-      // Upload new logo to Supabase Storage
-      const supabase = createClient()
-      const ext = logoFile.name.split('.').pop() || 'jpg'
-      const path = `${organization.id}/logo.${ext}`
+      // Upload via a server action (admin client) — the browser hitting storage
+      // directly was blocked by storage RLS on the org-logos bucket.
+      const fd = new FormData()
+      fd.append('file', logoFile)
+      const uploadResult = await uploadOrgLogo(fd)
 
-      const { error: uploadError } = await supabase.storage
-        .from('org-logos')
-        .upload(path, logoFile, { upsert: true, contentType: logoFile.type })
-
-      if (uploadError) {
-        setError(t('settings.org.errLogoUpload'))
+      if (!uploadResult.success) {
+        setError(uploadResult.error || t('settings.org.errLogoUpload'))
         setIsLoading(false)
         return
       }
 
-      const { data: { publicUrl } } = supabase.storage.from('org-logos').getPublicUrl(path)
-      // Append cache-buster so the browser doesn't show the old image after update
-      finalLogoUrl = `${publicUrl}?t=${Date.now()}`
+      finalLogoUrl = uploadResult.data.url
     } else if (logoUrl === null && organization.logo_url) {
       // User explicitly removed the logo
       finalLogoUrl = null

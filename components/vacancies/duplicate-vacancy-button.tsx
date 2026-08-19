@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { Copy, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { duplicateVacancy } from '@/lib/actions/vacancies'
 
+/** Rendered as a plain (icon-less) menu item inside the vacancy ⋯ menu. */
 export function DuplicateVacancyButton({ vacancyId }: { vacancyId: string }) {
+  const t = useTranslations()
   const router = useRouter()
   const [isPending, setIsPending] = useState(false)
 
@@ -20,19 +22,19 @@ export function DuplicateVacancyButton({ vacancyId }: { vacancyId: string }) {
       // Previously this failed silently — the button looked like it did
       // nothing when the real cause was usually a plan/vacancy limit on
       // trial. Surface the reason so it's never a dead click.
-      toast.error(result.error || 'Could not duplicate this vacancy.')
+      toast.error(result.error || t('vacancies.duplicateFailed'))
       setIsPending(false)
     }
   }
 
   return (
-    <Button variant="outline" onClick={handleDuplicate} disabled={isPending}>
-      {isPending ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      ) : (
-        <Copy className="mr-2 h-4 w-4" />
-      )}
-      {isPending ? 'Duplicating…' : 'Duplicate'}
+    <Button
+      variant="ghost"
+      onClick={handleDuplicate}
+      disabled={isPending}
+      className="h-auto w-full justify-start px-2 py-1.5 font-normal"
+    >
+      {isPending ? t('vacancies.duplicating') : t('vacancies.duplicate')}
     </Button>
   )
 }

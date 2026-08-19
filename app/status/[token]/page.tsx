@@ -8,6 +8,7 @@ import { getMessages, getTranslations } from 'next-intl/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { statusCodeToBucket, BUCKET_LABEL_KEY, statusSubtitleKey } from '@/lib/application-status-bucket'
 import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { isOfferExpired } from '@/lib/offers/expiry'
 import { StatusStepper } from '@/components/status/status-stepper'
@@ -128,6 +129,7 @@ export default async function StatusPage({ params }: PageProps) {
   const contentLocale = resolveOrgContentLocale(orgLang)
   const t = await getTranslations({ locale: contentLocale })
   const messages = await getMessages({ locale: contentLocale })
+  const dfLocale = dateFnsLocale(contentLocale)
 
   // S05 §2.3 — surface a pending offer at the top of the status tile.
   // Reads offers where status='sent' (signed and delivered, awaiting candidate
@@ -152,9 +154,9 @@ export default async function StatusPage({ params }: PageProps) {
     return row as { public_token: string; expiry_date: string | null; sent_at: string | null }
   })()
 
-  const appliedAt = format(new Date(app.applied_at), 'MMM d, yyyy')
+  const appliedAt = format(new Date(app.applied_at), 'MMM d, yyyy', { locale: dfLocale })
   const lastUpdatedAt = app.last_status_changed_at
-    ? format(new Date(app.last_status_changed_at), 'MMM d, yyyy')
+    ? format(new Date(app.last_status_changed_at), 'MMM d, yyyy', { locale: dfLocale })
     : appliedAt
 
   return (
@@ -231,7 +233,7 @@ export default async function StatusPage({ params }: PageProps) {
                 <p className="text-sm font-semibold text-emerald-900">{t('status.hasOffer')}</p>
                 {pendingOffer.expiry_date && (
                   <p className="mt-0.5 text-xs text-emerald-800">
-                    {t('status.respondBy', { date: format(new Date(pendingOffer.expiry_date), 'MMM d, yyyy') })}
+                    {t('status.respondBy', { date: format(new Date(pendingOffer.expiry_date), 'MMM d, yyyy', { locale: dfLocale }) })}
                   </p>
                 )}
               </div>
