@@ -1,13 +1,15 @@
 import { env } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { siteBaseUrl } from '@/lib/site-url'
 
 const AUTH_BASE = 'https://login.microsoftonline.com/common/oauth2/v2.0'
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0'
 const SCOPES = 'Calendars.ReadWrite OnlineMeetings.ReadWrite offline_access'
 
 export function getMicrosoftRedirectUri(): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
-  return `${base}/api/auth/microsoft/callback`
+  // siteBaseUrl() strips trailing slashes so a "https://host.com/" env value
+  // can't produce a double-slash redirect URI (Azure → redirect_uri mismatch).
+  return `${siteBaseUrl()}/api/auth/microsoft/callback`
 }
 
 export function getMicrosoftOAuthUrl(state: string): string {
