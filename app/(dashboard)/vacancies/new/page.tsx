@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getVacancyStatuses } from '@/lib/cache/lookups'
 import { VacancyCreateWizard } from '@/components/vacancies/wizard/vacancy-create-wizard'
 import { orgDefaultLocale, orgEnabledLocales } from '@/lib/i18n/org-locale'
+import { resolveBillingCurrency } from '@/lib/pricing/currency'
 
 /**
  * Wave 2.7 vacancy creation flow — replaced the single-page
@@ -47,7 +48,7 @@ export default async function NewVacancyPage() {
     // JD tabs (i18n Slice 4). Graceful: a null row falls back to English-only.
     supabase
       .from('organizations')
-      .select('default_content_locale, enabled_content_locales')
+      .select('default_content_locale, enabled_content_locales, billing_country, billing_currency')
       .eq('id', profile.organization_id)
       .maybeSingle(),
   ])
@@ -55,10 +56,16 @@ export default async function NewVacancyPage() {
   const sectors = (sectorsRaw || []) as { id: string; name: string }[]
   const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
   const orgLocales = { default: orgDefaultLocale(orgLangRow), enabled: orgEnabledLocales(orgLangRow) }
+  // Default the salary currency to the org's local/billing currency (GE→GEL,
+  // EU→EUR, else USD), same logic as billing — Georgian orgs shouldn't default to USD.
+  const defaultCurrency = resolveBillingCurrency(
+    (orgLangRow as { billing_country?: string | null } | null)?.billing_country,
+    (orgLangRow as { billing_currency?: string | null } | null)?.billing_currency,
+  )
 
   return (
     <div className="mx-auto max-w-[1360px] p-4 lg:p-6">
-      <VacancyCreateWizard sectors={sectors} statusOptions={statusOptions} orgLocales={orgLocales} />
+      <VacancyCreateWizard sectors={sectors} statusOptions={statusOptions} orgLocales={orgLocales} defaultCurrency={defaultCurrency} />
     </div>
   )
 }

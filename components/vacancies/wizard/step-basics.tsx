@@ -112,7 +112,7 @@ export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
         </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_120px_1fr]">
+      <div className="grid items-end gap-4 sm:grid-cols-[1fr_130px_1fr]">
         <Field id="employment_type" label={t('columns.employmentType')}>
           <Select
             value={value.employmentType}

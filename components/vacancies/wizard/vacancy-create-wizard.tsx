@@ -44,6 +44,8 @@ interface VacancyCreateWizardProps {
   }[]
   /** Org content languages — when >1, Step 3 shows per-language JD tabs (Slice 4). */
   orgLocales?: { default: Locale; enabled: Locale[] }
+  /** Org's local/billing currency (GEL/EUR/USD) — seeds the salary currency. */
+  defaultCurrency?: string
 }
 
 /** Per-locale JD text for the non-default languages (default is `description`). */
@@ -84,6 +86,7 @@ export function VacancyCreateWizard({
   sectors,
   statusOptions,
   orgLocales = { default: DEFAULT_LOCALE, enabled: [DEFAULT_LOCALE] },
+  defaultCurrency = 'USD',
 }: VacancyCreateWizardProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -118,7 +121,7 @@ export function VacancyCreateWizard({
     endDate: null,
     salaryMin: null,
     salaryMax: null,
-    salaryCurrency: 'USD',
+    salaryCurrency: defaultCurrency,
   })
 
   const [description, setDescription] = useState<DescriptionState>({

@@ -79,8 +79,8 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-primary" />
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Sparkles className="h-4 w-4 shrink-0 text-primary" />
         <span className="text-[15px] font-bold text-foreground">{t('aiSummary.title')}</span>
         <span className="ml-auto text-[11px] uppercase tracking-wide text-muted-foreground">
           {t('aiJd.assistant')}
@@ -127,7 +127,7 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
             </p>
           )}
 
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Button onClick={generate} size="sm" variant="ghost" disabled={isSaving}>
               <RefreshCw className="mr-2 h-4 w-4" />
               {t('aiJd.regenerate')}

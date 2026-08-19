@@ -3,8 +3,11 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Briefcase } from 'lucide-react'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages } from 'next-intl/server'
 import { SignUpForm } from '@/components/auth/sign-up-form'
 import { getBlockedCountry } from '@/lib/sanctions'
+import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 
 export default async function SignUpPage({
   searchParams,
@@ -25,6 +28,9 @@ export default async function SignUpPage({
   let inviteEmail: string | undefined
   let inviteOrgName: string | undefined
   let inviteToken: string | undefined
+  // Invitees arrive with no NEXT_LOCALE cookie, so the sign-up page would render
+  // in English. Render it in the inviting org's content language instead.
+  let inviteLocale: string | undefined
 
   if (safeNext.startsWith('/join')) {
     const token = new URLSearchParams(safeNext.split('?')[1] ?? '').get('token') ?? undefined
@@ -33,7 +39,7 @@ export default async function SignUpPage({
       const admin = createAdminClient()
       const { data: invite } = await admin
         .from('team_invitations')
-        .select('email, organizations(name)')
+        .select('email, organizations(name, default_content_locale, enabled_content_locales)')
         .eq('token', token)
         .eq('status', 'pending')
         .gt('expires_at', new Date().toISOString())
@@ -41,15 +47,24 @@ export default async function SignUpPage({
       if (invite) {
         inviteToken = token
         inviteEmail = invite.email ?? undefined
-        const orgs = invite.organizations as { name: string }[] | { name: string } | null
-        if (Array.isArray(orgs)) {
-          inviteOrgName = orgs[0]?.name
-        } else if (orgs) {
-          inviteOrgName = orgs.name
+        type OrgRow = { name: string; default_content_locale: string | null; enabled_content_locales: string[] | null }
+        const orgs = invite.organizations as OrgRow[] | OrgRow | null
+        const org = Array.isArray(orgs) ? orgs[0] : orgs
+        if (org) {
+          inviteOrgName = org.name
+          inviteLocale = resolveOrgContentLocale(org)
         }
       }
     }
   }
+
+  const form = (
+    <SignUpForm
+      inviteEmail={inviteEmail}
+      inviteOrgName={inviteOrgName}
+      inviteToken={inviteToken}
+    />
+  )
 
   return (
     <div className="min-h-screen bg-background px-4 py-12 flex items-center justify-center">
@@ -63,11 +78,13 @@ export default async function SignUpPage({
           </Link>
         </div>
         <Suspense>
-          <SignUpForm
-            inviteEmail={inviteEmail}
-            inviteOrgName={inviteOrgName}
-            inviteToken={inviteToken}
-          />
+          {inviteLocale ? (
+            <NextIntlClientProvider locale={inviteLocale} messages={await getMessages({ locale: inviteLocale })}>
+              {form}
+            </NextIntlClientProvider>
+          ) : (
+            form
+          )}
         </Suspense>
       </div>
     </div>

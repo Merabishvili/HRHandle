@@ -237,19 +237,9 @@ export default async function ApplyPage({ params }: PageProps) {
               token={token}
               companyName={org?.name || t('apply.company')}
               screeningQuestions={screeningQuestions}
+              aiFitEnabled={aiFitEnabled}
             />
           </NextIntlClientProvider>
-        )}
-
-        {/* AI transparency notice (Wave 3.1) — only when this org uses AI Fit. */}
-        {aiFitEnabled && !isClosed && (
-          <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-600 shadow-sm">
-            <p className="mb-1 flex items-center gap-2 font-semibold text-gray-900">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3a6 6 0 0 0-6 6c0 1.6.8 3 2 4l.5 3h7l.5-3c1.2-1 2-2.4 2-4a6 6 0 0 0-6-6Z"/><path d="M9 18h6"/><path d="M10 21h4"/></svg>
-              {t('apply.aiReviewTitle')}
-            </p>
-            <p>{t('apply.aiReviewBody', { company: org?.name || t('apply.company') })}</p>
-          </div>
         )}
 
         {publicJobsSlug && (
