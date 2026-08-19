@@ -31,6 +31,9 @@ export interface AssessmentSuggesterInput {
     | null
   sector_name: string | null
   additional_context: string | null
+  /** Criteria already on the scorecard — the model must not re-suggest these or
+   * close rephrasings of them, so the recruiter only sees NEW options. */
+  existing_skills?: string[] | null
 }
 
 export interface AssessmentSuggestions {
@@ -48,7 +51,7 @@ export type AssessmentSuggesterResult =
     }
 
 const RULES = `Strict rules:
-- Generate 4-6 SKILL labels (score-type evaluation criteria scored 1-5) and 3-5 PROMPT questions (text-type open-ended evaluation prompts).
+- Generate exactly 5 SKILL labels (score-type evaluation criteria scored 1-5) and 3-5 PROMPT questions (text-type open-ended evaluation prompts). If the role genuinely supports fewer than 5 distinct skills, it is acceptable to return 4, but prefer 5.
 - SKILL labels are short focused names of a skill, competency, or knowledge area. They should be specific to the role's domain when the description gives enough signal. Examples: "PostgreSQL tuning", "Distributed-system design", "Mentoring engineers", "Customer-conversation skills". Keep each skill label under 60 characters.
 - PROMPT questions are open-ended evaluation questions the recruiter asks the candidate to write or talk through. They should probe depth, not surface facts. Examples: "Describe a backend system you owned end-to-end and the trade-offs you made.", "Tell us about a time you had to lead a project through significant scope changes." Keep each prompt under 200 characters.
 - Tone is neutral and respectful. NEVER ask about protected characteristics (age, gender, race, ethnicity, religion, national origin, family or marital status, pregnancy, sexual orientation, disability, or political views).
@@ -65,7 +68,7 @@ const OUTPUT_FORMAT = `Output strictly as JSON with this exact shape — no prea
   "prompts": ["...", "...", "..."]
 }`
 
-function buildPrompt(input: AssessmentSuggesterInput): string {
+export function buildPrompt(input: AssessmentSuggesterInput): string {
   const employmentLabel: Record<string, string> = {
     full_time: 'Full-time',
     part_time: 'Part-time',
@@ -88,11 +91,25 @@ function buildPrompt(input: AssessmentSuggesterInput): string {
     facts.push(`Recruiter notes / focus areas:\n${input.additional_context.trim()}`)
   }
 
+  // When the recruiter already has criteria on the scorecard, tell the model so
+  // it returns only NEW, distinct suggestions (not rephrasings of existing ones).
+  const existing = (input.existing_skills ?? [])
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+  const exclusionBlock = existing.length
+    ? [
+        '',
+        'Already on the scorecard — do NOT suggest any of these, and do NOT suggest close rephrasings, synonyms, or narrower/broader variants of them. Every suggestion must be a genuinely NEW, distinct criterion:',
+        existing.map((s) => `- ${s}`).join('\n'),
+      ].join('\n')
+    : ''
+
   return [
     'You are a recruiting copilot helping a recruiter design an assessment for a specific role.',
     'Suggest two kinds of evaluation items: short SKILL labels (scored 1-5 after the interview) and open-ended PROMPT questions (the candidate writes or speaks an answer).',
     '',
     RULES,
+    exclusionBlock,
     '',
     OUTPUT_FORMAT,
     '',

@@ -104,6 +104,8 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
           location: jdContext.location,
           employment_type: jdContext.employment_type,
           sector_name: jdContext.sector_name,
+          // So the model returns only NEW criteria, not rephrasings of what's added.
+          existing_skills: value.attributes.map((a) => a.label).filter(Boolean),
         }),
       })
       const body = await res.json()
@@ -411,7 +413,7 @@ export function StepScorecard({ value, onChange, jdContext }: StepScorecardProps
               className="ml-auto h-9 gap-1.5"
             >
               <Plus className="h-3.5 w-3.5" aria-hidden />
-              Add
+              {t('wizard.add')}
             </Button>
           </div>
         </div>

@@ -116,14 +116,16 @@ interface InterviewRow {
   status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
 }
 
-function formatEmploymentType(value: VacancyRow['employment_type']): string {
-  if (!value) return 'Not specified'
+function formatEmploymentType(
+  t: (key: string) => string,
+  value: VacancyRow['employment_type'],
+): string {
   switch (value) {
-    case 'full_time': return 'Full-time'
-    case 'part_time': return 'Part-time'
-    case 'contract': return 'Contract'
-    case 'internship': return 'Internship'
-    default: return value
+    case 'full_time': return t('enum.employment.fullTime')
+    case 'part_time': return t('enum.employment.partTime')
+    case 'contract': return t('enum.employment.contract')
+    case 'internship': return t('enum.employment.internship')
+    default: return t('common.notSpecified')
   }
 }
 
@@ -405,7 +407,7 @@ export default async function VacancyDetailPage({
           title={vacancy.title}
           status={vacancyStatus ? { code: vacancyStatus.code, name: vacancyStatus.name } : null}
           meta={{
-            employmentLabel: formatEmploymentType(vacancy.employment_type),
+            employmentLabel: formatEmploymentType(t, vacancy.employment_type),
             department: vacancy.department,
             location: vacancy.location,
             openedDaysAgo: timeOpenDays,
@@ -526,7 +528,7 @@ export default async function VacancyDetailPage({
                 title: vacancy.title,
                 department: vacancy.department,
                 location: vacancy.location,
-                employmentTypeLabel: formatEmploymentType(vacancy.employment_type),
+                employmentTypeLabel: formatEmploymentType(t, vacancy.employment_type),
                 workModeLabel: formatWorkMode(vacancy.work_mode),
                 endDate: vacancy.end_date,
               }}

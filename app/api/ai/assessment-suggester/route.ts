@@ -34,9 +34,13 @@ function checkRateLimit(orgId: string): boolean {
 // Two shapes: an existing vacancy (the vacancy page), or raw JD text (the
 // create-vacancy wizard, where no vacancy exists yet — suggestions are
 // returned but nothing is persisted).
+// Criteria already on the scorecard, so the model returns only NEW suggestions.
+const ExistingSkills = z.array(z.string().trim().max(200)).max(50).optional()
+
 const VacancyBody = z.object({
   vacancyId: z.string().uuid(),
   additional_context: z.string().trim().max(1000).nullable().optional(),
+  existing_skills: ExistingSkills,
 })
 const RawBody = z.object({
   title: z.string().trim().min(1).max(200),
@@ -51,6 +55,7 @@ const RawBody = z.object({
     .optional(),
   sector_name: z.string().max(100).nullable().optional(),
   additional_context: z.string().trim().max(1000).nullable().optional(),
+  existing_skills: ExistingSkills,
 })
 const BodySchema = z.union([VacancyBody, RawBody])
 
@@ -122,6 +127,7 @@ export async function POST(req: NextRequest) {
           | null) ?? null,
       sector_name,
       additional_context: parsed.data.additional_context ?? null,
+      existing_skills: parsed.data.existing_skills ?? null,
     }
     auditVacancyId = parsed.data.vacancyId
   } else {
@@ -136,6 +142,7 @@ export async function POST(req: NextRequest) {
       employment_type: parsed.data.employment_type ?? null,
       sector_name: parsed.data.sector_name ?? null,
       additional_context: parsed.data.additional_context ?? null,
+      existing_skills: parsed.data.existing_skills ?? null,
     }
   }
 
