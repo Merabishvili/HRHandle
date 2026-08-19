@@ -17,6 +17,51 @@ const AVATAR_BUCKET = 'avatars'
 const AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024
 
+const ORG_LOGO_BUCKET = 'org-logos'
+const ORG_LOGO_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const ORG_LOGO_MAX_BYTES = 2 * 1024 * 1024
+
+/** Upload an organization logo to the public `org-logos` bucket. Server-side via
+ * the admin client (owner/admin only), so the browser never touches storage —
+ * client-side uploads were tripping storage RLS. Returns a cache-busted public
+ * URL; the caller persists it on the org via updateOrganization. */
+export async function uploadOrgLogo(formData: FormData): Promise<ActionResult<{ url: string }>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!isOrgAdmin(ctx.role)) {
+    return { success: false, error: 'Only owners and admins can change the organization logo.' }
+  }
+
+  const file = formData.get('file')
+  if (!(file instanceof File)) return { success: false, error: 'No file provided' }
+  if (!ORG_LOGO_MIME_TYPES.has(file.type)) {
+    return { success: false, error: 'Only JPG, PNG, WebP, or GIF images are accepted' }
+  }
+  if (file.size > ORG_LOGO_MAX_BYTES) {
+    return { success: false, error: 'Image must be under 2 MB' }
+  }
+
+  const ext =
+    file.type === 'image/png' ? 'png'
+    : file.type === 'image/webp' ? 'webp'
+    : file.type === 'image/gif' ? 'gif'
+    : 'jpg'
+  const path = `${ctx.orgId}/logo.${ext}`
+  const bytes = await file.arrayBuffer()
+
+  const admin = createAdminClient()
+  const { error: upErr } = await admin.storage
+    .from(ORG_LOGO_BUCKET)
+    .upload(path, bytes, { contentType: file.type, upsert: true })
+  if (upErr) {
+    console.error('[settings] org logo upload failed:', upErr.message)
+    return { success: false, error: 'Failed to upload image' }
+  }
+
+  const { data: pub } = admin.storage.from(ORG_LOGO_BUCKET).getPublicUrl(path)
+  return { success: true, data: { url: `${pub.publicUrl}?t=${Date.now()}` } }
+}
+
 /** #1 — upload a profile avatar to the public `avatars` bucket and save the URL
  * on the user's profile. Server-side via the admin client, so no per-user
  * storage policy is needed. */
