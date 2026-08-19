@@ -178,11 +178,13 @@ export async function sendInterviewInvitationEmail({
   rescheduled?: boolean
   timezone?: string | undefined
 }) {
+  const locale = contentLocale ?? DEFAULT_LOCALE
+  const chrome = emailChrome(locale)
   const tz = timezone || 'UTC'
   const d = new Date(scheduledAt)
-  const date = d.toLocaleDateString('en-US', { timeZone: tz, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-  const time = d.toLocaleTimeString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })
-  const typeLabel = interviewType === 'video' ? 'Video Call' : interviewType === 'phone' ? 'Phone Call' : 'On-site'
+  const date = d.toLocaleDateString(chrome.dateTag, { timeZone: tz, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  const time = d.toLocaleTimeString(chrome.dateTag, { timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })
+  const typeLabel = interviewType === 'video' ? chrome.typeVideo : interviewType === 'phone' ? chrome.typePhone : chrome.typeOnsite
   const safeCandidate = escapeHtml(candidateName)
   const safeSenderName = escapeHtml(senderName)
   const safeSenderEmail = escapeHtml(senderEmail)
@@ -197,16 +199,16 @@ export async function sendInterviewInvitationEmail({
     meeting_link: meetingLink ?? '',
     interviewer_name: senderName,
   }
-  const defaults = defaultTemplate('interview_invitation', contentLocale ?? DEFAULT_LOCALE)
+  const defaults = defaultTemplate('interview_invitation', locale)
   const subject = rescheduled
-    ? `Interview Rescheduled: ${vacancyTitle}`
+    ? chrome.interviewRescheduledSubject(vacancyTitle)
     : applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
-  const headingText = rescheduled ? 'Interview Rescheduled' : 'Interview Invitation'
+  const headingText = rescheduled ? chrome.interviewRescheduled : chrome.interviewInvitation
 
   const meetingRow = safeMeetingLink
     ? `<tr>
-        <td style="padding: 6px 0; color: #6b7280; width: 130px;">Meeting link</td>
+        <td style="padding: 6px 0; color: #6b7280; width: 130px;">${chrome.labelMeetingLink}</td>
         <td style="padding: 6px 0;">
           <a href="${safeMeetingLink}" style="color: #111827; font-weight: 600;">${escapeHtml(safeMeetingLink)}</a>
         </td>
@@ -226,25 +228,25 @@ export async function sendInterviewInvitationEmail({
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
     <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${headingText}</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
-      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
+      ${chrome.dear(`<strong style="color: #111827;">${safeCandidate}</strong>`)}<br><br>
       ${body}
     </p>
 
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
       <tr>
-        <td style="padding: 6px 0; color: #6b7280; width: 130px;">Date</td>
+        <td style="padding: 6px 0; color: #6b7280; width: 130px;">${chrome.labelDate}</td>
         <td style="padding: 6px 0; font-weight: 600; color: #111827;">${date}</td>
       </tr>
       <tr>
-        <td style="padding: 6px 0; color: #6b7280;">Time</td>
+        <td style="padding: 6px 0; color: #6b7280;">${chrome.labelTime}</td>
         <td style="padding: 6px 0; font-weight: 600; color: #111827;">${time}</td>
       </tr>
       <tr>
-        <td style="padding: 6px 0; color: #6b7280;">Duration</td>
-        <td style="padding: 6px 0; color: #111827;">${durationMinutes} minutes</td>
+        <td style="padding: 6px 0; color: #6b7280;">${chrome.labelDuration}</td>
+        <td style="padding: 6px 0; color: #111827;">${chrome.minutes(durationMinutes)}</td>
       </tr>
       <tr>
-        <td style="padding: 6px 0; color: #6b7280;">Format</td>
+        <td style="padding: 6px 0; color: #6b7280;">${chrome.labelFormat}</td>
         <td style="padding: 6px 0; color: #111827;">${typeLabel}</td>
       </tr>
       ${meetingRow}
@@ -254,16 +256,17 @@ export async function sendInterviewInvitationEmail({
     <a href="${safeMeetingLink}"
        style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none;
               padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-bottom: 24px;">
-      Join Meeting
+      ${chrome.joinMeeting}
     </a>` : ''}
 
     <p style="color: #6b7280; font-size: 13px; margin: 24px 0 0;">
-      If you have any questions, please reply to this email or contact
-      <strong style="color: #111827;">${safeSenderName}</strong> at
-      <a href="mailto:${safeSenderEmail}" style="color: #111827;">${safeSenderEmail}</a>.
+      ${chrome.contactReply(
+        `<strong style="color: #111827;">${safeSenderName}</strong>`,
+        `<a href="mailto:${safeSenderEmail}" style="color: #111827;">${safeSenderEmail}</a>`,
+      )}
     </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
-    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle</p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">${chrome.sentVia}</p>
   </div>
 </body>
 </html>`,
@@ -372,21 +375,23 @@ export async function sendApplicationStatusChangedEmail({
     company: organizationName,
     status_url: statusUrl ?? '',
   }
+  const locale = contentLocale ?? DEFAULT_LOCALE
+  const chrome = emailChrome(locale)
   const defaults =
     stage === 'screening'
-      ? defaultTemplate('status_change_screening', contentLocale ?? DEFAULT_LOCALE)
-      : defaultTemplate('status_change_interview', contentLocale ?? DEFAULT_LOCALE)
+      ? defaultTemplate('status_change_screening', locale)
+      : defaultTemplate('status_change_interview', locale)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
   const safeStatusUrl = statusUrl ? escapeHtml(statusUrl) : null
 
-  const heading = stage === 'screening' ? 'Your application is under review' : 'Moving to the interview stage'
+  const heading = stage === 'screening' ? chrome.underReview : chrome.movingToInterview
 
   const statusCta = safeStatusUrl
     ? `
     <p style="margin: 0 0 16px;">
-      <a href="${safeStatusUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">Track your application</a>
+      <a href="${safeStatusUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">${chrome.trackApplication}</a>
     </p>`
     : ''
 
@@ -402,12 +407,12 @@ export async function sendApplicationStatusChangedEmail({
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
     <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${heading}</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
-      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
+      ${chrome.dear(`<strong style="color: #111827;">${safeCandidate}</strong>`)}<br><br>
       ${body}
     </p>
     ${statusCta}
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
-    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">${chrome.sentViaNoReply}</p>
   </div>
 </body>
 </html>`,
@@ -443,7 +448,9 @@ export async function sendOfferEmail({
     company: organizationName,
     offer_url: offerUrl,
   }
-  const defaults = defaultTemplate('offer_sent', contentLocale ?? DEFAULT_LOCALE)
+  const locale = contentLocale ?? DEFAULT_LOCALE
+  const chrome = emailChrome(locale)
+  const defaults = defaultTemplate('offer_sent', locale)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
@@ -459,19 +466,19 @@ export async function sendOfferEmail({
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
-    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">You have an offer</h1>
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${chrome.youHaveOffer}</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
-      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
+      ${chrome.dear(`<strong style="color: #111827;">${safeCandidate}</strong>`)}<br><br>
       ${body}
     </p>
     <p style="margin: 0 0 16px;">
-      <a href="${safeOfferUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">View your offer</a>
+      <a href="${safeOfferUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">${chrome.viewOffer}</a>
     </p>
     <p style="color: #9ca3af; font-size: 12px; margin: 0 0 16px;">
-      Keep this link private — it's the only way to view and respond to this offer.
+      ${chrome.keepLinkPrivateOffer}
     </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
-    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">${chrome.sentViaNoReply}</p>
   </div>
 </body>
 </html>`,
@@ -500,7 +507,9 @@ export async function sendApplicationRejectionEmail({
   contentLocale?: Locale | undefined
 }) {
   const vars = { candidate_name: candidateName, role: vacancyTitle, company: organizationName }
-  const defaults = defaultTemplate('rejection', contentLocale ?? DEFAULT_LOCALE)
+  const locale = contentLocale ?? DEFAULT_LOCALE
+  const chrome = emailChrome(locale)
+  const defaults = defaultTemplate('rejection', locale)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
@@ -518,18 +527,19 @@ export async function sendApplicationRejectionEmail({
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
-    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Hiring Update</h1>
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${chrome.hiringUpdate}</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
-      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
+      ${chrome.dear(`<strong style="color: #111827;">${safeCandidate}</strong>`)}<br><br>
       ${body}
     </p>
     <p style="color: #6b7280; font-size: 13px; margin: 0;">
-      If you have any questions, you are welcome to contact
-      <strong style="color: #111827;">${safeSenderName}</strong> at
-      <a href="mailto:${safeSenderEmail}" style="color: #111827;">${safeSenderEmail}</a>.
+      ${chrome.contactWelcome(
+        `<strong style="color: #111827;">${safeSenderName}</strong>`,
+        `<a href="mailto:${safeSenderEmail}" style="color: #111827;">${safeSenderEmail}</a>`,
+      )}
     </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
-    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle</p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">${chrome.sentVia}</p>
   </div>
 </body>
 </html>`,
