@@ -1,6 +1,7 @@
 import type { User } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { transliterate } from '@/lib/i18n/transliterate'
+import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/locales'
 
 function slugify(value: string): string {
   return transliterate(value)
@@ -21,6 +22,10 @@ export interface OnboardingOptions {
   companyName?: string
   /** Overrides user_metadata.full_name. */
   fullName?: string
+  /** The signup UI language, used to seed the org's content locale (candidate
+   * emails + public pages). Falls back to user_metadata.locale, then English.
+   * OAuth signups pass this from the onboarding page's NEXT_LOCALE cookie. */
+  locale?: Locale
 }
 
 export async function runOnboarding(
@@ -53,6 +58,15 @@ export async function runOnboarding(
     (user.user_metadata?.company_name as string | undefined)?.trim() ||
     'New Organization'
 
+  // Seed the org's content locale from the signup language so candidate-facing
+  // emails + public pages default to the org's language (not always English).
+  // Source: explicit opt → signup metadata.locale → English. `en` is always
+  // kept in the enabled set so English stays available as a fallback.
+  const localeRaw = opts.locale ?? (user.user_metadata?.locale as string | undefined)
+  const contentLocale: Locale = isLocale(localeRaw) ? localeRaw : DEFAULT_LOCALE
+  const enabledLocales =
+    contentLocale === DEFAULT_LOCALE ? [DEFAULT_LOCALE] : [contentLocale, DEFAULT_LOCALE]
+
   const baseSlug = slugify(companyName) || `org-${user.id.slice(0, 8)}`
   const uniqueSlug = `${baseSlug}-${user.id.slice(0, 6)}`
 
@@ -76,6 +90,8 @@ export async function runOnboarding(
       slug: uniqueSlug,
       public_page_slug: publicPageSlug,
       is_active: true,
+      default_content_locale: contentLocale,
+      enabled_content_locales: enabledLocales,
     })
     .select('id')
     .single()

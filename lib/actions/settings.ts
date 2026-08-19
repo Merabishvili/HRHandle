@@ -91,6 +91,12 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<v
       maxAge: LOCALE_COOKIE_MAX_AGE,
       sameSite: 'lax',
     })
+
+    // Mirror the chosen UI language into auth metadata so Supabase auth emails
+    // (e.g. password reset) render in the right language via `{{ .Data.locale }}`.
+    // Best-effort: a metadata write failure must not block the profile save.
+    const { error: metaErr } = await ctx.supabase.auth.updateUser({ data: { locale: language } })
+    if (metaErr) console.error('[settings] locale metadata sync failed:', metaErr.message)
   }
 
   revalidatePath('/settings')

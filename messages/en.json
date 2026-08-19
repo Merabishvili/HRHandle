@@ -118,7 +118,7 @@
     "yourName": "Your name",
     "companyPlaceholder": "e.g., Acme Recruiting",
     "settingUp": "Setting up…",
-    "openDashboard": "Open dashboard"
+    "openPortal": "Open portal"
   },
   "wizard": {
     "createVacancy": "Create vacancy",
@@ -1725,7 +1725,13 @@
     "connected": "Connected",
     "notConnected": "Not connected",
     "connect": "Connect",
-    "disconnect": "Disconnect"
+    "disconnect": "Disconnect",
+    "promptGoogleTitle": "Connect Google Calendar",
+    "promptGoogleDesc": "Link your Google account to schedule interviews with Google Meet links and calendar invites.",
+    "promptMicrosoftTitle": "Connect Microsoft Teams",
+    "promptMicrosoftDesc": "Link your Microsoft account to schedule interviews with Teams links and Outlook calendar invites.",
+    "promptConnect": "Connect",
+    "promptDismiss": "Dismiss"
   },
   "liConnect": {
     "connected": "LinkedIn company page connected successfully.",

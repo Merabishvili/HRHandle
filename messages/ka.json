@@ -118,7 +118,7 @@
     "yourName": "თქვენი სახელი",
     "companyPlaceholder": "მაგ., Acme Recruiting",
     "settingUp": "მიმდინარეობს მომართვა…",
-    "openDashboard": "დაშბორდის გახსნა"
+    "openPortal": "პორტალის გახსნა"
   },
   "wizard": {
     "createVacancy": "ვაკანსიის შექმნა",
@@ -1725,7 +1725,13 @@
     "connected": "დაკავშირებული",
     "notConnected": "დაუკავშირებელი",
     "connect": "დაკავშირება",
-    "disconnect": "გათიშვა"
+    "disconnect": "გათიშვა",
+    "promptGoogleTitle": "დააკავშირეთ Google Calendar",
+    "promptGoogleDesc": "დააკავშირეთ თქვენი Google ანგარიში, რომ გასაუბრებები დანიშნოთ Google Meet-ის ბმულებითა და კალენდრის მოწვევებით.",
+    "promptMicrosoftTitle": "დააკავშირეთ Microsoft Teams",
+    "promptMicrosoftDesc": "დააკავშირეთ თქვენი Microsoft ანგარიში, რომ გასაუბრებები დანიშნოთ Teams-ის ბმულებითა და Outlook კალენდრის მოწვევებით.",
+    "promptConnect": "დაკავშირება",
+    "promptDismiss": "დახურვა"
   },
   "liConnect": {
     "connected": "LinkedIn-ის კომპანიის გვერდი წარმატებით დაუკავშირდა.",

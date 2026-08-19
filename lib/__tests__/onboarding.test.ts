@@ -170,3 +170,42 @@ describe('runOnboarding public_page_slug generation', () => {
     expect(calls.organizationInserts[0]?.public_page_slug).toBe('hr-hendli')
   })
 })
+
+describe('runOnboarding content locale seeding', () => {
+  beforeEach(() => {
+    calls.organizationInserts = []
+    calls.profileUpserts = []
+  })
+
+  it('seeds the org content locale from opts.locale (OAuth flow)', async () => {
+    const user = makeUser({})
+    await runOnboarding(user, { companyName: 'Acme', locale: 'ka' })
+
+    expect(calls.organizationInserts[0]?.default_content_locale).toBe('ka')
+    // `en` is always kept enabled as a fallback.
+    expect(calls.organizationInserts[0]?.enabled_content_locales).toEqual(['ka', 'en'])
+  })
+
+  it('falls back to user_metadata.locale (email signup)', async () => {
+    const user = makeUser({ company_name: 'Acme', locale: 'ru' })
+    await runOnboarding(user)
+
+    expect(calls.organizationInserts[0]?.default_content_locale).toBe('ru')
+    expect(calls.organizationInserts[0]?.enabled_content_locales).toEqual(['ru', 'en'])
+  })
+
+  it('defaults to English when no locale is available', async () => {
+    const user = makeUser({ company_name: 'Acme' })
+    await runOnboarding(user)
+
+    expect(calls.organizationInserts[0]?.default_content_locale).toBe('en')
+    expect(calls.organizationInserts[0]?.enabled_content_locales).toEqual(['en'])
+  })
+
+  it('ignores an invalid locale value and defaults to English', async () => {
+    const user = makeUser({ company_name: 'Acme', locale: 'xx' })
+    await runOnboarding(user)
+
+    expect(calls.organizationInserts[0]?.default_content_locale).toBe('en')
+  })
+})
