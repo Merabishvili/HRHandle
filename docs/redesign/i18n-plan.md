@@ -72,6 +72,8 @@ Candidate-typed data (notes, CV text, screening *answers*) and the candidate `la
 
 The **audit log** stores an English `message` per row at write time; that historical string is never re-translated, but the **display** of the Entity + Details columns *is* localized at render time (`lib/audit-log/message-i18n.ts`) by re-deriving a phrase from the row's stable `action` code + structured `details` (e.g. `status_changed` → localized `applied → screening`, `ai_assist` by `details.feature`). Unmapped/legacy actions fall back to the stored English message. The Action badge stays the raw code. Default **pipeline stage names** and the seeded **"General"** rejection reason are likewise localized on display when they match the canonical default; custom entries render as typed.
 
+The **candidate Activity feed** (`candidate_activity` view) follows the same "structure over string" pattern: the view still composes an English `headline` in SQL, but also emits a `params` JSONB (migration `20260820_candidate_activity_i18n_params.sql`) that `lib/candidates/activity-i18n.ts` uses to rebuild a localized headline at render time — application/document/interview headlines from their own params, stage/offer rows by delegating to `message-i18n.ts`. Note **body** text (user content) and the interview meta timestamp are rendered as typed / per-locale respectively. Missing `params` (pre-migration) falls back to the stored English `headline`.
+
 ---
 
 ## 3. Schema changes (all idempotent, RLS-consistent with existing tables)

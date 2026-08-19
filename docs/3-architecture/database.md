@@ -194,11 +194,12 @@ Read-only view unioning all activity events for a candidate. Used by the candida
 | organization_id | uuid | |
 | candidate_id | uuid | |
 | kind | text | 🔄 (renamed from `type`) 'application', 'note', 'document', 'interview' |
-| headline | text | 🔄 (renamed from `title`) Human-readable label (e.g. `"Applied to Senior Engineer"`, `"Interview scheduled"`) |
+| headline | text | 🔄 (renamed from `title`) English label composed in SQL (e.g. `"Applied to Senior Engineer"`). **Display fallback only** — the feed re-localizes from `params` (see below); this is what renders when `params` is absent. |
 | body | text | 🆕 Long-form text (note body, etc.); null for most rows |
-| meta | text | Type-specific payload (status name, file name, document type, etc.). Note: now `text` not `jsonb`. |
+| meta | text | Type-specific payload (status name, file name, document type, etc.). Note: now `text` not `jsonb`. Interview date meta is re-formatted per-locale in the client from `params.at`. |
 | actor_name | text | 🆕 Display name of the user who triggered the event |
 | created_at | timestamptz | Used for feed ordering |
+| params | jsonb | 🆕 (`20260820_candidate_activity_i18n_params.sql`) Structured params for render-time i18n — `{title}` (application), `{file,docType}` (document), `{type,at}` (interview), `{audit,action,entity_type,details}` (stage/offer → reuse `lib/audit-log/message-i18n`). `lib/candidates/activity-i18n.ts` rebuilds a localized headline from `kind`+`params`, falling back to `headline`. |
 
 ---
 

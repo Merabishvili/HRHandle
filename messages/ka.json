@@ -2384,6 +2384,9 @@
     "filterOffers": "შეთავაზებები",
     "empty": "აქტივობა ჯერ არ არის.",
     "noteAdded": "შენიშვნა დაემატა",
+    "appliedTo": "განაცხადი: {title}",
+    "documentUploaded": "ატვირთულია დოკუმენტი: {file}",
+    "interviewScheduled": "დაგეგმილია გასაუბრება ({type})",
     "notePlaceholder": "დაამატეთ შენიშვნა ამ კანდიდატზე… აკრიფეთ @ კოლეგის მოსახსენიებლად.",
     "willNotify": "{count, plural, one {შეატყობინებს # კოლეგას.} other {შეატყობინებს # კოლეგას.}}"
   },

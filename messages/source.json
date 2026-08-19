@@ -2107,6 +2107,9 @@
   "activity.filterOffers": { "en": "Offers", "ru": "Офферы", "ka": "შეთავაზებები" },
   "activity.empty": { "en": "No activity yet.", "ru": "Активности пока нет.", "ka": "აქტივობა ჯერ არ არის." },
   "activity.noteAdded": { "en": "Note added", "ru": "Заметка добавлена", "ka": "შენიშვნა დაემატა" },
+  "activity.appliedTo": { "en": "Applied to {title}", "ru": "Отклик на «{title}»", "ka": "განაცხადი: {title}" },
+  "activity.documentUploaded": { "en": "Document uploaded: {file}", "ru": "Загружен документ: {file}", "ka": "ატვირთულია დოკუმენტი: {file}" },
+  "activity.interviewScheduled": { "en": "{type} interview scheduled", "ru": "Запланировано интервью ({type})", "ka": "დაგეგმილია გასაუბრება ({type})" },
   "activity.notePlaceholder": { "en": "Add a note about this candidate… Type @ to mention a teammate.", "ru": "Добавьте заметку об этом кандидате… Введите @, чтобы упомянуть коллегу.", "ka": "დაამატეთ შენიშვნა ამ კანდიდატზე… აკრიფეთ @ კოლეგის მოსახსენიებლად." },
   "activity.willNotify": { "en": "{count, plural, one {Will notify # teammate.} other {Will notify # teammates.}}", "ru": "{count, plural, one {Уведомит # коллегу.} few {Уведомит # коллег.} many {Уведомит # коллег.} other {Уведомит # коллег.}}", "ka": "{count, plural, one {შეატყობინებს # კოლეგას.} other {შეატყობინებს # კოლეგას.}}" },
 

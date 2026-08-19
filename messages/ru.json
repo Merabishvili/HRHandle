@@ -2384,6 +2384,9 @@
     "filterOffers": "Офферы",
     "empty": "Активности пока нет.",
     "noteAdded": "Заметка добавлена",
+    "appliedTo": "Отклик на «{title}»",
+    "documentUploaded": "Загружен документ: {file}",
+    "interviewScheduled": "Запланировано интервью ({type})",
     "notePlaceholder": "Добавьте заметку об этом кандидате… Введите @, чтобы упомянуть коллегу.",
     "willNotify": "{count, plural, one {Уведомит # коллегу.} few {Уведомит # коллег.} many {Уведомит # коллег.} other {Уведомит # коллег.}}"
   },
