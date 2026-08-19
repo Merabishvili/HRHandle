@@ -603,7 +603,8 @@ Job posting within an organization.
 | department | text | NULL | — | max 100 |
 | location | text | NULL | — | max 100 |
 | employment_type | text | NULL | — | 'full_time', 'part_time', 'contract', 'internship' |
-| hiring_manager_name | text | NULL | — | max 100 |
+| hiring_manager_name | text | NULL | — | max 100; display name, kept in sync with the picker |
+| hiring_manager_id | uuid | NULL | — | FK → profiles(id) ON DELETE SET NULL; real link (UI shows only the name). Added `20260820_vacancy_hiring_manager_id.sql` |
 | salary_min | numeric | NULL | — | min 0 |
 | salary_max | numeric | NULL | — | min 0; must be >= salary_min |
 | salary_currency | text | NULL | 'USD' | ISO 3-letter code |

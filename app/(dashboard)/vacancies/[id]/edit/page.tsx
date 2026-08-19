@@ -167,6 +167,24 @@ export default async function EditVacancyPage({
     requirements: (vi18n?.requirements_i18n as LocalizedText | null) ?? {},
   }
 
+  // #9 — hiring-manager link. A SEPARATE graceful read so the (possibly
+  // unmigrated) hiring_manager_id column can never take down the edit page,
+  // plus the org member list that populates the picker (UI shows the name,
+  // stores the id).
+  const [{ data: hmRow }, { data: membersRaw }] = await Promise.all([
+    supabase.from('vacancies').select('hiring_manager_id').eq('id', id).maybeSingle(),
+    supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('organization_id', organizationId)
+      .order('full_name', { ascending: true }),
+  ])
+  const orgMembers = (membersRaw || []) as { id: string; full_name: string | null }[]
+  const vacancyWithManager = {
+    ...vacancy,
+    hiring_manager_id: (hmRow as { hiring_manager_id?: string | null } | null)?.hiring_manager_id ?? null,
+  }
+
   return (
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
@@ -187,7 +205,7 @@ export default async function EditVacancyPage({
       </div>
 
       <VacancyForm
-        vacancy={vacancy}
+        vacancy={vacancyWithManager}
         sectors={sectors}
         statusOptions={statusOptions}
         customFieldGroups={customFieldGroups}
@@ -195,6 +213,7 @@ export default async function EditVacancyPage({
         isDuplicated={isDuplicated}
         orgLocales={orgLocales}
         initialI18n={initialI18n}
+        orgMembers={orgMembers}
       />
     </div>
   )

@@ -46,6 +46,8 @@ interface VacancyCreateWizardProps {
   orgLocales?: { default: Locale; enabled: Locale[] }
   /** Org's local/billing currency (GEL/EUR/USD) — seeds the salary currency. */
   defaultCurrency?: string
+  /** Org members for the hiring-manager picker (UI shows name, stores the id). */
+  orgMembers?: { id: string; full_name: string | null }[]
 }
 
 /** Per-locale JD text for the non-default languages (default is `description`). */
@@ -87,6 +89,7 @@ export function VacancyCreateWizard({
   statusOptions,
   orgLocales = { default: DEFAULT_LOCALE, enabled: [DEFAULT_LOCALE] },
   defaultCurrency = 'USD',
+  orgMembers = [],
 }: VacancyCreateWizardProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -114,6 +117,7 @@ export function VacancyCreateWizard({
     employmentType: 'full_time',
     openingsCount: 1,
     hiringManagerName: '',
+    hiringManagerId: null,
   })
 
   const [datesComp, setDatesComp] = useState<DatesCompState>({
@@ -202,6 +206,7 @@ export function VacancyCreateWizard({
         employment_type: basics.employmentType,
         work_mode: basics.workMode,
         hiring_manager_name: basics.hiringManagerName.trim() || null,
+        hiring_manager_id: basics.hiringManagerId,
         salary_min: datesComp.salaryMin,
         salary_max: datesComp.salaryMax,
         salary_currency: datesComp.salaryCurrency,
@@ -331,7 +336,7 @@ export function VacancyCreateWizard({
       }
     >
       {currentStep === 'basics' && (
-        <StepBasics value={basics} onChange={setBasics} sectors={sectors} />
+        <StepBasics value={basics} onChange={setBasics} sectors={sectors} orgMembers={orgMembers} />
       )}
       {currentStep === 'dates-comp' && (
         <StepDatesComp value={datesComp} onChange={setDatesComp} />

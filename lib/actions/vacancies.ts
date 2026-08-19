@@ -20,10 +20,16 @@ export async function createVacancy(input: VacancyInput): Promise<ActionResult<{
     ? Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url')
     : undefined
 
+  // hiring_manager_id (FK → profiles) is only written when a manager is
+  // actually selected, so a vacancy created before the 20260820 migration is
+  // applied still succeeds (an unknown column would otherwise reject the insert).
+  const { hiring_manager_id: hmId, ...insertData } = parsed.data
+
   const { data, error } = await ctx.supabase
     .from('vacancies')
     .insert({
-      ...parsed.data,
+      ...insertData,
+      ...(hmId ? { hiring_manager_id: hmId } : {}),
       organization_id: ctx.orgId,
       created_by: ctx.userId,
       ...(tokenForInsert ? { application_form_token: tokenForInsert } : {}),
@@ -63,7 +69,11 @@ export async function updateVacancy(
   const parsed = VacancySchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
 
-  const updatePayload: Record<string, unknown> = { ...parsed.data }
+  // See createVacancy: only write hiring_manager_id when a manager is picked,
+  // so edits still work before the 20260820 migration lands.
+  const { hiring_manager_id: hmId, ...updateData } = parsed.data
+  const updatePayload: Record<string, unknown> = { ...updateData }
+  if (hmId) updatePayload.hiring_manager_id = hmId
 
   // Auto-generate application_form_token when show_on_public_page is being enabled
   if (parsed.data.show_on_public_page) {

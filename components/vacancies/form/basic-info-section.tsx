@@ -34,14 +34,16 @@ interface BasicInfoSectionProps {
   form: UseFormReturn<VacancyFormValues>
   sectors: Sector[]
   statusOptions: VacancyStatus[]
+  orgMembers: { id: string; full_name: string | null }[]
   disabled: boolean
 }
 
-export function BasicInfoSection({ form, sectors, statusOptions, disabled }: BasicInfoSectionProps) {
+export function BasicInfoSection({ form, sectors, statusOptions, orgMembers, disabled }: BasicInfoSectionProps) {
   const t = useTranslations()
   const {
     control,
     register,
+    setValue,
     formState: { errors },
   } = form
 
@@ -201,12 +203,26 @@ export function BasicInfoSection({ form, sectors, statusOptions, disabled }: Bas
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="hiring_manager_name">{t('columns.hiringManager')}</Label>
-            <Input
-              id="hiring_manager_name"
-              placeholder={t('vacancy.form.hmPlaceholder')}
-              disabled={disabled}
-              {...register('hiring_manager_name')}
+            <Label htmlFor="hiring_manager_id">{t('columns.hiringManager')}</Label>
+            <Controller
+              control={control}
+              name="hiring_manager_id"
+              render={({ field }) => (
+                <SearchableSelect
+                  id="hiring_manager_id"
+                  options={orgMembers.map((m) => ({ value: m.id, label: m.full_name || '—' }))}
+                  value={field.value ?? ''}
+                  onValueChange={(v) => {
+                    field.onChange(v || null)
+                    // Keep the display-name column in sync with the picked member.
+                    setValue('hiring_manager_name', orgMembers.find((m) => m.id === v)?.full_name ?? '')
+                  }}
+                  placeholder={t('vacancy.form.hmSelect')}
+                  searchPlaceholder={t('vacancy.form.hmSearch')}
+                  emptyText={t('vacancy.form.hmEmpty')}
+                  disabled={disabled}
+                />
+              )}
             />
           </div>
         </div>
