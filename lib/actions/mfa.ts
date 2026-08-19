@@ -38,9 +38,19 @@ export async function startEnrollment(): Promise<ActionResult<EnrollStartResult>
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
 
-  // Supabase's `listFactors` narrows to verified factors; unverified ones are
-  // cleaned up by Supabase Auth itself on session refresh. We don't need to
-  // sweep them here.
+  // Abandoned enrollments (QR dialog closed before verifying) leave an
+  // UNVERIFIED factor behind — Supabase does NOT reliably auto-clean these, and
+  // re-enrolling then fails with "a factor with the friendly name … already
+  // exists". Sweep any unverified TOTP factors first so the retry succeeds.
+  // (`listFactors().totp` is verified-only; the unverified ones are in `.all`.)
+  const { data: existing } = await ctx.supabase.auth.mfa.listFactors()
+  const staleUnverified = (existing?.all ?? []).filter(
+    (f) => f.factor_type === 'totp' && f.status === 'unverified',
+  )
+  for (const f of staleUnverified) {
+    await ctx.supabase.auth.mfa.unenroll({ factorId: f.id })
+  }
+
   const { data, error } = await ctx.supabase.auth.mfa.enroll({
     factorType: 'totp',
     friendlyName: defaultFactorName(),
@@ -103,7 +113,7 @@ export async function verifyEnrollment(
     details: { factor_type: 'totp' },
   })
 
-  revalidatePath('/settings/profile/security')
+  revalidatePath('/settings/security')
   return { success: true, data: undefined }
 }
 
@@ -162,7 +172,7 @@ export async function unenrollFactor(factorId: string): Promise<ActionResult<voi
     details: { factor_id_prefix: factorId.slice(0, 8) },
   })
 
-  revalidatePath('/settings/profile/security')
+  revalidatePath('/settings/security')
   return { success: true, data: undefined }
 }
 
