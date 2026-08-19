@@ -530,6 +530,16 @@
     "openings": "Openings",
     "hiringManager": "Hiring manager"
   },
+  "sector": {
+    "financial": "Financial",
+    "it": "IT",
+    "sales": "Sales",
+    "marketing": "Marketing",
+    "hr": "HR",
+    "operations": "Operations",
+    "legal": "Legal",
+    "customerSupport": "Customer Support"
+  },
   "sort": {
     "addedNewest": "Added: Newest first",
     "addedOldest": "Added: Oldest first",

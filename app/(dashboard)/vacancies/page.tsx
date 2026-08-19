@@ -33,6 +33,7 @@ import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { parsePageSize, type PageSize } from '@/lib/pagination'
 import { vacancyRecencyLabel } from '@/lib/vacancy-age'
+import { sectorLabel } from '@/lib/vacancies/sector-i18n'
 
 type SearchParams = Promise<{
   page?: string
@@ -471,7 +472,7 @@ export default async function VacanciesPage({
                                 : vacancy.sectors
                               return (
                                 <TableCell key={col} className="text-sm text-muted-foreground">
-                                  {sector?.name || '—'}
+                                  {sectorLabel(t, sector?.name) || '—'}
                                 </TableCell>
                               )
                             }

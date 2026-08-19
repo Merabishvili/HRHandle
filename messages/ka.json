@@ -530,6 +530,16 @@
     "openings": "ვაკანტური ადგილები",
     "hiringManager": "დამქირავებელი მენეჯერი"
   },
+  "sector": {
+    "financial": "ფინანსები",
+    "it": "IT",
+    "sales": "გაყიდვები",
+    "marketing": "მარკეტინგი",
+    "hr": "HR",
+    "operations": "ოპერაციები",
+    "legal": "იურიდიული",
+    "customerSupport": "მომხმარებელთა მხარდაჭერა"
+  },
   "sort": {
     "addedNewest": "დამატებული: ჯერ ახლები",
     "addedOldest": "დამატებული: ჯერ ძველები",

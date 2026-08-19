@@ -530,6 +530,16 @@
     "openings": "Мест",
     "hiringManager": "Нанимающий менеджер"
   },
+  "sector": {
+    "financial": "Финансы",
+    "it": "ИТ",
+    "sales": "Продажи",
+    "marketing": "Маркетинг",
+    "hr": "HR",
+    "operations": "Операции",
+    "legal": "Юридический",
+    "customerSupport": "Поддержка клиентов"
+  },
   "sort": {
     "addedNewest": "Добавлены: сначала новые",
     "addedOldest": "Добавлены: сначала старые",

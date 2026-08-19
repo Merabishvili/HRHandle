@@ -1,18 +1,10 @@
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
-import { Briefcase, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { Briefcase, ChevronRight } from 'lucide-react'
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { CopyApplyLinkButton } from '@/components/vacancies/copy-apply-link-button'
-import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy-button'
-import { DeleteVacancyButton } from '@/components/vacancies/delete-vacancy-button'
+import { VacancyActionsMenu } from '@/components/vacancies/detail/vacancy-actions-menu'
 
 interface VacancyHeaderProps {
   vacancyId: string
@@ -107,33 +99,7 @@ export async function VacancyHeader({
               {t('vacHeader.viewPipeline')}
             </Link>
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9"
-                aria-label={t('profile.moreActions')}
-              >
-                <MoreHorizontal className="h-4 w-4" aria-hidden />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem asChild>
-                <Link href={`/vacancies/${vacancyId}/edit`}>{t('vacancies.editVacancy')}</Link>
-              </DropdownMenuItem>
-              {/* preventDefault keeps the menu open so the nested button's
-                  own click reliably fires (and its loading/error state is
-                  visible) instead of the item closing the menu first. */}
-              <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
-                <div className="flex w-full"><DuplicateVacancyButton vacancyId={vacancyId} /></div>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild className="text-destructive" onSelect={(e) => e.preventDefault()}>
-                <div className="flex w-full"><DeleteVacancyButton vacancyId={vacancyId} vacancyTitle={title} /></div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <VacancyActionsMenu vacancyId={vacancyId} title={title} />
         </div>
       </div>
     </header>
