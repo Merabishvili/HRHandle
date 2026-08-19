@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 import { applyVariables, escapeHtml, defaultTemplate } from '@/lib/email-template-utils'
 import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
+import { emailChrome } from '@/lib/email-i18n'
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY
@@ -296,19 +297,21 @@ export async function sendApplicationConfirmationEmail({
     company: organizationName,
     status_url: statusUrl ?? '',
   }
-  const defaults = defaultTemplate('application_received', contentLocale ?? DEFAULT_LOCALE)
+  const locale = contentLocale ?? DEFAULT_LOCALE
+  const defaults = defaultTemplate('application_received', locale)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
   const safeStatusUrl = statusUrl ? escapeHtml(statusUrl) : null
+  const chrome = emailChrome(locale)
 
   const statusCta = safeStatusUrl
     ? `
     <p style="margin: 0 0 24px;">
-      <a href="${safeStatusUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">Track your application</a>
+      <a href="${safeStatusUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 6px;">${chrome.trackApplication}</a>
     </p>
     <p style="color: #9ca3af; font-size: 12px; margin: 0 0 16px;">
-      Keep this link private — it's the only way to view your status without contacting the recruiter.
+      ${chrome.keepLinkPrivate}
     </p>`
     : ''
 
@@ -322,14 +325,14 @@ export async function sendApplicationConfirmationEmail({
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
-    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Thanks for Applying!</h1>
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${chrome.thanksForApplying}</h1>
     <p style="color: #6b7280; margin: 0 0 24px;">
-      Dear <strong style="color: #111827;">${safeCandidate}</strong>,<br><br>
+      ${chrome.dear(`<strong style="color: #111827;">${safeCandidate}</strong>`)}<br><br>
       ${body}
     </p>
     ${statusCta}
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
-    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Sent via HRHandle · Please do not reply to this email.</p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">${chrome.sentViaNoReply}</p>
   </div>
 </body>
 </html>`,
