@@ -16,55 +16,132 @@ function senderFrom(senderName: string) {
   return `${safe} <noreply@hrhandle.com>`
 }
 
-export async function sendTeamInviteEmail({
-  to,
+/** Localized copy for the team-invite email. Language is the inviter's org
+ * content locale (the invitee has no account/locale yet). `intro` carries
+ * `{inviter}` / `{org}` / `{role}` tokens filled in with bold, HTML-escaped
+ * values at render time. */
+const INVITE_STRINGS: Record<
+  Locale,
+  {
+    subject: (inviter: string, org: string) => string
+    heading: string
+    intro: string
+    accept: string
+    expiry: string
+    copyLabel: string
+    roleAdmin: string
+    roleMember: string
+  }
+> = {
+  en: {
+    subject: (inviter, org) => `${inviter} invited you to join ${org} on HRHandle`,
+    heading: "You've been invited",
+    intro: '{inviter} has invited you to join {org} as a {role}.',
+    accept: 'Accept Invitation',
+    expiry: "This invitation expires in 7 days. If you weren't expecting this, you can ignore it.",
+    copyLabel: 'Or copy this link:',
+    roleAdmin: 'Admin',
+    roleMember: 'Member',
+  },
+  ka: {
+    subject: (inviter, org) => `${inviter}-მ მოგიწვიათ ${org}-ის გუნდში HRHandle-ზე`,
+    heading: 'თქვენ მიწვეული ხართ',
+    intro: '{inviter}-მ მოგიწვიათ {org}-ის გუნდში, როგორც {role}.',
+    accept: 'მოწვევის მიღება',
+    expiry: 'მოწვევა იწურება 7 დღეში. თუ ამას არ ელოდით, შეგიძლიათ უგულებელყოთ.',
+    copyLabel: 'ან დააკოპირეთ ეს ბმული:',
+    roleAdmin: 'ადმინისტრატორი',
+    roleMember: 'წევრი',
+  },
+  ru: {
+    subject: (inviter, org) => `${inviter} приглашает вас в ${org} на HRHandle`,
+    heading: 'Вас пригласили',
+    intro: '{inviter} пригласил(а) вас присоединиться к {org} в роли {role}.',
+    accept: 'Принять приглашение',
+    expiry: 'Приглашение истекает через 7 дней. Если вы этого не ожидали, можете проигнорировать письмо.',
+    copyLabel: 'Или скопируйте эту ссылку:',
+    roleAdmin: 'Администратор',
+    roleMember: 'Участник',
+  },
+}
+
+/** Pure builder for the team-invite email (subject + HTML), extracted so the
+ * localization is unit-testable without hitting Resend. */
+export function buildTeamInviteEmail({
   inviterName,
   organizationName,
   role,
-  token,
+  joinUrl,
+  locale,
 }: {
-  to: string
   inviterName: string
   organizationName: string
   role: string
-  token: string
-}) {
-  const joinUrl = `${BASE_URL}/join?token=${encodeURIComponent(token)}`
-  const roleLabel = role === 'admin' ? 'Admin' : 'Member'
+  joinUrl: string
+  locale?: Locale | undefined
+}): { subject: string; html: string } {
+  const s = INVITE_STRINGS[locale ?? DEFAULT_LOCALE] ?? INVITE_STRINGS[DEFAULT_LOCALE]
+  const roleLabel = role === 'admin' ? s.roleAdmin : s.roleMember
   const safeInviter = escapeHtml(inviterName)
   const safeOrg = escapeHtml(organizationName)
+  // Function replacers so a `$`-containing org/inviter name can't trigger
+  // String.replace's special `$&`/`$'` substitution patterns.
+  const introHtml = s.intro
+    .replace('{inviter}', () => `<strong style="color: #111827;">${safeInviter}</strong>`)
+    .replace('{org}', () => `<strong style="color: #111827;">${safeOrg}</strong>`)
+    .replace('{role}', () => `<strong style="color: #111827;">${roleLabel}</strong>`)
 
-  return getResend().emails.send({
-    from: FROM,
-    to,
-    subject: `${inviterName} invited you to join ${organizationName} on HRHandle`,
+  return {
+    subject: s.subject(inviterName, organizationName),
     html: `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
-    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">You've been invited</h1>
-    <p style="color: #6b7280; margin: 0 0 24px;">
-      <strong style="color: #111827;">${safeInviter}</strong> has invited you to join
-      <strong style="color: #111827;">${safeOrg}</strong> as a <strong style="color: #111827;">${roleLabel}</strong>.
-    </p>
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${s.heading}</h1>
+    <p style="color: #6b7280; margin: 0 0 24px;">${introHtml}</p>
     <a href="${joinUrl}"
        style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none;
               padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px;">
-      Accept Invitation
+      ${s.accept}
     </a>
-    <p style="color: #9ca3af; font-size: 13px; margin: 24px 0 0;">
-      This invitation expires in 7 days. If you weren't expecting this, you can ignore it.
-    </p>
+    <p style="color: #9ca3af; font-size: 13px; margin: 24px 0 0;">${s.expiry}</p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      Or copy this link: <span style="color: #6b7280;">${joinUrl}</span>
+      ${s.copyLabel} <span style="color: #6b7280;">${joinUrl}</span>
     </p>
   </div>
 </body>
 </html>`,
+  }
+}
+
+export async function sendTeamInviteEmail({
+  to,
+  inviterName,
+  organizationName,
+  role,
+  token,
+  contentLocale,
+}: {
+  to: string
+  inviterName: string
+  organizationName: string
+  role: string
+  token: string
+  contentLocale?: Locale
+}) {
+  const joinUrl = `${BASE_URL}/join?token=${encodeURIComponent(token)}`
+  const { subject, html } = buildTeamInviteEmail({
+    inviterName,
+    organizationName,
+    role,
+    joinUrl,
+    locale: contentLocale,
   })
+
+  return getResend().emails.send({ from: FROM, to, subject, html })
 }
 
 export async function sendInterviewInvitationEmail({

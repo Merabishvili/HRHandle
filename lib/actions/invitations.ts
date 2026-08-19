@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendTeamInviteEmail } from '@/lib/email'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { isOrgAdmin } from '@/lib/permissions'
+import { orgDefaultLocale } from '@/lib/i18n/org-locale'
 
 const InviteSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -74,10 +75,10 @@ export async function inviteTeamMember(
 
   const admin = createAdminClient()
 
-  // Fetch inviter name and org name for the email
+  // Fetch inviter name and org name + content locale for the email
   const [{ data: inviterProfile }, { data: org }] = await Promise.all([
     admin.from('profiles').select('full_name').eq('id', ctx.userId).single(),
-    admin.from('organizations').select('name').eq('id', ctx.orgId).single(),
+    admin.from('organizations').select('name, default_content_locale').eq('id', ctx.orgId).single(),
   ])
 
   const { data: invite, error } = await admin
@@ -102,6 +103,7 @@ export async function inviteTeamMember(
       organizationName: org?.name || 'your organization',
       role: parsed.data.role,
       token: invite.token,
+      contentLocale: orgDefaultLocale(org),
     })
   } catch {
     // Email failure: clean up and surface the error
@@ -179,7 +181,7 @@ export async function resendInvitation(invitationId: string): Promise<ActionResu
 
   const [{ data: inviterProfile }, { data: org }] = await Promise.all([
     admin.from('profiles').select('full_name').eq('id', ctx.userId).single(),
-    admin.from('organizations').select('name').eq('id', ctx.orgId).single(),
+    admin.from('organizations').select('name, default_content_locale').eq('id', ctx.orgId).single(),
   ])
 
   // Refresh the expiry window so a resent invite isn't already near-dead.
@@ -192,6 +194,7 @@ export async function resendInvitation(invitationId: string): Promise<ActionResu
       organizationName: org?.name || 'your organization',
       role: invite.role as 'admin' | 'member',
       token: invite.token as string,
+      contentLocale: orgDefaultLocale(org),
     })
   } catch {
     return { success: false, error: 'Failed to resend invitation email. Please try again.' }
