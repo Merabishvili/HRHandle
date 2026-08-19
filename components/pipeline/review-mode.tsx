@@ -25,6 +25,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { InterviewForm } from '@/components/interviews/interview-form'
 import { toDisplayName } from '@/lib/format-name'
+import { statusLabel } from '@/lib/pipeline/status-i18n'
+import { sourceLabel } from '@/lib/pipeline/source-i18n'
 import { getDocumentSignedUrl } from '@/lib/actions/documents'
 import {
   getReviewCandidateDetail,
@@ -403,7 +405,7 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                 <div className="flex w-full flex-col gap-2 text-[12.5px] sm:w-[210px] sm:shrink-0">
                   <FactRow label={t('review.salaryExp')} value={detailData?.salaryExpectation ?? '—'} />
                   <FactRow label={t('review.notice')} value={detailData?.noticePeriod ?? '—'} />
-                  <FactRow label={t('review.sourceLabel')} value={current.source ?? '—'} />
+                  <FactRow label={t('review.sourceLabel')} value={sourceLabel(t, current.source) || '—'} />
                 </div>
               </div>
 
@@ -430,7 +432,7 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
             <ActionButton label={t('review.action.skip')} shortcut="K" onClick={goNext} disabled={index >= queue.length - 1} icon={SkipForward} />
             <ActionButton label={t('pipeline.bulk.schedule')} shortcut="S" onClick={() => void openSchedule()} disabled={pending} icon={CalendarPlus} />
             <ActionButton
-              label={nextStage ? t('review.action.advanceTo', { stage: nextStage.name }) : t('review.action.advance')}
+              label={nextStage ? t('review.action.advanceTo', { stage: statusLabel(t, nextStage.code, nextStage.name) }) : t('review.action.advance')}
               shortcut="A"
               onClick={() => void advance()}
               disabled={pending || !nextStage}
