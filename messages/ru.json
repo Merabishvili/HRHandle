@@ -118,7 +118,7 @@
     "yourName": "Ваше имя",
     "companyPlaceholder": "напр., Acme Recruiting",
     "settingUp": "Настройка…",
-    "openDashboard": "Открыть панель"
+    "openPortal": "Открыть портал"
   },
   "wizard": {
     "createVacancy": "Создать вакансию",
@@ -1725,7 +1725,13 @@
     "connected": "Подключено",
     "notConnected": "Не подключено",
     "connect": "Подключить",
-    "disconnect": "Отключить"
+    "disconnect": "Отключить",
+    "promptGoogleTitle": "Подключите Google Календарь",
+    "promptGoogleDesc": "Подключите аккаунт Google, чтобы назначать собеседования со ссылками Google Meet и приглашениями в календарь.",
+    "promptMicrosoftTitle": "Подключите Microsoft Teams",
+    "promptMicrosoftDesc": "Подключите аккаунт Microsoft, чтобы назначать собеседования со ссылками Teams и приглашениями в календарь Outlook.",
+    "promptConnect": "Подключить",
+    "promptDismiss": "Скрыть"
   },
   "liConnect": {
     "connected": "Страница компании LinkedIn успешно подключена.",

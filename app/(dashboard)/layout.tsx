@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
@@ -5,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { runOnboarding } from '@/lib/onboarding'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/header'
+import { IntegrationConnectPrompt } from '@/components/integrations/integration-connect-prompt'
 import { NavigationLoader } from '@/components/navigation/navigation-loader'
 import { SessionGuard } from '@/components/auth/session-guard'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
@@ -316,6 +318,12 @@ export default async function DashboardLayout({
         />
 
         <main id="dashboard-main" tabIndex={-1} className="min-w-0 flex-1 p-4 lg:p-8">
+          <Suspense fallback={null}>
+            <IntegrationConnectPrompt
+              userId={user.id}
+              provider={user.app_metadata?.provider as string | undefined}
+            />
+          </Suspense>
           <NavigationLoader>{children}</NavigationLoader>
         </main>
         <SessionGuard />

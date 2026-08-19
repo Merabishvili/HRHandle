@@ -149,3 +149,7 @@ https://staging.hrhandle.com/auth/login
 | `https://staging.hrhandle.com/` | Staging home (likely legacy) |
 
 > **If Google OAuth breaks with `redirect_uri_mismatch`:** The missing URI needs to be added to this single shared OAuth client in Google Cloud Console. Changes can take 5–10 minutes to propagate.
+
+## Post-signup connect prompt
+
+Google sign-in only grants email/profile scopes and does not capture Calendar tokens, so the Calendar/Meet integration is **not** auto-linked. Instead, users who signed up with Google see a dismissible "Connect Google Calendar" banner on the dashboard until they connect or dismiss it. The banner links to the same `/api/auth/google` flow used in Settings → Integrations. Logic: [`lib/integrations/prompt.ts`](../../lib/integrations/prompt.ts) (`resolveIntegrationPrompt`), rendered by [`components/integrations/integration-connect-prompt.tsx`](../../components/integrations/integration-connect-prompt.tsx) from the dashboard layout. Dismissal is stored in the `int_prompt_dismissed` cookie. The same mechanism covers Microsoft (`azure` → Teams/Outlook).

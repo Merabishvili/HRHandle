@@ -138,3 +138,7 @@ The Azure app for this integration is **separate** from the Supabase `azure` sig
 - The tenant is `common` — allows any Microsoft account to authenticate
 - The `azure` provider for Supabase sign-in and the custom Microsoft integration OAuth are separate apps/flows
 - The sign-in provider requires only `email` scope; the integration requires `Calendars.ReadWrite OnlineMeetings.ReadWrite offline_access`
+
+## Post-signup connect prompt
+
+Because Microsoft sign-in only grants `email` and doesn't capture Teams/Outlook tokens, the integration is **not** auto-linked. Users who signed up with Microsoft (`azure`) see a dismissible "Connect Microsoft Teams" banner on the dashboard, linking to the same `/api/auth/microsoft` flow used in Settings → Integrations. Shared with Google — see [google.md](./google.md#post-signup-connect-prompt); logic in [`lib/integrations/prompt.ts`](../../lib/integrations/prompt.ts).

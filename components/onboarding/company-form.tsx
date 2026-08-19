@@ -86,7 +86,7 @@ export function CompanyOnboardingForm({ defaultFullName }: CompanyOnboardingForm
                 {t('onboarding.settingUp')}
               </>
             ) : (
-              t('onboarding.openDashboard')
+              t('onboarding.openPortal')
             )}
           </Button>
         </form>
