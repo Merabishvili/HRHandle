@@ -100,7 +100,7 @@ per-currency; amounts are converted to minor units (tetri/cents, ×100) for Flit
 - [x] Product descriptions + **GEL** prices on the site (landing defaults to GEL; Georgian orgs billed in GEL)
 - [x] Terms: entity name + ID + digital-delivery + refund (Terms §5, `/refund`)
 - [x] Privacy policy (`/privacy`)
-- [x] Contact — email, **phone**, and full **address** ([`lib/legal/contact.ts`](../../lib/legal/contact.ts): 29 Tskneti Highway, Tbilisi; +995 599 89 29 17) on all legal pages + footer
+- [x] Contact — email, **phone**, and full **address** ([`lib/legal/contact.ts`](../../lib/legal/contact.ts): 29 Tskneti Highway, Tbilisi; +995 599 89 29 17) on all legal pages (Terms/Privacy/Refund). **Removed from the landing footer** to limit public exposure of the sole-proprietor's personal identity — the footer keeps links to the legal pages, which satisfies disclosure. If Flitt/the acquirer requires the full identity on the homepage itself before the live switch, restore the block in [`app/page.tsx`](../../app/page.tsx).
 - [x] Visa/Mastercard (+ Google Pay / Apple Pay) marks on the site
 - [ ] Test all three methods (card, Google Pay, Apple Pay) on the test merchant
 - [ ] Email Flitt to request the production switch, then set live creds on Vercel
