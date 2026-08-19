@@ -65,9 +65,12 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/settings') ||
     pathname.startsWith('/subscription')
 
+  // The enrollment UI (TwoFactorSection) AND the org MFA-policy toggle both live
+  // on /settings/security — it MUST be exempt, otherwise an admin who turns on
+  // "require MFA" before enrolling can never reach the page to enroll or undo it.
   const isExemptMfaPath =
-    pathname === '/settings/profile' ||
-    pathname.startsWith('/settings/profile/') ||
+    pathname === '/settings/security' ||
+    pathname.startsWith('/settings/security/') ||
     pathname === '/auth/mfa-challenge' ||
     pathname.startsWith('/api/') ||
     pathname === '/auth/logout'
@@ -93,7 +96,7 @@ export async function updateSession(request: NextRequest) {
 
         if (!profile.mfa_enrolled && requireForUser) {
           const url = request.nextUrl.clone()
-          url.pathname = '/settings/profile'
+          url.pathname = '/settings/security'
           url.searchParams.set('enforce', 'mfa')
           return NextResponse.redirect(url)
         }
