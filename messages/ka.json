@@ -438,6 +438,9 @@
     "inStageSource": "{time} ეტაპზე · {source}",
     "reasonAgo": "მიზეზი: {reason} · {time} წინ",
     "timeAgo": "{time} წინ",
+    "timeJustNow": "ახლახ",
+    "timeHours": "{n}სთ",
+    "timeDays": "{n}დღ",
     "status": {
       "rejected": "უარყოფილი",
       "withdrawn": "გატანილი"
@@ -785,6 +788,14 @@
     "ariaUnread": "შეტყობინებები, {count} წაუკითხავი",
     "errMarkRead": "შეტყობინების წაკითხულად მონიშვნა ვერ მოხერხდა.",
     "errMarkAll": "შეტყობინებების წაკითხულად მონიშვნა ვერ მოხერხდა."
+  },
+  "source": {
+    "publicForm": "საჯარო ფორმა",
+    "linkedin": "LinkedIn",
+    "csv": "CSV იმპორტი",
+    "manual": "ხელით",
+    "website": "ვებსაიტი",
+    "jobBoard": "სამუშაო დაფა"
   },
   "interviews": {
     "title": "გასაუბრებები",

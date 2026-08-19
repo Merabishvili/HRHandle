@@ -438,6 +438,9 @@
     "inStageSource": "{time} in stage · {source}",
     "reasonAgo": "Reason: {reason} · {time} ago",
     "timeAgo": "{time} ago",
+    "timeJustNow": "Just now",
+    "timeHours": "{n}h",
+    "timeDays": "{n}d",
     "status": {
       "rejected": "Rejected",
       "withdrawn": "Withdrawn"
@@ -785,6 +788,14 @@
     "ariaUnread": "Notifications, {count} unread",
     "errMarkRead": "Could not mark notification as read.",
     "errMarkAll": "Could not mark notifications as read."
+  },
+  "source": {
+    "publicForm": "Public Form",
+    "linkedin": "LinkedIn",
+    "csv": "CSV import",
+    "manual": "Manual",
+    "website": "Website",
+    "jobBoard": "Job board"
   },
   "interviews": {
     "title": "Interviews",

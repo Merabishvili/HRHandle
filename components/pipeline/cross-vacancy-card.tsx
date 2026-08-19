@@ -13,7 +13,8 @@ import {
   STALE_SPINE,
   STALE_TEXT,
 } from '@/lib/pipeline/stage-style'
-import { timeInStage } from '@/lib/pipeline/time-in-stage'
+import { timeInStage, timeInStageLabel } from '@/lib/pipeline/time-in-stage'
+import { sourceLabel } from '@/lib/pipeline/source-i18n'
 import { toDisplayName } from '@/lib/format-name'
 
 export interface CrossVacancyCardData {
@@ -118,16 +119,17 @@ export function CrossVacancyCard({
   // positive line (never "stale"): Hired reads "Hired Nd ago", the other
   // closed outcomes just show time-in-stage. Active stages show source and
   // flip to the amber "· stale" suffix past the threshold.
+  const timeLabel = timeInStageLabel(t, time)
   const bottomLabel =
     data.stageCode === 'hired'
-      ? t('pipeline.hiredAgo', { time: time.label })
+      ? t('pipeline.hiredAgo', { time: timeLabel })
       : terminal
-        ? t('pipeline.inStage', { time: time.label })
+        ? t('pipeline.inStage', { time: timeLabel })
         : isStale
-          ? t('pipeline.inStageStale', { time: time.label })
+          ? t('pipeline.inStageStale', { time: timeLabel })
           : data.source
-            ? t('pipeline.inStageSource', { time: time.label, source: data.source })
-            : t('pipeline.inStage', { time: time.label })
+            ? t('pipeline.inStageSource', { time: timeLabel, source: sourceLabel(t, data.source) })
+            : t('pipeline.inStage', { time: timeLabel })
 
   // "New" badge: applies (Applied stage) created within the last 24 hours
   // surface a small pill so the recruiter immediately spots fresh

@@ -438,6 +438,9 @@
     "inStageSource": "{time} на этапе · {source}",
     "reasonAgo": "Причина: {reason} · {time} назад",
     "timeAgo": "{time} назад",
+    "timeJustNow": "Только что",
+    "timeHours": "{n}ч",
+    "timeDays": "{n}д",
     "status": {
       "rejected": "Отклонён",
       "withdrawn": "Отозван"
@@ -785,6 +788,14 @@
     "ariaUnread": "Уведомления, {count} непрочитанных",
     "errMarkRead": "Не удалось отметить уведомление как прочитанное.",
     "errMarkAll": "Не удалось отметить уведомления как прочитанные."
+  },
+  "source": {
+    "publicForm": "Публичная форма",
+    "linkedin": "LinkedIn",
+    "csv": "Импорт CSV",
+    "manual": "Вручную",
+    "website": "Веб-сайт",
+    "jobBoard": "Джоб-борд"
   },
   "interviews": {
     "title": "Собеседования",

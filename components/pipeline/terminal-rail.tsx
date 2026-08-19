@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
-import { timeInStage } from '@/lib/pipeline/time-in-stage'
+import { timeInStage, timeInStageLabel } from '@/lib/pipeline/time-in-stage'
 import { toDisplayName } from '@/lib/format-name'
 import { cn } from '@/lib/utils'
 
@@ -217,9 +217,10 @@ function ClosedCard({
 }) {
   const t = useTranslations()
   const time = timeInStage(item.inStageSince)
+  const timeLabel = timeInStageLabel(t, time)
   const metaLabel = item.reason
-    ? t('pipeline.reasonAgo', { reason: item.reason, time: time.label })
-    : t('pipeline.timeAgo', { time: time.label })
+    ? t('pipeline.reasonAgo', { reason: item.reason, time: timeLabel })
+    : t('pipeline.timeAgo', { time: timeLabel })
   return (
     <div
       className={cn(
