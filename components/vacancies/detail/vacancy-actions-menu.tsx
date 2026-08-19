@@ -44,20 +44,20 @@ export function VacancyActionsMenu({
           <MoreHorizontal className="h-4 w-4" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem asChild>
           <Link href={`/vacancies/${vacancyId}/edit`}>{t('vacancies.editVacancy')}</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
-          <div className="flex w-full">
-            <DuplicateVacancyButton vacancyId={vacancyId} />
-          </div>
+        <DropdownMenuSeparator />
+        {/* preventDefault keeps the menu open so the nested button's own click
+            reliably fires (and its loading/error state is visible). The buttons
+            render icon-less + full-width so they read as plain menu items. */}
+        <DropdownMenuItem asChild className="p-0 focus:bg-transparent" onSelect={(e) => e.preventDefault()}>
+          <div className="w-full"><DuplicateVacancyButton vacancyId={vacancyId} /></div>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="text-destructive" onSelect={(e) => e.preventDefault()}>
-          <div className="flex w-full">
-            <DeleteVacancyButton vacancyId={vacancyId} vacancyTitle={title} />
-          </div>
+        <DropdownMenuItem asChild className="p-0 focus:bg-transparent" onSelect={(e) => e.preventDefault()}>
+          <div className="w-full"><DeleteVacancyButton vacancyId={vacancyId} vacancyTitle={title} menuItem /></div>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

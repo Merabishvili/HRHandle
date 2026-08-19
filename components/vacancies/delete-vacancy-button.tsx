@@ -22,9 +22,13 @@ import { deleteVacancy } from '@/lib/actions/vacancies'
 export function DeleteVacancyButton({
   vacancyId,
   vacancyTitle,
+  menuItem = false,
 }: {
   vacancyId: string
   vacancyTitle: string
+  /** Render as a plain (icon-less) menu item for the vacancy ⋯ menu; otherwise
+   * a standalone outline button (Settings tab). */
+  menuItem?: boolean
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -45,14 +49,24 @@ export function DeleteVacancyButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" disabled={isPending} className="text-destructive hover:text-destructive">
-          {isPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Trash2 className="mr-2 h-4 w-4" />
-          )}
-          {t('common.delete')}
-        </Button>
+        {menuItem ? (
+          <Button
+            variant="ghost"
+            disabled={isPending}
+            className="h-auto w-full justify-start px-2 py-1.5 font-normal text-destructive hover:text-destructive"
+          >
+            {t('common.delete')}
+          </Button>
+        ) : (
+          <Button variant="outline" disabled={isPending} className="text-destructive hover:text-destructive">
+            {isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="mr-2 h-4 w-4" />
+            )}
+            {t('common.delete')}
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
