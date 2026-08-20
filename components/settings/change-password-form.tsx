@@ -113,10 +113,15 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
   }
 
   // Apply the new password on the current session. Returns 'mfa' when Supabase
-  // requires the second factor first (AAL2).
+  // requires the second factor first (AAL2). current_password is sent because
+  // the prod project enables GOTRUE_SECURITY_UPDATE_PASSWORD_REQUIRE_CURRENT_PASSWORD
+  // — without it updateUser rejects with `current_password_required` (400).
   const applyNewPassword = async (): Promise<'ok' | 'mfa' | string> => {
     const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+      current_password: currentPassword,
+    })
     if (!error) return 'ok'
     const needsMfa =
       error.code === 'insufficient_aal' ||
