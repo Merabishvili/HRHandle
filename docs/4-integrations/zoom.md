@@ -1,9 +1,10 @@
 # Zoom Integration
 
-_Last updated: 2026-05-08_
+_Last updated: 2026-08-20_
 
 ## Changelog
 
+- 🆕 2026-08-20 — documented the **redirect-URI registration** on the Zoom Marketplace app (fixes `Invalid redirect … (4,700)`). No code change; the redirect URI was always correct — it just wasn't in the app's OAuth allow list.
 - 🔄 No code changes. Note: there is still no Zoom-meeting deletion when an interview is cancelled (Google Calendar **does** delete events) — tracked as `BL-zoom-cleanup`.
 
 ---
@@ -80,3 +81,26 @@ Stored in `profiles` table:
 | `ZOOM_CLIENT_SECRET` | Zoom OAuth app client secret (optional — feature disabled if missing) |
 
 If either is missing, `GET /api/auth/zoom` redirects to `/settings?zoom=not_configured`.
+
+## Redirect URIs — Zoom Marketplace (fixes `Invalid redirect … (4,700)`)
+
+The redirect URI the app sends is built from `NEXT_PUBLIC_SITE_URL`:
+`${NEXT_PUBLIC_SITE_URL}/api/auth/zoom/callback` (see `getZoomRedirectUri` in
+`lib/zoom/meetings.ts`). Zoom validates it against the app's allow list at the
+authorize step and returns **error 4700 `Invalid redirect: …`** on any URI that
+isn't registered **exactly** (scheme + host + path, no trailing slash).
+
+**Register all three** on the Zoom app (Zoom Marketplace → your app → **OAuth
+Information**): set **Redirect URL for OAuth** to the production URI and add every
+environment to the **OAuth Allow List**:
+
+- `https://hrhandle.com/api/auth/zoom/callback` — production
+- `https://staging.hrhandle.com/api/auth/zoom/callback` — staging
+- `http://localhost:3000/api/auth/zoom/callback` — local dev
+
+Notes:
+- Use the **exact** host `NEXT_PUBLIC_SITE_URL` resolves to. Prod is the apex
+  `hrhandle.com` (not `www`); if that env var is ever changed to `www.hrhandle.com`,
+  the registered URI must change with it. (Same apex/www gotcha as Google/Turnstile.)
+- This mirrors the Google/Microsoft redirect-URI registration — see
+  `docs/4-integrations/google.md`. Changes can take a few minutes to propagate.
