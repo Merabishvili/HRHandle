@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
-import { exchangeZoomCode } from '@/lib/zoom/meetings'
+import { exchangeZoomCode, fetchZoomUserId } from '@/lib/zoom/meetings'
 import { writeAuditLog } from '@/lib/audit-log'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
@@ -46,6 +46,14 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
+  }
+
+  // Store the Zoom user id so the deauthorization webhook can find whose tokens
+  // to delete on uninstall. Best-effort + separate update: a failure here (e.g.
+  // the column isn't migrated yet) must not fail an otherwise-successful connect.
+  const zoomUserId = await fetchZoomUserId(tokens.access_token)
+  if (zoomUserId) {
+    await admin.from('profiles').update({ zoom_user_id: zoomUserId }).eq('id', user.id)
   }
 
   const { data: profile } = await admin

@@ -4,6 +4,7 @@ _Last updated: 2026-08-20_
 
 ## Changelog
 
+- 🆕 2026-08-20 — **deauthorization webhook** for Marketplace publishing: `POST /api/webhooks/zoom/deauthorization` (CRC + signature + data-compliance), `profiles.zoom_user_id` mapping (migration `20260820_zoom_user_id.sql`), `ZOOM_SECRET_TOKEN` env var. Plus a publishing checklist.
 - 🆕 2026-08-20 — documented the **redirect-URI registration** on the Zoom Marketplace app (fixes `Invalid redirect … (4,700)`). No code change; the redirect URI was always correct — it just wasn't in the app's OAuth allow list.
 - 🔄 No code changes. Note: there is still no Zoom-meeting deletion when an interview is cancelled (Google Calendar **does** delete events) — tracked as `BL-zoom-cleanup`.
 
@@ -67,10 +68,12 @@ Stored in `profiles` table:
 
 ## Files
 
-- `lib/zoom/meetings.ts` — `getZoomOAuthUrl`, `getZoomRedirectUri`, `exchangeZoomCode`, `getValidZoomAccessToken`, `createZoomMeeting`
+- `lib/zoom/meetings.ts` — `getZoomOAuthUrl`, `getZoomRedirectUri`, `exchangeZoomCode`, `getValidZoomAccessToken`, `createZoomMeeting`, `fetchZoomUserId`, `notifyZoomDataCompliance`
+- `lib/zoom/webhook.ts` — `zoomCrcEncryptedToken`, `verifyZoomSignature` (deauthorization webhook crypto)
 - `app/api/auth/zoom/route.ts` — initiates OAuth
-- `app/api/auth/zoom/callback/route.ts` — handles callback, stores tokens
+- `app/api/auth/zoom/callback/route.ts` — handles callback, stores tokens + `zoom_user_id`
 - `app/api/auth/zoom/disconnect/route.ts` — clears tokens
+- `app/api/webhooks/zoom/deauthorization/route.ts` — Zoom uninstall webhook (CRC + signature + data compliance)
 - `components/settings/zoom-connect.tsx` — UI for connect/disconnect
 
 ## Environment Variables
@@ -79,8 +82,40 @@ Stored in `profiles` table:
 |---|---|
 | `ZOOM_CLIENT_ID` | Zoom OAuth app client ID (optional — feature disabled if missing) |
 | `ZOOM_CLIENT_SECRET` | Zoom OAuth app client secret (optional — feature disabled if missing) |
+| `ZOOM_SECRET_TOKEN` | Zoom app **Secret Token** — verifies the deauthorization webhook's signature + URL-validation (CRC) challenge. Set on **both** Vercel envs. |
 
-If either is missing, `GET /api/auth/zoom` redirects to `/settings?zoom=not_configured`.
+If either client credential is missing, `GET /api/auth/zoom` redirects to `/settings?zoom=not_configured`.
+
+## Deauthorization webhook (required for Marketplace publishing)
+
+Zoom's **Security Review** requires the app to delete a user's data when they
+uninstall it. Implemented at **`POST /api/webhooks/zoom/deauthorization`**
+(`app/api/webhooks/zoom/deauthorization/route.ts`):
+
+1. **URL validation (CRC):** answers Zoom's `endpoint.url_validation` event with
+   `{ plainToken, encryptedToken }`, where `encryptedToken = HMAC-SHA256(plainToken, ZOOM_SECRET_TOKEN)` (see `lib/zoom/webhook.ts`).
+2. **Signature check:** every other event must carry a valid `x-zm-signature`
+   (`v0=HMAC-SHA256("v0:<timestamp>:<rawBody>", ZOOM_SECRET_TOKEN)`), else 401.
+3. **`app_deauthorized`:** clears the user's `zoom_*` columns (matched by
+   `zoom_user_id`) and calls Zoom's data-compliance API
+   (`POST /oauth/data/compliance`, `notifyZoomDataCompliance` in `lib/zoom/meetings.ts`).
+
+To make the mapping possible, the OAuth **callback** stores the connected user's
+Zoom id in `profiles.zoom_user_id` (best-effort; migration
+`20260820_zoom_user_id.sql`, apply on both projects).
+
+Set the endpoint in the Zoom app under **Basic Information → Deauthorization
+Notification → Endpoint URL**: `https://hrhandle.com/api/webhooks/zoom/deauthorization`.
+
+## Publishing checklist (Zoom Marketplace)
+
+- **Scopes:** two, both minimal:
+  - `meeting:write:meeting` — create a meeting for the authorized user (`POST /v2/users/me/meetings`).
+  - `user:read:user` — read the connected user's own id (`GET /v2/users/me`) so a deauthorization event can be mapped back to their profile (`zoom_user_id`) and their data deleted.
+- **OAuth Redirect URL + Allow List:** `https://hrhandle.com/api/auth/zoom/callback` (+ `staging`, `localhost`). Apex `hrhandle.com` (matches `NEXT_PUBLIC_SITE_URL`).
+- **Deauthorization endpoint:** the webhook above + `ZOOM_SECRET_TOKEN` set on Vercel.
+- **App Listing:** name, short/long description, icon, screenshots, **Privacy Policy** `https://hrhandle.com/privacy`, **Terms** `https://hrhandle.com/terms`, support contact.
+- **Dev vs Prod:** an **unpublished** app only authorizes the owner + test users; real customers can connect only **after** the app passes Functional + Security review and is published.
 
 ## Redirect URIs — Zoom Marketplace (fixes `Invalid redirect … (4,700)`)
 
