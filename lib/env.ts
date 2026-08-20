@@ -9,6 +9,9 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     ZOOM_CLIENT_ID: z.string().min(1).optional(),
     ZOOM_CLIENT_SECRET: z.string().min(1).optional(),
+    // Zoom app "Secret Token" — verifies webhook signatures + the endpoint
+    // URL-validation (CRC) challenge on the deauthorization webhook.
+    ZOOM_SECRET_TOKEN: z.string().min(1).optional(),
     MICROSOFT_CLIENT_ID: z.string().min(1).optional(),
     MICROSOFT_CLIENT_SECRET: z.string().min(1).optional(),
     TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
@@ -44,6 +47,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     ZOOM_CLIENT_ID: process.env.ZOOM_CLIENT_ID,
     ZOOM_CLIENT_SECRET: process.env.ZOOM_CLIENT_SECRET,
+    ZOOM_SECRET_TOKEN: process.env.ZOOM_SECRET_TOKEN,
     MICROSOFT_CLIENT_ID: process.env.MICROSOFT_CLIENT_ID,
     MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,

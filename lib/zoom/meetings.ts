@@ -4,6 +4,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const TOKEN_URL = 'https://zoom.us/oauth/token'
 const REVOKE_URL = 'https://zoom.us/oauth/revoke'
 const MEETINGS_API = 'https://api.zoom.us/v2/users/me/meetings'
+const USERS_ME_API = 'https://api.zoom.us/v2/users/me'
+const DATA_COMPLIANCE_URL = 'https://api.zoom.us/oauth/data/compliance'
 
 export function getZoomRedirectUri(): string {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
@@ -22,6 +24,56 @@ export function getZoomOAuthUrl(state: string): string {
 
 function getBasicAuthHeader(): string {
   return Buffer.from(`${env.ZOOM_CLIENT_ID}:${env.ZOOM_CLIENT_SECRET}`).toString('base64')
+}
+
+/**
+ * The connected Zoom user's id (`GET /v2/users/me`). Stored on connect so the
+ * deauthorization webhook can map an uninstall back to the right profile.
+ * Best-effort — returns null on any failure (never blocks the connect flow).
+ */
+export async function fetchZoomUserId(accessToken: string): Promise<string | null> {
+  try {
+    const res = await fetch(USERS_ME_API, { headers: { Authorization: `Bearer ${accessToken}` } })
+    if (!res.ok) return null
+    const data = (await res.json()) as { id?: string }
+    return data?.id ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Confirm to Zoom that a deauthorized user's data has been deleted. Required by
+ * Zoom's Marketplace security review — the deauthorization webhook calls this
+ * after clearing the user's tokens. Best-effort (logs on failure).
+ */
+export async function notifyZoomDataCompliance(input: {
+  userId: string
+  accountId: string
+  deauthorizationEventReceived: unknown
+}): Promise<void> {
+  if (!env.ZOOM_CLIENT_ID || !env.ZOOM_CLIENT_SECRET) return
+  try {
+    const res = await fetch(DATA_COMPLIANCE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${getBasicAuthHeader()}`,
+      },
+      body: JSON.stringify({
+        client_id: env.ZOOM_CLIENT_ID,
+        user_id: input.userId,
+        account_id: input.accountId,
+        deauthorization_event_received: input.deauthorizationEventReceived,
+        compliance_completed: true,
+      }),
+    })
+    if (!res.ok) {
+      console.error(`[zoom] data compliance call failed: HTTP ${res.status}`)
+    }
+  } catch (err) {
+    console.error('[zoom] data compliance call threw:', err)
+  }
 }
 
 export async function exchangeZoomCode(code: string): Promise<{
