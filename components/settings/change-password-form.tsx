@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { createClient } from '@/lib/supabase/client'
+import { verifyPassword } from '@/lib/actions/auth'
 import { authErrorMessage } from '@/lib/auth/error-i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,31 +69,25 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
     setIsLoading(true)
 
     try {
-      const supabase = createClient()
-
-      // Step 1: Verify the current password by re-authenticating.
-      // This is critical — prevents an attacker with an active session from
-      // changing the password without knowing the current one. The captcha
-      // token is forwarded because Supabase guards signInWithPassword.
-      const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: userEmail,
-        password: currentPassword,
-        ...(captchaToken ? { options: { captchaToken } } : {}),
-      })
+      // Step 1: Verify the current password on a STATELESS server client so it
+      // doesn't downgrade this (possibly AAL2/MFA) session — see verifyPassword.
+      // The captcha token is forwarded because Supabase guards signInWithPassword.
+      const verify = await verifyPassword(userEmail, currentPassword, captchaToken)
 
       // Turnstile tokens are single-use — refresh the widget so a retry (e.g.
       // after a genuine typo) has a fresh token instead of a spent one.
       turnstileRef.current?.reset()
       setCaptchaToken(null)
 
-      if (verifyError) {
-        setError(t('changePw.wrongCurrent'))
+      if (!verify.success) {
+        setError(verify.reason === 'captcha' ? t('auth.errCaptcha') : t('changePw.wrongCurrent'))
         setIsLoading(false)
         return
       }
 
-      // Step 2: Update to the new password.
+      // Step 2: Update to the new password on the real (AAL2-intact) session.
       // Supabase automatically invalidates all other active sessions on password change.
+      const supabase = createClient()
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       })
@@ -174,7 +169,7 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
         />
       </div>
 
-      <Button type="submit" disabled={isLoading || !captchaToken}>
+      <Button type="submit" disabled={isLoading || !captchaToken || !currentPassword || !newPassword || !confirmPassword}>
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
