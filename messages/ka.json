@@ -819,6 +819,9 @@
     "interviewScheduled": {
       "title": "დაინიშნა გასაუბრება: {name}"
     },
+    "interviewReminder": {
+      "title": "მოახლოებული გასაუბრება: {name}"
+    },
     "candidateHired": {
       "title": "კანდიდატი დაქირავდა: {name}"
     },

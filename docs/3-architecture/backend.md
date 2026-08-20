@@ -155,11 +155,15 @@ The middleware (`lib/supabase/middleware.ts`) auth-gates both `/dashboard/*` and
 
 ## Background Jobs / Cron
 
-Two daily cron endpoints, both protected by `Authorization: Bearer {CRON_SECRET}` header (timing-safe comparison) and scheduled via `vercel.json`.
+Three daily cron endpoints, all protected by `Authorization: Bearer {CRON_SECRET}` header (timing-safe comparison) and scheduled via `vercel.json`.
 
 **`app/api/cron/expire-vacancies`** — GET, daily at 01:00 UTC
 
 - Calls Supabase RPC `expire_past_vacancies()`
+
+**`app/api/cron/interview-reminders`** — GET, daily at 06:00 UTC (#9)
+
+- Scans `interviews` that are still `scheduled`, start within the next ~26h, and have `reminder_sent_at IS NULL` (partial index `idx_interviews_reminder_due`). For each, sends an in-app `interview_reminder` notification (localized via `lib/notifications/render.ts`) to the assigned `interviewer_id`, or — when unassigned — to the org's owners/admins, then stamps `reminder_sent_at` so it's reminded at most once. The 26h look-ahead (> 24h) guarantees a once-daily run catches every next-day interview. Migration `20260821_interview_reminder.sql`.
 
 **`app/api/cron/purge-deleted`** — GET, daily at 03:00 UTC
 

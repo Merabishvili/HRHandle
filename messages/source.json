@@ -702,6 +702,7 @@
   "notif.forVacancy": { "en": "For {vacancy}", "ru": "На {vacancy}", "ka": "პოზიციაზე: {vacancy}" },
   "notif.newApplication.title": { "en": "New application: {name}", "ru": "Новый отклик: {name}", "ka": "ახალი განაცხადი: {name}" },
   "notif.interviewScheduled.title": { "en": "Interview scheduled: {name}", "ru": "Собеседование назначено: {name}", "ka": "დაინიშნა გასაუბრება: {name}" },
+  "notif.interviewReminder.title": { "en": "Upcoming interview: {name}", "ru": "Скоро собеседование: {name}", "ka": "მოახლოებული გასაუბრება: {name}" },
   "notif.candidateHired.title": { "en": "Candidate hired: {name}", "ru": "Кандидат нанят: {name}", "ka": "კანდიდატი დაქირავდა: {name}" },
   "notif.teamInvite.title": { "en": "Team invite sent to {email}", "ru": "Приглашение отправлено: {email}", "ka": "მოწვევა გაიგზავნა: {email}" },
   "notif.teamInvite.body": { "en": "{inviter} invited a new {role}", "ru": "{inviter} пригласил(а) нового участника: {role}", "ka": "{inviter}-მ მოიწვია ახალი {role}" },

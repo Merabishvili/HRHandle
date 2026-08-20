@@ -819,6 +819,9 @@
     "interviewScheduled": {
       "title": "Interview scheduled: {name}"
     },
+    "interviewReminder": {
+      "title": "Upcoming interview: {name}"
+    },
     "candidateHired": {
       "title": "Candidate hired: {name}"
     },

@@ -819,6 +819,9 @@
     "interviewScheduled": {
       "title": "Собеседование назначено: {name}"
     },
+    "interviewReminder": {
+      "title": "Скоро собеседование: {name}"
+    },
     "candidateHired": {
       "title": "Кандидат нанят: {name}"
     },

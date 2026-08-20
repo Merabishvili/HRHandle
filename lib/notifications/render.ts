@@ -40,6 +40,11 @@ export function renderNotification(t: Translate, n: NotificationForRender): Rend
         title: t('notif.interviewScheduled.title', { name: str(d.name) }),
         body: d.vacancy ? t('notif.forVacancy', { vacancy: str(d.vacancy) }) : null,
       }
+    case 'interview_reminder':
+      return {
+        title: t('notif.interviewReminder.title', { name: str(d.name) }),
+        body: d.vacancy ? t('notif.forVacancy', { vacancy: str(d.vacancy) }) : null,
+      }
     case 'candidate_hired':
       return {
         title: t('notif.candidateHired.title', { name: str(d.name) }),
