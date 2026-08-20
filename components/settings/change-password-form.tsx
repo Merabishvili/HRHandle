@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { createClient } from '@/lib/supabase/client'
+import { authErrorMessage } from '@/lib/auth/error-i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -97,7 +98,7 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
       })
 
       if (updateError) {
-        setError(updateError.message)
+        setError(authErrorMessage(t, updateError, 'changePw.genericError'))
         setIsLoading(false)
         return
       }

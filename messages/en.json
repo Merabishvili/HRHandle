@@ -65,12 +65,22 @@
     "errPasswordsNoMatch": "Passwords do not match.",
     "errCaptcha": "Security check not complete. Please wait a moment and try again.",
     "errSignInFailed": "Failed to sign in.",
+    "errInvalidCredentials": "Invalid email or password.",
+    "errEmailNotConfirmed": "Please confirm your email before signing in.",
+    "errRateLimit": "Too many attempts. Please try again later.",
+    "errUserExists": "An account with this email already exists.",
+    "errWeakPassword": "Password is too weak. Use at least 8 characters.",
     "errGoogleFailed": "Failed to sign in with Google.",
     "errMicrosoftFailed": "Failed to sign in with Microsoft.",
     "errCreateFailed": "Failed to create account.",
     "errGoogleSignUpFailed": "Failed to sign up with Google.",
     "errMicrosoftSignUpFailed": "Failed to sign up with Microsoft.",
     "errResetFailed": "Failed to reset password."
+  },
+  "planLimit": {
+    "candidates": "You've reached your plan limit of {limit} candidates. Upgrade to add more.",
+    "vacancies": "You've reached your plan limit of {limit} active vacancies. Upgrade to add more.",
+    "members": "You've reached your plan limit of {limit} team members. Upgrade to add more."
   },
   "mfa": {
     "twoFactor": "Two-factor authentication",

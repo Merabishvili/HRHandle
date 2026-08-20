@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { createClient } from '@/lib/supabase/client'
+import { authErrorMessage } from '@/lib/auth/error-i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -112,10 +113,10 @@ export function SignUpForm({ inviteEmail, inviteOrgName, inviteToken }: SignUpFo
           },
         },
       })
-      if (signUpError) throw new Error(signUpError.message)
+      if (signUpError) throw signUpError
       router.push('/auth/sign-up-success')
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.errCreateFailed'))
+      setError(authErrorMessage(t, err, 'auth.errCreateFailed'))
       turnstileRef.current?.reset()
       setCaptchaToken(null)
       setIsLoading(false)

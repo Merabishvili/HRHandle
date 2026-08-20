@@ -1,5 +1,6 @@
 'use server'
 
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 
 export type ActionErrorCode =
@@ -57,6 +58,11 @@ export async function checkPlanLimit(
 
   if (!sub) return null
 
+  // Localized to the caller's UI language (NEXT_LOCALE cookie) — this string is
+  // shown directly to the user (toast). getTranslations is request-scoped, and
+  // checkPlanLimit is always called from within a user-triggered server action.
+  const t = await getTranslations('planLimit')
+
   if (resource === 'candidate') {
     if (!sub.candidate_limit) return null
     const { count } = await ctx.supabase
@@ -65,7 +71,7 @@ export async function checkPlanLimit(
       .eq('organization_id', ctx.orgId)
       .is('deleted_at', null)
     if ((count ?? 0) >= sub.candidate_limit) {
-      return `You've reached your plan limit of ${sub.candidate_limit} candidates. Upgrade to add more.`
+      return t('candidates', { limit: sub.candidate_limit })
     }
   }
 
@@ -78,7 +84,7 @@ export async function checkPlanLimit(
       .is('archived_at', null)
       .is('deleted_at', null)
     if ((count ?? 0) >= sub.vacancy_limit) {
-      return `You've reached your plan limit of ${sub.vacancy_limit} active vacancies. Upgrade to add more.`
+      return t('vacancies', { limit: sub.vacancy_limit })
     }
   }
 
@@ -89,7 +95,7 @@ export async function checkPlanLimit(
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', ctx.orgId)
     if ((count ?? 0) >= sub.member_limit) {
-      return `You've reached your plan limit of ${sub.member_limit} team members. Upgrade to add more.`
+      return t('members', { limit: sub.member_limit })
     }
   }
 
