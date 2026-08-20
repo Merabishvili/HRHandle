@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { authErrorMessage } from '@/lib/auth/error-i18n'
-import { startLoginChallenge, completeLoginChallenge } from '@/lib/actions/mfa'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -71,26 +70,44 @@ export default function ResetPasswordPage() {
   }
 
   // Second step for MFA accounts: verify the TOTP code to elevate the recovery
-  // session to AAL2, then apply the (already-entered) new password.
+  // session to AAL2, then apply the (already-entered) new password. The whole
+  // challenge runs on the SAME browser client so its in-memory session becomes
+  // AAL2 before updateUser (a server-action challenge would only elevate the
+  // server-side session, leaving this client on AAL1).
   const handleMfaSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
 
-    const start = await startLoginChallenge()
-    if (!start.success) {
+    const supabase = createClient()
+    const { data: factors } = await supabase.auth.mfa.listFactors()
+    const factor = (factors?.totp ?? []).find((f) => f.status === 'verified')
+    if (!factor) {
       setError(t('auth.errResetFailed'))
       setIsLoading(false)
       return
     }
-    const done = await completeLoginChallenge(start.data.factorId, start.data.challengeId, mfaCode)
-    if (!done.success) {
+
+    const { data: challenge, error: chErr } = await supabase.auth.mfa.challenge({ factorId: factor.id })
+    if (chErr || !challenge) {
+      setError(t('auth.errResetFailed'))
+      setIsLoading(false)
+      return
+    }
+
+    const { error: verifyErr } = await supabase.auth.mfa.verify({
+      factorId: factor.id,
+      challengeId: challenge.id,
+      code: mfaCode,
+    })
+    if (verifyErr) {
       setError(t('auth.errMfaCode'))
       setMfaCode('')
       setIsLoading(false)
       return
     }
 
+    // Session is now AAL2 on this client — apply the new password.
     const res = await applyNewPassword()
     if (res === 'ok') {
       router.push('/auth/reset-password-success')
