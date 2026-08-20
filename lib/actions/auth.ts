@@ -73,10 +73,21 @@ export async function requestPasswordReset(
 
   // Implicit flow is required so the recovery email contains a plain OTP
   // (token_hash-verifiable server-side without a PKCE code verifier). See CLAUDE.md.
+  //
+  // This "browser" client runs inside a server action (a stateless HTTP wrapper,
+  // not a real browser). @supabase/ssr's createBrowserClient needs cookie
+  // methods and, in a non-browser runtime, THROWS
+  // "createBrowserClient in non-browser runtimes … needs getAll/setAll" the
+  // moment GoTrue's storage init reads cookies. Requesting a reset email needs
+  // no existing session, so we pass STATELESS no-op cookie methods: read
+  // nothing, persist nothing. Do not remove — without them this action crashes.
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { flowType: 'implicit' } },
+    {
+      auth: { flowType: 'implicit' },
+      cookies: { getAll: () => [], setAll: () => {} },
+    },
   )
 
   await supabase.auth.resetPasswordForEmail(normalisedEmail, {
