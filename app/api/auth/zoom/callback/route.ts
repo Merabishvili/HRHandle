@@ -7,7 +7,29 @@ import { writeAuditLog } from '@/lib/audit-log'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
+/**
+ * Some link scanners / browser extensions / proxies issue a HEAD (or a
+ * prefetch) to the callback URL. Next auto-runs GET for HEAD, which would
+ * exchange — and thereby SPEND — the single-use OAuth code before the user's
+ * real navigation, so their GET then fails with "Invalid Grant" (#22). Answer
+ * HEAD with an empty 204 so it never touches the code.
+ */
+export function HEAD() {
+  return new Response(null, { status: 204 })
+}
+
 export async function GET(request: NextRequest) {
+  // Same guard for GET prefetch/preview requests (they must not consume the code).
+  const purpose =
+    request.headers.get('sec-purpose') ||
+    request.headers.get('purpose') ||
+    request.headers.get('x-purpose') ||
+    request.headers.get('x-moz') ||
+    ''
+  if (/prefetch|preview|preconnect/i.test(purpose)) {
+    return new Response(null, { status: 204 })
+  }
+
   const { searchParams } = request.nextUrl
   const code = searchParams.get('code')
   const state = searchParams.get('state')
