@@ -1,5 +1,6 @@
 import { formatDistanceToNow, format } from 'date-fns'
 import { getTranslations } from 'next-intl/server'
+import { sourceLabel } from '@/lib/pipeline/source-i18n'
 
 interface MetadataFooterProps {
   source: string | null
@@ -30,7 +31,7 @@ export async function MetadataFooter({ source, createdAt, updatedAt, candidateId
   return (
     <div className="rounded-lg border border-border/60 bg-muted px-5 py-3.5">
       <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-        <MetaItem label={t('candWizard.application.sourceLabel')} value={source || '—'} />
+        <MetaItem label={t('candWizard.application.sourceLabel')} value={sourceLabel(t, source) || '—'} />
         <MetaItem label={t('profile.fact.added')}        value={formatDistanceToNow(new Date(createdAt), { addSuffix: true })} />
         <MetaItem label={t('profile.meta.lastUpdated')} value={format(new Date(updatedAt), 'MMM d, yyyy')} />
         <MetaItem label={t('profile.meta.candidateId')} value={shortId} mono />

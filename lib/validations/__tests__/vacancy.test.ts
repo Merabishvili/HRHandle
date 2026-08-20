@@ -36,6 +36,25 @@ describe('VacancySchema — required fields', () => {
     expect(result.success).toBe(false)
   })
 
+  // #9 — hiring_manager_id is the real FK link behind the name picker.
+  it('accepts a uuid hiring_manager_id', () => {
+    const result = VacancySchema.safeParse({
+      ...base,
+      hiring_manager_id: '11111111-1111-1111-1111-111111111111',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts a null / omitted hiring_manager_id', () => {
+    expect(VacancySchema.safeParse({ ...base, hiring_manager_id: null }).success).toBe(true)
+    expect(VacancySchema.safeParse(base).success).toBe(true)
+  })
+
+  it('rejects a non-uuid hiring_manager_id', () => {
+    const result = VacancySchema.safeParse({ ...base, hiring_manager_id: 'not-a-uuid' })
+    expect(result.success).toBe(false)
+  })
+
   it('rejects missing start_date', () => {
     const { start_date: _, ...rest } = base
     expect(VacancySchema.safeParse(rest).success).toBe(false)

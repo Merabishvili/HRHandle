@@ -32,9 +32,12 @@ interface ApplyFormProps {
    * the apply UX is identical regardless of answer — no warning, no
    * blocking. */
   screeningQuestions?: ApplyScreeningQuestion[]
+  /** When the org uses AI Fit, the transparency notice is folded into the
+   * collapsed privacy section instead of a separate prominent card. */
+  aiFitEnabled?: boolean
 }
 
-export function ApplyForm({ token, companyName, screeningQuestions = [] }: ApplyFormProps) {
+export function ApplyForm({ token, companyName, screeningQuestions = [], aiFitEnabled = false }: ApplyFormProps) {
   const t = useTranslations()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
@@ -556,6 +559,9 @@ export function ApplyForm({ token, companyName, screeningQuestions = [] }: Apply
           <div className="border-t border-gray-200 px-4 pb-4 pt-3">
             <p>{t('apply.privacyIntro', { company: companyName })}</p>
             <p className="mt-2">{t('apply.privacyCollect')}</p>
+            {aiFitEnabled && (
+              <p className="mt-2">{t('apply.aiReviewBody', { company: companyName })}</p>
+            )}
             <p className="mt-2">{t('apply.privacyRetention', { company: companyName })}</p>
             <p className="mt-2">
               {t('apply.privacyRights', { company: companyName })}{' '}

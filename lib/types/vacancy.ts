@@ -36,6 +36,7 @@ export interface Vacancy {
   employment_type: EmploymentType | null
   work_mode: WorkMode | null
   hiring_manager_name: string | null
+  hiring_manager_id: string | null
 
   salary_min: number | null
   salary_max: number | null

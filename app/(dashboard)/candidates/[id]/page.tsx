@@ -11,6 +11,7 @@ import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { toDisplayFullName } from '@/lib/format-name'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 import type { ActivityItem } from '@/components/candidates/activity-feed'
+import type { ActivityParams } from '@/lib/candidates/activity-i18n'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { getRecentMerge } from '@/lib/actions/candidate-merge'
 import { CandidateProfileShell } from '@/components/candidates/profile/profile-shell'
@@ -121,6 +122,9 @@ interface RawActivityRow {
   meta: string | null
   actor_name: string | null
   created_at: string
+  /** Structured localization params (present once the 20260820 view rebuild is
+   * applied; absent before that → English headline fallback). */
+  params?: Record<string, unknown> | null
 }
 
 const TERMINAL_CODES: ReadonlySet<ApplicationStatus['code']> = new Set([
@@ -482,9 +486,13 @@ export default async function CandidateDetailPage({
   const educationEntries = (educationRaw || []) as CandidateEducation[]
   const documents = (documentsRaw || []) as DocumentRow[]
 
+  // `select('*')` (not an explicit column list) so the structured `params`
+  // column added by 20260820_candidate_activity_i18n_params.sql rides along when
+  // present and is simply absent pre-migration — the client renderer falls back
+  // to the English `headline`, so this can't break before the view is rebuilt.
   const { data: activityRaw } = await supabase
     .from('candidate_activity')
-    .select('id, candidate_id, organization_id, kind, headline, body, meta, actor_name, created_at')
+    .select('*')
     .eq('candidate_id', id)
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
@@ -497,6 +505,7 @@ export default async function CandidateDetailPage({
     meta: r.meta,
     actor_name: r.actor_name,
     created_at: r.created_at,
+    params: (r.params ?? null) as ActivityParams | null,
   }))
 
   const yearsExp = computeYearsExp(experienceEntries)

@@ -40,6 +40,8 @@ interface VacancyFormProps {
   orgLocales?: { default: Locale; enabled: Locale[] }
   /** Existing per-locale JD content (edit mode). */
   initialI18n?: { description: LocalizedText; responsibilities: LocalizedText; requirements: LocalizedText }
+  /** Org members for the hiring-manager picker (UI shows name, stores the id). */
+  orgMembers?: { id: string; full_name: string | null }[]
 }
 
 // Maps each RHF field name to the DOM id used for scroll-to-error on submit.
@@ -77,6 +79,7 @@ export function VacancyForm({
   isDuplicated = false,
   orgLocales = { default: DEFAULT_LOCALE, enabled: [DEFAULT_LOCALE] },
   initialI18n,
+  orgMembers = [],
 }: VacancyFormProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -112,6 +115,7 @@ export function VacancyForm({
       employment_type: vacancy?.employment_type ?? 'full_time',
       work_mode: vacancy?.work_mode ?? WORK_MODE_NONE,
       hiring_manager_name: vacancy?.hiring_manager_name ?? '',
+      hiring_manager_id: vacancy?.hiring_manager_id ?? null,
       salary_min: vacancy?.salary_min ?? null,
       salary_max: vacancy?.salary_max ?? null,
       salary_currency: vacancy?.salary_currency ?? 'USD',
@@ -190,6 +194,7 @@ export function VacancyForm({
       employment_type: values.employment_type,
       work_mode: values.work_mode === WORK_MODE_NONE ? null : values.work_mode,
       hiring_manager_name: values.hiring_manager_name.trim() || null,
+      hiring_manager_id: values.hiring_manager_id ?? null,
       salary_min: values.salary_min,
       salary_max: values.salary_max,
       salary_currency: values.salary_currency || 'USD',
@@ -246,7 +251,7 @@ export function VacancyForm({
         </Alert>
       )}
 
-      <BasicInfoSection form={form} sectors={sectors} statusOptions={statusOptions} disabled={isLoading} />
+      <BasicInfoSection form={form} sectors={sectors} statusOptions={statusOptions} orgMembers={orgMembers} disabled={isLoading} />
       <DatesCompensationSection form={form} disabled={isLoading} />
       <DetailsSection
         form={form}

@@ -100,7 +100,6 @@ interface VacancyRow {
 interface ApplicationRow {
   id: string
   candidate_id: string
-  status_id: string | null
   pipeline_stage_id: string | null
   applied_at: string
   last_status_changed_at: string | null
@@ -234,7 +233,7 @@ export default async function VacancyDetailPage({
   ] = await Promise.all([
     supabase
       .from('applications')
-      .select('id, candidate_id, status_id, pipeline_stage_id, applied_at, last_status_changed_at')
+      .select('id, candidate_id, pipeline_stage_id, applied_at, last_status_changed_at')
       .eq('organization_id', organizationId)
       .eq('vacancy_id', id)
       .is('deleted_at', null)

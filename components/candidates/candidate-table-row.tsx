@@ -4,6 +4,7 @@ import { MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TableCell, TableRow } from '@/components/ui/table'
+import { sourceLabel } from '@/lib/pipeline/source-i18n'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,7 +77,7 @@ export async function CandidateTableRow({
           <div>
             <p className="font-medium text-foreground">{fullName}</p>
             {candidate.source && (
-              <p className="text-xs text-muted-foreground">{t('candTable.via', { source: candidate.source })}</p>
+              <p className="text-xs text-muted-foreground">{t('candTable.via', { source: sourceLabel(t, candidate.source) })}</p>
             )}
           </div>
         </Link>

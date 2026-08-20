@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { sectorLabel } from '@/lib/vacancies/sector-i18n'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import {
   Select,
   SelectContent,
@@ -22,12 +23,15 @@ export interface BasicsState {
   employmentType: 'full_time' | 'part_time' | 'contract' | 'internship'
   openingsCount: number
   hiringManagerName: string
+  /** FK → profiles(id). The UI shows only the name; this is the real link. */
+  hiringManagerId: string | null
 }
 
 interface StepBasicsProps {
   value: BasicsState
   onChange: (next: BasicsState) => void
   sectors: { id: string; name: string }[]
+  orgMembers: { id: string; full_name: string | null }[]
 }
 
 /**
@@ -37,7 +41,7 @@ interface StepBasicsProps {
  * optional. Sector → optional (was required), Work mode → NEW.
  * Status dropdown is gone; status is decided by the footer action.
  */
-export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
+export function StepBasics({ value, onChange, sectors, orgMembers }: StepBasicsProps) {
   const t = useTranslations()
   const set = <K extends keyof BasicsState>(key: K, v: BasicsState[K]) => {
     onChange({ ...value, [key]: v })
@@ -112,7 +116,7 @@ export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
         </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_120px_1fr]">
+      <div className="grid items-end gap-4 sm:grid-cols-[1fr_130px_1fr]">
         <Field id="employment_type" label={t('columns.employmentType')}>
           <Select
             value={value.employmentType}
@@ -140,12 +144,20 @@ export function StepBasics({ value, onChange, sectors }: StepBasicsProps) {
           />
         </Field>
         <Field id="hiring_manager" label={t('columns.hiringManager')}>
-          <Input
+          <SearchableSelect
             id="hiring_manager"
-            value={value.hiringManagerName}
-            onChange={(e) => set('hiringManagerName', e.target.value)}
-            placeholder={t('vacancy.form.hmPlaceholder')}
-            maxLength={100}
+            options={orgMembers.map((m) => ({ value: m.id, label: m.full_name || '—' }))}
+            value={value.hiringManagerId ?? ''}
+            onValueChange={(v) =>
+              onChange({
+                ...value,
+                hiringManagerId: v || null,
+                hiringManagerName: orgMembers.find((m) => m.id === v)?.full_name ?? '',
+              })
+            }
+            placeholder={t('vacancy.form.hmSelect')}
+            searchPlaceholder={t('vacancy.form.hmSearch')}
+            emptyText={t('vacancy.form.hmEmpty')}
           />
         </Field>
       </div>

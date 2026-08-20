@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { createNote, deleteNote, listMentionableMembers } from '@/lib/actions/notes'
 import { Briefcase, FileText, ArrowRight, MessageSquare, Calendar, Loader2, Send, Trash2 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, format } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
+import { activityHeadline, type ActivityParams } from '@/lib/candidates/activity-i18n'
 import { Button } from '@/components/ui/button'
 
 import { MentionTextarea } from '@/components/notes/mention-textarea'
@@ -17,11 +19,15 @@ export type ActivityKind = 'application' | 'document' | 'stage' | 'note' | 'inte
 export interface ActivityItem {
   id: string
   kind: ActivityKind
+  /** English headline composed in SQL — the graceful fallback. The displayed
+   * text is rebuilt from `params` in the recruiter's locale where possible. */
   headline: string
   body: string | null
   meta: string | null
   actor_name: string | null
   created_at: string
+  /** Structured params for locale-aware rendering (added 20260820). */
+  params?: ActivityParams | null
 }
 
 interface ActivityFeedProps {
@@ -78,6 +84,7 @@ export function ActivityFeed({
   initialMembers = [],
 }: ActivityFeedProps) {
   const t = useTranslations()
+  const dfLocale = dateFnsLocale(useLocale())
   const [items, setItems]     = useState<ActivityItem[]>(initialItems)
   const [filter, setFilter]   = useState<ActivityKind | 'all'>('all')
   const [noteText, setNoteText] = useState('')
@@ -187,7 +194,16 @@ export function ActivityFeed({
         <p className="py-6 text-center text-sm text-muted-foreground">{t('activity.empty')}</p>
       ) : (
         <div className="space-y-0">
-          {filtered.map((item, idx) => (
+          {filtered.map((item, idx) => {
+            // Locale-aware headline (rebuilt from `params`, English fallback) and
+            // meta — for interviews, reformat the raw timestamp in the active
+            // locale instead of the SQL-baked English date string.
+            const headline = activityHeadline(t, item.kind, item.headline, item.params)
+            const metaText =
+              item.kind === 'interview' && item.params?.at
+                ? format(new Date(item.params.at), 'PP · p', { locale: dfLocale })
+                : item.meta
+            return (
             <div key={item.id} id={item.kind === 'note' ? `note-${item.id}` : undefined} className="flex gap-3">
               {/* Icon + connector */}
               <div className="flex flex-col items-center">
@@ -200,7 +216,7 @@ export function ActivityFeed({
               {/* Body */}
               <div className={cn('min-w-0 flex-1', idx < filtered.length - 1 ? 'pb-4' : 'pb-1')}>
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-[13px] font-medium text-foreground">{item.headline}</p>
+                  <p className="text-[13px] font-medium text-foreground">{headline}</p>
                   {item.kind === 'note' && (
                     <button
                       onClick={() => handleDelete(item.id)}
@@ -223,15 +239,15 @@ export function ActivityFeed({
                     )}
                   </div>
                 )}
-                {item.meta && !item.body && (
-                  <p className="mt-0.5 text-[12px] text-muted-foreground">{item.meta}</p>
+                {metaText && !item.body && (
+                  <p className="mt-0.5 text-[12px] text-muted-foreground">{metaText}</p>
                 )}
                 <p className="mt-1 text-[11.5px] text-muted-foreground">
-                  {item.actor_name ?? t('auditTable.system')} · {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                  {item.actor_name ?? t('auditTable.system')} · {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: dfLocale })}
                 </p>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
 

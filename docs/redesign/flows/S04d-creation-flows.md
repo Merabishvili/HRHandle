@@ -34,7 +34,8 @@
 | `department` | optional | optional (Step 1) |
 | `location` | optional | optional (Step 1) |
 | `employment_type` | required | required (Step 1) |
-| `hiring_manager_name` | optional | optional (Step 1) |
+| `hiring_manager_name` | optional | optional (Step 1) — display name, synced from the picker |
+| `hiring_manager_id` | — | optional (Step 1) — FK → `profiles(id)`, the real link behind the name picker |
 | **`work_mode`** | — (doesn't exist) | ➕ **NEW** (Step 1) — `on_site`, `remote`, `hybrid` |
 | `openings_count` | required (default 1) | required (Step 1) |
 | `start_date` | ✅ | ✏️ **Now optional** (Step 2) |
@@ -122,7 +123,7 @@
 - **Work mode (NEW)** — select: On-site / Remote / Hybrid (`vacancies.work_mode`)
 - Employment type (Full-time / Part-time / Contract / Internship — existing)
 - Openings (number input, default 1)
-- Hiring manager (text input — kept as free text to match current schema; no profile link)
+- Hiring manager (searchable dropdown of org members — the UI shows only the name, but stores a real FK on `vacancies.hiring_manager_id` → `profiles(id)`; `hiring_manager_name` is kept in sync for display/back-compat)
 
 **Callout box (orange):** "Removed: the required Status dropdown. A new vacancy is a Draft until you publish — the footer's Save & publish decides that."
 
@@ -418,7 +419,7 @@ Greenfield rewrites — the existing 656 + 907 lines mostly go away.
 - **Q-S4d-a:** Step 5 Review's draft-vs-publish radio default — **Publish now** highlighted (per design) or **Save as draft** (more conservative for first-time users)? *Lean: Publish now* — matches the redesign's "publishable after Step 1" thesis; if someone hits Step 5 they're already committed.
 - **Q-S4d-b:** Should the vacancy wizard show **custom fields** in Step 4 or omit and rely on the Settings tab post-create? Custom fields can be required per `custom_field_schemas` — if a custom field is required, omitting from the wizard means we can't validate. *Lean: include custom fields as a Step 4 sub-section* — both scorecard and custom fields are "optional config" in spirit.
 - **Q-S4d-c:** **Plan limit reached** at Step 1 publish — block at field level or at submit? *Lean: at submit*. The user might be filling for testing; surface the limit + upgrade CTA only when they try to publish/save draft.
-- **Q-S4d-d:** **Hiring manager field** — currently free text. Should the wizard upgrade this to a profile-link picker (select from org members) to enable per-vacancy hiring-team scoping later (S04 Q-S04-c)? *Lean: keep free text v1* — defer per-vacancy hiring-team feature; matches the audit's recommendation in S04.
+- **Q-S4d-d:** **Hiring manager field** — ~~currently free text~~ **RESOLVED (2026-08-20):** upgraded to a searchable dropdown of org members that stores a real FK (`vacancies.hiring_manager_id` → `profiles(id)`), while the UI shows only the name and `hiring_manager_name` is kept in sync. This unblocks per-vacancy hiring-team scoping later (S04 Q-S04-c). Migration `20260820_vacancy_hiring_manager_id.sql`.
 - **Q-S4d-e:** **Default scorecard template** when user skips Step 4 — empty (forces them to set up later) OR 5 generic attributes (Communication / Problem solving / Domain knowledge / Culture add / Drive) marked as defaults? *Lean: empty* — generic defaults are noise; users who skip Step 4 will get an empty Scorecard tab + a "Suggest from JD" CTA there.
 - **Q-S4d-f:** **CV parse mid-wizard re-trigger** — what if a user uploads a different CV after Step 1? *Lean: silently re-parse and update fields with a banner "New CV parsed — fields updated"* — no destructive overwrite, but transparent.
 - **Q-S4d-g:** **`work_mode` location interaction** — if `work_mode = 'remote'`, should `location` field be hidden or shown? *Lean: keep both visible* — many "remote" roles have a region constraint ("Remote, EU only").
