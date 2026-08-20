@@ -17,8 +17,13 @@ export async function GET(request: NextRequest) {
 
   // Diagnostic: distinguish which step failed via ?zoom=error&reason=… (the UI
   // still shows the same message; the reason is for debugging the OAuth flow).
-  const fail = (reason: string) =>
-    NextResponse.redirect(new URL(`/settings/integrations?zoom=error&reason=${reason}`, BASE))
+  const fail = (reason: string, detail?: string) =>
+    NextResponse.redirect(
+      new URL(
+        `/settings/integrations?zoom=error&reason=${reason}${detail ? `&detail=${encodeURIComponent(detail)}` : ''}`,
+        BASE,
+      ),
+    )
 
   if (!code || !state) {
     console.error('[zoom/callback] missing code/state', { hasCode: !!code, hasState: !!state })
@@ -39,10 +44,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', BASE))
   }
 
-  const tokens = await exchangeZoomCode(code)
-  if (!tokens) {
-    return fail('exchange')
+  const result = await exchangeZoomCode(code)
+  if ('error' in result) {
+    // Zoom's exact rejection reason ends up in the URL, e.g.
+    // ?zoom=error&reason=exchange&detail=invalid_client
+    return fail('exchange', result.error)
   }
+  const tokens = result
 
   const admin = createAdminClient()
   const { error } = await admin

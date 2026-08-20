@@ -76,12 +76,12 @@ export async function notifyZoomDataCompliance(input: {
   }
 }
 
-export async function exchangeZoomCode(code: string): Promise<{
-  access_token: string
-  refresh_token: string
-  expires_in: number
-} | null> {
-  if (!env.ZOOM_CLIENT_ID || !env.ZOOM_CLIENT_SECRET) return null
+export type ZoomTokenResult =
+  | { access_token: string; refresh_token: string; expires_in: number }
+  | { error: string }
+
+export async function exchangeZoomCode(code: string): Promise<ZoomTokenResult> {
+  if (!env.ZOOM_CLIENT_ID || !env.ZOOM_CLIENT_SECRET) return { error: 'not_configured' }
 
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
@@ -101,9 +101,17 @@ export async function exchangeZoomCode(code: string): Promise<{
     console.error(
       `[zoom] token exchange failed: HTTP ${res.status} ${res.statusText} (redirect_uri=${getZoomRedirectUri()}) ${detail}`,
     )
-    return null
+    // Surface a short reason to the caller (→ URL) so it can be read without logs.
+    let reason = `http_${res.status}`
+    try {
+      const j = JSON.parse(detail) as { reason?: string; error?: string }
+      reason = j.reason || j.error || reason
+    } catch {
+      /* non-JSON body — keep http_<status> */
+    }
+    return { error: reason }
   }
-  return res.json()
+  return res.json() as Promise<ZoomTokenResult>
 }
 
 /**
