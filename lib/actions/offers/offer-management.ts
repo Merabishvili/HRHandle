@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import { z } from 'zod'
 import { getAuthContext, type ActionResult } from '../index'
 import { isOrgAdmin } from '@/lib/permissions'
@@ -40,6 +41,19 @@ const OfferInputSchema = z.object({
 
 export type OfferInput = z.infer<typeof OfferInputSchema>
 
+/** Localize the first Zod issue on the offer form to a field-specific, translated
+ * message (recruiter UI locale via getTranslations). */
+function offerValidationError(
+  t: Awaited<ReturnType<typeof getTranslations<'offerErr'>>>,
+  err: z.ZodError,
+): string {
+  const field = err.errors[0]?.path[0]
+  if (field === 'role_title') return t('roleTitleRequired')
+  if (field === 'body') return t('bodyRequired')
+  if (field === 'compensation_currency') return t('currencyFormat')
+  return t('validationFailed')
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 //  Recruiter actions
 // ──────────────────────────────────────────────────────────────────────────
@@ -49,14 +63,15 @@ export async function createOffer(
   input: OfferInput,
 ): Promise<ActionResult<{ id: string }>> {
   const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  const t = await getTranslations('offerErr')
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
   if (!isOrgAdmin(ctx.role)) {
-    return { success: false, error: 'Only owners and admins can create offers.' }
+    return { success: false, error: t('notAllowedCreate') }
   }
 
   const parsed = OfferInputSchema.safeParse(input)
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
+    return { success: false, error: offerValidationError(t, parsed.error) }
   }
 
   // Verify the application belongs to this org and isn't deleted.
@@ -67,7 +82,7 @@ export async function createOffer(
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .single()
-  if (!application) return { success: false, error: 'Application not found' }
+  if (!application) return { success: false, error: t('applicationNotFound') }
 
   // Block creating a new offer while a live one is still around.
   const { data: existing } = await ctx.supabase
@@ -81,10 +96,7 @@ export async function createOffer(
   if (existing) {
     return {
       success: false,
-      error:
-        existing.status === 'sent'
-          ? 'There is already a live offer for this application. Withdraw it first.'
-          : 'There is already a draft offer for this application. Edit it instead.',
+      error: existing.status === 'sent' ? t('liveOfferExists') : t('draftOfferExists'),
     }
   }
 
@@ -109,7 +121,7 @@ export async function createOffer(
 
   if (error || !data) {
     console.error('[offers] insert failed:', error?.message)
-    return { success: false, error: 'Failed to create offer' }
+    return { success: false, error: t('createFailed') }
   }
 
   void writeAuditLog({
@@ -131,14 +143,15 @@ export async function updateOffer(
   input: OfferInput,
 ): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  const t = await getTranslations('offerErr')
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
   if (!isOrgAdmin(ctx.role)) {
-    return { success: false, error: 'Only owners and admins can edit offers.' }
+    return { success: false, error: t('notAllowedEdit') }
   }
 
   const parsed = OfferInputSchema.safeParse(input)
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Validation failed" }
+    return { success: false, error: offerValidationError(t, parsed.error) }
   }
 
   const { data: existing } = await ctx.supabase
@@ -148,12 +161,9 @@ export async function updateOffer(
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .single()
-  if (!existing) return { success: false, error: 'Offer not found' }
+  if (!existing) return { success: false, error: t('offerNotFound') }
   if (!canEdit(existing.status)) {
-    return {
-      success: false,
-      error: 'This offer has already been sent and can no longer be edited. Withdraw it and create a new one to revise.',
-    }
+    return { success: false, error: t('alreadySent') }
   }
 
   const { error } = await ctx.supabase
@@ -172,7 +182,7 @@ export async function updateOffer(
     .eq('id', offerId)
     .eq('organization_id', ctx.orgId)
 
-  if (error) return { success: false, error: 'Failed to update offer' }
+  if (error) return { success: false, error: t('updateFailed') }
 
   revalidatePath('/candidates/[id]', 'page')
   return { success: true, data: undefined }
@@ -180,9 +190,10 @@ export async function updateOffer(
 
 export async function sendOffer(offerId: string): Promise<ActionResult<{ token: string }>> {
   const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  const t = await getTranslations('offerErr')
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
   if (!isOrgAdmin(ctx.role)) {
-    return { success: false, error: 'Only owners and admins can send offers.' }
+    return { success: false, error: t('notAllowedSend') }
   }
 
   // Fetch the offer + the associated application + candidate + org so we can
@@ -197,14 +208,14 @@ export async function sendOffer(offerId: string): Promise<ActionResult<{ token: 
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .single()
-  if (!offer) return { success: false, error: 'Offer not found' }
+  if (!offer) return { success: false, error: t('offerNotFound') }
   if (!canSend(offer.status)) {
-    return { success: false, error: 'This offer cannot be sent (it is no longer a draft).' }
+    return { success: false, error: t('cannotSend') }
   }
 
   // Reject an expiry in the past — there's no point sending an already-expired offer.
   if (offer.expiry_date && isOfferExpired(offer.expiry_date as string)) {
-    return { success: false, error: 'Expiry date is in the past — pick a future date or clear it.' }
+    return { success: false, error: t('expiryPast') }
   }
 
   type AppJoin =
@@ -213,7 +224,7 @@ export async function sendOffer(offerId: string): Promise<ActionResult<{ token: 
     | null
   const appJoin = offer.applications as AppJoin
   const app = Array.isArray(appJoin) ? appJoin[0] : appJoin
-  if (!app?.candidate_id) return { success: false, error: 'Offer application is missing' }
+  if (!app?.candidate_id) return { success: false, error: t('applicationMissing') }
 
   const { data: candidate } = await ctx.supabase
     .from('candidates')
@@ -222,7 +233,7 @@ export async function sendOffer(offerId: string): Promise<ActionResult<{ token: 
     .eq('organization_id', ctx.orgId)
     .single()
   if (!candidate?.email) {
-    return { success: false, error: 'Candidate has no email on file — cannot send offer.' }
+    return { success: false, error: t('candidateNoEmail') }
   }
 
   const token = (offer.public_token as string | null) ?? crypto.randomUUID().replace(/-/g, '')
@@ -242,7 +253,7 @@ export async function sendOffer(offerId: string): Promise<ActionResult<{ token: 
 
   if (updateErr) {
     console.error('[offers] send failed:', updateErr.message)
-    return { success: false, error: 'Failed to send offer' }
+    return { success: false, error: t('sendFailed') }
   }
 
   // Look up the org name + custom template for the email send.
@@ -316,9 +327,10 @@ export async function sendOffer(offerId: string): Promise<ActionResult<{ token: 
 
 export async function withdrawOffer(offerId: string): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  const t = await getTranslations('offerErr')
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
   if (!isOrgAdmin(ctx.role)) {
-    return { success: false, error: 'Only owners and admins can withdraw offers.' }
+    return { success: false, error: t('notAllowedWithdraw') }
   }
 
   const { data: offer } = await ctx.supabase
@@ -328,9 +340,9 @@ export async function withdrawOffer(offerId: string): Promise<ActionResult<void>
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .single()
-  if (!offer) return { success: false, error: 'Offer not found' }
+  if (!offer) return { success: false, error: t('offerNotFound') }
   if (!canWithdraw(offer.status)) {
-    return { success: false, error: 'Only sent offers can be withdrawn.' }
+    return { success: false, error: t('onlySentWithdraw') }
   }
 
   const now = new Date().toISOString()
@@ -341,7 +353,7 @@ export async function withdrawOffer(offerId: string): Promise<ActionResult<void>
     .eq('organization_id', ctx.orgId)
     .eq('status', 'sent')
 
-  if (error) return { success: false, error: 'Failed to withdraw offer' }
+  if (error) return { success: false, error: t('withdrawFailed') }
 
   void writeAuditLog({
     orgId: ctx.orgId,
@@ -359,9 +371,10 @@ export async function withdrawOffer(offerId: string): Promise<ActionResult<void>
 
 export async function deleteOffer(offerId: string): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  const t = await getTranslations('offerErr')
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
   if (!isOrgAdmin(ctx.role)) {
-    return { success: false, error: 'Only owners and admins can delete offers.' }
+    return { success: false, error: t('notAllowedDelete') }
   }
 
   // Only draft offers can be deleted — sent/terminal offers are part of the
@@ -373,9 +386,9 @@ export async function deleteOffer(offerId: string): Promise<ActionResult<void>> 
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .single()
-  if (!offer) return { success: false, error: 'Offer not found' }
+  if (!offer) return { success: false, error: t('offerNotFound') }
   if (offer.status !== 'draft') {
-    return { success: false, error: 'Only draft offers can be deleted.' }
+    return { success: false, error: t('onlyDraftDelete') }
   }
 
   const { error } = await ctx.supabase
@@ -384,7 +397,7 @@ export async function deleteOffer(offerId: string): Promise<ActionResult<void>> 
     .eq('id', offerId)
     .eq('organization_id', ctx.orgId)
 
-  if (error) return { success: false, error: 'Failed to delete offer' }
+  if (error) return { success: false, error: t('deleteFailed') }
 
   revalidatePath('/candidates/[id]', 'page')
   return { success: true, data: undefined }

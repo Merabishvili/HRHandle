@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { format } from 'date-fns'
+import type { Locale as DateFnsLocale } from 'date-fns'
 import { Building2, Briefcase, Calendar, Clock } from 'lucide-react'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, getTranslations } from 'next-intl/server'
@@ -9,10 +10,14 @@ import { type CompensationPeriod } from '@/lib/offers/state'
 import { offerCountdown } from '@/lib/offers/expiry'
 import { OfferRespondForm } from '@/components/offers/offer-respond-form'
 import { OfferBody } from '@/components/offers/offer-body'
-import { isLocale, DEFAULT_LOCALE } from '@/lib/i18n/locales'
+import { isLocale, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import { cn } from '@/lib/utils'
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>
+
+/** BCP-47 tag for Intl number/currency formatting, per app content locale. */
+const INTL_LOCALE: Record<Locale, string> = { en: 'en-US', ka: 'ka-GE', ru: 'ru-RU' }
 
 const COMPENSATION_PERIOD_KEY: Partial<Record<CompensationPeriod, string>> = {
   annual: 'offer.perYear',
@@ -41,10 +46,12 @@ export default async function OfferPage({ params }: PageProps) {
   const isRespondable = offer.status === 'sent'
   const responded = offer.status === 'accepted' || offer.status === 'declined'
 
-  // i18n Slice 3b — render in the org's content language (resolved in the action).
+  // Render in the org's single content language (resolved in the action).
   const contentLocale = isLocale(offer.content_locale) ? offer.content_locale : DEFAULT_LOCALE
   const t = await getTranslations({ locale: contentLocale })
   const messages = await getMessages({ locale: contentLocale })
+  const dfLocale = dateFnsLocale(contentLocale)
+  const intlLocale = INTL_LOCALE[contentLocale]
   const companyName = offer.organization_name?.trim() || t('offer.hiringTeam')
 
   const showCompensation =
@@ -55,7 +62,7 @@ export default async function OfferPage({ params }: PageProps) {
     : undefined
   const periodLabel = periodKey ? t(periodKey) : ''
   const compensationLine = showCompensation
-    ? formatCompensation(offer.compensation_amount as number, offer.compensation_currency, periodLabel)
+    ? formatCompensation(offer.compensation_amount as number, offer.compensation_currency, periodLabel, intlLocale)
     : null
 
   return (
@@ -92,7 +99,7 @@ export default async function OfferPage({ params }: PageProps) {
           {offer.start_date && (
             <Row icon={Calendar} label={t('offer.startDate')}>
               <span className="text-gray-700">
-                {format(new Date(offer.start_date), 'MMMM d, yyyy')}
+                {format(new Date(offer.start_date), 'PPP', { locale: dfLocale })}
               </span>
             </Row>
           )}
@@ -110,7 +117,7 @@ export default async function OfferPage({ params }: PageProps) {
             // "Pulse only on the final tier; constant flashing is
             // hostile." Reduced-motion users opt out via globals.css.
             const isUrgent = countdown?.urgency === 'urgent'
-            const dateLabel = format(new Date(offer.expiry_date), 'MMMM d, yyyy')
+            const dateLabel = format(new Date(offer.expiry_date), 'PPP', { locale: dfLocale })
             return (
               <div className="flex items-start gap-3">
                 <Clock
@@ -177,6 +184,7 @@ export default async function OfferPage({ params }: PageProps) {
         <NextIntlClientProvider locale={contentLocale} messages={messages}>
           <StatusArea
             t={t}
+            dfLocale={dfLocale}
             status={offer.status}
             token={token}
             respondedAt={offer.responded_at ?? null}
@@ -191,7 +199,7 @@ export default async function OfferPage({ params }: PageProps) {
 
       <footer className="mt-6 space-y-1 text-center text-xs text-gray-500">
         {!responded && offer.sent_at && (
-          <p>{t('offer.sentOn', { date: format(new Date(offer.sent_at), 'MMMM d, yyyy') })}</p>
+          <p>{t('offer.sentOn', { date: format(new Date(offer.sent_at), 'PPP', { locale: dfLocale }) })}</p>
         )}
         <p>{t('offer.keepPrivate')}</p>
       </footer>
@@ -222,6 +230,7 @@ function Row({
 
 function StatusArea({
   t,
+  dfLocale,
   status,
   token,
   respondedAt,
@@ -231,6 +240,7 @@ function StatusArea({
   organizationName,
 }: {
   t: Translator
+  dfLocale: DateFnsLocale
   status: string
   token: string
   respondedAt: string | null
@@ -242,7 +252,7 @@ function StatusArea({
   if (status === 'sent') {
     const mailto = recruiterEmail
       ? `mailto:${recruiterEmail}?subject=${encodeURIComponent(
-          `Question about your offer for ${roleTitle} at ${organizationName}`,
+          t('offer.questionSubject', { role: roleTitle, company: organizationName }),
         )}`
       : null
     return (
@@ -272,7 +282,7 @@ function StatusArea({
         <p className="mt-1 text-sm text-emerald-800">{t('offer.accepted.body')}</p>
         {respondedAt && (
           <p className="mt-3 text-xs text-emerald-700/80">
-            {t('offer.accepted.on', { date: format(new Date(respondedAt), 'MMMM d, yyyy') })}
+            {t('offer.accepted.on', { date: format(new Date(respondedAt), 'PPP', { locale: dfLocale }) })}
           </p>
         )}
       </div>
@@ -310,22 +320,24 @@ function formatCompensation(
   amount: number,
   currency: string | null,
   periodLabel: string,
+  intlLocale: string,
 ): string {
   // Try Intl with the recruiter-supplied currency; fall back to a plain
   // numeric format if Intl rejects the code (it does for non-ISO strings).
+  // Formatted in the org content locale so grouping/symbols read natively.
   let formatted = String(amount)
   if (currency) {
     try {
-      formatted = new Intl.NumberFormat('en-US', {
+      formatted = new Intl.NumberFormat(intlLocale, {
         style: 'currency',
         currency,
         maximumFractionDigits: 2,
       }).format(amount)
     } catch {
-      formatted = `${amount.toLocaleString('en-US')} ${currency}`
+      formatted = `${amount.toLocaleString(intlLocale)} ${currency}`
     }
   } else {
-    formatted = amount.toLocaleString('en-US')
+    formatted = amount.toLocaleString(intlLocale)
   }
   return periodLabel ? `${formatted} ${periodLabel}` : formatted
 }
