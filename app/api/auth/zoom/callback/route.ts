@@ -15,8 +15,18 @@ export async function GET(request: NextRequest) {
   const cookieStore = await cookies()
   const savedState = cookieStore.get('zoom_oauth_state')?.value
 
-  if (!code || !state || state !== savedState) {
-    return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
+  // Diagnostic: distinguish which step failed via ?zoom=error&reason=… (the UI
+  // still shows the same message; the reason is for debugging the OAuth flow).
+  const fail = (reason: string) =>
+    NextResponse.redirect(new URL(`/settings/integrations?zoom=error&reason=${reason}`, BASE))
+
+  if (!code || !state) {
+    console.error('[zoom/callback] missing code/state', { hasCode: !!code, hasState: !!state })
+    return fail('missing')
+  }
+  if (state !== savedState) {
+    console.error('[zoom/callback] state mismatch', { hasSavedState: !!savedState })
+    return fail('state')
   }
 
   cookieStore.delete('zoom_oauth_state')
@@ -31,7 +41,7 @@ export async function GET(request: NextRequest) {
 
   const tokens = await exchangeZoomCode(code)
   if (!tokens) {
-    return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
+    return fail('exchange')
   }
 
   const admin = createAdminClient()
@@ -45,7 +55,8 @@ export async function GET(request: NextRequest) {
     .eq('id', user.id)
 
   if (error) {
-    return NextResponse.redirect(new URL('/settings/integrations?zoom=error', BASE))
+    console.error('[zoom/callback] profile token update failed:', error.message)
+    return fail('db')
   }
 
   // Store the Zoom user id so the deauthorization webhook can find whose tokens

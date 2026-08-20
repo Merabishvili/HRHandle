@@ -96,7 +96,13 @@ export async function exchangeZoomCode(code: string): Promise<{
     }),
   })
 
-  if (!res.ok) return null
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '')
+    console.error(
+      `[zoom] token exchange failed: HTTP ${res.status} ${res.statusText} (redirect_uri=${getZoomRedirectUri()}) ${detail}`,
+    )
+    return null
+  }
   return res.json()
 }
 
