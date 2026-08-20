@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { format, parseISO, isValid, startOfToday } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import { cn } from '@/lib/utils'
 
 interface DatePickerProps {
@@ -23,13 +25,15 @@ interface DatePickerProps {
 export function DatePicker({
   value,
   onChange,
-  placeholder = 'Pick a date',
+  placeholder,
   className,
   disabled,
   disablePast,
   fromYear = 1950,
   toYear = 2040,
 }: DatePickerProps) {
+  const t = useTranslations()
+  const dfLocale = dateFnsLocale(useLocale())
   const [open, setOpen] = useState(false)
 
   const parsed = value ? parseISO(value) : undefined
@@ -49,12 +53,13 @@ export function DatePicker({
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-          {selected ? format(selected, 'MMM d, yyyy') : placeholder}
+          {selected ? format(selected, 'dd.MM.yyyy') : (placeholder ?? t('common.pickDate'))}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
+          locale={dfLocale}
           selected={selected}
           onSelect={(date) => {
             onChange(date ? format(date, 'yyyy-MM-dd') : null)

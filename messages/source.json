@@ -254,6 +254,8 @@
   "common.saveChanges": { "en": "Save changes", "ru": "Сохранить изменения", "ka": "ცვლილებების შენახვა" },
   "common.saving": { "en": "Saving…", "ru": "Сохранение…", "ka": "ინახება…" },
   "common.cancel": { "en": "Cancel", "ru": "Отмена", "ka": "გაუქმება" },
+  "common.pickDate": { "en": "Select a date", "ru": "Выберите дату", "ka": "აირჩიეთ თარიღი" },
+  "common.dateFormat": { "en": "dd.mm.yyyy", "ru": "дд.мм.гггг", "ka": "დდ.თთ.წწწწ" },
   "common.delete": { "en": "Delete", "ru": "Удалить", "ka": "წაშლა" },
   "common.edit": { "en": "Edit", "ru": "Редактировать", "ka": "რედაქტირება" },
   "common.remove": { "en": "Remove", "ru": "Убрать", "ka": "მოცილება" },

@@ -271,6 +271,8 @@
     "saveChanges": "Save changes",
     "saving": "Saving…",
     "cancel": "Cancel",
+    "pickDate": "Select a date",
+    "dateFormat": "dd.mm.yyyy",
     "delete": "Delete",
     "edit": "Edit",
     "remove": "Remove",
