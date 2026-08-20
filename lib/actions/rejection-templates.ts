@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 import { isOrgAdmin } from '@/lib/permissions'
+import { defaultTemplate, isDefaultTemplateContentAnyLocale } from '@/lib/email-template-utils'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 export interface RejectionTemplate {
   id: string
   name: string
@@ -18,15 +20,30 @@ export async function getRejectionTemplates(): Promise<ActionResult<RejectionTem
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  const { data, error } = await ctx.supabase
-    .from('rejection_templates')
-    .select('id, name, subject, body, sort_order, reason_id')
-    .eq('organization_id', ctx.orgId)
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: true })
+  const [{ data, error }, contentLocale] = await Promise.all([
+    ctx.supabase
+      .from('rejection_templates')
+      .select('id, name, subject, body, sort_order, reason_id')
+      .eq('organization_id', ctx.orgId)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+    fetchOrgContentLocale(ctx.supabase, ctx.orgId),
+  ])
 
   if (error) return { success: false, error: 'Operation failed. Please try again.' }
-  return { success: true, data: data as RejectionTemplate[] }
+
+  // Show an untouched default template (the onboarding-seeded "General", stored
+  // as the built-in default in some locale) in the org's CURRENT content
+  // language — matching what the rejection email actually sends (#8).
+  const localized = (data as RejectionTemplate[]).map((tpl) => {
+    if (isDefaultTemplateContentAnyLocale('rejection', tpl.subject, tpl.body)) {
+      const d = defaultTemplate('rejection', contentLocale)
+      return { ...tpl, subject: d.subject, body: d.body }
+    }
+    return tpl
+  })
+
+  return { success: true, data: localized }
 }
 
 export async function createRejectionTemplate(

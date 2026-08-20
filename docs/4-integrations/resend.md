@@ -105,6 +105,15 @@ Rejection emails apply a three-level override:
 2. Template stored in `rejection_templates` table (looked up by `templateId`)
 3. Built-in default from `DEFAULT_TEMPLATES.rejection`
 
+**Localization of the seeded default (#8).** Onboarding seeds a "General"
+`rejection_templates` row with the default subject/body. Both the send path
+(`rejection-actions.ts`) and the settings display (`getRejectionTemplates`)
+detect an untouched default via `isDefaultTemplateContentAnyLocale` and swap it
+for `defaultTemplate('rejection', orgContentLocale)` — so an org whose content
+language is Georgian sees, and sends, the Georgian default even though the
+stored seed is English. Once the recruiter edits the template, it's kept
+verbatim. Self-healing: no migration; follows the org's current content locale.
+
 ## Relevant Files
 
 - `lib/email.ts` — all four `send*` functions, HTML templates
