@@ -109,7 +109,9 @@ Notification → Endpoint URL**: `https://hrhandle.com/api/webhooks/zoom/deautho
 
 ## Publishing checklist (Zoom Marketplace)
 
-- **Scopes:** only `meeting:write:meeting` (create a meeting for the authorized user — we call `POST /v2/users/me/meetings`). Storing `zoom_user_id` uses the profile returned by the token exchange context; no extra read scope is requested.
+- **Scopes:** two, both minimal:
+  - `meeting:write:meeting` — create a meeting for the authorized user (`POST /v2/users/me/meetings`).
+  - `user:read:user` — read the connected user's own id (`GET /v2/users/me`) so a deauthorization event can be mapped back to their profile (`zoom_user_id`) and their data deleted.
 - **OAuth Redirect URL + Allow List:** `https://hrhandle.com/api/auth/zoom/callback` (+ `staging`, `localhost`). Apex `hrhandle.com` (matches `NEXT_PUBLIC_SITE_URL`).
 - **Deauthorization endpoint:** the webhook above + `ZOOM_SECRET_TOKEN` set on Vercel.
 - **App Listing:** name, short/long description, icon, screenshots, **Privacy Policy** `https://hrhandle.com/privacy`, **Terms** `https://hrhandle.com/terms`, support contact.
