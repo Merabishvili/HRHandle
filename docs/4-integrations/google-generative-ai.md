@@ -17,7 +17,7 @@ Parses uploaded CVs (PDF / DOCX / DOC) into structured candidate data so the
 
 | File | Role |
 |---|---|
-| `lib/cv-parser.ts` | Extracts text from file (via `pdfjs-dist` for PDFs and `mammoth` for DOCX), prompts Gemini, validates the response with `ParsedCVSchema` |
+| `lib/cv-parser.ts` | Extracts text from file (via `pdfjs-dist` for PDFs and `mammoth` for DOCX), prompts Gemini, validates the response with `ParsedCVSchema`, then `backfillCurrentRole()` derives `current_position`/`current_company` from the most recent experience entry when the model left them null (#3) |
 | `app/api/parse-cv/route.ts` | Public HTTP entry point (multipart upload, IP rate-limit, MIME + magic-byte validation, 25 s timeout) |
 | `lib/validations/candidate-background.ts` | `ParsedCVSchema` (and `ExperienceEntrySchema` / `EducationEntrySchema`) |
 | `components/apply/apply-form.tsx` | Public form — calls the endpoint on CV upload, displays "Parsing CV…" / failure states |
