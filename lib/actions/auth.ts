@@ -96,3 +96,45 @@ export async function requestPasswordReset(
   // on other soft errors), to prevent account enumeration.
   return { success: true }
 }
+
+export type VerifyPasswordResult =
+  | { success: true }
+  | { success: false; reason: 'invalid' | 'captcha' }
+
+/**
+ * Verify a user's current password WITHOUT touching their browser session.
+ *
+ * The change-password form used to call `signInWithPassword` on the client to
+ * confirm the current password — but that mints a NEW session at AAL1, which
+ * for an MFA user downgrades the current AAL2 session, so the subsequent
+ * `updateUser` fails with "AAL2 session is required …" (#18). Verifying here on
+ * a STATELESS server client (no cookies persisted, same pattern as the reset
+ * action) checks the password without disturbing the real session, so the
+ * client's AAL2 session survives and `updateUser` succeeds. The Turnstile token
+ * is forwarded because Supabase guards signInWithPassword.
+ */
+export async function verifyPassword(
+  email: string,
+  password: string,
+  captchaToken?: string | null,
+): Promise<VerifyPasswordResult> {
+  if (!email || !password) return { success: false, reason: 'invalid' }
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => [], setAll: () => {} } },
+  )
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    ...(captchaToken ? { options: { captchaToken } } : {}),
+  })
+
+  if (!error) return { success: true }
+  if (/captcha/i.test(`${error.code ?? ''} ${error.message}`)) {
+    return { success: false, reason: 'captcha' }
+  }
+  return { success: false, reason: 'invalid' }
+}

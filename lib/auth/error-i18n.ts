@@ -23,6 +23,7 @@ const CODE_KEY: Record<string, string> = {
   email_exists: 'auth.errUserExists',
   weak_password: 'auth.errWeakPassword',
   captcha_failed: 'auth.errCaptcha',
+  insufficient_aal: 'auth.errMfaRequired',
 }
 
 export function authErrorMessage(
@@ -42,6 +43,7 @@ export function authErrorMessage(
   if (/captcha/i.test(message)) return t('auth.errCaptcha')
   if (/rate limit|too many/i.test(message)) return t('auth.errRateLimit')
   if (/weak password|at least/i.test(message)) return t('auth.errWeakPassword')
+  if (/aal2|assurance level|mfa is enabled/i.test(message)) return t('auth.errMfaRequired')
 
   return t(fallbackKey)
 }

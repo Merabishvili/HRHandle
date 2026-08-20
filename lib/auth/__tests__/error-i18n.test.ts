@@ -27,6 +27,12 @@ describe('authErrorMessage', () => {
     expect(authErrorMessage(t, new Error('User already registered'))).toBe('auth.errUserExists')
   })
 
+  it('maps the MFA/AAL2 error (code + message) to the two-factor prompt', () => {
+    expect(authErrorMessage(t, { code: 'insufficient_aal', message: 'x' })).toBe('auth.errMfaRequired')
+    expect(authErrorMessage(t, new Error('AAL2 session is required to update email or password when MFA is enabled')))
+      .toBe('auth.errMfaRequired')
+  })
+
   it('uses the provided fallback key for anything unrecognized', () => {
     expect(authErrorMessage(t, new Error('boom'))).toBe('auth.errSignInFailed')
     expect(authErrorMessage(t, new Error('boom'), 'auth.errCreateFailed')).toBe('auth.errCreateFailed')

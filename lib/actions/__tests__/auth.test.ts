@@ -6,6 +6,7 @@ vi.mock('next/headers', () => ({
 }))
 
 const resetPasswordForEmailMock = vi.fn()
+const signInWithPasswordMock = vi.fn()
 // Capture the args createBrowserClient was constructed with, so we can assert
 // the stateless cookie methods are present (see the getAll/setAll regression).
 const createBrowserClientArgs: unknown[] = []
@@ -13,7 +14,12 @@ vi.mock('@supabase/ssr', () => ({
   createBrowserClient: (...args: unknown[]) => {
     createBrowserClientArgs.length = 0
     createBrowserClientArgs.push(...args)
-    return { auth: { resetPasswordForEmail: resetPasswordForEmailMock } }
+    return {
+      auth: {
+        resetPasswordForEmail: resetPasswordForEmailMock,
+        signInWithPassword: signInWithPasswordMock,
+      },
+    }
   },
 }))
 
@@ -26,6 +32,13 @@ async function loadAction() {
   resetPasswordForEmailMock.mockReset()
   resetPasswordForEmailMock.mockResolvedValue({ error: null })
   return (await import('@/lib/actions/auth')).requestPasswordReset
+}
+
+async function loadVerifyPassword() {
+  vi.resetModules()
+  signInWithPasswordMock.mockReset()
+  signInWithPasswordMock.mockResolvedValue({ error: null })
+  return (await import('@/lib/actions/auth')).verifyPassword
 }
 
 describe('requestPasswordReset', () => {
@@ -115,5 +128,34 @@ describe('requestPasswordReset', () => {
     }
     const blocked = await requestPasswordReset('user5@example.com', REDIRECT)
     expect(blocked.success).toBe(false)
+  })
+})
+
+describe('verifyPassword (stateless — must not touch the caller session)', () => {
+  it('no error → success, and forwards the captcha token', async () => {
+    const verifyPassword = await loadVerifyPassword()
+    const res = await verifyPassword('a@b.com', 'pw', 'tok-9')
+    expect(res).toEqual({ success: true })
+    expect(signInWithPasswordMock).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'a@b.com', password: 'pw', options: { captchaToken: 'tok-9' } }),
+    )
+  })
+
+  it('captcha error → reason captcha', async () => {
+    const verifyPassword = await loadVerifyPassword()
+    signInWithPasswordMock.mockResolvedValueOnce({ error: { code: 'captcha_failed', message: 'captcha failed' } })
+    expect(await verifyPassword('a@b.com', 'pw', 'x')).toEqual({ success: false, reason: 'captcha' })
+  })
+
+  it('wrong password → reason invalid', async () => {
+    const verifyPassword = await loadVerifyPassword()
+    signInWithPasswordMock.mockResolvedValueOnce({ error: { code: 'invalid_credentials', message: 'Invalid login credentials' } })
+    expect(await verifyPassword('a@b.com', 'nope')).toEqual({ success: false, reason: 'invalid' })
+  })
+
+  it('empty input short-circuits without a network call', async () => {
+    const verifyPassword = await loadVerifyPassword()
+    expect(await verifyPassword('', '')).toEqual({ success: false, reason: 'invalid' })
+    expect(signInWithPasswordMock).not.toHaveBeenCalled()
   })
 })
