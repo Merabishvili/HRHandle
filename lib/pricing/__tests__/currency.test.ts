@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveBillingCurrency, toMinorUnits } from '@/lib/pricing/currency'
+import { resolveBillingCurrency, resolveOrgDefaultCurrency, toMinorUnits } from '@/lib/pricing/currency'
 import { getPlanMonthly, getPlanChargeTotal, PRICING_PLANS } from '@/lib/types/subscription'
 
 describe('resolveBillingCurrency', () => {
@@ -28,6 +28,25 @@ describe('resolveBillingCurrency', () => {
   })
   it('invalid override is ignored (falls back to country)', () => {
     expect(resolveBillingCurrency('GE', 'XXX')).toBe('GEL')
+  })
+})
+
+describe('resolveOrgDefaultCurrency', () => {
+  it('uses the explicit billing_currency override first', () => {
+    expect(resolveOrgDefaultCurrency({ billingCurrency: 'EUR', contentLocale: 'ka' })).toBe('EUR')
+  })
+  it('uses the billing country when set', () => {
+    expect(resolveOrgDefaultCurrency({ billingCountry: 'DE', contentLocale: 'ka' })).toBe('EUR')
+    expect(resolveOrgDefaultCurrency({ billingCountry: 'US', contentLocale: 'ka' })).toBe('USD')
+  })
+  it('falls back to GEL for a Georgian-language org with no billing config (#10)', () => {
+    expect(resolveOrgDefaultCurrency({ contentLocale: 'ka' })).toBe('GEL')
+    expect(resolveOrgDefaultCurrency({ billingCountry: null, billingCurrency: null, contentLocale: 'ka' })).toBe('GEL')
+  })
+  it('defaults to USD for ru/en/unknown when billing is unset', () => {
+    expect(resolveOrgDefaultCurrency({ contentLocale: 'ru' })).toBe('USD')
+    expect(resolveOrgDefaultCurrency({ contentLocale: 'en' })).toBe('USD')
+    expect(resolveOrgDefaultCurrency({})).toBe('USD')
     expect(resolveBillingCurrency('GE', '')).toBe('GEL')
   })
 })

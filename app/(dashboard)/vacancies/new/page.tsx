@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getVacancyStatuses } from '@/lib/cache/lookups'
 import { VacancyCreateWizard } from '@/components/vacancies/wizard/vacancy-create-wizard'
 import { orgDefaultLocale, orgEnabledLocales } from '@/lib/i18n/org-locale'
-import { resolveBillingCurrency } from '@/lib/pricing/currency'
+import { resolveOrgDefaultCurrency } from '@/lib/pricing/currency'
 
 /**
  * Wave 2.7 vacancy creation flow — replaced the single-page
@@ -65,11 +65,13 @@ export default async function NewVacancyPage() {
   const statusOptions = (statusOptionsRaw || []).filter((s) => s.is_active) as VacancyStatusRow[]
   const orgLocales = { default: orgDefaultLocale(orgLangRow), enabled: orgEnabledLocales(orgLangRow) }
   // Default the salary currency to the org's local/billing currency (GE→GEL,
-  // EU→EUR, else USD), same logic as billing — Georgian orgs shouldn't default to USD.
-  const defaultCurrency = resolveBillingCurrency(
-    (orgLangRow as { billing_country?: string | null } | null)?.billing_country,
-    (orgLangRow as { billing_currency?: string | null } | null)?.billing_currency,
-  )
+  // EU→EUR, else USD). When billing isn't configured yet, fall back to the org's
+  // content language so a Georgian-language org defaults to GEL, not USD (#10).
+  const defaultCurrency = resolveOrgDefaultCurrency({
+    billingCountry: (orgLangRow as { billing_country?: string | null } | null)?.billing_country ?? null,
+    billingCurrency: (orgLangRow as { billing_currency?: string | null } | null)?.billing_currency ?? null,
+    contentLocale: orgLocales.default,
+  })
 
   return (
     <div className="mx-auto max-w-[1360px] p-4 lg:p-6">

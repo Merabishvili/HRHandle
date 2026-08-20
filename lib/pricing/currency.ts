@@ -43,6 +43,26 @@ export function resolveBillingCurrency(
 }
 
 /**
+ * Default currency for an org's salary/vacancy fields. Prefers the billing
+ * config (explicit override → billing country), but when billing isn't
+ * configured yet (a fresh org that never set a country), falls back to the org's
+ * **content language** so a Georgian-language org defaults to GEL instead of USD
+ * (#10). Only `ka` implies GEL — `ru`/`en` keep USD, since Russian isn't a
+ * supported billing currency and English is the neutral default.
+ */
+export function resolveOrgDefaultCurrency(opts: {
+  billingCountry?: string | null
+  billingCurrency?: string | null
+  contentLocale?: string | null
+}): Currency {
+  if (isCurrency(opts.billingCurrency)) return opts.billingCurrency
+  if (opts.billingCountry && opts.billingCountry.trim()) {
+    return resolveBillingCurrency(opts.billingCountry, null)
+  }
+  return opts.contentLocale === 'ka' ? 'GEL' : 'USD'
+}
+
+/**
  * Flitt charges in the minor unit (tetri / cents). GEL, EUR and USD are all
  * 2-decimal, so ×100. e.g. ₾49.00 → 4900.
  */

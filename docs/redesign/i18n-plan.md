@@ -200,6 +200,17 @@ content language**, not the recruiter's UI cookie. So the org must be able to
 *set* that language (Slice 2) before the public pages have anything to switch to
 (Slice 3b). Order is strict: **2 → 3b**.
 
+**Canonical `/jobs/slug` = the org's DEFAULT content locale (#15, 2026-08-20).**
+The `as-needed` prefix scheme still holds (`/ka/…`, `/ru/…` are the explicit
+alternates, and `middleware.ts` redirects `/en/jobs` → the bare path), but the
+bare canonical URL is no longer forced to English — a Georgian-default org's
+`/jobs/slug` renders **Georgian** chrome, not English. Because `/en/jobs` always
+redirects to the bare path, the page sees `locale === DEFAULT_LOCALE` only for
+the canonical path and maps that to `orgDefaultLocale(org)`. Consequence: for a
+non-English-default org, English is not a distinct reachable URL, so it's omitted
+from the `hreflang` alternates (which now use `orgEnabledLocales` + `x-default =`
+the bare path). The page title/description are localized to the default locale.
+
 ### 10.2 Slice 2 — org content language (safe half, one migration)
 
 **Migration** `…_org_content_locale.sql` (idempotent; USER applies on staging → prod, like the AI Fit migration):

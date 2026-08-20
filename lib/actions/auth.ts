@@ -3,7 +3,6 @@
 import { headers } from 'next/headers'
 import { createBrowserClient } from '@supabase/ssr'
 import { z } from 'zod'
-import { verifyCaptcha } from '@/lib/turnstile'
 
 const MAX_RESET_REQUESTS_PER_IP_PER_HOUR = 5
 const MAX_RESET_REQUESTS_PER_EMAIL_PER_HOUR = 5
@@ -28,15 +27,11 @@ const ResetSchema = z.object({
   redirectTo: z.string().url(),
 })
 
-const GENERIC_SUCCESS_MESSAGE =
-  'If an account exists for that email, a reset link has been sent.'
-
-const RATE_LIMIT_ERROR =
-  'Too many password-reset requests. Please try again in an hour.'
-
+// The action returns a reason CODE, not a display string — the (client) page
+// localizes it. Keeps all copy in the i18n catalog (see #14).
 export type RequestPasswordResetResult =
-  | { success: true; message: string }
-  | { success: false; error: string }
+  | { success: true }
+  | { success: false; reason: 'invalid_email' | 'rate_limit' | 'captcha' }
 
 export async function requestPasswordReset(
   email: string,
@@ -45,7 +40,7 @@ export async function requestPasswordReset(
 ): Promise<RequestPasswordResetResult> {
   const parsed = ResetSchema.safeParse({ email, redirectTo })
   if (!parsed.success) {
-    return { success: false, error: 'Please enter a valid email address.' }
+    return { success: false, reason: 'invalid_email' }
   }
 
   const normalisedEmail = parsed.data.email.trim().toLowerCase()
@@ -56,19 +51,11 @@ export async function requestPasswordReset(
     headersList.get('x-real-ip') ||
     'unknown'
 
-  // Turnstile verification. `verifyCaptcha` fails open when TURNSTILE_SECRET_KEY
-  // is unset (with a server warning), so this is no-op until the env var is
-  // configured. Once configured, an absent or invalid token is rejected.
-  const captchaOk = await verifyCaptcha(captchaToken ?? null, ip !== 'unknown' ? ip : null)
-  if (!captchaOk) {
-    return { success: false, error: 'Security check failed. Please try again.' }
-  }
-
   if (ip !== 'unknown' && !checkLimit(`ip:${ip}`, MAX_RESET_REQUESTS_PER_IP_PER_HOUR)) {
-    return { success: false, error: RATE_LIMIT_ERROR }
+    return { success: false, reason: 'rate_limit' }
   }
   if (!checkLimit(`email:${normalisedEmail}`, MAX_RESET_REQUESTS_PER_EMAIL_PER_HOUR)) {
-    return { success: false, error: RATE_LIMIT_ERROR }
+    return { success: false, reason: 'rate_limit' }
   }
 
   // Implicit flow is required so the recovery email contains a plain OTP
@@ -90,10 +77,22 @@ export async function requestPasswordReset(
     },
   )
 
-  await supabase.auth.resetPasswordForEmail(normalisedEmail, {
+  // Supabase's CAPTCHA protection (enabled in the dashboard) guards the
+  // /recover endpoint, so the Turnstile token must be forwarded HERE. A
+  // Turnstile token is single-use, so we no longer verify it ourselves first
+  // (that consumed it and made Supabase reject the reset → no email sent).
+  const { error } = await supabase.auth.resetPasswordForEmail(normalisedEmail, {
     redirectTo: parsed.data.redirectTo,
+    ...(captchaToken ? { captchaToken } : {}),
   })
 
-  // Return the same response whether or not the email exists, to prevent enumeration.
-  return { success: true, message: GENERIC_SUCCESS_MESSAGE }
+  // Surface a real captcha failure so the user can retry — don't bury it under
+  // the generic message (that's why "no email" looked like success before).
+  if (error && /captcha/i.test(`${error.code ?? ''} ${error.message}`)) {
+    return { success: false, reason: 'captcha' }
+  }
+
+  // Otherwise return the same response whether or not the email exists (and even
+  // on other soft errors), to prevent account enumeration.
+  return { success: true }
 }

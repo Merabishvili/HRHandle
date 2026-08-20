@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { createClient } from '@/lib/supabase/client'
+import { authErrorMessage } from '@/lib/auth/error-i18n'
 import { setSessionPreference } from '@/lib/session'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -72,12 +73,12 @@ function LoginForm() {
         password,
         options: { captchaToken },
       })
-      if (signInError) throw new Error(signInError.message)
+      if (signInError) throw signInError
       setSessionPreference(rememberMe)
       router.push(safeNext)
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.errSignInFailed'))
+      setError(authErrorMessage(t, err))
       turnstileRef.current?.reset()
       setCaptchaToken(null)
       setIsLoading(false)

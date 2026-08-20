@@ -39,6 +39,10 @@
     "sendResetLink": "Send reset link",
     "resetTitle": "Reset password",
     "resetSubtitle": "Choose a new password for your account.",
+    "resetGenericSent": "If an account exists for that email, a reset link has been sent.",
+    "resetInvalidEmail": "Please enter a valid email address.",
+    "resetRateLimit": "Too many password-reset requests. Please try again in an hour.",
+    "resetCaptchaFailed": "Security check failed. Please try again.",
     "newPassword": "New password",
     "confirmNewPassword": "Confirm new password",
     "updating": "Updating...",
@@ -61,12 +65,22 @@
     "errPasswordsNoMatch": "Passwords do not match.",
     "errCaptcha": "Security check not complete. Please wait a moment and try again.",
     "errSignInFailed": "Failed to sign in.",
+    "errInvalidCredentials": "Invalid email or password.",
+    "errEmailNotConfirmed": "Please confirm your email before signing in.",
+    "errRateLimit": "Too many attempts. Please try again later.",
+    "errUserExists": "An account with this email already exists.",
+    "errWeakPassword": "Password is too weak. Use at least 8 characters.",
     "errGoogleFailed": "Failed to sign in with Google.",
     "errMicrosoftFailed": "Failed to sign in with Microsoft.",
     "errCreateFailed": "Failed to create account.",
     "errGoogleSignUpFailed": "Failed to sign up with Google.",
     "errMicrosoftSignUpFailed": "Failed to sign up with Microsoft.",
     "errResetFailed": "Failed to reset password."
+  },
+  "planLimit": {
+    "candidates": "You've reached your plan limit of {limit} candidates. Upgrade to add more.",
+    "vacancies": "You've reached your plan limit of {limit} active vacancies. Upgrade to add more.",
+    "members": "You've reached your plan limit of {limit} team members. Upgrade to add more."
   },
   "mfa": {
     "twoFactor": "Two-factor authentication",
@@ -2667,6 +2681,8 @@
   },
   "jobs": {
     "metaTitle": "Jobs",
+    "careersMetaTitle": "Open positions — {org}",
+    "careersMetaDesc": "Browse open positions at {org} and apply online.",
     "openPositions": "Open positions",
     "rolesCount": "{count, plural, one {# role} other {# roles}}",
     "apply": "Apply",
