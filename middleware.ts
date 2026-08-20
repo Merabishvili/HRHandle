@@ -1,17 +1,18 @@
 import { updateSession } from '@/lib/supabase/middleware'
 import { buildCsp, generateNonce } from '@/lib/security-headers'
-import { LOCALES, DEFAULT_LOCALE } from '@/lib/i18n/locales'
+import { LOCALES } from '@/lib/i18n/locales'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const PREFIXES = new Set<string>(LOCALES) // 'en' | 'ka' | 'ru'
 
 /**
- * i18n Slice 3b — public SEO routing for the careers page only. `as-needed`
- * locale prefix: English is canonical (`/jobs/...`), other locales are prefixed
- * (`/ka/jobs/...`). This branch is deliberately scoped to `/jobs` paths so the
- * dashboard's auth + session handling in `updateSession` stays completely
- * untouched. Public pages still need the CSP nonce (strict-dynamic), so we
- * inject `x-nonce` + the CSP header ourselves here.
+ * Public careers page (`/jobs/...`). The org publishes in a single content
+ * language, so there is no per-locale path routing — every careers URL is the
+ * bare `/jobs/slug`. Legacy locale-prefixed links (`/ka/jobs/...`, from the old
+ * multi-language SEO surface) are permanently redirected to the bare path. This
+ * branch is scoped to `/jobs` so the dashboard's auth/session handling in
+ * `updateSession` stays untouched. Public pages still need the CSP nonce
+ * (strict-dynamic), so we inject `x-nonce` + the CSP header ourselves here.
  */
 function handleJobsLocale(request: NextRequest): NextResponse | null {
   const { pathname } = request.nextUrl
@@ -20,11 +21,11 @@ function handleJobsLocale(request: NextRequest): NextResponse | null {
   const prefixed = !!seg[1] && PREFIXES.has(seg[1]) && seg[2] === 'jobs'
   if (!unprefixed && !prefixed) return null
 
-  // Canonicalize the redundant English prefix: /en/jobs/... → /jobs/...
-  if (prefixed && seg[1] === DEFAULT_LOCALE) {
+  // Legacy locale-prefixed careers links → bare canonical path (308, cacheable).
+  if (prefixed) {
     const url = request.nextUrl.clone()
     url.pathname = '/' + seg.slice(2).join('/')
-    return NextResponse.redirect(url)
+    return NextResponse.redirect(url, 308)
   }
 
   const nonce = generateNonce()
@@ -33,18 +34,7 @@ function handleJobsLocale(request: NextRequest): NextResponse | null {
   requestHeaders.set('x-nonce', nonce)
   requestHeaders.set('Content-Security-Policy', csp)
 
-  let response: NextResponse
-  if (unprefixed) {
-    // Rewrite the canonical URL onto the [locale] tree (URL unchanged). Because
-    // any explicit /en/jobs is redirected to the bare path above, the page only
-    // ever sees locale === DEFAULT_LOCALE for THIS canonical path — it uses that
-    // to render in the org's default content locale (#15).
-    const url = request.nextUrl.clone()
-    url.pathname = `/${DEFAULT_LOCALE}${pathname}`
-    response = NextResponse.rewrite(url, { request: { headers: requestHeaders } })
-  } else {
-    response = NextResponse.next({ request: { headers: requestHeaders } })
-  }
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
   response.headers.set('Content-Security-Policy', csp)
   return response
 }

@@ -3,20 +3,8 @@ import {
   orgEnabledLocales,
   orgDefaultLocale,
   resolveOrgContentLocale,
-  normalizeOrgLocales,
+  normalizeOrgContentLocale,
 } from '@/lib/i18n/org-locale'
-
-describe('orgEnabledLocales', () => {
-  it('always includes en, in canonical order, deduped', () => {
-    expect(orgEnabledLocales({ enabled_content_locales: ['ru', 'ka'] })).toEqual(['en', 'ka', 'ru'])
-    expect(orgEnabledLocales({ enabled_content_locales: ['ka', 'ka'] })).toEqual(['en', 'ka'])
-  })
-  it('drops invalid locales and defaults to [en] when empty/null', () => {
-    expect(orgEnabledLocales({ enabled_content_locales: ['xx', 'de'] })).toEqual(['en'])
-    expect(orgEnabledLocales({ enabled_content_locales: [] })).toEqual(['en'])
-    expect(orgEnabledLocales(null)).toEqual(['en'])
-  })
-})
 
 describe('orgDefaultLocale', () => {
   it('returns the stored default when valid, else en', () => {
@@ -26,28 +14,35 @@ describe('orgDefaultLocale', () => {
   })
 })
 
-describe('resolveOrgContentLocale', () => {
-  const org = { default_content_locale: 'ka', enabled_content_locales: ['en', 'ka'] }
-  it('honors a requested locale only when the org enabled it', () => {
-    expect(resolveOrgContentLocale(org, 'ka')).toBe('ka')
-    expect(resolveOrgContentLocale(org, 'en')).toBe('en')
-    expect(resolveOrgContentLocale(org, 'ru')).toBe('ka') // ru not enabled → org default
+describe('orgEnabledLocales', () => {
+  it('is always the single default locale as a one-element list', () => {
+    expect(orgEnabledLocales({ default_content_locale: 'ka' })).toEqual(['ka'])
+    // A stale multi-value array can never resurface two languages — reads
+    // derive from the single default.
+    expect(orgEnabledLocales({ default_content_locale: 'ru', enabled_content_locales: ['en', 'ka', 'ru'] })).toEqual(['ru'])
+    expect(orgEnabledLocales({ default_content_locale: 'xx' })).toEqual(['en'])
+    expect(orgEnabledLocales(null)).toEqual(['en'])
   })
-  it('falls back to org default, then en', () => {
+})
+
+describe('resolveOrgContentLocale', () => {
+  it('is the org default, ignoring any requested locale', () => {
+    const org = { default_content_locale: 'ka', enabled_content_locales: ['ka'] }
     expect(resolveOrgContentLocale(org)).toBe('ka')
-    expect(resolveOrgContentLocale({ enabled_content_locales: ['en'] }, 'ka')).toBe('en')
+    expect(resolveOrgContentLocale(org, 'en')).toBe('ka')
+    expect(resolveOrgContentLocale(org, 'ru')).toBe('ka')
     expect(resolveOrgContentLocale(null, 'ka')).toBe('en')
   })
 })
 
-describe('normalizeOrgLocales', () => {
-  it('forces en into the enabled set and orders canonically', () => {
-    expect(normalizeOrgLocales('ka', ['ka', 'ru'])).toEqual({ default: 'ka', enabled: ['en', 'ka', 'ru'] })
+describe('normalizeOrgContentLocale', () => {
+  it('passes through a valid locale', () => {
+    expect(normalizeOrgContentLocale('ka')).toBe('ka')
+    expect(normalizeOrgContentLocale('ru')).toBe('ru')
+    expect(normalizeOrgContentLocale('en')).toBe('en')
   })
-  it('clamps an out-of-set default back to en', () => {
-    expect(normalizeOrgLocales('ru', ['en', 'ka'])).toEqual({ default: 'en', enabled: ['en', 'ka'] })
-  })
-  it('drops invalid locales', () => {
-    expect(normalizeOrgLocales('xx', ['de', 'ka'])).toEqual({ default: 'en', enabled: ['en', 'ka'] })
+  it('clamps an invalid locale to en', () => {
+    expect(normalizeOrgContentLocale('xx')).toBe('en')
+    expect(normalizeOrgContentLocale('')).toBe('en')
   })
 })

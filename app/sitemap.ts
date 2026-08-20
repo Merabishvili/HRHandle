@@ -1,18 +1,12 @@
 import type { MetadataRoute } from 'next'
 import { listExistingGuideSlugs } from '@/lib/guides/loader'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { LOCALES, DEFAULT_LOCALE } from '@/lib/i18n/locales'
 
 const base = 'https://hrhandle.com'
 
-/** As-needed locale prefix: English is canonical (no prefix). */
-function jobsUrl(locale: string, slug: string): string {
-  return locale === DEFAULT_LOCALE ? `${base}/jobs/${slug}` : `${base}/${locale}/jobs/${slug}`
-}
-
-/** Public org careers pages, each with per-locale hreflang alternates (i18n
- * Slice 3b — job listings ranking per language). Best-effort: a query failure
- * just omits them, leaving the static entries intact. */
+/** Public org careers pages. Each org publishes in a single content language,
+ * so there is one canonical URL per org (no per-locale hreflang alternates).
+ * Best-effort: a query failure just omits them, leaving the static entries. */
 async function careersEntries(lastModified: Date): Promise<MetadataRoute.Sitemap> {
   try {
     const admin = createAdminClient()
@@ -23,13 +17,10 @@ async function careersEntries(lastModified: Date): Promise<MetadataRoute.Sitemap
       .is('deleted_at', null)
     const slugs = [...new Set((data ?? []).map((o) => o.public_page_slug as string).filter(Boolean))]
     return slugs.map((slug) => ({
-      url: jobsUrl(DEFAULT_LOCALE, slug),
+      url: `${base}/jobs/${slug}`,
       lastModified,
       changeFrequency: 'daily',
       priority: 0.7,
-      alternates: {
-        languages: Object.fromEntries(LOCALES.map((l) => [l, jobsUrl(l, slug)])),
-      },
     }))
   } catch (err) {
     console.error('[sitemap] careers enumeration failed:', err)
