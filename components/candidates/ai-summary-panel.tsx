@@ -128,7 +128,7 @@ export function AiSummaryPanel({ candidateId }: AiSummaryPanelProps) {
           )}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={generate} size="sm" variant="ghost" disabled={isSaving}>
+            <Button onClick={generate} size="sm" variant="outline" disabled={isSaving}>
               <RefreshCw className="mr-2 h-4 w-4" />
               {t('aiJd.regenerate')}
             </Button>
