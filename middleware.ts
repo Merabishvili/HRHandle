@@ -35,7 +35,10 @@ function handleJobsLocale(request: NextRequest): NextResponse | null {
 
   let response: NextResponse
   if (unprefixed) {
-    // Rewrite the canonical English URL onto the [locale] tree (URL unchanged).
+    // Rewrite the canonical URL onto the [locale] tree (URL unchanged). Because
+    // any explicit /en/jobs is redirected to the bare path above, the page only
+    // ever sees locale === DEFAULT_LOCALE for THIS canonical path — it uses that
+    // to render in the org's default content locale (#15).
     const url = request.nextUrl.clone()
     url.pathname = `/${DEFAULT_LOCALE}${pathname}`
     response = NextResponse.rewrite(url, { request: { headers: requestHeaders } })

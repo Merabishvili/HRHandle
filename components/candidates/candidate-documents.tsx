@@ -116,9 +116,9 @@ export function CandidateDocuments({ candidateId, initialDocuments }: CandidateD
           </Alert>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Select value={documentType} onValueChange={setDocumentType} disabled={isPending}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full min-w-[140px] sm:w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

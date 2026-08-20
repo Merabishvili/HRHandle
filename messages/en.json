@@ -2681,6 +2681,8 @@
   },
   "jobs": {
     "metaTitle": "Jobs",
+    "careersMetaTitle": "Open positions — {org}",
+    "careersMetaDesc": "Browse open positions at {org} and apply online.",
     "openPositions": "Open positions",
     "rolesCount": "{count, plural, one {# role} other {# roles}}",
     "apply": "Apply",

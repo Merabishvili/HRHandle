@@ -2371,6 +2371,8 @@
   "withdraw.withdrawing": { "en": "Withdrawing…", "ru": "Отзыв…", "ka": "მიმდინარეობს გატანა…" },
 
   "jobs.metaTitle": { "en": "Jobs", "ru": "Вакансии", "ka": "ვაკანსიები" },
+  "jobs.careersMetaTitle": { "en": "Open positions — {org}", "ru": "Открытые вакансии — {org}", "ka": "ღია პოზიციები — {org}" },
+  "jobs.careersMetaDesc": { "en": "Browse open positions at {org} and apply online.", "ru": "Смотрите открытые вакансии в {org} и откликайтесь онлайн.", "ka": "იხილეთ ღია პოზიციები {org}-ში და გააგზავნეთ განაცხადი ონლაინ." },
   "jobs.openPositions": { "en": "Open positions", "ru": "Открытые вакансии", "ka": "ღია პოზიციები" },
   "jobs.rolesCount": { "en": "{count, plural, one {# role} other {# roles}}", "ru": "{count, plural, one {# вакансия} few {# вакансии} many {# вакансий} other {# вакансии}}", "ka": "{count, plural, one {# პოზიცია} other {# პოზიცია}}" },
   "jobs.apply": { "en": "Apply", "ru": "Откликнуться", "ka": "განაცხადი" },

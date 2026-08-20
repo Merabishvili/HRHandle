@@ -2681,6 +2681,8 @@
   },
   "jobs": {
     "metaTitle": "ვაკანსიები",
+    "careersMetaTitle": "ღია პოზიციები — {org}",
+    "careersMetaDesc": "იხილეთ ღია პოზიციები {org}-ში და გააგზავნეთ განაცხადი ონლაინ.",
     "openPositions": "ღია პოზიციები",
     "rolesCount": "{count, plural, one {# პოზიცია} other {# პოზიცია}}",
     "apply": "განაცხადი",
