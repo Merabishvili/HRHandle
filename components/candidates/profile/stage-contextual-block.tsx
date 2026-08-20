@@ -21,6 +21,7 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
@@ -475,21 +476,19 @@ function OfferState({
       <div className="grid gap-2.5 sm:grid-cols-2">
         <div className="space-y-1">
           <Label htmlFor="of-start" className="text-[12px]">{t('stageBlock.startDate')}</Label>
-          <Input
-            id="of-start"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+          <DatePicker
+            value={startDate || null}
+            onChange={(v) => setStartDate(v ?? '')}
+            placeholder={t('common.dateFormat')}
             disabled={pending}
           />
         </div>
         <div className="space-y-1">
           <Label htmlFor="of-expiry" className="text-[12px]">{t('stageBlock.respondByDate')}</Label>
-          <Input
-            id="of-expiry"
-            type="date"
-            value={expiryDate}
-            onChange={(e) => setExpiryDate(e.target.value)}
+          <DatePicker
+            value={expiryDate || null}
+            onChange={(v) => setExpiryDate(v ?? '')}
+            placeholder={t('common.dateFormat')}
             disabled={pending}
           />
         </div>

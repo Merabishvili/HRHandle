@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
@@ -213,21 +214,19 @@ export function OfferForm({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="of-start">{t('stageBlock.startDate')}</Label>
-              <Input
-                id="of-start"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+              <DatePicker
+                value={startDate || null}
+                onChange={(v) => setStartDate(v ?? '')}
+                placeholder={t('common.dateFormat')}
                 disabled={isPending}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="of-expiry">{t('stageBlock.respondByDate')}</Label>
-              <Input
-                id="of-expiry"
-                type="date"
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
+              <DatePicker
+                value={expiryDate || null}
+                onChange={(v) => setExpiryDate(v ?? '')}
+                placeholder={t('common.dateFormat')}
                 disabled={isPending}
               />
             </div>

@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -47,19 +48,17 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field id="start_date" label={t('columns.startDate')}>
-          <Input
-            id="start_date"
-            type="date"
-            value={value.startDate ?? ''}
-            onChange={(e) => set('startDate', e.target.value || null)}
+          <DatePicker
+            value={value.startDate ?? null}
+            onChange={(v) => set('startDate', v)}
+            placeholder={t('common.dateFormat')}
           />
         </Field>
         <Field id="end_date" label={t('columns.endDate')}>
-          <Input
-            id="end_date"
-            type="date"
-            value={value.endDate ?? ''}
-            onChange={(e) => set('endDate', e.target.value || null)}
+          <DatePicker
+            value={value.endDate ?? null}
+            onChange={(v) => set('endDate', v)}
+            placeholder={t('common.dateFormat')}
           />
         </Field>
       </div>

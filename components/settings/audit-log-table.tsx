@@ -66,7 +66,7 @@ function Row({ row }: { row: AuditLogRow }) {
   return (
     <tr className="hover:bg-muted/30">
         <td className="whitespace-nowrap px-4 py-2.5 text-xs text-muted-foreground">
-          {format(new Date(row.created_at), 'MMM d, yyyy HH:mm')}
+          {format(new Date(row.created_at), 'dd.MM.yyyy HH:mm')}
         </td>
         <td className="px-4 py-2.5">
           <div className="text-sm text-foreground">

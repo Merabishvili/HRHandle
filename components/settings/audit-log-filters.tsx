@@ -1,11 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Search, X } from 'lucide-react'
 import { auditEntityLabel } from '@/lib/audit-log/message-i18n'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -84,6 +85,10 @@ export function AuditLogFilters({
 }: AuditLogFiltersProps) {
   const t = useTranslations()
   const router = useRouter()
+  // Date range is controlled (a localized DatePicker, not a native date input)
+  // and read from state on submit.
+  const [from, setFrom] = useState(filter.from ?? '')
+  const [to, setTo] = useState(filter.to ?? '')
 
   const setParam = (key: keyof AuditLogFilter, value: string | null) => {
     const params = new URLSearchParams()
@@ -111,18 +116,14 @@ export function AuditLogFilters({
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        const data = new FormData(e.currentTarget)
         const params = new URLSearchParams()
-        // action + entityType are controlled Selects (already in the URL via
-        // setParam); only the date inputs are form-submitted, so preserve the
-        // current filter for the rest.
-        const from = data.get('from')?.toString().trim()
-        const to = data.get('to')?.toString().trim()
+        // action + entityType + userId are controlled Selects (already in the URL
+        // via setParam); the date range comes from the DatePicker state.
         if (filter.action) params.set('action', filter.action)
         if (filter.entityType) params.set('entityType', filter.entityType)
         if (filter.userId) params.set('userId', filter.userId)
-        if (from) params.set('from', from)
-        if (to) params.set('to', to)
+        if (from.trim()) params.set('from', from.trim())
+        if (to.trim()) params.set('to', to.trim())
         router.push(`${basePath}?${params.toString()}`)
       }}
       className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
@@ -182,22 +183,20 @@ export function AuditLogFilters({
       </div>
       <div className="min-w-0 space-y-1.5">
         <Label htmlFor="al-from" className="text-xs">{t('auditFilters.from')}</Label>
-        <Input
-          id="al-from"
-          name="from"
-          type="date"
-          defaultValue={filter.from ?? ''}
-          className="h-9 w-full min-w-0 text-sm"
+        <DatePicker
+          value={from || null}
+          onChange={(v) => setFrom(v ?? '')}
+          placeholder={t('common.dateFormat')}
+          className="h-9 text-sm"
         />
       </div>
       <div className="min-w-0 space-y-1.5">
         <Label htmlFor="al-to" className="text-xs">{t('auditFilters.to')}</Label>
-        <Input
-          id="al-to"
-          name="to"
-          type="date"
-          defaultValue={filter.to ?? ''}
-          className="h-9 w-full min-w-0 text-sm"
+        <DatePicker
+          value={to || null}
+          onChange={(v) => setTo(v ?? '')}
+          placeholder={t('common.dateFormat')}
+          className="h-9 text-sm"
         />
       </div>
 
