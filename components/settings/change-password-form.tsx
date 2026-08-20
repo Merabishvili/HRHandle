@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +24,11 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  // Verifying the current password re-authenticates via signInWithPassword,
+  // which Supabase's CAPTCHA protection guards — so we need a Turnstile token
+  // here too, or the re-auth is rejected and looks like a wrong password (#18).
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   if (isOAuthOnly) {
     return (
@@ -64,11 +71,18 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
 
       // Step 1: Verify the current password by re-authenticating.
       // This is critical — prevents an attacker with an active session from
-      // changing the password without knowing the current one.
+      // changing the password without knowing the current one. The captcha
+      // token is forwarded because Supabase guards signInWithPassword.
       const { error: verifyError } = await supabase.auth.signInWithPassword({
         email: userEmail,
         password: currentPassword,
+        ...(captchaToken ? { options: { captchaToken } } : {}),
       })
+
+      // Turnstile tokens are single-use — refresh the widget so a retry (e.g.
+      // after a genuine typo) has a fresh token instead of a spent one.
+      turnstileRef.current?.reset()
+      setCaptchaToken(null)
 
       if (verifyError) {
         setError(t('changePw.wrongCurrent'))
@@ -159,7 +173,7 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
         />
       </div>
 
-      <Button type="submit" disabled={isLoading}>
+      <Button type="submit" disabled={isLoading || !captchaToken}>
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -169,6 +183,15 @@ export function ChangePasswordForm({ userEmail, isOAuthOnly }: ChangePasswordFor
           t('changePw.updatePassword')
         )}
       </Button>
+
+      <Turnstile
+        ref={turnstileRef}
+        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+        onSuccess={(token) => setCaptchaToken(token)}
+        onError={() => setCaptchaToken(null)}
+        onExpire={() => setCaptchaToken(null)}
+        options={{ size: 'invisible' }}
+      />
     </form>
   )
 }

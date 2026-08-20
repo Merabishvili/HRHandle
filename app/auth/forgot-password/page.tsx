@@ -39,9 +39,15 @@ export default function ForgotPasswordPage() {
     )
 
     if (result.success) {
-      setSuccess(result.message)
+      setSuccess(t('auth.resetGenericSent'))
     } else {
-      setError(result.error)
+      const key =
+        result.reason === 'invalid_email'
+          ? 'auth.resetInvalidEmail'
+          : result.reason === 'rate_limit'
+            ? 'auth.resetRateLimit'
+            : 'auth.resetCaptchaFailed'
+      setError(t(key))
       turnstileRef.current?.reset()
       setCaptchaToken(null)
     }

@@ -36,18 +36,42 @@ describe('requestPasswordReset', () => {
   it('rejects invalid email format without calling Supabase', async () => {
     const requestPasswordReset = await loadAction()
     const res = await requestPasswordReset('not-an-email', REDIRECT)
-    expect(res).toEqual({ success: false, error: 'Please enter a valid email address.' })
+    expect(res).toEqual({ success: false, reason: 'invalid_email' })
     expect(resetPasswordForEmailMock).not.toHaveBeenCalled()
   })
 
-  it('returns a generic success message for valid input', async () => {
+  it('returns a generic success (no reason leaked) for valid input', async () => {
     const requestPasswordReset = await loadAction()
     const res = await requestPasswordReset('alice@example.com', REDIRECT)
-    expect(res.success).toBe(true)
-    if (res.success) {
-      expect(res.message).toContain('reset link has been sent')
-    }
+    expect(res).toEqual({ success: true })
     expect(resetPasswordForEmailMock).toHaveBeenCalledOnce()
+  })
+
+  it('forwards the captcha token to Supabase (Supabase enforces captcha now)', async () => {
+    const requestPasswordReset = await loadAction()
+    await requestPasswordReset('alice@example.com', REDIRECT, 'tok-123')
+    expect(resetPasswordForEmailMock).toHaveBeenCalledWith(
+      'alice@example.com',
+      expect.objectContaining({ captchaToken: 'tok-123' }),
+    )
+  })
+
+  it('surfaces a captcha failure instead of a fake success', async () => {
+    const requestPasswordReset = await loadAction()
+    resetPasswordForEmailMock.mockResolvedValueOnce({
+      error: { code: 'captcha_failed', message: 'captcha verification process failed' },
+    })
+    const res = await requestPasswordReset('alice@example.com', REDIRECT, 'bad')
+    expect(res).toEqual({ success: false, reason: 'captcha' })
+  })
+
+  it('still returns generic success on other soft errors (no enumeration)', async () => {
+    const requestPasswordReset = await loadAction()
+    resetPasswordForEmailMock.mockResolvedValueOnce({
+      error: { code: 'over_email_send_rate_limit', message: 'email rate limit exceeded' },
+    })
+    const res = await requestPasswordReset('alice@example.com', REDIRECT, 'tok')
+    expect(res).toEqual({ success: true })
   })
 
   // Regression: createBrowserClient runs inside a server action (non-browser
@@ -77,10 +101,7 @@ describe('requestPasswordReset', () => {
       expect(res.success).toBe(true)
     }
     const blocked = await requestPasswordReset('victim@example.com', REDIRECT)
-    expect(blocked).toEqual({
-      success: false,
-      error: 'Too many password-reset requests. Please try again in an hour.',
-    })
+    expect(blocked).toEqual({ success: false, reason: 'rate_limit' })
   })
 
   it('blocks the 6th request from the same IP regardless of email', async () => {
