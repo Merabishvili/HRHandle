@@ -23,6 +23,12 @@ describe('renderNotification', () => {
     expect(r.body).toBeNull()
   })
 
+  it('localizes interview_reminder from data', () => {
+    const r = renderNotification(t, { type: 'interview_reminder', data: { name: 'Ana', vacancy: 'Dev' }, title: 'x', body: 'y' })
+    expect(r.title).toBe('notif.interviewReminder.title|name=Ana')
+    expect(r.body).toBe('notif.forVacancy|vacancy=Dev')
+  })
+
   it('localizes no-param types (empty data object)', () => {
     expect(renderNotification(t, { type: 'offer_accepted', data: {}, title: 'x', body: null }).title).toBe('notif.offerAccepted.title')
     expect(renderNotification(t, { type: 'application_withdrawn', data: {}, title: 'x', body: null }).title).toBe('notif.applicationWithdrawn.title')

@@ -20,7 +20,7 @@ Rules:
 - is_current: true only when the person explicitly states they still work there (e.g. "present", "current", "now", "დღემდე").
 - is_ongoing: true only when education is explicitly stated as ongoing/current.
 - Keep all text in the original language — do not translate.
-- current_position and current_company: the most recent or current role. Use null if not determinable.
+- current_position and current_company: the candidate's present or most recent job. Take the title and company from the most recent experience entry — the one marked present/current, or (if none) the one with the latest dates, or the one listed first. Only use null when there is no work experience at all.
 - location: city and/or country where the candidate is based (e.g. "Tbilisi, Georgia"). Use null if not stated.
 - timezone: UTC offset or timezone name if mentioned (e.g. "GMT+4", "UTC+3", "Europe/London"). Use null if not stated.
 - languages: array of languages the candidate speaks (e.g. ["English", "Georgian"]). Use [] if none listed.
@@ -69,6 +69,51 @@ CV text:
 export type CVParseSuccess = { success: true; data: ParsedCVInput }
 export type CVParseFailure = { success: false; reason: 'unreadable' | 'parse_failed' | 'timeout' | 'empty' }
 export type CVParseResult = CVParseSuccess | CVParseFailure
+
+type ExperienceEntry = ParsedCVInput['experience'][number]
+
+/**
+ * Sortable "recency" key for an experience entry. Parsed dates are zero-padded
+ * "YYYY-MM" strings, so a lexical compare orders them correctly. An ongoing role
+ * (flagged `is_current`, or with no end date) sorts newest.
+ */
+function recencyKey(e: ExperienceEntry): string {
+  if (e.is_current || !e.end_date) return '9999-99'
+  return e.end_date
+}
+
+/**
+ * Pick the candidate's present/most-recent role from their experience list:
+ * an explicitly-current entry wins, else the latest by end date, else — on ties
+ * or missing dates — the first listed (CVs lead with the newest role, and
+ * `Array.sort` is stable so first-listed wins). Returns null if there's no
+ * usable experience. Pure — unit-tested.
+ */
+export function deriveCurrentRole(
+  experience: ExperienceEntry[],
+): { title: string | null; company: string | null } | null {
+  const usable = experience.filter((e) => e.title || e.company)
+  if (usable.length === 0) return null
+  const best = [...usable].sort((a, b) => recencyKey(b).localeCompare(recencyKey(a)))[0]!
+  return { title: best.title, company: best.company }
+}
+
+/**
+ * The model frequently leaves `current_position` / `current_company` null even
+ * when the experience section clearly names a current job (#3). Backfill each
+ * field independently from the derived current role so the wizard/edit form and
+ * CV export get it populated. Never overwrites a value the model did extract.
+ */
+export function backfillCurrentRole(data: ParsedCVInput): ParsedCVInput {
+  if (data.current_position && data.current_company) return data
+  const cur = deriveCurrentRole(data.experience)
+  if (!cur) return data
+  return {
+    ...data,
+    current_position: data.current_position || cur.title,
+    current_company: data.current_company || cur.company,
+  }
+}
 
 export async function extractTextFromFile(file: File): Promise<string | null> {
   const ext = file.name.split('.').pop()?.toLowerCase()
@@ -166,7 +211,7 @@ export async function parseCV(text: string): Promise<CVParseResult> {
         return { success: false, reason: 'parse_failed' }
       }
 
-      return { success: true, data: validated.data }
+      return { success: true, data: backfillCurrentRole(validated.data) }
     } catch (err) {
       if (err instanceof Error && err.message === 'timeout') {
         if (modelIdx < MODELS.length - 1) continue

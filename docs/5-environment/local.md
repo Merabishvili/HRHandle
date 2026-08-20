@@ -12,7 +12,7 @@ _Last updated: 2026-05-08_
 
 ## Prerequisites
 
-- Node.js 20+ (Next.js 16 requires Node 20+)
+- Node.js 24+ (pinned via `.nvmrc` / `engines.node`; Vercel disables Node 20 builds on 2026-10-01)
 - npm (or compatible package manager)
 - A Supabase account with a project (or use the staging project `hrhandle-staging` with read access)
 - Git

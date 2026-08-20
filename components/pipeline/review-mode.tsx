@@ -15,7 +15,6 @@ import {
   ArrowRight,
   FileText,
   ExternalLink,
-  Sparkles,
   Loader2,
   CheckCircle2,
   CalendarCheck,
@@ -50,15 +49,6 @@ interface ReviewModeProps {
   onReject: (applicationId: string) => void
 }
 
-type SummaryState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'ok'; text: string }
-  | { status: 'too_thin' }
-  | { status: 'rate_limited' }
-  | { status: 'no_key' }
-  | { status: 'error' }
-
 /** Deterministic avatar tint per first letter — stable variation for scanning,
  * matching the kanban card treatment. */
 const AVATAR_HUES = [
@@ -77,8 +67,8 @@ function avatarStyle(seed: string): { background: string; color: string } {
  * Pipeline Quick Review Mode — full-bleed triage per `Review Mode Fixed.dc.html`.
  *
  * A dark backdrop with prev/next chevrons flanking a single rich candidate
- * card: header + tags, a CV summary (generated on demand), a CV preview + a
- * salary/notice/source fact column, and four keyboard-driven actions —
+ * card: header + tags, a CV preview + a salary/notice/source fact column, and
+ * four keyboard-driven actions —
  * Reject (R) · Skip (K) · Schedule (S) · Advance (A). Advance/Reject shrink the
  * "new" queue (the board owns those writes); Skip just moves on; Schedule opens
  * the interview form in an overlay and returns here without auto-advancing.
@@ -97,7 +87,6 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
   const [detailByCandidate, setDetailByCandidate] = useState<
     Record<string, ReviewCandidateDetail | 'loading' | 'error'>
   >({})
-  const [summaryByCandidate, setSummaryByCandidate] = useState<Record<string, SummaryState>>({})
   const [scheduledIds, setScheduledIds] = useState<Set<string>>(new Set())
 
   const [scheduleOpen, setScheduleOpen] = useState(false)
@@ -160,29 +149,6 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
       }
     }
   }, [current, scheduleData, t])
-
-  const generateSummary = useCallback(async (candidateId: string) => {
-    setSummaryByCandidate((prev) => ({ ...prev, [candidateId]: { status: 'loading' } }))
-    try {
-      const res = await fetch('/api/ai/candidate-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidateId }),
-      })
-      const body = await res.json()
-      if (body.ok && typeof body.summary === 'string') {
-        setSummaryByCandidate((prev) => ({ ...prev, [candidateId]: { status: 'ok', text: body.summary } }))
-        return
-      }
-      const reason = body?.reason
-      const status: 'too_thin' | 'rate_limited' | 'no_key' | 'error' =
-        reason === 'too_thin' || reason === 'rate_limited' || reason === 'no_key' ? reason : 'error'
-      setSummaryByCandidate((prev) => ({ ...prev, [candidateId]: { status } }))
-    } catch (err) {
-      console.error('[review-mode] summary request failed:', err)
-      setSummaryByCandidate((prev) => ({ ...prev, [candidateId]: { status: 'error' } }))
-    }
-  }, [])
 
   const openCv = useCallback(async (documentId: string) => {
     const res = await getDocumentSignedUrl(documentId)
@@ -247,7 +213,6 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
 
   const detail = current ? detailByCandidate[current.candidate_id] : undefined
   const detailData = detail && detail !== 'loading' && detail !== 'error' ? detail : null
-  const summary = current ? summaryByCandidate[current.candidate_id] ?? { status: 'idle' } : { status: 'idle' as const }
   const isScheduled = current ? scheduledIds.has(current.id) : false
 
   return (
@@ -330,60 +295,6 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                   )}
                 </div>
               </div>
-
-              {/* CV summary — generated on demand */}
-              <section className="rounded-[10px] border border-[oklch(0.92_0.01_250)] bg-[oklch(0.985_0.002_247)] p-3.5">
-                <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[oklch(0.5_0.02_250)]">
-                    {t('review.summaryFromCv')}
-                  </span>
-                  {summary.status === 'ok' && (
-                    <button
-                      type="button"
-                      onClick={() => generateSummary(current.candidate_id)}
-                      className="text-[11.5px] font-medium text-[oklch(0.45_0.16_250)] hover:opacity-80"
-                    >
-                      {t('review.regenerate')}
-                    </button>
-                  )}
-                </div>
-                {summary.status === 'ok' ? (
-                  <p className="text-[13.5px] leading-[1.55] text-[oklch(0.25_0.02_250)]">{summary.text}</p>
-                ) : summary.status === 'loading' ? (
-                  <p className="flex items-center gap-2 text-[13px] text-[oklch(0.5_0.02_250)]">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                    {t('review.generating')}
-                  </p>
-                ) : summary.status === 'idle' ? (
-                  <button
-                    type="button"
-                    onClick={() => generateSummary(current.candidate_id)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[oklch(0.86_0.05_250)] bg-white px-3 py-1.5 text-[12.5px] font-semibold text-[oklch(0.4_0.16_250)] hover:bg-[oklch(0.98_0.015_250)]"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                    {t('review.generateSummary')}
-                  </button>
-                ) : (
-                  <p className="text-[12.5px] text-[oklch(0.5_0.02_250)]">
-                    {summary.status === 'too_thin'
-                      ? t('review.summaryTooThin')
-                      : summary.status === 'rate_limited'
-                        ? t('review.summaryRateLimited')
-                        : summary.status === 'no_key'
-                          ? t('review.summaryNoKey')
-                          : t('review.summaryError')}{' '}
-                    {summary.status !== 'no_key' && (
-                      <button
-                        type="button"
-                        onClick={() => generateSummary(current.candidate_id)}
-                        className="font-semibold text-[oklch(0.45_0.16_250)] hover:opacity-80"
-                      >
-                        {t('common.tryAgain')}
-                      </button>
-                    )}
-                  </p>
-                )}
-              </section>
 
               {/* CV preview + facts */}
               <div className="flex flex-col gap-3.5 sm:flex-row">

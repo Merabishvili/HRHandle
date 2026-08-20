@@ -1,5 +1,34 @@
 import { describe, it, expect } from 'vitest'
-import { defaultMeetingOption } from '@/components/interviews/interview-form-helpers'
+import {
+  defaultMeetingOption,
+  eligibleInterviewers,
+  type InterviewTeamMemberOption,
+} from '@/components/interviews/interview-form-helpers'
+
+describe('eligibleInterviewers', () => {
+  const owner: InterviewTeamMemberOption = { id: 'u1', full_name: 'Owner', email: 'owner@x.com' }
+  const other: InterviewTeamMemberOption = { id: 'u2', full_name: 'Other', email: 'other@x.com' }
+  const members = [owner, other]
+
+  it('returns everyone when the candidate has no email', () => {
+    expect(eligibleInterviewers(members, null, 'u1')).toEqual(members)
+    expect(eligibleInterviewers(members, '', 'u1')).toEqual(members)
+  })
+
+  it('drops a non-current member who is the candidate (internal applicant)', () => {
+    expect(eligibleInterviewers(members, 'OTHER@x.com', 'u1')).toEqual([owner])
+  })
+
+  it('never drops the current user even when they share the candidate email (#10)', () => {
+    // The candidate shares the owner's email and the owner is the current user —
+    // the picker must not end up empty.
+    expect(eligibleInterviewers(members, 'owner@x.com', 'u1')).toEqual(members)
+  })
+
+  it('keeps a single-member org selectable when that member is the current user', () => {
+    expect(eligibleInterviewers([owner], 'owner@x.com', 'u1')).toEqual([owner])
+  })
+})
 
 describe('defaultMeetingOption', () => {
   it('honours the preferred provider when it is connected', () => {

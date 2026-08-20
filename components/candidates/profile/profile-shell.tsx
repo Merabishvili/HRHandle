@@ -27,7 +27,6 @@ import { RecentMergeBanner } from '@/components/candidates/profile/recent-merge-
 import type { RecentMergeInfo } from '@/lib/actions/candidate-merge'
 import { ContactCard } from '@/components/candidates/contact-card'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
-import { AiSummaryPanel } from '@/components/candidates/ai-summary-panel'
 import { AiNotesExtractor } from '@/components/candidates/ai-notes-extractor'
 import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
@@ -108,6 +107,10 @@ interface ProfileShellProps {
    * screening answers. Empty list when the candidate cleared every
    * question; missing entry when the vacancy had no screening questions. */
   screeningFlagsByApplication: Map<string, StageContextualBlockProps['screeningFlags']>
+  /** Application ids that have ANY apply-form screening answer on file. Used to
+   * distinguish "applied + passed" (green All clear) from "added manually,
+   * nothing to check" (neutral No screening data) on the Screening panel (#6). */
+  screeningAnsweredApplications: Set<string>
   /** Wave 3.1 — whether the org has enabled AI Fit Analysis. */
   aiFitEnabled: boolean
   rejectionReasons: RejectionReason[]
@@ -171,7 +174,6 @@ function hasCustomFieldValues(values: CustomFieldValue[]): boolean {
  *           - CustomFieldsDisplay (if groups present)
  *         RIGHT RAIL:
  *           - RailActions
- *           - AiSummaryPanel
  *           - CandidateDocuments
  *           - RailDetails (salary / notice / location / timezone / source / added)
  *           - ContactCard
@@ -191,6 +193,7 @@ export function CandidateProfileShell({
   activeStages,
   upcomingInterviewByApplication,
   screeningFlagsByApplication,
+  screeningAnsweredApplications,
   aiFitEnabled,
   rejectionReasons,
   rejectionTemplates,
@@ -391,6 +394,7 @@ export function CandidateProfileShell({
                   upcomingInterviewByApplication.get(selectedApp.id) ?? null
                 }
                 screeningFlags={screeningFlagsByApplication.get(selectedApp.id) ?? []}
+                hasScreeningData={screeningAnsweredApplications.has(selectedApp.id)}
               />
             )}
 
@@ -484,8 +488,6 @@ export function CandidateProfileShell({
                 />
               </div>
             )}
-
-            <AiSummaryPanel candidateId={candidate.id} />
 
             {/* A-12b — Hidden on lg- because a mobile copy renders inline
                 between EducationSection and CustomFieldsDisplay. */}

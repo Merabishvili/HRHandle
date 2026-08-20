@@ -25,6 +25,7 @@ import type { InterviewType } from '@/lib/types'
 import {
   getCandidateFullName,
   defaultMeetingOption,
+  eligibleInterviewers,
   type InterviewFormProps,
 } from './interview-form-helpers'
 import {
@@ -115,13 +116,13 @@ export function InterviewForm({
 
   // The interviewer is always a team member, never the candidate. Candidates
   // aren't in `teamMembers` to begin with; this also drops an internal
-  // applicant (a team member whose email matches the selected candidate) so
-  // you can't pick the interviewee as their own interviewer (#1).
-  const interviewerMembers = useMemo(() => {
-    const candEmail = selectedCandidate?.email?.trim().toLowerCase()
-    if (!candEmail) return teamMembers
-    return teamMembers.filter((m) => (m.email ?? '').trim().toLowerCase() !== candEmail)
-  }, [teamMembers, selectedCandidate])
+  // applicant (a team member whose email matches the selected candidate) so you
+  // can't pick the interviewee as their own interviewer (#1) — except the
+  // current user is never dropped, so the picker can't end up empty (#10).
+  const interviewerMembers = useMemo(
+    () => eligibleInterviewers(teamMembers, selectedCandidate?.email, defaultInterviewerId),
+    [teamMembers, selectedCandidate, defaultInterviewerId],
+  )
 
   // Lock the vacancy (show it read-only) when we arrived from a candidate and
   // there's a single role to interview for — no redundant picker (#3).

@@ -143,7 +143,7 @@ export function OfferForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? t('offer.editDraft') : t('stageBlock.createOffer')}</DialogTitle>
           <DialogDescription>

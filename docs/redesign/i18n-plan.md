@@ -187,6 +187,16 @@ The user chose **translation files first**. So the order is now:
 
 ## 10. Slice 2 + 3b execution plan — org content language + public path routing
 
+> **SUPERSEDED 2026-08-20 — public pages are now SINGLE-language.** Slice 3b's
+> multi-language public surface (`/[locale]/jobs`, `localePrefix`, hreflang
+> alternates, an "also available" multi-select) was removed. An org now publishes
+> ALL candidate-facing content — public jobs/apply/status/offer, emails, AI
+> output — in **one** language, chosen from a single dropdown in Settings →
+> Organization. The `enabled_content_locales` column is retained but written as
+> `[default_content_locale]`; `orgEnabledLocales()` returns `[orgDefaultLocale]`.
+> `app/jobs/[slug]` renders that one language; legacy `/{locale}/jobs/*` links
+> 308-redirect to the bare path. The rest of this section is kept for history.
+
 > Authored 2026-08-02, after the whole dashboard + landing were swapped to `t()`
 > (551 keys live). This is the implementation-ready plan for the **last** i18n
 > surface: the candidate-facing public pages. Two decisions are locked: (a) the

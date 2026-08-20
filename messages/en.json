@@ -819,6 +819,9 @@
     "interviewScheduled": {
       "title": "Interview scheduled: {name}"
     },
+    "interviewReminder": {
+      "title": "Upcoming interview: {name}"
+    },
     "candidateHired": {
       "title": "Candidate hired: {name}"
     },
@@ -962,6 +965,8 @@
     "screeningChecks": "Screening checks",
     "autoFlagged": "· auto-flagged from the apply form",
     "allClear": "All clear",
+    "noScreeningData": "No screening data",
+    "noScreeningDataHint": "This candidate was added manually, so there are no apply-form screening answers to check. Use Advance or Reject to move them along.",
     "flagCount": "{count, plural, one {# flag} other {# flags}}",
     "salaryExpectation": "Salary expectation",
     "noticePeriod": "Notice period",
@@ -1426,6 +1431,7 @@
     "perHour": "per hour",
     "sentOn": "Sent {date}.",
     "keepPrivate": "Keep this link private — it's the only way to view or respond to this offer.",
+    "questionSubject": "Question about your offer for {role} at {company}",
     "readyPrompt": "When you're ready, accept or decline below. You'll see a confirmation straight away.",
     "notSure": "Not sure?",
     "askQuestion": "Ask {recruiter} a question",
@@ -1461,6 +1467,34 @@
     "goBack": "Go back",
     "declining": "Declining…",
     "confirmDecline": "Confirm decline"
+  },
+  "offerErr": {
+    "notAuthenticated": "Not authenticated.",
+    "notAllowedCreate": "Only owners and admins can create offers.",
+    "notAllowedEdit": "Only owners and admins can edit offers.",
+    "notAllowedSend": "Only owners and admins can send offers.",
+    "notAllowedWithdraw": "Only owners and admins can withdraw offers.",
+    "notAllowedDelete": "Only owners and admins can delete offers.",
+    "validationFailed": "Please check the offer fields.",
+    "roleTitleRequired": "Role title is required.",
+    "bodyRequired": "Offer details are required.",
+    "currencyFormat": "Currency must be 3–4 uppercase letters (e.g. USD).",
+    "applicationNotFound": "Application not found.",
+    "liveOfferExists": "There is already a live offer for this application. Withdraw it first.",
+    "draftOfferExists": "There is already a draft offer for this application. Edit it instead.",
+    "createFailed": "Failed to create offer.",
+    "updateFailed": "Failed to update offer.",
+    "sendFailed": "Failed to send offer.",
+    "withdrawFailed": "Failed to withdraw offer.",
+    "deleteFailed": "Failed to delete offer.",
+    "offerNotFound": "Offer not found.",
+    "alreadySent": "This offer has already been sent and can no longer be edited. Withdraw it and create a new one to revise.",
+    "cannotSend": "This offer cannot be sent (it is no longer a draft).",
+    "expiryPast": "Expiry date is in the past — pick a future date or clear it.",
+    "applicationMissing": "Offer application is missing.",
+    "candidateNoEmail": "Candidate has no email on file — cannot send offer.",
+    "onlySentWithdraw": "Only sent offers can be withdrawn.",
+    "onlyDraftDelete": "Only draft offers can be deleted."
   },
   "merge": {
     "title": "Merge candidates",

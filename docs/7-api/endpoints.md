@@ -292,7 +292,6 @@ These route handlers exist in `app/api/` but were missing from this doc. All AI 
 
 | Method | Path | Purpose | Auth |
 |---|---|---|---|
-| POST | `/api/ai/candidate-summary` | Gemini candidate summary (org-scoped read, not persisted) | Session + per-org rate limit |
 | POST | `/api/ai/note-extractor` | Extract structured fields from a free-text note | Session + rate limit |
 | POST | `/api/ai/assessment-suggester` | Suggest assessment tasks for a vacancy | Session + rate limit |
 | POST | `/api/ai/jd-generator` | Generate job-description sections | Session + rate limit |
@@ -301,6 +300,7 @@ These route handlers exist in `app/api/` but were missing from this doc. All AI 
 | GET | `/api/auth/calendly/callback` | Calendly OAuth callback → stores tokens + HMAC key | Session (admin) |
 | POST | `/api/webhooks/calendly` | Calendly booking webhook → creates interview + fan-out notification | HMAC-verified (no session) |
 | GET | `/api/cron/purge-deleted` | 30-day hard-purge of soft-deleted rows | Cron secret |
+| GET | `/api/cron/interview-reminders` | Daily reminder for interviews starting in ~26h (in-app notification) | Cron secret |
 | GET | `/api/export/audit-log` | CSV export of the org's audit log | Session |
 
 _Note: this section was added as a drift-fix; a full re-verification of every row in the tables above against current handler signatures is a recommended follow-up (this doc was last fully refreshed 2026-05-08)._

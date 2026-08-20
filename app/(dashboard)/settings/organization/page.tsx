@@ -7,7 +7,7 @@ import { DangerZone } from '@/components/settings/danger-zone'
 import { MfaPolicyCard } from '@/components/settings/mfa-policy-card'
 import { AiFitPolicyCard } from '@/components/settings/ai-fit-policy-card'
 import { OrgLanguageCard } from '@/components/settings/org-language-card'
-import { orgDefaultLocale, orgEnabledLocales } from '@/lib/i18n/org-locale'
+import { orgDefaultLocale } from '@/lib/i18n/org-locale'
 
 export default async function OrganizationSettingsPage() {
   const t = await getTranslations()
@@ -67,12 +67,7 @@ export default async function OrganizationSettingsPage() {
         }}
       />
 
-      <OrgLanguageCard
-        initial={{
-          default: orgDefaultLocale(orgLang),
-          enabled: orgEnabledLocales(orgLang),
-        }}
-      />
+      <OrgLanguageCard initial={{ locale: orgDefaultLocale(orgLang) }} />
 
       <AiFitPolicyCard initial={{ ai_fit_enabled: !!aiFit?.ai_fit_enabled }} />
 

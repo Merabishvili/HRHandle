@@ -2,13 +2,13 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolveOrgContentLocale, orgDefaultLocale, orgEnabledLocales } from '@/lib/i18n/org-locale'
-import { pickLocale, DEFAULT_LOCALE } from '@/lib/i18n/locales'
+import { orgDefaultLocale } from '@/lib/i18n/org-locale'
+import { pickLocale } from '@/lib/i18n/locales'
 
 export const revalidate = 300 // 5 minutes
 
 interface PageProps {
-  params: Promise<{ locale: string; slug: string }>
+  params: Promise<{ slug: string }>
 }
 
 async function resolveOrg(slug: string) {
@@ -26,23 +26,13 @@ export async function generateMetadata({ params }: PageProps) {
   const org = await resolveOrg(slug)
   if (!org) return { title: 'Jobs' }
 
-  // The canonical (bare) page renders in the org's default content locale, so
-  // localize the title + hreflang to match. Alternates: the default locale is
-  // the bare URL; other enabled locales are prefixed. `en` when it isn't the
-  // default is omitted — /en redirects to the bare path, so it isn't a distinct
-  // URL (#15).
-  const def = orgDefaultLocale(org)
-  const t = await getTranslations({ locale: def })
-  const languages: Record<string, string> = { 'x-default': `/jobs/${slug}` }
-  for (const l of orgEnabledLocales(org)) {
-    if (l === def) languages[l] = `/jobs/${slug}`
-    else if (l !== DEFAULT_LOCALE) languages[l] = `/${l}/jobs/${slug}`
-  }
-
+  // The page renders in the org's single content language, so localize the
+  // title/description to match. One language → no hreflang alternates.
+  const t = await getTranslations({ locale: orgDefaultLocale(org) })
   return {
     title: t('jobs.careersMetaTitle', { org: org.name }),
     description: t('jobs.careersMetaDesc', { org: org.name }),
-    alternates: { languages },
+    alternates: { canonical: `/jobs/${slug}` },
   }
 }
 
@@ -54,19 +44,14 @@ const employmentLabelKey: Record<string, string> = {
 }
 
 export default async function PublicJobsPage({ params }: PageProps) {
-  const { locale, slug } = await params
+  const { slug } = await params
   const supabase = createAdminClient()
 
   const org = await resolveOrg(slug)
   if (!org) notFound()
 
-  // Display locale: the bare canonical path (`/jobs/slug`) is rewritten to the
-  // DEFAULT_LOCALE tree and any explicit /en is redirected to it, so
-  // locale === DEFAULT_LOCALE uniquely means "canonical path" — render it in the
-  // org's DEFAULT content locale so a Georgian org's page reads Georgian, not
-  // English (#15). An explicit /ka|/ru prefix still forces that locale.
-  const displayLocale =
-    locale === DEFAULT_LOCALE ? orgDefaultLocale(org) : resolveOrgContentLocale(org, locale)
+  // Single content language per org — render every public page in it.
+  const displayLocale = orgDefaultLocale(org)
   const t = await getTranslations({ locale: displayLocale })
 
   const { data: vacanciesRaw } = await supabase

@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, pickLocale, type Locale } from '@/lib/i18n/locales'
+import { DEFAULT_LOCALE, LOCALES, pickLocale, type Locale } from '@/lib/i18n/locales'
 import emailsSource from '@/messages/emails.source.json'
 
 export type TemplateType =
@@ -110,6 +110,24 @@ export function isDefaultTemplateContent(
 ): boolean {
   const base = DEFAULT_TEMPLATES[type]
   return subject.trim() === base.subject && body.trim() === base.body
+}
+
+/** Like `isDefaultTemplateContent` but matches the built-in default in ANY
+ * locale (en/ka/ru), not just English. Lets a seeded default template be
+ * recognized — and re-localized to the org's CURRENT content language — even
+ * after it was stored in a different locale's default text. */
+export function isDefaultTemplateContentAnyLocale(
+  type: TemplateType,
+  subject: string,
+  body: string
+): boolean {
+  const s = subject.trim()
+  const b = body.trim()
+  if (isDefaultTemplateContent(type, subject, body)) return true
+  return LOCALES.some((locale) => {
+    const d = defaultTemplate(type, locale)
+    return s === d.subject.trim() && b === d.body.trim()
+  })
 }
 
 export function escapeHtml(str: string): string {

@@ -58,6 +58,28 @@ export function getCandidateFullName(candidate: InterviewCandidateOption): strin
   return toDisplayFullName(candidate.first_name, candidate.last_name)
 }
 
+/**
+ * Team members eligible to be the interviewer for the selected candidate.
+ *
+ * A member who IS the selected candidate (same email — an internal applicant)
+ * is dropped so you can't pick the interviewee as their own interviewer. But
+ * the current user (`currentUserId`, the default interviewer) is NEVER dropped:
+ * without that exemption, a recruiter testing with a candidate that shares
+ * their own email — or a single-member org — ends up with an EMPTY picker that
+ * shows only "Not assigned" (#10).
+ */
+export function eligibleInterviewers(
+  teamMembers: InterviewTeamMemberOption[],
+  candidateEmail: string | null | undefined,
+  currentUserId: string | null | undefined,
+): InterviewTeamMemberOption[] {
+  const candEmail = candidateEmail?.trim().toLowerCase()
+  if (!candEmail) return teamMembers
+  return teamMembers.filter(
+    (m) => m.id === currentUserId || (m.email ?? '').trim().toLowerCase() !== candEmail,
+  )
+}
+
 /** Prefer auto-generated links when a calendar is connected; manual is the
  * fallback only when nothing is connected. Honours the user's saved
  * "default for video interviews" (#6b) when that provider is connected,

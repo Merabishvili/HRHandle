@@ -3,9 +3,30 @@ import {
   escapeHtml,
   applyVariables,
   resolveTemplate,
+  defaultTemplate,
+  isDefaultTemplateContent,
+  isDefaultTemplateContentAnyLocale,
   DEFAULT_TEMPLATES,
   type TemplateType,
 } from '@/lib/email-template-utils'
+
+describe('isDefaultTemplateContentAnyLocale', () => {
+  it('matches the built-in English default', () => {
+    const base = DEFAULT_TEMPLATES.rejection
+    expect(isDefaultTemplateContentAnyLocale('rejection', base.subject, base.body)).toBe(true)
+    expect(isDefaultTemplateContent('rejection', base.subject, base.body)).toBe(true)
+  })
+
+  it('matches a non-English default (ka) that the plain English check misses', () => {
+    const ka = defaultTemplate('rejection', 'ka')
+    expect(isDefaultTemplateContentAnyLocale('rejection', ka.subject, ka.body)).toBe(true)
+    expect(isDefaultTemplateContent('rejection', ka.subject, ka.body)).toBe(false)
+  })
+
+  it('is false once the recruiter customizes the content', () => {
+    expect(isDefaultTemplateContentAnyLocale('rejection', 'Custom subject', 'Custom body')).toBe(false)
+  })
+})
 
 // ─── escapeHtml ───────────────────────────────────────────────────────────────
 

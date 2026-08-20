@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { ProfileSchema, OrganizationSchema } from '@/lib/validations/settings'
 import type { ProfileInput, OrganizationInput } from '@/lib/validations/settings'
 import { isLocale } from '@/lib/i18n/locales'
-import { normalizeOrgLocales } from '@/lib/i18n/org-locale'
+import { normalizeOrgContentLocale } from '@/lib/i18n/org-locale'
 import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
 
@@ -149,28 +149,25 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<v
 }
 
 /**
- * Set the org's content language (i18n Slice 2 — see docs/redesign/i18n-plan.md
- * §10.2). Owner/admin only. Governs candidate-facing pages + AI output, not the
- * recruiter's own UI. Invariants (en always enabled, default within the enabled
- * set, valid locales only) are enforced by `normalizeOrgLocales`.
+ * Set the org's single content language. Owner/admin only. Governs
+ * candidate-facing pages (public jobs/apply/status/offer), outgoing emails, and
+ * AI output — not the recruiter's own UI. `enabled_content_locales` is written
+ * as `[locale]` for backwards compatibility (reads derive from the default).
  */
-export async function setOrgContentLocales(
-  defaultLocale: string,
-  enabled: string[],
-): Promise<ActionResult<void>> {
+export async function setOrgContentLocale(locale: string): Promise<ActionResult<void>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
   if (!isOrgAdmin(ctx.role)) {
     return { success: false, error: 'Only owners and admins can change the content language.' }
   }
 
-  const normalized = normalizeOrgLocales(defaultLocale, enabled)
+  const normalized = normalizeOrgContentLocale(locale)
 
   const { error } = await ctx.supabase
     .from('organizations')
     .update({
-      default_content_locale: normalized.default,
-      enabled_content_locales: normalized.enabled,
+      default_content_locale: normalized,
+      enabled_content_locales: [normalized],
     })
     .eq('id', ctx.orgId)
   if (error) return { success: false, error: 'Failed to update the content language.' }
@@ -181,8 +178,8 @@ export async function setOrgContentLocales(
     entityType: 'organization',
     entityId: ctx.orgId,
     action: 'org_content_locale_updated',
-    message: `Content language — default=${normalized.default}, enabled=${normalized.enabled.join(', ')}`,
-    details: { default_content_locale: normalized.default, enabled_content_locales: normalized.enabled },
+    message: `Content language set to ${normalized}`,
+    details: { default_content_locale: normalized, enabled_content_locales: [normalized] },
   })
   revalidatePath('/settings/organization')
   return { success: true, data: undefined }

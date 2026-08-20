@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, localeFromUserMetadata } from '@/lib/i18n/locale-cookie'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -51,7 +52,18 @@ export async function GET(request: NextRequest) {
 
       // Only allow relative redirects to prevent open-redirect attacks
       const safeNext = next.startsWith('/') ? next : '/pipeline'
-      return NextResponse.redirect(`${origin}${safeNext}`)
+      const response = NextResponse.redirect(`${origin}${safeNext}`)
+      // Render the dashboard in the user's saved UI language, not whatever the
+      // landing page's NEXT_LOCALE cookie happens to be (#7).
+      const savedLocale = localeFromUserMetadata(user.user_metadata)
+      if (savedLocale) {
+        response.cookies.set(LOCALE_COOKIE, savedLocale, {
+          path: '/',
+          maxAge: LOCALE_COOKIE_MAX_AGE,
+          sameSite: 'lax',
+        })
+      }
+      return response
     }
   }
 
