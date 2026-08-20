@@ -435,26 +435,33 @@ export default async function CandidateDetailPage({
     string,
     { questionLabel: string; answerValue: string | null; expectedAnswer: string | null }[]
   >()
+  // Applications that have ANY apply-form screening answer on file. Lets the
+  // Screening panel tell "applied + passed all checks" (green "All clear") apart
+  // from "added manually, nothing to check" (neutral "No screening data") — a
+  // 0-flag count alone can't distinguish the two (#6).
+  const screeningAnsweredApplications = new Set<string>()
   if (activeApplications.length > 0) {
     const activeAppIds = activeApplications.map((a) => a.id)
-    const { data: flaggedRaw } = await supabase
+    const { data: answersRaw } = await supabase
       .from('application_screening_answers')
       .select(
-        'application_id, answer_value, vacancy_screening_questions ( label, knockout_answer )',
+        'application_id, answer_value, is_knockout_flag, vacancy_screening_questions ( label, knockout_answer )',
       )
       .eq('organization_id', organizationId)
-      .eq('is_knockout_flag', true)
       .in('application_id', activeAppIds)
 
     type ScreeningJoin = {
       application_id: string
       answer_value: string | null
+      is_knockout_flag: boolean | null
       vacancy_screening_questions:
         | { label: string; knockout_answer: string | null }
         | { label: string; knockout_answer: string | null }[]
         | null
     }
-    for (const row of (flaggedRaw ?? []) as ScreeningJoin[]) {
+    for (const row of (answersRaw ?? []) as ScreeningJoin[]) {
+      screeningAnsweredApplications.add(row.application_id)
+      if (!row.is_knockout_flag) continue
       const qJoin = row.vacancy_screening_questions
       const q = Array.isArray(qJoin) ? qJoin[0] : qJoin
       if (!q) continue
@@ -611,6 +618,7 @@ export default async function CandidateDetailPage({
       activeStages={sortedActiveStages.map((s) => ({ id: s.id, code: s.code, name: s.name }))}
       upcomingInterviewByApplication={upcomingInterviewByApplication}
       screeningFlagsByApplication={screeningFlagsByApplication}
+      screeningAnsweredApplications={screeningAnsweredApplications}
       rejectionReasons={rejectionReasonsRaw ?? []}
       rejectionTemplates={rejectionTemplatesRaw ?? []}
       rejectedStatusId={rejectedStatusId}

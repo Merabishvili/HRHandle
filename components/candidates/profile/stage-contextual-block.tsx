@@ -70,6 +70,10 @@ export interface StageContextualBlockProps {
     answerValue: string | null
     expectedAnswer: string | null
   }[]
+  /** Whether this application has ANY apply-form screening answer on file. When
+   * false (candidate added manually), the Screening panel shows a neutral
+   * "No screening data" state instead of a green "All clear" (#6). */
+  hasScreeningData: boolean
 }
 
 /**
@@ -99,6 +103,7 @@ export function StageContextualBlock({
   candidate,
   upcomingInterview,
   screeningFlags,
+  hasScreeningData,
 }: StageContextualBlockProps) {
   switch (currentStage.code) {
     case 'screening':
@@ -108,6 +113,7 @@ export function StageContextualBlock({
           currentCode={currentStage.code}
           candidate={candidate}
           screeningFlags={screeningFlags}
+          hasScreeningData={hasScreeningData}
         />
       )
     case 'interview':
@@ -154,15 +160,20 @@ function ScreeningChecks({
   currentCode,
   candidate,
   screeningFlags,
+  hasScreeningData,
 }: {
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   candidate: StageContextualBlockProps['candidate']
   screeningFlags: StageContextualBlockProps['screeningFlags']
+  hasScreeningData: boolean
 }) {
   const t = useTranslations()
   const flagCount = screeningFlags.length
-  const allClear = flagCount === 0
+  // "All clear" (green) is only truthful when the candidate actually answered
+  // apply-form screening questions and none were flagged. A manually-added
+  // candidate has no answers to check → neutral "No screening data" (#6).
+  const allClear = hasScreeningData && flagCount === 0
 
   return (
     <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
@@ -171,19 +182,27 @@ function ScreeningChecks({
       <header className="flex items-start justify-between gap-3">
         <h3 className="text-[15px] font-bold text-foreground">
           {t('stageBlock.screeningChecks')}
-          <span className="ml-2 text-[12px] font-normal text-muted-foreground">
-            {t('stageBlock.autoFlagged')}
-          </span>
+          {hasScreeningData && (
+            <span className="ml-2 text-[12px] font-normal text-muted-foreground">
+              {t('stageBlock.autoFlagged')}
+            </span>
+          )}
         </h3>
         <span
           className={cn(
             'shrink-0 rounded-full px-2.5 py-0.5 text-[11.5px] font-bold',
-            allClear
-              ? 'bg-[oklch(0.93_0.06_155)] text-[oklch(0.4_0.13_150)]'
-              : 'bg-[oklch(0.97_0.03_70)] text-[oklch(0.45_0.12_55)]',
+            !hasScreeningData
+              ? 'bg-[oklch(0.95_0.005_250)] text-muted-foreground'
+              : allClear
+                ? 'bg-[oklch(0.93_0.06_155)] text-[oklch(0.4_0.13_150)]'
+                : 'bg-[oklch(0.97_0.03_70)] text-[oklch(0.45_0.12_55)]',
           )}
         >
-          {allClear ? t('stageBlock.allClear') : t('stageBlock.flagCount', { count: flagCount })}
+          {!hasScreeningData
+            ? t('stageBlock.noScreeningData')
+            : allClear
+              ? t('stageBlock.allClear')
+              : t('stageBlock.flagCount', { count: flagCount })}
         </span>
       </header>
 
@@ -193,6 +212,12 @@ function ScreeningChecks({
         <GateCard icon={Clock} label={t('stageBlock.noticePeriod')} value={candidate.noticePeriod ?? '—'} />
         <GateCard icon={MapPin} label={t('stageBlock.location')} value={candidate.location ?? '—'} />
       </div>
+
+      {!hasScreeningData && (
+        <p className="rounded-[10px] border border-dashed border-[oklch(0.9_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2.5 text-[12px] text-muted-foreground">
+          {t('stageBlock.noScreeningDataHint')}
+        </p>
+      )}
 
       {flagCount > 0 && (
         <div

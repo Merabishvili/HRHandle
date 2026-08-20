@@ -107,6 +107,10 @@ interface ProfileShellProps {
    * screening answers. Empty list when the candidate cleared every
    * question; missing entry when the vacancy had no screening questions. */
   screeningFlagsByApplication: Map<string, StageContextualBlockProps['screeningFlags']>
+  /** Application ids that have ANY apply-form screening answer on file. Used to
+   * distinguish "applied + passed" (green All clear) from "added manually,
+   * nothing to check" (neutral No screening data) on the Screening panel (#6). */
+  screeningAnsweredApplications: Set<string>
   /** Wave 3.1 — whether the org has enabled AI Fit Analysis. */
   aiFitEnabled: boolean
   rejectionReasons: RejectionReason[]
@@ -189,6 +193,7 @@ export function CandidateProfileShell({
   activeStages,
   upcomingInterviewByApplication,
   screeningFlagsByApplication,
+  screeningAnsweredApplications,
   aiFitEnabled,
   rejectionReasons,
   rejectionTemplates,
@@ -389,6 +394,7 @@ export function CandidateProfileShell({
                   upcomingInterviewByApplication.get(selectedApp.id) ?? null
                 }
                 screeningFlags={screeningFlagsByApplication.get(selectedApp.id) ?? []}
+                hasScreeningData={screeningAnsweredApplications.has(selectedApp.id)}
               />
             )}
 

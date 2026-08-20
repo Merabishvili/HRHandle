@@ -962,6 +962,8 @@
     "screeningChecks": "Screening checks",
     "autoFlagged": "· auto-flagged from the apply form",
     "allClear": "All clear",
+    "noScreeningData": "No screening data",
+    "noScreeningDataHint": "This candidate was added manually, so there are no apply-form screening answers to check. Use Advance or Reject to move them along.",
     "flagCount": "{count, plural, one {# flag} other {# flags}}",
     "salaryExpectation": "Salary expectation",
     "noticePeriod": "Notice period",

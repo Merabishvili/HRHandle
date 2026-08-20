@@ -848,6 +848,8 @@
   "stageBlock.screeningChecks": { "en": "Screening checks", "ru": "Проверки скрининга", "ka": "სქრინინგის შემოწმებები" },
   "stageBlock.autoFlagged": { "en": "· auto-flagged from the apply form", "ru": "· автоматически отмечено из формы отклика", "ka": "· ავტომატურად მონიშნული განაცხადის ფორმიდან" },
   "stageBlock.allClear": { "en": "All clear", "ru": "Всё чисто", "ka": "ყველაფერი წესრიგშია" },
+  "stageBlock.noScreeningData": { "en": "No screening data", "ru": "Нет данных скрининга", "ka": "სკრინინგის მონაცემები არ არის" },
+  "stageBlock.noScreeningDataHint": { "en": "This candidate was added manually, so there are no apply-form screening answers to check. Use Advance or Reject to move them along.", "ru": "Этот кандидат добавлен вручную, поэтому нет ответов скрининга из формы отклика для проверки. Используйте «Продвинуть» или «Отклонить», чтобы продолжить.", "ka": "ეს კანდიდატი ხელით დაემატა, ამიტომ განაცხადის ფორმის სკრინინგის პასუხები შესამოწმებლად არ არსებობს. გასაგრძელებლად გამოიყენეთ „წინ წაწევა“ ან „უარყოფა“." },
   "stageBlock.flagCount": { "en": "{count, plural, one {# flag} other {# flags}}", "ru": "{count, plural, one {# флаг} few {# флага} many {# флагов} other {# флага}}", "ka": "{count, plural, one {# ფლაგი} other {# ფლაგი}}" },
   "stageBlock.salaryExpectation": { "en": "Salary expectation", "ru": "Ожидания по зарплате", "ka": "სახელფასო მოლოდინი" },
   "stageBlock.noticePeriod": { "en": "Notice period", "ru": "Срок отработки", "ka": "გაფრთხილების ვადა" },
