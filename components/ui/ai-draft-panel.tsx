@@ -41,7 +41,7 @@ interface AiDraftPanelProps {
  * Provenance via the embedded <AiDraftTag /> once a draft is ready. The
  * invoke button is off by default; nothing auto-runs.
  *
- * Existing AI components today (ai-summary-panel, ai-jd-suggest, etc.)
+ * Existing AI components today (ai-jd-suggest, ai-notes-extractor, etc.)
  * have feature-specific state machines and can stay as-is — they already
  * use <AiDraftTag /> for the calm-tag swap from Wave 1.6. This shell is
  * the forward-looking starting point for NEW AI surfaces (e.g. AI Fit

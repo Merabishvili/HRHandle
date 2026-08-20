@@ -292,7 +292,6 @@ These route handlers exist in `app/api/` but were missing from this doc. All AI 
 
 | Method | Path | Purpose | Auth |
 |---|---|---|---|
-| POST | `/api/ai/candidate-summary` | Gemini candidate summary (org-scoped read, not persisted) | Session + per-org rate limit |
 | POST | `/api/ai/note-extractor` | Extract structured fields from a free-text note | Session + rate limit |
 | POST | `/api/ai/assessment-suggester` | Suggest assessment tasks for a vacancy | Session + rate limit |
 | POST | `/api/ai/jd-generator` | Generate job-description sections | Session + rate limit |

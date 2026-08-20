@@ -27,7 +27,6 @@ import { RecentMergeBanner } from '@/components/candidates/profile/recent-merge-
 import type { RecentMergeInfo } from '@/lib/actions/candidate-merge'
 import { ContactCard } from '@/components/candidates/contact-card'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
-import { AiSummaryPanel } from '@/components/candidates/ai-summary-panel'
 import { AiNotesExtractor } from '@/components/candidates/ai-notes-extractor'
 import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
@@ -171,7 +170,6 @@ function hasCustomFieldValues(values: CustomFieldValue[]): boolean {
  *           - CustomFieldsDisplay (if groups present)
  *         RIGHT RAIL:
  *           - RailActions
- *           - AiSummaryPanel
  *           - CandidateDocuments
  *           - RailDetails (salary / notice / location / timezone / source / added)
  *           - ContactCard
@@ -484,8 +482,6 @@ export function CandidateProfileShell({
                 />
               </div>
             )}
-
-            <AiSummaryPanel candidateId={candidate.id} />
 
             {/* A-12b — Hidden on lg- because a mobile copy renders inline
                 between EducationSection and CustomFieldsDisplay. */}
