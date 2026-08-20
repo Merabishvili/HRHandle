@@ -8,6 +8,7 @@ import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { createClient } from '@/lib/supabase/client'
 import { authErrorMessage } from '@/lib/auth/error-i18n'
+import { localeFromUserMetadata, setLocaleCookieClient } from '@/lib/i18n/locale-cookie'
 import { setSessionPreference } from '@/lib/session'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,12 +69,17 @@ function LoginForm() {
 
     try {
       const supabase = createClient()
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
         options: { captchaToken },
       })
       if (signInError) throw signInError
+      // Sync the dashboard UI language to the user's saved preference so logging
+      // in from a landing page in another language doesn't leave the app in that
+      // language (#7). Set before navigating so the RSC request carries it.
+      const savedLocale = localeFromUserMetadata(data.user?.user_metadata)
+      if (savedLocale) setLocaleCookieClient(savedLocale)
       setSessionPreference(rememberMe)
       router.push(safeNext)
       router.refresh()

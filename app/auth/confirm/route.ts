@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, localeFromUserMetadata } from '@/lib/i18n/locale-cookie'
 import { NextRequest, NextResponse } from 'next/server'
 import { type EmailOtpType } from '@supabase/supabase-js'
 
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   if (token_hash && type) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.verifyOtp({ token_hash, type })
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash, type })
     if (!error) {
       let redirectTarget: string
       if (next.startsWith('/')) {
@@ -21,7 +22,17 @@ export async function GET(request: NextRequest) {
       } else {
         redirectTarget = `${origin}/pipeline`
       }
-      return NextResponse.redirect(redirectTarget)
+      const response = NextResponse.redirect(redirectTarget)
+      // Match the dashboard UI language to the user's saved preference (#7).
+      const savedLocale = localeFromUserMetadata(data.user?.user_metadata)
+      if (savedLocale) {
+        response.cookies.set(LOCALE_COOKIE, savedLocale, {
+          path: '/',
+          maxAge: LOCALE_COOKIE_MAX_AGE,
+          sameSite: 'lax',
+        })
+      }
+      return response
     }
   }
 
