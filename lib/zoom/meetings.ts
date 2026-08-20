@@ -1,5 +1,6 @@
 import { env } from '@/lib/env'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { siteBaseUrl } from '@/lib/site-url'
 
 const TOKEN_URL = 'https://zoom.us/oauth/token'
 const REVOKE_URL = 'https://zoom.us/oauth/revoke'
@@ -8,8 +9,12 @@ const USERS_ME_API = 'https://api.zoom.us/v2/users/me'
 const DATA_COMPLIANCE_URL = 'https://api.zoom.us/oauth/data/compliance'
 
 export function getZoomRedirectUri(): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
-  return `${base}/api/auth/zoom/callback`
+  // siteBaseUrl() strips a trailing slash — the prod NEXT_PUBLIC_SITE_URL ends in
+  // "/", which previously produced "https://host.com//api/auth/zoom/callback"
+  // (double slash). Zoom's authorize tolerates it, but the token exchange
+  // rejects the mismatch → "Invalid Grant" (#22). Google/Microsoft already
+  // normalize this way.
+  return `${siteBaseUrl()}/api/auth/zoom/callback`
 }
 
 export function getZoomOAuthUrl(state: string): string {
