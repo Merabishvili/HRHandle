@@ -6,10 +6,15 @@ vi.mock('next/headers', () => ({
 }))
 
 const resetPasswordForEmailMock = vi.fn()
+// Capture the args createBrowserClient was constructed with, so we can assert
+// the stateless cookie methods are present (see the getAll/setAll regression).
+const createBrowserClientArgs: unknown[] = []
 vi.mock('@supabase/ssr', () => ({
-  createBrowserClient: () => ({
-    auth: { resetPasswordForEmail: resetPasswordForEmailMock },
-  }),
+  createBrowserClient: (...args: unknown[]) => {
+    createBrowserClientArgs.length = 0
+    createBrowserClientArgs.push(...args)
+    return { auth: { resetPasswordForEmail: resetPasswordForEmailMock } }
+  },
 }))
 
 const REDIRECT = 'https://example.com/auth/confirm?type=recovery&next=/auth/reset-password'
@@ -43,6 +48,26 @@ describe('requestPasswordReset', () => {
       expect(res.message).toContain('reset link has been sent')
     }
     expect(resetPasswordForEmailMock).toHaveBeenCalledOnce()
+  })
+
+  // Regression: createBrowserClient runs inside a server action (non-browser
+  // runtime), so it MUST receive cookie methods or @supabase/ssr throws
+  // "createBrowserClient in non-browser runtimes … needs getAll/setAll". They
+  // must also be stateless (read/persist nothing) for a reset-email request.
+  it('constructs the client with stateless cookie methods', async () => {
+    const requestPasswordReset = await loadAction()
+    await requestPasswordReset('alice@example.com', REDIRECT)
+
+    const opts = createBrowserClientArgs[2] as {
+      auth?: { flowType?: string }
+      cookies?: { getAll?: () => unknown; setAll?: () => unknown }
+    }
+    expect(opts?.auth?.flowType).toBe('implicit')
+    expect(typeof opts?.cookies?.getAll).toBe('function')
+    expect(typeof opts?.cookies?.setAll).toBe('function')
+    // Stateless: reads nothing, and writing is a harmless no-op.
+    expect(opts.cookies!.getAll!()).toEqual([])
+    expect(() => opts.cookies!.setAll!()).not.toThrow()
   })
 
   it('blocks the 6th request for the same email within the hour', async () => {
