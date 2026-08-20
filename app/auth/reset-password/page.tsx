@@ -60,8 +60,10 @@ export default function ResetPasswordPage() {
       return
     }
     if (res === 'mfa') {
+      // Not an error — just the next step. The prompt renders as neutral text in
+      // the MFA form; keep the red alert clear.
       setMfaMode(true)
-      setError(t('auth.errMfaRequired'))
+      setError(null)
       setIsLoading(false)
       return
     }
@@ -142,6 +144,8 @@ export default function ResetPasswordPage() {
           <CardContent>
             {mfaMode ? (
               <form onSubmit={handleMfaSubmit} className="space-y-4">
+                <p className="text-sm text-muted-foreground">{t('auth.errMfaRequired')}</p>
+
                 {error && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
