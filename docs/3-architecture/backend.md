@@ -155,15 +155,15 @@ The middleware (`lib/supabase/middleware.ts`) auth-gates both `/dashboard/*` and
 
 ## Background Jobs / Cron
 
-Three daily cron endpoints, all protected by `Authorization: Bearer {CRON_SECRET}` header (timing-safe comparison) and scheduled via `vercel.json`.
+Cron endpoints, all protected by `Authorization: Bearer {CRON_SECRET}` header (timing-safe comparison) and scheduled via `vercel.json`. `interview-reminders` runs every 15 min (requires a Vercel plan that allows sub-daily crons); the rest are daily.
 
 **`app/api/cron/expire-vacancies`** — GET, daily at 01:00 UTC
 
 - Calls Supabase RPC `expire_past_vacancies()`
 
-**`app/api/cron/interview-reminders`** — GET, daily at 06:00 UTC (#9)
+**`app/api/cron/interview-reminders`** — GET, every 15 min (`*/15 * * * *`) (#9)
 
-- Scans `interviews` that are still `scheduled`, start within the next ~26h, and have `reminder_sent_at IS NULL` (partial index `idx_interviews_reminder_due`). For each, sends an in-app `interview_reminder` notification (localized via `lib/notifications/render.ts`) to the assigned `interviewer_id`, or — when unassigned — to the org's owners/admins, then stamps `reminder_sent_at` so it's reminded at most once. The 26h look-ahead (> 24h) guarantees a once-daily run catches every next-day interview. Migration `20260821_interview_reminder.sql`.
+- Scans `interviews` that are still `scheduled`, start within the next ~75 min, and have `reminder_sent_at IS NULL` (partial index `idx_interviews_reminder_due`). For each, sends an in-app `interview_reminder` notification (localized via `lib/notifications/render.ts`) to the assigned `interviewer_id`, or — when unassigned — to the org's owners/admins, **filtered by each recipient's `in_app_events.interview_reminder` notification preference** (default ON), then stamps `reminder_sent_at` so it's reminded at most once. The ~75 min look-ahead + 15-min cadence gives roughly the "1 hour before a scheduled interview" reminder the Notifications settings promise. `reminder_sent_at` is stamped even when every recipient has the reminder disabled, so the window isn't re-scanned. Migration `20260821_interview_reminder.sql`.
 
 **`app/api/cron/purge-deleted`** — GET, daily at 03:00 UTC
 
