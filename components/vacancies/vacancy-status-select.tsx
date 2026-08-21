@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Loader2, ChevronDown } from 'lucide-react'
 import { updateVacancyStatus } from '@/lib/actions/vacancies'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
@@ -28,8 +29,14 @@ interface VacancyStatusSelectProps {
 
 export function VacancyStatusSelect({ vacancyId, current, options }: VacancyStatusSelectProps) {
   const router = useRouter()
+  const t = useTranslations()
   const [isPending, setIsPending] = useState(false)
   const [activeStatus, setActiveStatus] = useState(current)
+
+  // Localize the status by code (matches the list page); fall back to the
+  // stored DB name for any code without a translation.
+  const statusLabel = (o: StatusOption) =>
+    t.has(`vacStatus.${o.code}`) ? t(`vacStatus.${o.code}`) : o.name
 
   async function handleSelect(option: StatusOption) {
     if (option.id === activeStatus.id) return
@@ -55,7 +62,7 @@ export function VacancyStatusSelect({ vacancyId, current, options }: VacancyStat
             {isPending ? (
               <Loader2 className="mr-1 h-3 w-3 animate-spin" />
             ) : null}
-            {activeStatus.name}
+            {statusLabel(activeStatus)}
             <ChevronDown className="ml-1 h-3 w-3 opacity-60" />
           </Badge>
         </button>
@@ -77,7 +84,7 @@ export function VacancyStatusSelect({ vacancyId, current, options }: VacancyStat
                 option.code === 'archived' && 'bg-zinc-400',
               )}
             />
-            {option.name}
+            {statusLabel(option)}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

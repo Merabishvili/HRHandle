@@ -837,10 +837,10 @@
       "title": "{author} mentioned you on {candidate}"
     },
     "offerAccepted": {
-      "title": "Offer accepted"
+      "title": "Offer accepted: {name}"
     },
     "offerDeclined": {
-      "title": "Offer declined"
+      "title": "Offer declined: {name}"
     },
     "applicationWithdrawn": {
       "title": "A candidate withdrew their application"
@@ -978,6 +978,12 @@
     "typeInterview": "{type} interview",
     "noInterviewYet": "No interview scheduled yet for this application.",
     "addScorecard": "Add full scorecard",
+    "editScorecard": "Edit scorecard",
+    "yourScorecard": "Your scorecard",
+    "offerAccepted": "Offer accepted",
+    "offerAcceptedHint": "The candidate accepted the offer. Finalize the hire when you're ready.",
+    "markHired": "Mark as Hired",
+    "markedHired": "Candidate marked as hired.",
     "reschedule": "Reschedule",
     "scoreHint": "Score this candidate against the role's scorecard — the average of the 1–5 ratings becomes the fit score on the kanban.",
     "errOfferDetails": "Add the offer details before saving.",
@@ -1499,6 +1505,18 @@
     "onlySentWithdraw": "Only sent offers can be withdrawn.",
     "onlyDraftDelete": "Only draft offers can be deleted."
   },
+  "aiFitErr": {
+    "notAuthenticated": "Not authenticated.",
+    "notEnabled": "AI Fit Analysis is not enabled for your organization.",
+    "euAck": "AI Fit Analysis requires EU acknowledgement in Settings.",
+    "monthlyCap": "Monthly AI Fit Analysis limit reached. Upgrade to run more.",
+    "applicationNotFound": "Application not found.",
+    "noCriteria": "Add scorecard criteria to this vacancy before running a fit analysis.",
+    "notConfigured": "AI is not configured.",
+    "unparseable": "Fit analysis unavailable — score manually.",
+    "temporarilyUnavailable": "Fit analysis is temporarily unavailable — try again shortly.",
+    "saveFailed": "Failed to save fit analysis."
+  },
   "merge": {
     "title": "Merge candidates",
     "stepOf": "Step {step} of 3 · {label}",
@@ -1924,7 +1942,7 @@
       },
       "interview_reminder": {
         "title": "Interview reminder",
-        "description": "1 hour before a scheduled interview"
+        "description": "Ahead of an upcoming interview"
       },
       "offer_response": {
         "title": "Offer response",

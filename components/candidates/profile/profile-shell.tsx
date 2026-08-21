@@ -107,6 +107,9 @@ interface ProfileShellProps {
    * `isFlag` if it failed a knockout). Empty/missing entry means the candidate
    * has no apply-form data (added manually) → neutral Screening panel (#6). */
   screeningAnswersByApplication: Map<string, StageContextualBlockProps['screeningAnswers']>
+  /** The current recruiter's own scorecard per application, shown on the
+   * profile after they submit it (#N6). */
+  myEvaluationByApplication: Map<string, NonNullable<StageContextualBlockProps['evaluation']>>
   /** Wave 3.1 — whether the org has enabled AI Fit Analysis. */
   aiFitEnabled: boolean
   rejectionReasons: RejectionReason[]
@@ -189,6 +192,7 @@ export function CandidateProfileShell({
   activeStages,
   upcomingInterviewByApplication,
   screeningAnswersByApplication,
+  myEvaluationByApplication,
   aiFitEnabled,
   rejectionReasons,
   rejectionTemplates,
@@ -389,6 +393,7 @@ export function CandidateProfileShell({
                   upcomingInterviewByApplication.get(selectedApp.id) ?? null
                 }
                 screeningAnswers={screeningAnswersByApplication.get(selectedApp.id) ?? []}
+                evaluation={myEvaluationByApplication.get(selectedApp.id) ?? null}
               />
             )}
 

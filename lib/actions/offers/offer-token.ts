@@ -11,7 +11,6 @@ import {
 } from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolvePipelineStageId } from '@/lib/pipeline-stages/resolve'
 import { canRespond, type OfferStatus } from '@/lib/offers/state'
 import { isOfferExpired } from '@/lib/offers/expiry'
 import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
@@ -19,6 +18,23 @@ import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 // ──────────────────────────────────────────────────────────────────────────
 //  Candidate-facing actions (no auth — token is the credential)
 // ──────────────────────────────────────────────────────────────────────────
+
+type OfferAppRow = {
+  candidate_id: string | null
+  candidates:
+    | { first_name: string | null; last_name: string | null }
+    | { first_name: string | null; last_name: string | null }[]
+    | null
+} | null
+
+/** Candidate id + display name from an application row (with a candidates embed),
+ * for the offer accept/decline notifications. */
+function offerCandidate(appRow: OfferAppRow): { id: string | null; name: string | null } {
+  const cJoin = appRow?.candidates
+  const c = Array.isArray(cJoin) ? cJoin[0] : cJoin
+  const name = c ? `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim() || null : null
+  return { id: appRow?.candidate_id ?? null, name }
+}
 
 const DeclineSchema = z.object({
   reason: z.string().trim().max(1000).nullable().optional(),
@@ -197,46 +213,9 @@ export async function acceptOfferByToken(token: string): Promise<ActionResult<vo
     return { success: false, error: 'Failed to record response' }
   }
 
-  // Move the application to "hired" — that triggers the existing candidate-
-  // status sync + audit-log row inside updateApplicationStatus. We can't
-  // call that action directly because it relies on the recruiter's session;
-  // do the equivalent UPDATE directly via the admin client, then write our
-  // own audit row. Wave 2.6 Slice 4 — pipeline_stage_id only; resolve the
-  // per-vacancy "Hired" stage from the application's vacancy.
-  const { data: hireAppRow } = await admin
-    .from('applications')
-    .select('candidate_id, vacancy_id')
-    .eq('id', offer.application_id as string)
-    .single()
-  if (hireAppRow?.vacancy_id) {
-    const hiredPipelineStageId = await resolvePipelineStageId(
-      admin,
-      hireAppRow.vacancy_id as string,
-      'hired',
-    )
-    const hireUpdate: Record<string, unknown> = { last_status_changed_at: now }
-    if (hiredPipelineStageId) hireUpdate.pipeline_stage_id = hiredPipelineStageId
-    await admin
-      .from('applications')
-      .update(hireUpdate)
-      .eq('id', offer.application_id as string)
-      .eq('organization_id', offer.organization_id as string)
-
-    // Sync candidate's general status to Hired too, matching the existing
-    // pattern in updateApplicationStatus.
-    const { data: candidateHiredStatus } = await admin
-      .from('candidate_statuses')
-      .select('id')
-      .eq('code', 'hired')
-      .single()
-    if (candidateHiredStatus && hireAppRow.candidate_id) {
-      await admin
-        .from('candidates')
-        .update({ general_status_id: candidateHiredStatus.id })
-        .eq('id', hireAppRow.candidate_id)
-        .eq('organization_id', offer.organization_id as string)
-    }
-  }
+  // Accepting an offer no longer auto-hires the candidate — the recruiter makes
+  // the final hire a deliberate step (#N8, "Mark as Hired" on the profile). The
+  // application stays in the Offer stage with the offer marked accepted.
 
   void writeAuditLog({
     orgId: offer.organization_id as string,
@@ -248,21 +227,30 @@ export async function acceptOfferByToken(token: string): Promise<ActionResult<vo
     details: { application_id: offer.application_id, via: 'candidate_token' },
   })
 
-  // Notify org owners + admins (best-effort).
+  // Notify org owners + admins (best-effort) — with the candidate's name + a
+  // link to their profile so the recruiter knows WHO accepted and can click
+  // through to advance the hire (#N7).
   try {
-    const { data: members } = await admin
-      .from('profiles')
-      .select('id')
-      .eq('organization_id', offer.organization_id as string)
-      .in('role', ['owner', 'admin'])
+    const [{ data: members }, { data: appRow }] = await Promise.all([
+      admin
+        .from('profiles')
+        .select('id')
+        .eq('organization_id', offer.organization_id as string)
+        .in('role', ['owner', 'admin']),
+      admin
+        .from('applications')
+        .select('candidate_id, candidates ( first_name, last_name )')
+        .eq('id', offer.application_id as string)
+        .single(),
+    ])
     const recipientIds = (members || []).map((m) => m.id)
+    const cand = offerCandidate(appRow)
     if (recipientIds.length > 0) {
       await createOrgNotifications(offer.organization_id as string, recipientIds, {
         type: 'offer_accepted',
-        title: 'Offer accepted',
-        body: undefined,
-        link: undefined,
-        data: {},
+        title: cand.name ? `Offer accepted: ${cand.name}` : 'Offer accepted',
+        link: cand.id ? `/candidates/${cand.id}` : undefined,
+        data: cand.name ? { name: cand.name } : {},
       })
     }
   } catch (err) {
@@ -356,19 +344,26 @@ export async function declineOfferByToken(
   })
 
   try {
-    const { data: members } = await admin
-      .from('profiles')
-      .select('id')
-      .eq('organization_id', offer.organization_id as string)
-      .in('role', ['owner', 'admin'])
+    const [{ data: members }, { data: appRow }] = await Promise.all([
+      admin
+        .from('profiles')
+        .select('id')
+        .eq('organization_id', offer.organization_id as string)
+        .in('role', ['owner', 'admin']),
+      admin
+        .from('applications')
+        .select('candidate_id, candidates ( first_name, last_name )')
+        .eq('id', offer.application_id as string)
+        .single(),
+    ])
     const recipientIds = (members || []).map((m) => m.id)
+    const cand = offerCandidate(appRow)
     if (recipientIds.length > 0) {
       await createOrgNotifications(offer.organization_id as string, recipientIds, {
         type: 'offer_declined',
-        title: 'Offer declined',
-        body: undefined,
-        link: undefined,
-        data: {},
+        title: cand.name ? `Offer declined: ${cand.name}` : 'Offer declined',
+        link: cand.id ? `/candidates/${cand.id}` : undefined,
+        data: cand.name ? { name: cand.name } : {},
       })
     }
   } catch (err) {

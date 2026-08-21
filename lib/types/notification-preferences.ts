@@ -183,7 +183,7 @@ export const MATRIX_EVENTS: MatrixEventMeta[] = [
   {
     key: 'interview_reminder',
     title: 'Interview reminder',
-    description: '1 hour before a scheduled interview',
+    description: 'Ahead of an upcoming interview',
     emailKey: 'interview_scheduled',
     inAppKey: 'interview_reminder',
     slackKey: 'interview_reminder',

@@ -478,6 +478,30 @@ export default async function CandidateDetailPage({
     }
   }
 
+  // The current recruiter's OWN scorecard per active application, so it's
+  // visible on the profile after submitting (was previously only re-openable in
+  // the modal) (#N6). Reviewer-scoped — one row per (application, reviewer).
+  const myEvaluationByApplication = new Map<
+    string,
+    { recommendation: string | null; score: number | null; submitted: boolean; reason: string | null }
+  >()
+  if (activeApplications.length > 0) {
+    const { data: myEvalsRaw } = await supabase
+      .from('candidate_evaluations')
+      .select('application_id, recommendation, score, submitted, recommendation_reason')
+      .eq('organization_id', organizationId)
+      .eq('reviewer_id', user.id)
+      .in('application_id', activeApplications.map((a) => a.id))
+    for (const row of myEvalsRaw ?? []) {
+      myEvaluationByApplication.set(row.application_id as string, {
+        recommendation: (row.recommendation as string | null) ?? null,
+        score: (row.score as number | null) ?? null,
+        submitted: !!row.submitted,
+        reason: (row.recommendation_reason as string | null) ?? null,
+      })
+    }
+  }
+
   const [
     { data: experienceRaw },
     { data: educationRaw },
@@ -621,6 +645,7 @@ export default async function CandidateDetailPage({
       activeStages={sortedActiveStages.map((s) => ({ id: s.id, code: s.code, name: s.name }))}
       upcomingInterviewByApplication={upcomingInterviewByApplication}
       screeningAnswersByApplication={screeningAnswersByApplication}
+      myEvaluationByApplication={myEvaluationByApplication}
       rejectionReasons={rejectionReasonsRaw ?? []}
       rejectionTemplates={rejectionTemplatesRaw ?? []}
       rejectedStatusId={rejectedStatusId}

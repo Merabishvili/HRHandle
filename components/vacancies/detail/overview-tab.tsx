@@ -342,10 +342,12 @@ type OverviewTranslator = Awaited<ReturnType<typeof getTranslations>>
 
 export function buildAttentionList(
   {
+    vacancyId,
     pendingOffers,
     upcomingInterviewsTomorrow,
     newApplicantCount,
   }: {
+    vacancyId: string
     pendingOffers: { applicationId: string; candidateInitials: string; candidateFirstName: string; daysAwaiting: number }[]
     upcomingInterviewsTomorrow: { interviewId: string; candidateInitials: string; candidateFirstName: string; scheduledAt: string }[]
     newApplicantCount: number
@@ -381,7 +383,7 @@ export function buildAttentionList(
       initialsHue: 'blue',
       message: t.rich('vacOverview.newApplicants', { count: newApplicantCount, ...bold }),
       ctaLabel: t('vacOverview.review'),
-      ctaHref: `#`,
+      ctaHref: `/vacancies/${vacancyId}/pipeline`,
     })
   }
   return items

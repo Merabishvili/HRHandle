@@ -4,6 +4,8 @@
  * import the same definitions.
  */
 
+import type { KnockoutCondition } from '@/lib/screening-questions/knockout-condition'
+
 export interface ScorecardAttribute {
   label: string
   mustHave: boolean
@@ -32,6 +34,20 @@ export interface ScorecardScreeningQuestion {
 }
 
 export const supportsKnockout = (t: ScreeningAnswerType) => t !== 'short_text'
+
+/** Build the persisted passing condition from an edited screening question.
+ * Returns null when the question is informational or the condition is
+ * incomplete (the caller then persists it as informational). */
+export function toKnockoutCondition(q: ScorecardScreeningQuestion): KnockoutCondition | null {
+  if (!q.knockout) return null
+  if (q.answerType === 'yes_no') return { kind: 'yes_no', passingAnswer: q.passYesNo }
+  if (q.answerType === 'number') {
+    if (q.numberValue === null) return null
+    return { kind: 'number', op: q.numberOp, value: q.numberValue, value2: q.numberValue2 }
+  }
+  if (q.answerType === 'select') return { kind: 'select', passingOptions: q.passOptions }
+  return null
+}
 
 /** A fresh screening question, informational by default. */
 export function blankQuestion(

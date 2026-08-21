@@ -17,23 +17,10 @@ import { StepDescription, type DescriptionState } from './step-description'
 import {
   StepScorecard,
   type ScorecardState,
-  type ScorecardScreeningQuestion,
 } from './step-scorecard'
 import { StepReview } from './step-review'
-import type { KnockoutCondition } from '@/lib/screening-questions/knockout-condition'
+import { toKnockoutCondition } from './scorecard-shared'
 import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
-
-/** Build the persisted passing condition from a wizard screening question. */
-function toKnockoutCondition(q: ScorecardScreeningQuestion): KnockoutCondition | null {
-  if (!q.knockout) return null
-  if (q.answerType === 'yes_no') return { kind: 'yes_no', passingAnswer: q.passYesNo }
-  if (q.answerType === 'number') {
-    if (q.numberValue === null) return null
-    return { kind: 'number', op: q.numberOp, value: q.numberValue, value2: q.numberValue2 }
-  }
-  if (q.answerType === 'select') return { kind: 'select', passingOptions: q.passOptions }
-  return null
-}
 
 interface VacancyCreateWizardProps {
   sectors: { id: string; name: string }[]

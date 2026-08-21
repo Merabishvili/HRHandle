@@ -131,12 +131,15 @@ function formatEmploymentType(
   }
 }
 
-function formatWorkMode(value: VacancyRow['work_mode']): string {
+function formatWorkMode(
+  t: (key: string) => string,
+  value: VacancyRow['work_mode'],
+): string {
   switch (value) {
-    case 'remote': return 'Remote'
-    case 'hybrid': return 'Hybrid'
-    case 'onsite': return 'On-site'
-    default: return 'Not specified'
+    case 'remote': return t('enum.workMode.remote')
+    case 'hybrid': return t('enum.workMode.hybrid')
+    case 'onsite': return t('enum.workMode.onsite')
+    default: return t('common.notSpecified')
   }
 }
 
@@ -383,6 +386,7 @@ export default async function VacancyDetailPage({
 
   const t = await getTranslations()
   const attention = buildAttentionList({
+    vacancyId: id,
     pendingOffers,
     upcomingInterviewsTomorrow,
     newApplicantCount,
@@ -539,7 +543,7 @@ export default async function VacancyDetailPage({
                 department: vacancy.department,
                 location: vacancy.location,
                 employmentTypeLabel: formatEmploymentType(t, vacancy.employment_type),
-                workModeLabel: formatWorkMode(vacancy.work_mode),
+                workModeLabel: formatWorkMode(t, vacancy.work_mode),
                 endDate: vacancy.end_date,
               }}
               status={{

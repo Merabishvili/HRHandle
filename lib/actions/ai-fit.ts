@@ -2,6 +2,7 @@
 
 import { createHash } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { getAuthContext, type ActionResult } from './index'
 import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
@@ -26,8 +27,9 @@ const MAX_ANALYSES_PER_ORG_PER_MONTH = 100
  * model/parse failure returns a graceful error, never throws at the UI.
  */
 export async function runAiFitAnalysis(applicationId: string): Promise<ActionResult<{ id: string }>> {
+  const t = await getTranslations('aiFitErr')
   const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
 
   // ── Opt-in + geofencing gate ───────────────────────────────────────────────
   const { data: org } = await ctx.supabase
@@ -36,10 +38,10 @@ export async function runAiFitAnalysis(applicationId: string): Promise<ActionRes
     .eq('id', ctx.orgId)
     .single()
   if (!org?.ai_fit_enabled) {
-    return { success: false, error: 'AI Fit Analysis is not enabled for your organization.' }
+    return { success: false, error: t('notEnabled') }
   }
   if (!canEnableAiFit(org.billing_country, !!org.ai_fit_eu_acknowledged)) {
-    return { success: false, error: 'AI Fit Analysis requires EU acknowledgement in Settings.' }
+    return { success: false, error: t('euAck') }
   }
 
   // ── Monthly cap ────────────────────────────────────────────────────────────
@@ -52,7 +54,7 @@ export async function runAiFitAnalysis(applicationId: string): Promise<ActionRes
     .eq('organization_id', ctx.orgId)
     .gte('created_at', monthStart.toISOString())
   if ((usedThisMonth ?? 0) >= MAX_ANALYSES_PER_ORG_PER_MONTH) {
-    return { success: false, error: 'Monthly AI Fit Analysis limit reached. Upgrade to run more.' }
+    return { success: false, error: t('monthlyCap') }
   }
 
   // ── Load inputs (org-scoped via RLS) ───────────────────────────────────────
@@ -63,7 +65,7 @@ export async function runAiFitAnalysis(applicationId: string): Promise<ActionRes
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
     .single()
-  if (!app) return { success: false, error: 'Application not found' }
+  if (!app) return { success: false, error: t('applicationNotFound') }
 
   const [{ data: candidate }, { data: questions }, { data: experience }, { data: education }] =
     await Promise.all([
@@ -92,7 +94,7 @@ export async function runAiFitAnalysis(applicationId: string): Promise<ActionRes
     must_have: !!q.must_have,
   }))
   if (criteria.length === 0) {
-    return { success: false, error: 'Add scorecard criteria to this vacancy before running a fit analysis.' }
+    return { success: false, error: t('noCriteria') }
   }
 
   // Screening answers (job-relevant) for this application.
@@ -135,10 +137,10 @@ export async function runAiFitAnalysis(applicationId: string): Promise<ActionRes
     })
     const msg =
       result.reason === 'no_key'
-        ? 'AI is not configured.'
+        ? t('notConfigured')
         : result.reason === 'unparseable'
-          ? 'Fit analysis unavailable — score manually.'
-          : 'Fit analysis is temporarily unavailable — try again shortly.'
+          ? t('unparseable')
+          : t('temporarilyUnavailable')
     return { success: false, error: msg }
   }
 
@@ -166,7 +168,7 @@ export async function runAiFitAnalysis(applicationId: string): Promise<ActionRes
 
   if (insErr || !inserted) {
     console.error('[ai-fit] insert failed:', insErr?.message)
-    return { success: false, error: 'Failed to save fit analysis.' }
+    return { success: false, error: t('saveFailed') }
   }
 
   void writeAuditLog({

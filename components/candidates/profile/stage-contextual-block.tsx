@@ -6,14 +6,12 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import {
-  Briefcase,
-  Clock,
-  MapPin,
   Video,
   Calendar,
   ExternalLink,
   Sparkles,
   AlertTriangle,
+  CheckCircle2,
   Loader2,
   Save,
   Send,
@@ -27,11 +25,20 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { createOffer, sendOffer } from '@/lib/actions/offers'
+import { markApplicationHired } from '@/lib/actions/applications/status-actions'
 import { OfferPanel, type OfferRow } from '@/components/offers/offer-panel'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { StageTracker } from './stage-tracker'
 import { ScoreCandidateModal } from './score-candidate-modal'
+
+/** Recommendation value → i18n label key (reused from the score modal). */
+const REC_LABEL_KEY: Record<string, string> = {
+  strong_yes: 'scoreModal.recStrongYes',
+  yes: 'scoreModal.recYes',
+  lean_no: 'scoreModal.recLeanNo',
+  no: 'scoreModal.recNo',
+}
 
 export interface StageContextualBlockProps {
   applicationId: string
@@ -72,6 +79,15 @@ export interface StageContextualBlockProps {
     expectedAnswer: string | null
     isFlag: boolean
   }[]
+  /** The current recruiter's own scorecard for this application — shown as a
+   * summary on the Interview stage once submitted, so their estimation is
+   * visible on the profile (not just re-openable in the modal) (#N6). */
+  evaluation: {
+    recommendation: string | null
+    score: number | null
+    submitted: boolean
+    reason: string | null
+  } | null
 }
 
 /**
@@ -98,9 +114,9 @@ export function StageContextualBlock({
   offers,
   stages,
   currentStage,
-  candidate,
   upcomingInterview,
   screeningAnswers,
+  evaluation,
 }: StageContextualBlockProps) {
   switch (currentStage.code) {
     case 'screening':
@@ -108,7 +124,6 @@ export function StageContextualBlock({
         <ScreeningChecks
           stages={stages}
           currentCode={currentStage.code}
-          candidate={candidate}
           screeningAnswers={screeningAnswers}
         />
       )
@@ -120,6 +135,7 @@ export function StageContextualBlock({
           stages={stages}
           currentCode={currentStage.code}
           upcomingInterview={upcomingInterview}
+          evaluation={evaluation}
         />
       )
     case 'offer':
@@ -154,17 +170,17 @@ export function StageContextualBlock({
 function ScreeningChecks({
   stages,
   currentCode,
-  candidate,
   screeningAnswers,
 }: {
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
-  candidate: StageContextualBlockProps['candidate']
   screeningAnswers: StageContextualBlockProps['screeningAnswers']
 }) {
   const t = useTranslations()
   const hasScreeningData = screeningAnswers.length > 0
   const flagCount = screeningAnswers.filter((a) => a.isFlag).length
+  // Only show answers that actually have a value — no empty "—" cards (#6).
+  const answered = screeningAnswers.filter((a) => (a.answerValue ?? '').trim() !== '')
   // "All clear" (green) is only truthful when the candidate actually answered
   // apply-form screening questions and none were flagged. A manually-added
   // candidate has no answers to check → neutral "No screening data" (#6).
@@ -201,48 +217,29 @@ function ScreeningChecks({
         </span>
       </header>
 
-      {/* Read-only info chips pulled from the candidate profile. */}
-      <div className="grid gap-2 sm:grid-cols-3">
-        <GateCard icon={Briefcase} label={t('stageBlock.salaryExpectation')} value={candidate.salaryExpectation ?? '—'} />
-        <GateCard icon={Clock} label={t('stageBlock.noticePeriod')} value={candidate.noticePeriod ?? '—'} />
-        <GateCard icon={MapPin} label={t('stageBlock.location')} value={candidate.location ?? '—'} />
-      </div>
-
       {!hasScreeningData && (
         <p className="rounded-[10px] border border-dashed border-[oklch(0.9_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2.5 text-[12px] text-muted-foreground">
           {t('stageBlock.noScreeningDataHint')}
         </p>
       )}
 
-      {hasScreeningData && (
-        <div className="rounded-[10px] border border-[oklch(0.91_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2.5">
-          <div className="mb-1.5 flex items-center gap-1.5">
-            {flagCount > 0 ? (
-              <>
-                <AlertTriangle className="h-3.5 w-3.5" style={{ color: 'oklch(0.5 0.12 60)' }} aria-hidden />
-                <p className="text-[12px] font-bold" style={{ color: 'oklch(0.4 0.08 55)' }}>
-                  {t('stageBlock.knockoutFlags', { count: flagCount })}
-                </p>
-              </>
-            ) : (
-              <p className="text-[12px] font-bold text-foreground/80">{t('stageBlock.screeningAnswers')}</p>
-            )}
-          </div>
-          <ul className="space-y-1">
-            {screeningAnswers.map((ans, idx) => (
-              <li
-                key={idx}
-                className={cn('text-[12px]', ans.isFlag && 'rounded-md px-1.5 py-0.5')}
-                style={ans.isFlag ? { background: 'oklch(0.97 0.03 70)' } : undefined}
-              >
-                <span className="font-semibold text-foreground/85">{ans.questionLabel}:</span>{' '}
-                <span className="text-foreground/70">{ans.answerValue || '—'}</span>
-                {ans.isFlag && ans.expectedAnswer && (
-                  <span className="text-muted-foreground"> {t('stageBlock.expected', { answer: ans.expectedAnswer })}</span>
-                )}
-              </li>
-            ))}
-          </ul>
+      {/* The candidate's actual apply-form screening answers (empty ones hidden).
+          A knockout-failed answer is highlighted amber with the expected value. */}
+      {answered.length > 0 && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {answered.map((ans, idx) => (
+            <AnswerCard
+              key={idx}
+              label={ans.questionLabel}
+              value={ans.answerValue ?? '—'}
+              flagged={ans.isFlag}
+              expectedNote={
+                ans.isFlag && ans.expectedAnswer
+                  ? t('stageBlock.expected', { answer: ans.expectedAnswer })
+                  : null
+              }
+            />
+          ))}
         </div>
       )}
 
@@ -257,22 +254,36 @@ function ScreeningChecks({
   )
 }
 
-function GateCard({
-  icon: Icon,
+/** One screening question + answer. Green for a normal answer, amber when the
+ * answer failed a knockout condition (with the expected value below). */
+function AnswerCard({
   label,
   value,
+  flagged,
+  expectedNote,
 }: {
-  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
   label: string
   value: string
+  flagged: boolean
+  expectedNote: string | null
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-[oklch(0.9_0.06_150)] bg-[oklch(0.985_0.02_150)] px-3 py-2">
-      <Icon className="h-3.5 w-3.5 shrink-0 text-[oklch(0.42_0.14_150)]" aria-hidden />
-      <div className="min-w-0">
+    <div
+      className={cn(
+        'rounded-lg border px-3 py-2',
+        flagged
+          ? 'border-[oklch(0.86_0.07_70)] bg-[oklch(0.985_0.03_70)]'
+          : 'border-[oklch(0.9_0.06_150)] bg-[oklch(0.985_0.02_150)]',
+      )}
+    >
+      <div className="flex items-center gap-1.5">
+        {flagged && (
+          <AlertTriangle className="h-3 w-3 shrink-0" style={{ color: 'oklch(0.5 0.12 60)' }} aria-hidden />
+        )}
         <p className="text-[11px] text-muted-foreground">{label}</p>
-        <p className="truncate text-[12.5px] font-semibold text-foreground">{value}</p>
       </div>
+      <p className="text-[12.5px] font-semibold text-foreground">{value}</p>
+      {expectedNote && <p className="mt-0.5 text-[11px] text-muted-foreground">{expectedNote}</p>}
     </div>
   )
 }
@@ -283,15 +294,21 @@ function InterviewState({
   stages,
   currentCode,
   upcomingInterview,
+  evaluation,
 }: {
   applicationId: string
   vacancyTitle: string
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   upcomingInterview: StageContextualBlockProps['upcomingInterview']
+  evaluation: StageContextualBlockProps['evaluation']
 }) {
   const t = useTranslations()
   const [scoreOpen, setScoreOpen] = useState(false)
+  const hasScorecard = !!evaluation?.submitted
+  const recLabelKey = evaluation?.recommendation
+    ? REC_LABEL_KEY[evaluation.recommendation]
+    : undefined
   const typeLabelKey =
     upcomingInterview?.type === 'video'
       ? 'interviews.form.typeVideo'
@@ -337,6 +354,31 @@ function InterviewState({
         </div>
       )}
 
+      {/* The recruiter's own submitted scorecard, so their estimation is
+          visible here after submitting (not just re-openable in the modal). */}
+      {hasScorecard && (
+        <div className="rounded-[10px] border border-[oklch(0.9_0.06_150)] bg-[oklch(0.985_0.02_150)] px-3.5 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[13px] font-semibold text-foreground">{t('stageBlock.yourScorecard')}</p>
+            <div className="flex items-center gap-2">
+              {recLabelKey && (
+                <span className="rounded border border-[oklch(0.88_0.05_150)] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-foreground">
+                  {t(recLabelKey)}
+                </span>
+              )}
+              {typeof evaluation?.score === 'number' && (
+                <span className="text-[12px] font-bold text-[oklch(0.38_0.14_150)]">
+                  {t('scoreModal.fitPercent', { score: evaluation.score })}
+                </span>
+              )}
+            </div>
+          </div>
+          {evaluation?.reason && (
+            <p className="mt-1 text-[12px] text-muted-foreground">{evaluation.reason}</p>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
@@ -345,7 +387,7 @@ function InterviewState({
           className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
         >
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
-          {t('stageBlock.addScorecard')}
+          {hasScorecard ? t('stageBlock.editScorecard') : t('stageBlock.addScorecard')}
         </Button>
         <Button asChild variant="outline" size="sm" className="gap-1.5">
           <Link href={`/interviews/new?reschedule=${upcomingInterview?.id ?? ''}`}>
@@ -454,6 +496,21 @@ function OfferState({
           canEdit
         />
       </article>
+    )
+  }
+
+  // Offer accepted (no live offer) → the candidate said yes. Show it clearly and
+  // let the recruiter make the FINAL hire a deliberate step (#N8).
+  const acceptedOffer = offers.find((o) => o.status === 'accepted')
+  if (acceptedOffer) {
+    return (
+      <AcceptedOfferState
+        applicationId={applicationId}
+        vacancyTitle={vacancyTitle}
+        offers={offers}
+        stages={stages}
+        currentCode={currentCode}
+      />
     )
   }
 
@@ -567,6 +624,76 @@ function OfferState({
           />
         </div>
       )}
+    </article>
+  )
+}
+
+/**
+ * Offer-accepted state — the candidate accepted, but the hire is NOT automatic
+ * (#N8). Shows a clear "Offer accepted" banner + the offer summary, and a
+ * "Mark as Hired" button so the recruiter finalizes the hire deliberately.
+ */
+function AcceptedOfferState({
+  applicationId,
+  vacancyTitle,
+  offers,
+  stages,
+  currentCode,
+}: {
+  applicationId: string
+  vacancyTitle: string
+  offers: OfferRow[]
+  stages: { code: ApplicationStatus['code']; name: string; id: string }[]
+  currentCode: ApplicationStatus['code']
+}) {
+  const t = useTranslations()
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  const hire = () => {
+    startTransition(async () => {
+      const result = await markApplicationHired(applicationId)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(t('stageBlock.markedHired'))
+      router.refresh()
+    })
+  }
+
+  return (
+    <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
+      <StageTracker stages={stages} currentCode={currentCode} compact />
+
+      <div className="rounded-[10px] border border-[oklch(0.86_0.06_155)] bg-[oklch(0.97_0.04_155)] px-3.5 py-3">
+        <p className="text-[13.5px] font-bold text-[oklch(0.36_0.13_150)]">
+          {t('stageBlock.offerAccepted')} <span aria-hidden>🎉</span>
+        </p>
+        <p className="mt-0.5 text-[12px] text-[oklch(0.4_0.08_150)]">
+          {t('stageBlock.offerAcceptedHint')}
+        </p>
+      </div>
+
+      <OfferPanel
+        applicationId={applicationId}
+        vacancyTitle={vacancyTitle}
+        offers={offers}
+        canEdit={false}
+      />
+
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          size="sm"
+          onClick={hire}
+          disabled={pending}
+          className="gap-1.5 bg-[oklch(0.55_0.16_150)] text-white hover:bg-[oklch(0.5_0.16_150)]"
+        >
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+          {t('stageBlock.markHired')}
+        </Button>
+      </div>
     </article>
   )
 }
