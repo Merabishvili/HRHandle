@@ -386,6 +386,7 @@ export default async function VacancyDetailPage({
 
   const t = await getTranslations()
   const attention = buildAttentionList({
+    vacancyId: id,
     pendingOffers,
     upcomingInterviewsTomorrow,
     newApplicantCount,
