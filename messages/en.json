@@ -1924,7 +1924,7 @@
       },
       "interview_reminder": {
         "title": "Interview reminder",
-        "description": "1 hour before a scheduled interview"
+        "description": "Ahead of an upcoming interview"
       },
       "offer_response": {
         "title": "Offer response",

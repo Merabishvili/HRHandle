@@ -1665,7 +1665,7 @@
   "notifPrefs.event.stage_change.title": { "en": "Stage change", "ru": "Смена этапа", "ka": "ეტაპის ცვლილება" },
   "notifPrefs.event.stage_change.description": { "en": "A candidate you follow moves stage", "ru": "Кандидат, за которым вы следите, меняет этап", "ka": "კანდიდატი, რომელსაც აკვირდებით, იცვლის ეტაპს" },
   "notifPrefs.event.interview_reminder.title": { "en": "Interview reminder", "ru": "Напоминание о собеседовании", "ka": "გასაუბრების შეხსენება" },
-  "notifPrefs.event.interview_reminder.description": { "en": "1 hour before a scheduled interview", "ru": "За 1 час до запланированного собеседования", "ka": "დაგეგმილ გასაუბრებამდე 1 საათით ადრე" },
+  "notifPrefs.event.interview_reminder.description": { "en": "Ahead of an upcoming interview", "ru": "Перед предстоящим собеседованием", "ka": "მოახლოებული გასაუბრების წინ" },
   "notifPrefs.event.offer_response.title": { "en": "Offer response", "ru": "Ответ на оффер", "ka": "შეთავაზების პასუხი" },
   "notifPrefs.event.offer_response.description": { "en": "A candidate accepts or declines an offer", "ru": "Кандидат принимает или отклоняет оффер", "ka": "კანდიდატი იღებს ან უარყოფს შეთავაზებას" },
   "notifPrefs.event.mention.title": { "en": "@mention in a note", "ru": "@упоминание в заметке", "ka": "@ხსენება შენიშვნაში" },
