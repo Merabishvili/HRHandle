@@ -101,14 +101,18 @@ export function ScoreCandidateModal({
 
   const scoreQuestions = data?.questions.filter((q) => q.type === 'score') ?? []
   const guideQuestions = data?.questions.filter((q) => q.type === 'text') ?? []
-  const allRated = scoreQuestions.length > 0 && scoreQuestions.every((q) => scores[q.id])
-  const fitScore = allRated
-    ? Math.round(
-        (scoreQuestions.reduce((acc, q) => acc + (scores[q.id] ?? 0), 0) /
-          (scoreQuestions.length * 5)) *
-          100,
-      )
-    : null
+  // `every` on an empty list is true — a vacancy with NO score attributes is
+  // "fully rated" (nothing to rate), so the recommendation + reason can still be
+  // submitted (#N12). Only compute a fit % when there are attributes.
+  const allRated = scoreQuestions.every((q) => scores[q.id])
+  const fitScore =
+    allRated && scoreQuestions.length > 0
+      ? Math.round(
+          (scoreQuestions.reduce((acc, q) => acc + (scores[q.id] ?? 0), 0) /
+            (scoreQuestions.length * 5)) *
+            100,
+        )
+      : null
 
   const persist = async (submit: boolean) => {
     if (!data) return

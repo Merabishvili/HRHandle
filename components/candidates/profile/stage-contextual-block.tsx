@@ -389,12 +389,16 @@ function InterviewState({
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
           {hasScorecard ? t('stageBlock.editScorecard') : t('stageBlock.addScorecard')}
         </Button>
-        <Button asChild variant="outline" size="sm" className="gap-1.5">
-          <Link href={`/interviews/new?reschedule=${upcomingInterview?.id ?? ''}`}>
-            <Calendar className="h-3.5 w-3.5" aria-hidden />
-            {t('stageBlock.reschedule')}
-          </Link>
-        </Button>
+        {/* Reschedule only makes sense when there's an interview to move (#N13);
+            with none, the button pointed at an empty ?reschedule= and was useless. */}
+        {upcomingInterview && (
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link href={`/interviews/new?reschedule=${upcomingInterview.id}`}>
+              <Calendar className="h-3.5 w-3.5" aria-hidden />
+              {t('stageBlock.reschedule')}
+            </Link>
+          </Button>
+        )}
       </div>
 
       <p className="text-[11.5px] text-muted-foreground">
