@@ -9,10 +9,14 @@ import { timingSafeEqual } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
-// Runs every 15 min; reminds interviews starting within the next ~75 min so the
-// recipient gets roughly the "1 hour before a scheduled interview" reminder the
-// notification settings promise. reminder_sent_at guarantees at most one.
-const LOOKAHEAD_MS = 75 * 60 * 1000
+// Vercel Hobby crons can only run once per day, so this is a DAILY reminder:
+// every interview starting within the next ~26h is reminded once (the > 24h
+// window means a once-daily run never misses a next-day interview;
+// reminder_sent_at guarantees at most one). For a true "~1h before" reminder,
+// an external every-15-min trigger (GitHub Actions) can hit this same endpoint —
+// the query already scopes by scheduled_at, so tightening LOOKAHEAD_MS to ~75 min
+// is all that changes. See docs/3-architecture/backend.md.
+const LOOKAHEAD_MS = 26 * 60 * 60 * 1000
 const MAX_PER_RUN = 500
 
 if (!process.env.CRON_SECRET) {
