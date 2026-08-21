@@ -837,10 +837,10 @@
       "title": "{author} упомянул(а) вас в {candidate}"
     },
     "offerAccepted": {
-      "title": "Оффер принят"
+      "title": "Оффер принят: {name}"
     },
     "offerDeclined": {
-      "title": "Оффер отклонён"
+      "title": "Оффер отклонён: {name}"
     },
     "applicationWithdrawn": {
       "title": "Кандидат отозвал заявку"

@@ -67,9 +67,9 @@ export function renderNotification(t: Translate, n: NotificationForRender): Rend
         body: n.body ?? null,
       }
     case 'offer_accepted':
-      return { title: t('notif.offerAccepted.title'), body: null }
+      return { title: d.name ? t('notif.offerAccepted.title', { name: str(d.name) }) : n.title, body: null }
     case 'offer_declined':
-      return { title: t('notif.offerDeclined.title'), body: null }
+      return { title: d.name ? t('notif.offerDeclined.title', { name: str(d.name) }) : n.title, body: null }
     case 'application_withdrawn':
       return { title: t('notif.applicationWithdrawn.title'), body: null }
     default:

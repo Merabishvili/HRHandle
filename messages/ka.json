@@ -837,10 +837,10 @@
       "title": "{author}-მ მოგიხსენიათ {candidate}-ზე"
     },
     "offerAccepted": {
-      "title": "შეთავაზება მიღებულია"
+      "title": "შეთავაზება მიღებულია: {name}"
     },
     "offerDeclined": {
-      "title": "შეთავაზება უარყოფილია"
+      "title": "შეთავაზება უარყოფილია: {name}"
     },
     "applicationWithdrawn": {
       "title": "კანდიდატმა გაიხმო თავისი განაცხადი"

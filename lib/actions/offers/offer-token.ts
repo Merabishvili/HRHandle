@@ -20,6 +20,23 @@ import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 //  Candidate-facing actions (no auth — token is the credential)
 // ──────────────────────────────────────────────────────────────────────────
 
+type OfferAppRow = {
+  candidate_id: string | null
+  candidates:
+    | { first_name: string | null; last_name: string | null }
+    | { first_name: string | null; last_name: string | null }[]
+    | null
+} | null
+
+/** Candidate id + display name from an application row (with a candidates embed),
+ * for the offer accept/decline notifications. */
+function offerCandidate(appRow: OfferAppRow): { id: string | null; name: string | null } {
+  const cJoin = appRow?.candidates
+  const c = Array.isArray(cJoin) ? cJoin[0] : cJoin
+  const name = c ? `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim() || null : null
+  return { id: appRow?.candidate_id ?? null, name }
+}
+
 const DeclineSchema = z.object({
   reason: z.string().trim().max(1000).nullable().optional(),
 })
@@ -248,21 +265,30 @@ export async function acceptOfferByToken(token: string): Promise<ActionResult<vo
     details: { application_id: offer.application_id, via: 'candidate_token' },
   })
 
-  // Notify org owners + admins (best-effort).
+  // Notify org owners + admins (best-effort) — with the candidate's name + a
+  // link to their profile so the recruiter knows WHO accepted and can click
+  // through to advance the hire (#N7).
   try {
-    const { data: members } = await admin
-      .from('profiles')
-      .select('id')
-      .eq('organization_id', offer.organization_id as string)
-      .in('role', ['owner', 'admin'])
+    const [{ data: members }, { data: appRow }] = await Promise.all([
+      admin
+        .from('profiles')
+        .select('id')
+        .eq('organization_id', offer.organization_id as string)
+        .in('role', ['owner', 'admin']),
+      admin
+        .from('applications')
+        .select('candidate_id, candidates ( first_name, last_name )')
+        .eq('id', offer.application_id as string)
+        .single(),
+    ])
     const recipientIds = (members || []).map((m) => m.id)
+    const cand = offerCandidate(appRow)
     if (recipientIds.length > 0) {
       await createOrgNotifications(offer.organization_id as string, recipientIds, {
         type: 'offer_accepted',
-        title: 'Offer accepted',
-        body: undefined,
-        link: undefined,
-        data: {},
+        title: cand.name ? `Offer accepted: ${cand.name}` : 'Offer accepted',
+        link: cand.id ? `/candidates/${cand.id}` : undefined,
+        data: cand.name ? { name: cand.name } : {},
       })
     }
   } catch (err) {
@@ -356,19 +382,26 @@ export async function declineOfferByToken(
   })
 
   try {
-    const { data: members } = await admin
-      .from('profiles')
-      .select('id')
-      .eq('organization_id', offer.organization_id as string)
-      .in('role', ['owner', 'admin'])
+    const [{ data: members }, { data: appRow }] = await Promise.all([
+      admin
+        .from('profiles')
+        .select('id')
+        .eq('organization_id', offer.organization_id as string)
+        .in('role', ['owner', 'admin']),
+      admin
+        .from('applications')
+        .select('candidate_id, candidates ( first_name, last_name )')
+        .eq('id', offer.application_id as string)
+        .single(),
+    ])
     const recipientIds = (members || []).map((m) => m.id)
+    const cand = offerCandidate(appRow)
     if (recipientIds.length > 0) {
       await createOrgNotifications(offer.organization_id as string, recipientIds, {
         type: 'offer_declined',
-        title: 'Offer declined',
-        body: undefined,
-        link: undefined,
-        data: {},
+        title: cand.name ? `Offer declined: ${cand.name}` : 'Offer declined',
+        link: cand.id ? `/candidates/${cand.id}` : undefined,
+        data: cand.name ? { name: cand.name } : {},
       })
     }
   } catch (err) {

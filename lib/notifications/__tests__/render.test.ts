@@ -30,8 +30,14 @@ describe('renderNotification', () => {
   })
 
   it('localizes no-param types (empty data object)', () => {
-    expect(renderNotification(t, { type: 'offer_accepted', data: {}, title: 'x', body: null }).title).toBe('notif.offerAccepted.title')
     expect(renderNotification(t, { type: 'application_withdrawn', data: {}, title: 'x', body: null }).title).toBe('notif.applicationWithdrawn.title')
+  })
+
+  it('offer accepted/declined: uses the candidate name when present, else the stored title', () => {
+    expect(renderNotification(t, { type: 'offer_accepted', data: { name: 'Ana B' }, title: 'x', body: null }).title).toBe('notif.offerAccepted.title|name=Ana B')
+    expect(renderNotification(t, { type: 'offer_declined', data: { name: 'Ana B' }, title: 'x', body: null }).title).toBe('notif.offerDeclined.title|name=Ana B')
+    // No name (legacy / empty data) → stored English fallback title.
+    expect(renderNotification(t, { type: 'offer_accepted', data: {}, title: 'Offer accepted', body: null }).title).toBe('Offer accepted')
   })
 
   it('keeps the note-mention preview body (user content) unlocalized', () => {

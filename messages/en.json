@@ -837,10 +837,10 @@
       "title": "{author} mentioned you on {candidate}"
     },
     "offerAccepted": {
-      "title": "Offer accepted"
+      "title": "Offer accepted: {name}"
     },
     "offerDeclined": {
-      "title": "Offer declined"
+      "title": "Offer declined: {name}"
     },
     "applicationWithdrawn": {
       "title": "A candidate withdrew their application"
