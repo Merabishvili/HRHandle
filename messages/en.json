@@ -1499,6 +1499,18 @@
     "onlySentWithdraw": "Only sent offers can be withdrawn.",
     "onlyDraftDelete": "Only draft offers can be deleted."
   },
+  "aiFitErr": {
+    "notAuthenticated": "Not authenticated.",
+    "notEnabled": "AI Fit Analysis is not enabled for your organization.",
+    "euAck": "AI Fit Analysis requires EU acknowledgement in Settings.",
+    "monthlyCap": "Monthly AI Fit Analysis limit reached. Upgrade to run more.",
+    "applicationNotFound": "Application not found.",
+    "noCriteria": "Add scorecard criteria to this vacancy before running a fit analysis.",
+    "notConfigured": "AI is not configured.",
+    "unparseable": "Fit analysis unavailable — score manually.",
+    "temporarilyUnavailable": "Fit analysis is temporarily unavailable — try again shortly.",
+    "saveFailed": "Failed to save fit analysis."
+  },
   "merge": {
     "title": "Merge candidates",
     "stepOf": "Step {step} of 3 · {label}",
