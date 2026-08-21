@@ -11,7 +11,6 @@ import {
 } from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolvePipelineStageId } from '@/lib/pipeline-stages/resolve'
 import { canRespond, type OfferStatus } from '@/lib/offers/state'
 import { isOfferExpired } from '@/lib/offers/expiry'
 import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
@@ -214,46 +213,9 @@ export async function acceptOfferByToken(token: string): Promise<ActionResult<vo
     return { success: false, error: 'Failed to record response' }
   }
 
-  // Move the application to "hired" — that triggers the existing candidate-
-  // status sync + audit-log row inside updateApplicationStatus. We can't
-  // call that action directly because it relies on the recruiter's session;
-  // do the equivalent UPDATE directly via the admin client, then write our
-  // own audit row. Wave 2.6 Slice 4 — pipeline_stage_id only; resolve the
-  // per-vacancy "Hired" stage from the application's vacancy.
-  const { data: hireAppRow } = await admin
-    .from('applications')
-    .select('candidate_id, vacancy_id')
-    .eq('id', offer.application_id as string)
-    .single()
-  if (hireAppRow?.vacancy_id) {
-    const hiredPipelineStageId = await resolvePipelineStageId(
-      admin,
-      hireAppRow.vacancy_id as string,
-      'hired',
-    )
-    const hireUpdate: Record<string, unknown> = { last_status_changed_at: now }
-    if (hiredPipelineStageId) hireUpdate.pipeline_stage_id = hiredPipelineStageId
-    await admin
-      .from('applications')
-      .update(hireUpdate)
-      .eq('id', offer.application_id as string)
-      .eq('organization_id', offer.organization_id as string)
-
-    // Sync candidate's general status to Hired too, matching the existing
-    // pattern in updateApplicationStatus.
-    const { data: candidateHiredStatus } = await admin
-      .from('candidate_statuses')
-      .select('id')
-      .eq('code', 'hired')
-      .single()
-    if (candidateHiredStatus && hireAppRow.candidate_id) {
-      await admin
-        .from('candidates')
-        .update({ general_status_id: candidateHiredStatus.id })
-        .eq('id', hireAppRow.candidate_id)
-        .eq('organization_id', offer.organization_id as string)
-    }
-  }
+  // Accepting an offer no longer auto-hires the candidate — the recruiter makes
+  // the final hire a deliberate step (#N8, "Mark as Hired" on the profile). The
+  // application stays in the Offer stage with the offer marked accepted.
 
   void writeAuditLog({
     orgId: offer.organization_id as string,

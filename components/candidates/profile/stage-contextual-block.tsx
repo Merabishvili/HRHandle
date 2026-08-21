@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Sparkles,
   AlertTriangle,
+  CheckCircle2,
   Loader2,
   Save,
   Send,
@@ -24,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { createOffer, sendOffer } from '@/lib/actions/offers'
+import { markApplicationHired } from '@/lib/actions/applications/status-actions'
 import { OfferPanel, type OfferRow } from '@/components/offers/offer-panel'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
@@ -497,6 +499,21 @@ function OfferState({
     )
   }
 
+  // Offer accepted (no live offer) → the candidate said yes. Show it clearly and
+  // let the recruiter make the FINAL hire a deliberate step (#N8).
+  const acceptedOffer = offers.find((o) => o.status === 'accepted')
+  if (acceptedOffer) {
+    return (
+      <AcceptedOfferState
+        applicationId={applicationId}
+        vacancyTitle={vacancyTitle}
+        offers={offers}
+        stages={stages}
+        currentCode={currentCode}
+      />
+    )
+  }
+
   return (
     <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
       <StageTracker stages={stages} currentCode={currentCode} compact />
@@ -607,6 +624,76 @@ function OfferState({
           />
         </div>
       )}
+    </article>
+  )
+}
+
+/**
+ * Offer-accepted state — the candidate accepted, but the hire is NOT automatic
+ * (#N8). Shows a clear "Offer accepted" banner + the offer summary, and a
+ * "Mark as Hired" button so the recruiter finalizes the hire deliberately.
+ */
+function AcceptedOfferState({
+  applicationId,
+  vacancyTitle,
+  offers,
+  stages,
+  currentCode,
+}: {
+  applicationId: string
+  vacancyTitle: string
+  offers: OfferRow[]
+  stages: { code: ApplicationStatus['code']; name: string; id: string }[]
+  currentCode: ApplicationStatus['code']
+}) {
+  const t = useTranslations()
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  const hire = () => {
+    startTransition(async () => {
+      const result = await markApplicationHired(applicationId)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(t('stageBlock.markedHired'))
+      router.refresh()
+    })
+  }
+
+  return (
+    <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
+      <StageTracker stages={stages} currentCode={currentCode} compact />
+
+      <div className="rounded-[10px] border border-[oklch(0.86_0.06_155)] bg-[oklch(0.97_0.04_155)] px-3.5 py-3">
+        <p className="text-[13.5px] font-bold text-[oklch(0.36_0.13_150)]">
+          {t('stageBlock.offerAccepted')} <span aria-hidden>🎉</span>
+        </p>
+        <p className="mt-0.5 text-[12px] text-[oklch(0.4_0.08_150)]">
+          {t('stageBlock.offerAcceptedHint')}
+        </p>
+      </div>
+
+      <OfferPanel
+        applicationId={applicationId}
+        vacancyTitle={vacancyTitle}
+        offers={offers}
+        canEdit={false}
+      />
+
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          size="sm"
+          onClick={hire}
+          disabled={pending}
+          className="gap-1.5 bg-[oklch(0.55_0.16_150)] text-white hover:bg-[oklch(0.5_0.16_150)]"
+        >
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+          {t('stageBlock.markHired')}
+        </Button>
+      </div>
     </article>
   )
 }

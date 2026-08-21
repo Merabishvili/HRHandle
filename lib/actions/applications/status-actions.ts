@@ -547,3 +547,23 @@ export async function moveApplicationsBatch(input: {
     data: { moved, skipped, failed: failures.length, failures },
   }
 }
+
+/**
+ * Finalize a hire — the recruiter's deliberate last step after an offer is
+ * accepted (#N8; accepting an offer no longer auto-hires). Resolves the
+ * canonical "hired" status and reuses updateApplicationStatus so the candidate
+ * general-status sync, audit row, hired webhook + notification all fire.
+ */
+export async function markApplicationHired(applicationId: string): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { data: hiredStatus } = await ctx.supabase
+    .from('application_statuses')
+    .select('id')
+    .eq('code', 'hired')
+    .single()
+  if (!hiredStatus) return { success: false, error: 'Hired status is not configured.' }
+
+  return updateApplicationStatus(applicationId, hiredStatus.id as string)
+}
