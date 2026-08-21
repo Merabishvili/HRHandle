@@ -12,6 +12,17 @@ import {
   bulkCreateScreeningQuestions,
   deleteScreeningQuestion,
 } from '@/lib/actions/screening-questions'
+import {
+  blankQuestion,
+  supportsKnockout,
+  toKnockoutCondition,
+  type ScorecardScreeningQuestion,
+} from '@/components/vacancies/wizard/scorecard-shared'
+import {
+  PurposeButton,
+  KnockoutConditionEditor,
+} from '@/components/vacancies/wizard/step-scorecard-parts'
+import { encodeKnockoutAnswer } from '@/lib/screening-questions/knockout-condition'
 
 type AnswerType = 'yes_no' | 'short_text' | 'number' | 'select'
 
@@ -38,7 +49,6 @@ const TYPE_LABEL_KEYS: Record<AnswerType, string> = {
   select: 'screenQ.typeSelect',
 }
 
-const supportsKnockout = (t: AnswerType) => t === 'yes_no' || t === 'select'
 const needsOptions = (t: AnswerType) => t === 'select'
 
 /**
@@ -55,9 +65,9 @@ export function ScreeningQuestionsCard({
 }: ScreeningQuestionsCardProps) {
   const tr = useTranslations()
   const [questions, setQuestions] = useState(initialQuestions)
-  const [label, setLabel] = useState('')
-  const [answerType, setAnswerType] = useState<AnswerType>('yes_no')
-  const [knockout, setKnockout] = useState(false)
+  // The question being added — modelled on the wizard's shape so it can reuse
+  // the wizard's purpose toggle + passing-condition editor (#N9).
+  const [draft, setDraft] = useState<ScorecardScreeningQuestion>(() => blankQuestion('', 'yes_no'))
   const [optionsInput, setOptionsInput] = useState('')
   const [pending, startTransition] = useTransition()
 
@@ -66,49 +76,62 @@ export function ScreeningQuestionsCard({
     .map((o) => o.trim())
     .filter((o) => o.length > 0)
 
+  const patch = (p: Partial<ScorecardScreeningQuestion>) => setDraft((d) => ({ ...d, ...p }))
+  // Draft carrying the live options list so the select-knockout editor can show
+  // its checkboxes; passOptions is clamped to the options that still exist.
+  const draftForEditor: ScorecardScreeningQuestion = {
+    ...draft,
+    options: parsedOptions,
+    passOptions: draft.passOptions.filter((o) =>
+      parsedOptions.some((p) => p.toLowerCase() === o.toLowerCase()),
+    ),
+  }
+  const knockoutEff = supportsKnockout(draft.answerType) ? draft.knockout : false
+  const selectNeedsPassing =
+    knockoutEff && draft.answerType === 'select' && draftForEditor.passOptions.length === 0
+  const canAdd =
+    !!draft.label.trim() &&
+    (!needsOptions(draft.answerType) || parsedOptions.length > 0) &&
+    !selectNeedsPassing
+
+  const resetDraft = () => {
+    setDraft(blankQuestion('', 'yes_no'))
+    setOptionsInput('')
+  }
+
   const handleAdd = () => {
-    const trimmed = label.trim()
-    if (!trimmed) return
-    if (needsOptions(answerType) && parsedOptions.length === 0) return
-    const knockoutEff = supportsKnockout(answerType) ? knockout : false
+    const trimmed = draft.label.trim()
+    if (!trimmed || !canAdd) return
+    const condition = toKnockoutCondition(draftForEditor)
 
     startTransition(async () => {
       const result = await bulkCreateScreeningQuestions(vacancyId, [
         {
           label: trimmed,
-          answerType,
+          answerType: draft.answerType,
           knockout: knockoutEff,
-          options: needsOptions(answerType) ? parsedOptions : undefined,
+          options: needsOptions(draft.answerType) ? parsedOptions : undefined,
+          knockoutCondition: condition,
         },
       ])
       if (!result.success) {
         toast.error(result.error)
         return
       }
-      // Optimistic insert with a synthetic id; the next revalidate
-      // replaces it with the server row.
+      // Optimistic insert with a synthetic id; the next revalidate replaces it.
       setQuestions((prev) => [
         ...prev,
         {
           id: `optimistic-${prev.length}-${Date.now()}`,
           label: trimmed,
-          answer_type: answerType,
+          answer_type: draft.answerType,
           is_knockout: knockoutEff,
-          knockout_answer: !knockoutEff
-            ? null
-            : answerType === 'yes_no'
-              ? 'yes'
-              : answerType === 'select'
-                ? parsedOptions[0] ?? null
-                : null,
-          options: needsOptions(answerType) ? parsedOptions : null,
+          knockout_answer: knockoutEff ? encodeKnockoutAnswer(draft.answerType, condition) : null,
+          options: needsOptions(draft.answerType) ? parsedOptions : null,
           sort_order: (prev[prev.length - 1]?.sort_order ?? -1) + 1,
         },
       ])
-      setLabel('')
-      setAnswerType('yes_no')
-      setKnockout(false)
-      setOptionsInput('')
+      resetDraft()
     })
   }
 
@@ -197,10 +220,10 @@ export function ScreeningQuestionsCard({
         <div className="mt-3 flex flex-col gap-2 rounded-[9px] border border-dashed border-[oklch(0.88_0.01_250)] p-2.5">
           <Input
             placeholder={tr('screenQ.labelPlaceholder')}
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
+            value={draft.label}
+            onChange={(e) => patch({ label: e.target.value })}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !needsOptions(answerType)) {
+              if (e.key === 'Enter' && !needsOptions(draft.answerType) && !draft.knockout) {
                 e.preventDefault()
                 handleAdd()
               }
@@ -217,15 +240,12 @@ export function ScreeningQuestionsCard({
                 key={at}
                 type="button"
                 role="radio"
-                aria-checked={answerType === at}
-                onClick={() => {
-                  setAnswerType(at)
-                  if (!supportsKnockout(at)) setKnockout(false)
-                }}
+                aria-checked={draft.answerType === at}
+                onClick={() => patch({ answerType: at, knockout: supportsKnockout(at) ? draft.knockout : false })}
                 disabled={pending}
                 className={cn(
                   'rounded-md border px-2.5 py-1 text-[11.5px] font-semibold transition-colors',
-                  answerType === at
+                  draft.answerType === at
                     ? 'border-[oklch(0.55_0.18_250)] bg-[oklch(0.98_0.015_250)] text-[oklch(0.2_0.16_250)]'
                     : 'border-[oklch(0.9_0.01_250)] text-foreground/75 hover:bg-muted/40',
                 )}
@@ -236,7 +256,7 @@ export function ScreeningQuestionsCard({
           </div>
 
           {/* Options input — select only */}
-          {needsOptions(answerType) && (
+          {needsOptions(draft.answerType) && (
             <Input
               value={optionsInput}
               onChange={(e) => setOptionsInput(e.target.value)}
@@ -247,38 +267,29 @@ export function ScreeningQuestionsCard({
             />
           )}
 
+          {/* Purpose — Informational vs Mandatory (knockout), both visible.
+              Reuses the wizard's toggle + passing-condition editor (#N9). */}
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setKnockout((v) => !v)}
-              disabled={pending || !supportsKnockout(answerType)}
-              aria-pressed={knockout}
-              className={cn(
-                'rounded-md border px-2.5 py-1 text-[11px] font-bold uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-                knockout
-                  ? 'border-[oklch(0.86_0.05_27)] bg-[oklch(0.96_0.05_27)] text-[oklch(0.5_0.19_27)]'
-                  : 'border-[oklch(0.9_0.01_250)] text-foreground/70',
-              )}
-              title={
-                supportsKnockout(answerType)
-                  ? knockout
-                    ? tr('screenQ.titleAutoFlag')
-                    : tr('screenQ.titleInfoOnly')
-                  : tr('screenQ.titleKnockoutApplies')
-              }
+            <div
+              className="inline-flex rounded-md border border-[oklch(0.9_0.01_250)] p-0.5"
+              role="radiogroup"
+              aria-label={tr('wizard.questionPurpose')}
             >
-              {knockout ? tr('screenQ.knockout') : tr('screenQ.informational')}
-            </button>
-            <Button
-              onClick={handleAdd}
-              disabled={
-                pending ||
-                !label.trim() ||
-                (needsOptions(answerType) && parsedOptions.length === 0)
-              }
-              size="sm"
-              className="ml-auto"
-            >
+              <PurposeButton active={!draft.knockout} onClick={() => patch({ knockout: false })}>
+                {tr('screenQ.informational')}
+              </PurposeButton>
+              <PurposeButton
+                active={draft.knockout}
+                disabled={!supportsKnockout(draft.answerType)}
+                onClick={() => patch({ knockout: true })}
+              >
+                {tr('screenQ.knockout')}
+              </PurposeButton>
+            </div>
+            {!supportsKnockout(draft.answerType) && (
+              <span className="text-[10.5px] text-muted-foreground">{tr('wizard.shortTextNoKnockout')}</span>
+            )}
+            <Button onClick={handleAdd} disabled={pending || !canAdd} size="sm" className="ml-auto">
               {pending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -288,6 +299,10 @@ export function ScreeningQuestionsCard({
               )}
             </Button>
           </div>
+
+          {knockoutEff && (
+            <KnockoutConditionEditor q={draftForEditor} onPatch={patch} />
+          )}
         </div>
       )}
 

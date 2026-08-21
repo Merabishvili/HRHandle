@@ -28,7 +28,6 @@ export function ScreeningQuestionRow({
 }) {
   const t = useTranslations()
   const canKnockout = supportsKnockout(q.answerType)
-  const options = q.options ?? []
 
   return (
     <li className="rounded-[9px] border border-[oklch(0.92_0.01_250)] px-3 py-2.5">
@@ -79,111 +78,130 @@ export function ScreeningQuestionRow({
 
       {/* Passing-condition editor */}
       {q.knockout && canKnockout && (
-        <div className="mt-2 rounded-md border border-[oklch(0.93_0.03_27)] bg-[oklch(0.99_0.008_27)] p-2.5">
-          {q.answerType === 'yes_no' && (
-            <div className="flex items-center gap-2 text-[12px]">
-              <span className="text-muted-foreground">{t('wizard.passingAnswer')}</span>
-              {(['yes', 'no'] as const).map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => onPatch({ passYesNo: v })}
-                  aria-pressed={q.passYesNo === v}
-                  className={cn(
-                    'rounded-md border px-2.5 py-1 text-[11.5px] font-semibold capitalize transition-colors',
-                    q.passYesNo === v
-                      ? 'border-[oklch(0.55_0.18_250)] bg-[oklch(0.98_0.015_250)] text-[oklch(0.2_0.16_250)]'
-                      : 'border-[oklch(0.9_0.01_250)] text-foreground/75 hover:bg-muted/40',
-                  )}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {q.answerType === 'number' && (
-            <div className="flex flex-wrap items-center gap-2 text-[12px]">
-              <span className="text-muted-foreground">{t('wizard.passesWhen')}</span>
-              <select
-                value={q.numberOp}
-                onChange={(e) => onPatch({ numberOp: e.target.value as NumberOp })}
-                aria-label={t('wizard.comparison')}
-                className="h-8 rounded-md border border-[oklch(0.9_0.01_250)] bg-white px-2 text-[12px]"
-              >
-                <option value="lte">≤</option>
-                <option value="gte">≥</option>
-                <option value="between">{t('wizard.between')}</option>
-              </select>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={q.numberValue ?? ''}
-                onChange={(e) =>
-                  onPatch({ numberValue: e.target.value === '' ? null : Number(e.target.value) })
-                }
-                placeholder={t('wizard.valuePlaceholder')}
-                className="h-8 w-[110px] text-[12px]"
-                aria-label={t('wizard.knockoutValueAria')}
-              />
-              {q.numberOp === 'between' && (
-                <>
-                  <span className="text-muted-foreground">{t('auth.and')}</span>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    value={q.numberValue2 ?? ''}
-                    onChange={(e) =>
-                      onPatch({
-                        numberValue2: e.target.value === '' ? null : Number(e.target.value),
-                      })
-                    }
-                    placeholder={t('wizard.valuePlaceholder')}
-                    className="h-8 w-[110px] text-[12px]"
-                    aria-label={t('wizard.knockoutUpperValueAria')}
-                  />
-                </>
-              )}
-            </div>
-          )}
-
-          {q.answerType === 'select' && (
-            <div className="text-[12px]">
-              <p className="mb-1.5 text-muted-foreground">{t('wizard.passingOptions')}</p>
-              <div className="flex flex-col gap-1">
-                {options.map((opt) => {
-                  const checked = q.passOptions.some((o) => o.toLowerCase() === opt.toLowerCase())
-                  return (
-                    <label key={opt} className="flex items-center gap-2 text-foreground/85">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(e) =>
-                          onPatch({
-                            passOptions: e.target.checked
-                              ? [...q.passOptions, opt]
-                              : q.passOptions.filter(
-                                  (o) => o.toLowerCase() !== opt.toLowerCase(),
-                                ),
-                          })
-                        }
-                        className="h-3.5 w-3.5 rounded border-border"
-                      />
-                      {opt}
-                    </label>
-                  )
-                })}
-              </div>
-              {q.passOptions.length === 0 && (
-                <p className="mt-1 text-[10.5px] text-[oklch(0.5_0.19_27)]">
-                  {t('wizard.pickOnePassing')}
-                </p>
-              )}
-            </div>
-          )}
+        <div className="mt-2">
+          <KnockoutConditionEditor q={q} onPatch={onPatch} />
         </div>
       )}
     </li>
+  )
+}
+
+/**
+ * Type-appropriate passing-condition editor for a knockout screening question
+ * (yes/no answer, number comparison, or select options). Shared by the create
+ * wizard and the vacancy-edit screening card so both offer the same UX (#N9).
+ */
+export function KnockoutConditionEditor({
+  q,
+  onPatch,
+}: {
+  q: ScorecardScreeningQuestion
+  onPatch: (patch: Partial<ScorecardScreeningQuestion>) => void
+}) {
+  const t = useTranslations()
+  const options = q.options ?? []
+  return (
+    <div className="rounded-md border border-[oklch(0.93_0.03_27)] bg-[oklch(0.99_0.008_27)] p-2.5">
+      {q.answerType === 'yes_no' && (
+        <div className="flex items-center gap-2 text-[12px]">
+          <span className="text-muted-foreground">{t('wizard.passingAnswer')}</span>
+          {(['yes', 'no'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => onPatch({ passYesNo: v })}
+              aria-pressed={q.passYesNo === v}
+              className={cn(
+                'rounded-md border px-2.5 py-1 text-[11.5px] font-semibold capitalize transition-colors',
+                q.passYesNo === v
+                  ? 'border-[oklch(0.55_0.18_250)] bg-[oklch(0.98_0.015_250)] text-[oklch(0.2_0.16_250)]'
+                  : 'border-[oklch(0.9_0.01_250)] text-foreground/75 hover:bg-muted/40',
+              )}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {q.answerType === 'number' && (
+        <div className="flex flex-wrap items-center gap-2 text-[12px]">
+          <span className="text-muted-foreground">{t('wizard.passesWhen')}</span>
+          <select
+            value={q.numberOp}
+            onChange={(e) => onPatch({ numberOp: e.target.value as NumberOp })}
+            aria-label={t('wizard.comparison')}
+            className="h-8 rounded-md border border-[oklch(0.9_0.01_250)] bg-white px-2 text-[12px]"
+          >
+            <option value="lte">≤</option>
+            <option value="gte">≥</option>
+            <option value="between">{t('wizard.between')}</option>
+          </select>
+          <Input
+            type="number"
+            inputMode="numeric"
+            value={q.numberValue ?? ''}
+            onChange={(e) =>
+              onPatch({ numberValue: e.target.value === '' ? null : Number(e.target.value) })
+            }
+            placeholder={t('wizard.valuePlaceholder')}
+            className="h-8 w-[110px] text-[12px]"
+            aria-label={t('wizard.knockoutValueAria')}
+          />
+          {q.numberOp === 'between' && (
+            <>
+              <span className="text-muted-foreground">{t('auth.and')}</span>
+              <Input
+                type="number"
+                inputMode="numeric"
+                value={q.numberValue2 ?? ''}
+                onChange={(e) =>
+                  onPatch({
+                    numberValue2: e.target.value === '' ? null : Number(e.target.value),
+                  })
+                }
+                placeholder={t('wizard.valuePlaceholder')}
+                className="h-8 w-[110px] text-[12px]"
+                aria-label={t('wizard.knockoutUpperValueAria')}
+              />
+            </>
+          )}
+        </div>
+      )}
+
+      {q.answerType === 'select' && (
+        <div className="text-[12px]">
+          <p className="mb-1.5 text-muted-foreground">{t('wizard.passingOptions')}</p>
+          <div className="flex flex-col gap-1">
+            {options.map((opt) => {
+              const checked = q.passOptions.some((o) => o.toLowerCase() === opt.toLowerCase())
+              return (
+                <label key={opt} className="flex items-center gap-2 text-foreground/85">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) =>
+                      onPatch({
+                        passOptions: e.target.checked
+                          ? [...q.passOptions, opt]
+                          : q.passOptions.filter((o) => o.toLowerCase() !== opt.toLowerCase()),
+                      })
+                    }
+                    className="h-3.5 w-3.5 rounded border-border"
+                  />
+                  {opt}
+                </label>
+              )
+            })}
+          </div>
+          {q.passOptions.length === 0 && (
+            <p className="mt-1 text-[10.5px] text-[oklch(0.5_0.19_27)]">
+              {t('wizard.pickOnePassing')}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
