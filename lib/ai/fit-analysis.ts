@@ -179,11 +179,23 @@ export type FitRunResult =
   | { ok: true; analysis: RenderedFitAnalysis; modelName: string; rawResponse: string }
   | { ok: false; reason: 'no_key' | 'timeout' | 'failed' | 'unparseable' }
 
+/** Gemini often returns a transient 503 ("high demand"/overloaded) or a 429
+ * rate-limit — those are worth retrying. Anything else (bad request, auth) isn't. */
+function isRetryableError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err ?? '')
+  return /\b(503|429)\b|service unavailable|overloaded|high demand|unavailable|rate.?limit|try again/i.test(msg)
+}
+
+/** How many times to try EACH model before falling through to the next. With
+ * two models that's up to 6 attempts, which comfortably rides out the transient
+ * "model is experiencing high demand" 503 spikes. */
+const MAX_ATTEMPTS_PER_MODEL = 3
+
 async function callGemini(
   apiKey: string,
   modelName: string,
   prompt: string,
-): Promise<string | { error: 'timeout' | 'failed' }> {
+): Promise<{ text: string } | { error: 'timeout' | 'failed'; retryable: boolean }> {
   const client = new GoogleGenerativeAI(apiKey)
   const model = client.getGenerativeModel({ model: modelName })
   const timeout = new Promise<{ error: 'timeout' }>((resolve) =>
@@ -194,16 +206,18 @@ async function callGemini(
       model.generateContent(prompt).then((r) => ({ text: r.response.text() })),
       timeout,
     ])
-    if ('error' in result) return { error: 'timeout' }
-    return result.text
+    if ('error' in result) return { error: 'timeout', retryable: true }
+    return { text: result.text }
   } catch (err) {
     console.error('[ai/fit-analysis] gemini call failed:', err)
     Sentry.captureException(err, { tags: { feature: 'ai_fit', model: modelName } })
-    return { error: 'failed' }
+    return { error: 'failed', retryable: isRetryableError(err) }
   }
 }
 
-/** Run the analysis on already-sanitized input. Fail-soft. */
+/** Run the analysis on already-sanitized input. Fail-soft. Retries each model on
+ * transient errors (503/overloaded/timeout) with backoff before falling through
+ * to the next, so a spike in Gemini demand doesn't fail the whole request. */
 export async function runFitAnalysis(
   sanitized: SanitizedFitInput,
   criteria: FitCriterionSpec[],
@@ -213,17 +227,30 @@ export async function runFitAnalysis(
   if (!apiKey) return { ok: false, reason: 'no_key' }
 
   const prompt = buildFitPrompt(sanitized, criteria, locale)
-  for (let i = 0; i < MODELS.length; i++) {
-    const modelName = MODELS[i]!
-    const result = await callGemini(apiKey, modelName, prompt)
-    if (typeof result === 'string') {
-      const analysis = parseFitResponse(result, criteria)
-      if (analysis) return { ok: true, analysis, modelName, rawResponse: result }
-      if (i === MODELS.length - 1) return { ok: false, reason: 'unparseable' }
-    } else if (i === MODELS.length - 1) {
-      return { ok: false, reason: result.error }
+  let lastReason: 'timeout' | 'failed' | 'unparseable' = 'failed'
+
+  for (const modelName of MODELS) {
+    for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_MODEL; attempt++) {
+      const result = await callGemini(apiKey, modelName, prompt)
+
+      if ('text' in result) {
+        const analysis = parseFitResponse(result.text, criteria)
+        if (analysis) return { ok: true, analysis, modelName, rawResponse: result.text }
+        // Malformed JSON is deterministic — don't hammer the same model; move on.
+        lastReason = 'unparseable'
+        break
+      }
+
+      lastReason = result.error
+      // Retry the SAME model on a transient error, with exponential backoff.
+      if (result.retryable && attempt < MAX_ATTEMPTS_PER_MODEL - 1) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)))
+        continue
+      }
+      break // non-retryable or out of attempts → next model
     }
     await new Promise((r) => setTimeout(r, RETRY_DELAY_MS))
   }
-  return { ok: false, reason: 'failed' }
+
+  return { ok: false, reason: lastReason }
 }

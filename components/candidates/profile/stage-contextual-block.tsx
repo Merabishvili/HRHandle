@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
@@ -31,6 +30,7 @@ import type { ApplicationStatus } from '@/lib/types/application'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { StageTracker } from './stage-tracker'
 import { ScoreCandidateModal } from './score-candidate-modal'
+import { RescheduleInterviewDialog } from '@/components/interviews/reschedule-interview-dialog'
 
 /** Recommendation value → i18n label key (reused from the score modal). */
 const REC_LABEL_KEY: Record<string, string> = {
@@ -313,6 +313,7 @@ function InterviewState({
 }) {
   const t = useTranslations()
   const [scoreOpen, setScoreOpen] = useState(false)
+  const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const hasScorecard = !!evaluation?.submitted
   const recLabelKey = evaluation?.recommendation
     ? REC_LABEL_KEY[evaluation.recommendation]
@@ -397,14 +398,19 @@ function InterviewState({
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
           {hasScorecard ? t('stageBlock.editScorecard') : t('stageBlock.addScorecard')}
         </Button>
-        {/* Reschedule only makes sense when there's an interview to move (#N13);
-            with none, the button pointed at an empty ?reschedule= and was useless. */}
+        {/* Reschedule only makes sense when there's an interview to move (#N13).
+            Opens a reschedule dialog in place — no more blank new-interview
+            page that ignored the interview (#N15). */}
         {upcomingInterview && (
-          <Button asChild variant="outline" size="sm" className="gap-1.5">
-            <Link href={`/interviews/new?reschedule=${upcomingInterview.id}`}>
-              <Calendar className="h-3.5 w-3.5" aria-hidden />
-              {t('stageBlock.reschedule')}
-            </Link>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setRescheduleOpen(true)}
+          >
+            <Calendar className="h-3.5 w-3.5" aria-hidden />
+            {t('stageBlock.reschedule')}
           </Button>
         )}
       </div>
@@ -419,6 +425,17 @@ function InterviewState({
         open={scoreOpen}
         onOpenChange={setScoreOpen}
       />
+
+      {upcomingInterview && (
+        <RescheduleInterviewDialog
+          open={rescheduleOpen}
+          onOpenChange={setRescheduleOpen}
+          interviewId={upcomingInterview.id}
+          scheduledAt={upcomingInterview.scheduledAt}
+          durationMinutes={upcomingInterview.durationMinutes}
+          candidateHasEmail
+        />
+      )}
     </article>
   )
 }
