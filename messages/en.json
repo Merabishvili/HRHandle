@@ -1433,6 +1433,8 @@
     "sentOn": "Sent {date}.",
     "keepPrivate": "Keep this link private — it's the only way to view or respond to this offer.",
     "questionSubject": "Question about your offer for {role} at {company}",
+    "expiresToday": "Expires today",
+    "daysLeft": "{days, plural, one {# day left} other {# days left}}",
     "readyPrompt": "When you're ready, accept or decline below. You'll see a confirmation straight away.",
     "notSure": "Not sure?",
     "askQuestion": "Ask {recruiter} a question",

@@ -2429,6 +2429,8 @@
   "offer.sentOn": { "en": "Sent {date}.", "ru": "Отправлено {date}.", "ka": "გაგზავნილია {date}." },
   "offer.keepPrivate": { "en": "Keep this link private — it's the only way to view or respond to this offer.", "ru": "Храните эту ссылку в тайне — это единственный способ просмотреть оффер и ответить на него.", "ka": "შეინახეთ ეს ბმული პირადად — ეს ერთადერთი გზაა ამ შეთავაზების სანახავად ან საპასუხოდ." },
   "offer.questionSubject": { "en": "Question about your offer for {role} at {company}", "ru": "Вопрос по вашему офферу на {role} в {company}", "ka": "კითხვა თქვენი შეთავაზების შესახებ — {role}, {company}" },
+  "offer.expiresToday": { "en": "Expires today", "ru": "Истекает сегодня", "ka": "იწურება დღეს" },
+  "offer.daysLeft": { "en": "{days, plural, one {# day left} other {# days left}}", "ru": "{days, plural, one {остался # день} few {осталось # дня} many {осталось # дней} other {осталось # дня}}", "ka": "{days, plural, one {დარჩა # დღე} other {დარჩა # დღე}}" },
   "offer.readyPrompt": { "en": "When you're ready, accept or decline below. You'll see a confirmation straight away.", "ru": "Когда будете готовы, примите или отклоните оффер ниже. Подтверждение появится сразу.", "ka": "როცა მზად იქნებით, ქვემოთ მიიღეთ ან უარყავით. დადასტურებას მაშინვე იხილავთ." },
   "offer.notSure": { "en": "Not sure?", "ru": "Не уверены?", "ka": "არ ხართ დარწმუნებული?" },
   "offer.askQuestion": { "en": "Ask {recruiter} a question", "ru": "Задать вопрос: {recruiter}", "ka": "დაუსვით კითხვა: {recruiter}" },

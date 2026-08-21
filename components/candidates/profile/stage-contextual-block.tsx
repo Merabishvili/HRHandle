@@ -437,10 +437,13 @@ function OfferState({
     })
   }
 
-  // Once an offer exists on this application, Save & send has happened — show
-  // the persistent OfferPanel summary (status, terms, View / Edit & resend /
-  // Withdraw) instead of leaving a bare create form behind.
-  if (offers.length > 0) {
+  // While an offer is live (draft/sent), show the persistent OfferPanel summary
+  // (status, terms, View / Edit & resend / Withdraw). Once it's closed
+  // (declined/withdrawn/expired), fall through to the SAME inline create form as
+  // the first offer — a second offer must be created inline, not via the modal
+  // popup, so it's consistent with the first (#5).
+  const activeOffer = offers.find((o) => o.status === 'draft' || o.status === 'sent')
+  if (activeOffer) {
     return (
       <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
         <StageTracker stages={stages} currentCode={currentCode} compact />
@@ -551,6 +554,19 @@ function OfferState({
           {t('stageBlock.saveSend')}
         </Button>
       </div>
+
+      {/* Past (closed) offers, read-only — so a re-offer keeps the declined /
+          withdrawn history in view without the create modal. */}
+      {offers.length > 0 && (
+        <div className="border-t border-[oklch(0.92_0.01_250)] pt-3.5">
+          <OfferPanel
+            applicationId={applicationId}
+            vacancyTitle={vacancyTitle}
+            offers={offers}
+            canEdit={false}
+          />
+        </div>
+      )}
     </article>
   )
 }
