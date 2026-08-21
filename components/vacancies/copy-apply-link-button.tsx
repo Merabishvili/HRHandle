@@ -6,7 +6,9 @@ import { toast } from 'sonner'
 import { Check, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || ''
+// Strip a trailing slash so NEXT_PUBLIC_SITE_URL="https://host.com/" doesn't
+// produce a double-slash apply URL (https://host.com//apply/...) that 404s.
+const BASE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')
 
 interface CopyApplyLinkButtonProps {
   token: string

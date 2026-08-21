@@ -82,7 +82,9 @@ function CopyButton({ text }: { text: string }) {
 
 export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButtonProps) {
   const t = useTranslations()
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hrhandle.com'
+  // Trailing slash stripped so a "https://host.com/" SITE_URL doesn't yield a
+  // double-slash apply URL (https://host.com//apply/...) that 404s.
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hrhandle.com').replace(/\/$/, '')
   const linkedInUrl = `https://www.linkedin.com/job-posting/v2/?companyId=${pageId}`
   const applyUrl = vacancy.application_form_token
     ? `${siteUrl}/apply/${vacancy.application_form_token}`

@@ -437,26 +437,24 @@ export default async function CandidateDetailPage({
   // (#6). `isFlag` marks the ones that failed a knockout condition.
   const screeningAnswersByApplication = new Map<
     string,
-    { questionLabel: string; answerValue: string | null; expectedAnswer: string | null; isFlag: boolean; sortOrder: number }[]
+    { questionLabel: string; answerValue: string | null; answerType: string; expectedAnswer: string | null; isFlag: boolean; sortOrder: number }[]
   >()
   if (activeApplications.length > 0) {
     const activeAppIds = activeApplications.map((a) => a.id)
     const { data: answersRaw } = await supabase
       .from('application_screening_answers')
       .select(
-        'application_id, answer_value, is_knockout_flag, vacancy_screening_questions ( label, knockout_answer, sort_order )',
+        'application_id, answer_value, is_knockout_flag, vacancy_screening_questions ( label, answer_type, knockout_answer, sort_order )',
       )
       .eq('organization_id', organizationId)
       .in('application_id', activeAppIds)
 
+    type ScreeningQ = { label: string; answer_type: string | null; knockout_answer: string | null; sort_order: number | null }
     type ScreeningJoin = {
       application_id: string
       answer_value: string | null
       is_knockout_flag: boolean | null
-      vacancy_screening_questions:
-        | { label: string; knockout_answer: string | null; sort_order: number | null }
-        | { label: string; knockout_answer: string | null; sort_order: number | null }[]
-        | null
+      vacancy_screening_questions: ScreeningQ | ScreeningQ[] | null
     }
     for (const row of (answersRaw ?? []) as ScreeningJoin[]) {
       const qJoin = row.vacancy_screening_questions
@@ -466,6 +464,7 @@ export default async function CandidateDetailPage({
       existing.push({
         questionLabel: q.label,
         answerValue: row.answer_value ?? null,
+        answerType: q.answer_type ?? 'short_text',
         expectedAnswer: q.knockout_answer ?? null,
         isFlag: !!row.is_knockout_flag,
         sortOrder: q.sort_order ?? 0,

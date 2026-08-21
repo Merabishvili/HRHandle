@@ -8,7 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { activateApplicationForm, deactivateApplicationForm } from '@/lib/actions/application-form'
 import { Copy, Check, ExternalLink, Trash2, AlertTriangle, Link as LinkIcon } from 'lucide-react'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || ''
+// Trailing slash stripped so a "https://host.com/" SITE_URL doesn't yield a
+// double-slash apply URL (https://host.com//apply/...) that 404s.
+const BASE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')
 
 interface Props {
   vacancyId: string

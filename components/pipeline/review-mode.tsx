@@ -29,8 +29,10 @@ import { sourceLabel } from '@/lib/pipeline/source-i18n'
 import { getDocumentSignedUrl } from '@/lib/actions/documents'
 import {
   getReviewCandidateDetail,
+  getReviewScreeningAnswers,
   getInterviewFormData,
   type ReviewCandidateDetail,
+  type ReviewScreeningAnswer,
   type InterviewFormData,
 } from '@/lib/actions/review-mode'
 import type { ApplicationStatus } from '@/lib/types/application'
@@ -87,6 +89,11 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
   const [detailByCandidate, setDetailByCandidate] = useState<
     Record<string, ReviewCandidateDetail | 'loading' | 'error'>
   >({})
+  // Real apply-form screening answers per application (#N11) — keyed by
+  // application id, not candidate, since answers belong to the application.
+  const [screeningByApp, setScreeningByApp] = useState<
+    Record<string, ReviewScreeningAnswer[] | 'loading' | 'error'>
+  >({})
   const [scheduledIds, setScheduledIds] = useState<Set<string>>(new Set())
 
   const [scheduleOpen, setScheduleOpen] = useState(false)
@@ -113,6 +120,16 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
       }))
     })
   }, [current?.candidate_id, detailByCandidate])
+
+  // Lazily fetch this application's real screening answers (#N11).
+  useEffect(() => {
+    const appId = current?.id
+    if (!appId || screeningByApp[appId]) return
+    setScreeningByApp((prev) => ({ ...prev, [appId]: 'loading' }))
+    getReviewScreeningAnswers(appId).then((res) => {
+      setScreeningByApp((prev) => ({ ...prev, [appId]: res.success ? res.data : 'error' }))
+    })
+  }, [current?.id, screeningByApp])
 
   const goNext = useCallback(() => {
     setIndex((i) => Math.min(i + 1, Math.max(0, queue.length - 1)))
@@ -213,6 +230,17 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
 
   const detail = current ? detailByCandidate[current.candidate_id] : undefined
   const detailData = detail && detail !== 'loading' && detail !== 'error' ? detail : null
+  const screening = current ? screeningByApp[current.id] : undefined
+  const screeningAnswers = Array.isArray(screening)
+    ? screening.filter((a) => (a.answerValue ?? '').trim() !== '')
+    : []
+  // yes/no answers are stored literally "yes"/"no" — localize (#N4b/#N11).
+  const localizeYesNo = (answerType: string, v: string | null): string => {
+    if (!v) return '—'
+    if (answerType !== 'yes_no') return v
+    const low = v.trim().toLowerCase()
+    return low === 'yes' ? t('common.yes') : low === 'no' ? t('common.no') : v
+  }
   const isScheduled = current ? scheduledIds.has(current.id) : false
 
   return (
@@ -314,8 +342,15 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                   </div>
                 )}
                 <div className="flex w-full flex-col gap-2 text-[12.5px] sm:w-[210px] sm:shrink-0">
-                  <FactRow label={t('review.salaryExp')} value={detailData?.salaryExpectation ?? '—'} />
-                  <FactRow label={t('review.notice')} value={detailData?.noticePeriod ?? '—'} />
+                  {/* Real apply-form screening answers (#N11) — flagged ones amber. */}
+                  {screeningAnswers.map((ans, i) => (
+                    <FactRow
+                      key={i}
+                      label={ans.questionLabel}
+                      value={localizeYesNo(ans.answerType, ans.answerValue)}
+                      flagged={ans.isFlag}
+                    />
+                  ))}
                   <FactRow label={t('review.sourceLabel')} value={sourceLabel(t, current.source) || '—'} />
                 </div>
               </div>
@@ -481,11 +516,17 @@ function FactTag({ children }: { children: React.ReactNode }) {
   )
 }
 
-function FactRow({ label, value }: { label: string; value: string }) {
+function FactRow({ label, value, flagged }: { label: string; value: string; flagged?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-[oklch(0.55_0.02_250)]">{label}</span>
-      <span className="truncate font-semibold text-[oklch(0.25_0.02_250)]" title={value}>
+      <span className="truncate text-[oklch(0.55_0.02_250)]" title={label}>{label}</span>
+      <span
+        className={
+          'shrink-0 truncate font-semibold ' +
+          (flagged ? 'text-[oklch(0.5_0.19_27)]' : 'text-[oklch(0.25_0.02_250)]')
+        }
+        title={value}
+      >
         {value}
       </span>
     </div>

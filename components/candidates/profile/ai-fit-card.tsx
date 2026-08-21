@@ -219,9 +219,11 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
                 )}
               </div>
 
-              {/* Audit rail */}
-              <div className="rounded-lg border border-[oklch(0.93_0.01_250)] px-3 py-2 font-mono text-[10.5px] leading-relaxed text-muted-foreground">
-                model: {analysis.model_name} · prompt_v: {analysis.prompt_version}<br />
+              {/* Audit rail — when it ran / was reviewed. The model + prompt
+                  version stay recorded on the ai_fit_analyses row (append-only
+                  provenance for the audit trail); they're just not surfaced in
+                  the recruiter UI (#N10). */}
+              <div className="rounded-lg border border-[oklch(0.93_0.01_250)] px-3 py-2 text-[10.5px] leading-relaxed text-muted-foreground">
                 {tr('aiFit.generated')} {new Date(analysis.created_at).toLocaleString()}
                 {analysis.assessed_at && <> · {tr('aiFit.reviewed')} {new Date(analysis.assessed_at).toLocaleString()}</>}
               </div>

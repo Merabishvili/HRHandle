@@ -24,7 +24,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { createOffer, sendOffer } from '@/lib/actions/offers'
+import { createOffer, updateOffer, sendOffer } from '@/lib/actions/offers'
 import { markApplicationHired } from '@/lib/actions/applications/status-actions'
 import { OfferPanel, type OfferRow } from '@/components/offers/offer-panel'
 import type { ApplicationStatus } from '@/lib/types/application'
@@ -76,6 +76,7 @@ export interface StageContextualBlockProps {
   screeningAnswers: {
     questionLabel: string
     answerValue: string | null
+    answerType: string
     expectedAnswer: string | null
     isFlag: boolean
   }[]
@@ -181,6 +182,13 @@ function ScreeningChecks({
   const flagCount = screeningAnswers.filter((a) => a.isFlag).length
   // Only show answers that actually have a value — no empty "—" cards (#6).
   const answered = screeningAnswers.filter((a) => (a.answerValue ?? '').trim() !== '')
+  // yes/no answers are stored as the literal "yes"/"no" — localize them (#N4b).
+  const localizeYesNo = (answerType: string, v: string | null): string => {
+    if (!v) return '—'
+    if (answerType !== 'yes_no') return v
+    const low = v.trim().toLowerCase()
+    return low === 'yes' ? t('common.yes') : low === 'no' ? t('common.no') : v
+  }
   // "All clear" (green) is only truthful when the candidate actually answered
   // apply-form screening questions and none were flagged. A manually-added
   // candidate has no answers to check → neutral "No screening data" (#6).
@@ -231,11 +239,11 @@ function ScreeningChecks({
             <AnswerCard
               key={idx}
               label={ans.questionLabel}
-              value={ans.answerValue ?? '—'}
+              value={localizeYesNo(ans.answerType, ans.answerValue)}
               flagged={ans.isFlag}
               expectedNote={
                 ans.isFlag && ans.expectedAnswer
-                  ? t('stageBlock.expected', { answer: ans.expectedAnswer })
+                  ? t('stageBlock.expected', { answer: localizeYesNo(ans.answerType, ans.expectedAnswer) })
                   : null
               }
             />
@@ -389,12 +397,16 @@ function InterviewState({
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
           {hasScorecard ? t('stageBlock.editScorecard') : t('stageBlock.addScorecard')}
         </Button>
-        <Button asChild variant="outline" size="sm" className="gap-1.5">
-          <Link href={`/interviews/new?reschedule=${upcomingInterview?.id ?? ''}`}>
-            <Calendar className="h-3.5 w-3.5" aria-hidden />
-            {t('stageBlock.reschedule')}
-          </Link>
-        </Button>
+        {/* Reschedule only makes sense when there's an interview to move (#N13);
+            with none, the button pointed at an empty ?reschedule= and was useless. */}
+        {upcomingInterview && (
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link href={`/interviews/new?reschedule=${upcomingInterview.id}`}>
+              <Calendar className="h-3.5 w-3.5" aria-hidden />
+              {t('stageBlock.reschedule')}
+            </Link>
+          </Button>
+        )}
       </div>
 
       <p className="text-[11.5px] text-muted-foreground">
@@ -434,11 +446,16 @@ function OfferState({
 }) {
   const t = useTranslations()
   const router = useRouter()
-  const [amount, setAmount] = useState('')
-  const [currency, setCurrency] = useState('USD')
-  const [startDate, setStartDate] = useState('')
-  const [expiryDate, setExpiryDate] = useState('')
-  const [body, setBody] = useState('')
+  // Editing an existing DRAFT happens inline in this SAME form (pre-filled),
+  // not the modal popup — consistent with creating the first offer (#N14).
+  const draftOffer = offers.find((o) => o.status === 'draft') ?? null
+  const [amount, setAmount] = useState(
+    draftOffer?.compensation_amount != null ? String(draftOffer.compensation_amount) : '',
+  )
+  const [currency, setCurrency] = useState(draftOffer?.compensation_currency ?? 'USD')
+  const [startDate, setStartDate] = useState(draftOffer?.start_date ?? '')
+  const [expiryDate, setExpiryDate] = useState(draftOffer?.expiry_date ?? '')
+  const [body, setBody] = useState(draftOffer?.body ?? '')
   const [pending, startTransition] = useTransition()
 
   const submit = (send: boolean) => {
@@ -446,23 +463,35 @@ function OfferState({
       toast.error(t('stageBlock.errOfferDetails'))
       return
     }
+    const input = {
+      role_title: vacancyTitle.trim() || t('stageBlock.theRole'),
+      body: body.trim(),
+      recruiter_message: draftOffer?.recruiter_message ?? null,
+      compensation_amount: amount.trim() ? Number(amount) : null,
+      compensation_currency: currency.trim() ? currency.trim().toUpperCase() : null,
+      compensation_period: draftOffer?.compensation_period ?? null,
+      start_date: startDate || null,
+      expiry_date: expiryDate || null,
+    }
     startTransition(async () => {
-      const result = await createOffer(applicationId, {
-        role_title: vacancyTitle.trim() || t('stageBlock.theRole'),
-        body: body.trim(),
-        recruiter_message: null,
-        compensation_amount: amount.trim() ? Number(amount) : null,
-        compensation_currency: currency.trim() ? currency.trim().toUpperCase() : null,
-        compensation_period: null,
-        start_date: startDate || null,
-        expiry_date: expiryDate || null,
-      })
-      if (!result.success) {
-        toast.error(result.error)
-        return
+      let offerId: string
+      if (draftOffer) {
+        const result = await updateOffer(draftOffer.id, input)
+        if (!result.success) {
+          toast.error(result.error)
+          return
+        }
+        offerId = draftOffer.id
+      } else {
+        const result = await createOffer(applicationId, input)
+        if (!result.success) {
+          toast.error(result.error)
+          return
+        }
+        offerId = result.data.id
       }
       if (send) {
-        const sent = await sendOffer(result.data.id)
+        const sent = await sendOffer(offerId)
         if (!sent.success) {
           toast.error(sent.error)
           return
@@ -471,21 +500,15 @@ function OfferState({
       } else {
         toast.success(t('stageBlock.offerSavedDraft'))
       }
-      setAmount('')
-      setBody('')
-      setStartDate('')
-      setExpiryDate('')
       router.refresh()
     })
   }
 
-  // While an offer is live (draft/sent), show the persistent OfferPanel summary
-  // (status, terms, View / Edit & resend / Withdraw). Once it's closed
-  // (declined/withdrawn/expired), fall through to the SAME inline create form as
-  // the first offer — a second offer must be created inline, not via the modal
-  // popup, so it's consistent with the first (#5).
-  const activeOffer = offers.find((o) => o.status === 'draft' || o.status === 'sent')
-  if (activeOffer) {
+  // A SENT offer shows the persistent OfferPanel (status, copy link, withdraw) —
+  // sent offers can't be edited inline. A DRAFT falls through to the inline form
+  // below, pre-filled, so editing a draft matches creating one (#N14).
+  const sentOffer = offers.find((o) => o.status === 'sent')
+  if (sentOffer) {
     return (
       <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
         <StageTracker stages={stages} currentCode={currentCode} compact />
@@ -520,7 +543,7 @@ function OfferState({
 
       <header>
         <h3 className="text-[15px] font-bold text-foreground">
-          {t('stageBlock.createOffer')}
+          {draftOffer ? t('offer.editDraft') : t('stageBlock.createOffer')}
           <span className="ml-2 text-[12px] font-normal text-muted-foreground">· {vacancyTitle}</span>
         </h3>
         <p className="mt-1 text-[12px] text-muted-foreground">
@@ -613,13 +636,14 @@ function OfferState({
       </div>
 
       {/* Past (closed) offers, read-only — so a re-offer keeps the declined /
-          withdrawn history in view without the create modal. */}
-      {offers.length > 0 && (
+          withdrawn history in view without the create modal. Excludes the draft
+          being edited above (it's not "history"). */}
+      {offers.some((o) => o.id !== draftOffer?.id) && (
         <div className="border-t border-[oklch(0.92_0.01_250)] pt-3.5">
           <OfferPanel
             applicationId={applicationId}
             vacancyTitle={vacancyTitle}
-            offers={offers}
+            offers={offers.filter((o) => o.id !== draftOffer?.id)}
             canEdit={false}
           />
         </div>
