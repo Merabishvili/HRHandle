@@ -9,6 +9,7 @@ import { applicationReceivedCtx } from '@/lib/notifications/event-builders'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 import { verifyCaptcha } from '@/lib/turnstile'
 import { computeIsKnockoutFlag } from '@/lib/screening-questions/compute-flag'
+import { parseProfileFields } from '@/lib/candidates/profile-fields'
 import { resolvePipelineStageId } from '@/lib/pipeline-stages/resolve'
 import { justCrossedLimit } from '@/lib/plan-limits'
 import { headers } from 'next/headers'
@@ -91,6 +92,9 @@ export async function submitPublicApplication(
   // posts an array of { question_id, answer_value } objects.
   const screeningAnswersJson =
     (formData.get('screening_answers_json') as string | null) || '[]'
+  // Parsed CV profile fields (current role, salary, notice, location, …). Saved
+  // onto a NEW candidate so the recruiter's profile rail isn't empty (#3/#6).
+  const profileJson = (formData.get('profile_json') as string | null) || '{}'
 
   // ── 3. Basic validation ────────────────────────────────────────────────────
   if (!token) return { success: false, error: 'Invalid form link.' }
@@ -218,6 +222,9 @@ export async function submitPublicApplication(
     }
   } else {
     // ── 10. Create new candidate ─────────────────────────────────────────────
+    // Include the parsed-CV profile fields so the recruiter's rail is populated
+    // (current role, salary, notice, location, timezone, languages) (#3/#6).
+    const profileFields = parseProfileFields(profileJson)
     const { data: newCandidate, error: candidateError } = await supabase
       .from('candidates')
       .insert({
@@ -229,6 +236,13 @@ export async function submitPublicApplication(
         linkedin_profile_url: linkedinUrl || null,
         source: 'Public Form',
         general_status_id: activeStatus.id,
+        current_position: profileFields.current_position,
+        current_company: profileFields.current_company,
+        salary_expectation: profileFields.salary_expectation,
+        notice_period: profileFields.notice_period,
+        location: profileFields.location,
+        timezone: profileFields.timezone,
+        languages: profileFields.languages,
       })
       .select('id')
       .single()
