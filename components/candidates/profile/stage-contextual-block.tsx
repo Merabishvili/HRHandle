@@ -76,6 +76,7 @@ export interface StageContextualBlockProps {
   screeningAnswers: {
     questionLabel: string
     answerValue: string | null
+    answerType: string
     expectedAnswer: string | null
     isFlag: boolean
   }[]
@@ -181,6 +182,13 @@ function ScreeningChecks({
   const flagCount = screeningAnswers.filter((a) => a.isFlag).length
   // Only show answers that actually have a value — no empty "—" cards (#6).
   const answered = screeningAnswers.filter((a) => (a.answerValue ?? '').trim() !== '')
+  // yes/no answers are stored as the literal "yes"/"no" — localize them (#N4b).
+  const localizeYesNo = (answerType: string, v: string | null): string => {
+    if (!v) return '—'
+    if (answerType !== 'yes_no') return v
+    const low = v.trim().toLowerCase()
+    return low === 'yes' ? t('common.yes') : low === 'no' ? t('common.no') : v
+  }
   // "All clear" (green) is only truthful when the candidate actually answered
   // apply-form screening questions and none were flagged. A manually-added
   // candidate has no answers to check → neutral "No screening data" (#6).
@@ -231,11 +239,11 @@ function ScreeningChecks({
             <AnswerCard
               key={idx}
               label={ans.questionLabel}
-              value={ans.answerValue ?? '—'}
+              value={localizeYesNo(ans.answerType, ans.answerValue)}
               flagged={ans.isFlag}
               expectedNote={
                 ans.isFlag && ans.expectedAnswer
-                  ? t('stageBlock.expected', { answer: ans.expectedAnswer })
+                  ? t('stageBlock.expected', { answer: localizeYesNo(ans.answerType, ans.expectedAnswer) })
                   : null
               }
             />
