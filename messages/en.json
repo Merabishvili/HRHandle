@@ -978,6 +978,8 @@
     "typeInterview": "{type} interview",
     "noInterviewYet": "No interview scheduled yet for this application.",
     "addScorecard": "Add full scorecard",
+    "editScorecard": "Edit scorecard",
+    "yourScorecard": "Your scorecard",
     "reschedule": "Reschedule",
     "scoreHint": "Score this candidate against the role's scorecard — the average of the 1–5 ratings becomes the fit score on the kanban.",
     "errOfferDetails": "Add the offer details before saving.",

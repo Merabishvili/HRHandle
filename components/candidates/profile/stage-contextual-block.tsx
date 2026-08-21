@@ -30,6 +30,14 @@ import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { StageTracker } from './stage-tracker'
 import { ScoreCandidateModal } from './score-candidate-modal'
 
+/** Recommendation value → i18n label key (reused from the score modal). */
+const REC_LABEL_KEY: Record<string, string> = {
+  strong_yes: 'scoreModal.recStrongYes',
+  yes: 'scoreModal.recYes',
+  lean_no: 'scoreModal.recLeanNo',
+  no: 'scoreModal.recNo',
+}
+
 export interface StageContextualBlockProps {
   applicationId: string
   vacancyTitle: string
@@ -69,6 +77,15 @@ export interface StageContextualBlockProps {
     expectedAnswer: string | null
     isFlag: boolean
   }[]
+  /** The current recruiter's own scorecard for this application — shown as a
+   * summary on the Interview stage once submitted, so their estimation is
+   * visible on the profile (not just re-openable in the modal) (#N6). */
+  evaluation: {
+    recommendation: string | null
+    score: number | null
+    submitted: boolean
+    reason: string | null
+  } | null
 }
 
 /**
@@ -97,6 +114,7 @@ export function StageContextualBlock({
   currentStage,
   upcomingInterview,
   screeningAnswers,
+  evaluation,
 }: StageContextualBlockProps) {
   switch (currentStage.code) {
     case 'screening':
@@ -115,6 +133,7 @@ export function StageContextualBlock({
           stages={stages}
           currentCode={currentStage.code}
           upcomingInterview={upcomingInterview}
+          evaluation={evaluation}
         />
       )
     case 'offer':
@@ -273,15 +292,21 @@ function InterviewState({
   stages,
   currentCode,
   upcomingInterview,
+  evaluation,
 }: {
   applicationId: string
   vacancyTitle: string
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   upcomingInterview: StageContextualBlockProps['upcomingInterview']
+  evaluation: StageContextualBlockProps['evaluation']
 }) {
   const t = useTranslations()
   const [scoreOpen, setScoreOpen] = useState(false)
+  const hasScorecard = !!evaluation?.submitted
+  const recLabelKey = evaluation?.recommendation
+    ? REC_LABEL_KEY[evaluation.recommendation]
+    : undefined
   const typeLabelKey =
     upcomingInterview?.type === 'video'
       ? 'interviews.form.typeVideo'
@@ -327,6 +352,31 @@ function InterviewState({
         </div>
       )}
 
+      {/* The recruiter's own submitted scorecard, so their estimation is
+          visible here after submitting (not just re-openable in the modal). */}
+      {hasScorecard && (
+        <div className="rounded-[10px] border border-[oklch(0.9_0.06_150)] bg-[oklch(0.985_0.02_150)] px-3.5 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[13px] font-semibold text-foreground">{t('stageBlock.yourScorecard')}</p>
+            <div className="flex items-center gap-2">
+              {recLabelKey && (
+                <span className="rounded border border-[oklch(0.88_0.05_150)] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-foreground">
+                  {t(recLabelKey)}
+                </span>
+              )}
+              {typeof evaluation?.score === 'number' && (
+                <span className="text-[12px] font-bold text-[oklch(0.38_0.14_150)]">
+                  {t('scoreModal.fitPercent', { score: evaluation.score })}
+                </span>
+              )}
+            </div>
+          </div>
+          {evaluation?.reason && (
+            <p className="mt-1 text-[12px] text-muted-foreground">{evaluation.reason}</p>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
@@ -335,7 +385,7 @@ function InterviewState({
           className="gap-1.5 bg-[oklch(0.55_0.18_250)] text-white hover:bg-[oklch(0.5_0.18_250)]"
         >
           <Sparkles className="h-3.5 w-3.5" aria-hidden />
-          {t('stageBlock.addScorecard')}
+          {hasScorecard ? t('stageBlock.editScorecard') : t('stageBlock.addScorecard')}
         </Button>
         <Button asChild variant="outline" size="sm" className="gap-1.5">
           <Link href={`/interviews/new?reschedule=${upcomingInterview?.id ?? ''}`}>
