@@ -431,21 +431,20 @@ export default async function CandidateDetailPage({
   // application. Surfaces on the Screening-stage block so the recruiter
   // sees which questions the candidate fell short on before they decide
   // whether to advance to interview.
-  const screeningFlagsByApplication = new Map<
+  // ALL apply-form screening answers per application (not just knockout-flagged
+  // ones) so the recruiter sees every question the candidate answered — e.g. a
+  // "desired salary" answer that isn't a knockout was previously invisible
+  // (#6). `isFlag` marks the ones that failed a knockout condition.
+  const screeningAnswersByApplication = new Map<
     string,
-    { questionLabel: string; answerValue: string | null; expectedAnswer: string | null }[]
+    { questionLabel: string; answerValue: string | null; expectedAnswer: string | null; isFlag: boolean; sortOrder: number }[]
   >()
-  // Applications that have ANY apply-form screening answer on file. Lets the
-  // Screening panel tell "applied + passed all checks" (green "All clear") apart
-  // from "added manually, nothing to check" (neutral "No screening data") — a
-  // 0-flag count alone can't distinguish the two (#6).
-  const screeningAnsweredApplications = new Set<string>()
   if (activeApplications.length > 0) {
     const activeAppIds = activeApplications.map((a) => a.id)
     const { data: answersRaw } = await supabase
       .from('application_screening_answers')
       .select(
-        'application_id, answer_value, is_knockout_flag, vacancy_screening_questions ( label, knockout_answer )',
+        'application_id, answer_value, is_knockout_flag, vacancy_screening_questions ( label, knockout_answer, sort_order )',
       )
       .eq('organization_id', organizationId)
       .in('application_id', activeAppIds)
@@ -455,23 +454,27 @@ export default async function CandidateDetailPage({
       answer_value: string | null
       is_knockout_flag: boolean | null
       vacancy_screening_questions:
-        | { label: string; knockout_answer: string | null }
-        | { label: string; knockout_answer: string | null }[]
+        | { label: string; knockout_answer: string | null; sort_order: number | null }
+        | { label: string; knockout_answer: string | null; sort_order: number | null }[]
         | null
     }
     for (const row of (answersRaw ?? []) as ScreeningJoin[]) {
-      screeningAnsweredApplications.add(row.application_id)
-      if (!row.is_knockout_flag) continue
       const qJoin = row.vacancy_screening_questions
       const q = Array.isArray(qJoin) ? qJoin[0] : qJoin
       if (!q) continue
-      const existing = screeningFlagsByApplication.get(row.application_id) ?? []
+      const existing = screeningAnswersByApplication.get(row.application_id) ?? []
       existing.push({
         questionLabel: q.label,
         answerValue: row.answer_value ?? null,
         expectedAnswer: q.knockout_answer ?? null,
+        isFlag: !!row.is_knockout_flag,
+        sortOrder: q.sort_order ?? 0,
       })
-      screeningFlagsByApplication.set(row.application_id, existing)
+      screeningAnswersByApplication.set(row.application_id, existing)
+    }
+    // Stable display order per the vacancy's question order.
+    for (const list of screeningAnswersByApplication.values()) {
+      list.sort((a, b) => a.sortOrder - b.sortOrder)
     }
   }
 
@@ -617,8 +620,7 @@ export default async function CandidateDetailPage({
       repeatSummary={repeatSummary}
       activeStages={sortedActiveStages.map((s) => ({ id: s.id, code: s.code, name: s.name }))}
       upcomingInterviewByApplication={upcomingInterviewByApplication}
-      screeningFlagsByApplication={screeningFlagsByApplication}
-      screeningAnsweredApplications={screeningAnsweredApplications}
+      screeningAnswersByApplication={screeningAnswersByApplication}
       rejectionReasons={rejectionReasonsRaw ?? []}
       rejectionTemplates={rejectionTemplatesRaw ?? []}
       rejectedStatusId={rejectedStatusId}

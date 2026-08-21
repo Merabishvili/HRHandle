@@ -61,19 +61,17 @@ export interface StageContextualBlockProps {
     durationMinutes: number
     meetingLink: string | null
   } | null
-  /** Wave 2.5 Slice 2b — knockout-flagged screening answers on this
-   * application. Rendered as a small "Screening flags" callout on the
-   * Screening stage so the recruiter sees which questions the candidate
-   * fell short on before they decide whether to advance. */
-  screeningFlags: {
+  /** ALL apply-form screening answers on this application — not just the
+   * knockout-flagged ones — so the recruiter sees every question the candidate
+   * answered (e.g. a non-knockout "desired salary") on the Screening stage.
+   * `isFlag` marks answers that failed a knockout condition. An empty list means
+   * the candidate has no apply-form data (added manually) → neutral state (#6). */
+  screeningAnswers: {
     questionLabel: string
     answerValue: string | null
     expectedAnswer: string | null
+    isFlag: boolean
   }[]
-  /** Whether this application has ANY apply-form screening answer on file. When
-   * false (candidate added manually), the Screening panel shows a neutral
-   * "No screening data" state instead of a green "All clear" (#6). */
-  hasScreeningData: boolean
 }
 
 /**
@@ -102,8 +100,7 @@ export function StageContextualBlock({
   currentStage,
   candidate,
   upcomingInterview,
-  screeningFlags,
-  hasScreeningData,
+  screeningAnswers,
 }: StageContextualBlockProps) {
   switch (currentStage.code) {
     case 'screening':
@@ -112,8 +109,7 @@ export function StageContextualBlock({
           stages={stages}
           currentCode={currentStage.code}
           candidate={candidate}
-          screeningFlags={screeningFlags}
-          hasScreeningData={hasScreeningData}
+          screeningAnswers={screeningAnswers}
         />
       )
     case 'interview':
@@ -159,17 +155,16 @@ function ScreeningChecks({
   stages,
   currentCode,
   candidate,
-  screeningFlags,
-  hasScreeningData,
+  screeningAnswers,
 }: {
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   candidate: StageContextualBlockProps['candidate']
-  screeningFlags: StageContextualBlockProps['screeningFlags']
-  hasScreeningData: boolean
+  screeningAnswers: StageContextualBlockProps['screeningAnswers']
 }) {
   const t = useTranslations()
-  const flagCount = screeningFlags.length
+  const hasScreeningData = screeningAnswers.length > 0
+  const flagCount = screeningAnswers.filter((a) => a.isFlag).length
   // "All clear" (green) is only truthful when the candidate actually answered
   // apply-form screening questions and none were flagged. A manually-added
   // candidate has no answers to check → neutral "No screening data" (#6).
@@ -219,31 +214,31 @@ function ScreeningChecks({
         </p>
       )}
 
-      {flagCount > 0 && (
-        <div
-          className="rounded-[10px] border px-3 py-2.5"
-          style={{
-            borderColor: 'oklch(0.86 0.07 70)',
-            background: 'oklch(0.985 0.03 70)',
-          }}
-        >
+      {hasScreeningData && (
+        <div className="rounded-[10px] border border-[oklch(0.91_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2.5">
           <div className="mb-1.5 flex items-center gap-1.5">
-            <AlertTriangle
-              className="h-3.5 w-3.5"
-              style={{ color: 'oklch(0.5 0.12 60)' }}
-              aria-hidden
-            />
-            <p className="text-[12px] font-bold" style={{ color: 'oklch(0.4 0.08 55)' }}>
-              {t('stageBlock.knockoutFlags', { count: flagCount })}
-            </p>
+            {flagCount > 0 ? (
+              <>
+                <AlertTriangle className="h-3.5 w-3.5" style={{ color: 'oklch(0.5 0.12 60)' }} aria-hidden />
+                <p className="text-[12px] font-bold" style={{ color: 'oklch(0.4 0.08 55)' }}>
+                  {t('stageBlock.knockoutFlags', { count: flagCount })}
+                </p>
+              </>
+            ) : (
+              <p className="text-[12px] font-bold text-foreground/80">{t('stageBlock.screeningAnswers')}</p>
+            )}
           </div>
-          <ul className="space-y-1.5">
-            {screeningFlags.map((flag, idx) => (
-              <li key={idx} className="text-[12px] text-foreground/85">
-                <span className="font-semibold">{flag.questionLabel}:</span>{' '}
-                <span className="text-foreground/70">{flag.answerValue || '—'}</span>
-                {flag.expectedAnswer && (
-                  <span className="text-muted-foreground"> {t('stageBlock.expected', { answer: flag.expectedAnswer })}</span>
+          <ul className="space-y-1">
+            {screeningAnswers.map((ans, idx) => (
+              <li
+                key={idx}
+                className={cn('text-[12px]', ans.isFlag && 'rounded-md px-1.5 py-0.5')}
+                style={ans.isFlag ? { background: 'oklch(0.97 0.03 70)' } : undefined}
+              >
+                <span className="font-semibold text-foreground/85">{ans.questionLabel}:</span>{' '}
+                <span className="text-foreground/70">{ans.answerValue || '—'}</span>
+                {ans.isFlag && ans.expectedAnswer && (
+                  <span className="text-muted-foreground"> {t('stageBlock.expected', { answer: ans.expectedAnswer })}</span>
                 )}
               </li>
             ))}
@@ -442,10 +437,13 @@ function OfferState({
     })
   }
 
-  // Once an offer exists on this application, Save & send has happened — show
-  // the persistent OfferPanel summary (status, terms, View / Edit & resend /
-  // Withdraw) instead of leaving a bare create form behind.
-  if (offers.length > 0) {
+  // While an offer is live (draft/sent), show the persistent OfferPanel summary
+  // (status, terms, View / Edit & resend / Withdraw). Once it's closed
+  // (declined/withdrawn/expired), fall through to the SAME inline create form as
+  // the first offer — a second offer must be created inline, not via the modal
+  // popup, so it's consistent with the first (#5).
+  const activeOffer = offers.find((o) => o.status === 'draft' || o.status === 'sent')
+  if (activeOffer) {
     return (
       <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
         <StageTracker stages={stages} currentCode={currentCode} compact />
@@ -556,6 +554,19 @@ function OfferState({
           {t('stageBlock.saveSend')}
         </Button>
       </div>
+
+      {/* Past (closed) offers, read-only — so a re-offer keeps the declined /
+          withdrawn history in view without the create modal. */}
+      {offers.length > 0 && (
+        <div className="border-t border-[oklch(0.92_0.01_250)] pt-3.5">
+          <OfferPanel
+            applicationId={applicationId}
+            vacancyTitle={vacancyTitle}
+            offers={offers}
+            canEdit={false}
+          />
+        </div>
+      )}
     </article>
   )
 }

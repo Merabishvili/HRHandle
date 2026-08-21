@@ -99,7 +99,7 @@ export default async function OfferPage({ params }: PageProps) {
           {offer.start_date && (
             <Row icon={Calendar} label={t('offer.startDate')}>
               <span className="text-gray-700">
-                {format(new Date(offer.start_date), 'PPP', { locale: dfLocale })}
+                {format(new Date(offer.start_date), 'd MMMM yyyy', { locale: dfLocale })}
               </span>
             </Row>
           )}
@@ -117,7 +117,14 @@ export default async function OfferPage({ params }: PageProps) {
             // "Pulse only on the final tier; constant flashing is
             // hostile." Reduced-motion users opt out via globals.css.
             const isUrgent = countdown?.urgency === 'urgent'
-            const dateLabel = format(new Date(offer.expiry_date), 'PPP', { locale: dfLocale })
+            const dateLabel = format(new Date(offer.expiry_date), 'd MMMM yyyy', { locale: dfLocale })
+            // Localized countdown ("7 days left") — offerCountdown()'s own label
+            // is English-only, so render it from daysLeft in the org locale (#5).
+            const countdownLabel = countdown
+              ? countdown.daysLeft === 0
+                ? t('offer.expiresToday')
+                : t('offer.daysLeft', { days: countdown.daysLeft })
+              : null
             return (
               <div className="flex items-start gap-3">
                 <Clock
@@ -135,15 +142,15 @@ export default async function OfferPage({ params }: PageProps) {
                       isAmber ? 'text-[oklch(0.45_0.12_60)]' : 'text-gray-700',
                     )}
                     aria-label={
-                      countdown ? `${t('offer.respondBy')} ${dateLabel} — ${countdown.label}` : undefined
+                      countdownLabel ? `${t('offer.respondBy')} ${dateLabel} — ${countdownLabel}` : undefined
                     }
                   >
                     {dateLabel}
-                    {countdown && (
+                    {countdownLabel && (
                       <>
                         <span className="mx-1.5 opacity-60">·</span>
                         <span className={isUrgent ? 'animate-pulse-soft' : undefined}>
-                          {countdown.label}
+                          {countdownLabel}
                         </span>
                       </>
                     )}
@@ -199,7 +206,7 @@ export default async function OfferPage({ params }: PageProps) {
 
       <footer className="mt-6 space-y-1 text-center text-xs text-gray-500">
         {!responded && offer.sent_at && (
-          <p>{t('offer.sentOn', { date: format(new Date(offer.sent_at), 'PPP', { locale: dfLocale }) })}</p>
+          <p>{t('offer.sentOn', { date: format(new Date(offer.sent_at), 'd MMMM yyyy', { locale: dfLocale }) })}</p>
         )}
         <p>{t('offer.keepPrivate')}</p>
       </footer>
@@ -282,7 +289,7 @@ function StatusArea({
         <p className="mt-1 text-sm text-emerald-800">{t('offer.accepted.body')}</p>
         {respondedAt && (
           <p className="mt-3 text-xs text-emerald-700/80">
-            {t('offer.accepted.on', { date: format(new Date(respondedAt), 'PPP', { locale: dfLocale }) })}
+            {t('offer.accepted.on', { date: format(new Date(respondedAt), 'd MMMM yyyy', { locale: dfLocale }) })}
           </p>
         )}
       </div>

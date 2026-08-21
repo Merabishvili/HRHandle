@@ -207,6 +207,21 @@ export function ApplyForm({ token, companyName, screeningQuestions = [], aiFitEn
     fd.append('website', '') // Honeypot
     fd.append('experience_json', JSON.stringify(parsed?.experience ?? []))
     fd.append('education_json', JSON.stringify(parsed?.education ?? []))
+    // Parsed CV profile fields — persisted onto the new candidate so the
+    // recruiter sees current role, salary, notice, location, etc. instead of an
+    // empty rail (#3/#6). Empty when no CV was uploaded/parsed.
+    fd.append(
+      'profile_json',
+      JSON.stringify({
+        current_position: parsed?.current_position ?? null,
+        current_company: parsed?.current_company ?? null,
+        salary_expectation: parsed?.salary_expectation ?? null,
+        notice_period: parsed?.notice_period ?? null,
+        location: parsed?.location ?? null,
+        timezone: parsed?.timezone ?? null,
+        languages: parsed?.languages ?? [],
+      }),
+    )
     fd.append(
       'screening_answers_json',
       JSON.stringify(

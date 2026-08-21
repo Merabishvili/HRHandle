@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createOrgNotifications } from '@/lib/actions/notifications'
+import {
+  normalizeNotificationPreferences,
+  type NotificationPreferences,
+} from '@/lib/types/notification-preferences'
 import { timingSafeEqual } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
-// A daily run with a > 24h look-ahead so every next-day interview is caught once
-// (reminder_sent_at prevents a second reminder if runs overlap).
+// Vercel Hobby crons can only run once per day, so this is a DAILY reminder:
+// every interview starting within the next ~26h is reminded once (the > 24h
+// window means a once-daily run never misses a next-day interview;
+// reminder_sent_at guarantees at most one). For a true "~1h before" reminder,
+// an external every-15-min trigger (GitHub Actions) can hit this same endpoint —
+// the query already scopes by scheduled_at, so tightening LOOKAHEAD_MS to ~75 min
+// is all that changes. See docs/3-architecture/backend.md.
 const LOOKAHEAD_MS = 26 * 60 * 60 * 1000
 const MAX_PER_RUN = 500
 
@@ -88,9 +97,41 @@ export async function GET(req: NextRequest) {
     return ids
   }
 
-  const remindedIds: string[] = []
+  // Resolve each interview's candidate recipients (interviewer, or org
+  // owners/admins when unassigned).
+  const perInterviewRecipients = new Map<string, string[]>()
+  const allRecipientIds = new Set<string>()
   for (const iv of due) {
     const recipients = iv.interviewer_id ? [iv.interviewer_id] : await orgAdmins(iv.organization_id)
+    perInterviewRecipients.set(iv.id, recipients)
+    recipients.forEach((r) => allRecipientIds.add(r))
+  }
+
+  // Honour each recipient's "interview reminder" in-app notification preference
+  // (Settings → Notifications). Default ON for legacy/unset rows. One query.
+  const wantsReminder = new Map<string, boolean>()
+  if (allRecipientIds.size > 0) {
+    const { data: profs } = await supabase
+      .from('profiles')
+      .select('id, notification_preferences')
+      .in('id', [...allRecipientIds])
+    for (const p of profs ?? []) {
+      const prefs = normalizeNotificationPreferences(
+        p.notification_preferences as Partial<NotificationPreferences> | null,
+      )
+      wantsReminder.set(p.id as string, prefs.in_app_events.interview_reminder !== false)
+    }
+  }
+
+  const remindedIds: string[] = []
+  for (const iv of due) {
+    // Mark reminded regardless of recipients so the ~1h window isn't re-scanned
+    // every 15 min — a recipient who disabled the reminder simply doesn't get it.
+    remindedIds.push(iv.id)
+
+    const recipients = (perInterviewRecipients.get(iv.id) ?? []).filter(
+      (id) => wantsReminder.get(id) ?? true,
+    )
     if (recipients.length === 0) continue
 
     const cand = one(iv.candidates)
@@ -104,7 +145,6 @@ export async function GET(req: NextRequest) {
       link: '/interviews',
       data: { name, ...(vac?.title ? { vacancy: vac.title } : {}) },
     })
-    remindedIds.push(iv.id)
   }
 
   // Mark reminded so they're never reminded twice. Best-effort per-batch.

@@ -103,14 +103,10 @@ interface ProfileShellProps {
     string,
     StageContextualBlockProps['upcomingInterview']
   >
-  /** Wave 2.5 Slice 2b — Map of applicationId → knockout-flagged
-   * screening answers. Empty list when the candidate cleared every
-   * question; missing entry when the vacancy had no screening questions. */
-  screeningFlagsByApplication: Map<string, StageContextualBlockProps['screeningFlags']>
-  /** Application ids that have ANY apply-form screening answer on file. Used to
-   * distinguish "applied + passed" (green All clear) from "added manually,
-   * nothing to check" (neutral No screening data) on the Screening panel (#6). */
-  screeningAnsweredApplications: Set<string>
+  /** Map of applicationId → ALL apply-form screening answers (each marked
+   * `isFlag` if it failed a knockout). Empty/missing entry means the candidate
+   * has no apply-form data (added manually) → neutral Screening panel (#6). */
+  screeningAnswersByApplication: Map<string, StageContextualBlockProps['screeningAnswers']>
   /** Wave 3.1 — whether the org has enabled AI Fit Analysis. */
   aiFitEnabled: boolean
   rejectionReasons: RejectionReason[]
@@ -192,8 +188,7 @@ export function CandidateProfileShell({
   repeatSummary,
   activeStages,
   upcomingInterviewByApplication,
-  screeningFlagsByApplication,
-  screeningAnsweredApplications,
+  screeningAnswersByApplication,
   aiFitEnabled,
   rejectionReasons,
   rejectionTemplates,
@@ -393,8 +388,7 @@ export function CandidateProfileShell({
                 upcomingInterview={
                   upcomingInterviewByApplication.get(selectedApp.id) ?? null
                 }
-                screeningFlags={screeningFlagsByApplication.get(selectedApp.id) ?? []}
-                hasScreeningData={screeningAnsweredApplications.has(selectedApp.id)}
+                screeningAnswers={screeningAnswersByApplication.get(selectedApp.id) ?? []}
               />
             )}
 
