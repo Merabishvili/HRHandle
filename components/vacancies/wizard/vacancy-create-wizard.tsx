@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import { createVacancy } from '@/lib/actions/vacancies'
 import { bulkCreateVacancyQuestions } from '@/lib/actions/evaluations'
 import { bulkCreateScreeningQuestions } from '@/lib/actions/screening-questions'
+import { saveCustomFieldValues, type CustomFieldGroupWithFields } from '@/lib/actions/custom-fields'
+import { mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
 import { WizardShell } from './wizard-shell'
 import { StepBasics, type BasicsState } from './step-basics'
 import { StepDatesComp, type DatesCompState } from './step-dates-comp'
@@ -35,6 +37,9 @@ interface VacancyCreateWizardProps {
   defaultCurrency?: string
   /** Org members for the hiring-manager picker (UI shows name, stores the id). */
   orgMembers?: { id: string; full_name: string | null }[]
+  /** Vacancy custom-field schema — rendered on Step 2 so values can be captured
+   * during creation (previously only editable after the fact). */
+  customFieldGroups?: CustomFieldGroupWithFields[]
 }
 
 /** Per-locale JD text for the non-default languages (default is `description`). */
@@ -77,6 +82,7 @@ export function VacancyCreateWizard({
   orgLocales = { default: DEFAULT_LOCALE, enabled: [DEFAULT_LOCALE] },
   defaultCurrency = 'USD',
   orgMembers = [],
+  customFieldGroups = [],
 }: VacancyCreateWizardProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -126,6 +132,11 @@ export function VacancyCreateWizard({
     attributes: [],
     screeningQuestions: [],
   })
+
+  // Custom-field values keyed by field id (Step 2). Persisted after the vacancy
+  // row is created, via saveCustomFieldValues.
+  const [cfValues, setCfValues] = useState<Record<string, string>>({})
+  const hasCustomFields = customFieldGroups.some((g) => g.fields.length > 0)
 
   const stepIdx = STEPS.findIndex((s) => s.id === currentStep)
   const isFirstStep = stepIdx === 0
@@ -213,6 +224,14 @@ export function VacancyCreateWizard({
       if (!result.success) {
         toast.error(result.error)
         return
+      }
+
+      // Persist Step 2 custom-field values now that the vacancy row exists.
+      if (hasCustomFields) {
+        const upserts = mapToValueUpserts(cfValues, customFieldGroups)
+        if (upserts.length > 0) {
+          await saveCustomFieldValues(result.data.id, upserts)
+        }
       }
 
       // Wave 2.5 Slice 1 — persist scorecard attributes captured in
@@ -326,7 +345,15 @@ export function VacancyCreateWizard({
         <StepBasics value={basics} onChange={setBasics} sectors={sectors} orgMembers={orgMembers} />
       )}
       {currentStep === 'dates-comp' && (
-        <StepDatesComp value={datesComp} onChange={setDatesComp} />
+        <StepDatesComp
+          value={datesComp}
+          onChange={setDatesComp}
+          customFieldGroups={customFieldGroups}
+          customFieldValues={cfValues}
+          onCustomFieldChange={(fieldId, value) =>
+            setCfValues((prev) => ({ ...prev, [fieldId]: value }))
+          }
+        />
       )}
       {currentStep === 'description' && (
         <StepDescription

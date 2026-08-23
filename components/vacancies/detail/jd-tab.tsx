@@ -4,6 +4,8 @@ import { getTranslations } from 'next-intl/server'
 import { Sparkles, Pencil, ExternalLink } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
+import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 
 interface JdTabProps {
   vacancyId: string
@@ -16,6 +18,21 @@ interface JdTabProps {
     lastEditedAt: string | null
   }
   applicationFormToken: string | null
+  /** Vacancy custom fields — rendered in the right rail like Posting details (#7). */
+  customFieldGroups?: CustomFieldGroupWithFields[]
+  customFieldValues?: CustomFieldValue[]
+}
+
+/** True when at least one custom-field value is set — keeps the JD rail's
+ * "Additional information" card from rendering as an empty shell (#7). */
+function hasAnyCustomFieldValue(values: CustomFieldValue[]): boolean {
+  return values.some(
+    (v) =>
+      (v.value_text != null && v.value_text.trim() !== '') ||
+      v.value_number != null ||
+      v.value_boolean === true ||
+      (v.value_option != null && v.value_option.trim() !== ''),
+  )
 }
 
 /**
@@ -37,8 +54,11 @@ export async function JdTab({
   requirements,
   postingDetails,
   applicationFormToken,
+  customFieldGroups = [],
+  customFieldValues = [],
 }: JdTabProps) {
   const t = await getTranslations()
+  const hasCustomFields = customFieldGroups.some((g) => g.fields.length > 0)
   return (
     <div className="flex flex-col gap-4 bg-[oklch(0.985_0.002_247)] p-5 sm:flex-row sm:p-6">
       {/* Left — About the role */}
@@ -100,6 +120,13 @@ export async function JdTab({
             )}
           </ul>
         </section>
+
+        {hasCustomFields && hasAnyCustomFieldValue(customFieldValues) && (
+          <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('candidateForm.additionalInfo')}>
+            <h2 className="mb-3 text-[15px] font-bold text-foreground">{t('candidateForm.additionalInfo')}</h2>
+            <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
+          </section>
+        )}
 
         {applicationFormToken && (
           <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('jdTab.previewApplyPage')}>

@@ -14,6 +14,8 @@ import {
 } from '@/lib/actions/candidate-background'
 import { createNote } from '@/lib/actions/notes'
 import { uploadDocument } from '@/lib/actions/documents'
+import { saveCustomFieldValues, type CustomFieldGroupWithFields } from '@/lib/actions/custom-fields'
+import { mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
 import { WizardShell } from '@/components/vacancies/wizard/wizard-shell'
 import { StepPathSelect, type EntryMode } from './step-path-select'
 import { StepPersonal, type PersonalState } from './step-personal'
@@ -37,6 +39,9 @@ interface CandidateCreateWizardProps {
   defaultVacancyId: string | null
   /** Ordered, non-terminal pipeline stages (hired/rejected/withdrawn excluded). */
   startingStages: { id: string; code: ApplicationStatus['code']; name: string }[]
+  /** Candidate custom-field schema — rendered on Step 4 (Application) above the
+   * hiring details so values are captured during creation (#5). */
+  customFieldGroups?: CustomFieldGroupWithFields[]
 }
 
 const BLANK_PERSONAL: PersonalState = {
@@ -86,6 +91,7 @@ export function CandidateCreateWizard({
   vacancies,
   defaultVacancyId,
   startingStages,
+  customFieldGroups = [],
 }: CandidateCreateWizardProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -101,6 +107,10 @@ export function CandidateCreateWizard({
     startingStageCode: 'applied',
   })
   const [note, setNote] = useState('')
+  // Custom-field values keyed by field id (Step 4). Persisted after the
+  // candidate row is created, via saveCustomFieldValues.
+  const [cfValues, setCfValues] = useState<Record<string, string>>({})
+  const hasCustomFields = customFieldGroups.some((g) => g.fields.length > 0)
 
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [parsedFromCv, setParsedFromCv] = useState(false)
@@ -198,6 +208,7 @@ export function CandidateCreateWizard({
       startingStageCode: 'applied',
     })
     setNote('')
+    setCfValues({})
     setCvFile(null)
     setParsedFromCv(false)
     setDuplicate(null)
@@ -249,6 +260,14 @@ export function CandidateCreateWizard({
         return
       }
       const candidateId = result.data.id
+
+      // Persist Step 4 custom-field values now that the candidate row exists.
+      if (hasCustomFields) {
+        const upserts = mapToValueUpserts(cfValues, customFieldGroups)
+        if (upserts.length > 0) {
+          await saveCustomFieldValues(candidateId, upserts)
+        }
+      }
 
       // Persist the uploaded CV as a document so it appears under Documents on
       // the profile (it was only used for field prefill before, then dropped).
@@ -390,6 +409,11 @@ export function CandidateCreateWizard({
           duplicate={duplicate}
           note={note}
           onNoteChange={setNote}
+          customFieldGroups={customFieldGroups}
+          customFieldValues={cfValues}
+          onCustomFieldChange={(fieldId, value) =>
+            setCfValues((prev) => ({ ...prev, [fieldId]: value }))
+          }
         />
       )}
       {currentStep === 'review' && (

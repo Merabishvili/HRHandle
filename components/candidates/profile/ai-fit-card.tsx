@@ -3,11 +3,11 @@
 import { useEffect, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { Sparkles, Shield, ChevronDown, ChevronRight, Check, CircleAlert, Loader2 } from 'lucide-react'
+import { Sparkles, Shield, ChevronDown, ChevronRight, Check, CircleAlert, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { runAiFitAnalysis, getAiFitAnalysis, submitFitAssessment } from '@/lib/actions/ai-fit'
+import { requestAiFitAnalysis, getAiFitAnalysis, submitFitAssessment } from '@/lib/actions/ai-fit'
 import type { AiFitAnalysis, FitConfidence } from '@/lib/types/ai-fit'
 
 const CONFIDENCE_STYLE: Record<FitConfidence, string> = {
@@ -52,18 +52,46 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
     }
   }, [applicationId, enabled])
 
+  // While an analysis is running in the background (#1), poll for the result.
+  // Flips the card to the finished state + a "finished" toast, or surfaces the
+  // failed state with a Retry button. Stops on any terminal status / unmount.
+  useEffect(() => {
+    if (!enabled || analysis?.status !== 'pending') return
+    let alive = true
+    const timer = setInterval(async () => {
+      const g = await getAiFitAnalysis(applicationId)
+      if (!alive || !g.success || !g.data) return
+      if (g.data.status !== 'pending') {
+        setAnalysis(g.data)
+        if (g.data.status === 'completed') {
+          setExpanded(true)
+          toast.success(tr('aiFit.finished'))
+        } else if (g.data.status === 'failed') {
+          toast.error(tr('aiFit.failed'))
+        }
+      }
+    }, 4000)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [enabled, analysis?.status, applicationId, tr])
+
   if (!enabled) return null
 
   const run = () =>
     startTransition(async () => {
-      const r = await runAiFitAnalysis(applicationId)
+      const r = await requestAiFitAnalysis(applicationId)
       if (!r.success) {
         toast.error(r.error)
         return
       }
+      // Reflect the pending row immediately so the card shows "generating…" and
+      // the polling effect starts; the toast sets expectations.
       const g = await getAiFitAnalysis(applicationId)
       if (g.success) setAnalysis(g.data)
       setExpanded(true)
+      toast.success(tr('aiFit.requested'))
     })
 
   const assess = (choice: 'agree' | 'override') =>
@@ -85,7 +113,7 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
       toast.success(choice === 'agree' ? tr('aiFit.toastAgreed') : tr('aiFit.toastOverride'))
     })
 
-  const a = analysis?.rendered_analysis
+  const a = analysis?.status === 'completed' ? analysis.rendered_analysis : null
 
   return (
     <div className="rounded-[11px] border border-[oklch(0.88_0.05_250)] bg-white">
@@ -101,9 +129,15 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
         <span className="rounded-md border border-[oklch(0.88_0.05_250)] bg-[oklch(0.96_0.03_250)] px-1.5 py-0.5 text-[10px] font-semibold text-[oklch(0.45_0.16_250)]">
           {tr('aiFit.advisory')}
         </span>
-        {analysis && (
+        {analysis?.status === 'completed' && analysis.meets_count != null && (
           <span className="text-xs text-muted-foreground">
-            {tr('aiFit.meetsShort', { n: analysis.meets_count, m: analysis.must_have_total })}
+            {tr('aiFit.meetsShort', { n: analysis.meets_count, m: analysis.must_have_total ?? 0 })}
+          </span>
+        )}
+        {analysis?.status === 'pending' && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+            {tr('aiFit.generating')}
           </span>
         )}
         <span className="ml-auto text-muted-foreground">
@@ -122,6 +156,31 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
               <Button size="sm" onClick={run} disabled={isPending}>
                 {isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
                 {tr('aiFit.runAnalysis')}
+              </Button>
+            </div>
+          )}
+
+          {/* Running in the background (#1) */}
+          {analysis?.status === 'pending' && (
+            <div className="flex items-start gap-2 rounded-lg border border-[oklch(0.93_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2.5">
+              <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-[oklch(0.45_0.16_250)]" aria-hidden />
+              <div className="flex flex-col gap-0.5">
+                <p className="text-[13px] font-semibold text-foreground">{tr('aiFit.generating')}</p>
+                <p className="text-[11.5px] text-muted-foreground">{tr('aiFit.generatingHint')}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Background run failed → let the recruiter retry */}
+          {analysis?.status === 'failed' && (
+            <div className="flex flex-col items-start gap-2">
+              <div className="flex items-start gap-2 text-[13px] text-foreground">
+                <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-[oklch(0.6_0.16_25)]" aria-hidden />
+                <span>{tr('aiFit.failedHint')}</span>
+              </div>
+              <Button size="sm" variant="outline" onClick={run} disabled={isPending}>
+                {isPending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-2 h-3.5 w-3.5" />}
+                {tr('aiFit.retry')}
               </Button>
             </div>
           )}

@@ -5,6 +5,7 @@ import { Briefcase, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CopyApplyLinkButton } from '@/components/vacancies/copy-apply-link-button'
 import { VacancyActionsMenu } from '@/components/vacancies/detail/vacancy-actions-menu'
+import { PrevNextNav } from '@/components/ui/prev-next-nav'
 
 interface VacancyHeaderProps {
   vacancyId: string
@@ -18,6 +19,9 @@ interface VacancyHeaderProps {
     endDate: string | null
   }
   applicationFormToken: string | null
+  /** Adjacent vacancy ids for prev/next paging (#2), or null at a boundary. */
+  prevId?: string | null
+  nextId?: string | null
 }
 
 /**
@@ -39,6 +43,8 @@ export async function VacancyHeader({
   status,
   meta,
   applicationFormToken,
+  prevId = null,
+  nextId = null,
 }: VacancyHeaderProps) {
   const t = await getTranslations()
   return (
@@ -53,6 +59,14 @@ export async function VacancyHeader({
         </Link>
         <ChevronRight className="h-3 w-3 text-muted-foreground/50" aria-hidden />
         <span className="truncate text-[13px] font-semibold text-foreground">{title}</span>
+        <div className="ml-auto">
+          <PrevNextNav
+            prevHref={prevId ? `/vacancies/${prevId}` : null}
+            nextHref={nextId ? `/vacancies/${nextId}` : null}
+            prevLabel={t('nav.prevVacancy')}
+            nextLabel={t('nav.nextVacancy')}
+          />
+        </div>
       </div>
 
       {/* Title row */}

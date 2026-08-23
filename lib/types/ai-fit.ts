@@ -4,6 +4,9 @@
 
 export type FitConfidence = 'low' | 'medium' | 'high'
 export type FitAssessment = 'agree' | 'override'
+/** Async lifecycle of an analysis row. `pending` = queued/running in the
+ * background; `completed` = outputs filled; `failed` = model/parse error. */
+export type FitStatus = 'pending' | 'completed' | 'failed'
 
 /** One scorecard criterion (from the vacancy's `vacancy_questions`). The
  * per-criterion `match_degree` is evidence-backed — it is NOT a verdict on the
@@ -31,18 +34,23 @@ export interface RenderedFitAnalysis {
   suggested_questions: string[]
 }
 
-/** A stored analysis row (`ai_fit_analyses`). */
+/** A stored analysis row (`ai_fit_analyses`). Output fields are nullable while
+ * an analysis is `pending` (they're filled once it completes). */
 export interface AiFitAnalysis {
   id: string
   application_id: string
-  meets_count: number
-  must_have_total: number
+  /** Async lifecycle — pending rows have null outputs; see {@link FitStatus}. */
+  status: FitStatus
+  /** Set when status = 'failed' (e.g. 'timeout' | 'failed' | 'unparseable'). */
+  error_reason: string | null
+  meets_count: number | null
+  must_have_total: number | null
   confidence: FitConfidence | null
-  rendered_analysis: RenderedFitAnalysis
+  rendered_analysis: RenderedFitAnalysis | null
   redacted_categories: string[]
-  model_name: string
+  model_name: string | null
   model_version: string | null
-  prompt_version: string
+  prompt_version: string | null
   // Mandatory human oversight (Agree/Override)
   assessment: FitAssessment | null
   assessment_reason: string | null

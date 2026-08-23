@@ -40,6 +40,12 @@ describe('renderNotification', () => {
     expect(renderNotification(t, { type: 'offer_accepted', data: {}, title: 'Offer accepted', body: null }).title).toBe('Offer accepted')
   })
 
+  it('localizes ai_fit_ready from data', () => {
+    const r = renderNotification(t, { type: 'ai_fit_ready', data: { name: 'Ana B' }, title: 'x', body: 'y' })
+    expect(r.title).toBe('notif.aiFitReady.title|name=Ana B')
+    expect(r.body).toBe('notif.aiFitReady.body')
+  })
+
   it('keeps the note-mention preview body (user content) unlocalized', () => {
     const r = renderNotification(t, { type: 'note_mention', data: { author: 'Ann', candidate: 'Bob' }, title: 'x', body: 'the raw note text' })
     expect(r.title).toBe('notif.noteMention.title|author=Ann,candidate=Bob')

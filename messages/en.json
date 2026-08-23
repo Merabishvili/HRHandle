@@ -246,6 +246,10 @@
     "pipeline": "Pipeline",
     "vacancies": "Vacancies",
     "candidates": "Candidates",
+    "prevCandidate": "Previous candidate",
+    "nextCandidate": "Next candidate",
+    "prevVacancy": "Previous vacancy",
+    "nextVacancy": "Next vacancy",
     "interviews": "Interviews",
     "reports": "Reports",
     "settings": "Settings",
@@ -824,6 +828,10 @@
     },
     "candidateHired": {
       "title": "Candidate hired: {name}"
+    },
+    "aiFitReady": {
+      "title": "AI fit analysis ready — {name}",
+      "body": "Open the candidate to see the results."
     },
     "teamInvite": {
       "title": "Team invite sent to {email}",
@@ -1728,6 +1736,13 @@
     "meetsShort": "· meets {n}/{m} must-haves",
     "intro": "Assess this candidate against the vacancy's scorecard criteria. Advisory only — it never advances or rejects anyone.",
     "runAnalysis": "Run analysis",
+    "requested": "AI fit analysis requested — we'll have results shortly.",
+    "finished": "AI fit analysis is ready.",
+    "generating": "Generating analysis…",
+    "generatingHint": "This runs in the background — you can leave this page and we'll notify you when it's ready.",
+    "failed": "AI fit analysis failed.",
+    "failedHint": "Something went wrong generating the analysis. Please try again.",
+    "retry": "Try again",
     "scoredOnly": "Scored on job-relevant data only.",
     "removed": "{list} were removed before the model saw anything.",
     "neverSent": "Name, photo, age, gender and other protected fields are never sent.",

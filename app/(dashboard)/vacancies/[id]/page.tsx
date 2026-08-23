@@ -10,7 +10,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { VacancyQuestions } from '@/components/vacancies/vacancy-questions'
 import { ScreeningQuestionsCard } from '@/components/vacancies/screening-questions-card'
-import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { getLinkedInIntegration } from '@/lib/actions/integrations'
@@ -413,6 +412,20 @@ export default async function VacancyDetailPage({
     getCustomFieldValues(id),
   ])
 
+  // Prev/next paging (#2) — neighbours in the org-wide default list order
+  // (newest first), independent of any list filters. Only ids are fetched.
+  const { data: navRows } = await supabase
+    .from('vacancies')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .is('archived_at', null)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+  const navIds = (navRows ?? []).map((r) => r.id as string)
+  const navIdx = navIds.indexOf(id)
+  const prevVacancyId = navIdx > 0 ? navIds[navIdx - 1]! : null
+  const nextVacancyId = navIdx >= 0 && navIdx < navIds.length - 1 ? navIds[navIdx + 1]! : null
+
   return (
     <div className="mx-auto max-w-[1360px] p-4 lg:p-6">
       <article className="overflow-hidden rounded-xl border border-[oklch(0.88_0.01_250)] bg-white shadow-[0_1px_3px_0_oklch(0_0_0_/_0.08)]">
@@ -428,6 +441,8 @@ export default async function VacancyDetailPage({
             endDate: formatEndDate(vacancy.end_date),
           }}
           applicationFormToken={vacancy.application_form_token}
+          prevId={prevVacancyId}
+          nextId={nextVacancyId}
         />
 
         <Tabs key={defaultTab} defaultValue={defaultTab} className="border-t border-[oklch(0.93_0.01_250)]">
@@ -469,6 +484,8 @@ export default async function VacancyDetailPage({
                 lastEditedAt: vacancy.updated_at,
               }}
               applicationFormToken={vacancy.application_form_token}
+              customFieldGroups={vacancyCustomFieldGroups}
+              customFieldValues={vacancyCustomFieldValues}
             />
           </TabsContent>
 
@@ -505,13 +522,6 @@ export default async function VacancyDetailPage({
                   />
                 </section>
               </div>
-
-              {vacancyCustomFieldGroups.length > 0 && (
-                <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]" aria-label={t('candidateForm.additionalInfo')}>
-                  <h2 className="mb-3 text-[15px] font-bold text-foreground">{t('candidateForm.additionalInfo')}</h2>
-                  <CustomFieldsDisplay groups={vacancyCustomFieldGroups} values={vacancyCustomFieldValues} />
-                </section>
-              )}
             </div>
           </TabsContent>
 

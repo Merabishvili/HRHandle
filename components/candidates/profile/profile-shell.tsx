@@ -26,15 +26,14 @@ import { MergeCandidatesDialog } from '@/components/candidates/merge-candidates-
 import { RecentMergeBanner } from '@/components/candidates/profile/recent-merge-banner'
 import type { RecentMergeInfo } from '@/lib/actions/candidate-merge'
 import { ContactCard } from '@/components/candidates/contact-card'
+import { PrevNextNav } from '@/components/ui/prev-next-nav'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
 import { AiNotesExtractor } from '@/components/candidates/ai-notes-extractor'
 import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
 import { ActivityFeed, type ActivityItem } from '@/components/candidates/activity-feed'
-import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 import type { ApplicationStatus } from '@/lib/types/application'
-import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 import type { OfferRow } from '@/components/offers/offer-panel'
 
 import {
@@ -112,6 +111,9 @@ interface ProfileShellProps {
   myEvaluationByApplication: Map<string, NonNullable<StageContextualBlockProps['evaluation']>>
   /** Wave 3.1 — whether the org has enabled AI Fit Analysis. */
   aiFitEnabled: boolean
+  /** Adjacent candidate ids for prev/next paging (#2), or null at a boundary. */
+  prevCandidateId?: string | null
+  nextCandidateId?: string | null
   rejectionReasons: RejectionReason[]
   rejectionTemplates: RejectionTemplate[]
   /** The 'rejected' status id from application_statuses — needed by the
@@ -128,27 +130,12 @@ interface ProfileShellProps {
     document_type: string
     created_at: string
   }[]
-  customFieldGroups: CustomFieldGroupWithFields[]
-  customFieldValues: CustomFieldValue[]
-  /** Flat key-value list to show in the rail "Custom fields" section
-   * (text-only custom field values, for the dense rail layout). */
-  railCustomFields: { label: string; value: string | null }[]
+  /** Flat list shown in the rail "Custom fields" section (after Details, #6).
+   * Includes long_text — RailCustomFields renders those as a stacked block. */
+  railCustomFields: { label: string; value: string | null; fieldType: string }[]
   /** A-3b — set when this candidate is the surviving record of a merge
    * still inside the 30-day split-back window. */
   recentMerge: RecentMergeInfo | null
-}
-
-/** True if this candidate has at least one custom field with a real value —
- * drives whether the "Additional information" card renders at all (empty →
- * hidden, never an empty shell). */
-function hasCustomFieldValues(values: CustomFieldValue[]): boolean {
-  return values.some(
-    (v) =>
-      (v.value_text != null && v.value_text.trim() !== '') ||
-      v.value_number != null ||
-      v.value_boolean === true ||
-      (v.value_option != null && v.value_option.trim() !== ''),
-  )
 }
 
 /**
@@ -181,6 +168,8 @@ function hasCustomFieldValues(values: CustomFieldValue[]): boolean {
  */
 export function CandidateProfileShell({
   candidate,
+  prevCandidateId = null,
+  nextCandidateId = null,
   organizationId: _organizationId,
   currentUserId,
   currentUserName,
@@ -201,8 +190,6 @@ export function CandidateProfileShell({
   educationEntries,
   activityItems,
   documents,
-  customFieldGroups,
-  customFieldValues,
   railCustomFields,
   recentMerge,
 }: ProfileShellProps) {
@@ -302,6 +289,12 @@ export function CandidateProfileShell({
             )}
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <PrevNextNav
+              prevHref={prevCandidateId ? `/candidates/${prevCandidateId}` : null}
+              nextHref={nextCandidateId ? `/candidates/${nextCandidateId}` : null}
+              prevLabel={t('nav.prevCandidate')}
+              nextLabel={t('nav.nextCandidate')}
+            />
             <AddApplicationDialog
               candidateId={candidate.id}
               availableVacancies={availableVacancies}
@@ -455,12 +448,9 @@ export function CandidateProfileShell({
               />
             </div>
 
-            {customFieldGroups.length > 0 && hasCustomFieldValues(customFieldValues) && (
-              <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4">
-                <p className="mb-3 text-[14px] font-bold text-foreground">{t('candidateForm.additionalInfo')}</p>
-                <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
-              </div>
-            )}
+            {/* Custom fields (incl. long text) live in the right rail after
+                Details (#6). The rail stacks below the left column on mobile,
+                so they surface there — no separate mobile copy needed. */}
 
             <ActivityFeed
               candidateId={candidate.id}
@@ -497,6 +487,16 @@ export function CandidateProfileShell({
               />
             </div>
 
+            {/* #6 — Contact sits ABOVE Details. Hidden on lg- because a mobile
+                copy renders inline between Education and the stacked rail. */}
+            <div className="hidden lg:block">
+              <ContactCard
+                email={candidate.email}
+                phone={candidate.phone}
+                linkedinUrl={candidate.linkedinUrl}
+              />
+            </div>
+
             <RailDetails
               items={[
                 { label: t('candWizard.personal.salaryExpectation'), value: candidate.salaryExpectation ?? '—' },
@@ -509,16 +509,7 @@ export function CandidateProfileShell({
               ]}
             />
 
-            {/* A-12b — Hidden on lg- because a mobile copy renders inline
-                between EducationSection and CustomFieldsDisplay. */}
-            <div className="hidden lg:block">
-              <ContactCard
-                email={candidate.email}
-                phone={candidate.phone}
-                linkedinUrl={candidate.linkedinUrl}
-              />
-            </div>
-
+            {/* Custom fields after Details (#6), styled like Posting details. */}
             <RailCustomFields items={railCustomFields} />
 
             <AiNotesExtractor candidateId={candidate.id} />

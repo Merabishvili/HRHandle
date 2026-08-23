@@ -1,13 +1,17 @@
 'use server'
 
 import { createHash } from 'node:crypto'
+import { after } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { getAuthContext, type ActionResult } from './index'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { createOrgNotifications } from './notifications'
 import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
 import {
   sanitizeForFitAnalysis,
+  type SanitizedFitInput,
   type RawFitInput,
   type FitExperience,
   type FitEducation,
@@ -15,18 +19,24 @@ import {
 import { runFitAnalysis, FIT_PROMPT_VERSION, type FitCriterionSpec } from '@/lib/ai/fit-analysis'
 import { canEnableAiFit } from '@/lib/ai/fit-geofence'
 import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
+import type { Locale } from '@/lib/i18n/locales'
 import type { AiFitAnalysis, FitAssessment } from '@/lib/types/ai-fit'
 
 /** Advisory cap — matches the spec's 100 analyses/org/month. */
 const MAX_ANALYSES_PER_ORG_PER_MONTH = 100
 
 /**
- * Run an AI Fit Analysis for an application. Advisory-only. Enforced guardrails:
- * org opt-in + EU acknowledgement, monthly cap, sanitization (protected fields
- * never reach the model), append-only provenance, audit log. Fail-soft — a
- * model/parse failure returns a graceful error, never throws at the UI.
+ * Request an AI Fit Analysis for an application. Advisory-only. Enforced
+ * guardrails: org opt-in + EU acknowledgement, monthly cap, sanitization
+ * (protected fields never reach the model), append-only provenance, audit log.
+ *
+ * ASYNC (#1): the model call used to run inline and block the request for the
+ * whole retry budget, which Vercel killed → "temporarily unavailable". We now
+ * insert a `pending` row, run the model in the background via `after()`, and
+ * flip the row to completed/failed + fire an in-app notification when done. The
+ * UI polls the row and shows "generating…" meanwhile. Fail-soft throughout.
  */
-export async function runAiFitAnalysis(applicationId: string): Promise<ActionResult<{ id: string }>> {
+export async function requestAiFitAnalysis(applicationId: string): Promise<ActionResult<{ id: string }>> {
   const t = await getTranslations('aiFitErr')
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: t('notAuthenticated') }
@@ -122,71 +132,136 @@ export async function runAiFitAnalysis(applicationId: string): Promise<ActionRes
   const sanitized = sanitizeForFitAnalysis(rawInput)
   const cvSnapshotHash = createHash('sha256').update(JSON.stringify(sanitized)).digest('hex')
 
-  // ── Run the model (sanitized input only, in the org content language) ───────
-  const result = await runFitAnalysis(sanitized, criteria, resolveOrgContentLocale(org))
-  if (!result.ok) {
-    // Audit the attempt even on failure (traceability).
-    void writeAuditLog({
-      orgId: ctx.orgId,
-      userId: ctx.userId,
-      entityType: 'application',
-      entityId: applicationId,
-      action: 'ai_fit_invoked',
-      message: `AI fit analysis failed (${result.reason})`,
-      details: { feature: 'ai_fit', ok: false, reason: result.reason },
-    })
-    const msg =
-      result.reason === 'no_key'
-        ? t('notConfigured')
-        : result.reason === 'unparseable'
-          ? t('unparseable')
-          : t('temporarilyUnavailable')
-    return { success: false, error: msg }
-  }
-
-  const { analysis } = result
+  // ── Insert a PENDING row (outputs filled later by the background run) ───────
   const { data: inserted, error: insErr } = await ctx.supabase
     .from('ai_fit_analyses')
     .insert({
       organization_id: ctx.orgId,
       application_id: applicationId,
+      status: 'pending',
       criteria_snapshot: criteria,
       cv_snapshot_hash: cvSnapshotHash,
       redacted_categories: sanitized.redactedCategories,
       screening_answers_snapshot: screeningAnswers,
-      meets_count: analysis.meets_count,
-      must_have_total: analysis.must_have_total,
-      confidence: analysis.confidence,
-      rendered_analysis: analysis,
-      model_name: result.modelName,
       prompt_version: FIT_PROMPT_VERSION,
-      raw_response: result.rawResponse,
       created_by: ctx.userId,
     })
     .select('id')
     .single()
 
   if (insErr || !inserted) {
-    console.error('[ai-fit] insert failed:', insErr?.message)
+    console.error('[ai-fit] pending insert failed:', insErr?.message)
     return { success: false, error: t('saveFailed') }
   }
 
-  void writeAuditLog({
-    orgId: ctx.orgId,
-    userId: ctx.userId,
-    entityType: 'application',
-    entityId: applicationId,
-    action: 'ai_fit_invoked',
-    message: `AI fit analysis generated (${analysis.meets_count}/${analysis.must_have_total} must-haves)`,
-    details: { feature: 'ai_fit', analysis_id: inserted.id, model: result.modelName, prompt_version: FIT_PROMPT_VERSION, redacted: sanitized.redactedCategories },
-  })
+  const candidateName = [candidate?.first_name, candidate?.last_name].filter(Boolean).join(' ').trim()
+  const locale = resolveOrgContentLocale(org)
 
-  revalidatePath(`/candidates/${app.candidate_id}`)
+  // Run the model AFTER the response is sent — the client gets an immediate
+  // "requested" acknowledgement and polls the row for the result.
+  after(() =>
+    processFitAnalysis({
+      analysisId: inserted.id,
+      orgId: ctx.orgId,
+      userId: ctx.userId,
+      applicationId,
+      candidateId: app.candidate_id,
+      candidateName: candidateName || 'Candidate',
+      sanitized,
+      criteria,
+      locale,
+    }),
+  )
+
   return { success: true, data: { id: inserted.id } }
 }
 
+/**
+ * Background worker for a pending analysis (scheduled via `after()`). Runs the
+ * model, updates the row to completed/failed, writes the audit log, and — on
+ * success — fires an in-app notification so the requester is alerted even if
+ * they navigated away. Uses the admin client because the request's auth context
+ * is gone once the response has been sent. Never throws.
+ */
+async function processFitAnalysis(args: {
+  analysisId: string
+  orgId: string
+  userId: string
+  applicationId: string
+  candidateId: string
+  candidateName: string
+  sanitized: SanitizedFitInput
+  criteria: FitCriterionSpec[]
+  locale: Locale
+}): Promise<void> {
+  const { analysisId, orgId, userId, applicationId, candidateId, candidateName, sanitized, criteria, locale } = args
+  const admin = createAdminClient()
+  try {
+    const result = await runFitAnalysis(sanitized, criteria, locale)
+
+    if (!result.ok) {
+      await admin
+        .from('ai_fit_analyses')
+        .update({ status: 'failed', error_reason: result.reason })
+        .eq('id', analysisId)
+        .eq('organization_id', orgId)
+      void writeAuditLog({
+        orgId,
+        userId,
+        entityType: 'application',
+        entityId: applicationId,
+        action: 'ai_fit_invoked',
+        message: `AI fit analysis failed (${result.reason})`,
+        details: { feature: 'ai_fit', ok: false, reason: result.reason, analysis_id: analysisId },
+      })
+      return
+    }
+
+    const { analysis } = result
+    await admin
+      .from('ai_fit_analyses')
+      .update({
+        status: 'completed',
+        meets_count: analysis.meets_count,
+        must_have_total: analysis.must_have_total,
+        confidence: analysis.confidence,
+        rendered_analysis: analysis,
+        model_name: result.modelName,
+        raw_response: result.rawResponse,
+      })
+      .eq('id', analysisId)
+      .eq('organization_id', orgId)
+
+    void writeAuditLog({
+      orgId,
+      userId,
+      entityType: 'application',
+      entityId: applicationId,
+      action: 'ai_fit_invoked',
+      message: `AI fit analysis generated (${analysis.meets_count}/${analysis.must_have_total} must-haves)`,
+      details: { feature: 'ai_fit', analysis_id: analysisId, model: result.modelName, prompt_version: FIT_PROMPT_VERSION, redacted: sanitized.redactedCategories },
+    })
+
+    // Alert the requester (bell + localized at display time via `data`).
+    void createOrgNotifications(orgId, [userId], {
+      type: 'ai_fit_ready',
+      title: `AI fit analysis ready — ${candidateName}`,
+      body: 'View the candidate to see the results.',
+      link: `/candidates/${candidateId}`,
+      data: { name: candidateName },
+    })
+  } catch (err) {
+    console.error('[ai-fit] background run failed:', err)
+    await admin
+      .from('ai_fit_analyses')
+      .update({ status: 'failed', error_reason: 'failed' })
+      .eq('id', analysisId)
+      .eq('organization_id', orgId)
+  }
+}
+
 const ANALYSIS_COLUMNS =
-  'id, application_id, meets_count, must_have_total, confidence, rendered_analysis, redacted_categories, model_name, model_version, prompt_version, assessment, assessment_reason, assessed_by, assessed_at, created_by, created_at'
+  'id, application_id, status, error_reason, meets_count, must_have_total, confidence, rendered_analysis, redacted_categories, model_name, model_version, prompt_version, assessment, assessment_reason, assessed_by, assessed_at, created_by, created_at'
 
 /** Latest analysis for an application (org-scoped), or null. */
 export async function getAiFitAnalysis(applicationId: string): Promise<ActionResult<AiFitAnalysis | null>> {
