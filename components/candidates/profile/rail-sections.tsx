@@ -158,10 +158,10 @@ export function RailDetails({ items }: RailDetailsProps) {
   const t = useTranslations()
   if (items.length === 0) return null
   return (
-    <section aria-label={t('rail.details')} className="space-y-2">
-      <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        {t('rail.details')}
-      </p>
+    // Styled to match the vacancy "Posting details" block (15px bold heading,
+    // 12.5px label/value rows) per #6.
+    <section aria-label={t('rail.details')} className="space-y-2.5">
+      <h2 className="text-[15px] font-bold text-foreground">{t('rail.details')}</h2>
       <ul className="flex flex-col gap-[7px] text-[12.5px]">
         {items.map((item) => (
           <li key={item.label} className="flex items-center justify-between gap-2">
@@ -175,24 +175,40 @@ export function RailDetails({ items }: RailDetailsProps) {
 }
 
 interface RailCustomFieldsProps {
-  items: { label: string; value: string | null }[]
+  items: { label: string; value: string | null; fieldType: string }[]
 }
 
 export function RailCustomFields({ items }: RailCustomFieldsProps) {
   const t = useTranslations()
   if (items.length === 0) return null
+  // Checkbox values arrive canonical ('yes'/'no') and are localized here.
+  const displayValue = (item: { value: string | null; fieldType: string }): string => {
+    if (item.fieldType === 'checkbox') {
+      if (item.value === 'yes') return t('common.yes')
+      if (item.value === 'no') return t('common.no')
+    }
+    return item.value ?? '—'
+  }
   return (
-    <section aria-label={t('rail.customFields')} className="space-y-2">
-      <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        {t('rail.customFields')}
-      </p>
+    // Same visual language as RailDetails / the vacancy "Posting details" block.
+    // Long-text fields render as a stacked label + wrapped block; every other
+    // type keeps the compact label/value row (#6).
+    <section aria-label={t('rail.customFields')} className="space-y-2.5">
+      <h2 className="text-[15px] font-bold text-foreground">{t('rail.customFields')}</h2>
       <ul className="flex flex-col gap-[7px] text-[12.5px]">
-        {items.map((item) => (
-          <li key={item.label} className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground">{item.label}</span>
-            <span className="text-right font-semibold text-foreground">{item.value ?? '—'}</span>
-          </li>
-        ))}
+        {items.map((item) =>
+          item.fieldType === 'long_text' ? (
+            <li key={item.label} className="flex flex-col gap-0.5">
+              <span className="text-muted-foreground">{item.label}</span>
+              <span className="whitespace-pre-wrap font-medium text-foreground">{displayValue(item)}</span>
+            </li>
+          ) : (
+            <li key={item.label} className="flex items-center justify-between gap-2">
+              <span className="text-muted-foreground">{item.label}</span>
+              <span className="text-right font-semibold text-foreground">{displayValue(item)}</span>
+            </li>
+          ),
+        )}
       </ul>
     </section>
   )

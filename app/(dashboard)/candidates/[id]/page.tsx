@@ -20,6 +20,11 @@ import type { HistoryRow } from '@/components/candidates/profile/application-his
 import type { RepeatApplicantSummary } from '@/components/candidates/profile/repeat-applicant-banner'
 import type { StageContextualBlockProps } from '@/components/candidates/profile/stage-contextual-block'
 
+// AI Fit runs in the background via `after()` from the profile's server action
+// (#1). Give that function room beyond the client response so the model call +
+// row update can finish within one invocation.
+export const maxDuration = 60
+
 /**
  * Wave 2.3 candidate profile — rebuild per
  * `redesign/Candidate Profile A Refined.dc.html`. Headline additions over
@@ -555,14 +560,12 @@ export default async function CandidateDetailPage({
   ].filter(Boolean) as string[]
   const headlineSubtitle = subtitleParts.length > 0 ? subtitleParts.join(' · ') : null
 
-  // Custom-field rail items — flatten short-typed fields for the dense rail.
-  // Long_text fields are deliberately excluded — they belong in the
-  // "Additional information" card under the contextual block, not in the
-  // dense rail.
-  const railCustomFields: { label: string; value: string | null }[] = []
+  // Custom-field rail items — ALL custom fields render in the rail after the
+  // Details block (#6), including long_text (shown as a stacked block by
+  // RailCustomFields). fieldType lets the renderer pick the row vs block layout.
+  const railCustomFields: { label: string; value: string | null; fieldType: string }[] = []
   for (const group of customFieldGroups) {
     for (const field of group.fields) {
-      if (field.field_type === 'long_text') continue
       const valueRow = customFieldValues.find((v) => v.field_id === field.id)
       let value: string | null = null
       if (valueRow) {
@@ -570,10 +573,10 @@ export default async function CandidateDetailPage({
         else if (valueRow.value_option) value = valueRow.value_option
         else if (valueRow.value_number !== null && valueRow.value_number !== undefined) {
           value = String(valueRow.value_number)
-        } else if (valueRow.value_boolean === true) value = 'Yes'
-        else if (valueRow.value_boolean === false) value = 'No'
+        } else if (valueRow.value_boolean === true) value = 'yes'
+        else if (valueRow.value_boolean === false) value = 'no'
       }
-      railCustomFields.push({ label: field.name, value })
+      railCustomFields.push({ label: field.name, value, fieldType: field.field_type })
     }
   }
 
@@ -609,9 +612,24 @@ export default async function CandidateDetailPage({
     })
     .map((v) => ({ id: v.id, title: v.title, department: v.department }))
 
+  // Prev/next paging (#2) — neighbours in the org-wide default list order
+  // (newest first), independent of any list filters. Only ids are fetched.
+  const { data: navRows } = await supabase
+    .from('candidates')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+  const navIds = (navRows ?? []).map((r) => r.id as string)
+  const navIdx = navIds.indexOf(id)
+  const prevCandidateId = navIdx > 0 ? navIds[navIdx - 1]! : null
+  const nextCandidateId = navIdx >= 0 && navIdx < navIds.length - 1 ? navIds[navIdx + 1]! : null
+
   return (
     <CandidateProfileShell
       aiFitEnabled={aiFitEnabled}
+      prevCandidateId={prevCandidateId}
+      nextCandidateId={nextCandidateId}
       candidate={{
         id: candidate.id,
         fullName: toDisplayFullName(candidate.first_name, candidate.last_name),
@@ -652,8 +670,6 @@ export default async function CandidateDetailPage({
       educationEntries={educationEntries}
       activityItems={activityItems}
       documents={documents}
-      customFieldGroups={customFieldGroups}
-      customFieldValues={customFieldValues}
       railCustomFields={railCustomFields}
       recentMerge={recentMerge}
     />
