@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { getStageStyle, isTerminalStage, STALE_TEXT } from '@/lib/pipeline/stage-style'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
+import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 import { timeInStage, timeInStageLabel } from '@/lib/pipeline/time-in-stage'
 import { toDisplayName } from '@/lib/format-name'
 import { cn } from '@/lib/utils'
@@ -188,7 +189,7 @@ export function ListView({
                       </td>
                       <td className="px-3 py-2 text-xs text-muted-foreground">
                         {card.rejectionReason
-                          ? t('listView.reason', { reason: card.rejectionReason })
+                          ? t('listView.reason', { reason: rejectionReasonLabel(t, card.rejectionReason) })
                           : t('pipeline.timeAgo', { time: timeInStageLabel(t, time) })}
                       </td>
                     </tr>

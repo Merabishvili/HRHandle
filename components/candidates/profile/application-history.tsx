@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
+import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 
 export interface HistoryRow {
   applicationId: string
@@ -68,7 +69,7 @@ export function ApplicationHistory({ rows, open }: ApplicationHistoryProps) {
             <OutcomeBadge label={statusLabel(t, row.outcome, row.outcome)} outcome={row.outcome} />
             <span className="text-muted-foreground">
               {row.reasonName
-                ? t('listView.reason', { reason: row.reasonName })
+                ? t('listView.reason', { reason: rejectionReasonLabel(t, row.reasonName) })
                 : row.outcome === 'withdrawn'
                   ? t('appHistory.candidateWithdrew')
                   : '—'}
