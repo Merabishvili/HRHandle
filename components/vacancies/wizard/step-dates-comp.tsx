@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { CustomFieldsForm } from '@/components/custom-fields/custom-fields-form'
+import type { CustomFieldGroupWithFields } from '@/lib/actions/custom-fields'
 
 export interface DatesCompState {
   startDate: string | null
@@ -23,6 +25,10 @@ export interface DatesCompState {
 interface StepDatesCompProps {
   value: DatesCompState
   onChange: (next: DatesCompState) => void
+  /** Vacancy custom-field schema — rendered below the salary hint (#5). */
+  customFieldGroups?: CustomFieldGroupWithFields[]
+  customFieldValues?: Record<string, string>
+  onCustomFieldChange?: (fieldId: string, value: string) => void
 }
 
 const COMMON_CURRENCIES = ['USD', 'EUR', 'GBP', 'GEL']
@@ -33,11 +39,18 @@ const COMMON_CURRENCIES = ['USD', 'EUR', 'GBP', 'GEL']
  * orchestrator defaults `startDate` to today on submit to satisfy the
  * existing schema constraint (tech-debt.md §1 tracks the schema relax).
  */
-export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
+export function StepDatesComp({
+  value,
+  onChange,
+  customFieldGroups = [],
+  customFieldValues = {},
+  onCustomFieldChange,
+}: StepDatesCompProps) {
   const t = useTranslations()
   const set = <K extends keyof DatesCompState>(key: K, v: DatesCompState[K]) => {
     onChange({ ...value, [key]: v })
   }
+  const hasCustomFields = customFieldGroups.some((g) => g.fields.length > 0)
 
   return (
     <div className="flex max-w-[860px] flex-col gap-4">
@@ -108,6 +121,16 @@ export function StepDatesComp({ value, onChange }: StepDatesCompProps) {
       <p className="text-[11.5px] text-muted-foreground">
         {t('wizard.salaryHint')}
       </p>
+
+      {hasCustomFields && onCustomFieldChange && (
+        <div className="mt-2 border-t border-[oklch(0.93_0.01_250)] pt-4">
+          <CustomFieldsForm
+            groups={customFieldGroups}
+            values={customFieldValues}
+            onChange={onCustomFieldChange}
+          />
+        </div>
+      )}
     </div>
   )
 }

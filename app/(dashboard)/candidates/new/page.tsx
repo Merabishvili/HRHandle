@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { CandidateCreateWizard } from '@/components/candidates/wizard/candidate-create-wizard'
 import { getApplicationStatuses } from '@/lib/cache/lookups'
+import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
 
 /**
  * Wave 2.7 — wizard host for /candidates/new per Create Candidate
@@ -45,7 +46,7 @@ export default async function NewCandidatePage({
   // full application-status list. We filter the stages to non-terminal
   // codes server-side so the wizard never has to deal with hired /
   // rejected / withdrawn — those aren't valid starting stages.
-  const [{ data: vacancies }, applicationStatusesAll] = await Promise.all([
+  const [{ data: vacancies }, applicationStatusesAll, customFieldGroups] = await Promise.all([
     supabase
       .from('vacancies')
       .select('id, title, application_statuses:status_id(code)')
@@ -53,6 +54,7 @@ export default async function NewCandidatePage({
       .is('deleted_at', null)
       .order('title'),
     getApplicationStatuses(),
+    getCustomFieldSchema('candidate'),
   ])
 
   // Non-terminal stages for the starting-stage picker. The order is
@@ -68,6 +70,7 @@ export default async function NewCandidatePage({
         vacancies={(vacancies || []).map((v) => ({ id: v.id, title: v.title }))}
         defaultVacancyId={defaultVacancyId ?? null}
         startingStages={startingStages}
+        customFieldGroups={customFieldGroups}
       />
     </div>
   )

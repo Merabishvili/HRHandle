@@ -5,6 +5,7 @@ import { getVacancyStatuses } from '@/lib/cache/lookups'
 import { VacancyCreateWizard } from '@/components/vacancies/wizard/vacancy-create-wizard'
 import { orgDefaultLocale, orgEnabledLocales } from '@/lib/i18n/org-locale'
 import { resolveOrgDefaultCurrency } from '@/lib/pricing/currency'
+import { getCustomFieldSchema } from '@/lib/actions/custom-fields'
 
 /**
  * Wave 2.7 vacancy creation flow — replaced the single-page
@@ -73,9 +74,13 @@ export default async function NewVacancyPage() {
     contentLocale: orgLocales.default,
   })
 
+  // Vacancy custom fields — surfaced in the wizard (Step 2) so they can be
+  // filled during creation, not only via Edit afterwards.
+  const customFieldGroups = await getCustomFieldSchema('vacancy')
+
   return (
     <div className="mx-auto max-w-[1360px] p-4 lg:p-6">
-      <VacancyCreateWizard sectors={sectors} statusOptions={statusOptions} orgLocales={orgLocales} defaultCurrency={defaultCurrency} orgMembers={orgMembers} />
+      <VacancyCreateWizard sectors={sectors} statusOptions={statusOptions} orgLocales={orgLocales} defaultCurrency={defaultCurrency} orgMembers={orgMembers} customFieldGroups={customFieldGroups} />
     </div>
   )
 }

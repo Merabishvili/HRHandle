@@ -15,6 +15,8 @@ import {
 import { cn } from '@/lib/utils'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
+import { CustomFieldsForm } from '@/components/custom-fields/custom-fields-form'
+import type { CustomFieldGroupWithFields } from '@/lib/actions/custom-fields'
 
 export interface ApplicationState {
   source: string | null
@@ -39,6 +41,10 @@ interface StepApplicationProps {
   /** Merged Notes section (Source + Notes are one step now). */
   note: string
   onNoteChange: (next: string) => void
+  /** Candidate custom-field schema — rendered above the hiring details (#5). */
+  customFieldGroups?: CustomFieldGroupWithFields[]
+  customFieldValues?: Record<string, string>
+  onCustomFieldChange?: (fieldId: string, value: string) => void
 }
 
 // Stored value stays canonical English (kept stable in the DB); the label
@@ -74,14 +80,29 @@ export function StepApplication({
   duplicate,
   note,
   onNoteChange,
+  customFieldGroups = [],
+  customFieldValues = {},
+  onCustomFieldChange,
 }: StepApplicationProps) {
   const t = useTranslations()
   const set = <K extends keyof ApplicationState>(key: K, v: ApplicationState[K]) => {
     onChange({ ...value, [key]: v })
   }
+  const hasCustomFields = customFieldGroups.some((g) => g.fields.length > 0)
 
   return (
     <div className="flex max-w-[900px] flex-col gap-4">
+      {hasCustomFields && onCustomFieldChange && (
+        <>
+          <CustomFieldsForm
+            groups={customFieldGroups}
+            values={customFieldValues}
+            onChange={onCustomFieldChange}
+          />
+          <div className="h-px bg-[oklch(0.93_0.01_250)]" />
+        </>
+      )}
+
       <div>
         <h2 className="text-[15px] font-bold text-foreground">{t('candWizard.application.recruitmentDetails')}</h2>
         <p className="text-[12.5px] text-muted-foreground">
