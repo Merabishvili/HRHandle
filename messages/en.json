@@ -2559,7 +2559,11 @@
     "required": "(required)",
     "pickDate": "Pick a date",
     "selectPlaceholder": "Select...",
-    "none": "— None —"
+    "none": "— None —",
+    "sectionTitle": "Additional information",
+    "sectionSubtitle": "Custom fields, grouped by section.",
+    "countBadge": "{count} / {max} fields",
+    "fieldsCount": "{count} fields"
   },
   "mention": {
     "membersAria": "Members to mention"

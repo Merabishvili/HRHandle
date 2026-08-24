@@ -10,7 +10,10 @@ import { aiLanguageDirective, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/loc
 // (fit-against-criteria + evidence + advisory), enforced by the prompt + the
 // defensive parser below.
 
-const FIT_TIMEOUT_MS = 25_000
+// Kept tight so the whole background job (2 models × attempts + retries) can
+// finish inside the Vercel function budget. The caller (processFitAnalysis) also
+// enforces a hard overall deadline as a backstop (#1).
+const FIT_TIMEOUT_MS = 18_000
 const RETRY_DELAY_MS = 1_500
 const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'] as const
 
@@ -187,9 +190,9 @@ function isRetryableError(err: unknown): boolean {
 }
 
 /** How many times to try EACH model before falling through to the next. With
- * two models that's up to 6 attempts, which comfortably rides out the transient
- * "model is experiencing high demand" 503 spikes. */
-const MAX_ATTEMPTS_PER_MODEL = 3
+ * two models that's up to 4 attempts — enough to ride out a transient "high
+ * demand" 503 while staying inside the serverless time budget (#1). */
+const MAX_ATTEMPTS_PER_MODEL = 2
 
 async function callGemini(
   apiKey: string,

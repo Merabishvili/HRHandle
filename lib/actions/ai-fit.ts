@@ -16,7 +16,7 @@ import {
   type FitExperience,
   type FitEducation,
 } from '@/lib/ai/cv-sanitizer'
-import { runFitAnalysis, FIT_PROMPT_VERSION, type FitCriterionSpec } from '@/lib/ai/fit-analysis'
+import { runFitAnalysis, FIT_PROMPT_VERSION, type FitCriterionSpec, type FitRunResult } from '@/lib/ai/fit-analysis'
 import { canEnableAiFit } from '@/lib/ai/fit-geofence'
 import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
 import type { Locale } from '@/lib/i18n/locales'
@@ -24,6 +24,11 @@ import type { AiFitAnalysis, FitAssessment } from '@/lib/types/ai-fit'
 
 /** Advisory cap — matches the spec's 100 analyses/org/month. */
 const MAX_ANALYSES_PER_ORG_PER_MONTH = 100
+
+/** Hard deadline for the background run. Must stay below the route's
+ * `maxDuration` (60s) so we always mark the row terminal before Vercel kills
+ * the function — otherwise a pending row would spin forever (#1). */
+const PROCESS_DEADLINE_MS = 50_000
 
 /**
  * Request an AI Fit Analysis for an application. Advisory-only. Enforced
@@ -197,7 +202,15 @@ async function processFitAnalysis(args: {
   const { analysisId, orgId, userId, applicationId, candidateId, candidateName, sanitized, criteria, locale } = args
   const admin = createAdminClient()
   try {
-    const result = await runFitAnalysis(sanitized, criteria, locale)
+    // Hard overall deadline: Vercel kills the function at 60s, which would leave
+    // the row stuck 'pending' forever. Race the model run against ~50s so we
+    // always write a terminal status before the kill (#1).
+    const result = await Promise.race([
+      runFitAnalysis(sanitized, criteria, locale),
+      new Promise<FitRunResult>((resolve) =>
+        setTimeout(() => resolve({ ok: false, reason: 'timeout' }), PROCESS_DEADLINE_MS),
+      ),
+    ])
 
     if (!result.ok) {
       await admin

@@ -32,8 +32,10 @@ import { AiNotesExtractor } from '@/components/candidates/ai-notes-extractor'
 import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
 import { ActivityFeed, type ActivityItem } from '@/components/candidates/activity-feed'
+import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import type { CandidateExperience, CandidateEducation } from '@/lib/types/candidate'
 import type { ApplicationStatus } from '@/lib/types/application'
+import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 import type { OfferRow } from '@/components/offers/offer-panel'
 
 import {
@@ -50,7 +52,7 @@ import {
   type StageContextualBlockProps,
 } from './stage-contextual-block'
 import { AiFitCard } from './ai-fit-card'
-import { RailActions, RailDetails, RailCustomFields } from './rail-sections'
+import { RailActions, RailDetails } from './rail-sections'
 
 interface ProfileShellProps {
   candidate: {
@@ -130,12 +132,25 @@ interface ProfileShellProps {
     document_type: string
     created_at: string
   }[]
-  /** Flat list shown in the rail "Custom fields" section (after Details, #6).
-   * Includes long_text — RailCustomFields renders those as a stacked block. */
-  railCustomFields: { label: string; value: string | null; fieldType: string }[]
+  /** Candidate custom-field schema + values — shown in the rail "Custom fields"
+   * card after Details, grouped with per-group counts (#5/6/7). */
+  customFieldGroups: CustomFieldGroupWithFields[]
+  customFieldValues: CustomFieldValue[]
   /** A-3b — set when this candidate is the surviving record of a merge
    * still inside the 30-day split-back window. */
   recentMerge: RecentMergeInfo | null
+}
+
+/** True if at least one custom field has a real value — gates the rail card so
+ * it never renders as an empty shell. */
+function hasCustomFieldValues(values: CustomFieldValue[]): boolean {
+  return values.some(
+    (v) =>
+      (v.value_text != null && v.value_text.trim() !== '') ||
+      v.value_number != null ||
+      v.value_boolean != null ||
+      (v.value_option != null && v.value_option.trim() !== ''),
+  )
 }
 
 /**
@@ -190,7 +205,8 @@ export function CandidateProfileShell({
   educationEntries,
   activityItems,
   documents,
-  railCustomFields,
+  customFieldGroups,
+  customFieldValues,
   recentMerge,
 }: ProfileShellProps) {
   const t = useTranslations()
@@ -260,6 +276,12 @@ export function CandidateProfileShell({
           <RecentMergeBanner info={recentMerge} />
         </div>
       )}
+      <PrevNextNav
+        prevHref={prevCandidateId ? `/candidates/${prevCandidateId}` : null}
+        nextHref={nextCandidateId ? `/candidates/${nextCandidateId}` : null}
+        prevLabel={t('nav.prevCandidate')}
+        nextLabel={t('nav.nextCandidate')}
+      />
       <article className="overflow-hidden rounded-xl border border-[oklch(0.88_0.01_250)] bg-white shadow-[0_1px_3px_0_oklch(0_0_0_/_0.08)]">
         {/* Header bar */}
         <header className="flex flex-wrap items-center gap-3.5 border-b border-[oklch(0.93_0.01_250)] px-5 py-4 sm:px-6">
@@ -289,12 +311,6 @@ export function CandidateProfileShell({
             )}
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <PrevNextNav
-              prevHref={prevCandidateId ? `/candidates/${prevCandidateId}` : null}
-              nextHref={nextCandidateId ? `/candidates/${nextCandidateId}` : null}
-              prevLabel={t('nav.prevCandidate')}
-              nextLabel={t('nav.nextCandidate')}
-            />
             <AddApplicationDialog
               candidateId={candidate.id}
               availableVacancies={availableVacancies}
@@ -509,8 +525,17 @@ export function CandidateProfileShell({
               ]}
             />
 
-            {/* Custom fields after Details (#6), styled like Posting details. */}
-            <RailCustomFields items={railCustomFields} />
+            {/* Custom fields after Details (#6), grouped with per-group counts
+                and wrapping values (#5/6/7). */}
+            {customFieldGroups.length > 0 && hasCustomFieldValues(customFieldValues) && (
+              <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4">
+                <CustomFieldsDisplay
+                  groups={customFieldGroups}
+                  values={customFieldValues}
+                  variant="stacked"
+                />
+              </div>
+            )}
 
             <AiNotesExtractor candidateId={candidate.id} />
           </aside>

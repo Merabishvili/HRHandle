@@ -2559,7 +2559,11 @@
     "required": "(обязательно)",
     "pickDate": "Выберите дату",
     "selectPlaceholder": "Выберите...",
-    "none": "— Нет —"
+    "none": "— Нет —",
+    "sectionTitle": "Дополнительная информация",
+    "sectionSubtitle": "Пользовательские поля, сгруппированные по разделам.",
+    "countBadge": "{count} / {max} полей",
+    "fieldsCount": "{count} полей"
   },
   "mention": {
     "membersAria": "Участники для упоминания"

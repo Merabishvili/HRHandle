@@ -13,26 +13,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { MAX_CUSTOM_FIELDS_PER_ENTITY } from '@/lib/custom-fields/constants'
 import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 
 interface Props {
   groups: CustomFieldGroupWithFields[]
   values: Record<string, string>
   onChange: (fieldId: string, value: string) => void
+  /** Render the block header ("Additional information" + N/MAX counter) above
+   * the group cards. Default true; parents that supply their own heading pass
+   * false. (#5/6/7) */
+  showHeader?: boolean
 }
 
-export function CustomFieldsForm({ groups, values, onChange }: Props) {
+export function CustomFieldsForm({ groups, values, onChange, showHeader = true }: Props) {
   const t = useTranslations()
   const visibleGroups = groups.filter((g) => g.fields.length > 0)
   if (visibleGroups.length === 0) return null
+  const totalFields = visibleGroups.reduce((n, g) => n + g.fields.length, 0)
 
   return (
-    <>
+    <div className="space-y-4">
+      {showHeader && (
+        <div className="flex items-baseline justify-between gap-3">
+          <div>
+            <h3 className="text-[15px] font-bold text-foreground">{t('cff.sectionTitle')}</h3>
+            <p className="text-[12.5px] text-muted-foreground">{t('cff.sectionSubtitle')}</p>
+          </div>
+          <span className="shrink-0 rounded-md bg-muted px-2.5 py-1 text-[12px] font-medium text-muted-foreground">
+            {t('cff.countBadge', { count: totalFields, max: MAX_CUSTOM_FIELDS_PER_ENTITY })}
+          </span>
+        </div>
+      )}
       {visibleGroups.map((group) => (
-        <div key={group.id} className="space-y-4">
-          <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">
-            {group.name}
-          </h3>
+        <div key={group.id} className="rounded-xl border border-border bg-card p-4 sm:p-[18px]">
+          <div className="mb-4 flex items-center justify-between gap-2 border-b border-border pb-3">
+            <h4 className="text-[15px] font-semibold text-foreground">{group.name}</h4>
+            <span className="shrink-0 text-[12px] text-muted-foreground">
+              {t('cff.fieldsCount', { count: group.fields.length })}
+            </span>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {group.fields.map((field) => {
               const val = values[field.id] ?? ''
@@ -129,7 +149,7 @@ export function CustomFieldsForm({ groups, values, onChange }: Props) {
           </div>
         </div>
       ))}
-    </>
+    </div>
   )
 }
 

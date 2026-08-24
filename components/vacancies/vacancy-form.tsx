@@ -9,7 +9,6 @@ import { toast } from 'sonner'
 import { createVacancy, updateVacancy, deleteVacancy } from '@/lib/actions/vacancies'
 import { saveCustomFieldValues } from '@/lib/actions/custom-fields'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
 import { CustomFieldsForm, valuesToMap, mapToValueUpserts } from '@/components/custom-fields/custom-fields-form'
@@ -267,24 +266,15 @@ export function VacancyForm({
         }
       />
 
-      {/* Custom Fields */}
-      {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle>{t('profile.additionalInfo')}</CardTitle>
-            <CardDescription>{t('vacForm.customFieldsDesc')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <CustomFieldsForm
-              groups={customFieldGroups}
-              values={cfValues}
-              onChange={(fieldId, value) =>
-                setCfValues((prev) => ({ ...prev, [fieldId]: value }))
-              }
-            />
-          </CardContent>
-        </Card>
-      )}
+      {/* Custom Fields — CustomFieldsForm renders its own block header + group
+          cards (#5/6/7), so no outer Card wrapper here. */}
+      <CustomFieldsForm
+        groups={customFieldGroups}
+        values={cfValues}
+        onChange={(fieldId, value) =>
+          setCfValues((prev) => ({ ...prev, [fieldId]: value }))
+        }
+      />
 
       <div className="flex items-center justify-end gap-4">
         {isDuplicated ? (
