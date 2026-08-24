@@ -27,6 +27,9 @@ const CONFIDENCE_LEVEL_KEY: Record<FitConfidence, string> = {
   high: 'aiFit.confHigh',
 }
 
+/** Max time to keep showing "generating…" before giving up on a pending row. */
+const PENDING_MAX_MS = 5 * 60 * 1000
+
 /**
  * AI Fit Analysis card (Wave 3.1). Collapsed by default (anti-anchoring).
  * Advisory-only, evidence-based, NO overall score — renders "meets N of M
@@ -40,6 +43,11 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
   const [isPending, startTransition] = useTransition()
   const [overriding, setOverriding] = useState(false)
   const [reason, setReason] = useState('')
+  // Belt-and-suspenders for the pending spinner: if the background run hasn't
+  // reported back within 5 min, stop waiting and show the failed/retry state so
+  // the "generating…" copy can't hang forever (#1). The server also marks the
+  // row failed within ~50s, so this rarely fires.
+  const [timedOut, setTimedOut] = useState(false)
 
   useEffect(() => {
     if (!enabled) return
@@ -54,11 +62,23 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
 
   // While an analysis is running in the background (#1), poll for the result.
   // Flips the card to the finished state + a "finished" toast, or surfaces the
-  // failed state with a Retry button. Stops on any terminal status / unmount.
+  // failed state with a Retry button. Stops on any terminal status, on unmount,
+  // or once the pending row has been running longer than PENDING_MAX_MS.
   useEffect(() => {
-    if (!enabled || analysis?.status !== 'pending') return
+    if (!enabled || analysis?.status !== 'pending' || timedOut) return
     let alive = true
+    const startedAt = Date.parse(analysis.created_at)
+    const expired = () => Number.isFinite(startedAt) && Date.now() - startedAt > PENDING_MAX_MS
+    if (expired()) {
+      setTimedOut(true)
+      return
+    }
     const timer = setInterval(async () => {
+      if (expired()) {
+        setTimedOut(true)
+        clearInterval(timer)
+        return
+      }
       const g = await getAiFitAnalysis(applicationId)
       if (!alive || !g.success || !g.data) return
       if (g.data.status !== 'pending') {
@@ -75,12 +95,13 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
       alive = false
       clearInterval(timer)
     }
-  }, [enabled, analysis?.status, applicationId, tr])
+  }, [enabled, analysis?.status, analysis?.created_at, applicationId, timedOut, tr])
 
   if (!enabled) return null
 
   const run = () =>
     startTransition(async () => {
+      setTimedOut(false)
       const r = await requestAiFitAnalysis(applicationId)
       if (!r.success) {
         toast.error(r.error)
@@ -134,7 +155,7 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
             {tr('aiFit.meetsShort', { n: analysis.meets_count, m: analysis.must_have_total ?? 0 })}
           </span>
         )}
-        {analysis?.status === 'pending' && (
+        {analysis?.status === 'pending' && !timedOut && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
             {tr('aiFit.generating')}
@@ -161,7 +182,7 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
           )}
 
           {/* Running in the background (#1) */}
-          {analysis?.status === 'pending' && (
+          {analysis?.status === 'pending' && !timedOut && (
             <div className="flex items-start gap-2 rounded-lg border border-[oklch(0.93_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2.5">
               <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-[oklch(0.45_0.16_250)]" aria-hidden />
               <div className="flex flex-col gap-0.5">
@@ -171,8 +192,9 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
             </div>
           )}
 
-          {/* Background run failed → let the recruiter retry */}
-          {analysis?.status === 'failed' && (
+          {/* Background run failed OR the pending spinner hit its 5-min ceiling
+              → let the recruiter retry (#1) */}
+          {(analysis?.status === 'failed' || (analysis?.status === 'pending' && timedOut)) && (
             <div className="flex flex-col items-start gap-2">
               <div className="flex items-start gap-2 text-[13px] text-foreground">
                 <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-[oklch(0.6_0.16_25)]" aria-hidden />
