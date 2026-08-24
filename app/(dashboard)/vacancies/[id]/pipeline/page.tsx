@@ -10,6 +10,8 @@ import {
 } from '@/components/pipeline/vacancy-pipeline-board'
 import { getApplicationStatuses } from '@/lib/cache/lookups'
 import { shortSourceLabel } from '@/lib/pipeline/source-label'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
+import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
 import type { ApplicationStatus } from '@/lib/types/application'
 
 interface PipelineApplicationRow {
@@ -181,6 +183,13 @@ export default async function VacancyPipelinePage({
     }
   })
 
+  // Localize seeded default rejection templates so the reject-dialog preview
+  // matches the (already-localized) email that gets sent (#3).
+  const orgContentLocale = await fetchOrgContentLocale(supabase, organizationId)
+  const rejectionTemplates = (rejectionTemplatesRaw ?? []).map((tpl) =>
+    localizeRejectionTemplateRow(tpl, orgContentLocale),
+  )
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -222,7 +231,7 @@ export default async function VacancyPipelinePage({
           columns={columns}
           initialApplications={applications}
           rejectionReasons={rejectionReasonsRaw ?? []}
-          rejectionTemplates={rejectionTemplatesRaw ?? []}
+          rejectionTemplates={rejectionTemplates}
           rejectedStatusId={rejectedStatusId}
           vacancyId={id}
           vacancyTitle={vacancy.title}

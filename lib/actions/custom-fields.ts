@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
+import { MAX_CUSTOM_FIELDS_PER_ENTITY } from '@/lib/custom-fields/constants'
 
 export type EntityType = 'candidate' | 'vacancy'
 export type FieldType = 'text' | 'long_text' | 'date' | 'number' | 'dropdown' | 'checkbox'
@@ -199,10 +200,10 @@ export async function createCustomField(input: {
       .in('group_id', groupIds)
       .is('deleted_at', null)
 
-    if ((count ?? 0) >= 20) {
+    if ((count ?? 0) >= MAX_CUSTOM_FIELDS_PER_ENTITY) {
       return {
         success: false,
-        error: `You've reached the limit of 20 custom fields for ${input.entityType}s.`,
+        error: `You've reached the limit of ${MAX_CUSTOM_FIELDS_PER_ENTITY} custom fields for ${input.entityType}s.`,
       }
     }
   }

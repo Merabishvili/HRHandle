@@ -14,6 +14,7 @@ import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { getLinkedInIntegration } from '@/lib/actions/integrations'
 import { AiAssessmentSuggester } from '@/components/vacancies/ai-assessment-suggester'
+import { PrevNextNav } from '@/components/ui/prev-next-nav'
 
 import { VacancyHeader } from '@/components/vacancies/detail/vacancy-header'
 import {
@@ -428,6 +429,12 @@ export default async function VacancyDetailPage({
 
   return (
     <div className="mx-auto max-w-[1360px] p-4 lg:p-6">
+      <PrevNextNav
+        prevHref={prevVacancyId ? `/vacancies/${prevVacancyId}` : null}
+        nextHref={nextVacancyId ? `/vacancies/${nextVacancyId}` : null}
+        prevLabel={t('nav.prevVacancy')}
+        nextLabel={t('nav.nextVacancy')}
+      />
       <article className="overflow-hidden rounded-xl border border-[oklch(0.88_0.01_250)] bg-white shadow-[0_1px_3px_0_oklch(0_0_0_/_0.08)]">
         <VacancyHeader
           vacancyId={vacancy.id}
@@ -441,8 +448,6 @@ export default async function VacancyDetailPage({
             endDate: formatEndDate(vacancy.end_date),
           }}
           applicationFormToken={vacancy.application_form_token}
-          prevId={prevVacancyId}
-          nextId={nextVacancyId}
         />
 
         <Tabs key={defaultTab} defaultValue={defaultTab} className="border-t border-[oklch(0.93_0.01_250)]">

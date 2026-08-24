@@ -2255,6 +2255,10 @@
   "cff.pickDate": { "en": "Pick a date", "ru": "Выберите дату", "ka": "აირჩიეთ თარიღი" },
   "cff.selectPlaceholder": { "en": "Select...", "ru": "Выберите...", "ka": "აირჩიეთ..." },
   "cff.none": { "en": "— None —", "ru": "— Нет —", "ka": "— არცერთი —" },
+  "cff.sectionTitle": { "en": "Additional information", "ru": "Дополнительная информация", "ka": "დამატებითი ინფორმაცია" },
+  "cff.sectionSubtitle": { "en": "Custom fields, grouped by section.", "ru": "Пользовательские поля, сгруппированные по разделам.", "ka": "მორგებული ველები, დაჯგუფებული სექციების მიხედვით." },
+  "cff.countBadge": { "en": "{count} / {max} fields", "ru": "{count} / {max} полей", "ka": "{count} / {max} ველი" },
+  "cff.fieldsCount": { "en": "{count} fields", "ru": "{count} полей", "ka": "{count} ველი" },
 
   "mention.membersAria": { "en": "Members to mention", "ru": "Участники для упоминания", "ka": "მოსახსენიებელი წევრები" },
 

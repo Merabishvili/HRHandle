@@ -13,6 +13,8 @@ import type { CandidateExperience, CandidateEducation } from '@/lib/types/candid
 import type { ActivityItem } from '@/components/candidates/activity-feed'
 import type { ActivityParams } from '@/lib/candidates/activity-i18n'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
+import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
 import { getRecentMerge } from '@/lib/actions/candidate-merge'
 import { CandidateProfileShell } from '@/components/candidates/profile/profile-shell'
 import type { OfferRow } from '@/components/offers/offer-panel'
@@ -560,26 +562,6 @@ export default async function CandidateDetailPage({
   ].filter(Boolean) as string[]
   const headlineSubtitle = subtitleParts.length > 0 ? subtitleParts.join(' · ') : null
 
-  // Custom-field rail items — ALL custom fields render in the rail after the
-  // Details block (#6), including long_text (shown as a stacked block by
-  // RailCustomFields). fieldType lets the renderer pick the row vs block layout.
-  const railCustomFields: { label: string; value: string | null; fieldType: string }[] = []
-  for (const group of customFieldGroups) {
-    for (const field of group.fields) {
-      const valueRow = customFieldValues.find((v) => v.field_id === field.id)
-      let value: string | null = null
-      if (valueRow) {
-        if (valueRow.value_text) value = valueRow.value_text
-        else if (valueRow.value_option) value = valueRow.value_option
-        else if (valueRow.value_number !== null && valueRow.value_number !== undefined) {
-          value = String(valueRow.value_number)
-        } else if (valueRow.value_boolean === true) value = 'yes'
-        else if (valueRow.value_boolean === false) value = 'no'
-      }
-      railCustomFields.push({ label: field.name, value, fieldType: field.field_type })
-    }
-  }
-
   // A-3b — fetch the most recent un-reverted merge inside the 30-day
   // window so the profile shell can render the split-back banner. Best-
   // effort: failures fall back to no banner.
@@ -625,6 +607,13 @@ export default async function CandidateDetailPage({
   const prevCandidateId = navIdx > 0 ? navIds[navIdx - 1]! : null
   const nextCandidateId = navIdx >= 0 && navIdx < navIds.length - 1 ? navIds[navIdx + 1]! : null
 
+  // Localize seeded default rejection templates so the reject-dialog preview
+  // matches the (already-localized) email that gets sent (#3).
+  const orgContentLocale = await fetchOrgContentLocale(supabase, organizationId)
+  const rejectionTemplates = (rejectionTemplatesRaw ?? []).map((tpl) =>
+    localizeRejectionTemplateRow(tpl, orgContentLocale),
+  )
+
   return (
     <CandidateProfileShell
       aiFitEnabled={aiFitEnabled}
@@ -664,13 +653,14 @@ export default async function CandidateDetailPage({
       screeningAnswersByApplication={screeningAnswersByApplication}
       myEvaluationByApplication={myEvaluationByApplication}
       rejectionReasons={rejectionReasonsRaw ?? []}
-      rejectionTemplates={rejectionTemplatesRaw ?? []}
+      rejectionTemplates={rejectionTemplates}
       rejectedStatusId={rejectedStatusId}
       experienceEntries={experienceEntries}
       educationEntries={educationEntries}
       activityItems={activityItems}
       documents={documents}
-      railCustomFields={railCustomFields}
+      customFieldGroups={customFieldGroups}
+      customFieldValues={customFieldValues}
       recentMerge={recentMerge}
     />
   )

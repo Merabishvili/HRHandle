@@ -122,9 +122,8 @@ export async function JdTab({
         </section>
 
         {hasCustomFields && hasAnyCustomFieldValue(customFieldValues) && (
-          <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('candidateForm.additionalInfo')}>
-            <h2 className="mb-3 text-[15px] font-bold text-foreground">{t('candidateForm.additionalInfo')}</h2>
-            <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
+          <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('cff.sectionTitle')}>
+            <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} variant="rows" />
           </section>
         )}
 

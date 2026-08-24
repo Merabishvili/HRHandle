@@ -148,3 +148,18 @@ export function applyVariables(
 
 export const DEFAULT_REJECTION_SUBJECT = DEFAULT_TEMPLATES.rejection.subject
 export const DEFAULT_REJECTION_BODY = DEFAULT_TEMPLATES.rejection.body
+
+/**
+ * Swap a seeded/default rejection template row to the org's content-locale
+ * default so the rejection DIALOG preview matches what actually gets sent
+ * (the send path already localizes via {@link isDefaultTemplateContentAnyLocale}).
+ * Custom (org-edited) templates are returned untouched. (#3)
+ */
+export function localizeRejectionTemplateRow<T extends { subject: string; body: string }>(
+  row: T,
+  locale: Locale = DEFAULT_LOCALE,
+): T {
+  if (!isDefaultTemplateContentAnyLocale('rejection', row.subject, row.body)) return row
+  const d = defaultTemplate('rejection', locale)
+  return { ...row, subject: d.subject, body: d.body }
+}

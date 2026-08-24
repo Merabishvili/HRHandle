@@ -2559,7 +2559,11 @@
     "required": "(სავალდებულო)",
     "pickDate": "აირჩიეთ თარიღი",
     "selectPlaceholder": "აირჩიეთ...",
-    "none": "— არცერთი —"
+    "none": "— არცერთი —",
+    "sectionTitle": "დამატებითი ინფორმაცია",
+    "sectionSubtitle": "მორგებული ველები, დაჯგუფებული სექციების მიხედვით.",
+    "countBadge": "{count} / {max} ველი",
+    "fieldsCount": "{count} ველი"
   },
   "mention": {
     "membersAria": "მოსახსენიებელი წევრები"

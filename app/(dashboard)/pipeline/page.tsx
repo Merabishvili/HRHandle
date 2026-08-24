@@ -14,6 +14,8 @@ import {
 import type { RoleOption } from '@/components/pipeline/role-filter-pills'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { shortSourceLabel } from '@/lib/pipeline/source-label'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
+import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
 
 /**
  * Top-level `/pipeline` route — Wave 2.1 Version B.
@@ -302,6 +304,13 @@ export default async function PipelinePage() {
     return { id: v.id, title: v.title, activeCount }
   })
 
+  // Localize seeded default rejection templates so the reject-dialog preview
+  // matches the (already-localized) email that gets sent (#3).
+  const orgContentLocale = await fetchOrgContentLocale(supabase, orgId)
+  const rejectionTemplates = (rejectionTemplatesRaw ?? []).map((tpl) =>
+    localizeRejectionTemplateRow(tpl, orgContentLocale),
+  )
+
   return (
     <div className="flex flex-col gap-4 pb-24">
       <CrossVacancyBoard
@@ -309,7 +318,7 @@ export default async function PipelinePage() {
         roles={roleOptions}
         initialApplications={applications}
         rejectionReasons={rejectionReasonsRaw ?? []}
-        rejectionTemplates={rejectionTemplatesRaw ?? []}
+        rejectionTemplates={rejectionTemplates}
       />
     </div>
   )

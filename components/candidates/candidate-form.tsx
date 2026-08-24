@@ -526,24 +526,15 @@ export function CandidateForm({
         </Card>
       )}
 
-      {/* Custom Fields */}
-      {customFieldGroups.length > 0 && customFieldGroups.some((g) => g.fields.length > 0) && (
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle>{t('candidateForm.additionalInfo')}</CardTitle>
-            <CardDescription>{t('candidateForm.customFieldsDesc')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <CustomFieldsForm
-              groups={customFieldGroups}
-              values={cfValues}
-              onChange={(fieldId, value) =>
-                setCfValues((prev) => ({ ...prev, [fieldId]: value }))
-              }
-            />
-          </CardContent>
-        </Card>
-      )}
+      {/* Custom Fields — CustomFieldsForm renders its own block header + group
+          cards (#5/6/7), so no outer Card wrapper here. */}
+      <CustomFieldsForm
+        groups={customFieldGroups}
+        values={cfValues}
+        onChange={(fieldId, value) =>
+          setCfValues((prev) => ({ ...prev, [fieldId]: value }))
+        }
+      />
 
       <div className="flex items-center justify-end gap-4">
         <Button

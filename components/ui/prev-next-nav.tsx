@@ -12,35 +12,40 @@ interface PrevNextNavProps {
   nextLabel: string
 }
 
+const base =
+  'inline-flex items-center gap-1.5 rounded-lg border border-[oklch(0.88_0.01_250)] bg-white px-3 py-2 text-[13px] font-medium text-foreground transition-colors'
+
 /**
- * Compact prev/next pager for detail pages (#2). Renders two arrow buttons.
- * Renders NOTHING when there are no neighbours on either side (e.g. the org
- * only has one candidate/vacancy). Each arrow is disabled at the list
- * boundary. Plain anchors — usable from server and client components alike.
+ * Prev/next pager bar for detail pages (#2) — a full-width row that sits ABOVE
+ * the detail card, with a labelled "‹ Previous …" button on the left and a
+ * "Next … ›" button on the right. Renders NOTHING when there are no neighbours
+ * on either side (e.g. the org only has one record); each side is disabled at
+ * the list boundary.
  */
 export function PrevNextNav({ prevHref, nextHref, prevLabel, nextLabel }: PrevNextNavProps) {
   if (!prevHref && !nextHref) return null
 
-  const base =
-    'inline-flex h-7 w-7 items-center justify-center rounded-md border border-[oklch(0.88_0.01_250)] text-muted-foreground transition-colors'
-
   return (
-    <div className="flex items-center gap-1">
+    <div className="mb-3 flex items-center justify-between gap-2">
       {prevHref ? (
-        <Link href={prevHref} aria-label={prevLabel} title={prevLabel} className={cn(base, 'hover:bg-muted hover:text-foreground')}>
+        <Link href={prevHref} className={cn(base, 'hover:bg-muted')}>
           <ChevronLeft className="h-4 w-4" aria-hidden />
+          {prevLabel}
         </Link>
       ) : (
-        <span aria-disabled="true" aria-label={prevLabel} className={cn(base, 'cursor-not-allowed opacity-40')}>
+        <span aria-disabled="true" className={cn(base, 'cursor-not-allowed opacity-40')}>
           <ChevronLeft className="h-4 w-4" aria-hidden />
+          {prevLabel}
         </span>
       )}
       {nextHref ? (
-        <Link href={nextHref} aria-label={nextLabel} title={nextLabel} className={cn(base, 'hover:bg-muted hover:text-foreground')}>
+        <Link href={nextHref} className={cn(base, 'hover:bg-muted')}>
+          {nextLabel}
           <ChevronRight className="h-4 w-4" aria-hidden />
         </Link>
       ) : (
-        <span aria-disabled="true" aria-label={nextLabel} className={cn(base, 'cursor-not-allowed opacity-40')}>
+        <span aria-disabled="true" className={cn(base, 'cursor-not-allowed opacity-40')}>
+          {nextLabel}
           <ChevronRight className="h-4 w-4" aria-hidden />
         </span>
       )}
