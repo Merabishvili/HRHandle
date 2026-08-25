@@ -63,10 +63,13 @@ export async function requestAiFitAnalysis(applicationId: string): Promise<Actio
   const monthStart = new Date()
   monthStart.setUTCDate(1)
   monthStart.setUTCHours(0, 0, 0, 0)
+  // Exclude `failed` rows — a transient Gemini 503 that never produced a result
+  // shouldn't burn the org's quota, otherwise auto-retries would eat the cap (#1).
   const { count: usedThisMonth } = await ctx.supabase
     .from('ai_fit_analyses')
     .select('id', { count: 'exact', head: true })
     .eq('organization_id', ctx.orgId)
+    .neq('status', 'failed')
     .gte('created_at', monthStart.toISOString())
   if ((usedThisMonth ?? 0) >= MAX_ANALYSES_PER_ORG_PER_MONTH) {
     return { success: false, error: t('monthlyCap') }

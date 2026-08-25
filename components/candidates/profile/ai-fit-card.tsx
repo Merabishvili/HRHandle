@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Sparkles, Shield, ChevronDown, ChevronRight, Check, CircleAlert, Loader2, RefreshCw } from 'lucide-react'
@@ -30,6 +30,12 @@ const CONFIDENCE_LEVEL_KEY: Record<FitConfidence, string> = {
 /** Max time to keep showing "generating…" before giving up on a pending row. */
 const PENDING_MAX_MS = 5 * 60 * 1000
 
+/** On a transient failure (Gemini 503 spike), auto-retry across fresh function
+ * invocations — the only way to outlast a spike that's longer than one 60s
+ * serverless run on Hobby. Failed rows don't count against the monthly cap. */
+const MAX_AUTO_RETRIES = 3
+const AUTO_RETRY_REASONS = new Set(['timeout', 'failed'])
+
 /**
  * AI Fit Analysis card (Wave 3.1). Collapsed by default (anti-anchoring).
  * Advisory-only, evidence-based, NO overall score — renders "meets N of M
@@ -48,6 +54,7 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
   // the "generating…" copy can't hang forever (#1). The server also marks the
   // row failed within ~50s, so this rarely fires.
   const [timedOut, setTimedOut] = useState(false)
+  const autoRetriesRef = useRef(0)
 
   useEffect(() => {
     if (!enabled) return
@@ -81,14 +88,28 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
       }
       const g = await getAiFitAnalysis(applicationId)
       if (!alive || !g.success || !g.data) return
-      if (g.data.status !== 'pending') {
+      if (g.data.status === 'completed') {
         setAnalysis(g.data)
-        if (g.data.status === 'completed') {
-          setExpanded(true)
-          toast.success(tr('aiFit.finished'))
-        } else if (g.data.status === 'failed') {
-          toast.error(tr('aiFit.failed'))
+        setExpanded(true)
+        toast.success(tr('aiFit.finished'))
+        return
+      }
+      if (g.data.status === 'failed') {
+        // Transient (503/timeout) → auto-retry in a fresh invocation, staying in
+        // the "generating…" state, until we run out of retries (#1).
+        const transient = g.data.error_reason == null || AUTO_RETRY_REASONS.has(g.data.error_reason)
+        if (transient && autoRetriesRef.current < MAX_AUTO_RETRIES) {
+          autoRetriesRef.current += 1
+          const r = await requestAiFitAnalysis(applicationId)
+          if (!alive) return
+          if (r.success) {
+            const g2 = await getAiFitAnalysis(applicationId)
+            if (alive && g2.success && g2.data) setAnalysis(g2.data)
+            return
+          }
         }
+        setAnalysis(g.data)
+        toast.error(tr('aiFit.failed'))
       }
     }, 4000)
     return () => {
@@ -102,6 +123,7 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
   const run = () =>
     startTransition(async () => {
       setTimedOut(false)
+      autoRetriesRef.current = 0
       const r = await requestAiFitAnalysis(applicationId)
       if (!r.success) {
         toast.error(r.error)

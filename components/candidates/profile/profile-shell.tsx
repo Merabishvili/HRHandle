@@ -141,18 +141,6 @@ interface ProfileShellProps {
   recentMerge: RecentMergeInfo | null
 }
 
-/** True if at least one custom field has a real value — gates the rail card so
- * it never renders as an empty shell. */
-function hasCustomFieldValues(values: CustomFieldValue[]): boolean {
-  return values.some(
-    (v) =>
-      (v.value_text != null && v.value_text.trim() !== '') ||
-      v.value_number != null ||
-      v.value_boolean != null ||
-      (v.value_option != null && v.value_option.trim() !== ''),
-  )
-}
-
 /**
  * Wave 2.3 candidate profile shell per Candidate Profile A Refined.dc.html.
  *
@@ -525,17 +513,9 @@ export function CandidateProfileShell({
               ]}
             />
 
-            {/* Custom fields after Details (#6), grouped with per-group counts
-                and wrapping values (#5/6/7). */}
-            {customFieldGroups.length > 0 && hasCustomFieldValues(customFieldValues) && (
-              <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4">
-                <CustomFieldsDisplay
-                  groups={customFieldGroups}
-                  values={customFieldValues}
-                  variant="stacked"
-                />
-              </div>
-            )}
+            {/* Custom fields after Details (#6) — each group is its own card,
+                short values as rows, long values stacked (#5/6/7). */}
+            <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
 
             <AiNotesExtractor candidateId={candidate.id} />
           </aside>

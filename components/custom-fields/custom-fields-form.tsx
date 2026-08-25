@@ -14,24 +14,139 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MAX_CUSTOM_FIELDS_PER_ENTITY } from '@/lib/custom-fields/constants'
-import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
+import type {
+  CustomField,
+  CustomFieldGroupWithFields,
+  CustomFieldValue,
+} from '@/lib/actions/custom-fields'
 
 interface Props {
   groups: CustomFieldGroupWithFields[]
   values: Record<string, string>
   onChange: (fieldId: string, value: string) => void
   /** Render the block header ("Additional information" + N/MAX counter) above
-   * the group cards. Default true; parents that supply their own heading pass
-   * false. (#5/6/7) */
+   * the groups. Only used by the `cards` layout. Default true. */
   showHeader?: boolean
+  /**
+   * `cards` — edit pages: block header + N/MAX counter + each group in a
+   * bordered card with a per-group count badge (approved edit-page design).
+   * `plain` — create wizards: no frames, no counters — each group is a plain
+   * section (heading + subtitle + grid) on the page background (#5/6/7).
+   */
+  layout?: 'cards' | 'plain'
 }
 
-export function CustomFieldsForm({ groups, values, onChange, showHeader = true }: Props) {
+export function CustomFieldsForm({ groups, values, onChange, showHeader = true, layout = 'cards' }: Props) {
   const t = useTranslations()
   const visibleGroups = groups.filter((g) => g.fields.length > 0)
   if (visibleGroups.length === 0) return null
   const totalFields = visibleGroups.reduce((n, g) => n + g.fields.length, 0)
 
+  const renderField = (field: CustomField) => {
+    const val = values[field.id] ?? ''
+    const isWide = field.field_type === 'long_text'
+    return (
+      <div key={field.id} className={`space-y-1.5${isWide ? ' sm:col-span-2' : ''}`}>
+        <Label htmlFor={`cf-${field.id}`} className="text-sm">
+          {field.name}
+          {field.is_required && (
+            <span className="ml-1 text-xs text-muted-foreground">{t('cff.required')}</span>
+          )}
+        </Label>
+
+        {field.field_type === 'text' && (
+          <Input
+            id={`cf-${field.id}`}
+            value={val}
+            onChange={(e) => onChange(field.id, e.target.value)}
+            placeholder={field.name}
+            maxLength={100}
+          />
+        )}
+
+        {field.field_type === 'long_text' && (
+          <Textarea
+            id={`cf-${field.id}`}
+            value={val}
+            onChange={(e) => onChange(field.id, e.target.value)}
+            placeholder={field.name}
+            maxLength={5000}
+            rows={4}
+          />
+        )}
+
+        {field.field_type === 'date' && (
+          <DatePicker
+            value={val || null}
+            onChange={(v) => onChange(field.id, v ?? '')}
+            placeholder={t('cff.pickDate')}
+            fromYear={1900}
+            toYear={new Date().getFullYear() + 10}
+          />
+        )}
+
+        {field.field_type === 'number' && (
+          <Input
+            id={`cf-${field.id}`}
+            type="number"
+            value={val}
+            onChange={(e) => onChange(field.id, e.target.value)}
+            placeholder="0"
+          />
+        )}
+
+        {field.field_type === 'dropdown' && (
+          <Select
+            value={val || '__none__'}
+            onValueChange={(v) => onChange(field.id, v === '__none__' ? '' : v)}
+          >
+            <SelectTrigger id={`cf-${field.id}`}>
+              <SelectValue placeholder={t('cff.selectPlaceholder')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">{t('cff.none')}</SelectItem>
+              {(field.options || []).map((opt) => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {field.field_type === 'checkbox' && (
+          <Select
+            value={val || '__none__'}
+            onValueChange={(v) => onChange(field.id, v === '__none__' ? '' : v)}
+          >
+            <SelectTrigger id={`cf-${field.id}`}>
+              <SelectValue placeholder={t('cff.selectPlaceholder')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">{t('cff.none')}</SelectItem>
+              <SelectItem value="true">{t('common.yes')}</SelectItem>
+              <SelectItem value="false">{t('common.no')}</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+    )
+  }
+
+  // Create wizards: plain, frameless sections separated only by spacing (#5/6/7).
+  if (layout === 'plain') {
+    return (
+      <div className="flex flex-col gap-6">
+        {visibleGroups.map((group) => (
+          <section key={group.id}>
+            <h2 className="text-[17px] font-semibold text-foreground">{group.name}</h2>
+            <p className="mb-5 mt-1 text-[13px] text-muted-foreground">{t('cff.groupSubtitle')}</p>
+            <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">{group.fields.map(renderField)}</div>
+          </section>
+        ))}
+      </div>
+    )
+  }
+
+  // Edit pages: block header + N/MAX counter + per-group cards (approved).
   return (
     <div className="space-y-4">
       {showHeader && (
@@ -53,100 +168,7 @@ export function CustomFieldsForm({ groups, values, onChange, showHeader = true }
               {t('cff.fieldsCount', { count: group.fields.length })}
             </span>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {group.fields.map((field) => {
-              const val = values[field.id] ?? ''
-              const isWide = field.field_type === 'long_text'
-
-              return (
-                <div
-                  key={field.id}
-                  className={`space-y-1.5${isWide ? ' sm:col-span-2' : ''}`}
-                >
-                  <Label htmlFor={`cf-${field.id}`} className="text-sm">
-                    {field.name}
-                    {field.is_required && (
-                      <span className="ml-1 text-xs text-muted-foreground">{t('cff.required')}</span>
-                    )}
-                  </Label>
-
-                  {field.field_type === 'text' && (
-                    <Input
-                      id={`cf-${field.id}`}
-                      value={val}
-                      onChange={(e) => onChange(field.id, e.target.value)}
-                      placeholder={field.name}
-                      maxLength={100}
-                    />
-                  )}
-
-                  {field.field_type === 'long_text' && (
-                    <Textarea
-                      id={`cf-${field.id}`}
-                      value={val}
-                      onChange={(e) => onChange(field.id, e.target.value)}
-                      placeholder={field.name}
-                      maxLength={5000}
-                      rows={4}
-                    />
-                  )}
-
-                  {field.field_type === 'date' && (
-                    <DatePicker
-                      value={val || null}
-                      onChange={(v) => onChange(field.id, v ?? '')}
-                      placeholder={t('cff.pickDate')}
-                      fromYear={1900}
-                      toYear={new Date().getFullYear() + 10}
-                    />
-                  )}
-
-                  {field.field_type === 'number' && (
-                    <Input
-                      id={`cf-${field.id}`}
-                      type="number"
-                      value={val}
-                      onChange={(e) => onChange(field.id, e.target.value)}
-                      placeholder="0"
-                    />
-                  )}
-
-                  {field.field_type === 'dropdown' && (
-                    <Select
-                      value={val || '__none__'}
-                      onValueChange={(v) => onChange(field.id, v === '__none__' ? '' : v)}
-                    >
-                      <SelectTrigger id={`cf-${field.id}`}>
-                        <SelectValue placeholder={t('cff.selectPlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">{t('cff.none')}</SelectItem>
-                        {(field.options || []).map((opt) => (
-                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-
-                  {field.field_type === 'checkbox' && (
-                    <Select
-                      value={val || '__none__'}
-                      onValueChange={(v) => onChange(field.id, v === '__none__' ? '' : v)}
-                    >
-                      <SelectTrigger id={`cf-${field.id}`}>
-                        <SelectValue placeholder={t('cff.selectPlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">{t('cff.none')}</SelectItem>
-                        <SelectItem value="true">{t('common.yes')}</SelectItem>
-                        <SelectItem value="false">{t('common.no')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">{group.fields.map(renderField)}</div>
         </div>
       ))}
     </div>

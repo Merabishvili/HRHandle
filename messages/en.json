@@ -2563,7 +2563,8 @@
     "sectionTitle": "Additional information",
     "sectionSubtitle": "Custom fields, grouped by section.",
     "countBadge": "{count} / {max} fields",
-    "fieldsCount": "{count} fields"
+    "fieldsCount": "{count} fields",
+    "groupSubtitle": "Additional fields."
   },
   "mention": {
     "membersAria": "Members to mention"

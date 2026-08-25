@@ -93,14 +93,12 @@ export function StepApplication({
   return (
     <div className="flex max-w-[900px] flex-col gap-4">
       {hasCustomFields && onCustomFieldChange && (
-        <>
-          <CustomFieldsForm
-            groups={customFieldGroups}
-            values={customFieldValues}
-            onChange={onCustomFieldChange}
-          />
-          <div className="h-px bg-[oklch(0.93_0.01_250)]" />
-        </>
+        <CustomFieldsForm
+          groups={customFieldGroups}
+          values={customFieldValues}
+          onChange={onCustomFieldChange}
+          layout="plain"
+        />
       )}
 
       <div>
