@@ -42,12 +42,17 @@ export function CustomFieldsForm({ groups, values, onChange, showHeader = true, 
   if (visibleGroups.length === 0) return null
   const totalFields = visibleGroups.reduce((n, g) => n + g.fields.length, 0)
 
+  // In the wizards (plain layout) the custom-field labels must match the base
+  // field labels on those steps ("Start date", "Source", …) — the smaller muted
+  // style — not the 14px edit-page style (#5/6/7 follow-up).
+  const labelClass = layout === 'plain' ? 'text-[11.5px] font-medium text-muted-foreground' : 'text-sm'
+
   const renderField = (field: CustomField) => {
     const val = values[field.id] ?? ''
     const isWide = field.field_type === 'long_text'
     return (
       <div key={field.id} className={`space-y-1.5${isWide ? ' sm:col-span-2' : ''}`}>
-        <Label htmlFor={`cf-${field.id}`} className="text-sm">
+        <Label htmlFor={`cf-${field.id}`} className={labelClass}>
           {field.name}
           {field.is_required && (
             <span className="ml-1 text-xs text-muted-foreground">{t('cff.required')}</span>
@@ -137,8 +142,10 @@ export function CustomFieldsForm({ groups, values, onChange, showHeader = true, 
       <div className="flex flex-col gap-6">
         {visibleGroups.map((group) => (
           <section key={group.id}>
-            <h2 className="text-[17px] font-semibold text-foreground">{group.name}</h2>
-            <p className="mb-5 mt-1 text-[13px] text-muted-foreground">{t('cff.groupSubtitle')}</p>
+            {/* Heading/subtitle match the wizard's own section style (e.g.
+                "Dates & compensation", "Recruitment details"). */}
+            <h2 className="text-[15px] font-bold text-foreground">{group.name}</h2>
+            <p className="mb-4 mt-0.5 text-[12.5px] text-muted-foreground">{t('cff.groupSubtitle')}</p>
             <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">{group.fields.map(renderField)}</div>
           </section>
         ))}
