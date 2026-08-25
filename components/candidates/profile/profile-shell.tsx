@@ -370,10 +370,12 @@ export function CandidateProfileShell({
           </div>
         )}
 
-        {/* Body grid */}
-        <div className="grid grid-cols-1 gap-0 bg-[oklch(0.985_0.002_247)] lg:grid-cols-[1fr_360px]">
+        {/* Body — flex row (left content + right rail), matching the vacancy
+            detail tabs: one gray region, white cards, a gap instead of a
+            divider line (#5/6/7). */}
+        <div className="flex flex-col gap-5 bg-[oklch(0.985_0.002_247)] p-5 lg:flex-row lg:gap-6 lg:p-6">
           {/* LEFT */}
-          <div className="flex min-w-0 flex-col gap-3.5 px-5 py-4 sm:px-6">
+          <div className="flex min-w-0 flex-1 flex-col gap-3.5">
             {selectedApp && selectedApp.stage && (
               <StageContextualBlock
                 applicationId={selectedApp.id}
@@ -464,9 +466,9 @@ export function CandidateProfileShell({
             />
           </div>
 
-          {/* RIGHT RAIL — gray backdrop with white cards, matching the vacancy
-              detail tabs (#5/6/7). */}
-          <aside className="flex flex-col gap-4 border-t border-[oklch(0.92_0.01_250)] bg-[oklch(0.985_0.002_247)] p-4 sm:px-5 lg:border-l lg:border-t-0">
+          {/* RIGHT RAIL — white cards on the shared gray region, no divider,
+              matching the vacancy detail tabs (#5/6/7). */}
+          <aside className="flex w-full shrink-0 flex-col gap-4 lg:w-[360px]">
             {/* A-12 — RailActions also renders inline at the top of the
                 content on mobile (see lg:hidden block above). Hide this
                 duplicate on lg- so the user doesn't see two identical
