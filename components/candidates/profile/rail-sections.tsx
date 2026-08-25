@@ -154,6 +154,11 @@ interface RailDetailsProps {
   items: RailDetailsItem[]
 }
 
+/** Long string values (e.g. a comma-separated language list) wrap badly in a
+ * label-left / value-right row, so those render stacked (label above, value
+ * below) — matching the custom-fields display (#5/6/7). */
+const STACK_VALUE_OVER = 24
+
 export function RailDetails({ items }: RailDetailsProps) {
   const t = useTranslations()
   if (items.length === 0) return null
@@ -162,13 +167,28 @@ export function RailDetails({ items }: RailDetailsProps) {
     // 12.5px label/value rows) per #6.
     <section aria-label={t('rail.details')} className="space-y-2.5">
       <h2 className="text-[15px] font-bold text-foreground">{t('rail.details')}</h2>
-      <ul className="flex flex-col gap-[7px] text-[12.5px]">
-        {items.map((item) => (
-          <li key={item.label} className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground">{item.label}</span>
-            <span className="text-right font-semibold text-foreground">{item.value}</span>
-          </li>
-        ))}
+      <ul className="flex flex-col gap-2 text-[12.5px]">
+        {items.map((item) => {
+          const stacked = typeof item.value === 'string' && item.value.length > STACK_VALUE_OVER
+          if (stacked) {
+            return (
+              <li key={item.label} className="flex flex-col gap-0.5">
+                <span className="text-muted-foreground">{item.label}</span>
+                <span className="break-words font-semibold text-foreground [overflow-wrap:anywhere]">
+                  {item.value}
+                </span>
+              </li>
+            )
+          }
+          return (
+            <li key={item.label} className="flex items-center justify-between gap-2">
+              <span className="text-muted-foreground">{item.label}</span>
+              <span className="break-words text-right font-semibold text-foreground [overflow-wrap:anywhere]">
+                {item.value}
+              </span>
+            </li>
+          )
+        })}
       </ul>
     </section>
   )
