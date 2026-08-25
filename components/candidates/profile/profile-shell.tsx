@@ -371,7 +371,7 @@ export function CandidateProfileShell({
         )}
 
         {/* Body grid */}
-        <div className="grid grid-cols-1 gap-0 bg-[oklch(0.985_0.002_247)] lg:grid-cols-[1fr_326px]">
+        <div className="grid grid-cols-1 gap-0 bg-[oklch(0.985_0.002_247)] lg:grid-cols-[1fr_360px]">
           {/* LEFT */}
           <div className="flex min-w-0 flex-col gap-3.5 px-5 py-4 sm:px-6">
             {selectedApp && selectedApp.stage && (
@@ -464,14 +464,15 @@ export function CandidateProfileShell({
             />
           </div>
 
-          {/* RIGHT RAIL */}
-          <aside className="flex flex-col gap-4 border-t border-[oklch(0.92_0.01_250)] bg-white p-4 sm:px-5 lg:border-l lg:border-t-0">
+          {/* RIGHT RAIL — gray backdrop with white cards, matching the vacancy
+              detail tabs (#5/6/7). */}
+          <aside className="flex flex-col gap-4 border-t border-[oklch(0.92_0.01_250)] bg-[oklch(0.985_0.002_247)] p-4 sm:px-5 lg:border-l lg:border-t-0">
             {/* A-12 — RailActions also renders inline at the top of the
                 content on mobile (see lg:hidden block above). Hide this
                 duplicate on lg- so the user doesn't see two identical
                 Action sections. */}
             {selectedApp && (
-              <div className="hidden lg:block">
+              <div className="hidden rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 lg:block">
                 <RailActions
                   applicationId={selectedApp.id}
                   candidateId={candidate.id}
@@ -501,17 +502,20 @@ export function CandidateProfileShell({
               />
             </div>
 
-            <RailDetails
-              items={[
-                { label: t('candWizard.personal.salaryExpectation'), value: candidate.salaryExpectation ?? '—' },
-                { label: t('candWizard.personal.noticePeriod'), value: candidate.noticePeriod ?? '—' },
-                { label: t('candWizard.personal.location'), value: candidate.location ?? '—' },
-                { label: t('candWizard.personal.timezone'), value: candidate.timezone ?? '—' },
-                { label: t('candWizard.personal.languages'), value: candidate.languages.join(', ') || '—' },
-                { label: t('candWizard.application.sourceLabel'), value: sourceLabel(t, candidate.source) || '—' },
-                { label: t('profileShell.added'), value: new Date(candidate.addedAt).toLocaleDateString() },
-              ]}
-            />
+            {/* #5/6/7 — Details framed as a card like every other rail section. */}
+            <div className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
+              <RailDetails
+                items={[
+                  { label: t('candWizard.personal.salaryExpectation'), value: candidate.salaryExpectation ?? '—' },
+                  { label: t('candWizard.personal.noticePeriod'), value: candidate.noticePeriod ?? '—' },
+                  { label: t('candWizard.personal.location'), value: candidate.location ?? '—' },
+                  { label: t('candWizard.personal.timezone'), value: candidate.timezone ?? '—' },
+                  { label: t('candWizard.personal.languages'), value: candidate.languages.join(', ') || '—' },
+                  { label: t('candWizard.application.sourceLabel'), value: sourceLabel(t, candidate.source) || '—' },
+                  { label: t('profileShell.added'), value: new Date(candidate.addedAt).toLocaleDateString() },
+                ]}
+              />
+            </div>
 
             {/* Custom fields after Details (#6) — each group is its own card,
                 short values as rows, long values stacked (#5/6/7). */}
