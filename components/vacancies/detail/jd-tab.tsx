@@ -23,18 +23,6 @@ interface JdTabProps {
   customFieldValues?: CustomFieldValue[]
 }
 
-/** True when at least one custom-field value is set — keeps the JD rail's
- * "Additional information" card from rendering as an empty shell (#7). */
-function hasAnyCustomFieldValue(values: CustomFieldValue[]): boolean {
-  return values.some(
-    (v) =>
-      (v.value_text != null && v.value_text.trim() !== '') ||
-      v.value_number != null ||
-      v.value_boolean === true ||
-      (v.value_option != null && v.value_option.trim() !== ''),
-  )
-}
-
 /**
  * Wave 2.4 Job description tab per Vacancy Detail.dc.html.
  *
@@ -58,7 +46,6 @@ export async function JdTab({
   customFieldValues = [],
 }: JdTabProps) {
   const t = await getTranslations()
-  const hasCustomFields = customFieldGroups.some((g) => g.fields.length > 0)
   return (
     <div className="flex flex-col gap-4 bg-[oklch(0.985_0.002_247)] p-5 sm:flex-row sm:p-6">
       {/* Left — About the role */}
@@ -121,11 +108,8 @@ export async function JdTab({
           </ul>
         </section>
 
-        {hasCustomFields && hasAnyCustomFieldValue(customFieldValues) && (
-          <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('cff.sectionTitle')}>
-            <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} variant="rows" />
-          </section>
-        )}
+        {/* Each custom-field group renders as its own card (#5/6/7). */}
+        <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
 
         {applicationFormToken && (
           <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('jdTab.previewApplyPage')}>

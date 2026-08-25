@@ -2563,7 +2563,8 @@
     "sectionTitle": "Дополнительная информация",
     "sectionSubtitle": "Пользовательские поля, сгруппированные по разделам.",
     "countBadge": "{count} / {max} полей",
-    "fieldsCount": "{count} полей"
+    "fieldsCount": "{count} полей",
+    "groupSubtitle": "Дополнительные поля."
   },
   "mention": {
     "membersAria": "Участники для упоминания"

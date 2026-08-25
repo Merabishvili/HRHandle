@@ -10,12 +10,25 @@ import { aiLanguageDirective, DEFAULT_LOCALE, type Locale } from '@/lib/i18n/loc
 // (fit-against-criteria + evidence + advisory), enforced by the prompt + the
 // defensive parser below.
 
-// Kept tight so the whole background job (2 models × attempts + retries) can
-// finish inside the Vercel function budget. The caller (processFitAnalysis) also
-// enforces a hard overall deadline as a backstop (#1).
+// Kept tight so a hung request can't eat the whole budget. The caller
+// (processFitAnalysis) also enforces a hard overall deadline as a backstop (#1).
 const FIT_TIMEOUT_MS = 18_000
 const RETRY_DELAY_MS = 1_500
-const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'] as const
+// Several model families. Gemini's 503 "high demand" hits a model's own capacity
+// pool, so when 2.5-flash is saturated a different family (2.0) is often still
+// serving — cycling across families is the single biggest lever for riding out
+// a spike within one invocation (#1).
+const MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+] as const
+// 503s come back almost instantly, so a fixed tiny attempt count burns out in a
+// few seconds and wastes the rest of the window. Instead we keep cycling the
+// model list (with backoff) until this budget is spent — many more chances for
+// a free slot. Stays under processFitAnalysis's 50s deadline (#1).
+const OVERALL_BUDGET_MS = 45_000
 
 /** Bump when the prompt changes — stored on every analysis for provenance.
  * v2 adds the org-content-language directive (i18n Slice 5). */
@@ -189,11 +202,6 @@ function isRetryableError(err: unknown): boolean {
   return /\b(503|429)\b|service unavailable|overloaded|high demand|unavailable|rate.?limit|try again/i.test(msg)
 }
 
-/** How many times to try EACH model before falling through to the next. With
- * two models that's up to 4 attempts — enough to ride out a transient "high
- * demand" 503 while staying inside the serverless time budget (#1). */
-const MAX_ATTEMPTS_PER_MODEL = 2
-
 async function callGemini(
   apiKey: string,
   modelName: string,
@@ -218,9 +226,10 @@ async function callGemini(
   }
 }
 
-/** Run the analysis on already-sanitized input. Fail-soft. Retries each model on
- * transient errors (503/overloaded/timeout) with backoff before falling through
- * to the next, so a spike in Gemini demand doesn't fail the whole request. */
+/** Run the analysis on already-sanitized input. Fail-soft. Cycles the model
+ * families on transient errors (503/overloaded/timeout) with backoff until the
+ * OVERALL_BUDGET_MS window is spent, so a demand spike on one model doesn't fail
+ * the whole request (#1). */
 export async function runFitAnalysis(
   sanitized: SanitizedFitInput,
   criteria: FitCriterionSpec[],
@@ -230,29 +239,36 @@ export async function runFitAnalysis(
   if (!apiKey) return { ok: false, reason: 'no_key' }
 
   const prompt = buildFitPrompt(sanitized, criteria, locale)
+  const startedAt = Date.now()
+  const remaining = () => OVERALL_BUDGET_MS - (Date.now() - startedAt)
   let lastReason: 'timeout' | 'failed' | 'unparseable' = 'failed'
+  let round = 0
 
-  for (const modelName of MODELS) {
-    for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_MODEL; attempt++) {
+  while (remaining() > 0) {
+    let anyRetryable = false
+    for (const modelName of MODELS) {
+      if (remaining() <= 0) break
       const result = await callGemini(apiKey, modelName, prompt)
 
       if ('text' in result) {
         const analysis = parseFitResponse(result.text, criteria)
         if (analysis) return { ok: true, analysis, modelName, rawResponse: result.text }
-        // Malformed JSON is deterministic — don't hammer the same model; move on.
-        lastReason = 'unparseable'
-        break
+        // Malformed JSON is deterministic — retrying won't help; bail now.
+        return { ok: false, reason: 'unparseable' }
       }
 
       lastReason = result.error
-      // Retry the SAME model on a transient error, with exponential backoff.
-      if (result.retryable && attempt < MAX_ATTEMPTS_PER_MODEL - 1) {
-        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)))
-        continue
-      }
-      break // non-retryable or out of attempts → next model
+      if (result.retryable) anyRetryable = true
     }
-    await new Promise((r) => setTimeout(r, RETRY_DELAY_MS))
+
+    // If every model this round gave a hard (non-retryable) error, looping is
+    // pointless — stop. Only transient errors are worth another cycle.
+    if (!anyRetryable) break
+
+    round++
+    const wait = Math.min(RETRY_DELAY_MS * Math.min(round, 3), remaining())
+    if (wait <= 0) break
+    await new Promise((r) => setTimeout(r, wait))
   }
 
   return { ok: false, reason: lastReason }

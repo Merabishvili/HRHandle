@@ -123,13 +123,12 @@ export function StepDatesComp({
       </p>
 
       {hasCustomFields && onCustomFieldChange && (
-        <div className="mt-2 border-t border-[oklch(0.93_0.01_250)] pt-4">
-          <CustomFieldsForm
-            groups={customFieldGroups}
-            values={customFieldValues}
-            onChange={onCustomFieldChange}
-          />
-        </div>
+        <CustomFieldsForm
+          groups={customFieldGroups}
+          values={customFieldValues}
+          onChange={onCustomFieldChange}
+          layout="plain"
+        />
       )}
     </div>
   )

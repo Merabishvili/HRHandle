@@ -2563,7 +2563,8 @@
     "sectionTitle": "დამატებითი ინფორმაცია",
     "sectionSubtitle": "მორგებული ველები, დაჯგუფებული სექციების მიხედვით.",
     "countBadge": "{count} / {max} ველი",
-    "fieldsCount": "{count} ველი"
+    "fieldsCount": "{count} ველი",
+    "groupSubtitle": "დამატებითი ველები."
   },
   "mention": {
     "membersAria": "მოსახსენიებელი წევრები"
