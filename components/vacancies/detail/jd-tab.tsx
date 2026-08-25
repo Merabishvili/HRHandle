@@ -81,7 +81,7 @@ export async function JdTab({
       </article>
 
       {/* Right rail */}
-      <aside className="flex w-full shrink-0 flex-col gap-3.5 sm:w-[300px]">
+      <aside className="flex w-full shrink-0 flex-col gap-3.5 sm:w-[340px]">
         <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('jdTab.postingDetails')}>
           <h2 className="mb-3 text-[15px] font-bold text-foreground">{t('jdTab.postingDetails')}</h2>
           <ul className="flex flex-col gap-2 text-[12.5px]">

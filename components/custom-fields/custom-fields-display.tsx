@@ -9,6 +9,11 @@ interface Props {
   values: CustomFieldValue[]
 }
 
+/** Values longer than this can't fit on one line in the narrow sidebar, so they
+ * render stacked (label above, value below + wrap) instead of a row that would
+ * overflow off the card edge (#5/6/7). */
+const STACK_VALUE_OVER = 24
+
 function formatValue(
   value: CustomFieldValue,
   fieldType: string,
@@ -75,7 +80,10 @@ export function CustomFieldsDisplay({ groups, values }: Props) {
           <div className="flex flex-col gap-3">
             {filledFields.map((field) => {
               const display = formatValue(valueMap.get(field.id)!, field.field_type, yes, no)
-              if (field.field_type === 'long_text') {
+              // Long-text fields, or any value too long to fit on one line, stack
+              // (label above, value below) so nothing overflows the card.
+              const stacked = field.field_type === 'long_text' || (display?.length ?? 0) > STACK_VALUE_OVER
+              if (stacked) {
                 return (
                   <div key={field.id} className="flex flex-col gap-0.5">
                     <span className="text-[12px] text-muted-foreground">{field.name}</span>
