@@ -52,7 +52,7 @@ import {
   type StageContextualBlockProps,
 } from './stage-contextual-block'
 import { AiFitCard } from './ai-fit-card'
-import { AssessmentRecord, AssessmentRailChip } from './assessment-record'
+import { AssessmentRecord } from './assessment-record'
 import { RailActions, RailDetails } from './rail-sections'
 import type { AssessmentRecord as AssessmentRecordItem } from '@/lib/actions/evaluations'
 
@@ -497,10 +497,6 @@ export function CandidateProfileShell({
                 />
               </div>
             )}
-
-            {/* Part B3 — pinned assessment chip; scrolls to the full record in
-                the left column. Self-hides when there are no assessments. */}
-            <AssessmentRailChip records={assessmentRecords} />
 
             {/* A-12b — Hidden on lg- because a mobile copy renders inline
                 between EducationSection and CustomFieldsDisplay. */}

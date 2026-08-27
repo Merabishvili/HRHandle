@@ -1743,7 +1743,6 @@
     "willAutosave": "Сохраняется автоматически",
     "submitted": "Оценка отправлена",
     "recordTitle": "Оценки",
-    "railTitle": "Оценка",
     "criteriaHeading": "Критерии",
     "answersHeading": "Ответы",
     "criteriaCountLabel": "{count, plural, one {# критерий} few {# критерия} many {# критериев} other {# критериев}}"

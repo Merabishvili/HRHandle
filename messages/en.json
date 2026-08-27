@@ -1743,7 +1743,6 @@
     "willAutosave": "Autosaves as you type",
     "submitted": "Assessment submitted",
     "recordTitle": "Assessments",
-    "railTitle": "Assessment",
     "criteriaHeading": "Criteria",
     "answersHeading": "Answers",
     "criteriaCountLabel": "{count, plural, one {# criterion} other {# criteria}}"

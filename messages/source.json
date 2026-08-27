@@ -1499,7 +1499,6 @@
   "assess.willAutosave": { "en": "Autosaves as you type", "ru": "Сохраняется автоматически", "ka": "ავტომატურად შეინახება" },
   "assess.submitted": { "en": "Assessment submitted", "ru": "Оценка отправлена", "ka": "შეფასება წარდგენილია" },
   "assess.recordTitle": { "en": "Assessments", "ru": "Оценки", "ka": "შეფასებები" },
-  "assess.railTitle": { "en": "Assessment", "ru": "Оценка", "ka": "შეფასება" },
   "assess.criteriaHeading": { "en": "Criteria", "ru": "Критерии", "ka": "კრიტერიუმები" },
   "assess.answersHeading": { "en": "Answers", "ru": "Ответы", "ka": "პასუხები" },
   "assess.criteriaCountLabel": { "en": "{count, plural, one {# criterion} other {# criteria}}", "ru": "{count, plural, one {# критерий} few {# критерия} many {# критериев} other {# критериев}}", "ka": "{count} კრიტერიუმი" },
