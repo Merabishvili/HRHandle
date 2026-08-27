@@ -15,6 +15,7 @@ import type { CandidateExperience, CandidateEducation } from '@/lib/types/candid
 import type { ActivityItem } from '@/components/candidates/activity-feed'
 import type { ActivityParams } from '@/lib/candidates/activity-i18n'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { getAssessmentRecords } from '@/lib/actions/evaluations'
 import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
 import { getRecentMerge } from '@/lib/actions/candidate-merge'
@@ -514,6 +515,11 @@ export default async function CandidateDetailPage({
     }
   }
 
+  // Part B — every SUBMITTED assessment across all of this candidate's
+  // applications (active + closed), for the permanent read-only record.
+  const assessmentRecordsResult = await getAssessmentRecords(id)
+  const assessmentRecords = assessmentRecordsResult.success ? assessmentRecordsResult.data : []
+
   const [
     { data: experienceRaw },
     { data: educationRaw },
@@ -658,6 +664,7 @@ export default async function CandidateDetailPage({
       upcomingInterviewByApplication={upcomingInterviewByApplication}
       screeningAnswersByApplication={screeningAnswersByApplication}
       myEvaluationByApplication={myEvaluationByApplication}
+      assessmentRecords={assessmentRecords}
       rejectionReasons={rejectionReasonsRaw ?? []}
       rejectionTemplates={rejectionTemplates}
       rejectedStatusId={rejectedStatusId}

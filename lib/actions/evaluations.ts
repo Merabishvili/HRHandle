@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 import { normalizeVacancyQuestionEntries } from '@/lib/vacancy-questions/normalize'
+import { projectScorecard } from '@/lib/scorecards/projection'
 
 export async function addVacancyQuestion(
   vacancyId: string,
@@ -439,4 +440,164 @@ export async function getScorecardData(
       otherSubmittedCount: otherRows.length,
     },
   }
+}
+
+export interface AssessmentRecordScore {
+  label: string
+  score: number
+  max: number
+  percentage: number
+}
+
+export interface AssessmentRecordAnswer {
+  label: string
+  text: string
+}
+
+/**
+ * One submitted assessment shown in the permanent read-only record (Part B) —
+ * the candidate profile timeline chip + rail chip. One record per *submitted*
+ * reviewer card, so a panel interview surfaces one row per assessor.
+ */
+export interface AssessmentRecord {
+  evaluationId: string
+  applicationId: string
+  vacancyId: string
+  vacancyTitle: string
+  assessorName: string
+  /** ISO timestamp — `updated_at` at submission (no separate submitted_at col). */
+  submittedAt: string
+  recommendation: ScorecardRecommendation | null
+  recommendationReason: string | null
+  overallScore: number | null
+  scores: AssessmentRecordScore[]
+  answers: AssessmentRecordAnswer[]
+  /** Total score-type criteria configured on the vacancy (for "{n} criteria"). */
+  totalCriteria: number
+  /** Total text-type questions configured on the vacancy (for "{answered}/{total}"). */
+  totalQuestions: number
+}
+
+/**
+ * Every SUBMITTED assessment across all of a candidate's applications — active
+ * and closed. Read-only projection for the permanent record: per-criterion
+ * scores, answered questions, assessor, recommendation. Drafts are excluded
+ * (they stay private to their author until submitted). Newest first.
+ */
+export async function getAssessmentRecords(
+  candidateId: string,
+): Promise<ActionResult<AssessmentRecord[]>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  // Applications this candidate has (incl. closed) — the record persists at
+  // every stage, so we don't filter on pipeline_stage here.
+  const { data: apps } = await ctx.supabase
+    .from('applications')
+    .select('id, vacancy_id, vacancies!inner ( title )')
+    .eq('candidate_id', candidateId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+
+  const appRows = (apps ?? []) as {
+    id: string
+    vacancy_id: string
+    vacancies: { title: string } | { title: string }[] | null
+  }[]
+  if (appRows.length === 0) return { success: true, data: [] }
+
+  const titleByApp = new Map<string, { vacancyId: string; title: string }>()
+  for (const a of appRows) {
+    const v = Array.isArray(a.vacancies) ? a.vacancies[0] : a.vacancies
+    titleByApp.set(a.id, { vacancyId: a.vacancy_id, title: v?.title ?? 'this role' })
+  }
+
+  const { data: evalRows } = await ctx.supabase
+    .from('candidate_evaluations')
+    .select('id, application_id, vacancy_id, reviewer_id, score, recommendation, recommendation_reason, updated_at')
+    .in('application_id', [...titleByApp.keys()])
+    .eq('submitted', true)
+    .order('updated_at', { ascending: false })
+
+  const evals = (evalRows ?? []) as {
+    id: string
+    application_id: string
+    vacancy_id: string
+    reviewer_id: string | null
+    score: number | null
+    recommendation: string | null
+    recommendation_reason: string | null
+    updated_at: string
+  }[]
+  if (evals.length === 0) return { success: true, data: [] }
+
+  // Reviewer names — resolved separately (single-FK to profiles, but fetched
+  // here to keep the read simple and avoid any embed surprises).
+  const reviewerIds = [...new Set(evals.map((e) => e.reviewer_id).filter((id): id is string => !!id))]
+  const nameById = new Map<string, string>()
+  if (reviewerIds.length > 0) {
+    const { data: profs } = await ctx.supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', reviewerIds)
+    for (const p of (profs ?? []) as { id: string; full_name: string | null }[]) {
+      nameById.set(p.id, p.full_name ?? 'Teammate')
+    }
+  }
+
+  // Vacancy questions (labels + types) for every vacancy involved.
+  const vacancyIds = [...new Set(evals.map((e) => e.vacancy_id))]
+  const { data: qRows } = await ctx.supabase
+    .from('vacancy_questions')
+    .select('id, vacancy_id, label, type, sort_order')
+    .in('vacancy_id', vacancyIds)
+  const questionsByVacancy = new Map<string, { id: string; label: string; type: 'text' | 'score'; sort_order: number }[]>()
+  for (const q of (qRows ?? []) as { id: string; vacancy_id: string; label: string; type: 'text' | 'score'; sort_order: number }[]) {
+    const list = questionsByVacancy.get(q.vacancy_id) ?? []
+    list.push({ id: q.id, label: q.label, type: q.type, sort_order: q.sort_order })
+    questionsByVacancy.set(q.vacancy_id, list)
+  }
+
+  // Answers for every evaluation in one batch.
+  const { data: answerRows } = await ctx.supabase
+    .from('candidate_evaluation_answers')
+    .select('evaluation_id, question_id, text_value, score_value')
+    .in('evaluation_id', evals.map((e) => e.id))
+  const answersByEval = new Map<string, { question_id: string; text_value: string | null; score_value: number | null }[]>()
+  for (const a of (answerRows ?? []) as { evaluation_id: string; question_id: string; text_value: string | null; score_value: number | null }[]) {
+    const list = answersByEval.get(a.evaluation_id) ?? []
+    list.push({ question_id: a.question_id, text_value: a.text_value, score_value: a.score_value })
+    answersByEval.set(a.evaluation_id, list)
+  }
+
+  const records: AssessmentRecord[] = evals.map((e) => {
+    const questions = questionsByVacancy.get(e.vacancy_id) ?? []
+    const view = projectScorecard({
+      overallScore: e.score,
+      questions,
+      answers: answersByEval.get(e.id) ?? [],
+    })
+    const appInfo = titleByApp.get(e.application_id)
+    return {
+      evaluationId: e.id,
+      applicationId: e.application_id,
+      vacancyId: e.vacancy_id,
+      vacancyTitle: appInfo?.title ?? 'this role',
+      assessorName: e.reviewer_id ? nameById.get(e.reviewer_id) ?? 'Teammate' : 'Anonymous',
+      submittedAt: e.updated_at,
+      recommendation: (e.recommendation as ScorecardRecommendation | null) ?? null,
+      recommendationReason: e.recommendation_reason,
+      overallScore: view.overallScore,
+      scores: view.items
+        .filter((i): i is Extract<typeof i, { kind: 'score' }> => i.kind === 'score')
+        .map((i) => ({ label: i.label, score: i.score, max: i.max, percentage: i.percentage })),
+      answers: view.items
+        .filter((i): i is Extract<typeof i, { kind: 'text' }> => i.kind === 'text')
+        .map((i) => ({ label: i.label, text: i.text })),
+      totalCriteria: questions.filter((q) => q.type === 'score').length,
+      totalQuestions: questions.filter((q) => q.type === 'text').length,
+    }
+  })
+
+  return { success: true, data: records }
 }

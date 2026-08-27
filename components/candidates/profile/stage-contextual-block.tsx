@@ -29,7 +29,7 @@ import { OfferPanel, type OfferRow } from '@/components/offers/offer-panel'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { StageTracker } from './stage-tracker'
-import { ScoreCandidateModal } from './score-candidate-modal'
+import { AssessmentSheet } from './assessment-sheet'
 import { RescheduleInterviewDialog } from '@/components/interviews/reschedule-interview-dialog'
 
 /** Recommendation value → i18n label key (reused from the score modal). */
@@ -42,7 +42,10 @@ const REC_LABEL_KEY: Record<string, string> = {
 
 export interface StageContextualBlockProps {
   applicationId: string
+  vacancyId: string
   vacancyTitle: string
+  /** Candidate display name — the assessment sheet's subtitle. */
+  candidateName: string
   /** Offers on this application — when present, the Offer stage shows the sent
    * offer's summary + actions instead of a bare create form. */
   offers: OfferRow[]
@@ -111,7 +114,9 @@ export interface StageContextualBlockProps {
  */
 export function StageContextualBlock({
   applicationId,
+  vacancyId,
   vacancyTitle,
+  candidateName,
   offers,
   stages,
   currentStage,
@@ -132,7 +137,9 @@ export function StageContextualBlock({
       return (
         <InterviewState
           applicationId={applicationId}
+          vacancyId={vacancyId}
           vacancyTitle={vacancyTitle}
+          candidateName={candidateName}
           stages={stages}
           currentCode={currentStage.code}
           upcomingInterview={upcomingInterview}
@@ -298,14 +305,18 @@ function AnswerCard({
 
 function InterviewState({
   applicationId,
+  vacancyId,
   vacancyTitle,
+  candidateName,
   stages,
   currentCode,
   upcomingInterview,
   evaluation,
 }: {
   applicationId: string
+  vacancyId: string
   vacancyTitle: string
+  candidateName: string
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   upcomingInterview: StageContextualBlockProps['upcomingInterview']
@@ -419,9 +430,11 @@ function InterviewState({
         {t('stageBlock.scoreHint')}
       </p>
 
-      <ScoreCandidateModal
+      <AssessmentSheet
         applicationId={applicationId}
+        vacancyId={vacancyId}
         vacancyTitle={vacancyTitle}
+        candidateName={candidateName}
         open={scoreOpen}
         onOpenChange={setScoreOpen}
       />
