@@ -2042,6 +2042,8 @@
   "addApp.noOpenVacancies": { "en": "No open vacancies available to apply to.", "ru": "Нет открытых вакансий для отклика.", "ka": "ღია ვაკანსიები, რომლებზეც განაცხადის გაგზავნაა შესაძლებელი, არ არის." },
   "addApp.tooltipLimit": { "en": "Active on {max} vacancies — move one to Hired or Rejected, or archive it, before adding a new one.", "ru": "Активен на {max} вакансиях — переведите одну в «Нанят» или «Отклонён» либо заархивируйте, прежде чем добавлять новую.", "ka": "აქტიურია {max} ვაკანსიაზე — ახლის დამატებამდე ერთი გადაიტანეთ «დაქირავებულში» ან «უარყოფილში», ან დაარქივეთ." },
   "addApp.atLimit": { "en": "This candidate is already active on {max} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one.", "ru": "Этот кандидат уже активен на {max} вакансиях. Переведите одну в «Нанят» или «Отклонён» либо заархивируйте, прежде чем добавлять новую.", "ka": "ეს კანდიდატი უკვე აქტიურია {max} ვაკანსიაზე. ახლის დამატებამდე ერთი გადაიტანეთ «დაქირავებულში» ან «უარყოფილში», ან დაარქივეთ." },
+  "addApp.errDuplicate": { "en": "This candidate is already being considered for this vacancy.", "ru": "Этот кандидат уже рассматривается на эту вакансию.", "ka": "ეს კანდიდატი უკვე განიხილება ამ ვაკანსიაზე." },
+  "addApp.errInactive": { "en": "Only active candidates can be added to a vacancy.", "ru": "На вакансию можно добавить только активных кандидатов.", "ka": "ვაკანსიაზე მხოლოდ აქტიური კანდიდატების დამატება შეიძლება." },
 
   "candStatus.active": { "en": "Active", "ru": "Активный", "ka": "აქტიური" },
   "candStatus.hired": { "en": "Hired", "ru": "Нанят", "ka": "დაქირავებული" },

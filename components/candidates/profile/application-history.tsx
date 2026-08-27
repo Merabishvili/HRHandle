@@ -1,9 +1,10 @@
 'use client'
 
 import { formatDistanceToNow } from 'date-fns'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 
@@ -34,6 +35,7 @@ interface ApplicationHistoryProps {
  */
 export function ApplicationHistory({ rows, open }: ApplicationHistoryProps) {
   const t = useTranslations()
+  const dfLocale = dateFnsLocale(useLocale())
   if (!open) return null
   if (rows.length === 0) return null
 
@@ -75,8 +77,11 @@ export function ApplicationHistory({ rows, open }: ApplicationHistoryProps) {
                   : '—'}
             </span>
             <span className="ml-auto whitespace-nowrap text-muted-foreground">
-              {formatDistanceToNow(new Date(row.closedAt), { addSuffix: true })}
-              {row.reachedStageName && t('appHistory.reachedSuffix', { stage: row.reachedStageName })}
+              {formatDistanceToNow(new Date(row.closedAt), { addSuffix: true, locale: dfLocale })}
+              {row.reachedStageName &&
+                t('appHistory.reachedSuffix', {
+                  stage: statusLabel(t, row.outcome, row.reachedStageName),
+                })}
             </span>
           </li>
         ))}

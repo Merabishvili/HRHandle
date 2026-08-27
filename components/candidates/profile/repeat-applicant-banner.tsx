@@ -4,6 +4,7 @@ import { RotateCcw } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { statusLabel } from '@/lib/pipeline/status-i18n'
+import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 
 export interface RepeatApplicantSummary {
   totalClosed: number
@@ -65,7 +66,7 @@ export function RepeatApplicantBanner({
             outcome: statusLabel(t, mostRecent.outcome, mostRecent.outcome),
             relative: mostRecent.closedAtRelative,
             reason: mostRecent.reasonName
-              ? t('repeatBanner.reasonSuffix', { reason: mostRecent.reasonName })
+              ? t('repeatBanner.reasonSuffix', { reason: rejectionReasonLabel(t, mostRecent.reasonName) })
               : '',
             b: (c) => <span className="font-semibold">{c}</span>,
           })}
