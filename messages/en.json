@@ -1720,6 +1720,34 @@
     "othersHidden": "Others' cards stay hidden until you submit yours.",
     "submit": "Submit scorecard"
   },
+  "assess": {
+    "title": "Assess candidate",
+    "sectionQuestions": "Questions",
+    "sectionScorecard": "Scorecard",
+    "sectionConclusion": "Conclusion",
+    "questionsIntro": "Capture answers to the interview questions. Every field is optional.",
+    "answerPlaceholder": "Write an answer…",
+    "noQuestions": "No interview questions are set up for this role yet.",
+    "noCriteria": "No scorecard criteria are set up for this role yet.",
+    "setupLink": "Set up on the vacancy",
+    "runningAverage": "Average score",
+    "anchorLow": "Below",
+    "anchorMid": "Meets",
+    "anchorHigh": "Exceeds",
+    "recommendation": "Overall recommendation",
+    "reasonPlaceholder": "One-line reason (optional)",
+    "readback": "{criteria} criteria · avg {avg} · {answered}/{total} answered",
+    "submit": "Submit",
+    "savedAt": "Saved {time}",
+    "saving": "Saving…",
+    "willAutosave": "Autosaves as you type",
+    "submitted": "Assessment submitted",
+    "recordTitle": "Assessments",
+    "railTitle": "Assessment",
+    "criteriaHeading": "Criteria",
+    "answersHeading": "Answers",
+    "criteriaCountLabel": "{count, plural, one {# criterion} other {# criteria}}"
+  },
   "aiSummary": {
     "title": "AI summary",
     "intro": "Generate a brief, neutral summary of this candidate's background. The summary is informational only — no decision is taken from it, and nothing is saved unless you choose to save it as a note.",
@@ -2346,7 +2374,9 @@
     "selectPlaceholder": "Select a vacancy…",
     "noOpenVacancies": "No open vacancies available to apply to.",
     "tooltipLimit": "Active on {max} vacancies — move one to Hired or Rejected, or archive it, before adding a new one.",
-    "atLimit": "This candidate is already active on {max} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one."
+    "atLimit": "This candidate is already active on {max} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one.",
+    "errDuplicate": "This candidate is already being considered for this vacancy.",
+    "errInactive": "Only active candidates can be added to a vacancy."
   },
   "candStatus": {
     "active": "Active",

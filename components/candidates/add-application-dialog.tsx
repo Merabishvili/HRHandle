@@ -16,6 +16,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Label } from '@/components/ui/label'
 import { createApplication } from '@/lib/actions/applications'
 import { MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE } from '@/lib/types/constants'
+import { createApplicationErrorMessage } from '@/lib/i18n/create-application-error'
 
 interface Vacancy {
   id: string
@@ -53,7 +54,7 @@ export function AddApplicationDialog({
         setVacancyId('')
         router.refresh()
       } else {
-        setError(result.error)
+        setError(createApplicationErrorMessage(t, result))
       }
     })
   }

@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { searchCandidatesForVacancy } from '@/lib/actions/candidates'
 import { createApplication } from '@/lib/actions/applications'
+import { createApplicationErrorMessage } from '@/lib/i18n/create-application-error'
 
 interface Props {
   vacancyId: string
@@ -62,7 +63,7 @@ export function AddCandidateToVacancyDialog({ vacancyId }: Props) {
         setOpen(false)
         router.refresh()
       } else {
-        setError(result.error)
+        setError(createApplicationErrorMessage(t, result))
         setAddingId(null)
       }
     })

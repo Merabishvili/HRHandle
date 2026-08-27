@@ -13,6 +13,10 @@ export type ActionErrorCode =
   | 'STORAGE'
   | 'DB_ERROR'
   | 'EXTERNAL_SERVICE'
+  // createApplication (add-to-vacancy) — localized client-side in the dialogs.
+  | 'DUPLICATE_APPLICATION'
+  | 'ACTIVE_LIMIT'
+  | 'CANDIDATE_INACTIVE'
 
 export type ActionResult<T = void> =
   | { success: true; data: T }

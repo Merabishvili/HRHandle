@@ -52,7 +52,9 @@ import {
   type StageContextualBlockProps,
 } from './stage-contextual-block'
 import { AiFitCard } from './ai-fit-card'
+import { AssessmentRecord, AssessmentRailChip } from './assessment-record'
 import { RailActions, RailDetails } from './rail-sections'
+import type { AssessmentRecord as AssessmentRecordItem } from '@/lib/actions/evaluations'
 
 interface ProfileShellProps {
   candidate: {
@@ -111,6 +113,8 @@ interface ProfileShellProps {
   /** The current recruiter's own scorecard per application, shown on the
    * profile after they submit it (#N6). */
   myEvaluationByApplication: Map<string, NonNullable<StageContextualBlockProps['evaluation']>>
+  /** Part B — submitted assessments across all of the candidate's applications. */
+  assessmentRecords: AssessmentRecordItem[]
   /** Wave 3.1 — whether the org has enabled AI Fit Analysis. */
   aiFitEnabled: boolean
   /** Adjacent candidate ids for prev/next paging (#2), or null at a boundary. */
@@ -185,6 +189,7 @@ export function CandidateProfileShell({
   upcomingInterviewByApplication,
   screeningAnswersByApplication,
   myEvaluationByApplication,
+  assessmentRecords,
   aiFitEnabled,
   rejectionReasons,
   rejectionTemplates,
@@ -379,7 +384,9 @@ export function CandidateProfileShell({
             {selectedApp && selectedApp.stage && (
               <StageContextualBlock
                 applicationId={selectedApp.id}
+                vacancyId={selectedApp.vacancyId}
                 vacancyTitle={selectedApp.vacancyTitle}
+                candidateName={candidate.fullName}
                 offers={offersByApplication[selectedApp.id] ?? []}
                 stages={activeStages}
                 currentStage={selectedApp.stage}
@@ -397,6 +404,12 @@ export function CandidateProfileShell({
             )}
 
             {selectedApp && <AiFitCard applicationId={selectedApp.id} enabled={aiFitEnabled} />}
+
+            {/* Part B — permanent assessment record. Rendered independent of
+                the selected application / stage, so it persists after a
+                candidate is hired / rejected / re-applies. Self-hides when
+                there are no submitted assessments. */}
+            <AssessmentRecord records={assessmentRecords} />
 
             {!selectedApp && (
               <div className="rounded-xl border border-dashed border-border bg-white p-6 text-center text-[13px] text-muted-foreground">
@@ -484,6 +497,10 @@ export function CandidateProfileShell({
                 />
               </div>
             )}
+
+            {/* Part B3 — pinned assessment chip; scrolls to the full record in
+                the left column. Self-hides when there are no assessments. */}
+            <AssessmentRailChip records={assessmentRecords} />
 
             {/* A-12b — Hidden on lg- because a mobile copy renders inline
                 between EducationSection and CustomFieldsDisplay. */}

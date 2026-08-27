@@ -1,7 +1,9 @@
 import { notFound, redirect } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
+import { getLocale } from 'next-intl/server'
 
 import { createClient } from '@/lib/supabase/server'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import {
   getCandidateStatuses,
   getApplicationStatuses,
@@ -13,6 +15,7 @@ import type { CandidateExperience, CandidateEducation } from '@/lib/types/candid
 import type { ActivityItem } from '@/components/candidates/activity-feed'
 import type { ActivityParams } from '@/lib/candidates/activity-i18n'
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
+import { getAssessmentRecords } from '@/lib/actions/evaluations'
 import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
 import { getRecentMerge } from '@/lib/actions/candidate-merge'
@@ -388,6 +391,9 @@ export default async function CandidateDetailPage({
   const rejectedCount = closedHistoryRows.filter((r) => r.outcome === 'rejected').length
   const withdrawnCount = closedHistoryRows.filter((r) => r.outcome === 'withdrawn').length
   const mostRecentClosed = closedHistoryRows[0] ?? null
+  // Banner relative time is rendered server-side, so localize it to the
+  // recruiter's UI locale (the history-panel rows format client-side).
+  const uiDateLocale = dateFnsLocale(await getLocale())
   const repeatSummary: RepeatApplicantSummary = {
     totalClosed: closedHistoryRows.length,
     rejectedCount,
@@ -398,6 +404,7 @@ export default async function CandidateDetailPage({
           outcome: mostRecentClosed.outcome,
           closedAtRelative: formatDistanceToNow(new Date(mostRecentClosed.closedAt), {
             addSuffix: true,
+            locale: uiDateLocale,
           }),
           reasonName: mostRecentClosed.reasonName,
         }
@@ -507,6 +514,11 @@ export default async function CandidateDetailPage({
       })
     }
   }
+
+  // Part B — every SUBMITTED assessment across all of this candidate's
+  // applications (active + closed), for the permanent read-only record.
+  const assessmentRecordsResult = await getAssessmentRecords(id)
+  const assessmentRecords = assessmentRecordsResult.success ? assessmentRecordsResult.data : []
 
   const [
     { data: experienceRaw },
@@ -652,6 +664,7 @@ export default async function CandidateDetailPage({
       upcomingInterviewByApplication={upcomingInterviewByApplication}
       screeningAnswersByApplication={screeningAnswersByApplication}
       myEvaluationByApplication={myEvaluationByApplication}
+      assessmentRecords={assessmentRecords}
       rejectionReasons={rejectionReasonsRaw ?? []}
       rejectionTemplates={rejectionTemplates}
       rejectedStatusId={rejectedStatusId}

@@ -34,7 +34,7 @@ export async function createApplication(input: {
   const statusesRaw = candidateCheck?.candidate_statuses as { code: string }[] | { code: string } | null
   const generalCode = Array.isArray(statusesRaw) ? statusesRaw[0]?.code : (statusesRaw as { code: string } | null)?.code
   if (generalCode && generalCode !== CANDIDATE_STATUS.ACTIVE) {
-    return { success: false, error: 'Only active candidates can be added to a vacancy.' }
+    return { success: false, error: 'Only active candidates can be added to a vacancy.', code: 'CANDIDATE_INACTIVE' }
   }
 
   // Count existing active applications for this candidate. Wave 2.6 Slice 4 —
@@ -53,6 +53,7 @@ export async function createApplication(input: {
     return {
       success: false,
       error: `This candidate is already active on ${MAX_ACTIVE_APPLICATIONS_PER_CANDIDATE} vacancies. Move one to Hired or Rejected, or archive it, before adding a new one.`,
+      code: 'ACTIVE_LIMIT',
     }
   }
 
@@ -66,7 +67,7 @@ export async function createApplication(input: {
     .is('deleted_at', null)
     .maybeSingle()
 
-  if (existing) return { success: false, error: 'This candidate is already being considered for this vacancy.' }
+  if (existing) return { success: false, error: 'This candidate is already being considered for this vacancy.', code: 'DUPLICATE_APPLICATION' }
 
   // Wave 2.6 Slice 4 — applications.status_id is gone. We only resolve
   // the per-vacancy "Applied" pipeline_stages row and set pipeline_stage_id.
