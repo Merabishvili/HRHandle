@@ -7,7 +7,7 @@ _Last updated: 2026-07-20_
 - 🔄 **Validation section corrected against `lib/env.ts` (2026-07-20 audit).** Many vars the previous version listed as "not validated" **are now validated** in `lib/env.ts`: `GOOGLE_GEMINI_API_KEY`, `CRON_SECRET`, `SENTRY_ORG`, `SENTRY_PROJECT`, `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`. Only build-time / local-only / script vars remain outside the schema.
 - 🆕 `CALENDLY_CLIENT_ID` / `CALENDLY_CLIENT_SECRET` (G-031) — Calendly OAuth. Validated in `lib/env.ts` (optional). Used by `lib/calendly/oauth.ts`.
 - ❌ `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` **removed** — no longer in `lib/env.ts` and referenced nowhere in the codebase. LinkedIn integration is manual page-ID entry only (`app/api/integrations/linkedin/*`); there is no LinkedIn OAuth flow.
-- 🔄 `GOOGLE_GEMINI_API_KEY` is now in `lib/env.ts` (optional) and used by `lib/cv-parser.ts` **and** the AI modules (`lib/ai/*` — note-extractor, bias-check, jd-generator, assessment-suggester, fit-analysis).
+- 🔄 `GOOGLE_GEMINI_API_KEY` is now in `lib/env.ts` (optional) and used by `lib/cv-parser.ts` **and** the AI modules (`lib/ai/*` — bias-check, jd-generator, assessment-suggester, fit-analysis; note-extractor retired 2026-08-28).
 - 🔄 `CRON_SECRET` is now validated in `lib/env.ts` and used by **both** cron routes (`expire-vacancies`, `purge-deleted`).
 
 ---

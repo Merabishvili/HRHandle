@@ -292,7 +292,7 @@ These route handlers exist in `app/api/` but were missing from this doc. All AI 
 
 | Method | Path | Purpose | Auth |
 |---|---|---|---|
-| POST | `/api/ai/note-extractor` | Extract structured fields from a free-text note | Session + rate limit |
+| ~~POST~~ | ~~`/api/ai/note-extractor`~~ | **Removed 2026-08-28** — interview-note structuring feature retired. | — |
 | POST | `/api/ai/assessment-suggester` | Suggest assessment tasks for a vacancy | Session + rate limit |
 | POST | `/api/ai/jd-generator` | Generate job-description sections | Session + rate limit |
 | POST | `/api/ai/bias-check` | Inclusive-language check on JD text | Session + rate limit |
