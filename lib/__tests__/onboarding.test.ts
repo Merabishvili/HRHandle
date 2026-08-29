@@ -58,6 +58,9 @@ const { adminMock, calls } = vi.hoisted(() => {
 
   const adminMock = {
     from: (table: string) => makeChain(table),
+    // Main-pipeline seeding calls admin.rpc('seed_org_pipeline_stage_template_defaults').
+    // Best-effort in the code, so a no-op success is enough here.
+    rpc: async () => ({ data: null, error: null }),
   }
 
   return { adminMock, calls }

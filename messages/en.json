@@ -317,7 +317,7 @@
       "organization": "Organization",
       "team": "Team",
       "billing": "Billing",
-      "pipelineStages": "Pipeline stages",
+      "pipelineStages": "Main pipeline",
       "customFields": "Custom fields",
       "emailTemplates": "Email templates",
       "rejectionReasons": "Rejection reasons",
@@ -755,8 +755,8 @@
     }
   },
   "pipelineStages": {
-    "title": "Pipeline stages",
-    "description": "The default set every new vacancy starts with. A stage has a name (free-text, any language) and a type — the type drives the actions on the candidate profile, never the name. Capped at 10 stages.",
+    "title": "Main pipeline",
+    "description": "Your organization's default hiring stages. These form the columns on the main Pipeline board and are copied onto every new vacancy — where you can remove or add stages per vacancy. A stage's type (not its name) drives the actions on the candidate profile. Capped at 10 stages.",
     "type": {
       "standard": "Standard",
       "review": "Review / Assessment",
