@@ -32,6 +32,16 @@ alter table public.support_tickets enable row level security;
 comment on table public.support_tickets is
   'User-submitted support requests (in-app + public form). Written only by the submitSupportTicket server action via the service-role client; RLS on with no policies.';
 
+-- Idempotent upgrade path: an earlier version of this migration used single
+-- `attachment_path` / `attachment_name` columns. Convert them to arrays (up to
+-- 3 attachments). No-op on a fresh table where the array columns already exist,
+-- so this whole file stays safe to re-run.
+alter table public.support_tickets
+  drop column if exists attachment_path,
+  drop column if exists attachment_name,
+  add column if not exists attachment_paths text[] not null default '{}',
+  add column if not exists attachment_names text[] not null default '{}';
+
 -- Private bucket for optional ticket attachments.
 insert into storage.buckets (id, name, public)
 values ('support-attachments', 'support-attachments', false)
