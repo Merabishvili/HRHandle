@@ -9,12 +9,16 @@ import type { ApplicationStatus } from '@/lib/types/application'
 
 interface StageTrackerProps {
   /** Ordered list of stages to render. Pass only the active (non-terminal)
-   * stages for the standard tracker; the design shows Applied → Screening →
-   * Interview → Offer → Hired with no Rejected/Withdrawn. */
-  stages: { code: ApplicationStatus['code']; name: string }[]
-  /** Code of the current stage (highlighted with brand-blue ring). Steps
-   * before it render as `passed` (filled), steps after as `pending`. */
+   * stages; the design ends the path in Hired (appended here). Each stage's
+   * `id` (the per-vacancy pipeline_stage id) makes the current-stage match
+   * exact even when two stages share a canonical bucket (e.g. two interviews). */
+  stages: { code: ApplicationStatus['code']; name: string; id?: string }[]
+  /** Code of the current stage — the fallback match when `currentId` is absent
+   * or not found (e.g. the canonical-status fallback tracker). */
   currentCode: ApplicationStatus['code']
+  /** Id of the current stage — preferred over `currentCode` so duplicate-bucket
+   * stages highlight the exact node the candidate sits on. */
+  currentId?: string | undefined
   /** Compact mode = smaller pills + thinner connectors. Used inside the
    * stage-contextual block where the tracker is a microheader. */
   compact?: boolean
@@ -24,20 +28,25 @@ interface StageTrackerProps {
  * Wave 2.3 stage tracker per Candidate Profile A Refined.dc.html.
  *
  * Horizontal stepper showing each stage as a pill with a thin connector
- * between. Passed stages render in the stage's own colour; the current
- * stage adds a brand-blue focus ring. Future stages render as a thin
- * outline with neutral text.
+ * between. Passed + current stages render in the stage's own (saturated)
+ * colour; the current stage adds a brand-blue focus ring. Future stages
+ * render as a pale tint of their own hue so the pipeline stays colour-coded
+ * end to end.
  */
-export function StageTracker({ stages, currentCode, compact = false }: StageTrackerProps) {
+export function StageTracker({ stages, currentCode, currentId, compact = false }: StageTrackerProps) {
   const t = useTranslations()
   // Callers pass only the active (non-terminal) stages, so the terminal "Hired"
-  // node is missing. The confirmed design always shows the full 5-node path
-  // ending in Hired — append it here so every tracker renders it (it's always a
-  // pending/future node since the profile only shows active applications).
+  // node is missing. The confirmed design always shows the path ending in Hired
+  // — append it here (it's always a future node since the profile only shows
+  // active applications).
   const renderStages = stages.some((s) => s.code === 'hired')
     ? stages
-    : [...stages, { code: 'hired' as const, name: 'Hired' }]
-  const currentIdx = renderStages.findIndex((s) => s.code === currentCode)
+    : [...stages, { code: 'hired' as const, name: 'Hired', id: undefined }]
+  // Prefer an exact id match (unique per stage); fall back to bucket code.
+  const currentIdx =
+    (currentId ? renderStages.findIndex((s) => s.id === currentId) : -1) !== -1
+      ? renderStages.findIndex((s) => s.id === currentId)
+      : renderStages.findIndex((s) => s.code === currentCode)
 
   return (
     <div
@@ -57,19 +66,27 @@ export function StageTracker({ stages, currentCode, compact = false }: StageTrac
         const padding = compact ? 'px-1.5 py-0.5' : 'px-2.5 py-[3px]'
 
         let pillStyle: React.CSSProperties = {}
-        let pillClassName = `${padding} rounded-md font-semibold`
+        const pillClassName = `${padding} rounded-md font-semibold`
 
         if (isCurrent) {
           pillStyle = { background: style.pillBg, color: style.pillText }
-          pillClassName += ' shadow-[0_0_0_3px_oklch(0.55_0.18_250_/_0.12)]'
         } else if (isPassed) {
           pillStyle = { background: style.pillBg, color: style.pillText }
         } else {
-          pillClassName += ' border border-[oklch(0.9_0.01_250)] text-muted-foreground'
+          // Future stage — pale tint of its own hue with a hairline border
+          // (was a colourless grey outline), so every stage shows its colour.
+          pillStyle = {
+            background: style.columnBg,
+            color: style.pillText,
+            boxShadow: `inset 0 0 0 1px ${style.columnBorder}`,
+          }
+        }
+        if (isCurrent) {
+          pillStyle.boxShadow = '0 0 0 3px oklch(0.55 0.18 250 / 0.18)'
         }
 
         return (
-          <div key={stage.code} className="flex flex-1 items-center gap-1.5" role="listitem">
+          <div key={stage.id ?? `${stage.code}-${idx}`} className="flex flex-1 items-center gap-1.5" role="listitem">
             <span
               className={pillClassName}
               style={pillStyle}

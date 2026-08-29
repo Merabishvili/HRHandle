@@ -879,6 +879,7 @@
   "stageBlock.offerAccepted": { "en": "Offer accepted", "ru": "Оффер принят", "ka": "შეთავაზება მიღებულია" },
   "stageBlock.offerAcceptedHint": { "en": "The candidate accepted the offer. Finalize the hire when you're ready.", "ru": "Кандидат принял оффер. Завершите наём, когда будете готовы.", "ka": "კანდიდატმა მიიღო შეთავაზება. დაასრულეთ დაქირავება, როცა მზად იქნებით." },
   "stageBlock.markHired": { "en": "Mark as Hired", "ru": "Отметить как нанят", "ka": "მონიშნე დაქირავებულად" },
+  "stageBlock.hireSentHint": { "en": "You can hire now — no need to wait for the candidate to accept the offer.", "ru": "Можно нанять сейчас — не обязательно ждать, пока кандидат примет предложение.", "ka": "შეგიძლიათ დაქირავება ახლავე — არ არის საჭირო დაელოდოთ, სანამ კანდიდატი მიიღებს შეთავაზებას." },
   "stageBlock.markedHired": { "en": "Candidate marked as hired.", "ru": "Кандидат отмечен как нанятый.", "ka": "კანდიდატი მონიშნულია დაქირავებულად." },
   "stageBlock.reschedule": { "en": "Reschedule", "ru": "Перенести", "ka": "გადატანა" },
   "stageBlock.scoreHint": { "en": "Score this candidate against the role's scorecard — the average of the 1–5 ratings becomes the fit score on the kanban.", "ru": "Оцените кандидата по оценочной карте роли — среднее из оценок 1–5 становится баллом соответствия на канбане.", "ka": "შეაფასეთ კანდიდატი როლის შეფასების ბარათით — 1–5 შეფასებების საშუალო ხდება შესაბამისობის ქულა კანბანზე." },

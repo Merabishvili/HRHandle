@@ -3,6 +3,7 @@ import {
   evaluateKnockoutPass,
   encodeKnockoutAnswer,
   describeKnockoutAnswer,
+  formatKnockoutExpected,
 } from '@/lib/screening-questions/knockout-condition'
 
 describe('evaluateKnockoutPass — general', () => {
@@ -88,5 +89,20 @@ describe('describeKnockoutAnswer', () => {
     expect(describeKnockoutAnswer('number', JSON.stringify({ op: 'gte', value: 5 }))).toBe('passes when ≥ 5')
     expect(describeKnockoutAnswer('select', JSON.stringify(['A', 'B']))).toBe('passes: A, B')
     expect(describeKnockoutAnswer('yes_no', null)).toBeNull()
+  })
+})
+
+describe('formatKnockoutExpected', () => {
+  it('decodes the number condition to a concise operator form (no raw JSON)', () => {
+    expect(formatKnockoutExpected('number', JSON.stringify({ op: 'lte', value: 2 }))).toBe('≤ 2')
+    expect(formatKnockoutExpected('number', JSON.stringify({ op: 'gte', value: 5 }))).toBe('≥ 5')
+    expect(formatKnockoutExpected('number', JSON.stringify({ op: 'between', value: 2, value2: 5 }))).toBe('2–5')
+  })
+  it('joins select options', () => {
+    expect(formatKnockoutExpected('select', JSON.stringify(['Remote', 'Hybrid']))).toBe('Remote, Hybrid')
+  })
+  it('returns the raw value for yes_no/short_text (caller localizes) and null when unset', () => {
+    expect(formatKnockoutExpected('yes_no', 'yes')).toBe('yes')
+    expect(formatKnockoutExpected('number', null)).toBeNull()
   })
 })

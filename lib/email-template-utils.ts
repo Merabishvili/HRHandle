@@ -41,12 +41,12 @@ export const DEFAULT_TEMPLATES: Record<TemplateType, EmailTemplate> = {
   interview_invitation: {
     template_type: 'interview_invitation',
     subject: 'Interview Invitation — {{role}} at {{company}}',
-    body: 'You have been invited to an interview for the {{role}} position at {{company}}. Please find the details below.',
+    body: 'You have been invited to an interview for the {{role}} position at {{company}}. Please find the details below. If you have any questions, please reply to this email or contact {{interviewer_name}} at {{interviewer_email}}.',
   },
   rejection: {
     template_type: 'rejection',
     subject: 'An update from {{company}} — {{role}}',
-    body: 'After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background.',
+    body: 'After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background. If you have any questions, you are welcome to contact {{sender_name}} at {{sender_email}}.',
   },
   status_change_screening: {
     template_type: 'status_change_screening',

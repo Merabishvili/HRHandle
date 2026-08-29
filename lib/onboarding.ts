@@ -2,6 +2,7 @@ import type { User } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { transliterate } from '@/lib/i18n/transliterate'
 import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/locales'
+import { DEFAULT_REJECTION_SUBJECT, DEFAULT_REJECTION_BODY } from '@/lib/email-template-utils'
 
 function slugify(value: string): string {
   return transliterate(value)
@@ -163,8 +164,13 @@ export async function runOnboarding(
     await admin.from('rejection_templates').insert({
       organization_id: organization.id,
       name: 'General',
-      subject: 'An update from {{company}} — {{role}}',
-      body: 'After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background.',
+      // Seed from the shared default constants so this stays byte-identical to
+      // DEFAULT_TEMPLATES.rejection — the send path recognizes an untouched
+      // "General" template as the default and re-localizes it to the org's
+      // content language (incl. the {{sender_name}}/{{sender_email}} contact
+      // line moved into the body). Editing here would break that recognition.
+      subject: DEFAULT_REJECTION_SUBJECT,
+      body: DEFAULT_REJECTION_BODY,
       sort_order: 0,
       reason_id: generalReason.id,
     })

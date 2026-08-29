@@ -130,6 +130,7 @@ export function StageContextualBlock({
         <ScreeningChecks
           stages={stages}
           currentCode={currentStage.code}
+          currentId={currentStage.id}
           screeningAnswers={screeningAnswers}
         />
       )
@@ -142,6 +143,7 @@ export function StageContextualBlock({
           candidateName={candidateName}
           stages={stages}
           currentCode={currentStage.code}
+          currentId={currentStage.id}
           upcomingInterview={upcomingInterview}
           evaluation={evaluation}
         />
@@ -154,6 +156,7 @@ export function StageContextualBlock({
           offers={offers}
           stages={stages}
           currentCode={currentStage.code}
+          currentId={currentStage.id}
         />
       )
     default:
@@ -161,6 +164,7 @@ export function StageContextualBlock({
         <DefaultStateCard
           stages={stages}
           currentCode={currentStage.code}
+          currentId={currentStage.id}
           stageName={currentStage.name}
         />
       )
@@ -178,10 +182,12 @@ export function StageContextualBlock({
 function ScreeningChecks({
   stages,
   currentCode,
+  currentId,
   screeningAnswers,
 }: {
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
+  currentId: string
   screeningAnswers: StageContextualBlockProps['screeningAnswers']
 }) {
   const t = useTranslations()
@@ -203,7 +209,7 @@ function ScreeningChecks({
 
   return (
     <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
-      <StageTracker stages={stages} currentCode={currentCode} compact />
+      <StageTracker stages={stages} currentCode={currentCode} currentId={currentId} compact />
 
       <header className="flex items-start justify-between gap-3">
         <h3 className="text-[15px] font-bold text-foreground">
@@ -310,6 +316,7 @@ function InterviewState({
   candidateName,
   stages,
   currentCode,
+  currentId,
   upcomingInterview,
   evaluation,
 }: {
@@ -319,6 +326,7 @@ function InterviewState({
   candidateName: string
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
+  currentId: string
   upcomingInterview: StageContextualBlockProps['upcomingInterview']
   evaluation: StageContextualBlockProps['evaluation']
 }) {
@@ -337,7 +345,7 @@ function InterviewState({
         : 'interviews.form.typeOnsite'
   return (
     <article className="space-y-3 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
-      <StageTracker stages={stages} currentCode={currentCode} compact />
+      <StageTracker stages={stages} currentCode={currentCode} currentId={currentId} compact />
 
       {upcomingInterview ? (
         <div className="flex items-center gap-3 rounded-[10px] border border-[oklch(0.91_0.04_300)] bg-[oklch(0.985_0.015_300)] px-3.5 py-3">
@@ -467,12 +475,14 @@ function OfferState({
   offers,
   stages,
   currentCode,
+  currentId,
 }: {
   applicationId: string
   vacancyTitle: string
   offers: OfferRow[]
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
+  currentId: string
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -534,6 +544,22 @@ function OfferState({
     })
   }
 
+  // Hire directly from the offer stage — a recruiter can finalize the hire
+  // without waiting for the candidate to accept the offer (#6). Same action as
+  // the accepted-offer state; kept here so a sent (unanswered) offer isn't a
+  // dead end.
+  const hire = () => {
+    startTransition(async () => {
+      const result = await markApplicationHired(applicationId)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(t('stageBlock.markedHired'))
+      router.refresh()
+    })
+  }
+
   // A SENT offer shows the persistent OfferPanel (status, copy link, withdraw) —
   // sent offers can't be edited inline. A DRAFT falls through to the inline form
   // below, pre-filled, so editing a draft matches creating one (#N14).
@@ -541,13 +567,26 @@ function OfferState({
   if (sentOffer) {
     return (
       <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
-        <StageTracker stages={stages} currentCode={currentCode} compact />
+        <StageTracker stages={stages} currentCode={currentCode} currentId={currentId} compact />
         <OfferPanel
           applicationId={applicationId}
           vacancyTitle={vacancyTitle}
           offers={offers}
           canEdit
         />
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[oklch(0.92_0.01_250)] pt-3">
+          <p className="text-[12px] text-muted-foreground">{t('stageBlock.hireSentHint')}</p>
+          <Button
+            type="button"
+            size="sm"
+            onClick={hire}
+            disabled={pending}
+            className="gap-1.5 bg-[oklch(0.55_0.16_150)] text-white hover:bg-[oklch(0.5_0.16_150)]"
+          >
+            {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+            {t('stageBlock.markHired')}
+          </Button>
+        </div>
       </article>
     )
   }
@@ -563,13 +602,14 @@ function OfferState({
         offers={offers}
         stages={stages}
         currentCode={currentCode}
+        currentId={currentId}
       />
     )
   }
 
   return (
     <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
-      <StageTracker stages={stages} currentCode={currentCode} compact />
+      <StageTracker stages={stages} currentCode={currentCode} currentId={currentId} compact />
 
       <header>
         <h3 className="text-[15px] font-bold text-foreground">
@@ -693,12 +733,14 @@ function AcceptedOfferState({
   offers,
   stages,
   currentCode,
+  currentId,
 }: {
   applicationId: string
   vacancyTitle: string
   offers: OfferRow[]
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
+  currentId: string
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -718,7 +760,7 @@ function AcceptedOfferState({
 
   return (
     <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
-      <StageTracker stages={stages} currentCode={currentCode} compact />
+      <StageTracker stages={stages} currentCode={currentCode} currentId={currentId} compact />
 
       <div className="rounded-[10px] border border-[oklch(0.86_0.06_155)] bg-[oklch(0.97_0.04_155)] px-3.5 py-3">
         <p className="text-[13.5px] font-bold text-[oklch(0.36_0.13_150)]">
@@ -755,16 +797,18 @@ function AcceptedOfferState({
 function DefaultStateCard({
   stages,
   currentCode,
+  currentId,
   stageName,
 }: {
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
+  currentId: string
   stageName: string
 }) {
   const t = useTranslations()
   return (
     <article className="space-y-3 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
-      <StageTracker stages={stages} currentCode={currentCode} compact />
+      <StageTracker stages={stages} currentCode={currentCode} currentId={currentId} compact />
       <p className="text-[13px] text-muted-foreground">
         {t.rich('stageBlock.defaultState', {
           name: statusLabel(t, currentCode, stageName),

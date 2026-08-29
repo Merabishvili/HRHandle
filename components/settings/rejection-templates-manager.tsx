@@ -25,7 +25,7 @@ import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 import { DEFAULT_REJECTION_SUBJECT, DEFAULT_REJECTION_BODY } from '@/lib/email-template-utils'
 import { Plus, Trash2, Loader2, Pencil, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
-const VARIABLES = ['{{candidate_name}}', '{{role}}', '{{company}}']
+const VARIABLES = ['{{candidate_name}}', '{{role}}', '{{company}}', '{{sender_name}}', '{{sender_email}}']
 const NO_REASON = '__none__'
 
 /** Render a template with sample data so admins see the real subject/body
@@ -35,6 +35,8 @@ function renderRejectionPreview(text: string): string {
     .replaceAll('{{candidate_name}}', 'Jane Smith')
     .replaceAll('{{role}}', 'Senior Developer')
     .replaceAll('{{company}}', 'Acme Corp')
+    .replaceAll('{{sender_name}}', 'Taylor Brooks')
+    .replaceAll('{{sender_email}}', 'taylor@acme.com')
 }
 
 /** Live subject + body preview panel, matching the other Email-template tabs. */

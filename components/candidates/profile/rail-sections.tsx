@@ -9,8 +9,8 @@ import { Calendar, Mail, XCircle, ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { updateApplicationStatus } from '@/lib/actions/applications'
-import { statusLabel } from '@/lib/pipeline/status-i18n'
+import { updateApplicationStatus, updateApplicationPipelineStage } from '@/lib/actions/applications'
+import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
 import type { ApplicationStatus } from '@/lib/types/application'
 
 interface RailActionsProps {
@@ -22,6 +22,10 @@ interface RailActionsProps {
    * primary action's label and target). Null when the current stage is
    * already the last active stage. */
   nextStage: { code: ApplicationStatus['code']; name: string; id: string } | null
+  /** When true, `nextStage.id` is a per-vacancy pipeline_stage id (advance via
+   * updateApplicationPipelineStage); when false it's a canonical status id
+   * (advance via updateApplicationStatus). */
+  advanceUsesPipelineStage: boolean
   /** Trigger the existing rejection-dialog flow scoped to this
    * application. Held by the parent so the dialog can render at the page
    * level. */
@@ -40,17 +44,20 @@ export function RailActions({
   candidateId,
   candidateEmail,
   nextStage,
+  advanceUsesPipelineStage,
   onReject,
 }: RailActionsProps) {
   const t = useTranslations()
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const nextStageLabel = nextStage ? statusLabel(t, nextStage.code, nextStage.name) : ''
+  const nextStageLabel = nextStage ? pipelineStageLabel(t, nextStage.name) : ''
 
   const advance = () => {
     if (!nextStage) return
     startTransition(async () => {
-      const result = await updateApplicationStatus(applicationId, nextStage.id)
+      const result = advanceUsesPipelineStage
+        ? await updateApplicationPipelineStage(applicationId, nextStage.id)
+        : await updateApplicationStatus(applicationId, nextStage.id)
       if (!result.success) {
         toast.error(t('rail.advanceFailed'))
         return

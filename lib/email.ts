@@ -188,8 +188,6 @@ export async function sendInterviewInvitationEmail({
   const time = d.toLocaleTimeString(chrome.dateTag, { timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })
   const typeLabel = interviewType === 'video' ? chrome.typeVideo : interviewType === 'phone' ? chrome.typePhone : chrome.typeOnsite
   const safeCandidate = escapeHtml(candidateName)
-  const safeSenderName = escapeHtml(senderName)
-  const safeSenderEmail = escapeHtml(senderEmail)
   const safeMeetingLink = meetingLink && meetingLink.startsWith('https://') ? meetingLink : null
 
   const vars = {
@@ -200,6 +198,7 @@ export async function sendInterviewInvitationEmail({
     interview_time: time,
     meeting_link: meetingLink ?? '',
     interviewer_name: senderName,
+    interviewer_email: senderEmail,
   }
   const defaults = defaultTemplate('interview_invitation', locale)
   const subject = rescheduled
@@ -261,12 +260,6 @@ export async function sendInterviewInvitationEmail({
       ${chrome.joinMeeting}
     </a>` : ''}
 
-    <p style="color: #6b7280; font-size: 13px; margin: 24px 0 0;">
-      ${chrome.contactReply(
-        `<strong style="color: #111827;">${safeSenderName}</strong>`,
-        `<a href="mailto:${safeSenderEmail}" style="color: #111827;">${safeSenderEmail}</a>`,
-      )}
-    </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">${chrome.sentVia}</p>
   </div>
@@ -508,15 +501,19 @@ export async function sendApplicationRejectionEmail({
   customBody?: string | undefined
   contentLocale?: Locale | undefined
 }) {
-  const vars = { candidate_name: candidateName, role: vacancyTitle, company: organizationName }
+  const vars = {
+    candidate_name: candidateName,
+    role: vacancyTitle,
+    company: organizationName,
+    sender_name: senderName,
+    sender_email: senderEmail,
+  }
   const locale = contentLocale ?? DEFAULT_LOCALE
   const chrome = emailChrome(locale)
   const defaults = defaultTemplate('rejection', locale)
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
-  const safeSenderName = escapeHtml(senderName)
-  const safeSenderEmail = escapeHtml(senderEmail)
 
   return getResend().emails.send({
     from: senderFrom(senderName),
@@ -533,12 +530,6 @@ export async function sendApplicationRejectionEmail({
     <p style="color: #6b7280; margin: 0 0 24px;">
       ${chrome.dear(`<strong style="color: #111827;">${safeCandidate}</strong>`)}<br><br>
       ${body}
-    </p>
-    <p style="color: #6b7280; font-size: 13px; margin: 0;">
-      ${chrome.contactWelcome(
-        `<strong style="color: #111827;">${safeSenderName}</strong>`,
-        `<a href="mailto:${safeSenderEmail}" style="color: #111827;">${safeSenderEmail}</a>`,
-      )}
     </p>
     <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">${chrome.sentVia}</p>

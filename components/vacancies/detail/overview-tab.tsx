@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { format, formatDistanceToNow } from 'date-fns'
 import { getTranslations } from 'next-intl/server'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import { AlertTriangle, ArrowRight, Copy } from 'lucide-react'
 
 import { getStageStyle } from '@/lib/pipeline/stage-style'
@@ -348,13 +349,15 @@ export function buildAttentionList(
     newApplicantCount,
   }: {
     vacancyId: string
-    pendingOffers: { applicationId: string; candidateInitials: string; candidateFirstName: string; daysAwaiting: number }[]
-    upcomingInterviewsTomorrow: { interviewId: string; candidateInitials: string; candidateFirstName: string; scheduledAt: string }[]
+    pendingOffers: { applicationId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; daysAwaiting: number }[]
+    upcomingInterviewsTomorrow: { interviewId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; scheduledAt: string }[]
     newApplicantCount: number
   },
   t: OverviewTranslator,
+  locale: string,
 ): AttentionItem[] {
   const bold = { b: (chunks: React.ReactNode) => <strong className="font-semibold">{chunks}</strong> }
+  const df = dateFnsLocale(locale)
   const items: AttentionItem[] = []
   for (const o of pendingOffers) {
     items.push({
@@ -363,7 +366,9 @@ export function buildAttentionList(
       initialsHue: 'cyan',
       message: t.rich('vacOverview.offerAwaiting', { name: o.candidateFirstName, count: o.daysAwaiting, ...bold }),
       ctaLabel: t('vacOverview.followUp'),
-      ctaHref: `/candidates/${o.applicationId}`,
+      // Link to the candidate (there is no per-application route); the CTA
+      // previously pointed at /candidates/<applicationId>, which 404s.
+      ctaHref: `/candidates/${o.candidateId}`,
     })
   }
   for (const i of upcomingInterviewsTomorrow) {
@@ -371,9 +376,11 @@ export function buildAttentionList(
       id: `interview-${i.interviewId}`,
       initials: i.candidateInitials,
       initialsHue: 'purple',
-      message: t.rich('vacOverview.interviewWith', { name: i.candidateFirstName, time: formatDistanceToNow(new Date(i.scheduledAt), { addSuffix: true }), ...bold }),
+      message: t.rich('vacOverview.interviewWith', { name: i.candidateFirstName, time: formatDistanceToNow(new Date(i.scheduledAt), { addSuffix: true, locale: df }), ...bold }),
       ctaLabel: t('vacOverview.view'),
-      ctaHref: `/interviews/${i.interviewId}`,
+      // There is no /interviews/<id> page — link to the candidate profile,
+      // where the scheduled interview is shown (was a 404).
+      ctaHref: `/candidates/${i.candidateId}`,
     })
   }
   if (newApplicantCount > 0) {
@@ -391,8 +398,8 @@ export function buildAttentionList(
 
 // Exposed so the page can format end-date once instead of duplicating
 // the format() call.
-export function formatEndDate(value: string | null): string | null {
+export function formatEndDate(value: string | null, locale: string): string | null {
   if (!value) return null
-  return format(new Date(value), 'MMM d, yyyy')
+  return format(new Date(value), 'MMM d, yyyy', { locale: dateFnsLocale(locale) })
 }
 

@@ -79,6 +79,20 @@ export async function createRejectionTemplate(
     return { success: false, error: `Maximum ${MAX_TEMPLATES} rejection templates allowed.` }
   }
 
+  // One template per reason: the reject dialog auto-fills the reason's template,
+  // so two templates on the same reason would be ambiguous. (Unassigned /
+  // reason-less templates may still coexist.)
+  if (reasonId) {
+    const { count: reasonCount } = await ctx.supabase
+      .from('rejection_templates')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', ctx.orgId)
+      .eq('reason_id', reasonId)
+    if ((reasonCount ?? 0) > 0) {
+      return { success: false, error: 'A template is already linked to this reason. Edit that one instead of adding another.' }
+    }
+  }
+
   const { data, error } = await ctx.supabase
     .from('rejection_templates')
     .insert({
@@ -123,6 +137,22 @@ export async function updateRejectionTemplate(
   if (trimSubject.length > 500) return { success: false, error: 'Subject must be 500 characters or fewer.' }
   if (!trimBody) return { success: false, error: 'Message body is required.' }
   if (trimBody.length > 10000) return { success: false, error: 'Message body must be 10,000 characters or fewer.' }
+
+  // One template per reason (see createRejectionTemplate) — block reassigning
+  // this template to a reason another template already owns.
+  if (reasonId) {
+    const { data: clash } = await ctx.supabase
+      .from('rejection_templates')
+      .select('id')
+      .eq('organization_id', ctx.orgId)
+      .eq('reason_id', reasonId)
+      .neq('id', id)
+      .limit(1)
+      .maybeSingle()
+    if (clash) {
+      return { success: false, error: 'Another template is already linked to this reason.' }
+    }
+  }
 
   const { error } = await ctx.supabase
     .from('rejection_templates')

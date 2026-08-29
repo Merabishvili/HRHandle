@@ -137,3 +137,28 @@ export function describeKnockoutAnswer(
   }
   return `passes when = ${knockoutAnswer}`
 }
+
+/**
+ * Concise, label-free rendering of the passing condition for compact UI
+ * (e.g. "≤ 2", "≥ 3", "2–5", "Yes", "A, B"). Unlike `describeKnockoutAnswer`
+ * it omits the "passes when" prose, so callers can wrap it in their own
+ * localized "Expected: …" label. `yes_no` / `short_text` return the raw value
+ * so the caller can localize a yes/no answer itself. The stored knockout for
+ * number/select is an encoded JSON blob (`{"op":"lte","value":2}` / an option
+ * list) — decode it here rather than leaking the raw JSON into the UI.
+ */
+export function formatKnockoutExpected(
+  answerType: ScreeningAnswerType,
+  knockoutAnswer: string | null | undefined,
+): string | null {
+  if (!knockoutAnswer) return null
+  if (answerType === 'number') {
+    const cond = parseNumberCondition(knockoutAnswer)
+    if (!cond) return null
+    if (cond.op === 'lte') return `≤ ${cond.value}`
+    if (cond.op === 'gte') return `≥ ${cond.value}`
+    return `${cond.value}–${cond.value2}`
+  }
+  if (answerType === 'select') return parseSelectPassing(knockoutAnswer).join(', ')
+  return knockoutAnswer
+}
