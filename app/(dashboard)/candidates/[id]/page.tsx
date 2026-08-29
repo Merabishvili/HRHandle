@@ -274,6 +274,41 @@ export default async function CandidateDetailPage({
     }
   }
 
+  // Real per-vacancy stages (non-terminal, ordered) so the stage tracker
+  // shows each application's OWN vacancy stages with their custom names —
+  // not the canonical 7. Bucket-code drives the tracker colour; the name
+  // is the recruiter's real stage label.
+  const stagesByVacancy = new Map<
+    string,
+    { id: string; code: ApplicationStatus['code']; name: string }[]
+  >()
+  if (vacancyIds.length > 0) {
+    const { data: vacStagesRaw } = await supabase
+      .from('pipeline_stages')
+      .select('id, vacancy_id, name, type, is_terminal, sort_order')
+      .in('vacancy_id', vacancyIds)
+      .order('sort_order', { ascending: true })
+    type VacStageRow = {
+      id: string
+      vacancy_id: string
+      name: string
+      type: 'standard' | 'review' | 'interview' | 'offer'
+      is_terminal: boolean
+      sort_order: number
+    }
+    for (const st of (vacStagesRaw ?? []) as VacStageRow[]) {
+      if (st.is_terminal) continue // the tracker renders only the active path
+      const code = mapPipelineStageToBucket({
+        type: st.type,
+        name: st.name,
+        is_terminal: st.is_terminal,
+      }) as ApplicationStatus['code']
+      const arr = stagesByVacancy.get(st.vacancy_id) ?? []
+      arr.push({ id: st.id, code, name: st.name })
+      stagesByVacancy.set(st.vacancy_id, arr)
+    }
+  }
+
   // Wave 2.6 Slice 2c — Resolve each application's stage from the
   // per-vacancy `pipeline_stages` row joined on the application, then
   // bucket-map to the canonical code for outcome / terminal checks.
@@ -310,6 +345,8 @@ export default async function CandidateDetailPage({
       vacancyId: a.vacancy_id,
       vacancyTitle: vacancy.title,
       stage,
+      // This app's own vacancy stages — drives the fidelity of the tracker.
+      vacancyStages: stagesByVacancy.get(a.vacancy_id) ?? [],
     }]
   })
 

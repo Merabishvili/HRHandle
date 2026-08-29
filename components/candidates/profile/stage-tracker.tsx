@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
-import { statusLabel } from '@/lib/pipeline/status-i18n'
+import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
 import type { ApplicationStatus } from '@/lib/types/application'
 
 interface StageTrackerProps {
@@ -75,7 +75,7 @@ export function StageTracker({ stages, currentCode, compact = false }: StageTrac
               style={pillStyle}
               aria-current={isCurrent ? 'step' : undefined}
             >
-              {statusLabel(t, stage.code, stage.name)}
+              {pipelineStageLabel(t, stage.name)}
             </span>
             {!isLast && (
               <span

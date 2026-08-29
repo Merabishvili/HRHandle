@@ -90,6 +90,10 @@ interface ProfileShellProps {
     vacancyId: string
     vacancyTitle: string
     stage: { id: string; code: ApplicationStatus['code']; name: string } | null
+    /** This application's OWN vacancy stages (non-terminal, ordered) — the
+     * stage tracker renders these real custom stages instead of the
+     * canonical 7. Empty falls back to `activeStages`. */
+    vacancyStages: { id: string; code: ApplicationStatus['code']; name: string }[]
   }[]
   /** Offers keyed by application id — the offer-stage block shows the sent
    * offer's summary + actions once one exists. */
@@ -386,7 +390,11 @@ export function CandidateProfileShell({
                 vacancyTitle={selectedApp.vacancyTitle}
                 candidateName={candidate.fullName}
                 offers={offersByApplication[selectedApp.id] ?? []}
-                stages={activeStages}
+                stages={
+                  selectedApp.vacancyStages.length > 0
+                    ? selectedApp.vacancyStages
+                    : activeStages
+                }
                 currentStage={selectedApp.stage}
                 candidate={{
                   salaryExpectation: candidate.salaryExpectation,

@@ -99,9 +99,12 @@ export async function SettingsTab({
 
         <section
           className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]"
-          aria-label={t('settings.nav.pipelineStages')}
+          aria-label={t('vacSettings.pipelineStages')}
         >
-          <h2 className="mb-3 text-[15px] font-bold text-foreground">{t('settings.nav.pipelineStages')}</h2>
+          <h2 className="text-[15px] font-bold text-foreground">{t('vacSettings.pipelineStages')}</h2>
+          <p className="mb-3 mt-0.5 text-[12px] text-muted-foreground">
+            {t('vacSettings.pipelineStagesHint')}
+          </p>
           <PipelineStagesManager
             vacancyId={vacancyId}
             initialStages={stages}

@@ -259,7 +259,7 @@ export default async function VacancyDetailPage({
     // the per-vacancy kanban.
     supabase
       .from('pipeline_stages')
-      .select('id, name, type, is_terminal, sort_order')
+      .select('id, name, type, is_terminal, sort_order, origin_template_id')
       .eq('vacancy_id', id)
       .order('sort_order', { ascending: true }),
   ])
@@ -574,6 +574,7 @@ export default async function VacancyDetailPage({
                   type: 'standard' | 'review' | 'interview' | 'offer'
                   is_terminal: boolean
                   sort_order: number
+                  origin_template_id: string | null
                 }[]
               }
               canEditStages={canEditQuestions}
