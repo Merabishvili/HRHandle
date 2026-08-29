@@ -39,6 +39,12 @@ function renderRejectionPreview(text: string): string {
     .replaceAll('{{sender_email}}', 'taylor@acme.com')
 }
 
+/** Localize known machine error codes from the server actions; other errors
+ * (validation strings) are already human-readable and shown as-is. */
+function displayTemplateError(tr: (key: string) => string, error: string): string {
+  return error === 'reason_taken' ? tr('rejectTpl.reasonTaken') : error
+}
+
 /** Live subject + body preview panel, matching the other Email-template tabs. */
 function RejectionPreview({ subject, body }: { subject: string; body: string }) {
   const tr = useTranslations()
@@ -97,7 +103,7 @@ function TemplateRow({
         body,
         resolvedReasonId
       )
-      if (!result.success) { setError(result.error); return }
+      if (!result.success) { setError(displayTemplateError(tr, result.error)); return }
       onUpdated({ ...template, name, subject, body, reason_id: resolvedReasonId })
       setEditing(false)
     })
@@ -116,7 +122,7 @@ function TemplateRow({
     if (!confirmDelete) { setConfirmDelete(true); return }
     startTransition(async () => {
       const result = await deleteRejectionTemplate(template.id)
-      if (!result.success) { setError(result.error); return }
+      if (!result.success) { setError(displayTemplateError(tr, result.error)); return }
       onDeleted(template.id)
     })
   }
@@ -230,7 +236,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
     startTransition(async () => {
       const resolvedNewReasonId = newReasonId === NO_REASON ? null : newReasonId
       const result = await createRejectionTemplate(newName, newSubject, newBody, resolvedNewReasonId)
-      if (!result.success) { setError(result.error); return }
+      if (!result.success) { setError(displayTemplateError(tr, result.error)); return }
       setTemplates((prev) => [...prev, result.data])
       setNewName('')
       setNewReasonId(reasons[0]?.id ?? NO_REASON)

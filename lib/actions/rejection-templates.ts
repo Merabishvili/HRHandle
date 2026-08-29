@@ -89,7 +89,8 @@ export async function createRejectionTemplate(
       .eq('organization_id', ctx.orgId)
       .eq('reason_id', reasonId)
     if ((reasonCount ?? 0) > 0) {
-      return { success: false, error: 'A template is already linked to this reason. Edit that one instead of adding another.' }
+      // Machine code — the client localizes it (see rejection-templates-manager).
+      return { success: false, error: 'reason_taken' }
     }
   }
 
@@ -150,7 +151,8 @@ export async function updateRejectionTemplate(
       .limit(1)
       .maybeSingle()
     if (clash) {
-      return { success: false, error: 'Another template is already linked to this reason.' }
+      // Machine code — localized client-side.
+      return { success: false, error: 'reason_taken' }
     }
   }
 
