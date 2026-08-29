@@ -8,6 +8,7 @@
 export {
   updateApplicationStatus,
   updateApplicationPipelineStage,
+  moveApplicationToMainColumn,
   moveApplicationsBatch,
 } from './applications/status-actions'
 export type { BulkMoveResult } from './applications/status-actions'

@@ -4,6 +4,7 @@ import {
   filterApplicationsByRole,
   buildCardData,
   groupCardsByStageCode,
+  groupCardsByColumnId,
   buildTerminalCounts,
   buildClosedCandidates,
   countActiveApplications,
@@ -73,6 +74,37 @@ describe('buildCardData', () => {
     expect(c1?.inStageSince).toBe('2026-02-02T00:00:00Z')
     const [c2] = buildCardData([app({ id: '2', last_status_changed_at: null })], statusById, [applied])
     expect(c2?.inStageSince).toBe('2026-01-01T00:00:00Z')
+  })
+  it('carries the column id (status_id) as stageId for id-keyed grouping', () => {
+    const [card] = buildCardData([app({ id: '1', status_id: 'col-x' })], statusById, [applied])
+    expect(card?.stageId).toBe('col-x')
+  })
+})
+
+// ─── groupCardsByColumnId ─────────────────────────────────────────────────────
+
+describe('groupCardsByColumnId', () => {
+  it('buckets by column id, keeping two same-bucket columns distinct', () => {
+    // Two Main-pipeline "Interview" columns share the canonical bucket but
+    // have distinct ids — id-keyed grouping must NOT merge them.
+    const cards = buildCardData(
+      [
+        app({ id: '1', status_id: 'col-int-a' }),
+        app({ id: '2', status_id: 'col-int-b' }),
+        app({ id: '3', status_id: 'col-int-a' }),
+      ],
+      statusById,
+      [applied],
+    )
+    const grouped = groupCardsByColumnId(cards)
+    expect(grouped.get('col-int-a')?.map((c) => c.applicationId)).toEqual(['1', '3'])
+    expect(grouped.get('col-int-b')?.map((c) => c.applicationId)).toEqual(['2'])
+  })
+
+  it('falls back to stage code when a card has no column id', () => {
+    const cards = buildCardData([app({ id: '1', status_id: null })], statusById, [applied])
+    const grouped = groupCardsByColumnId(cards)
+    expect(grouped.get('applied')?.map((c) => c.applicationId)).toEqual(['1'])
   })
 })
 

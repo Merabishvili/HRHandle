@@ -144,16 +144,18 @@ export default async function PipelinePage() {
     { data: applicationsRaw },
     { data: rejectionReasonsRaw },
     { data: rejectionTemplatesRaw },
+    { data: templatesRaw },
   ] = await Promise.all([
     // Wave 2.6 Slice 4 — applications.status_id is gone; we read
-    // pipeline_stage_id + the joined pipeline_stages row, then bucket-
-    // map each app to a canonical column code.
+    // pipeline_stage_id + the joined pipeline_stages row (incl. its
+    // origin_template_id link), then place each app on a Main-pipeline
+    // column below.
     supabase
       .from('applications')
       .select(
         `id, candidate_id, vacancy_id, pipeline_stage_id, applied_at, last_status_changed_at,
          rejection_reason_id,
-         pipeline_stages ( type, name, is_terminal )`,
+         pipeline_stages ( type, name, is_terminal, origin_template_id )`,
       )
       .eq('organization_id', orgId)
       .in('vacancy_id', vacancyIds)
@@ -172,12 +174,23 @@ export default async function PipelinePage() {
       .select('id, name, subject, body, reason_id')
       .eq('organization_id', orgId)
       .order('sort_order', { ascending: true }),
+
+    // Main pipeline (org-level stage templates) — these render the board
+    // columns. Empty for orgs with no Main pipeline → canonical fallback.
+    supabase
+      .from('org_pipeline_stage_templates')
+      .select('id, name, type, is_terminal, sort_order')
+      .eq('organization_id', orgId)
+      .order('sort_order', { ascending: true }),
   ])
 
-  type StageJoin =
-    | { type: 'standard' | 'review' | 'interview' | 'offer'; name: string; is_terminal: boolean }
-    | { type: 'standard' | 'review' | 'interview' | 'offer'; name: string; is_terminal: boolean }[]
-    | null
+  type StageRow = {
+    type: 'standard' | 'review' | 'interview' | 'offer'
+    name: string
+    is_terminal: boolean
+    origin_template_id: string | null
+  }
+  type StageJoin = StageRow | StageRow[] | null
   interface AppRow {
     id: string
     candidate_id: string
@@ -238,16 +251,70 @@ export default async function PipelinePage() {
     reasonNameById.set(r.id, r.name)
   }
 
-  // Wave 2.6 Slice 4 — bucket each app from its pipeline_stages join to
-  // the canonical code, then look up the matching application_statuses.id
-  // so the CrossVacancyBoard contract (statuses + per-app status_id) stays
-  // intact. With status_id gone from the DB, this in-memory id is purely
-  // a column-key for the board UI; it never round-trips back to writes.
   const statusIdByCode = new Map<string, string>()
   for (const s of sortedStatuses) statusIdByCode.set(s.code, s.id)
   // Some terminal statuses (rejected / withdrawn) live outside
   // `sortedStatuses` because they're filtered to active. Pull them in too.
   for (const s of appStatuses) statusIdByCode.set(s.code, s.id)
+
+  // Rejection still keys off the canonical application_statuses.id.
+  const rejectedStatusId = statusIdByCode.get('rejected') ?? null
+
+  // Board columns come from the org's Main pipeline (org_pipeline_stage_templates),
+  // rendered as synthetic ApplicationStatus rows (id = template id = column key,
+  // code = canonical bucket for colour/terminal semantics, name = custom label).
+  // Orgs with no Main pipeline fall back to the canonical 7 statuses.
+  const templates = (templatesRaw ?? []) as {
+    id: string
+    name: string
+    type: 'standard' | 'review' | 'interview' | 'offer'
+    is_terminal: boolean
+    sort_order: number
+  }[]
+  const useTemplates = templates.length > 0
+
+  const boardStatuses: ApplicationStatus[] = useTemplates
+    ? [...templates]
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((tpl) => ({
+          id: tpl.id,
+          name: tpl.name,
+          code: mapPipelineStageToBucket({
+            type: tpl.type,
+            name: tpl.name,
+            is_terminal: tpl.is_terminal,
+          }) as ApplicationStatus['code'],
+          is_active: true,
+          sort_order: tpl.sort_order,
+        }))
+    : sortedStatuses
+
+  const boardStatusById = new Map(boardStatuses.map((s) => [s.id, s]))
+  const firstColumnId = boardStatuses[0]?.id ?? firstStatusId
+  // First column per canonical bucket — where a vacancy-only stage (no
+  // origin link) lands on the board.
+  const firstColumnIdByBucket = new Map<string, string>()
+  for (const s of boardStatuses) {
+    if (!firstColumnIdByBucket.has(s.code)) firstColumnIdByBucket.set(s.code, s.id)
+  }
+
+  // Place each application on a board column. Prefer the origin link
+  // (the exact Main-pipeline stage the app's per-vacancy stage was seeded
+  // from); fall back to the canonical bucket for vacancy-only / unlinked
+  // stages, then to the first column.
+  function resolveColumnId(a: AppRow): string | null {
+    const stageJoin = a.pipeline_stages
+    const stageRow = Array.isArray(stageJoin) ? stageJoin[0] : stageJoin
+    if (!stageRow) return firstColumnId
+    if (useTemplates) {
+      const origin = stageRow.origin_template_id
+      if (origin && boardStatusById.has(origin)) return origin
+      const bucket = mapPipelineStageToBucket(stageRow)
+      return firstColumnIdByBucket.get(bucket) ?? firstColumnId
+    }
+    const bucket = mapPipelineStageToBucket(stageRow)
+    return statusIdByCode.get(bucket) ?? firstColumnId
+  }
 
   const applications: CrossVacancyApplication[] = appRows
     .map((a) => {
@@ -259,24 +326,10 @@ export default async function PipelinePage() {
       const rawScore = fitScoreMap.get(a.id)
       const fitScore = typeof rawScore === 'number' ? Math.round(rawScore) / 10 : null
 
-      // Bucket assignment: read the joined pipeline_stages row, bucket-
-      // map to the canonical code, then resolve to the canonical
-      // application_statuses.id the board expects. Fall back to the
-      // first sorted column when the join is empty (defensive — every
-      // application should have a pipeline_stage_id post-Migration 049).
-      const stageJoin = a.pipeline_stages
-      const stageRow = Array.isArray(stageJoin) ? stageJoin[0] : stageJoin
-      let resolvedStatusId: string | null = firstStatusId
-      if (stageRow) {
-        const code = mapPipelineStageToBucket(stageRow)
-        const mappedId = statusIdByCode.get(code)
-        if (mappedId) resolvedStatusId = mappedId
-      }
-
       return {
         id: a.id,
         candidate_id: a.candidate_id,
-        status_id: resolvedStatusId,
+        status_id: resolveColumnId(a),
         first_name: candidate.first_name,
         last_name: candidate.last_name,
         email: candidate.email,
@@ -298,7 +351,7 @@ export default async function PipelinePage() {
   const roleOptions: RoleOption[] = vacancies.map((v) => {
     const activeCount = applications.filter((a) => {
       if (a.vacancy_id !== v.id) return false
-      const status = sortedStatuses.find((s) => s.id === a.status_id)
+      const status = a.status_id ? boardStatusById.get(a.status_id) : null
       return !!status && !TERMINAL_CODES.has(status.code)
     }).length
     return { id: v.id, title: v.title, activeCount }
@@ -314,11 +367,12 @@ export default async function PipelinePage() {
   return (
     <div className="flex flex-col gap-4 pb-24">
       <CrossVacancyBoard
-        statuses={sortedStatuses}
+        statuses={boardStatuses}
         roles={roleOptions}
         initialApplications={applications}
         rejectionReasons={rejectionReasonsRaw ?? []}
         rejectionTemplates={rejectionTemplates}
+        rejectedStatusId={rejectedStatusId}
       />
     </div>
   )

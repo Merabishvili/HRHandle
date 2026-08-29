@@ -63,3 +63,27 @@ export async function resolvePipelineStageId(
     .maybeSingle()
   return (data?.id as string | null) ?? null
 }
+
+/**
+ * Origin-link resolver: given a Main-pipeline template id and a vacancy,
+ * return the vacancy's `pipeline_stages.id` that was seeded from that
+ * template (`origin_template_id = templateId`). This is the robust
+ * cross-vacancy-board move path — it does NOT depend on the stage name,
+ * so a renamed stage still resolves correctly (unlike the name-based
+ * `resolvePipelineStageId`). Returns null when the vacancy has no stage
+ * linked to that template (e.g. the recruiter removed the inherited
+ * stage) — callers then fall back to code/name resolution.
+ */
+export async function resolvePipelineStageByTemplate(
+  client: StageLookupClient,
+  vacancyId: string,
+  templateId: string,
+): Promise<string | null> {
+  const { data } = await client
+    .from('pipeline_stages')
+    .select('id')
+    .eq('vacancy_id', vacancyId)
+    .eq('origin_template_id', templateId)
+    .maybeSingle()
+  return (data?.id as string | null) ?? null
+}

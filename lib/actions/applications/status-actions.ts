@@ -16,6 +16,7 @@ import { createOrgNotifications } from '@/lib/actions/notifications'
 import { APPLICATION_STATUS, CANDIDATE_STATUS } from '@/lib/types/constants'
 import {
   resolvePipelineStageId,
+  resolvePipelineStageByTemplate,
   type LegacyStatusCode,
 } from '@/lib/pipeline-stages/resolve'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
@@ -418,6 +419,79 @@ export async function updateApplicationPipelineStage(
 
   revalidatePath('/vacancies/[id]/pipeline', 'page')
   return { success: true, data: undefined }
+}
+
+/**
+ * Cross-vacancy board move. The board's columns are the org's Main
+ * pipeline (`org_pipeline_stage_templates`), so a drag targets a template
+ * id. Each application lives on a per-vacancy `pipeline_stages` row, so we
+ * resolve the app's vacancy's stage seeded from that template (via
+ * `origin_template_id`) and move there — preserving the specific stage and
+ * driving audit/email/webhook through `updateApplicationPipelineStage`.
+ *
+ * Routing:
+ *  - `columnId` is a Main-pipeline template → resolve by origin link; if
+ *    the vacancy has no linked stage (inherited stage removed, or an
+ *    older row), fall back to the template's canonical bucket.
+ *  - `columnId` is a canonical `application_statuses.id` (defensive
+ *    fallback board for an org with no Main pipeline) → delegate straight
+ *    to `updateApplicationStatus`.
+ */
+export async function moveApplicationToMainColumn(
+  applicationId: string,
+  columnId: string,
+): Promise<ActionResult<void>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  // Is this column a Main-pipeline template?
+  const { data: template } = await ctx.supabase
+    .from('org_pipeline_stage_templates')
+    .select('id, type, name, is_terminal')
+    .eq('id', columnId)
+    .eq('organization_id', ctx.orgId)
+    .maybeSingle()
+
+  // Fallback board (org has no Main pipeline): columnId is a canonical
+  // application_statuses id — the legacy path handles it directly.
+  if (!template) {
+    return updateApplicationStatus(applicationId, columnId)
+  }
+
+  // Resolve the app's vacancy so we can find its stage for this template.
+  const { data: application } = await ctx.supabase
+    .from('applications')
+    .select('id, vacancy_id')
+    .eq('id', applicationId)
+    .eq('organization_id', ctx.orgId)
+    .is('deleted_at', null)
+    .single()
+  if (!application) return { success: false, error: 'Application not found' }
+
+  // Preferred: the vacancy's stage seeded from this exact template.
+  const stageId = await resolvePipelineStageByTemplate(
+    ctx.supabase,
+    application.vacancy_id as string,
+    columnId,
+  )
+  if (stageId) {
+    return updateApplicationPipelineStage(applicationId, stageId)
+  }
+
+  // Fallback: no stage on this vacancy is linked to the template. Resolve
+  // by the template's canonical bucket so the move still lands sensibly.
+  const bucket = mapPipelineStageToBucket({
+    type: template.type as 'standard' | 'review' | 'interview' | 'offer',
+    name: template.name as string,
+    is_terminal: template.is_terminal as boolean,
+  })
+  const { data: canonicalStatus } = await ctx.supabase
+    .from('application_statuses')
+    .select('id')
+    .eq('code', bucket)
+    .single()
+  if (!canonicalStatus) return { success: false, error: 'Status configuration missing' }
+  return updateApplicationStatus(applicationId, canonicalStatus.id)
 }
 
 /** Defensive upper bound for one bulk-move call. With ~100ms per
