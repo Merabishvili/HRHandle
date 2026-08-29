@@ -33,7 +33,7 @@ const TEMPLATE_META: Partial<Record<TemplateType, { labelKey: string; descKey: s
     labelKey: 'emailTpl.interviewInvitation.label',
     descKey: 'emailTpl.interviewInvitation.desc',
     previewKey: 'emailTpl.interviewInvitation.preview',
-    variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{interview_date}}', '{{interview_time}}', '{{meeting_link}}'],
+    variables: ['{{candidate_name}}', '{{role}}', '{{company}}', '{{interview_date}}', '{{interview_time}}', '{{meeting_link}}', '{{interviewer_name}}', '{{interviewer_email}}'],
   },
   status_change_screening: {
     labelKey: 'emailTpl.statusScreening.label',
@@ -127,6 +127,10 @@ function TemplateEditor({
     .replace('{{interview_date}}', 'Monday, May 5, 2025')
     .replace('{{interview_time}}', '2:00 PM')
     .replace('{{meeting_link}}', 'https://meet.google.com/abc-xyz')
+    .replace('{{interviewer_name}}', 'Taylor Brooks')
+    .replace('{{interviewer_email}}', 'taylor@acme.com')
+    .replace('{{sender_name}}', 'Taylor Brooks')
+    .replace('{{sender_email}}', 'taylor@acme.com')
 
   return (
     <div className="space-y-6">
