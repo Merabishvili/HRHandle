@@ -6,7 +6,9 @@
 //
 //  This version targets WHICHEVER project the supplied creds point at, and
 //  forces you to TYPE that project's ref to proceed — so you can't wipe the
-//  wrong environment by muscle memory.
+//  wrong environment by muscle memory. It discovers the project's buckets from
+//  the Storage API at run time (so a newly-added bucket is emptied too), with a
+//  hard-coded fallback list if that call fails.
 //
 //  RUN (Node 20.6+; reads creds from the env file you pass):
 //    Staging:     node --env-file=.env.local     scripts/reset-storage.mjs --confirm quotchdymcnjlnwtjmgu
@@ -19,7 +21,13 @@ import { createClient } from '@supabase/supabase-js'
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-const BUCKETS = ['avatars', 'candidate-documents', 'org-logos']
+
+// Fallback list of the app's buckets, used for the pre-confirm warning and if
+// the live listBuckets() call fails. The actual run discovers buckets from the
+// API (see below) so a newly-added bucket is never missed. Keep this in sync
+// with the storage buckets created in migrations (029 + 20260829_support_tickets):
+//   avatars · candidate-documents · org-logos · support-attachments
+const KNOWN_BUCKETS = ['avatars', 'candidate-documents', 'org-logos', 'support-attachments']
 
 // Known projects — for a friendly label only; the guard works for any ref.
 const KNOWN = {
@@ -52,7 +60,7 @@ const confirmIdx = process.argv.indexOf('--confirm')
 const confirmed = confirmIdx !== -1 ? process.argv[confirmIdx + 1] : null
 if (confirmed !== ref) {
   console.error(
-    `\nRefusing. This will PERMANENTLY EMPTY these buckets: ${BUCKETS.join(', ')}` +
+    `\nRefusing. This will PERMANENTLY EMPTY every storage bucket (e.g. ${KNOWN_BUCKETS.join(', ')})` +
       `\nTo proceed, re-run with:  --confirm ${ref}`,
   )
   process.exit(1)
@@ -85,9 +93,24 @@ async function emptyBucket(bucket) {
   return removed
 }
 
-console.log(`\nConfirmed ${ref}. Emptying buckets…`)
+console.log(`\nConfirmed ${ref}.`)
+
+// Discover the project's buckets from the API so a newly-added bucket is never
+// missed (e.g. support-attachments). Fall back to the known list if the call
+// fails for any reason.
+let buckets = KNOWN_BUCKETS
+try {
+  const { data, error } = await supabase.storage.listBuckets()
+  if (error) throw error
+  if (data?.length) buckets = data.map((b) => b.id)
+  console.log(`Discovered ${buckets.length} bucket(s): ${buckets.join(', ')}`)
+} catch (e) {
+  console.warn(`Could not list buckets (${e.message}); falling back to: ${KNOWN_BUCKETS.join(', ')}`)
+}
+
+console.log('Emptying buckets…')
 let failed = false
-for (const bucket of BUCKETS) {
+for (const bucket of buckets) {
   try {
     const n = await emptyBucket(bucket)
     console.log(`✓ ${bucket}: removed ${n} file(s)`)
