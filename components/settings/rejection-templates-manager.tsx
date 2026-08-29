@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Select,
   SelectContent,
@@ -266,11 +265,7 @@ export function RejectionTemplatesManager({ initialTemplates, reasons }: Props) 
         )}
       </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {/* The add form shows its own error inline (below) — no duplicate banner here. */}
 
       {templates.length === 0 && !adding && (
         <div className="rounded-lg border border-dashed border-border px-4 py-6 text-center">

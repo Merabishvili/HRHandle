@@ -13,6 +13,8 @@ export interface EmailChrome {
   dear: (nameHtml: string) => string
   sentVia: string
   sentViaNoReply: string
+  /** CTA label on the generic team-notification email. */
+  openInApp: string
 
   // Application confirmation
   thanksForApplying: string
@@ -59,6 +61,7 @@ const CHROME: Record<Locale, EmailChrome> = {
     dear: (n) => `Dear ${n},`,
     sentVia: 'Sent via HRHandle',
     sentViaNoReply: 'Sent via HRHandle · Please do not reply to this email.',
+    openInApp: 'Open in HRHandle',
     thanksForApplying: 'Thanks for Applying!',
     trackApplication: 'Track your application',
     keepLinkPrivate:
@@ -93,6 +96,7 @@ const CHROME: Record<Locale, EmailChrome> = {
     dear: (n) => `ძვირფასო ${n},`,
     sentVia: 'გაგზავნილია HRHandle-ით',
     sentViaNoReply: 'გაგზავნილია HRHandle-ით · გთხოვთ, არ უპასუხოთ ამ წერილს.',
+    openInApp: 'გახსენით HRHandle-ში',
     thanksForApplying: 'გმადლობთ განაცხადისთვის!',
     trackApplication: 'თვალი ადევნეთ თქვენს განაცხადს',
     keepLinkPrivate:
@@ -127,6 +131,7 @@ const CHROME: Record<Locale, EmailChrome> = {
     dear: (n) => `Здравствуйте, ${n}!`,
     sentVia: 'Отправлено через HRHandle',
     sentViaNoReply: 'Отправлено через HRHandle · Пожалуйста, не отвечайте на это письмо.',
+    openInApp: 'Открыть в HRHandle',
     thanksForApplying: 'Спасибо за отклик!',
     trackApplication: 'Отслеживать заявку',
     keepLinkPrivate:

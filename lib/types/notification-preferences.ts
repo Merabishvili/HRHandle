@@ -53,25 +53,25 @@ export interface NotificationQuietHours {
   timezone: string    // IANA — e.g. "Europe/Tbilisi"
 }
 
-export type EmailDelivery = 'instant' | 'daily'
-
 export interface NotificationPreferences {
   email: NotificationEmailPreferences
   in_app_events: NotificationInAppEventPreferences
   slack_events: NotificationSlackEventPreferences
   in_product: NotificationInProductPreferences
-  email_delivery: EmailDelivery
   quiet_hours: NotificationQuietHours | null
 }
 
+// Email notifications are OFF by default and in-app ON by default (the org
+// opts into email per event). Emails are always sent instantly — there is no
+// digest.
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   email: {
-    new_applicant: true,
+    new_applicant: false,
     stage_change: false,
-    interview_scheduled: true,
-    offer_awaiting_response: true,
-    mention: true,
-    team_invite_update: true,
+    interview_scheduled: false,
+    offer_awaiting_response: false,
+    mention: false,
+    team_invite_update: false,
     weekly_digest: false,
   },
   in_app_events: {
@@ -92,8 +92,52 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
     show_bell_badge: true,
     auto_mark_read: true,
   },
-  email_delivery: 'instant',
   quiet_hours: null,
+}
+
+/**
+ * Maps a notification `type` (see lib/notifications/render.ts) to the
+ * preference keys that gate its delivery. Used by createOrgNotifications:
+ *   - in-app: skipped for a recipient who turned the matching toggle off
+ *     (`inAppLocked` types can't be turned off; types with no matching
+ *     toggle are always delivered in-app).
+ *   - email: sent only when the matching email toggle is on (types with no
+ *     email key are never emailed).
+ */
+export const NOTIFICATION_TYPE_PREFS: Record<
+  string,
+  {
+    inApp?: keyof NotificationInAppEventPreferences
+    email?: keyof NotificationEmailPreferences
+    inAppLocked?: boolean
+  }
+> = {
+  new_application: { inApp: 'new_applicant', email: 'new_applicant' },
+  interview_scheduled: { inApp: 'interview_reminder', email: 'interview_scheduled' },
+  interview_reminder: { inApp: 'interview_reminder', email: 'interview_scheduled' },
+  candidate_hired: { inApp: 'stage_change', email: 'stage_change' },
+  application_withdrawn: { inApp: 'stage_change', email: 'stage_change' },
+  offer_accepted: { inApp: 'offer_response', email: 'offer_awaiting_response' },
+  offer_declined: { inApp: 'offer_response', email: 'offer_awaiting_response' },
+  note_mention: { inApp: 'mention', email: 'mention', inAppLocked: true },
+  team_invite_sent: { email: 'team_invite_update' },
+  ai_fit_ready: {},
+  plan_limit_reached: {},
+}
+
+/** Whether a recipient should get the in-app notification for this type. */
+export function inAppNotificationAllowed(prefs: NotificationPreferences, type: string): boolean {
+  const m = NOTIFICATION_TYPE_PREFS[type]
+  if (!m || m.inApp === undefined) return true // no matching toggle → always in-app
+  if (m.inAppLocked) return true
+  return prefs.in_app_events[m.inApp]
+}
+
+/** Whether a recipient should be emailed for this type. */
+export function emailNotificationAllowed(prefs: NotificationPreferences, type: string): boolean {
+  const m = NOTIFICATION_TYPE_PREFS[type]
+  if (!m || m.email === undefined) return false // no email pref → never email
+  return prefs.email[m.email]
 }
 
 export const EMAIL_EVENT_LABELS: Record<keyof NotificationEmailPreferences, { title: string; description: string }> = {
@@ -223,7 +267,6 @@ export function normalizeNotificationPreferences(
     in_app_events: { ...d.in_app_events, ...(stored.in_app_events ?? {}) },
     slack_events: { ...d.slack_events, ...(stored.slack_events ?? {}) },
     in_product: { ...d.in_product, ...(stored.in_product ?? {}) },
-    email_delivery: stored.email_delivery ?? d.email_delivery,
     quiet_hours: stored.quiet_hours ?? d.quiet_hours,
   }
 }
