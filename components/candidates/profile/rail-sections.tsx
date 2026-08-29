@@ -4,12 +4,13 @@ import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Calendar, Mail, XCircle, ArrowRight, Loader2 } from 'lucide-react'
+import { Calendar, Mail, XCircle, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { updateApplicationStatus, updateApplicationPipelineStage } from '@/lib/actions/applications'
+import { markApplicationHired } from '@/lib/actions/applications/status-actions'
 import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
 import type { ApplicationStatus } from '@/lib/types/application'
 
@@ -67,6 +68,21 @@ export function RailActions({
     })
   }
 
+  // At the last active stage there's no "next stage" to advance to — the
+  // meaningful next move is hiring. Offer it here instead of a dead
+  // "final stage" message (works from Offer without waiting on acceptance).
+  const hire = () => {
+    startTransition(async () => {
+      const result = await markApplicationHired(applicationId)
+      if (!result.success) {
+        toast.error(t('rail.advanceFailed'))
+        return
+      }
+      toast.success(t('stageBlock.markedHired'))
+      router.refresh()
+    })
+  }
+
   return (
     <section aria-label={t('rail.actions')} className="space-y-2.5">
       <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
@@ -87,9 +103,18 @@ export function RailActions({
           {t('rail.advanceTo', { name: nextStageLabel })}
         </Button>
       ) : (
-        <p className="rounded-[9px] border border-dashed border-border bg-muted/30 px-3 py-2 text-center text-[12px] text-muted-foreground">
-          {t('rail.finalStage')}
-        </p>
+        <Button
+          onClick={hire}
+          disabled={pending}
+          className="w-full gap-1.5 rounded-[9px] bg-[oklch(0.55_0.16_150)] py-2.5 text-[13px] font-bold text-white hover:bg-[oklch(0.5_0.16_150)]"
+        >
+          {pending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+          ) : (
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+          )}
+          {t('stageBlock.markHired')}
+        </Button>
       )}
 
       <div className="grid grid-cols-3 gap-1.5">

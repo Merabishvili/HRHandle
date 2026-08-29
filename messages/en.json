@@ -1300,6 +1300,7 @@
   },
   "rejectTpl": {
     "templateName": "Template name",
+    "reasonTaken": "A template is already linked to this reason. Edit that one instead of adding another.",
     "linkedReason": "Linked rejection reason",
     "noneUnlinked": "None (unlinked)",
     "subject": "Subject",

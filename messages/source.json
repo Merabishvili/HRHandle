@@ -1135,6 +1135,7 @@
   "emailTpl.sentVia": { "en": "Sent via HRHandle", "ru": "Отправлено через HRHandle", "ka": "გაგზავნილია HRHandle-ით" },
 
   "rejectTpl.templateName": { "en": "Template name", "ru": "Название шаблона", "ka": "შაბლონის სახელი" },
+  "rejectTpl.reasonTaken": { "en": "A template is already linked to this reason. Edit that one instead of adding another.", "ru": "С этой причиной уже связан шаблон. Отредактируйте его вместо добавления нового.", "ka": "ამ მიზეზს უკვე დაკავშირებული აქვს შაბლონი. ახლის დამატების ნაცვლად, დაარედაქტირეთ არსებული." },
   "rejectTpl.linkedReason": { "en": "Linked rejection reason", "ru": "Связанная причина отказа", "ka": "დაკავშირებული უარყოფის მიზეზი" },
   "rejectTpl.noneUnlinked": { "en": "None (unlinked)", "ru": "Нет (без привязки)", "ka": "არცერთი (მიუბმელი)" },
   "rejectTpl.subject": { "en": "Subject", "ru": "Тема", "ka": "თემა" },
