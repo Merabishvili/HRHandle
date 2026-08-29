@@ -74,13 +74,17 @@ export function buildCardData(
       inStageSince: a.last_status_changed_at ?? a.applied_at,
       appliedAt: a.applied_at,
       stageCode: status?.code ?? activeStatuses[0]?.code ?? 'applied',
+      // Column id (Main-pipeline template id, or canonical status id in the
+      // fallback board). Drives id-keyed grouping so two columns that share a
+      // canonical bucket (e.g. two "Interview" rounds) don't merge.
+      stageId: a.status_id ?? undefined,
       fitScore: a.fit_score,
       rejectionReason: a.rejection_reason,
     }
   })
 }
 
-/** Bucket cards by their stage code (the board's column model). */
+/** Bucket cards by their stage code (the board's legacy column model). */
 export function groupCardsByStageCode(
   cardData: CrossVacancyCardData[],
 ): Map<string, CrossVacancyCardData[]> {
@@ -89,6 +93,21 @@ export function groupCardsByStageCode(
     const arr = m.get(c.stageCode) ?? []
     arr.push(c)
     m.set(c.stageCode, arr)
+  }
+  return m
+}
+
+/** Bucket cards by their column id (Main-pipeline board model). Falls back to
+ * the stage code when a card carries no column id (defensive). */
+export function groupCardsByColumnId(
+  cardData: CrossVacancyCardData[],
+): Map<string, CrossVacancyCardData[]> {
+  const m = new Map<string, CrossVacancyCardData[]>()
+  for (const c of cardData) {
+    const key = c.stageId ?? c.stageCode
+    const arr = m.get(key) ?? []
+    arr.push(c)
+    m.set(key, arr)
   }
   return m
 }

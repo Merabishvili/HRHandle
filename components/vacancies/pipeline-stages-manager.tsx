@@ -61,6 +61,10 @@ export interface PipelineStageRow {
   type: PipelineStageType
   is_terminal: boolean
   sort_order: number
+  /** The Main-pipeline template this stage was seeded from, or null for a
+   * stage added directly on this vacancy. Drives the "from Main pipeline"
+   * badge so recruiters see which stages are inherited vs vacancy-only. */
+  origin_template_id: string | null
 }
 
 interface PipelineStagesManagerProps {
@@ -378,6 +382,15 @@ function SortableStageRow({
       {stage.is_terminal && (
         <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
           {tr('pipeStages.terminal')}
+        </span>
+      )}
+
+      {stage.origin_template_id && (
+        <span
+          className="rounded bg-[oklch(0.95_0.03_250)] px-1.5 py-0.5 text-[10px] font-semibold text-[oklch(0.45_0.13_250)]"
+          title={tr('pipeStages.inheritedHint')}
+        >
+          {tr('pipeStages.inherited')}
         </span>
       )}
 

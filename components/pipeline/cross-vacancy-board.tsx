@@ -33,12 +33,13 @@ import {
 } from './cross-vacancy-card'
 import { ListView } from './list-view'
 import { BulkBar } from './bulk-bar'
-import { updateApplicationStatus } from '@/lib/actions/applications'
+import { moveApplicationToMainColumn } from '@/lib/actions/applications'
 import type { ApplicationStatus } from '@/lib/types/application'
+import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
 import {
   filterApplicationsByRole,
   buildCardData,
-  groupCardsByStageCode,
+  groupCardsByColumnId,
   buildTerminalCounts,
   buildClosedCandidates,
   countActiveApplications,
@@ -50,16 +51,25 @@ import { ViewModeToggle, type ViewMode } from './view-mode-toggle'
 export type { CrossVacancyApplication } from './cross-vacancy-derivation'
 
 interface CrossVacancyBoardProps {
+  /** Board columns — the org's Main pipeline as synthetic statuses (id =
+   * column key, code = canonical bucket, name = custom label), or the
+   * canonical 7 when the org has no Main pipeline. */
   statuses: ApplicationStatus[]
   roles: RoleOption[]
   initialApplications: CrossVacancyApplication[]
   rejectionReasons: RejectionReason[]
   rejectionTemplates: RejectionTemplate[]
+  /** Canonical `application_statuses.id` for code='rejected'. Rejection
+   * keys off this regardless of the Main-pipeline column dropped onto. */
+  rejectedStatusId: string | null
 }
 
 interface PendingRejection {
   applicationId: string
+  /** Canonical rejected status id — drives the reject action. */
   statusId: string
+  /** Board column the card moves to optimistically (the rejected column). */
+  targetColumnId: string
   candidateName: string
 }
 
@@ -79,6 +89,7 @@ export function CrossVacancyBoard({
   initialApplications,
   rejectionReasons,
   rejectionTemplates,
+  rejectedStatusId,
 }: CrossVacancyBoardProps) {
   const t = useTranslations()
   const [applications, setApplications] = useState(initialApplications)
@@ -138,7 +149,7 @@ export function CrossVacancyBoard({
     [filteredApplications, statusById, activeStatuses],
   )
 
-  const cardsByStageCode = useMemo(() => groupCardsByStageCode(cardData), [cardData])
+  const cardsByColumnId = useMemo(() => groupCardsByColumnId(cardData), [cardData])
 
   const terminalCounts = useMemo(
     () => buildTerminalCounts(terminalStatuses, filteredApplications),
@@ -206,9 +217,11 @@ export function CrossVacancyBoard({
 
     const targetStatus = statusById.get(targetColumnId)
     if (targetStatus?.code === 'rejected') {
+      if (!rejectedStatusId) return
       setPendingRejection({
         applicationId: activeIdStr,
-        statusId: targetColumnId,
+        statusId: rejectedStatusId,
+        targetColumnId,
         candidateName: `${app.first_name} ${app.last_name}`.trim(),
       })
       return
@@ -226,7 +239,7 @@ export function CrossVacancyBoard({
       ),
     )
 
-    const result = await updateApplicationStatus(activeIdStr, targetColumnId)
+    const result = await moveApplicationToMainColumn(activeIdStr, targetColumnId)
     if (!result.success) {
       setApplications(initialApplications)
       toast.error(t('pipeline.toast.moveFailed'))
@@ -240,7 +253,7 @@ export function CrossVacancyBoard({
         a.id === pendingRejection.applicationId
           ? {
               ...a,
-              status_id: pendingRejection.statusId,
+              status_id: pendingRejection.targetColumnId,
               last_status_changed_at: new Date().toISOString(),
             }
           : a,
@@ -271,7 +284,7 @@ export function CrossVacancyBoard({
             : a,
         ),
       )
-      const result = await updateApplicationStatus(appId, nextStatus.id)
+      const result = await moveApplicationToMainColumn(appId, nextStatus.id)
       if (!result.success) {
         setApplications(initialApplications)
         toast.error(t('pipeline.toast.advanceFailed'))
@@ -283,15 +296,16 @@ export function CrossVacancyBoard({
   const handleReviewReject = useCallback(
     (appId: string) => {
       const app = applications.find((a) => a.id === appId)
-      const rejectedStatus = statusByCode.get('rejected')
-      if (!app || !rejectedStatus) return
+      const rejectedColumn = statusByCode.get('rejected')
+      if (!app || !rejectedColumn || !rejectedStatusId) return
       setPendingRejection({
         applicationId: appId,
-        statusId: rejectedStatus.id,
+        statusId: rejectedStatusId,
+        targetColumnId: rejectedColumn.id,
         candidateName: `${app.first_name} ${app.last_name}`.trim(),
       })
     },
-    [applications, statusByCode],
+    [applications, statusByCode, rejectedStatusId],
   )
 
   const handleToggleSelect = useCallback((id: string, next: boolean) => {
@@ -332,7 +346,7 @@ export function CrossVacancyBoard({
     )
 
     const results = await Promise.all(
-      ids.map((id) => updateApplicationStatus(id, statusId)),
+      ids.map((id) => moveApplicationToMainColumn(id, statusId)),
     )
     const failed = results.filter((r) => !r.success).length
     if (failed > 0) {
@@ -350,7 +364,7 @@ export function CrossVacancyBoard({
   // we mirror the move into local state and clear the selection.
   const handleBulkReject = () => {
     if (selectedIds.size === 0) return
-    if (!statusByCode.get('rejected')) return
+    if (!rejectedStatusId) return
     setBulkRejectOpen(true)
   }
 
@@ -450,7 +464,8 @@ export function CrossVacancyBoard({
               <TintedKanbanColumn
                 key={status.id}
                 status={status}
-                cards={cardsByStageCode.get(status.code) ?? []}
+                label={pipelineStageLabel(t, status.name)}
+                cards={cardsByColumnId.get(status.id) ?? []}
                 isOver={overId === status.id}
                 selectedIds={selectedIds}
                 onToggleSelect={handleToggleSelect}
@@ -508,6 +523,7 @@ export function CrossVacancyBoard({
           selectedIds={selectedIds}
           onToggleSelect={handleToggleSelect}
           onToggleAll={handleToggleAll}
+          stageLabelFor={(s) => pipelineStageLabel(t, s.name)}
         />
       )}
 
@@ -527,6 +543,7 @@ export function CrossVacancyBoard({
           onClear={() => {
             setSelectedIds(new Set())
           }}
+          stageLabelFor={(s) => pipelineStageLabel(t, s.name)}
         />
       )}
 
@@ -554,12 +571,12 @@ export function CrossVacancyBoard({
       )}
 
       {/* Bulk reject — reason picker for the whole selection. */}
-      {statusByCode.get('rejected') && (
+      {rejectedStatusId && (
         <BatchRejectionDialog
           open={bulkRejectOpen}
           onOpenChange={setBulkRejectOpen}
           applicationIds={Array.from(selectedIds)}
-          rejectedStatusId={statusByCode.get('rejected')!.id}
+          rejectedStatusId={rejectedStatusId}
           reasons={rejectionReasons}
           templates={rejectionTemplates}
           onSuccess={handleBulkRejectSuccess}

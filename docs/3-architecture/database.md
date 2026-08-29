@@ -758,7 +758,7 @@ Per-org outgoing Slack/Teams webhook config.
 | created_at / updated_at | timestamptz | NOT NULL | |
 
 #### `pipeline_stages` (Wave 2.6) & `org_pipeline_stage_templates`
-Per-vacancy custom stages, and the org-level templates new vacancies clone.
+Per-vacancy custom stages, and the org-level **"Main pipeline"** templates new vacancies clone.
 
 | Column | Type | Nullable | Notes |
 |---|---|---|---|
@@ -769,8 +769,11 @@ Per-vacancy custom stages, and the org-level templates new vacancies clone.
 | type | text | NOT NULL | `standard\|review\|interview\|offer` (bucket-mapped via `mapPipelineStageToBucket`) |
 | sort_order | integer | NOT NULL | column order |
 | is_terminal | bool | NOT NULL | default false |
+| origin_template_id | uuid | NULL | *(pipeline_stages only, migration `20260829_main_pipeline_origin_link`)* → `org_pipeline_stage_templates(id)`. Set by `seed_default_pipeline_stages` when a stage is cloned from the Main pipeline; NULL for a stage added directly on the vacancy. |
 | created_by | uuid | NULL | |
 | created_at / updated_at | timestamptz | NOT NULL | |
+
+**Main pipeline drives the cross-vacancy board.** The `/pipeline` board renders one column per `org_pipeline_stage_templates` row (its custom name; falls back to the canonical 7 statuses when an org has no Main pipeline). Each application is placed on the column its per-vacancy stage was **seeded from** via `origin_template_id`; a vacancy-only stage (NULL origin) rolls up to its canonical bucket. Drag/advance/bulk moves go through `moveApplicationToMainColumn`, which resolves the app's own vacancy stage for the target template (`resolvePipelineStageByTemplate`) — robust to renamed stages, unlike the name-based `resolvePipelineStageId`. New orgs get the Main pipeline seeded at onboarding (`runOnboarding` → `seed_org_pipeline_stage_template_defaults`). Settings → **Main pipeline** (`/settings/pipeline-stages`) CRUDs the templates; a vacancy's own stages are edited on its Settings tab ("This vacancy's pipeline").
 
 #### `vacancy_screening_questions` & `application_screening_answers`
 Apply-form screening question definitions (per vacancy) + the candidate's answers (per application). Knockout logic in `lib/screening-questions/`.

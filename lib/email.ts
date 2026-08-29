@@ -618,7 +618,62 @@ export function buildSupportConfirmationEmail({
   }
 }
 
-/** Pure builder for the internal admin notification (English). */
+const SUPPORT_NOTIFY_STRINGS: Record<
+  Locale,
+  {
+    heading: (ref: string) => string
+    replyHint: string
+    from: string
+    source: string
+    sourcePublic: string
+    sourceApp: string
+    org: string
+    subject: string
+    attachment: string
+    attachments: string
+  }
+> = {
+  en: {
+    heading: (ref) => `New support ticket #${ref}`,
+    replyHint: 'Reply to this email to respond directly to the sender.',
+    from: 'From',
+    source: 'Source',
+    sourcePublic: 'Public form',
+    sourceApp: 'In-app (logged in)',
+    org: 'Org',
+    subject: 'Subject',
+    attachment: 'Attachment',
+    attachments: 'Attachments',
+  },
+  ka: {
+    heading: (ref) => `ახალი მხარდაჭერის მოთხოვნა #${ref}`,
+    replyHint: 'გამომგზავნისთვის პირდაპირ პასუხის გასაცემად უპასუხეთ ამ წერილს.',
+    from: 'გამომგზავნი',
+    source: 'წყარო',
+    sourcePublic: 'საჯარო ფორმა',
+    sourceApp: 'აპლიკაციიდან (ავტორიზებული)',
+    org: 'ორგანიზაცია',
+    subject: 'თემა',
+    attachment: 'დანართი',
+    attachments: 'დანართები',
+  },
+  ru: {
+    heading: (ref) => `Новый запрос в поддержку #${ref}`,
+    replyHint: 'Ответьте на это письмо, чтобы написать напрямую отправителю.',
+    from: 'От',
+    source: 'Источник',
+    sourcePublic: 'Публичная форма',
+    sourceApp: 'В приложении (авторизован)',
+    org: 'Организация',
+    subject: 'Тема',
+    attachment: 'Вложение',
+    attachments: 'Вложения',
+  },
+}
+
+/** Pure builder for the admin notification. Localized to the submitter's locale
+ * so the ticket in the support inbox matches the language they wrote in. The
+ * `[Support #REF]` subject prefix stays fixed so it's easy to filter. */
 export function buildSupportNotificationEmail({
   ticketId,
   subject,
@@ -627,6 +682,7 @@ export function buildSupportNotificationEmail({
   source,
   organizationId,
   attachments = [],
+  locale,
 }: {
   ticketId: string
   subject: string
@@ -635,10 +691,12 @@ export function buildSupportNotificationEmail({
   source: 'app' | 'public'
   organizationId: string | null
   attachments?: { name: string; url: string }[]
+  locale?: Locale | undefined
 }): { subject: string; html: string } {
+  const s = SUPPORT_NOTIFY_STRINGS[locale ?? DEFAULT_LOCALE] ?? SUPPORT_NOTIFY_STRINGS[DEFAULT_LOCALE]
   const ref = ticketRef(ticketId)
   const attachmentRow = attachments.length
-    ? `<tr><td style="padding: 6px 0; color: #6b7280; width: 110px; vertical-align: top;">${attachments.length > 1 ? 'Attachments' : 'Attachment'}</td><td style="padding: 6px 0;">${attachments
+    ? `<tr><td style="padding: 6px 0; color: #6b7280; width: 110px; vertical-align: top;">${attachments.length > 1 ? s.attachments : s.attachment}</td><td style="padding: 6px 0;">${attachments
         .map((a) => `<a href="${escapeHtml(a.url)}" style="color: #111827; font-weight: 600; display: block; margin-bottom: 2px;">${escapeHtml(a.name)}</a>`)
         .join('')}</td></tr>`
     : ''
@@ -650,13 +708,13 @@ export function buildSupportNotificationEmail({
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
   <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 32px;">
-    <h1 style="font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 4px;">New support ticket #${ref}</h1>
-    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 20px;">Reply to this email to respond directly to the sender.</p>
+    <h1 style="font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 4px;">${s.heading(ref)}</h1>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 20px;">${s.replyHint}</p>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-      <tr><td style="padding: 6px 0; color: #6b7280; width: 110px;">From</td><td style="padding: 6px 0; font-weight: 600; color: #111827;">${escapeHtml(submitterEmail)}</td></tr>
-      <tr><td style="padding: 6px 0; color: #6b7280;">Source</td><td style="padding: 6px 0; color: #111827;">${source === 'public' ? 'Public form' : 'In-app (logged in)'}</td></tr>
-      <tr><td style="padding: 6px 0; color: #6b7280;">Org</td><td style="padding: 6px 0; color: #111827;">${organizationId ? escapeHtml(organizationId) : '—'}</td></tr>
-      <tr><td style="padding: 6px 0; color: #6b7280;">Subject</td><td style="padding: 6px 0; font-weight: 600; color: #111827;">${escapeHtml(subject)}</td></tr>
+      <tr><td style="padding: 6px 0; color: #6b7280; width: 110px;">${s.from}</td><td style="padding: 6px 0; font-weight: 600; color: #111827;">${escapeHtml(submitterEmail)}</td></tr>
+      <tr><td style="padding: 6px 0; color: #6b7280;">${s.source}</td><td style="padding: 6px 0; color: #111827;">${source === 'public' ? s.sourcePublic : s.sourceApp}</td></tr>
+      <tr><td style="padding: 6px 0; color: #6b7280;">${s.org}</td><td style="padding: 6px 0; color: #111827;">${organizationId ? escapeHtml(organizationId) : '—'}</td></tr>
+      <tr><td style="padding: 6px 0; color: #6b7280;">${s.subject}</td><td style="padding: 6px 0; font-weight: 600; color: #111827;">${escapeHtml(subject)}</td></tr>
       ${attachmentRow}
     </table>
     <div style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px;">
@@ -668,10 +726,10 @@ export function buildSupportNotificationEmail({
   }
 }
 
-/** Sends both support emails: a localized confirmation to the submitter and an
- * English notification to the support inbox (Reply-To = the submitter, so a
- * plain reply reaches them). Best-effort — the caller catches failures so a
- * mail hiccup never loses the ticket. */
+/** Sends both support emails, each localized to the submitter's locale: a
+ * confirmation to the submitter and a notification to the support inbox
+ * (Reply-To = the submitter, so a plain reply reaches them). Best-effort — the
+ * caller catches failures so a mail hiccup never loses the ticket. */
 export async function sendSupportTicketEmails({
   ticketId,
   subject,
@@ -703,6 +761,7 @@ export async function sendSupportTicketEmails({
     source,
     organizationId,
     attachments,
+    locale,
   })
 
   await Promise.all([

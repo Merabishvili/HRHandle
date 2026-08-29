@@ -170,5 +170,18 @@ export async function runOnboarding(
     })
   }
 
+  // Seed the org's Main pipeline (default stage set) so it's populated from
+  // day one: it drives the cross-vacancy board columns and is copied — with
+  // origin links — onto every new vacancy. Best-effort: a failure here must
+  // never break onboarding (the seeder's fallback still gives new vacancies
+  // the hardcoded default set).
+  const { error: pipelineSeedError } = await admin.rpc(
+    'seed_org_pipeline_stage_template_defaults',
+    { p_org_id: organization.id, p_created_by: user.id },
+  )
+  if (pipelineSeedError) {
+    console.error('[onboarding] main pipeline seed failed:', pipelineSeedError.message)
+  }
+
   return { success: true }
 }

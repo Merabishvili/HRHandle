@@ -2,9 +2,15 @@
 -- HRHandle — RESET DATA (clean slate for testing) — REUSABLE (any project)
 -- ============================================================================
 --  Wipes every organization, user, candidate, vacancy, application,
---  subscription, payment order, note, interview, etc. Keeps the global lookup
---  tables (sectors + the status tables) so a fresh signup still works. All
---  per-org defaults are recreated by runOnboarding() on the next signup.
+--  subscription, payment order, note, interview, support ticket, pipeline
+--  stage + Main-pipeline template, etc. The wipe is DYNAMIC — it truncates
+--  every `public` table except the global lookups below — so tables added by
+--  later migrations (e.g. support_tickets, pipeline_stages,
+--  org_pipeline_stage_templates) are cleared automatically, no edits needed.
+--  Keeps the global lookup tables (sectors + the status tables) so a fresh
+--  signup still works. All per-org defaults are recreated on the next signup:
+--  runOnboarding() reseeds the org's Main pipeline + rejection defaults, and
+--  seed_default_pipeline_stages() clones it onto each new vacancy.
 --
 --  ⚠️  IRREVERSIBLE. Works on WHATEVER project the SQL Editor is connected to —
 --      staging OR production. There is no hard-coded target here, so the safety
@@ -19,7 +25,9 @@
 --            last line to `COMMIT;` and run again.
 --
 --  STORAGE: cleared separately (Supabase blocks DELETE on storage.objects from
---  SQL) — run `node --env-file=<env> scripts/reset-storage.mjs --confirm <ref>`.
+--  SQL) — run the companion script with the matching local env file:
+--    Staging:     node --env-file=.env.local           scripts/reset-storage.mjs --confirm quotchdymcnjlnwtjmgu
+--    Production:  node --env-file=.env.production.local scripts/reset-storage.mjs --confirm fnpyfwhvgzoxgyjafbsg
 -- ============================================================================
 
 BEGIN;

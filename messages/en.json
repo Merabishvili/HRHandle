@@ -317,7 +317,7 @@
       "organization": "Organization",
       "team": "Team",
       "billing": "Billing",
-      "pipelineStages": "Pipeline stages",
+      "pipelineStages": "Main pipeline",
       "customFields": "Custom fields",
       "emailTemplates": "Email templates",
       "rejectionReasons": "Rejection reasons",
@@ -755,8 +755,8 @@
     }
   },
   "pipelineStages": {
-    "title": "Pipeline stages",
-    "description": "The default set every new vacancy starts with. A stage has a name (free-text, any language) and a type — the type drives the actions on the candidate profile, never the name. Capped at 10 stages.",
+    "title": "Main pipeline",
+    "description": "Your organization's default hiring stages. These form the columns on the main Pipeline board and are copied onto every new vacancy — where you can remove or add stages per vacancy. A stage's type (not its name) drives the actions on the candidate profile. Capped at 10 stages.",
     "type": {
       "standard": "Standard",
       "review": "Review / Assessment",
@@ -1878,6 +1878,8 @@
     "workMode": "Work mode",
     "editRoleDetails": "Edit role details",
     "statusVisibility": "Status & visibility",
+    "pipelineStages": "This vacancy's pipeline",
+    "pipelineStagesHint": "Seeded from your Main pipeline. Rename, reorder or remove stages just for this vacancy — the Main pipeline stays unchanged.",
     "closingHint": "Closing stops new applications without deleting the role.",
     "dangerZone": "Danger zone",
     "dangerDesc": "Closing stops new applications. Deleting removes the role and its candidates — this can't be undone."
@@ -2098,6 +2100,8 @@
     "typeHint": "A stage's <b>type</b> drives the candidate profile actions — pick Interview for round-by-round scorecards, Review for screening gates, Offer for the offer state.",
     "dragReorder": "Drag to reorder",
     "terminal": "Terminal",
+    "inherited": "Main pipeline",
+    "inheritedHint": "Seeded from your organization's Main pipeline. You can rename or remove it for this vacancy.",
     "saveNameAria": "Save name",
     "cancelEditAria": "Cancel edit",
     "renameAria": "Rename stage",
