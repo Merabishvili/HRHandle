@@ -57,8 +57,8 @@ export default async function NotAvailablePage() {
               <p className="mt-1 text-muted-foreground">
                 If you are travelling, using a corporate VPN, or otherwise believe the
                 detected region is incorrect, email us at{' '}
-                <a href="mailto:hrhandle26@gmail.com" className="underline hover:text-foreground">
-                  hrhandle26@gmail.com
+                <a href="mailto:support@hrhandle.com" className="underline hover:text-foreground">
+                  support@hrhandle.com
                 </a>{' '}
                 from the address you intend to use. We&apos;ll respond within two business days.
               </p>

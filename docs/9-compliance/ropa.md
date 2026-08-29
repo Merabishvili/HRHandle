@@ -36,7 +36,7 @@ HRHandle wears two distinct controller/processor hats. Each is captured separate
 | Name | Aleksandre Merabishvili, Individual Entrepreneur |
 | Registration number | 01019062001 |
 | Address | Tbilisi, Georgia |
-| Contact | hrhandle26@gmail.com |
+| Contact | support@hrhandle.com |
 | DPO | Aleksandre Merabishvili (no formal DPO designation required at current scale; sole founder acts as the point of contact) |
 | EU representative (Art. 27) | **Not yet appointed.** Required before public marketing to EU markets — tracked in the audit plan. |
 | Supervisory authority | Georgian Personal Data Protection Service (and, once an EU representative is appointed, the relevant lead supervisory authority in the EU) |
@@ -105,11 +105,11 @@ For each activity: purpose, legal basis, data subject categories, personal data 
 |---|---|
 | Purpose | Respond to user-initiated emails about bugs, feature requests, billing, account questions, and GDPR rights requests. |
 | Legal basis (Art. 6) | (b) Contract performance for existing customers; (f) Legitimate interest for prospects and general enquiries. |
-| Data subject categories | Anyone who emails `hrhandle26@gmail.com`. |
+| Data subject categories | Anyone who emails `support@hrhandle.com`. |
 | Personal data categories | Email address; the content of the message (which may contain whatever the sender chose to disclose). |
-| Recipients / sub-processors | Google Workspace (the mailbox at gmail.com). |
+| Recipients / sub-processors | **ImprovMX** (USA — forwards `support@hrhandle.com` inbound mail to the Gmail mailbox); **Google/Gmail** (mailbox host, `hrhandle26@gmail.com`); **Resend** (USA — outbound support replies + ticket confirmations sent as `support@hrhandle.com`). |
 | Retention | Email retained per the inbox owner's normal practice; tickets/threads relating to specific compliance requests retained at least until the matter is closed plus a reasonable audit period. |
-| Transfer mechanism | SCCs with Google. |
+| Transfer mechanism | SCCs with Google, ImprovMX, and Resend (all USA-based). |
 | Security (Art. 32) | Strong account credentials, 2FA on the mailbox account. |
 
 ---

@@ -65,7 +65,7 @@ These are the realistic detection channels for HRHandle today:
    - New stack traces in `lib/supabase/*` or `lib/actions/*`
    - "permission denied for table" or RLS-related errors
 2. **Supabase advisor warnings** — check `get_advisors` periodically; flagged RLS / security_definer issues are pre-breach indicators
-3. **Customer report** — a recruiter contacts `hrhandle26@gmail.com` saying they saw data that shouldn't be theirs
+3. **Customer report** — a recruiter contacts `support@hrhandle.com` saying they saw data that shouldn't be theirs
 4. **Candidate report** — someone applying contacts to say something is wrong
 5. **Vendor notice** — Supabase / Vercel / Resend / Cloudflare / Google sends a security advisory
 6. **Suspicious activity in Vercel / Supabase logs** — repeated probing of an endpoint, unexpected admin-client invocations
@@ -165,7 +165,7 @@ Subject: Personal data breach notification — HRHandle ({YYYY-MM-DD})
 Notifying party:
   Aleksandre Merabishvili, Individual Entrepreneur
   Registration number: 01019062001, Tbilisi, Georgia
-  Contact: hrhandle26@gmail.com
+  Contact: support@hrhandle.com
   Service: HRHandle (https://hrhandle.com)
 
 1. Nature of the breach
@@ -184,7 +184,7 @@ Notifying party:
    {Rotation, deployment rollback, RLS hardening, customer notification, individual notification, etc.}
 
 6. Contact point for further information
-   Aleksandre Merabishvili — hrhandle26@gmail.com
+   Aleksandre Merabishvili — support@hrhandle.com
 
 7. Date and time of detection
    {YYYY-MM-DD HH:MM UTC}
@@ -224,7 +224,7 @@ What you should do
 We will send a follow-up message within {N} days with the results of our
 root-cause analysis and any further actions we recommend.
 
-If you have questions, reply to this email or contact hrhandle26@gmail.com.
+If you have questions, reply to this email or contact support@hrhandle.com.
 
 — HRHandle
 ```
@@ -307,7 +307,7 @@ Once per quarter (set a recurring calendar reminder):
 | Google AI / Gemini | status.cloud.google.com | Vendor breach notices |
 | Georgian Personal Data Protection Service | sda.gov.ge | [TODO: verify the current submission channel for breach notifications under the updated 2024 Georgian data protection law] |
 | EU representative | **Not yet appointed** — see [EU-rep item in audit plan](../issues-found.md) | When appointed, add address + email here |
-| HRHandle DPO / founder | Aleksandre Merabishvili | hrhandle26@gmail.com |
+| HRHandle DPO / founder | Aleksandre Merabishvili | support@hrhandle.com |
 
 ---
 

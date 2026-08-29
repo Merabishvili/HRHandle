@@ -33,7 +33,7 @@ export default function PrivacyPage() {
               are the data controller and we act as a data processor on your behalf.
             </p>
             <p className="mt-3">
-              Contact: <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a>
+              Contact: <a href="mailto:support@hrhandle.com" className="underline">support@hrhandle.com</a>
             </p>
           </section>
 
@@ -395,7 +395,7 @@ export default function PrivacyPage() {
             </ul>
             <p className="mt-3">
               To exercise any of these rights, contact us at{' '}
-              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a>.
+              <a href="mailto:support@hrhandle.com" className="underline">support@hrhandle.com</a>.
               We will respond within 30 days.
             </p>
           </section>
@@ -481,7 +481,7 @@ export default function PrivacyPage() {
               Data controller: Aleksandre Merabishvili, Individual Entrepreneur<br />
               Identification number: 01019062001<br />
               {BUSINESS_ADDRESS}<br />
-              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a><br />
+              <a href="mailto:support@hrhandle.com" className="underline">support@hrhandle.com</a><br />
               Phone: {SUPPORT_PHONE}
             </p>
           </section>
