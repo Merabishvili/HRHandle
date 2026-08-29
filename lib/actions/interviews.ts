@@ -11,6 +11,30 @@ import { sendInterviewInvitationEmail } from '@/lib/email'
 import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { createOrgNotifications } from '@/lib/actions/notifications'
 
+/**
+ * The org's saved interview-invitation template (custom subject/body), or empty
+ * so the email builder falls back to the platform defaults. The interview email
+ * previously ALWAYS used the defaults — editing the template under Settings →
+ * Email templates had no effect on the sent email. interview_invitation is
+ * always-on (not opt-in), so there is no is_enabled gate here.
+ */
+async function fetchInterviewTemplate(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: { from: (table: string) => any },
+  orgId: string,
+): Promise<{ customSubject: string | undefined; customBody: string | undefined }> {
+  const { data } = await supabase
+    .from('email_templates')
+    .select('subject, body')
+    .eq('organization_id', orgId)
+    .eq('template_type', 'interview_invitation')
+    .maybeSingle()
+  return {
+    customSubject: (data?.subject as string | undefined) || undefined,
+    customBody: (data?.body as string | undefined) || undefined,
+  }
+}
+
 export async function updateInterviewStatus(
   interviewId: string,
   status: 'cancelled' | 'no_show' | 'completed'
@@ -120,6 +144,7 @@ export async function rescheduleInterview(
 
       if (candidate?.email) {
         const meetLink = interview.google_meet_link || interview.meeting_link || null
+        const tpl = await fetchInterviewTemplate(ctx.supabase, ctx.orgId)
         await sendInterviewInvitationEmail({
           to: candidate.email,
           candidateName: `${candidate.first_name} ${candidate.last_name}`,
@@ -130,6 +155,8 @@ export async function rescheduleInterview(
           durationMinutes,
           interviewType: interview.type,
           meetingLink: meetLink,
+          customSubject: tpl.customSubject,
+          customBody: tpl.customBody,
           rescheduled: true,
           timezone,
           contentLocale: await fetchOrgContentLocale(ctx.supabase, ctx.orgId),
@@ -372,6 +399,7 @@ export async function createInterview(
           .eq('organization_id', ctx.orgId)
           .single()
 
+        const tpl = await fetchInterviewTemplate(ctx.supabase, ctx.orgId)
         await sendInterviewInvitationEmail({
           to: candidateEmail,
           candidateName: `${candidate.first_name} ${candidate.last_name}`,
@@ -382,6 +410,8 @@ export async function createInterview(
           durationMinutes: parsed.data.duration_minutes ?? 60,
           interviewType: parsed.data.type,
           meetingLink: meetLink,
+          customSubject: tpl.customSubject,
+          customBody: tpl.customBody,
           timezone: options.timezone,
           contentLocale: await fetchOrgContentLocale(ctx.supabase, ctx.orgId),
         })
