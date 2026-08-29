@@ -64,21 +64,36 @@ describe('buildSupportNotificationEmail', () => {
     expect(html).toContain('When am I charged?')
   })
 
-  it('renders an attachment link only when both name + url are present', () => {
-    const withAttachment = buildSupportNotificationEmail({
+  it('renders a link per attachment (up to 3) and pluralizes the label', () => {
+    const many = buildSupportNotificationEmail({
       ticketId: TICKET_ID,
       subject: 's',
       message: 'm',
       submitterEmail: 'a@b.com',
       source: 'app',
       organizationId: 'org-1',
-      attachmentName: 'log.pdf',
-      attachmentUrl: 'https://signed.example/log.pdf',
+      attachments: [
+        { name: 'log.pdf', url: 'https://signed.example/log.pdf' },
+        { name: 'screen.png', url: 'https://signed.example/screen.png' },
+      ],
     })
-    expect(withAttachment.html).toContain('log.pdf')
-    expect(withAttachment.html).toContain('https://signed.example/log.pdf')
+    expect(many.html).toContain('log.pdf')
+    expect(many.html).toContain('https://signed.example/log.pdf')
+    expect(many.html).toContain('screen.png')
+    expect(many.html).toContain('Attachments') // plural
 
-    const without = buildSupportNotificationEmail({
+    const one = buildSupportNotificationEmail({
+      ticketId: TICKET_ID,
+      subject: 's',
+      message: 'm',
+      submitterEmail: 'a@b.com',
+      source: 'app',
+      organizationId: 'org-1',
+      attachments: [{ name: 'log.pdf', url: 'https://signed.example/log.pdf' }],
+    })
+    expect(one.html).toContain('>Attachment<') // singular label cell
+
+    const none = buildSupportNotificationEmail({
       ticketId: TICKET_ID,
       subject: 's',
       message: 'm',
@@ -86,6 +101,6 @@ describe('buildSupportNotificationEmail', () => {
       source: 'app',
       organizationId: 'org-1',
     })
-    expect(without.html).not.toContain('Attachment')
+    expect(none.html).not.toContain('Attachment')
   })
 })

@@ -6,7 +6,7 @@ import { getLocale } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { ActionResult } from './index'
-import { validateSupportInput, type SupportError } from '@/lib/support/validation'
+import { validateSupportInput, MAX_ATTACHMENTS, type SupportError } from '@/lib/support/validation'
 import { verifyCaptcha } from '@/lib/turnstile'
 import { sendSupportTicketEmails } from '@/lib/email'
 import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/locales'
@@ -75,7 +75,7 @@ export async function submitSupportTicket(
   const captchaToken = formData.get('cf_turnstile_token')
     ? String(formData.get('cf_turnstile_token'))
     : null
-  const file = formData.get('file')
+  const files = formData.getAll('file').filter((f): f is File => f instanceof File && f.size > 0)
 
   // Resolve the session (may be absent → public path).
   const supabase = await createClient()
@@ -120,27 +120,35 @@ export async function submitSupportTicket(
     if (!ok) return fail('captcha_failed')
   }
 
-  const admin = createAdminClient()
+  if (files.length > MAX_ATTACHMENTS) return fail('too_many_files')
 
-  // Optional attachment.
-  let attachmentPath: string | null = null
-  let attachmentName: string | null = null
-  if (file instanceof File && file.size > 0) {
+  // Optional attachments (up to MAX_ATTACHMENTS). Validate ALL first, so a bad
+  // 3rd file never leaves the first two orphaned in storage; then upload.
+  const prepared: { bytes: ArrayBuffer; ext: string; type: string; name: string }[] = []
+  for (const file of files) {
     const ext = ALLOWED_TYPES.get(file.type)
     if (!ext) return fail('file_type')
     if (file.size > MAX_FILE_BYTES) return fail('file_size')
     const bytes = await file.arrayBuffer()
     if (!hasValidMagicNumber(bytes)) return fail('file_type')
-    const path = `${organizationId ?? 'public'}/${crypto.randomUUID()}.${ext}`
+    prepared.push({ bytes, ext, type: file.type, name: file.name })
+  }
+
+  const admin = createAdminClient()
+  const attachmentPaths: string[] = []
+  const attachmentNames: string[] = []
+  for (const p of prepared) {
+    const path = `${organizationId ?? 'public'}/${crypto.randomUUID()}.${p.ext}`
     const { error: uploadError } = await admin.storage
       .from(BUCKET)
-      .upload(path, bytes, { contentType: file.type, upsert: false })
+      .upload(path, p.bytes, { contentType: p.type, upsert: false })
     if (uploadError) {
       console.error('[support] attachment upload failed:', uploadError.message)
+      if (attachmentPaths.length) await admin.storage.from(BUCKET).remove(attachmentPaths)
       return fail('upload_failed')
     }
-    attachmentPath = path
-    attachmentName = file.name
+    attachmentPaths.push(path)
+    attachmentNames.push(p.name)
   }
 
   const { data, error: dbError } = await admin
@@ -151,8 +159,8 @@ export async function submitSupportTicket(
       email,
       subject: subject.trim(),
       message: message.trim(),
-      attachment_path: attachmentPath,
-      attachment_name: attachmentName,
+      attachment_paths: attachmentPaths,
+      attachment_names: attachmentNames,
       source,
     })
     .select('id')
@@ -160,19 +168,19 @@ export async function submitSupportTicket(
 
   if (dbError || !data) {
     console.error('[support] ticket insert failed:', dbError?.message)
-    if (attachmentPath) await admin.storage.from(BUCKET).remove([attachmentPath])
+    if (attachmentPaths.length) await admin.storage.from(BUCKET).remove(attachmentPaths)
     return fail('save_failed')
   }
 
   // Emails are best-effort — a mail hiccup must not lose a saved ticket.
   const localeRaw = await getLocale()
   const locale: Locale = isLocale(localeRaw) ? localeRaw : DEFAULT_LOCALE
-  let attachmentUrl: string | null = null
-  if (attachmentPath) {
+  const attachments: { name: string; url: string }[] = []
+  for (let i = 0; i < attachmentPaths.length; i++) {
     const { data: signed } = await admin.storage
       .from(BUCKET)
-      .createSignedUrl(attachmentPath, ATTACHMENT_TTL_SECONDS)
-    attachmentUrl = signed?.signedUrl ?? null
+      .createSignedUrl(attachmentPaths[i]!, ATTACHMENT_TTL_SECONDS)
+    if (signed?.signedUrl) attachments.push({ name: attachmentNames[i]!, url: signed.signedUrl })
   }
   try {
     await sendSupportTicketEmails({
@@ -182,8 +190,7 @@ export async function submitSupportTicket(
       submitterEmail: email,
       source,
       organizationId,
-      attachmentName,
-      attachmentUrl,
+      attachments,
       locale,
     })
   } catch (err) {

@@ -240,6 +240,7 @@
   "nav.interviews": { "en": "Interviews", "ru": "Собеседования", "ka": "გასაუბრებები" },
   "nav.reports": { "en": "Reports", "ru": "Отчёты", "ka": "ანგარიშები" },
   "nav.settings": { "en": "Settings", "ru": "Настройки", "ka": "პარამეტრები" },
+  "nav.support": { "en": "Support", "ru": "Поддержка", "ka": "მხარდაჭერა" },
   "nav.organization": { "en": "Organization", "ru": "Организация", "ka": "ორგანიზაცია" },
   "nav.openMenu": { "en": "Open navigation", "ru": "Открыть меню", "ka": "მენიუს გახსნა" },
   "nav.closeMenu": { "en": "Close navigation", "ru": "Закрыть меню", "ka": "მენიუს დახურვა" },
@@ -1497,7 +1498,7 @@
   "support.attachmentLabel": { "en": "Attachment (optional)", "ru": "Вложение (необязательно)", "ka": "დანართი (არასავალდებულო)" },
   "support.attachButton": { "en": "Attach a file", "ru": "Прикрепить файл", "ka": "ფაილის მიმაგრება" },
   "support.removeFile": { "en": "Remove file", "ru": "Удалить файл", "ka": "ფაილის წაშლა" },
-  "support.attachmentHint": { "en": "PDF, PNG, JPG or Word · up to 10 MB.", "ru": "PDF, PNG, JPG или Word · до 10 МБ.", "ka": "PDF, PNG, JPG ან Word · მაქს. 10 MB." },
+  "support.attachmentHint": { "en": "Up to 3 files · PDF, PNG, JPG or Word · 10 MB each.", "ru": "До 3 файлов · PDF, PNG, JPG или Word · до 10 МБ каждый.", "ka": "მაქს. 3 ფაილი · PDF, PNG, JPG ან Word · თითო მაქს. 10 MB." },
   "support.submit": { "en": "Send message", "ru": "Отправить сообщение", "ka": "შეტყობინების გაგზავნა" },
   "support.successTitle": { "en": "Message sent", "ru": "Сообщение отправлено", "ka": "შეტყობინება გაიგზავნა" },
   "support.successBody": { "en": "Thanks — we've received your request and sent a confirmation to your email. We'll reply as soon as we can.", "ru": "Спасибо — мы получили ваш запрос и отправили подтверждение на вашу почту. Мы ответим как можно скорее.", "ka": "მადლობა — თქვენი მოთხოვნა მივიღეთ და დადასტურება გამოგიგზავნეთ ელფოსტაზე. უმოკლეს ვადაში გიპასუხებთ." },
@@ -1510,6 +1511,7 @@
   "support.err.emailInvalid": { "en": "Please enter a valid email.", "ru": "Введите корректный email.", "ka": "შეიყვანეთ სწორი ელფოსტა." },
   "support.err.fileType": { "en": "That file type isn't supported. Use PDF, PNG, JPG or Word.", "ru": "Этот тип файла не поддерживается. Используйте PDF, PNG, JPG или Word.", "ka": "ეს ფაილის ტიპი არ არის მხარდაჭერილი. გამოიყენეთ PDF, PNG, JPG ან Word." },
   "support.err.fileSize": { "en": "File is too large — the limit is 10 MB.", "ru": "Файл слишком большой — лимит 10 МБ.", "ka": "ფაილი ძალიან დიდია — ლიმიტი 10 MB-ია." },
+  "support.err.tooManyFiles": { "en": "You can attach up to 3 files.", "ru": "Можно прикрепить не более 3 файлов.", "ka": "შესაძლებელია მაქსიმუმ 3 ფაილის მიმაგრება." },
   "support.err.rateLimited": { "en": "You've sent several messages recently. Please try again in a little while.", "ru": "Вы недавно отправили несколько сообщений. Пожалуйста, попробуйте позже.", "ka": "ბოლო დროს რამდენიმე შეტყობინება გამოაგზავნეთ. გთხოვთ, სცადოთ ცოტა ხანში." },
   "support.err.captcha": { "en": "Captcha check failed. Please try again.", "ru": "Проверка каптчи не пройдена. Попробуйте снова.", "ka": "Captcha-ს შემოწმება ვერ გაიარა. სცადეთ თავიდან." },
   "support.err.uploadFailed": { "en": "Couldn't upload your file. Please try again.", "ru": "Не удалось загрузить файл. Попробуйте снова.", "ka": "ფაილის ატვირთვა ვერ მოხერხდა. სცადეთ თავიდან." },
@@ -2585,5 +2587,6 @@
   "landing.footer.terms": { "en": "Terms and Conditions", "ru": "Условия использования", "ka": "წესები და პირობები" },
   "landing.footer.privacy": { "en": "Privacy Policy", "ru": "Политика конфиденциальности", "ka": "კონფიდენციალურობის პოლიტიკა" },
   "landing.footer.refund": { "en": "Refund Policy", "ru": "Политика возврата", "ka": "დაბრუნების პოლიტიკა" },
+  "landing.footer.support": { "en": "Support", "ru": "Поддержка", "ka": "მხარდაჭერა" },
   "landing.footer.rights": { "en": "© {year} HRHandle. All rights reserved.", "ru": "© {year} HRHandle. Все права защищены.", "ka": "© {year} HRHandle. ყველა უფლება დაცულია." }
 }

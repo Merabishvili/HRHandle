@@ -15,8 +15,9 @@ create table if not exists public.support_tickets (
   email             text not null,
   subject           text not null,
   message           text not null,
-  attachment_path   text,
-  attachment_name   text,
+  -- Up to 3 attachments: parallel arrays of storage paths + original filenames.
+  attachment_paths  text[] not null default '{}',
+  attachment_names  text[] not null default '{}',
   status            text not null default 'open' check (status in ('open', 'closed')),
   source            text not null default 'app'  check (source in ('app', 'public')),
   created_at        timestamptz not null default now()

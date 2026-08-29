@@ -330,6 +330,9 @@ export default async function LandingPage() {
               <Link href="/refund" className="transition-colors hover:text-foreground">
                 {t('landing.footer.refund')}
               </Link>
+              <Link href="/support" className="transition-colors hover:text-foreground">
+                {t('landing.footer.support')}
+              </Link>
             </div>
 
             <p className="text-sm text-muted-foreground">

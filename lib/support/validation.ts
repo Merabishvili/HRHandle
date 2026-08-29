@@ -5,6 +5,7 @@ export const SUBJECT_MIN = 3
 export const SUBJECT_MAX = 200
 export const MESSAGE_MIN = 10
 export const MESSAGE_MAX = 5000
+export const MAX_ATTACHMENTS = 3
 
 export type SupportError =
   | 'subject_required'
@@ -15,6 +16,7 @@ export type SupportError =
   | 'email_invalid'
   | 'file_type'
   | 'file_size'
+  | 'too_many_files'
   | 'rate_limited'
   | 'captcha_failed'
   | 'upload_failed'

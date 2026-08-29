@@ -626,8 +626,7 @@ export function buildSupportNotificationEmail({
   submitterEmail,
   source,
   organizationId,
-  attachmentName,
-  attachmentUrl,
+  attachments = [],
 }: {
   ticketId: string
   subject: string
@@ -635,14 +634,14 @@ export function buildSupportNotificationEmail({
   submitterEmail: string
   source: 'app' | 'public'
   organizationId: string | null
-  attachmentName?: string | null | undefined
-  attachmentUrl?: string | null | undefined
+  attachments?: { name: string; url: string }[]
 }): { subject: string; html: string } {
   const ref = ticketRef(ticketId)
-  const attachmentRow =
-    attachmentName && attachmentUrl
-      ? `<tr><td style="padding: 6px 0; color: #6b7280; width: 110px;">Attachment</td><td style="padding: 6px 0;"><a href="${escapeHtml(attachmentUrl)}" style="color: #111827; font-weight: 600;">${escapeHtml(attachmentName)}</a></td></tr>`
-      : ''
+  const attachmentRow = attachments.length
+    ? `<tr><td style="padding: 6px 0; color: #6b7280; width: 110px; vertical-align: top;">${attachments.length > 1 ? 'Attachments' : 'Attachment'}</td><td style="padding: 6px 0;">${attachments
+        .map((a) => `<a href="${escapeHtml(a.url)}" style="color: #111827; font-weight: 600; display: block; margin-bottom: 2px;">${escapeHtml(a.name)}</a>`)
+        .join('')}</td></tr>`
+    : ''
   return {
     subject: `[Support #${ref}] ${subject}`,
     html: `
@@ -680,8 +679,7 @@ export async function sendSupportTicketEmails({
   submitterEmail,
   source,
   organizationId,
-  attachmentName,
-  attachmentUrl,
+  attachments = [],
   locale,
 }: {
   ticketId: string
@@ -690,9 +688,8 @@ export async function sendSupportTicketEmails({
   submitterEmail: string
   source: 'app' | 'public'
   organizationId: string | null
-  attachmentName?: string | null
-  attachmentUrl?: string | null
-  locale?: Locale
+  attachments?: { name: string; url: string }[]
+  locale?: Locale | undefined
 }) {
   const resend = getResend()
   const inbox = process.env.SUPPORT_INBOX || SUPPORT_EMAIL
@@ -705,8 +702,7 @@ export async function sendSupportTicketEmails({
     submitterEmail,
     source,
     organizationId,
-    attachmentName,
-    attachmentUrl,
+    attachments,
   })
 
   await Promise.all([
