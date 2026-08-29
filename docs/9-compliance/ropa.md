@@ -103,14 +103,14 @@ For each activity: purpose, legal basis, data subject categories, personal data 
 
 | Field | Value |
 |---|---|
-| Purpose | Respond to user-initiated emails about bugs, feature requests, billing, account questions, and GDPR rights requests. |
+| Purpose | Respond to user-initiated support requests about bugs, feature requests, billing, account questions, and GDPR rights requests — submitted by email or via the in-app / public support form. |
 | Legal basis (Art. 6) | (b) Contract performance for existing customers; (f) Legitimate interest for prospects and general enquiries. |
-| Data subject categories | Anyone who emails `support@hrhandle.com`. |
-| Personal data categories | Email address; the content of the message (which may contain whatever the sender chose to disclose). |
-| Recipients / sub-processors | **ImprovMX** (USA — forwards `support@hrhandle.com` inbound mail to the Gmail mailbox); **Google/Gmail** (mailbox host, `hrhandle26@gmail.com`); **Resend** (USA — outbound support replies + ticket confirmations sent as `support@hrhandle.com`). |
-| Retention | Email retained per the inbox owner's normal practice; tickets/threads relating to specific compliance requests retained at least until the matter is closed plus a reasonable audit period. |
-| Transfer mechanism | SCCs with Google, ImprovMX, and Resend (all USA-based). |
-| Security (Art. 32) | Strong account credentials, 2FA on the mailbox account. |
+| Data subject categories | Anyone who emails `support@hrhandle.com` or submits the support form (in-app or public `/support`). |
+| Personal data categories | Email address; subject + message content (which may contain whatever the sender chose to disclose); an optional attachment (PDF/PNG/JPG/Word). Form submissions are stored in the `support_tickets` table (subject, message, submitter email, org/user id when logged in) with attachments in the private `support-attachments` bucket. |
+| Recipients / sub-processors | **Supabase** (USA — stores the `support_tickets` row + attachment); **ImprovMX** (USA — forwards `support@hrhandle.com` inbound mail to the Gmail mailbox); **Google/Gmail** (mailbox host, `hrhandle26@gmail.com`); **Resend** (USA — outbound support replies + ticket confirmations sent as `support@hrhandle.com`). |
+| Retention | Ticket rows + attachments retained until the matter is resolved plus a reasonable audit period, then deleted; email retained per the inbox owner's normal practice. |
+| Transfer mechanism | SCCs with Supabase, Google, ImprovMX, and Resend (all USA-based). |
+| Security (Art. 32) | Support-ticket table is RLS-locked (service-role writes only); attachments private, accessed via short-lived signed URLs; strong account credentials + 2FA on the mailbox account. |
 
 ---
 

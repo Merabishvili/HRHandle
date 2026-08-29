@@ -5,6 +5,10 @@ export const env = createEnv({
   server: {
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
     RESEND_API_KEY: z.string().min(1).optional(),
+    // Where support-ticket admin notifications are delivered. Deliberately NOT
+    // .email() — a malformed value must never hard-fail the build (same rule as
+    // the analytics host). Falls back to SUPPORT_EMAIL when unset.
+    SUPPORT_INBOX: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     ZOOM_CLIENT_ID: z.string().min(1).optional(),
@@ -43,6 +47,7 @@ export const env = createEnv({
   runtimeEnv: {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    SUPPORT_INBOX: process.env.SUPPORT_INBOX,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     ZOOM_CLIENT_ID: process.env.ZOOM_CLIENT_ID,

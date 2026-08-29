@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { applyVariables, escapeHtml, defaultTemplate } from '@/lib/email-template-utils'
 import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 import { emailChrome } from '@/lib/email-i18n'
+import { SUPPORT_EMAIL } from '@/lib/legal/contact'
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY
@@ -10,6 +11,7 @@ function getResend(): Resend {
 }
 
 const FROM = 'HRHandle <noreply@hrhandle.com>'
+const SUPPORT_FROM = `HRHandle Support <${SUPPORT_EMAIL}>`
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 function senderFrom(senderName: string) {
@@ -544,4 +546,183 @@ export async function sendApplicationRejectionEmail({
 </body>
 </html>`,
   })
+}
+
+// ── Support tickets ────────────────────────────────────────────────────────
+
+/** Short human-friendly reference from the ticket UUID (first block, upper). */
+export function ticketRef(ticketId: string): string {
+  return ticketId.split('-')[0]?.toUpperCase() ?? ticketId.slice(0, 8).toUpperCase()
+}
+
+const SUPPORT_STRINGS: Record<
+  Locale,
+  { subject: (ref: string) => string; heading: string; intro: string; yourMessage: string; closing: string }
+> = {
+  en: {
+    subject: (ref) => `We received your request (#${ref})`,
+    heading: 'Thanks — we got your message',
+    intro: "Our team will get back to you at this email address as soon as possible. Here's a copy of what you sent:",
+    yourMessage: 'Your message',
+    closing: 'You can simply reply to this email to add anything.',
+  },
+  ka: {
+    subject: (ref) => `თქვენი მოთხოვნა მიღებულია (#${ref})`,
+    heading: 'მადლობა — თქვენი შეტყობინება მივიღეთ',
+    intro: 'ჩვენი გუნდი უმოკლეს ვადაში დაგიკავშირდებათ ამ ელფოსტაზე. ქვემოთ მოცემულია თქვენ მიერ გამოგზავნილის ასლი:',
+    yourMessage: 'თქვენი შეტყობინება',
+    closing: 'დამატებითი ინფორმაციისთვის უბრალოდ უპასუხეთ ამ წერილს.',
+  },
+  ru: {
+    subject: (ref) => `Мы получили ваш запрос (#${ref})`,
+    heading: 'Спасибо — мы получили ваше сообщение',
+    intro: 'Наша команда свяжется с вами по этому адресу электронной почты как можно скорее. Ниже — копия отправленного вами:',
+    yourMessage: 'Ваше сообщение',
+    closing: 'Чтобы что-то добавить, просто ответьте на это письмо.',
+  },
+}
+
+/** Pure builder for the submitter's confirmation email (subject + HTML). */
+export function buildSupportConfirmationEmail({
+  ticketId,
+  subject,
+  message,
+  locale,
+}: {
+  ticketId: string
+  subject: string
+  message: string
+  locale?: Locale | undefined
+}): { subject: string; html: string } {
+  const s = SUPPORT_STRINGS[locale ?? DEFAULT_LOCALE] ?? SUPPORT_STRINGS[DEFAULT_LOCALE]
+  const ref = ticketRef(ticketId)
+  return {
+    subject: s.subject(ref),
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
+    <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">${s.heading}</h1>
+    <p style="color: #6b7280; margin: 0 0 20px;">${s.intro}</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; margin: 0 0 20px;">
+      <p style="font-size: 12px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px;">${escapeHtml(s.yourMessage)}</p>
+      <p style="font-size: 14px; font-weight: 600; color: #111827; margin: 0 0 8px;">${escapeHtml(subject)}</p>
+      <p style="font-size: 13px; line-height: 1.6; color: #374151; margin: 0; white-space: pre-wrap;">${escapeHtml(message)}</p>
+    </div>
+    <p style="color: #9ca3af; font-size: 13px; margin: 0;">${s.closing}</p>
+  </div>
+</body>
+</html>`,
+  }
+}
+
+/** Pure builder for the internal admin notification (English). */
+export function buildSupportNotificationEmail({
+  ticketId,
+  subject,
+  message,
+  submitterEmail,
+  source,
+  organizationId,
+  attachmentName,
+  attachmentUrl,
+}: {
+  ticketId: string
+  subject: string
+  message: string
+  submitterEmail: string
+  source: 'app' | 'public'
+  organizationId: string | null
+  attachmentName?: string | null | undefined
+  attachmentUrl?: string | null | undefined
+}): { subject: string; html: string } {
+  const ref = ticketRef(ticketId)
+  const attachmentRow =
+    attachmentName && attachmentUrl
+      ? `<tr><td style="padding: 6px 0; color: #6b7280; width: 110px;">Attachment</td><td style="padding: 6px 0;"><a href="${escapeHtml(attachmentUrl)}" style="color: #111827; font-weight: 600;">${escapeHtml(attachmentName)}</a></td></tr>`
+      : ''
+  return {
+    subject: `[Support #${ref}] ${subject}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 32px;">
+    <h1 style="font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 4px;">New support ticket #${ref}</h1>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0 0 20px;">Reply to this email to respond directly to the sender.</p>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+      <tr><td style="padding: 6px 0; color: #6b7280; width: 110px;">From</td><td style="padding: 6px 0; font-weight: 600; color: #111827;">${escapeHtml(submitterEmail)}</td></tr>
+      <tr><td style="padding: 6px 0; color: #6b7280;">Source</td><td style="padding: 6px 0; color: #111827;">${source === 'public' ? 'Public form' : 'In-app (logged in)'}</td></tr>
+      <tr><td style="padding: 6px 0; color: #6b7280;">Org</td><td style="padding: 6px 0; color: #111827;">${organizationId ? escapeHtml(organizationId) : '—'}</td></tr>
+      <tr><td style="padding: 6px 0; color: #6b7280;">Subject</td><td style="padding: 6px 0; font-weight: 600; color: #111827;">${escapeHtml(subject)}</td></tr>
+      ${attachmentRow}
+    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px;">
+      <p style="font-size: 13px; line-height: 1.6; color: #374151; margin: 0; white-space: pre-wrap;">${escapeHtml(message)}</p>
+    </div>
+  </div>
+</body>
+</html>`,
+  }
+}
+
+/** Sends both support emails: a localized confirmation to the submitter and an
+ * English notification to the support inbox (Reply-To = the submitter, so a
+ * plain reply reaches them). Best-effort — the caller catches failures so a
+ * mail hiccup never loses the ticket. */
+export async function sendSupportTicketEmails({
+  ticketId,
+  subject,
+  message,
+  submitterEmail,
+  source,
+  organizationId,
+  attachmentName,
+  attachmentUrl,
+  locale,
+}: {
+  ticketId: string
+  subject: string
+  message: string
+  submitterEmail: string
+  source: 'app' | 'public'
+  organizationId: string | null
+  attachmentName?: string | null
+  attachmentUrl?: string | null
+  locale?: Locale
+}) {
+  const resend = getResend()
+  const inbox = process.env.SUPPORT_INBOX || SUPPORT_EMAIL
+
+  const confirmation = buildSupportConfirmationEmail({ ticketId, subject, message, locale })
+  const notification = buildSupportNotificationEmail({
+    ticketId,
+    subject,
+    message,
+    submitterEmail,
+    source,
+    organizationId,
+    attachmentName,
+    attachmentUrl,
+  })
+
+  await Promise.all([
+    resend.emails.send({
+      from: SUPPORT_FROM,
+      to: submitterEmail,
+      replyTo: inbox,
+      subject: confirmation.subject,
+      html: confirmation.html,
+    }),
+    resend.emails.send({
+      from: FROM,
+      to: inbox,
+      replyTo: submitterEmail,
+      subject: notification.subject,
+      html: notification.html,
+    }),
+  ])
 }
