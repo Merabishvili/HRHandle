@@ -44,6 +44,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
+import { pipelineStageLabel } from '@/lib/pipeline/status-i18n'
 import {
   applyTemplateToEmptyVacancies,
   countEmptyVacancies,
@@ -237,7 +238,7 @@ export function PipelineStagesManager({ initialStages }: Props) {
                   key={s.name}
                   className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2"
                 >
-                  <span className="text-[13px] font-medium text-foreground">{s.name}</span>
+                  <span className="text-[13px] font-medium text-foreground">{pipelineStageLabel(t, s.name)}</span>
                   <span className={cn('rounded px-1.5 py-0.5 text-[10.5px] font-semibold', meta.pillBg, meta.pillText)}>
                     {t(meta.labelKey)}
                   </span>
@@ -384,7 +385,7 @@ function SortableStageRow({
     >
       <button
         type="button"
-        aria-label={t('pipelineStages.dragNamed', { name: stage.name })}
+        aria-label={t('pipelineStages.dragNamed', { name: pipelineStageLabel(t, stage.name) })}
         className="cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
         {...attributes}
         {...listeners}
@@ -399,7 +400,7 @@ function SortableStageRow({
         )}
       >
         <Icon className="h-3 w-3" aria-hidden />
-        {stage.name}
+        {pipelineStageLabel(t, stage.name)}
       </span>
       <span className="text-xs text-muted-foreground">· {t(meta.labelKey)}</span>
       {stage.is_terminal && (
@@ -412,7 +413,7 @@ function SortableStageRow({
         variant="ghost"
         size="icon"
         className="ml-auto h-7 w-7 text-muted-foreground hover:text-destructive"
-        aria-label={t('pipelineStages.removeNamed', { name: stage.name })}
+        aria-label={t('pipelineStages.removeNamed', { name: pipelineStageLabel(t, stage.name) })}
         onClick={() => onRemove(stage.id)}
         disabled={disabled}
       >
