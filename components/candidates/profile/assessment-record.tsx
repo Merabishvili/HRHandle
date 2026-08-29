@@ -159,32 +159,3 @@ function RecordCard({ record }: { record: AssessmentRecord }) {
     </div>
   )
 }
-
-/**
- * Part B3 — compact rail chip. Surfaces the most recent assessment one click
- * from anywhere on the page; clicking scrolls to and (via the anchor) reveals
- * the full record section in the left column.
- */
-export function AssessmentRailChip({ records }: { records: AssessmentRecord[] }) {
-  const t = useTranslations()
-  if (records.length === 0) return null
-  const latest = records[0]! // getAssessmentRecords returns newest first
-  const avg = avgOfFive(latest)
-  return (
-    <a
-      href="#assessment-record"
-      className="flex items-center gap-3 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-3.5 transition-colors hover:bg-muted/40"
-    >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[oklch(0.96_0.01_250)] text-[13px] font-bold text-[oklch(0.45_0.16_250)]">
-        {avg ?? '—'}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[13px] font-semibold text-foreground">{t('assess.railTitle')}</span>
-        <span className="block truncate text-[11.5px] text-muted-foreground">
-          {latest.recommendation ? t(REC_LABEL_KEY[latest.recommendation]) : latest.vacancyTitle}
-        </span>
-      </span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-    </a>
-  )
-}

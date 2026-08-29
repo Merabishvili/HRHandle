@@ -66,7 +66,7 @@ export default function TermsPage() {
             <p>
               You are responsible for maintaining the confidentiality of your account credentials
               and for all activity that occurs under your account. You agree to notify us
-              immediately at <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a> of
+              immediately at <a href="mailto:support@hrhandle.com" className="underline">support@hrhandle.com</a> of
               any unauthorized use of your account.
             </p>
             <p className="mt-3">
@@ -243,7 +243,7 @@ export default function TermsPage() {
               Aleksandre Merabishvili, Individual Entrepreneur<br />
               Identification number: 01019062001<br />
               {BUSINESS_ADDRESS}<br />
-              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a><br />
+              <a href="mailto:support@hrhandle.com" className="underline">support@hrhandle.com</a><br />
               Phone: {SUPPORT_PHONE}
             </p>
           </section>

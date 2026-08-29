@@ -124,8 +124,8 @@ export default async function AccountDeletionScheduledPage() {
               </div>
               <p className="mt-1 text-muted-foreground">
                 Email{' '}
-                <a href="mailto:hrhandle26@gmail.com" className="underline hover:text-foreground">
-                  hrhandle26@gmail.com
+                <a href="mailto:support@hrhandle.com" className="underline hover:text-foreground">
+                  support@hrhandle.com
                 </a>{' '}
                 from the address on the account. We&apos;ll respond within two business days.
               </p>

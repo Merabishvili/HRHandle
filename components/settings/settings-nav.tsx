@@ -19,6 +19,7 @@ import {
   Trash2,
   GitBranch,
   Sparkles,
+  LifeBuoy,
 } from 'lucide-react'
 
 interface NavItem {
@@ -54,6 +55,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/settings/profile',       label: 'settings.nav.profile',       icon: User },
       { href: '/settings/notifications', label: 'settings.nav.notifications', icon: Bell },
       { href: '/settings/security',      label: 'settings.nav.security',      icon: Lock },
+      { href: '/settings/support',       label: 'settings.nav.support',       icon: LifeBuoy },
     ],
   },
   {

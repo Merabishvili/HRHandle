@@ -28,7 +28,6 @@ import type { RecentMergeInfo } from '@/lib/actions/candidate-merge'
 import { ContactCard } from '@/components/candidates/contact-card'
 import { PrevNextNav } from '@/components/ui/prev-next-nav'
 import { CandidateDocuments } from '@/components/candidates/candidate-documents'
-import { AiNotesExtractor } from '@/components/candidates/ai-notes-extractor'
 import { ExperienceSection } from '@/components/candidates/experience-section'
 import { EducationSection } from '@/components/candidates/education-section'
 import { ActivityFeed, type ActivityItem } from '@/components/candidates/activity-feed'
@@ -52,7 +51,7 @@ import {
   type StageContextualBlockProps,
 } from './stage-contextual-block'
 import { AiFitCard } from './ai-fit-card'
-import { AssessmentRecord, AssessmentRailChip } from './assessment-record'
+import { AssessmentRecord } from './assessment-record'
 import { RailActions, RailDetails } from './rail-sections'
 import type { AssessmentRecord as AssessmentRecordItem } from '@/lib/actions/evaluations'
 
@@ -171,7 +170,6 @@ interface ProfileShellProps {
  *           - RailDetails (salary / notice / location / timezone / source / added)
  *           - ContactCard
  *           - RailCustomFields
- *           - AiNotesExtractor
  */
 export function CandidateProfileShell({
   candidate,
@@ -498,10 +496,6 @@ export function CandidateProfileShell({
               </div>
             )}
 
-            {/* Part B3 — pinned assessment chip; scrolls to the full record in
-                the left column. Self-hides when there are no assessments. */}
-            <AssessmentRailChip records={assessmentRecords} />
-
             {/* A-12b — Hidden on lg- because a mobile copy renders inline
                 between EducationSection and CustomFieldsDisplay. */}
             <div className="hidden lg:block">
@@ -539,8 +533,6 @@ export function CandidateProfileShell({
             {/* Custom fields after Details (#6) — each group is its own card,
                 short values as rows, long values stacked (#5/6/7). */}
             <CustomFieldsDisplay groups={customFieldGroups} values={customFieldValues} />
-
-            <AiNotesExtractor candidateId={candidate.id} />
           </aside>
         </div>
       </article>

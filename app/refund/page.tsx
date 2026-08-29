@@ -84,7 +84,7 @@ export default function RefundPage() {
             <h2 className="mb-3 text-lg font-semibold">5. How to Request a Refund</h2>
             <p>To request a refund, email us at:</p>
             <p className="mt-3">
-              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a>
+              <a href="mailto:support@hrhandle.com" className="underline">support@hrhandle.com</a>
             </p>
             <p className="mt-3">Please include the following in your request:</p>
             <ul className="mt-3 list-disc space-y-1 pl-5">
@@ -145,7 +145,7 @@ export default function RefundPage() {
               Aleksandre Merabishvili, Individual Entrepreneur<br />
               Identification number: 01019062001<br />
               {BUSINESS_ADDRESS}<br />
-              <a href="mailto:hrhandle26@gmail.com" className="underline">hrhandle26@gmail.com</a><br />
+              <a href="mailto:support@hrhandle.com" className="underline">support@hrhandle.com</a><br />
               Phone: {SUPPORT_PHONE}
             </p>
           </section>

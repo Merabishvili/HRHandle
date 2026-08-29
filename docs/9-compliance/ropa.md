@@ -36,7 +36,7 @@ HRHandle wears two distinct controller/processor hats. Each is captured separate
 | Name | Aleksandre Merabishvili, Individual Entrepreneur |
 | Registration number | 01019062001 |
 | Address | Tbilisi, Georgia |
-| Contact | hrhandle26@gmail.com |
+| Contact | support@hrhandle.com |
 | DPO | Aleksandre Merabishvili (no formal DPO designation required at current scale; sole founder acts as the point of contact) |
 | EU representative (Art. 27) | **Not yet appointed.** Required before public marketing to EU markets — tracked in the audit plan. |
 | Supervisory authority | Georgian Personal Data Protection Service (and, once an EU representative is appointed, the relevant lead supervisory authority in the EU) |
@@ -103,14 +103,14 @@ For each activity: purpose, legal basis, data subject categories, personal data 
 
 | Field | Value |
 |---|---|
-| Purpose | Respond to user-initiated emails about bugs, feature requests, billing, account questions, and GDPR rights requests. |
+| Purpose | Respond to user-initiated support requests about bugs, feature requests, billing, account questions, and GDPR rights requests — submitted by email or via the in-app / public support form. |
 | Legal basis (Art. 6) | (b) Contract performance for existing customers; (f) Legitimate interest for prospects and general enquiries. |
-| Data subject categories | Anyone who emails `hrhandle26@gmail.com`. |
-| Personal data categories | Email address; the content of the message (which may contain whatever the sender chose to disclose). |
-| Recipients / sub-processors | Google Workspace (the mailbox at gmail.com). |
-| Retention | Email retained per the inbox owner's normal practice; tickets/threads relating to specific compliance requests retained at least until the matter is closed plus a reasonable audit period. |
-| Transfer mechanism | SCCs with Google. |
-| Security (Art. 32) | Strong account credentials, 2FA on the mailbox account. |
+| Data subject categories | Anyone who emails `support@hrhandle.com` or submits the support form (in-app or public `/support`). |
+| Personal data categories | Email address; subject + message content (which may contain whatever the sender chose to disclose); an optional attachment (PDF/PNG/JPG/Word). Form submissions are stored in the `support_tickets` table (subject, message, submitter email, org/user id when logged in) with attachments in the private `support-attachments` bucket. |
+| Recipients / sub-processors | **Supabase** (USA — stores the `support_tickets` row + attachment); **ImprovMX** (USA — forwards `support@hrhandle.com` inbound mail to the Gmail mailbox); **Google/Gmail** (mailbox host, `hrhandle26@gmail.com`); **Resend** (USA — outbound support replies + ticket confirmations sent as `support@hrhandle.com`). |
+| Retention | Ticket rows + attachments retained until the matter is resolved plus a reasonable audit period, then deleted; email retained per the inbox owner's normal practice. |
+| Transfer mechanism | SCCs with Supabase, Google, ImprovMX, and Resend (all USA-based). |
+| Security (Art. 32) | Support-ticket table is RLS-locked (service-role writes only); attachments private, accessed via short-lived signed URLs; strong account credentials + 2FA on the mailbox account. |
 
 ---
 
@@ -153,7 +153,7 @@ The per-controller list (Art. 30(2)(a) requires naming each controller HRHandle 
 | Field | Value |
 |---|---|
 | Categories of processing | Sending candidate or vacancy data to Google's Gemini API on explicit recruiter request, to generate informational output (CV field extraction, professional summary, etc.) that the recruiter then reviews. No automated hiring decision is taken. Article 22 GDPR does not apply. |
-| Current features | **CV parsing** (file → structured fields, via `/api/parse-cv`); **JD generator** (button-triggered per-section job description draft, via `/api/ai/jd-generator` — vacancy-side, no candidate data sent); **interview question suggestions** (button-triggered categorised question set, via `/api/ai/interview-questions` — vacancy-side, no candidate data sent; optionally saved to `vacancies.interview_questions` JSONB column); **interview-note structuring** (recruiter pastes free-text notes → structured view via `/api/ai/note-extractor` — sends candidate name + role title + the pasted notes; output is not persisted unless recruiter explicitly saves as a candidate note); **inclusive-language check** (button-triggered review of vacancy text via `/api/ai/bias-check` — vacancy-side, no candidate data sent; output is a list of flagged passages with suggested replacements, never auto-applied); **assessment suggester** (button-triggered evaluation-criteria + open-ended-prompt suggestions for a vacancy via `/api/ai/assessment-suggester` — vacancy-side, no candidate data sent; recruiter adds items to the vacancy one-by-one via the existing `addVacancyQuestion` action). The **email drafter** (G-015) was retired on 2026-06-21 and the **candidate summary** feature was retired on 2026-08-20; both routes + code are removed. Historical `activity_log` rows with `feature: 'email_drafter'` / `feature: 'candidate_summary'` are preserved as immutable audit history. |
+| Current features | **CV parsing** (file → structured fields, via `/api/parse-cv`); **JD generator** (button-triggered per-section job description draft, via `/api/ai/jd-generator` — vacancy-side, no candidate data sent); **interview question suggestions** (button-triggered categorised question set, via `/api/ai/interview-questions` — vacancy-side, no candidate data sent; optionally saved to `vacancies.interview_questions` JSONB column); **inclusive-language check** (button-triggered review of vacancy text via `/api/ai/bias-check` — vacancy-side, no candidate data sent; output is a list of flagged passages with suggested replacements, never auto-applied); **assessment suggester** (button-triggered evaluation-criteria + open-ended-prompt suggestions for a vacancy via `/api/ai/assessment-suggester` — vacancy-side, no candidate data sent; recruiter adds items to the vacancy one-by-one via the existing `addVacancyQuestion` action). The **email drafter** (G-015) was retired on 2026-06-21, the **candidate summary** feature was retired on 2026-08-20, and the **interview-note structuring** feature was retired on 2026-08-28; all routes + code are removed. With note-extractor gone, **no AI feature sends candidate personal data** — the remaining AI modules are vacancy-side (JD generator, interview questions, bias check, assessment suggester) or redaction-based (fit analysis). Historical `activity_log` rows with `feature: 'email_drafter'` / `feature: 'candidate_summary'` / `feature: 'note_extractor'` are preserved as immutable audit history. |
 | Data subject categories | Candidates whose CV is uploaded. |
 | Personal data categories | The candidate fields explicitly chosen for each feature. For CV parsing: full file contents (may include Art. 9 special categories if the candidate volunteered them). For assessment suggester, JD generator, interview questions, and inclusive-language check: vacancy text only — **no candidate data is sent**. |
 | Sub-processors | Google Generative AI (Gemini API). |
