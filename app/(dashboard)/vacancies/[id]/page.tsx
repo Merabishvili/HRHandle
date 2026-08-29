@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { format, formatDistanceToNow } from 'date-fns'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getLocale } from 'next-intl/server'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -340,6 +341,7 @@ export default async function VacancyDetailPage({
     const days = Math.max(0, Math.floor((now - sinceMs) / (1000 * 60 * 60 * 24)))
     return {
       applicationId: a.id,
+      candidateId: a.candidate_id,
       candidateInitials: candidate ? getInitials(candidate.first_name, candidate.last_name) : '??',
       candidateFirstName: candidate?.first_name ?? 'Candidate',
       daysAwaiting: days,
@@ -350,6 +352,7 @@ export default async function VacancyDetailPage({
   const appIds = allApplications.map((a) => a.id)
   let upcomingInterviewsTomorrow: {
     interviewId: string
+    candidateId: string
     candidateInitials: string
     candidateFirstName: string
     scheduledAt: string
@@ -369,9 +372,14 @@ export default async function VacancyDetailPage({
       if (t < now || t > cutoff) continue
       const app = allApplications.find((a) => a.id === interview.application_id)
       if (!app) continue
+      // Skip interviews on closed applications — a rejected/withdrawn/hired
+      // candidate shouldn't surface as an "upcoming interview" needing attention.
+      const appBucket = bucketOf(app)
+      if (appBucket && ['rejected', 'withdrawn', 'hired'].includes(appBucket)) continue
       const candidate = candidateMap.get(app.candidate_id)
       upcomingInterviewsTomorrow.push({
         interviewId: interview.id,
+        candidateId: app.candidate_id,
         candidateInitials: candidate ? getInitials(candidate.first_name, candidate.last_name) : '??',
         candidateFirstName: candidate?.first_name ?? 'Candidate',
         scheduledAt: interview.scheduled_at,
@@ -385,12 +393,13 @@ export default async function VacancyDetailPage({
   ).length
 
   const t = await getTranslations()
+  const locale = await getLocale()
   const attention = buildAttentionList({
     vacancyId: id,
     pendingOffers,
     upcomingInterviewsTomorrow,
     newApplicantCount,
-  }, t)
+  }, t, locale)
 
   // Time-open + health
   const timeOpenDays = Math.max(
@@ -445,7 +454,7 @@ export default async function VacancyDetailPage({
             department: vacancy.department,
             location: vacancy.location,
             openedDaysAgo: timeOpenDays,
-            endDate: formatEndDate(vacancy.end_date),
+            endDate: formatEndDate(vacancy.end_date, locale),
           }}
           applicationFormToken={vacancy.application_form_token}
         />
@@ -466,7 +475,7 @@ export default async function VacancyDetailPage({
                 timeOpenDays,
                 activeCandidateCount,
                 salaryRangeLabel: formatSalary(vacancy),
-                endDate: vacancy.end_date ? format(new Date(vacancy.end_date), 'MMM d, yyyy') : null,
+                endDate: vacancy.end_date ? format(new Date(vacancy.end_date), 'MMM d, yyyy', { locale: dateFnsLocale(locale) }) : null,
                 healthLabel,
               }}
               attention={attention}
