@@ -11,8 +11,8 @@
 //  hard-coded fallback list if that call fails.
 //
 //  RUN (Node 20.6+; reads creds from the env file you pass):
-//    Staging:     node --env-file=.env.local     scripts/reset-storage.mjs --confirm quotchdymcnjlnwtjmgu
-//    Production:  node --env-file=.env.production scripts/reset-storage.mjs --confirm fnpyfwhvgzoxgyjafbsg
+//    Staging:     node --env-file=.env.local            scripts/reset-storage.mjs --confirm quotchdymcnjlnwtjmgu
+//    Production:  node --env-file=.env.production.local  scripts/reset-storage.mjs --confirm fnpyfwhvgzoxgyjafbsg
 //
 //  It prints the target URL + ref first, then refuses unless --confirm <ref>
 //  exactly matches the ref embedded in NEXT_PUBLIC_SUPABASE_URL.

@@ -25,7 +25,9 @@
 --            last line to `COMMIT;` and run again.
 --
 --  STORAGE: cleared separately (Supabase blocks DELETE on storage.objects from
---  SQL) — run `node --env-file=<env> scripts/reset-storage.mjs --confirm <ref>`.
+--  SQL) — run the companion script with the matching local env file:
+--    Staging:     node --env-file=.env.local           scripts/reset-storage.mjs --confirm quotchdymcnjlnwtjmgu
+--    Production:  node --env-file=.env.production.local scripts/reset-storage.mjs --confirm fnpyfwhvgzoxgyjafbsg
 -- ============================================================================
 
 BEGIN;
