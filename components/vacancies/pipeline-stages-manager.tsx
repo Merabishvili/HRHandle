@@ -158,9 +158,23 @@ export function PipelineStagesManager({
         toast.error(result.error)
         return
       }
+      // Append optimistically — `router.refresh()` re-fetches the server props
+      // but does NOT re-seed this component's `useState(initialStages)`, so the
+      // new stage only appeared after a full reload. Add it to local state so
+      // it shows immediately (mirrors the Main pipeline manager).
+      setStages((prev) => [
+        ...prev,
+        {
+          id: result.data.id,
+          name,
+          type,
+          is_terminal: false,
+          sort_order: (prev[prev.length - 1]?.sort_order ?? 0) + 1,
+          origin_template_id: null,
+        },
+      ])
       setAddOpen(false)
       toast.success(tr('pipeStages.added', { name }))
-      router.refresh()
     })
   }
 

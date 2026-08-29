@@ -238,11 +238,22 @@ export function CandidateProfileShell({
     [activeApplications, selectedAppId, sortedActive],
   )
 
+  // Advance through the selected app's OWN vacancy stages (real, ordered) when
+  // it has them — so "move to next" steps through every custom stage, not the
+  // canonical Applied→…→Offer buckets (which made Interview jump straight to
+  // Offer). Falls back to the canonical stages for an app with no per-vacancy
+  // stages. `advanceUsesPipelineStage` tells RailActions which write action to
+  // call (a real pipeline_stage id vs a canonical status id).
+  const advanceUsesPipelineStage = (selectedApp?.vacancyStages.length ?? 0) > 0
   const nextStage = useMemo(() => {
     if (!selectedApp?.stage) return null
-    const currentIdx = activeStages.findIndex((s) => s.code === selectedApp.stage!.code)
-    if (currentIdx === -1 || currentIdx >= activeStages.length - 1) return null
-    return activeStages[currentIdx + 1] ?? null
+    const stagesForApp =
+      selectedApp.vacancyStages.length > 0 ? selectedApp.vacancyStages : activeStages
+    const byId = stagesForApp.findIndex((s) => s.id === selectedApp.stage!.id)
+    const currentIdx =
+      byId !== -1 ? byId : stagesForApp.findIndex((s) => s.code === selectedApp.stage!.code)
+    if (currentIdx === -1 || currentIdx >= stagesForApp.length - 1) return null
+    return stagesForApp[currentIdx + 1] ?? null
   }, [selectedApp, activeStages])
 
   const selectorOptions: ActiveApplicationOption[] = sortedActive.map((a) => ({
@@ -437,6 +448,7 @@ export function CandidateProfileShell({
                   candidateId={candidate.id}
                   candidateEmail={candidate.email}
                   nextStage={nextStage}
+                  advanceUsesPipelineStage={advanceUsesPipelineStage}
                   onReject={triggerReject}
                 />
               </div>
@@ -499,6 +511,7 @@ export function CandidateProfileShell({
                   candidateId={candidate.id}
                   candidateEmail={candidate.email}
                   nextStage={nextStage}
+                  advanceUsesPipelineStage={advanceUsesPipelineStage}
                   onReject={triggerReject}
                 />
               </div>
