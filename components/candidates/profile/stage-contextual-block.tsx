@@ -544,6 +544,22 @@ function OfferState({
     })
   }
 
+  // Hire directly from the offer stage — a recruiter can finalize the hire
+  // without waiting for the candidate to accept the offer (#6). Same action as
+  // the accepted-offer state; kept here so a sent (unanswered) offer isn't a
+  // dead end.
+  const hire = () => {
+    startTransition(async () => {
+      const result = await markApplicationHired(applicationId)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(t('stageBlock.markedHired'))
+      router.refresh()
+    })
+  }
+
   // A SENT offer shows the persistent OfferPanel (status, copy link, withdraw) —
   // sent offers can't be edited inline. A DRAFT falls through to the inline form
   // below, pre-filled, so editing a draft matches creating one (#N14).
@@ -558,6 +574,19 @@ function OfferState({
           offers={offers}
           canEdit
         />
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[oklch(0.92_0.01_250)] pt-3">
+          <p className="text-[12px] text-muted-foreground">{t('stageBlock.hireSentHint')}</p>
+          <Button
+            type="button"
+            size="sm"
+            onClick={hire}
+            disabled={pending}
+            className="gap-1.5 bg-[oklch(0.55_0.16_150)] text-white hover:bg-[oklch(0.5_0.16_150)]"
+          >
+            {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+            {t('stageBlock.markHired')}
+          </Button>
+        </div>
       </article>
     )
   }

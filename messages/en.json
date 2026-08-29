@@ -997,6 +997,7 @@
     "offerAccepted": "Offer accepted",
     "offerAcceptedHint": "The candidate accepted the offer. Finalize the hire when you're ready.",
     "markHired": "Mark as Hired",
+    "hireSentHint": "You can hire now — no need to wait for the candidate to accept the offer.",
     "markedHired": "Candidate marked as hired.",
     "reschedule": "Reschedule",
     "scoreHint": "Score this candidate against the role's scorecard — the average of the 1–5 ratings becomes the fit score on the kanban.",

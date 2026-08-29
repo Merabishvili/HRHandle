@@ -19,6 +19,10 @@ import { getAssessmentRecords } from '@/lib/actions/evaluations'
 import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
 import { getRecentMerge } from '@/lib/actions/candidate-merge'
+import {
+  formatKnockoutExpected,
+  type ScreeningAnswerType,
+} from '@/lib/screening-questions/knockout-condition'
 import { CandidateProfileShell } from '@/components/candidates/profile/profile-shell'
 import type { OfferRow } from '@/components/offers/offer-panel'
 import type { HistoryRow } from '@/components/candidates/profile/application-history'
@@ -512,11 +516,14 @@ export default async function CandidateDetailPage({
       const q = Array.isArray(qJoin) ? qJoin[0] : qJoin
       if (!q) continue
       const existing = screeningAnswersByApplication.get(row.application_id) ?? []
+      const answerType = (q.answer_type ?? 'short_text') as ScreeningAnswerType
       existing.push({
         questionLabel: q.label,
         answerValue: row.answer_value ?? null,
-        answerType: q.answer_type ?? 'short_text',
-        expectedAnswer: q.knockout_answer ?? null,
+        answerType,
+        // Decode the stored knockout blob into a concise "≤ 2" / "A, B" form —
+        // it was rendering the raw JSON ({"op":"lte","value":2}) in the UI.
+        expectedAnswer: formatKnockoutExpected(answerType, q.knockout_answer),
         isFlag: !!row.is_knockout_flag,
         sortOrder: q.sort_order ?? 0,
       })
