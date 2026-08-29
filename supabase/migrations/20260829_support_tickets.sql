@@ -15,8 +15,9 @@ create table if not exists public.support_tickets (
   email             text not null,
   subject           text not null,
   message           text not null,
-  attachment_path   text,
-  attachment_name   text,
+  -- Up to 3 attachments: parallel arrays of storage paths + original filenames.
+  attachment_paths  text[] not null default '{}',
+  attachment_names  text[] not null default '{}',
   status            text not null default 'open' check (status in ('open', 'closed')),
   source            text not null default 'app'  check (source in ('app', 'public')),
   created_at        timestamptz not null default now()
@@ -30,6 +31,16 @@ alter table public.support_tickets enable row level security;
 
 comment on table public.support_tickets is
   'User-submitted support requests (in-app + public form). Written only by the submitSupportTicket server action via the service-role client; RLS on with no policies.';
+
+-- Idempotent upgrade path: an earlier version of this migration used single
+-- `attachment_path` / `attachment_name` columns. Convert them to arrays (up to
+-- 3 attachments). No-op on a fresh table where the array columns already exist,
+-- so this whole file stays safe to re-run.
+alter table public.support_tickets
+  drop column if exists attachment_path,
+  drop column if exists attachment_name,
+  add column if not exists attachment_paths text[] not null default '{}',
+  add column if not exists attachment_names text[] not null default '{}';
 
 -- Private bucket for optional ticket attachments.
 insert into storage.buckets (id, name, public)

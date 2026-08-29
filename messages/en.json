@@ -253,6 +253,7 @@
     "interviews": "Interviews",
     "reports": "Reports",
     "settings": "Settings",
+    "support": "Support",
     "organization": "Organization",
     "openMenu": "Open navigation",
     "closeMenu": "Close navigation"
@@ -1743,7 +1744,7 @@
     "attachmentLabel": "Attachment (optional)",
     "attachButton": "Attach a file",
     "removeFile": "Remove file",
-    "attachmentHint": "PDF, PNG, JPG or Word · up to 10 MB.",
+    "attachmentHint": "Up to 3 files · PDF, PNG, JPG or Word · 10 MB each.",
     "submit": "Send message",
     "successTitle": "Message sent",
     "successBody": "Thanks — we've received your request and sent a confirmation to your email. We'll reply as soon as we can.",
@@ -1757,6 +1758,7 @@
       "emailInvalid": "Please enter a valid email.",
       "fileType": "That file type isn't supported. Use PDF, PNG, JPG or Word.",
       "fileSize": "File is too large — the limit is 10 MB.",
+      "tooManyFiles": "You can attach up to 3 files.",
       "rateLimited": "You've sent several messages recently. Please try again in a little while.",
       "captcha": "Captcha check failed. Please try again.",
       "uploadFailed": "Couldn't upload your file. Please try again.",
@@ -2888,6 +2890,7 @@
       "terms": "Terms and Conditions",
       "privacy": "Privacy Policy",
       "refund": "Refund Policy",
+      "support": "Support",
       "rights": "© {year} HRHandle. All rights reserved."
     }
   }

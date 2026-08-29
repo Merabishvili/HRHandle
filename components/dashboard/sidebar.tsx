@@ -15,6 +15,7 @@ import {
   BarChart3,
   KanbanSquare,
   Settings,
+  LifeBuoy,
   Menu,
   X,
 } from 'lucide-react'
@@ -33,6 +34,9 @@ const navigation = [
   { key: 'nav.interviews', href: '/interviews', icon: Calendar },
   { key: 'nav.reports', href: '/reports', icon: BarChart3 },
   { key: 'nav.settings', href: '/settings', icon: Settings },
+  // Temporary top-level Support entry (below Administration/Settings) for quick
+  // access; the canonical home is Settings → Support.
+  { key: 'nav.support', href: '/settings/support', icon: LifeBuoy },
 ]
 
 /** Returns the plan-label translation key (resolved with `t()` in the component). */
