@@ -103,4 +103,19 @@ describe('buildSupportNotificationEmail', () => {
     })
     expect(none.html).not.toContain('Attachment')
   })
+
+  it('localizes the notification chrome to the submitter locale (ka)', () => {
+    const { html } = buildSupportNotificationEmail({
+      ticketId: TICKET_ID,
+      subject: 'შეკითხვა',
+      message: 'ტესტი',
+      submitterEmail: 'user@example.com',
+      source: 'public',
+      organizationId: null,
+      locale: 'ka',
+    })
+    expect(html).toContain('ახალი მხარდაჭერის მოთხოვნა') // "New support ticket"
+    expect(html).toContain('საჯარო ფორმა') // "Public form"
+    expect(html).toContain('გამომგზავნი') // "From"
+  })
 })
