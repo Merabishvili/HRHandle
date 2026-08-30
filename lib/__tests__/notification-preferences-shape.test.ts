@@ -21,12 +21,12 @@ describe('DEFAULT_NOTIFICATION_PREFERENCES', () => {
   it('matches the A-7 matrix shape', () => {
     expect(DEFAULT_NOTIFICATION_PREFERENCES).toEqual({
       email: {
-        new_applicant: true,
+        new_applicant: false,
         stage_change: false,
-        interview_scheduled: true,
-        offer_awaiting_response: true,
-        mention: true,
-        team_invite_update: true,
+        interview_scheduled: false,
+        offer_awaiting_response: false,
+        mention: false,
+        team_invite_update: false,
         weekly_digest: false,
       },
       in_app_events: {
@@ -47,20 +47,15 @@ describe('DEFAULT_NOTIFICATION_PREFERENCES', () => {
         show_bell_badge: true,
         auto_mark_read: true,
       },
-      email_delivery: 'instant',
       quiet_hours: null,
     })
   })
 
-  it('opts into the design-mandated email events except stage_change + weekly_digest', () => {
+  it('turns every email event OFF by default (org opts in per event)', () => {
     const opts = DEFAULT_NOTIFICATION_PREFERENCES.email
-    expect(opts.new_applicant).toBe(true)
-    expect(opts.interview_scheduled).toBe(true)
-    expect(opts.offer_awaiting_response).toBe(true)
-    expect(opts.mention).toBe(true)
-    expect(opts.team_invite_update).toBe(true)
-    expect(opts.stage_change).toBe(false)
-    expect(opts.weekly_digest).toBe(false)
+    for (const v of Object.values(opts)) {
+      expect(v).toBe(false)
+    }
   })
 
   it('opts every matrix event into in-app by default (per design)', () => {
@@ -82,10 +77,6 @@ describe('DEFAULT_NOTIFICATION_PREFERENCES', () => {
   it('opts into both in-product toggles by default', () => {
     expect(DEFAULT_NOTIFICATION_PREFERENCES.in_product.show_bell_badge).toBe(true)
     expect(DEFAULT_NOTIFICATION_PREFERENCES.in_product.auto_mark_read).toBe(true)
-  })
-
-  it('defaults email_delivery to instant', () => {
-    expect(DEFAULT_NOTIFICATION_PREFERENCES.email_delivery).toBe('instant')
   })
 
   it('leaves quiet_hours null (deferred to v1.1)', () => {
@@ -201,13 +192,12 @@ describe('normalizeNotificationPreferences', () => {
     expect(normalized.in_product.show_bell_badge).toBe(false)
     expect(normalized.in_app_events).toEqual(DEFAULT_NOTIFICATION_PREFERENCES.in_app_events)
     expect(normalized.slack_events).toEqual(DEFAULT_NOTIFICATION_PREFERENCES.slack_events)
-    expect(normalized.email_delivery).toBe('instant')
   })
 
   it('preserves a fully-populated A-7 row verbatim', () => {
     const full: NotificationPreferences = {
       ...DEFAULT_NOTIFICATION_PREFERENCES,
-      email: { ...DEFAULT_NOTIFICATION_PREFERENCES.email, new_applicant: false },
+      email: { ...DEFAULT_NOTIFICATION_PREFERENCES.email, new_applicant: true },
       slack_events: {
         ...DEFAULT_NOTIFICATION_PREFERENCES.slack_events,
         new_applicant: true,
@@ -216,7 +206,6 @@ describe('normalizeNotificationPreferences', () => {
         ...DEFAULT_NOTIFICATION_PREFERENCES.in_app_events,
         stage_change: false,
       } as NotificationInAppEventPreferences,
-      email_delivery: 'daily',
     }
     const normalized = normalizeNotificationPreferences(full)
     expect(normalized).toEqual(full)

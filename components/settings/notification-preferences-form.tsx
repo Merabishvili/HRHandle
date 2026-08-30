@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils'
 import { updateNotificationPreferences } from '@/lib/actions/notification-preferences'
 import {
   MATRIX_EVENTS,
-  type EmailDelivery,
   type MatrixEventMeta,
   type NotificationPreferences,
 } from '@/lib/types/notification-preferences'
@@ -58,10 +57,6 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
       }
       return { ...p, slack_events: { ...p.slack_events, [event.slackKey]: value } }
     })
-  }
-
-  const setEmailDelivery = (mode: EmailDelivery) => {
-    setPrefs((p) => ({ ...p, email_delivery: mode }))
   }
 
   const onSave = () => {
@@ -149,33 +144,6 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
         </CardContent>
       </Card>
 
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>{t('notifPrefs.emailDelivery')}</CardTitle>
-          <CardDescription>
-            {t('notifPrefs.emailDeliveryDesc')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-2.5 sm:flex-row">
-            <DeliveryOption
-              label={t('notifPrefs.instant')}
-              description={t('notifPrefs.instantDesc')}
-              selected={prefs.email_delivery === 'instant'}
-              onSelect={() => setEmailDelivery('instant')}
-              disabled={isPending}
-            />
-            <DeliveryOption
-              label={t('notifPrefs.dailyDigest')}
-              description={t('notifPrefs.dailyDesc')}
-              selected={prefs.email_delivery === 'daily'}
-              onSelect={() => setEmailDelivery('daily')}
-              disabled={isPending}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="flex justify-end">
         <Button onClick={onSave} disabled={isPending}>
           {isPending ? (
@@ -244,47 +212,3 @@ function MatrixCheckbox({
   )
 }
 
-function DeliveryOption({
-  label,
-  description,
-  selected,
-  onSelect,
-  disabled,
-}: {
-  label: string
-  description: string
-  selected: boolean
-  onSelect: () => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onSelect}
-      disabled={disabled}
-      className={cn(
-        'flex flex-1 items-center gap-2.5 rounded-[10px] border px-3.5 py-3 text-left transition-colors',
-        selected
-          ? 'border-primary bg-primary/5'
-          : 'border-border hover:border-foreground/20',
-        disabled && 'cursor-not-allowed opacity-60',
-      )}
-    >
-      <span
-        className={cn(
-          'h-4 w-4 shrink-0 rounded-full border',
-          selected ? 'border-[4.5px] border-primary' : 'border-1.5 border-border',
-        )}
-        aria-hidden
-      />
-      <span>
-        <span className={cn('block text-[13px] font-semibold', selected ? 'text-primary' : 'text-foreground')}>
-          {label}
-        </span>
-        <span className="block text-[11.5px] text-muted-foreground">{description}</span>
-      </span>
-    </button>
-  )
-}

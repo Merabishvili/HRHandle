@@ -1,8 +1,18 @@
 'use server'
 
 import * as Sentry from '@sentry/nextjs'
+import { getTranslations } from 'next-intl/server'
 import { getAuthContext } from './index'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
+import { renderNotification } from '@/lib/notifications/render'
+import { sendTeamNotificationEmail } from '@/lib/email'
+import {
+  normalizeNotificationPreferences,
+  inAppNotificationAllowed,
+  emailNotificationAllowed,
+  type NotificationPreferences,
+} from '@/lib/types/notification-preferences'
 
 export interface Notification {
   id: string
@@ -85,7 +95,66 @@ export async function createOrgNotifications(
   if (recipientIds.length === 0) return { success: true }
   const supabase = createAdminClient()
 
-  const baseRows = recipientIds.map((rid) => ({
+  // Honor each recipient's per-event channel toggles (Settings → Notifications):
+  //   - in-app: skip recipients who turned this event's in-app toggle off (N5).
+  //   - email: send an instant email to recipients who turned it on (off by
+  //     default). Emails are always instant — there is no digest.
+  const { data: recipientRows } = await supabase
+    .from('profiles')
+    .select('id, email, notification_preferences')
+    .in('id', recipientIds)
+  const recipients = (recipientRows ?? []) as {
+    id: string
+    email: string | null
+    notification_preferences: Partial<NotificationPreferences> | null
+  }[]
+
+  // Fall back to the raw recipient list (all in-app, no email) if the prefs
+  // read returned nothing — never silently drop in-app notifications.
+  let inAppRecipientIds = recipientIds
+  const emailRecipients: string[] = []
+  if (recipients.length > 0) {
+    inAppRecipientIds = []
+    for (const r of recipients) {
+      const prefs = normalizeNotificationPreferences(r.notification_preferences)
+      if (inAppNotificationAllowed(prefs, notification.type)) inAppRecipientIds.push(r.id)
+      if (r.email && emailNotificationAllowed(prefs, notification.type)) emailRecipients.push(r.email)
+    }
+  }
+
+  // Instant email (best-effort) — localized to the org's content language via
+  // the shared notification renderer. Never blocks or fails the in-app insert.
+  if (emailRecipients.length > 0) {
+    try {
+      const orgLocale = await fetchOrgContentLocale(supabase, orgId)
+      const t = await getTranslations({ locale: orgLocale })
+      const rendered = renderNotification(t, {
+        type: notification.type,
+        data: notification.data ?? null,
+        title: notification.title,
+        body: notification.body ?? null,
+      })
+      await Promise.allSettled(
+        emailRecipients.map((email) =>
+          sendTeamNotificationEmail({
+            to: email,
+            title: rendered.title,
+            body: rendered.body,
+            link: notification.link ?? null,
+            contentLocale: orgLocale,
+          }),
+        ),
+      )
+    } catch (err) {
+      console.error('[notifications] email send failed:', err)
+      Sentry.captureException(err, { tags: { area: 'notifications', op: 'email' } })
+    }
+  }
+
+  // Everyone opted out of in-app → nothing to insert, but email may have gone.
+  if (inAppRecipientIds.length === 0) return { success: true }
+
+  const baseRows = inAppRecipientIds.map((rid) => ({
     organization_id: orgId,
     recipient_id: rid,
     type: notification.type,

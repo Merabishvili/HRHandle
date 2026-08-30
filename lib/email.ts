@@ -147,6 +147,58 @@ export async function sendTeamInviteEmail({
   return getResend().emails.send({ from: FROM, to, subject, html })
 }
 
+/**
+ * Generic transactional notification email to a team member (recruiter/admin),
+ * sent instantly by createOrgNotifications when the recipient has the matching
+ * email toggle on. `title`/`body` are already localized (via renderNotification)
+ * for the org's content language. From noreply — these are internal alerts.
+ */
+export async function sendTeamNotificationEmail({
+  to,
+  title,
+  body,
+  link,
+  contentLocale,
+}: {
+  to: string
+  title: string
+  body?: string | null
+  link?: string | null
+  contentLocale?: Locale | undefined
+}) {
+  const locale = contentLocale ?? DEFAULT_LOCALE
+  const chrome = emailChrome(locale)
+  const safeTitle = escapeHtml(title)
+  const safeBody = body ? escapeHtml(body) : ''
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://hrhandle.com'
+  const rawHref = link
+    ? /^https?:\/\//.test(link)
+      ? link
+      : `${base}${link.startsWith('/') ? '' : '/'}${link}`
+    : null
+  const href = rawHref && /^https?:\/\//.test(rawHref) ? rawHref : null
+
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: title,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
+    <h1 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 12px;">${safeTitle}</h1>
+    ${safeBody ? `<p style="color: #374151; font-size: 14px; margin: 0 0 24px;">${safeBody}</p>` : ''}
+    ${href ? `<a href="${href}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px;">${chrome.openInApp}</a>` : ''}
+    <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;">
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">${chrome.sentViaNoReply}</p>
+  </div>
+</body>
+</html>`,
+  })
+}
+
 export async function sendInterviewInvitationEmail({
   to,
   candidateName,
