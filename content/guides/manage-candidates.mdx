@@ -70,3 +70,13 @@ When you move an application to **Hired**, the candidate's general status automa
 ## Export and bulk actions
 
 The list supports CSV export of every candidate visible after filters and search — useful for offline reporting or compliance. Click the **Export CSV** button next to **Add Candidate**.
+
+## Bulk import from CSV
+
+Owners and admins can bulk-import candidates from a spreadsheet via **Bulk import** on the candidates page. The flow is **upload → review → confirm → import** on a single page (no column-mapping step):
+
+1. **Upload.** Your file must use the downloadable template's exact header row (columns are matched case-insensitively; unknown or missing-required columns are rejected at upload). Only **first name** and **last name** are required — **email is optional**. Limits: 5,000 rows, 10 MB, UTF-8. Comma and semicolon delimiters are both accepted.
+2. **Review.** The file is parsed server-side and every row is validated. Errored rows sort to the top; each bad cell is highlighted with a reason (invalid email, phone, experience, LinkedIn, salary, or a **duplicate** email — already in your org, or repeated in the file). You can **edit any cell inline** or **delete rows**; the ready/error counters update live. You cannot proceed while any error remains — fix it or delete the row. Your edits are saved automatically and survive a page refresh for 24 hours.
+3. **Confirm & import.** A read-only preview of exactly what will be created, then the import runs as a background job with a live progress bar (it keeps running if you close the tab; you can cancel between batches — already-created candidates remain). When it finishes you get a count of imported candidates and a link to view just this import's candidates.
+
+Duplicates are never merged and existing candidates are never updated — a duplicate is an error you resolve by editing the email or deleting the row. Imported candidates count against your plan's candidate limit. Every imported candidate is stamped with the import so you can filter the list to a single import (`?import=<id>`).

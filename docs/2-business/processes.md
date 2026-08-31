@@ -6,6 +6,7 @@ _Last updated: 2026-07-20_
 
 - 🔄 **(2026-07-20 audit) Pipeline is the home surface** (`/dashboard` → `/pipeline`; redesign A-1). Onboarding still runs in the `(dashboard)` route-group layout, which now wraps `/pipeline`.
 - 🆕 **(2026-07-20 audit)** Offer lifecycle (draft → sent → accepted/declined/withdrawn; accept auto-advances to Hired), 2FA enrollment + org policy, Reports, and CSV import processes shipped since 2026-05-08 — see `docs/1-product/roadmap.md` for the full G-0xx list.
+- 🔄 **(2026-08-31) Candidate CSV import redesigned** into a server-backed, no-mapping flow: **upload → review → confirm → import**. File must match the template header row exactly (email column optional); rows are parsed + validated server-side and persisted as a per-user **draft** (24h). The review table lets recruiters **edit cells / delete rows** with live error highlighting (duplicate email — in-DB or in-file — is a blocking error, never a merge); import runs as a **background job** with a progress bar and cancel. Every created candidate is stamped with `candidates.import_id`. Migration `supabase/migrations/20260831_candidate_csv_import.sql` (apply on both projects). The hard plan cap still gates it.
 - 🔄 Trial `member_limit` corrected from **3 → 2** (matches `lib/onboarding.ts:111` and `lib/types/subscription.ts`)
 - 🆕 Custom fields cap documented: max 20 per entity type (`lib/actions/custom-fields.ts:202`)
 - 🆕 Rejection reasons cap documented: max 50 per org (`lib/actions/rejection-reasons.ts:12`)

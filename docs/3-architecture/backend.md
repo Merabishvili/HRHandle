@@ -97,7 +97,7 @@ Error codes: `NOT_AUTHENTICATED`, `PLAN_LIMIT`, `VALIDATION`, `NOT_FOUND`, `FORB
 | 🆕 `lib/actions/pipeline-stages.ts`, `org-pipeline-stage-templates.ts` | Per-vacancy pipeline-stage CRUD + org-level stage templates (Wave 2.6) |
 | 🆕 `lib/actions/restore.ts` | Trash restore + hard-delete-now for soft-deleted candidates/vacancies (G-020) |
 | 🆕 `lib/actions/candidate-merge.ts` | Merge duplicate candidate records |
-| 🆕 `lib/actions/candidate-import.ts` | Bulk CSV candidate import (G-028) |
+| 🔄 `lib/actions/candidate-import.ts` | Server-backed bulk CSV import (2026-08-31 redesign): `getImportDraft` / `saveImportDraft` (uploader-only draft persistence), `startImport` (background commit job via `after()`, batches of 100, dup re-check at commit, plan-cap enforced), `getImportProgress` (poll), `cancelImport`. Parsing/validation live in `lib/candidate-import/{parsing,validation}.ts` (pure, shared by the parse route + review table). |
 | 🆕 `lib/actions/search.ts` | Global cmd-K search across candidates / vacancies / notes (G-023) |
 | 🆕 `lib/actions/review-mode.ts` | Quick Review Mode data (`getReviewCandidateDetail`, `getInterviewFormData`) |
 | 🆕 `lib/actions/organization.ts` | Organization management (self-serve delete, MFA policy) |
@@ -115,6 +115,7 @@ Full documentation in `docs/7-api/endpoints.md`. Route files:
 | `app/api/health/route.ts` | GET | Health check |
 | `app/api/onboarding/route.ts` | POST | Run onboarding (delegates to `lib/onboarding.ts`). Optional JSON body `{ fullName?, companyName? }` overrides `user_metadata` lookups. |
 | `app/api/cron/expire-vacancies/route.ts` | GET | Cron: expire past vacancies (calls Supabase RPC) |
+| 🆕 `app/api/candidates/import/parse/route.ts` | POST | Parse an uploaded CSV (header hard-gate, UTF-8/BOM, comma/semicolon detect, 5k-row/10MB limits), validate every row, batch-check duplicates, persist a `candidate_import_drafts` row, return per-row validation + `importId`. `maxDuration = 60`. |
 | `app/api/export/candidates/route.ts` | GET | Export candidates as CSV |
 | `app/api/export/applications/route.ts` | GET | Export applications for a vacancy as CSV |
 | `app/api/auth/google/route.ts` | GET | Initiate Google OAuth for Calendar |

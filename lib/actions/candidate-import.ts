@@ -1,156 +1,308 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
+import { getTranslations } from 'next-intl/server'
 import { getAuthContext, type ActionResult } from './index'
 import { isOrgAdmin } from '@/lib/permissions'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { writeAuditLog } from '@/lib/audit-log'
-import { ImportRowSchema, type ImportRow } from '@/lib/candidate-import/validation'
 import { MAX_ROWS } from '@/lib/candidate-import/parsing'
+import {
+  validateDataset,
+  toCandidateInsert,
+  type DraftRow,
+  type ValidatedRow,
+} from '@/lib/candidate-import/validation'
 
-export interface ImportResult {
-  imported: number
-  skipped_duplicate: number
-  errored: number
-  duplicate_emails: string[]
-}
+const COMMIT_BATCH = 100
 
-export interface ImportPayload {
+export interface ImportDraftData {
   filename: string
-  rows: ImportRow[]
+  columns: number
+  size: number
+  rows: ValidatedRow[]
+  counts: { total: number; ready: number; error: number }
+  existingEmails: string[]
 }
 
-export async function importCandidates(
-  payload: ImportPayload
-): Promise<ActionResult<ImportResult>> {
+export interface ImportProgress {
+  status: 'running' | 'completed' | 'cancelled' | 'failed'
+  total: number
+  imported: number
+  failed: number
+  deleted_count: number
+  filename: string
+  started_at: string
+  finished_at: string | null
+  error_reason: string | null
+}
+
+/** Fetch the org's active-candidate emails (lowercased) for duplicate checks. */
+async function fetchExistingEmails(
+  client: ReturnType<typeof createAdminClient>,
+  orgId: string,
+): Promise<Set<string>> {
+  const { data } = await client
+    .from('candidates')
+    .select('email')
+    .eq('organization_id', orgId)
+    .is('deleted_at', null)
+    .not('email', 'is', null)
+    .limit(20000)
+  return new Set(
+    (data ?? []).map((r) => (r.email ?? '').toLowerCase()).filter((e) => e.length > 0),
+  )
+}
+
+/**
+ * Re-load a draft (uploader-only via RLS) and re-validate it against a fresh
+ * duplicate snapshot. Used to recover the review table after a page refresh.
+ */
+export async function getImportDraft(importId: string): Promise<ActionResult<ImportDraftData>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
+
+  const { data: draft } = await ctx.supabase
+    .from('candidate_import_drafts')
+    .select('filename, rows, size_bytes, column_count')
+    .eq('id', importId)
+    .single()
+  if (!draft) return { success: false, error: 'Draft not found or expired', code: 'NOT_FOUND' }
+
+  const draftRows = (draft.rows ?? []) as DraftRow[]
+  const admin = createAdminClient()
+  const existingEmails = await fetchExistingEmails(admin, ctx.orgId)
+  const validated = validateDataset(draftRows, existingEmails)
+
+  let ready = 0
+  let error = 0
+  for (const r of validated) r.status === 'ready' ? ready++ : error++
+
+  return {
+    success: true,
+    data: {
+      filename: draft.filename,
+      columns: draft.column_count ?? 0,
+      size: draft.size_bytes ?? 0,
+      rows: validated,
+      counts: { total: validated.length, ready, error },
+      existingEmails: Array.from(existingEmails),
+    },
+  }
+}
+
+/** Persist inline edits + deletions to the draft (debounced autosave). */
+export async function saveImportDraft(
+  importId: string,
+  rows: DraftRow[],
+): Promise<ActionResult> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
+  if (!Array.isArray(rows) || rows.length > MAX_ROWS) {
+    return { success: false, error: 'Invalid draft', code: 'VALIDATION' }
+  }
+
+  const { error } = await ctx.supabase
+    .from('candidate_import_drafts')
+    .update({ rows, updated_at: new Date().toISOString() })
+    .eq('id', importId)
+  if (error) return { success: false, error: 'Failed to save', code: 'DB_ERROR' }
+  return { success: true, data: undefined }
+}
+
+/**
+ * Kick off the commit as a background job. Returns immediately with a jobId;
+ * the client polls `getImportProgress`. Only rows that are error-free at
+ * commit time are attempted; a duplicate that appeared since parse (race) is
+ * dropped and counted as `failed`.
+ */
+export async function startImport(importId: string): Promise<ActionResult<{ jobId: string }>> {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
   if (!isOrgAdmin(ctx.role)) {
-    return { success: false, error: 'Only owners and admins can import candidates', code: 'FORBIDDEN' }
+    return { success: false, error: 'Only owners and admins can import', code: 'FORBIDDEN' }
   }
 
-  if (!Array.isArray(payload.rows) || payload.rows.length === 0) {
-    return { success: false, error: 'No rows to import', code: 'VALIDATION' }
-  }
-  if (payload.rows.length > MAX_ROWS) {
-    return { success: false, error: `Cannot import more than ${MAX_ROWS} rows at once`, code: 'VALIDATION' }
+  const { data: draft } = await ctx.supabase
+    .from('candidate_import_drafts')
+    .select('filename, rows, initial_row_count')
+    .eq('id', importId)
+    .single()
+  if (!draft) return { success: false, error: 'Draft not found or expired', code: 'NOT_FOUND' }
+
+  const draftRows = (draft.rows ?? []) as DraftRow[]
+  const admin = createAdminClient()
+  const existingEmails = await fetchExistingEmails(admin, ctx.orgId)
+  const validated = validateDataset(draftRows, existingEmails)
+  const readyRows = validated.filter((r) => r.status === 'ready')
+  if (readyRows.length === 0) {
+    return { success: false, error: 'No importable rows', code: 'VALIDATION' }
   }
 
-  // Re-validate rows server-side. The client may have been tampered with.
-  const validated: ImportRow[] = []
-  for (const row of payload.rows) {
-    const parsed = ImportRowSchema.safeParse(row)
-    if (!parsed.success) {
-      return {
-        success: false,
-        error: 'One or more rows failed server validation. Refresh and try again.',
-        code: 'VALIDATION',
-      }
-    }
-    validated.push(parsed.data)
-  }
-
-  // Plan-cap: refuse the whole batch if it would push the org over its candidate limit.
+  // Hard plan cap — importing must not push the org past candidate_limit.
   const { data: sub } = await ctx.supabase
     .from('subscriptions')
     .select('candidate_limit')
     .eq('organization_id', ctx.orgId)
     .single()
-
   if (sub?.candidate_limit) {
     const { count } = await ctx.supabase
       .from('candidates')
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', ctx.orgId)
       .is('deleted_at', null)
-    const projected = (count ?? 0) + validated.length
-    if (projected > sub.candidate_limit) {
-      return {
-        success: false,
-        error: `Importing ${validated.length} rows would exceed your plan limit of ${sub.candidate_limit} candidates (currently ${count ?? 0}).`,
-        code: 'PLAN_LIMIT',
-      }
+    if ((count ?? 0) + readyRows.length > sub.candidate_limit) {
+      const t = await getTranslations('planLimit')
+      return { success: false, error: t('candidates', { limit: sub.candidate_limit }), code: 'PLAN_LIMIT' }
     }
   }
 
-  // Dedupe by email against existing active candidates in the org.
-  const emails = Array.from(new Set(validated.map((r) => r.email)))
-  const { data: existing } = await ctx.supabase
-    .from('candidates')
-    .select('email')
-    .eq('organization_id', ctx.orgId)
-    .is('deleted_at', null)
-    .in('email', emails)
+  const deletedCount = Math.max(0, (draft.initial_row_count ?? readyRows.length) - draftRows.length)
 
-  const taken = new Set((existing ?? []).map((c) => (c.email ?? '').toLowerCase()))
-
-  // Also dedupe within the batch itself — first occurrence wins.
-  const seenInBatch = new Set<string>()
-  const toInsert: ImportRow[] = []
-  const duplicateEmails: string[] = []
-
-  for (const row of validated) {
-    const e = row.email.toLowerCase()
-    if (taken.has(e) || seenInBatch.has(e)) {
-      duplicateEmails.push(e)
-      continue
-    }
-    seenInBatch.add(e)
-    toInsert.push(row)
-  }
-
-  let inserted = 0
-  if (toInsert.length > 0) {
-    const insertPayload = toInsert.map((r) => ({
+  const { data: job, error: jobError } = await admin
+    .from('candidate_imports')
+    .insert({
       organization_id: ctx.orgId,
       created_by: ctx.userId,
-      first_name: r.first_name,
-      last_name: r.last_name,
-      email: r.email,
-      phone: r.phone,
-      current_company: r.current_company,
-      current_position: r.current_position,
-      years_of_experience: r.years_of_experience,
-      linkedin_profile_url: r.linkedin_url,
-      location: r.location,
-      source: r.source,
-      languages: r.languages,
-      salary_expectation: r.salary_expectation,
-      notice_period: r.notice_period,
-    }))
-
-    const { data, error } = await ctx.supabase
-      .from('candidates')
-      .insert(insertPayload)
-      .select('id')
-
-    if (error) {
-      return { success: false, error: 'Failed to import candidates', code: 'DB_ERROR' }
-    }
-    inserted = data?.length ?? 0
+      filename: draft.filename,
+      status: 'running',
+      total: readyRows.length,
+      deleted_count: deletedCount,
+    })
+    .select('id')
+    .single()
+  if (jobError || !job) {
+    return { success: false, error: 'Failed to start import', code: 'DB_ERROR' }
   }
 
-  const result: ImportResult = {
-    imported: inserted,
-    skipped_duplicate: duplicateEmails.length,
-    errored: 0,
-    duplicate_emails: duplicateEmails,
-  }
+  const jobId = job.id as string
+  const base = { organization_id: ctx.orgId, created_by: ctx.userId }
 
-  await writeAuditLog({
-    orgId: ctx.orgId,
-    userId: ctx.userId,
-    entityType: 'candidate',
-    entityId: null,
-    action: 'candidates_imported',
-    message: `Imported ${inserted} candidate${inserted === 1 ? '' : 's'} from CSV`,
-    details: {
-      filename: payload.filename,
-      rows_attempted: validated.length,
-      rows_imported: inserted,
-      rows_skipped_duplicate: duplicateEmails.length,
-    },
+  // Run the inserts after the response is sent. Progress is written to the
+  // candidate_imports row as batches land; the client polls it.
+  after(async () => {
+    await runImportJob({ jobId, importId, rows: readyRows, base, existingEmails })
   })
 
-  revalidatePath('/candidates')
-  return { success: true, data: result }
+  return { success: true, data: { jobId } }
+}
+
+/** Background worker: inserts ready rows in batches, updating live progress. */
+async function runImportJob(args: {
+  jobId: string
+  importId: string
+  rows: ValidatedRow[]
+  base: { organization_id: string; created_by: string }
+  existingEmails: Set<string>
+}): Promise<void> {
+  const { jobId, importId, rows, base, existingEmails } = args
+  const admin = createAdminClient()
+  const seen = new Set(existingEmails)
+  let imported = 0
+  let failed = 0
+
+  try {
+    for (let i = 0; i < rows.length; i += COMMIT_BATCH) {
+      // Honor a cancel request between batches; already-created rows remain.
+      const { data: jobRow } = await admin
+        .from('candidate_imports')
+        .select('cancel_requested')
+        .eq('id', jobId)
+        .single()
+      if (jobRow?.cancel_requested) {
+        await admin
+          .from('candidate_imports')
+          .update({ status: 'cancelled', imported, failed, finished_at: new Date().toISOString() })
+          .eq('id', jobId)
+        await admin.from('candidate_import_drafts').delete().eq('id', importId)
+        return
+      }
+
+      const batch = rows.slice(i, i + COMMIT_BATCH)
+      const payload: Record<string, unknown>[] = []
+      for (const r of batch) {
+        const email = (r.values.email ?? '').trim().toLowerCase()
+        if (email && seen.has(email)) {
+          failed++ // duplicate appeared since parse (race) — skip it
+          continue
+        }
+        if (email) seen.add(email)
+        payload.push(toCandidateInsert(r.values, { ...base, import_id: jobId }))
+      }
+
+      if (payload.length > 0) {
+        const { data, error } = await admin.from('candidates').insert(payload).select('id')
+        if (error) {
+          failed += payload.length
+        } else {
+          imported += data?.length ?? 0
+        }
+      }
+
+      await admin
+        .from('candidate_imports')
+        .update({ imported, failed })
+        .eq('id', jobId)
+    }
+
+    await admin
+      .from('candidate_imports')
+      .update({ status: 'completed', imported, failed, finished_at: new Date().toISOString() })
+      .eq('id', jobId)
+    await admin.from('candidate_import_drafts').delete().eq('id', importId)
+
+    await writeAuditLog({
+      orgId: base.organization_id,
+      userId: base.created_by,
+      entityType: 'candidate',
+      entityId: null,
+      action: 'candidates_imported',
+      message: `Imported ${imported} candidate${imported === 1 ? '' : 's'} from CSV`,
+      details: { import_id: jobId, imported, failed },
+    })
+  } catch (err) {
+    await admin
+      .from('candidate_imports')
+      .update({
+        status: 'failed',
+        imported,
+        failed,
+        error_reason: err instanceof Error ? err.message : 'unknown',
+        finished_at: new Date().toISOString(),
+      })
+      .eq('id', jobId)
+  }
+}
+
+/** Poll the live status of an import job (same-org read via RLS). */
+export async function getImportProgress(jobId: string): Promise<ActionResult<ImportProgress>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
+
+  const { data } = await ctx.supabase
+    .from('candidate_imports')
+    .select('status, total, imported, failed, deleted_count, filename, started_at, finished_at, error_reason')
+    .eq('id', jobId)
+    .single()
+  if (!data) return { success: false, error: 'Import not found', code: 'NOT_FOUND' }
+
+  return { success: true, data: data as ImportProgress }
+}
+
+/** Request cancellation; the job stops after its current batch. */
+export async function cancelImport(jobId: string): Promise<ActionResult> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
+  if (!isOrgAdmin(ctx.role)) {
+    return { success: false, error: 'Forbidden', code: 'FORBIDDEN' }
+  }
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('candidate_imports')
+    .update({ cancel_requested: true })
+    .eq('id', jobId)
+    .eq('organization_id', ctx.orgId)
+  if (error) return { success: false, error: 'Failed to cancel', code: 'DB_ERROR' }
+  return { success: true, data: undefined }
 }
