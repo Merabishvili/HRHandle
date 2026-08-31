@@ -43,6 +43,7 @@ type SearchParams = Promise<{
   search?: string
   sort?: string
   status?: string
+  import?: string
 }>
 
 export default async function CandidatesPage({
@@ -50,7 +51,7 @@ export default async function CandidatesPage({
 }: {
   searchParams: SearchParams
 }) {
-  const { vacancy: vacancyFilter, page: pageParam, pageSize: pageSizeParam, search = '', sort = 'created_desc', status: statusFilter } = await searchParams
+  const { vacancy: vacancyFilter, page: pageParam, pageSize: pageSizeParam, search = '', sort = 'created_desc', status: statusFilter, import: importFilter } = await searchParams
   const page = Math.max(1, parseInt(pageParam || '1', 10) || 1)
   const pageSize: PageSize = parsePageSize(pageSizeParam)
   const from = (page - 1) * pageSize
@@ -144,6 +145,11 @@ export default async function CandidatesPage({
 
     if (statusFilter) {
       baseQuery = baseQuery.eq('general_status_id', statusFilter)
+    }
+
+    // Deep-link from a completed CSV import → just this import's candidates.
+    if (importFilter) {
+      baseQuery = baseQuery.eq('import_id', importFilter)
     }
 
     if (vacancyFilter && candidateIdsForFilter && candidateIdsForFilter.length > 0) {
@@ -267,6 +273,7 @@ export default async function CandidatesPage({
   if (search) paginationPreserved.search = search
   if (sort !== 'created_desc') paginationPreserved.sort = sort
   if (statusFilter) paginationPreserved.status = statusFilter
+  if (importFilter) paginationPreserved.import = importFilter
 
   return (
     <div className="space-y-6">
