@@ -115,7 +115,8 @@ Full documentation in `docs/7-api/endpoints.md`. Route files:
 | `app/api/health/route.ts` | GET | Health check |
 | `app/api/onboarding/route.ts` | POST | Run onboarding (delegates to `lib/onboarding.ts`). Optional JSON body `{ fullName?, companyName? }` overrides `user_metadata` lookups. |
 | `app/api/cron/expire-vacancies/route.ts` | GET | Cron: expire past vacancies (calls Supabase RPC) |
-| 🆕 `app/api/candidates/import/parse/route.ts` | POST | Parse an uploaded CSV (header hard-gate, UTF-8/BOM, comma/semicolon detect, 5k-row/10MB limits), validate every row, batch-check duplicates, persist a `candidate_import_drafts` row, return per-row validation + `importId`. `maxDuration = 60`. |
+| 🆕 `app/api/candidates/import/parse/route.ts` | POST | Parse an uploaded **.xlsx or .csv** (xlsx via ExcelJS → `lib/candidate-import/xlsx.ts`; CSV decoded by real encoding via `decodeCsvBytes` — UTF-8/UTF-16 BOM — then comma/semicolon detect), header hard-gate, 5k-row/10MB limits, validate every row, batch-check duplicates, persist a `candidate_import_drafts` row, return per-row validation + `importId`. `maxDuration = 60`. |
+| 🆕 `app/api/candidates/import/template/route.ts` | GET | Stream the **.xlsx candidate-import template** (bold/frozen header + example row), generated with ExcelJS. Replaces the old static `public/*.csv` template so it opens as real columns in Excel/Numbers. |
 | `app/api/export/candidates/route.ts` | GET | Export candidates as CSV |
 | `app/api/export/applications/route.ts` | GET | Export applications for a vacancy as CSV |
 | `app/api/auth/google/route.ts` | GET | Initiate Google OAuth for Calendar |
