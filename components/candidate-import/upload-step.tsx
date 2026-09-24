@@ -66,7 +66,7 @@ export function UploadStep({ onParsed }: { onParsed: (ds: Dataset) => void }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{t('csvImport.uploadHint', { max: MAX_ROWS })}</p>
         <Button asChild variant="outline" size="sm" className="gap-2">
-          <a href="/hrhandle-candidates-template.csv" download>
+          <a href="/api/candidates/import/template" download>
             <Download className="h-4 w-4" />
             {t('csvImport.downloadTemplate')}
           </a>
@@ -104,7 +104,7 @@ export function UploadStep({ onParsed }: { onParsed: (ds: Dataset) => void }) {
               <label className="cursor-pointer">
                 <input
                   type="file"
-                  accept=".csv,text/csv"
+                  accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                   className="sr-only"
                   onChange={(e) => {
                     const file = e.target.files?.[0]
@@ -130,7 +130,7 @@ export function UploadStep({ onParsed }: { onParsed: (ds: Dataset) => void }) {
           <AlertDescription className="flex flex-col gap-2">
             <span>{error}</span>
             <a
-              href="/hrhandle-candidates-template.csv"
+              href="/api/candidates/import/template"
               download
               className="inline-flex w-fit items-center gap-1.5 text-sm font-medium underline"
             >

@@ -3,6 +3,7 @@ import {
   validateHeaders,
   buildValueMapper,
   detectDelimiter,
+  decodeCsvBytes,
   stripBom,
   looksNonUtf8,
   normalizeHeader,
@@ -73,5 +74,34 @@ describe('stripBom / looksNonUtf8', () => {
 describe('normalizeHeader', () => {
   it('lowercases and trims', () => {
     expect(normalizeHeader('  First_Name ')).toBe('first_name')
+  })
+})
+
+describe('decodeCsvBytes — encoding tolerance', () => {
+  const u8 = (s: string) => new TextEncoder().encode(s)
+
+  it('decodes plain UTF-8', () => {
+    expect(decodeCsvBytes(u8('first_name,last_name'))).toBe('first_name,last_name')
+  })
+
+  it('strips a UTF-8 BOM', () => {
+    const bytes = new Uint8Array([0xef, 0xbb, 0xbf, ...u8('a,b')])
+    expect(decodeCsvBytes(bytes)).toBe('a,b')
+  })
+
+  it('decodes UTF-16 LE with BOM (what Numbers/Excel often re-save)', () => {
+    // BOM FF FE, then "a,b" as little-endian 16-bit code units.
+    const bytes = new Uint8Array([0xff, 0xfe, 0x61, 0x00, 0x2c, 0x00, 0x62, 0x00])
+    expect(decodeCsvBytes(bytes)).toBe('a,b')
+  })
+
+  it('decodes UTF-16 BE with BOM', () => {
+    const bytes = new Uint8Array([0xfe, 0xff, 0x00, 0x61, 0x00, 0x2c, 0x00, 0x62])
+    expect(decodeCsvBytes(bytes)).toBe('a,b')
+  })
+
+  it('detects BOM-less UTF-16 LE from interleaved NUL bytes', () => {
+    const bytes = new Uint8Array([0x68, 0x00, 0x69, 0x00]) // "hi"
+    expect(decodeCsvBytes(bytes)).toBe('hi')
   })
 })

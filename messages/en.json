@@ -2858,10 +2858,10 @@
       "review": "Review",
       "confirm": "Confirm & import"
     },
-    "uploadHint": "Upload a CSV using our template (up to {max} rows).",
+    "uploadHint": "Upload an Excel (.xlsx) or CSV file using our template (up to {max} rows).",
     "downloadTemplate": "Download template",
     "parsing": "Processing…",
-    "dragHere": "Drag your CSV here",
+    "dragHere": "Drag your Excel or CSV file here",
     "or": "or",
     "chooseFile": "Choose file",
     "maxSize": "Max file size {mb} MB",

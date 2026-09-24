@@ -4,19 +4,20 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
   buildValueMapper,
+  decodeCsvBytes,
   detectDelimiter,
-  looksNonUtf8,
-  stripBom,
   validateHeaders,
   MAX_FILE_BYTES,
   MAX_ROWS,
 } from '@/lib/candidate-import/parsing'
+import { parseXlsxToTable } from '@/lib/candidate-import/xlsx'
 import {
   validateDataset,
   summarize,
   type DraftRow,
 } from '@/lib/candidate-import/validation'
 
+export const runtime = 'nodejs'
 export const maxDuration = 60
 
 /** Cap the existing-email set shipped to the client for local dup re-checking. */
@@ -56,18 +57,33 @@ export async function POST(request: Request) {
     return bad('tooLarge', { maxMb: Math.round(MAX_FILE_BYTES / (1024 * 1024)) })
   }
 
-  const rawText = stripBom(await file.text())
-  if (looksNonUtf8(rawText)) return bad('notUtf8')
-  if (!rawText.trim()) return bad('empty')
+  const isXlsx =
+    file.name.toLowerCase().endsWith('.xlsx') ||
+    file.type.includes('spreadsheetml') ||
+    file.type === 'application/vnd.ms-excel'
 
-  // --- parse ---
-  const firstLine = rawText.slice(0, rawText.indexOf('\n') === -1 ? undefined : rawText.indexOf('\n'))
-  const delimiter = detectDelimiter(firstLine)
-  const parsed = Papa.parse<string[]>(rawText, { delimiter, skipEmptyLines: true })
-  if (parsed.errors.length > 0) {
-    return bad('parseError', { message: parsed.errors[0]?.message ?? 'unknown' })
+  // --- parse to a header + rows table (same shape for CSV and XLSX) ---
+  let table: string[][]
+  if (isXlsx) {
+    try {
+      table = await parseXlsxToTable(await file.arrayBuffer())
+    } catch {
+      return bad('parseError')
+    }
+  } else {
+    // Decode by the file's real encoding (UTF-8 / UTF-16 via BOM) so a CSV
+    // re-saved by Numbers/Excel isn't wrongly rejected as "not UTF-8".
+    const rawText = decodeCsvBytes(new Uint8Array(await file.arrayBuffer()))
+    if (!rawText.trim()) return bad('empty')
+    const nl = rawText.indexOf('\n')
+    const firstLine = nl === -1 ? rawText : rawText.slice(0, nl)
+    const delimiter = detectDelimiter(firstLine)
+    const parsed = Papa.parse<string[]>(rawText, { delimiter, skipEmptyLines: true })
+    if (parsed.errors.length > 0) {
+      return bad('parseError', { message: parsed.errors[0]?.message ?? 'unknown' })
+    }
+    table = parsed.data as string[][]
   }
-  const table = parsed.data as string[][]
   if (table.length === 0) return bad('empty')
 
   const headers = (table[0] ?? []).map((h) => String(h ?? ''))

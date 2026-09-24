@@ -50,6 +50,27 @@ export function looksNonUtf8(text: string): boolean {
 }
 
 /**
+ * Decode raw CSV bytes to text, honoring the file's actual encoding instead of
+ * assuming UTF-8. Spreadsheet apps (Numbers, Excel) frequently re-save CSVs as
+ * **UTF-16** with a byte-order mark — decoding those as UTF-8 produces garbage
+ * and used to trip the "must be UTF-8" rejection. We sniff the BOM and pick the
+ * matching decoder; the BOM itself is stripped by TextDecoder.
+ */
+export function decodeCsvBytes(bytes: Uint8Array): string {
+  const [b0, b1, b2] = [bytes[0], bytes[1], bytes[2]]
+  let label: 'utf-8' | 'utf-16le' | 'utf-16be' = 'utf-8'
+  if (b0 === 0xff && b1 === 0xfe) label = 'utf-16le'
+  else if (b0 === 0xfe && b1 === 0xff) label = 'utf-16be'
+  else if (b0 === 0xef && b1 === 0xbb && b2 === 0xbf) label = 'utf-8'
+  else if (bytes.length >= 2 && bytes.includes(0x00)) {
+    // No BOM but NUL bytes present → almost certainly UTF-16. Guess endianness
+    // from whether the zeros land on odd (LE) or even (BE) offsets.
+    label = bytes[1] === 0x00 ? 'utf-16le' : 'utf-16be'
+  }
+  return new TextDecoder(label).decode(bytes)
+}
+
+/**
  * Pick the delimiter from the header line: comma by default, semicolon as a
  * fallback (common in Excel exports from a Georgian/EU locale). Whichever
  * appears more often on the first line wins.

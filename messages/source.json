@@ -11980,9 +11980,9 @@
     "ru": "Подтверждение и импорт"
   },
   "csvImport.uploadHint": {
-    "en": "Upload a CSV using our template (up to {max} rows).",
-    "ka": "ატვირთეთ CSV ჩვენი შაბლონით (მაქს. {max} სტრიქონი).",
-    "ru": "Загрузите CSV по нашему шаблону (до {max} строк)."
+    "en": "Upload an Excel (.xlsx) or CSV file using our template (up to {max} rows).",
+    "ka": "ატვირთეთ Excel (.xlsx) ან CSV ფაილი ჩვენი შაბლონით (მაქს. {max} სტრიქონი).",
+    "ru": "Загрузите файл Excel (.xlsx) или CSV по нашему шаблону (до {max} строк)."
   },
   "csvImport.downloadTemplate": {
     "en": "Download template",
@@ -11995,9 +11995,9 @@
     "ru": "Обработка…"
   },
   "csvImport.dragHere": {
-    "en": "Drag your CSV here",
-    "ka": "ჩააგდეთ CSV აქ",
-    "ru": "Перетащите CSV сюда"
+    "en": "Drag your Excel or CSV file here",
+    "ka": "ჩააგდეთ Excel ან CSV ფაილი აქ",
+    "ru": "Перетащите файл Excel или CSV сюда"
   },
   "csvImport.or": {
     "en": "or",
