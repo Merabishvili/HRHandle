@@ -203,7 +203,8 @@ export default async function VacancyDetailPage({
       `)
       .eq('id', id)
       .eq('organization_id', organizationId)
-      .is('archived_at', null)
+      // Archived (incl. auto-expired) vacancies stay openable so they can be
+      // reviewed and reopened from the actions menu; only hard-deleted ones 404.
       .is('deleted_at', null)
       .single(),
   ])

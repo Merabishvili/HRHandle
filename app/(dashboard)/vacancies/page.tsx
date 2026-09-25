@@ -153,19 +153,29 @@ export default async function VacanciesPage({
     sectors(name)
   `
 
+  // The "Archived" tab means "hidden from the active list" — which is the
+  // `archived_at` timestamp, NOT the `archived` vacancy *status*. The nightly
+  // expiry cron closes past-dated vacancies with status=closed + archived_at,
+  // so they'd never match a status-based archived filter. Key the tab off
+  // `archived_at` instead so both auto-expired and manually-archived show.
+  const archivedStatusId = statusOptions.find((s) => s.code === 'archived')?.id ?? null
+  const isArchivedTab = !!statusFilter && statusFilter === archivedStatusId
+
   let baseQuery = supabase
     .from('vacancies')
     .select(FIELDS, { count: 'exact' })
     .eq('organization_id', organizationId)
-    .is('archived_at', null)
     .is('deleted_at', null)
+
+  if (isArchivedTab) {
+    baseQuery = baseQuery.not('archived_at', 'is', null)
+  } else {
+    baseQuery = baseQuery.is('archived_at', null)
+    if (statusFilter) baseQuery = baseQuery.eq('status_id', statusFilter)
+  }
 
   if (search.trim()) {
     baseQuery = baseQuery.ilike('title', `%${search.trim()}%`)
-  }
-
-  if (statusFilter) {
-    baseQuery = baseQuery.eq('status_id', statusFilter)
   }
 
   let vacancies: VacancyRow[]

@@ -117,7 +117,7 @@ export async function updateVacancyStatus(
   const [{ data: vacancyBefore }, { data: newStatus }] = await Promise.all([
     ctx.supabase
       .from('vacancies')
-      .select('status_id, vacancy_statuses ( code )')
+      .select('status_id, end_date, archived_at, vacancy_statuses ( code )')
       .eq('id', id)
       .eq('organization_id', ctx.orgId)
       .is('deleted_at', null)
@@ -125,9 +125,31 @@ export async function updateVacancyStatus(
     ctx.supabase.from('vacancy_statuses').select('code').eq('id', statusId).single(),
   ])
 
+  const afterCode = newStatus?.code ?? null
+
+  // `archived_at` (not the `archived` status) is what hides a vacancy from the
+  // active list, so keep it in lockstep with the status: archiving sets it,
+  // any other status clears it (this is how you reopen an expired/archived
+  // vacancy). When reopening, also drop a stale past `end_date` so the nightly
+  // expiry cron doesn't immediately re-archive it.
+  const statusUpdate: Record<string, unknown> = { status_id: statusId }
+  if (afterCode === 'archived') {
+    statusUpdate.archived_at = new Date().toISOString()
+  } else {
+    statusUpdate.archived_at = null
+    const today = new Date().toISOString().slice(0, 10)
+    if (
+      (afterCode === 'open' || afterCode === 'on_hold') &&
+      vacancyBefore?.end_date &&
+      vacancyBefore.end_date < today
+    ) {
+      statusUpdate.end_date = null
+    }
+  }
+
   const { error } = await ctx.supabase
     .from('vacancies')
-    .update({ status_id: statusId })
+    .update(statusUpdate)
     .eq('id', id)
     .eq('organization_id', ctx.orgId)
     .is('deleted_at', null)
@@ -137,7 +159,6 @@ export async function updateVacancyStatus(
   type StatusJoin = { code: string } | { code: string }[] | null
   const beforeJoin = vacancyBefore?.vacancy_statuses as StatusJoin
   const beforeCode = Array.isArray(beforeJoin) ? beforeJoin[0]?.code : beforeJoin?.code
-  const afterCode = newStatus?.code ?? null
   void writeAuditLog({
     orgId: ctx.orgId,
     userId: ctx.userId,
