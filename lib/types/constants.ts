@@ -59,7 +59,7 @@ export const ACTIVE_APPLICATION_STATUS_CODES: readonly ApplicationStatusCode[] =
 export const CANDIDATE_STATUS = {
   ACTIVE: 'active',
   HIRED: 'hired',
-  ARCHIVED: 'archived',
+  INACTIVE: 'inactive',
 } as const
 
 export type CandidateStatusCode =

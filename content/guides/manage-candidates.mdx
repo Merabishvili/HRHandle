@@ -53,7 +53,7 @@ Click any row in the list to open the candidate detail page. From there you can:
 The top of the candidates list has a search box and status tabs.
 
 - **Search** matches against first name, last name, and email.
-- **Status tabs** filter by Active, Hired, or Archived.
+- **Status tabs** filter by In progress (მიმდინარე), Inactive (არააქტიური), or Hired.
 - **Columns** lets you choose which fields appear in the table — useful if you store custom data like preferred languages or notice period.
 
 ## General status vs. application status
@@ -62,10 +62,10 @@ These are two different things:
 
 | Status type | Where it lives | What it means |
 |---|---|---|
-| **General status** | On the candidate | Their relationship with your organization — Active, Hired, Archived. |
+| **General status** | On the candidate | Their relationship with your organization. **Auto-derived**, not manually set: **In progress** (მიმდინარე) = has at least one open application; **Inactive** (არააქტიური) = no open application (never added to a vacancy, or all applications closed); **Hired** (დაქირავებული) = hired. |
 | **Application status** | On each application (candidate ↔ vacancy) | Where they are in a specific hiring pipeline — Applied, Screening, Interview, Offer, Hired, Rejected. |
 
-When you move an application to **Hired**, the candidate's general status automatically syncs to **Hired** as well. Reverting the application reverts the candidate.
+The general status follows the applications automatically: adding a candidate to a vacancy makes them **In progress**; when all their applications close (rejected/withdrawn/hired), they fall back to **Inactive**; moving an application to **Hired** syncs the candidate to **Hired**. Bulk-imported and manually-added candidates start **Inactive** until you add them to a vacancy.
 
 ## Export and bulk actions
 

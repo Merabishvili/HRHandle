@@ -236,7 +236,7 @@ export function ImportFlow({ userName }: { userName?: string | undefined }) {
     )
   }
   if (view === 'done' && done) {
-    return <DoneCard state={done} jobId={jobId} userName={userName} onRestart={restart} />
+    return <DoneCard state={done} userName={userName} onRestart={restart} />
   }
   return null
 }

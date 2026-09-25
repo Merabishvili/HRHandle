@@ -2358,6 +2358,7 @@
   },
   "candStatus": {
     "active": "Активный",
+    "inactive": "Неактивный",
     "hired": "Нанят",
     "archived": "В архиве"
   },

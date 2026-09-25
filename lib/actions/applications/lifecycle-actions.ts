@@ -33,8 +33,12 @@ export async function createApplication(input: {
 
   const statusesRaw = candidateCheck?.candidate_statuses as { code: string }[] | { code: string } | null
   const generalCode = Array.isArray(statusesRaw) ? statusesRaw[0]?.code : (statusesRaw as { code: string } | null)?.code
-  if (generalCode && generalCode !== CANDIDATE_STATUS.ACTIVE) {
-    return { success: false, error: 'Only active candidates can be added to a vacancy.', code: 'CANDIDATE_INACTIVE' }
+  // Active AND inactive candidates can be added (inactive = no open application
+  // yet, e.g. bulk-imported — adding them here is exactly how they re-enter a
+  // pipeline). Only a hired candidate is blocked, so a settled hire isn't
+  // silently reopened.
+  if (generalCode === CANDIDATE_STATUS.HIRED) {
+    return { success: false, error: 'This candidate is already hired.', code: 'CANDIDATE_INACTIVE' }
   }
 
   // Count existing active applications for this candidate. Wave 2.6 Slice 4 —
@@ -96,6 +100,23 @@ export async function createApplication(input: {
     .single()
 
   if (error || !data) return { success: false, error: 'Failed to create application.' }
+
+  // Candidate now has an open application → active (მიმდინარე). The DB trigger
+  // only handles the reverse (→ inactive when all apps close), so flip here.
+  if (generalCode !== CANDIDATE_STATUS.ACTIVE) {
+    const { data: activeStatus } = await ctx.supabase
+      .from('candidate_statuses')
+      .select('id')
+      .eq('code', CANDIDATE_STATUS.ACTIVE)
+      .single()
+    if (activeStatus?.id) {
+      await ctx.supabase
+        .from('candidates')
+        .update({ general_status_id: activeStatus.id })
+        .eq('id', input.candidateId)
+        .eq('organization_id', ctx.orgId)
+    }
+  }
 
   revalidatePath(`/candidates/${input.candidateId}`)
   revalidatePath(`/vacancies/${input.vacancyId}`)

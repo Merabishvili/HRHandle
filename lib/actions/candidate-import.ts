@@ -201,6 +201,15 @@ async function runImportJob(args: {
   let imported = 0
   let failed = 0
 
+  // Imported candidates have no application yet → they start "inactive"
+  // (არააქტიური). Adding them to a vacancy later flips them to active.
+  const { data: inactiveStatus } = await admin
+    .from('candidate_statuses')
+    .select('id')
+    .eq('code', 'inactive')
+    .single()
+  const inactiveStatusId = (inactiveStatus?.id as string | undefined) ?? null
+
   try {
     for (let i = 0; i < rows.length; i += COMMIT_BATCH) {
       // Honor a cancel request between batches; already-created rows remain.
@@ -227,7 +236,10 @@ async function runImportJob(args: {
           continue
         }
         if (email) seen.add(email)
-        payload.push(toCandidateInsert(r.values, { ...base, import_id: jobId }))
+        payload.push({
+          ...toCandidateInsert(r.values, { ...base, import_id: jobId }),
+          ...(inactiveStatusId ? { general_status_id: inactiveStatusId } : {}),
+        })
       }
 
       if (payload.length > 0) {

@@ -4,7 +4,7 @@ import type { Profile } from './organization'
 export interface CandidateGeneralStatus {
   id: UUID
   name: string
-  code: 'active' | 'hired' | 'archived'
+  code: 'active' | 'hired' | 'inactive'
   is_active: boolean
   sort_order: number
   created_at?: ISODateTimeString
@@ -179,7 +179,7 @@ export interface CandidateFilters {
 export const CANDIDATE_GENERAL_STATUS_COLORS: Record<CandidateGeneralStatus['code'], string> = {
   active: 'bg-green-100 text-green-800',
   hired: 'bg-emerald-100 text-emerald-800',
-  archived: 'bg-slate-100 text-slate-800',
+  inactive: 'bg-slate-100 text-slate-800',
 }
 
 export function getCandidateFullName(
