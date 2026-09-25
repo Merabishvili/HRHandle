@@ -78,17 +78,15 @@ export async function createCandidate(
 
   const { linked_vacancy_ids: _, ...candidateData } = parsed.data
 
-  // Wave 1.1 — general_status is no longer user-editable; the form
-  // doesn't supply it. Stamp 'active' server-side so the cached value
-  // exists for the read-only badge / filter / sort surfaces on the
-  // candidates index. Subsequent transitions (→ hired on offer accept,
-  // → active on rejection of the last hired app) are driven by the
-  // app-level code in updateApplicationStatus / rejectApplication /
-  // offers.ts.
-  const { data: activeCandidateStatus } = await ctx.supabase
+  // Candidate general-status is auto-derived: a candidate with no open
+  // application is 'inactive' (არააქტიური). We stamp 'inactive' at insert; if a
+  // vacancy is linked below (creating an application), we flip to 'active'
+  // (მიმდინარე). Later transitions (→ hired on offer accept, → inactive when
+  // all apps close via the DB trigger) are driven elsewhere.
+  const { data: inactiveCandidateStatus } = await ctx.supabase
     .from('candidate_statuses')
     .select('id')
-    .eq('code', 'active')
+    .eq('code', 'inactive')
     .single()
 
   const { data, error } = await ctx.supabase
@@ -98,7 +96,7 @@ export async function createCandidate(
       email: candidateData.email || null,
       linkedin_profile_url: candidateData.linkedin_profile_url || null,
       organization_id: ctx.orgId,
-      general_status_id: activeCandidateStatus?.id ?? null,
+      general_status_id: inactiveCandidateStatus?.id ?? null,
       created_by: ctx.userId,
     })
     .select('id')
@@ -159,6 +157,20 @@ export async function createCandidate(
         })
         if (appErr) {
           console.error('[candidates] linked-vacancy application insert failed:', appErr.message)
+        } else {
+          // Candidate now has an open application → active (მიმდინარე).
+          const { data: activeStatus } = await ctx.supabase
+            .from('candidate_statuses')
+            .select('id')
+            .eq('code', 'active')
+            .single()
+          if (activeStatus?.id) {
+            await ctx.supabase
+              .from('candidates')
+              .update({ general_status_id: activeStatus.id })
+              .eq('id', data.id)
+              .eq('organization_id', ctx.orgId)
+          }
         }
       }
     }

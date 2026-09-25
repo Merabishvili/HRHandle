@@ -9747,7 +9747,12 @@
   "candStatus.active": {
     "en": "Active",
     "ru": "Активный",
-    "ka": "აქტიური"
+    "ka": "მიმდინარე"
+  },
+  "candStatus.inactive": {
+    "en": "Inactive",
+    "ru": "Неактивный",
+    "ka": "არააქტიური"
   },
   "candStatus.hired": {
     "en": "Hired",

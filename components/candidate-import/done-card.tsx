@@ -26,12 +26,10 @@ function duration(t: ReturnType<typeof useTranslations>, start: string, end: str
 
 export function DoneCard({
   state,
-  jobId,
   userName,
   onRestart,
 }: {
   state: DoneState
-  jobId: string | null
   userName?: string | undefined
   onRestart: () => void
 }) {
@@ -101,9 +99,12 @@ export function DoneCard({
           <div className="flex flex-col gap-2">
             {!failedVariant && state.imported > 0 && (
               <Button asChild>
-                <Link href={jobId ? `/candidates?import=${jobId}` : '/candidates'}>
-                  {t('csvImport.viewNCandidates', { n: state.imported })}
-                </Link>
+                {/* Full page navigation (not next/link) so the candidates list
+                    re-renders from the server with the just-imported rows —
+                    a client <Link> could serve a stale Router Cache entry from
+                    the earlier /candidates visit (the "only after refresh" bug). */}
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+                <a href="/candidates">{t('csvImport.viewNCandidates', { n: state.imported })}</a>
               </Button>
             )}
             <Button variant="outline" onClick={onRestart}>

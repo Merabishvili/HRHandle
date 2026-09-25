@@ -2358,6 +2358,7 @@
   },
   "candStatus": {
     "active": "Active",
+    "inactive": "Inactive",
     "hired": "Hired",
     "archived": "Archived"
   },
