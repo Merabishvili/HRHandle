@@ -5,6 +5,7 @@ import { verifyCallback, stopSubscription } from '@/lib/flitt/client'
 import { normalizeCallback } from '@/lib/flitt/callback'
 import { decideCallback, findParentOrderId, paymentIdOf } from '@/lib/flitt/lifecycle'
 import { PRICING_PLANS } from '@/lib/types/subscription'
+import { writeAuditLog } from '@/lib/audit-log'
 
 // The Flitt SDK uses Node's `https`/`crypto`; keep this on the Node runtime.
 export const runtime = 'nodejs'
@@ -42,9 +43,9 @@ async function parseBody(req: Request): Promise<Record<string, unknown> | null> 
  * the first charge and on each recurring renewal. We verify the signature,
  * match the stored order (anti-tamper), then apply the decision from
  * `decideCallback` (lib/flitt/lifecycle.ts): activate / extend the period,
- * mark past_due on a failed renewal, or record + flag a refund. Always ack with
- * 200 once handled so Flitt stops retrying; a bad signature returns 400
- * (unverified — never trusted).
+ * mark past_due on a failed renewal, end the plan on a full refund (flag a
+ * partial one). Always ack with 200 once handled so Flitt stops retrying; a bad
+ * signature returns 400 (unverified — never trusted).
  */
 export async function POST(req: Request): Promise<NextResponse> {
   const body = await parseBody(req)
@@ -220,16 +221,48 @@ export async function POST(req: Request): Promise<NextResponse> {
         .eq('organization_id', order.organization_id)
       break
     case 'refund':
-      // Refund / reversal — record + flag only; access changes are manual.
-      await admin
-        .from('subscriptions')
-        .update({ last_payment_status: 'reversed', updated_at: nowIso })
-        .eq('organization_id', order.organization_id)
-      Sentry.captureMessage('[flitt/callback] payment reversed — review access manually', {
-        level: 'warning',
-        tags: { feature: 'flitt_callback' },
-        extra: { order_id: cb.order_id, organization_id: order.organization_id },
-      })
+      if (decision.full) {
+        // Full refund → the plan ends now (decision 2026-10-09): stop the
+        // recurring at Flitt so the card isn't charged again, and lock access
+        // (isSubscriptionLocked treats `expired` as locked; the org can buy again).
+        const stopped = await stopSubscription(rootOrderId)
+        await admin
+          .from('subscriptions')
+          .update({
+            status: 'expired',
+            current_period_end_at: nowIso,
+            next_billing_at: null,
+            last_payment_status: 'reversed',
+            updated_at: nowIso,
+          })
+          .eq('organization_id', order.organization_id)
+        void writeAuditLog({
+          orgId: order.organization_id,
+          userId: null,
+          entityType: 'organization',
+          entityId: order.organization_id,
+          action: 'billing_refunded',
+          message: 'Payment fully refunded — plan ended',
+          details: { orderId: cb.order_id, recurringStopped: stopped.ok, flittStatus: stopped.status ?? null },
+        })
+        Sentry.captureMessage('[flitt/callback] full refund — plan ended', {
+          // An unconfirmed stop means the card could be charged again — act on it.
+          level: stopped.ok ? 'info' : 'error',
+          tags: { feature: 'flitt_callback' },
+          extra: { order_id: cb.order_id, organization_id: order.organization_id, flitt_status: stopped.status },
+        })
+      } else {
+        // Partial refund — record + flag only; access unchanged.
+        await admin
+          .from('subscriptions')
+          .update({ last_payment_status: 'partially_reversed', updated_at: nowIso })
+          .eq('organization_id', order.organization_id)
+        Sentry.captureMessage('[flitt/callback] partial refund — review access manually', {
+          level: 'warning',
+          tags: { feature: 'flitt_callback' },
+          extra: { order_id: cb.order_id, organization_id: order.organization_id, reversal: cb.reversal_amount },
+        })
+      }
       break
     case 'record':
       // First-payment failure / interim state — the plan is unchanged.

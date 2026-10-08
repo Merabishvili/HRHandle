@@ -74,7 +74,8 @@ The callback route does lookups + writes; every decision is the pure
 | `approved`, renewal | Period extended from the **current period end** (or now if it already lapsed). `past_due` → `active`. |
 | `declined`, renewal | `subscriptions.status` → `past_due`; header shows a "Payment failed · Fix" pill, billing page shows a notice. |
 | `declined` / `expired`, first payment | Recorded only (`last_payment_status`); plan unchanged. |
-| `reversed` (refund) | **Recorded + Sentry warning only** — access changes are manual (decision 2026-10-09). |
+| **Full refund** (`reversed`, or `reversal_amount` ≥ the charge) | **Plan ends now** (decision 2026-10-09): recurring **stopped** at Flitt, `subscriptions.status` → `expired` (locked; the org can buy again), `billing_refunded` audit row, Sentry info (error if the stop isn't confirmed). |
+| **Partial refund** (`reversal_amount` < the charge) | Recorded (`last_payment_status: partially_reversed`) + Sentry warning; access unchanged. |
 | Exact retry (same status + `payment_id`) | Ignored. |
 | Amount/currency mismatch | Ignored + Sentry error. |
 | Event for a recurring the org already replaced | Not applied; that recurring is stopped + Sentry warning. |
@@ -111,6 +112,25 @@ A locked or `past_due` org can buy its plan again from the billing page (the
 - **No billing emails yet** (plan ending / payment failed / plan ended) — deferred:
   they need a daily cron and the Vercel Hobby plan has no free cron slot. See the
   roadmap.
+
+## Cancel + checking a subscription's status
+
+The Flitt portal shows a subscription's schedule but **not whether it's on or
+off**, so Flitt's reply to the stop request is the only proof:
+
+- In-app **Cancel** (`cancelSubscription` → `stopSubscription`) only clears
+  `next_billing_at` (shows "auto-renew off") when Flitt's reply confirms the stop
+  (`isStopConfirmed`: `response_status: success` and not `active`). The reply's
+  `status` is saved in the `billing_subscription_canceled` audit row.
+- To check or stop any subscription by order ID (e.g. test orders HRHandle never
+  linked), run — key inline, never committed:
+
+  ```bash
+  FLITT_MERCHANT_ID=4056901 FLITT_SECRET_KEY=<payment key> \
+    node scripts/flitt-subscription.mjs stop <order_id> [<order_id> …]
+  ```
+
+  It prints `response_status` + `status` per order. Stopping twice is harmless.
 
 ## SDK
 

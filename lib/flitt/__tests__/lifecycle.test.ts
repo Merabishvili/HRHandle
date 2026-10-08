@@ -3,6 +3,7 @@ import {
   addPeriod,
   decideCallback,
   findParentOrderId,
+  isStopConfirmed,
   paymentIdOf,
   type StoredOrder,
 } from '../lifecycle'
@@ -128,13 +129,41 @@ describe('decideCallback', () => {
     expect(d).toEqual({ kind: 'record' })
   })
 
-  it('flags a reversal as a refund', () => {
+  it('treats a reversal as a full refund (ends the plan)', () => {
     const d = decideCallback({
       ...base,
       order: order({ status: 'approved', flitt_payment_id: '111' }),
       cb: cb({ order_status: 'reversed' }),
     })
-    expect(d).toEqual({ kind: 'refund' })
+    expect(d).toEqual({ kind: 'refund', full: true })
+  })
+
+  it('uses reversal_amount to tell full from partial refunds', () => {
+    const approved = order({ status: 'approved', flitt_payment_id: '111' })
+    expect(
+      decideCallback({ ...base, order: approved, cb: cb({ order_status: 'reversed', reversal_amount: '4900' }) }),
+    ).toEqual({ kind: 'refund', full: true })
+    expect(
+      decideCallback({ ...base, order: approved, cb: cb({ order_status: 'reversed', reversal_amount: '1000' }) }),
+    ).toEqual({ kind: 'refund', full: false })
+  })
+
+  it('catches a partial refund that keeps the approved status (not a retry)', () => {
+    const d = decideCallback({
+      ...base,
+      order: order({ status: 'approved', flitt_payment_id: '111' }),
+      cb: cb({ order_status: 'approved', reversal_amount: '1000' }),
+    })
+    expect(d).toEqual({ kind: 'refund', full: false })
+  })
+
+  it('re-applies a resent full refund (idempotent, not deduped)', () => {
+    const d = decideCallback({
+      ...base,
+      order: order({ status: 'reversed', flitt_payment_id: '111' }),
+      cb: cb({ order_status: 'reversed' }),
+    })
+    expect(d).toEqual({ kind: 'refund', full: true })
   })
 
   it('rejects an amount or currency mismatch', () => {
@@ -146,5 +175,17 @@ describe('decideCallback', () => {
       kind: 'ignore',
       reason: 'tamper',
     })
+  })
+})
+
+describe('isStopConfirmed', () => {
+  it('confirms a successful stop', () => {
+    expect(isStopConfirmed({ response_status: 'success', status: 'stopped' })).toBe(true)
+    expect(isStopConfirmed({ response_status: 'success' })).toBe(true)
+  })
+  it('rejects a reply that leaves the subscription active or failed', () => {
+    expect(isStopConfirmed({ response_status: 'success', status: 'active' })).toBe(false)
+    expect(isStopConfirmed({ response_status: 'failure', status: 'stopped' })).toBe(false)
+    expect(isStopConfirmed(undefined)).toBe(false)
   })
 })

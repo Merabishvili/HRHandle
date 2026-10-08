@@ -30,7 +30,8 @@ export type CallbackDecision =
   | { kind: 'ignore'; reason: 'duplicate' | 'tamper' }
   | { kind: 'activate'; renewal: boolean; periodStart: Date; periodEnd: Date }
   | { kind: 'past_due' }
-  | { kind: 'refund' }
+  /** `full` → the whole charge was refunded: end the plan (decision 2026-10-09). */
+  | { kind: 'refund'; full: boolean }
   | { kind: 'record' }
 
 /**
@@ -79,6 +80,16 @@ export function decideCallback(input: {
     return { kind: 'ignore', reason: 'tamper' }
   }
 
+  // Refund — `amount` stays the original charge; `reversal_amount` is what was
+  // refunded. Checked before the retry dedupe: a partial refund keeps the
+  // `approved` status + payment id. Not deduped — ending a plan twice is
+  // idempotent.
+  const reversal = Number(cb.reversal_amount ?? 0) || 0
+  if (cb.order_status === 'reversed' || reversal > 0) {
+    const full = reversal > 0 ? reversal >= order.amount_minor : cb.order_status === 'reversed'
+    return { kind: 'refund', full }
+  }
+
   // Retry of an event we already applied — same status + same payment.
   if (order.status === cb.order_status && paymentIdOf(cb) === order.flitt_payment_id) {
     return { kind: 'ignore', reason: 'duplicate' }
@@ -96,9 +107,18 @@ export function decideCallback(input: {
     }
     case 'declined':
       return renewal ? { kind: 'past_due' } : { kind: 'record' }
-    case 'reversed':
-      return { kind: 'refund' }
     default:
       return { kind: 'record' }
   }
+}
+
+/**
+ * Did Flitt confirm a subscription `stop`? Its /api/subscription reply carries
+ * `response_status` + the subscription's `status` (docs show `active` after a
+ * `start`). Anything but a success that leaves it `active` is not a confirmed
+ * stop.
+ */
+export function isStopConfirmed(reply: Record<string, unknown> | null | undefined): boolean {
+  if (!reply || reply.response_status !== 'success') return false
+  return String(reply.status ?? '').toLowerCase() !== 'active'
 }

@@ -38,5 +38,7 @@ export interface FlittCallback {
   rectoken_lifetime?: string
   merchant_data?: string
   masked_card?: string
+  /** Refunded amount (minor units) — `amount` stays the original charge. */
+  reversal_amount?: string
   [key: string]: unknown
 }
