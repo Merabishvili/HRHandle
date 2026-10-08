@@ -66,3 +66,15 @@ export function displaySubscriptionStatus<T extends string>(
 export function canViewBilling(role: string, locked: boolean): boolean {
   return role === 'owner' || role === 'admin' || locked
 }
+
+/**
+ * Should the dashboard layout send this request to /settings/billing?
+ * Only when locked, and never from billing itself (or the legacy /subscription
+ * route) — that redirected /settings/billing to itself forever. An unknown path
+ * (missing `x-pathname`) also doesn't redirect: failing open beats a redirect
+ * loop that blocks the very page where the org can pay.
+ */
+export function shouldRedirectToBilling(locked: boolean, pathname: string): boolean {
+  if (!locked || !pathname) return false
+  return !pathname.startsWith('/settings/billing') && !pathname.startsWith('/subscription')
+}

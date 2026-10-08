@@ -4,6 +4,7 @@ import {
   displaySubscriptionStatus,
   isSubscriptionLocked,
   RENEWAL_GRACE_DAYS,
+  shouldRedirectToBilling,
 } from '../access'
 
 const NOW = new Date('2026-10-08T12:00:00Z')
@@ -89,5 +90,22 @@ describe('canViewBilling', () => {
   it('lets members in only while the org is locked (no redirect loop)', () => {
     expect(canViewBilling('member', false)).toBe(false)
     expect(canViewBilling('member', true)).toBe(true)
+  })
+})
+
+describe('shouldRedirectToBilling', () => {
+  it('sends a locked org to billing from other pages', () => {
+    expect(shouldRedirectToBilling(true, '/pipeline')).toBe(true)
+    expect(shouldRedirectToBilling(true, '/settings')).toBe(true)
+  })
+  it('never redirects from billing itself (the redirect loop)', () => {
+    expect(shouldRedirectToBilling(true, '/settings/billing')).toBe(false)
+    expect(shouldRedirectToBilling(true, '/subscription')).toBe(false)
+  })
+  it('fails open when the path is unknown instead of looping', () => {
+    expect(shouldRedirectToBilling(true, '')).toBe(false)
+  })
+  it('never redirects an unlocked org', () => {
+    expect(shouldRedirectToBilling(false, '/pipeline')).toBe(false)
   })
 })

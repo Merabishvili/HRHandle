@@ -10,7 +10,7 @@ import { IntegrationConnectPrompt } from '@/components/integrations/integration-
 import { NavigationLoader } from '@/components/navigation/navigation-loader'
 import { SessionGuard } from '@/components/auth/session-guard'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
-import { isSubscriptionLocked } from '@/lib/billing/access'
+import { isSubscriptionLocked, shouldRedirectToBilling } from '@/lib/billing/access'
 
 interface ProfileRow {
   id: string
@@ -241,7 +241,8 @@ export default async function DashboardLayout({
   }
 
   const headersList = await headers()
-  const pathname = headersList.get('x-invoke-path') || headersList.get('x-pathname') || ''
+  // Set by middleware (lib/supabase/middleware.ts) — layouts don't get the path.
+  const pathname = headersList.get('x-pathname') ?? ''
 
   let subscription: SubscriptionRow | null = null
 
@@ -278,11 +279,9 @@ export default async function DashboardLayout({
   // grace period) — see lib/billing/access.ts.
   const isExpired = isSubscriptionLocked(subscription)
 
-  // Locked: send them to the canonical billing page. The legacy
-  // /subscription route still redirects to /settings/billing, so the
-  // includes() check covers both URLs and avoids a redirect loop if the
-  // user lands on /subscription themselves.
-  if (isExpired && !pathname.includes('/subscription') && !pathname.includes('/settings/billing')) {
+  // Locked: send them to the canonical billing page — except from billing (or
+  // the legacy /subscription route) itself, which would loop forever.
+  if (shouldRedirectToBilling(isExpired, pathname)) {
     redirect('/settings/billing')
   }
 
