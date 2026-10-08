@@ -12448,5 +12448,75 @@
     "en": "Import draft not found or expired.",
     "ka": "იმპორტის მონახაზი ვერ მოიძებნა ან ვადა გაუვიდა.",
     "ru": "Черновик импорта не найден или истёк."
+  },
+  "billingErr.notAuthenticated": {
+    "en": "Not authenticated.",
+    "ru": "Вы не авторизованы.",
+    "ka": "ავტორიზაცია არ არის გავლილი."
+  },
+  "billingErr.adminOnly": {
+    "en": "Only owners and admins can manage billing.",
+    "ru": "Управлять оплатой могут только владельцы и администраторы.",
+    "ka": "გადახდების მართვა მხოლოდ მფლობელებსა და ადმინისტრატორებს შეუძლიათ."
+  },
+  "billingErr.choosePaidPlan": {
+    "en": "Choose a paid plan to upgrade.",
+    "ru": "Выберите платный план для перехода.",
+    "ka": "გადასასვლელად აირჩიეთ ფასიანი გეგმა."
+  },
+  "billingErr.invalidCycle": {
+    "en": "Invalid billing cycle.",
+    "ru": "Неверный период оплаты.",
+    "ka": "გადახდის პერიოდი არასწორია."
+  },
+  "billingErr.notConfigured": {
+    "en": "Payments are not configured yet. Please try again later.",
+    "ru": "Платежи ещё не настроены. Попробуйте позже.",
+    "ka": "გადახდები ჯერ არ არის კონფიგურირებული. გთხოვთ, სცადოთ მოგვიანებით."
+  },
+  "billingErr.unknownPlan": {
+    "en": "Unknown plan.",
+    "ru": "Неизвестный план.",
+    "ka": "უცნობი გეგმა."
+  },
+  "billingErr.notPurchasable": {
+    "en": "This plan is not purchasable.",
+    "ru": "Этот план нельзя купить.",
+    "ka": "ამ გეგმის შეძენა შეუძლებელია."
+  },
+  "billingErr.checkoutFailed": {
+    "en": "Could not start checkout. Please try again.",
+    "ru": "Не удалось начать оплату. Попробуйте ещё раз.",
+    "ka": "გადახდის დაწყება ვერ მოხერხდა. გთხოვთ, სცადოთ ხელახლა."
+  },
+  "billingErr.providerUnavailable": {
+    "en": "The payment provider is unavailable right now. Please try again shortly.",
+    "ru": "Платёжный сервис сейчас недоступен. Попробуйте чуть позже.",
+    "ka": "გადახდის სერვისი ახლა მიუწვდომელია. გთხოვთ, სცადოთ ცოტა ხანში."
+  },
+  "billingErr.currencyAdminOnly": {
+    "en": "Only owners and admins can change the billing currency.",
+    "ru": "Менять валюту оплаты могут только владельцы и администраторы.",
+    "ka": "გადახდის ვალუტის შეცვლა მხოლოდ მფლობელებსა და ადმინისტრატორებს შეუძლიათ."
+  },
+  "billingErr.invalidCurrency": {
+    "en": "Invalid currency.",
+    "ru": "Неверная валюта.",
+    "ka": "ვალუტა არასწორია."
+  },
+  "billingErr.currencyUpdateFailed": {
+    "en": "Could not update the billing currency.",
+    "ru": "Не удалось изменить валюту оплаты.",
+    "ka": "გადახდის ვალუტის განახლება ვერ მოხერხდა."
+  },
+  "billingErr.noSubscription": {
+    "en": "No active subscription to cancel.",
+    "ru": "Нет активной подписки для отмены.",
+    "ka": "გასაუქმებელი აქტიური გამოწერა არ არის."
+  },
+  "billingErr.cancelFailed": {
+    "en": "Could not cancel with the payment provider. Please contact support.",
+    "ru": "Не удалось отменить у платёжного сервиса. Обратитесь в поддержку.",
+    "ka": "გადახდის სერვისთან გაუქმება ვერ მოხერხდა. გთხოვთ, დაუკავშირდეთ მხარდაჭერას."
   }
 }

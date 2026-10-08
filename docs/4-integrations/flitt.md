@@ -31,6 +31,24 @@ Hosted checkout + server callback:
 The browser return URL (`/settings/billing?checkout=return`) only shows a
 "confirming your payment" banner — the callback does the real work.
 
+## Recurring schedule (`recurring_data`)
+
+Built by the pure `buildRecurringData` in
+[`lib/flitt/recurring.ts`](../../lib/flitt/recurring.ts) (unit-tested), per
+[docs.flitt.com/api/subscriptions](https://docs.flitt.com/api/subscriptions/):
+
+- `every` / `period` / `amount` — mandatory. Monthly = every 1 month, annual =
+  every 12 months.
+- **`quantity` — mandatory when there's no `end_time`.** Without either, the
+  checkout page still opens but the payment fails with **"2008 Order parameters
+  are incorrect"** (hit on staging 2026-10-09). We schedule
+  `RECURRING_HORIZON_YEARS` (10) years of charges; cancel stops it earlier.
+- `start_time` — omitted on purpose: the default is "time of payment approval",
+  so the schedule anchors to the checkout payment.
+- `state: 'shown_readonly'` — the schedule is shown but the payer can't switch
+  auto-renew off on Flitt's page (`'y'` allows that, leaving us expecting
+  renewals that never come). Customers cancel from `/settings/billing`.
+
 ## Subscription lifecycle
 
 The callback route does lookups + writes; every decision is the pure
@@ -137,6 +155,7 @@ per-currency; amounts are converted to minor units (tetri/cents, ×100) for Flit
 | `lib/flitt/client.ts` | SDK wrapper: `createSubscriptionCheckout`, `stopSubscription`, `verifyCallback`, `isFlittConfigured` |
 | `lib/flitt/callback.ts` | Pure `normalizeCallback` (protocol 1.0 flat + 2.0 base64) |
 | `lib/flitt/types.ts` | Callback + status types |
+| `lib/flitt/recurring.ts` | Pure `buildRecurringData` — the `recurring_data` contract (`quantity`, `state`) |
 | `lib/flitt/lifecycle.ts` | Pure `decideCallback`, renewal detection (`findParentOrderId`), `addPeriod` |
 | `lib/billing/access.ts` | Pure `isSubscriptionLocked` + `RENEWAL_GRACE_DAYS` (dashboard lockout) |
 | `lib/actions/billing.ts` | `startPlanCheckout`, `cancelSubscription`, `setBillingCurrency` (owner/admin) |
