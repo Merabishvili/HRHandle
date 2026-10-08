@@ -1,6 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 import { getRequestCountry } from '@/lib/sanctions'
@@ -46,19 +47,21 @@ export async function startPlanCheckout(input: {
   planCode: PlanCode
   cycle: BillingCycle
 }): Promise<ActionResult<{ checkoutUrl: string }>> {
+  // Errors are shown in a toast — localize to the caller's UI language.
+  const t = await getTranslations('billingErr')
   const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
   if (!isOrgAdmin(ctx.role)) {
-    return { success: false, error: 'Only owners and admins can manage billing.' }
+    return { success: false, error: t('adminOnly') }
   }
   if (!PAID_PLANS.includes(input.planCode)) {
-    return { success: false, error: 'Choose a paid plan to upgrade.' }
+    return { success: false, error: t('choosePaidPlan') }
   }
   if (input.cycle !== 'monthly' && input.cycle !== 'annual') {
-    return { success: false, error: 'Invalid billing cycle.' }
+    return { success: false, error: t('invalidCycle') }
   }
   if (!isFlittConfigured()) {
-    return { success: false, error: 'Payments are not configured yet. Please try again later.' }
+    return { success: false, error: t('notConfigured') }
   }
 
   const { data: org } = await ctx.supabase
@@ -74,9 +77,9 @@ export async function startPlanCheckout(input: {
   )
 
   const plan = PRICING_PLANS.find((p) => p.code === input.planCode)
-  if (!plan) return { success: false, error: 'Unknown plan.' }
+  if (!plan) return { success: false, error: t('unknownPlan') }
   const total = getPlanChargeTotal(plan, currency, input.cycle)
-  if (total === null) return { success: false, error: 'This plan is not purchasable.' }
+  if (total === null) return { success: false, error: t('notPurchasable') }
   const amountMinor = toMinorUnits(total)
 
   // Unique order id — also the correlation key on the callback + the recurring
@@ -100,7 +103,7 @@ export async function startPlanCheckout(input: {
     created_by: ctx.userId,
   })
   if (insErr) {
-    return { success: false, error: 'Could not start checkout. Please try again.' }
+    return { success: false, error: t('checkoutFailed') }
   }
 
   const siteUrl = await getSiteUrl()
@@ -121,10 +124,7 @@ export async function startPlanCheckout(input: {
   if (!result.ok) {
     return {
       success: false,
-      error:
-        result.reason === 'not_configured'
-          ? 'Payments are not configured yet.'
-          : 'The payment provider is unavailable right now. Please try again shortly.',
+      error: result.reason === 'not_configured' ? t('notConfigured') : t('providerUnavailable'),
     }
   }
 
@@ -143,18 +143,20 @@ export async function startPlanCheckout(input: {
 
 /** Owner/admin: persist a manual billing-currency override for the org. */
 export async function setBillingCurrency(currency: Currency): Promise<ActionResult<void>> {
+  // Errors are shown in a toast — localize to the caller's UI language.
+  const t = await getTranslations('billingErr')
   const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
   if (!isOrgAdmin(ctx.role)) {
-    return { success: false, error: 'Only owners and admins can change the billing currency.' }
+    return { success: false, error: t('currencyAdminOnly') }
   }
-  if (!isCurrency(currency)) return { success: false, error: 'Invalid currency.' }
+  if (!isCurrency(currency)) return { success: false, error: t('invalidCurrency') }
 
   const { error } = await ctx.supabase
     .from('organizations')
     .update({ billing_currency: currency })
     .eq('id', ctx.orgId)
-  if (error) return { success: false, error: 'Could not update the billing currency.' }
+  if (error) return { success: false, error: t('currencyUpdateFailed') }
 
   revalidatePath('/settings/billing')
   return { success: true, data: undefined }
@@ -167,10 +169,12 @@ export async function setBillingCurrency(currency: Currency): Promise<ActionResu
  * subscription's `payment_provider_subscription_ref`.
  */
 export async function cancelSubscription(): Promise<ActionResult<void>> {
+  // Errors are shown in a toast — localize to the caller's UI language.
+  const t = await getTranslations('billingErr')
   const ctx = await getAuthContext()
-  if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
   if (!isOrgAdmin(ctx.role)) {
-    return { success: false, error: 'Only owners and admins can manage billing.' }
+    return { success: false, error: t('adminOnly') }
   }
 
   const { data: sub } = await ctx.supabase
@@ -180,13 +184,13 @@ export async function cancelSubscription(): Promise<ActionResult<void>> {
     .single()
 
   const orderRef = (sub?.payment_provider_subscription_ref as string | null) ?? null
-  if (!orderRef) return { success: false, error: 'No active subscription to cancel.' }
+  if (!orderRef) return { success: false, error: t('noSubscription') }
 
   const stop = await stopSubscription(orderRef)
   if (!stop.ok) {
     return {
       success: false,
-      error: 'Could not cancel with the payment provider. Please contact support.',
+      error: t('cancelFailed'),
     }
   }
 
