@@ -89,7 +89,9 @@ shape on the test merchant before go-live.
 
 **Lockout** — [`lib/billing/access.ts`](../../lib/billing/access.ts)
 `isSubscriptionLocked`, used by the dashboard layout (redirect to
-`/settings/billing`) and the billing page:
+`/settings/billing` on full page loads, via `shouldRedirectToBilling` + the
+`x-pathname` header), `SubscriptionLockGate` (same rule on client navigation —
+layouts don't re-render there) and the billing page:
 - expired trial → locked (unchanged);
 - paid plan with auto-renew on → locked **3 days** (`RENEWAL_GRACE_DAYS`) after
   `current_period_end_at`, so a late or failed renewal can recover;

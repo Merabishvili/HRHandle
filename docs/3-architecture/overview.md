@@ -89,7 +89,7 @@ graph TB
    - Calls `supabase.auth.getUser()`.
    - Fetches profile and subscription.
    - If `profile.organization_id` is missing: redirects to `/join?token=...` (pending invite), else to `/onboarding/company` (no `user_metadata.company_name` — typical for OAuth sign-up), else calls `runOnboarding()` (email sign-up with company name already in metadata).
-   - Checks `isSubscriptionLocked` (`lib/billing/access.ts` — trial over, or paid period ended past the grace period) → redirects to `/settings/billing`.
+   - Checks `isSubscriptionLocked` (`lib/billing/access.ts` — trial over, paid period ended past the grace period, or expired) → redirects to `/settings/billing` (full loads; path from the middleware's `x-pathname`). Client navigation doesn't re-run the layout, so `SubscriptionLockGate` re-applies the same rule there.
 4. `app/(dashboard)/candidates/page.tsx` fetches data server-side.
 5. HTML streamed to browser with React hydration.
 
