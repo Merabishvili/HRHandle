@@ -14,6 +14,7 @@ import FlittPay from '@flittpayments/flitt-node-js-sdk'
 import * as Sentry from '@sentry/nextjs'
 import { env } from '@/lib/env'
 import type { FlittCurrency } from './types'
+import { buildRecurringData } from './recurring'
 
 export { normalizeCallback } from './callback'
 
@@ -84,14 +85,12 @@ export async function createSubscriptionCheckout(p: CheckoutParams): Promise<Che
     server_callback_url: p.callbackUrl,
     ...(p.senderEmail ? { sender_email: p.senderEmail } : {}),
     ...(p.merchantData ? { merchant_data: p.merchantData } : {}),
-    recurring_data: {
+    recurring_data: buildRecurringData({
       every: p.recurring.every,
       period: p.recurring.period,
-      amount: p.amountMinor,
-      state: 'y',
-      readonly: 'y',
-      ...(p.recurring.startDate ? { start_time: p.recurring.startDate } : {}),
-    },
+      amountMinor: p.amountMinor,
+      startDate: p.recurring.startDate,
+    }),
   }
 
   try {
