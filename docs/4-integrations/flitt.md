@@ -145,10 +145,14 @@ is active; production uses the live merchant. If only one merchant exists (toggl
 test→live), point staging at a test merchant or disable checkout there before
 go-live.
 
-**Callback / response URLs** are derived from `NEXT_PUBLIC_SITE_URL` (falling back
-to the request host). Register both hosts in the Flitt portal:
-`https://staging.hrhandle.com/api/payments/flitt/callback` and
-`https://hrhandle.com/api/payments/flitt/callback`.
+**Callback / response URLs** use the **host serving the request**
+(`callbackOrigin()` in [`lib/site-url.ts`](../../lib/site-url.ts)), not
+`NEXT_PUBLIC_SITE_URL`: the apex `hrhandle.com` **307-redirects to
+`www.hrhandle.com`**, and Flitt's server callback does not follow redirects —
+with the apex URL a paid order never activated the plan (2026-10-09). Register
+the **www** host in the Flitt portal:
+`https://www.hrhandle.com/api/payments/flitt/callback` (prod) and
+`https://staging.hrhandle.com/api/payments/flitt/callback` (staging merchant).
 
 ## Currency model
 
@@ -187,7 +191,8 @@ Configured 2026-10-09 — replicate on the staging test merchant with
 - **Payment settings:** Redirect method to the result page = **GET** (a cross-site
   POST return arrives without the `SameSite=Lax` Supabase cookies → the payer
   would land logged out). Server Callback URL + Subscription callback URL =
-  `https://hrhandle.com/api/payments/flitt/callback`. T&C URL =
+  `https://www.hrhandle.com/api/payments/flitt/callback` — **www**: the apex
+  307-redirects and the callback is lost. T&C URL =
   `https://hrhandle.com/terms`. Save card / pre-auth off (recurring tokenizes
   the card itself). Success/Decline URLs empty (we send `response_url` per order).
 - **Notifications:** customer emails in **English** (non-Georgian payers);

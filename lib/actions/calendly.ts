@@ -1,10 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { getAuthContext, type ActionResult } from './index'
 import { isOrgAdmin } from '@/lib/permissions'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { writeAuditLog } from '@/lib/audit-log'
+import { callbackOrigin } from '@/lib/site-url'
 import {
   isCalendlyConfigured,
   exchangeCodeForTokens,
@@ -132,8 +134,10 @@ export async function completeCalendlyConnect(
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
   const admin = createAdminClient()
 
-  // Subscribe to webhooks now (user-scoped) so booking events flow in.
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')
+  // Subscribe to webhooks now (user-scoped) so booking events flow in. Use the
+  // host serving this request (www in prod): the apex NEXT_PUBLIC_SITE_URL
+  // 307-redirects, and Calendly's server POSTs don't follow redirects.
+  const siteUrl = callbackOrigin(await headers())
   const webhookUrl = `${siteUrl}/api/webhooks/calendly`
   let subscriptionUri = ''
   let signingKey = ''
