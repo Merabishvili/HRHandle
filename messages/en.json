@@ -2105,6 +2105,8 @@
     "trialRemaining": "Trial period: {count, plural, one {# day remaining} other {# days remaining}}",
     "trialAfter": "After the free trial, the account should move to Professional if a payment method is linked.",
     "renewNote": "Subscriptions renew automatically. Cancel anytime — you keep access until the end of your paid period. See our <refund>Refund Policy</refund> and <terms>Terms</terms>.",
+    "cancelledNote": "Auto-renewal is off — you won't be charged again. You can request a refund within {days} days of a payment; approved refunds are sent within {payout} business days, minus payment processing fees. See our <refund>Refund Policy</refund> and <terms>Terms</terms>.",
+    "refundedNote": "Your last payment was refunded. We send approved refunds within {payout} business days, minus payment processing fees; your bank may need a few more days to show it. See our <refund>Refund Policy</refund>.",
     "unlockCapacity": "Unlock more capacity",
     "upgradeDesc": "Upgrade to Individual or Organization to manage more vacancies and candidates.",
     "upgradeNow": "Upgrade now"
@@ -2972,5 +2974,15 @@
     "currencyUpdateFailed": "Could not update the billing currency.",
     "noSubscription": "No active subscription to cancel.",
     "cancelFailed": "Could not cancel with the payment provider. Please contact support."
+  },
+  "legal": {
+    "back": "← Back to HRHandle",
+    "lastUpdated": "Last updated: {date}",
+    "title": {
+      "terms": "Terms and Conditions",
+      "privacy": "Privacy Policy",
+      "refund": "Refund Policy"
+    },
+    "englishPrevails": "This is the original English version."
   }
 }

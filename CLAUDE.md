@@ -97,6 +97,9 @@ Full detail in `docs/claude-code-workflow.md`. Summary:
 
 See [`docs/1-product/roadmap.md`](docs/1-product/roadmap.md) — single index of planned features, tracked open items, ATS gaps not yet filed, and accepted tech debt. Update it when scoping new work.
 
+### Legal pages (Terms / Privacy / Refund)
+- Content lives in `components/legal/content/{terms,privacy,refund}-{en,ka,ru}.tsx` (English is the original; KA/RU show an "English prevails" note). **Any change must be made in all three languages** and `LEGAL_UPDATED` bumped in `lib/legal/documents.ts`. Numbers (refund window, payout days, refund limit, grace days) come from the constants there — the billing page uses the same ones. A test renders every document in every language and checks the section counts match.
+
 ## Things that went wrong before — don't repeat
 
 - **Layouts can't see the URL path — use `x-pathname`.** Next.js layouts don't receive the pathname, and Next 16 no longer sets `x-invoke-path`. The dashboard layout read an empty path, so its "locked org → `/settings/billing`" redirect also fired *on* `/settings/billing` → `ERR_TOO_MANY_REDIRECTS`, and a locked org (expired trial, ended or refunded plan) couldn't even reach the page to pay (2026-10-09). Middleware (`lib/supabase/middleware.ts`) now sets `x-pathname`; the redirect rule is `shouldRedirectToBilling` in `lib/billing/access.ts` (fails open on an unknown path). Any new layout-level redirect must exclude its own target the same way. **And a layout redirect only runs on full page loads** — shared layouts don't re-render on client (`<Link>`) navigation, so a locked org could click from billing into the whole app. `components/billing/subscription-lock-gate.tsx` (client, `usePathname`) re-applies the rule on every navigation and renders nothing for gated pages.

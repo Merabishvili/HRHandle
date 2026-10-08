@@ -75,7 +75,7 @@ The callback route does lookups + writes; every decision is the pure
 | `declined`, renewal | `subscriptions.status` → `past_due`; header shows a "Payment failed · Fix" pill, billing page shows a notice. |
 | `declined` / `expired`, first payment | Recorded only (`last_payment_status`); plan unchanged. |
 | **Full refund** (`reversed`, or `reversal_amount` ≥ the charge) | **Paid plan ends now** (decision 2026-10-09): recurring **stopped** at Flitt; if the org's 7-day trial is still running it goes **back to the trial** for the remaining days (`refundedSubscriptionUpdate`), otherwise `status` → `expired` (locked; the org can buy again). `billing_refunded` audit row; Sentry info (error if the stop isn't confirmed). |
-| **Partial refund** (`reversal_amount` < the charge) | Recorded (`last_payment_status: partially_reversed`) + Sentry warning; access unchanged. |
+| **Partial refund** (`reversal_amount` < the charge — the normal case, since the processing fee is deducted) | Recorded (`last_payment_status: partially_reversed` + `billing_refunded` audit row) + Sentry warning; access unchanged — follow the runbook below. |
 | Exact retry (same status + `payment_id`) | Ignored. |
 | Amount/currency mismatch | Ignored + Sentry error. |
 | Event for a recurring the org already replaced | Not applied; that recurring is stopped + Sentry warning. |
@@ -114,6 +114,62 @@ A locked or `past_due` org can buy its plan again from the billing page (the
 - **No billing emails yet** (plan ending / payment failed / plan ended) — deferred:
   they need a daily cron and the Vercel Hobby plan has no free cron slot. See the
   roadmap.
+
+## Refund handling (operator runbook)
+
+Policy (Refund Policy §3–§6, decisions 2026-10-09): request within **7 days** of
+the payment, most recent payment only, **at most one refund per organization in
+any 3 months**, we send approved refunds within **14 business days**, minus the
+**processing fee**. Because the fee is deducted, a refund is *partial* in Flitt's
+terms, so HRHandle only records + flags it — the steps below are manual.
+
+Every refund HRHandle receives is recorded as a `billing_refunded` row in
+`activity_log` (`details.orderId`, `reversalMinor`, `full`). A second refund for
+the same org inside the window raises a Sentry **error**
+("second refund within the refund-limit window").
+
+1. **Check eligibility** (Supabase SQL, prod) — any row with a `refunded_at` means
+   the org already had a refund in the last 3 months → decline:
+   ```sql
+   select o.id as org_id, o.name,
+          a.created_at as refunded_at, a.details->>'orderId' as refunded_order
+   from profiles p
+   join organizations o on o.id = p.organization_id
+   left join activity_log a on a.organization_id = o.id
+        and a.action = 'billing_refunded'
+        and a.created_at > now() - interval '3 months'
+   where p.email = '<customer email>';
+
+   select order_id, amount_minor, currency, status, created_at
+   from payment_orders where organization_id = '<org_id>'
+   order by created_at desc limit 3;   -- last payment must be ≤ 7 days old
+   ```
+2. **Refund in the Flitt portal**: Payments → the order → Refund, amount minus the
+   processing fee. Then re-run the first query: if no new `billing_refunded` row
+   appears, **resend the order's callback** from the Flitt portal (that's what
+   records it in the history).
+3. **Stop auto-renewal** — the order id is the subscription's root order:
+   ```sql
+   select payment_provider_subscription_ref from subscriptions where organization_id = '<org_id>';
+   ```
+   ```bash
+   FLITT_MERCHANT_ID=4056901 FLITT_SECRET_KEY=<payment key> \
+     node scripts/flitt-subscription.mjs stop <payment_provider_subscription_ref>
+   ```
+4. **End access** (policy: a refund cancels the paid subscription):
+   ```sql
+   -- trial already over (usual case) → locked, can buy again
+   update subscriptions
+   set status = 'expired', current_period_end_at = now(), next_billing_at = null
+   where organization_id = '<org_id>';
+
+   -- trial still running (bought during the trial) → back to the trial
+   update subscriptions
+   set plan_code = 'trial', status = 'trial', billing_cycle = null,
+       current_period_start_at = null, current_period_end_at = null, next_billing_at = null,
+       payment_method_linked = false, vacancy_limit = 5, candidate_limit = 100, member_limit = 2
+   where organization_id = '<org_id>';
+   ```
 
 ## Cancel + checking a subscription's status
 
@@ -241,6 +297,8 @@ Configured 2026-10-09 — replicate on the staging test merchant with
   the test merchant
 - [ ] Staging → its own **test merchant** creds on the staging Vercel env
 - [ ] Rotate the payment key if Flitt allows (it was shared in a screenshot)
+- [x] Legal pages audited + available in EN/KA/RU (2026-10-09) — content in
+  `components/legal/content/*`, shared facts in `lib/legal/documents.ts`
 
 ## Gotchas
 

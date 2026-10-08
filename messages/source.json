@@ -8734,6 +8734,16 @@
     "ru": "Подписки продлеваются автоматически. Отменить можно в любой момент — доступ сохраняется до конца оплаченного периода. См. нашу <refund>Политику возврата</refund> и <terms>Условия</terms>.",
     "ka": "გამოწერები ავტომატურად ახლდება. გააუქმეთ ნებისმიერ დროს — წვდომა გრჩებათ ანაზღაურებული პერიოდის ბოლომდე. იხილეთ ჩვენი <refund>დაბრუნების პოლიტიკა</refund> და <terms>პირობები</terms>."
   },
+  "billing.cancelledNote": {
+    "en": "Auto-renewal is off — you won't be charged again. You can request a refund within {days} days of a payment; approved refunds are sent within {payout} business days, minus payment processing fees. See our <refund>Refund Policy</refund> and <terms>Terms</terms>.",
+    "ru": "Автопродление отключено — больше списаний не будет. Запросить возврат можно в течение {days} дней после платежа; одобренный возврат мы отправляем в течение {payout} рабочих дней за вычетом комиссии за обработку платежа. См. нашу <refund>Политику возврата</refund> и <terms>Условия</terms>.",
+    "ka": "ავტომატური განახლება გამორთულია — თანხა აღარ ჩამოგეჭრებათ. თანხის დაბრუნება შეგიძლიათ მოითხოვოთ გადახდიდან {days} დღის განმავლობაში; დამტკიცებულ თანხას ვაბრუნებთ {payout} სამუშაო დღეში, გადახდის დამუშავების საკომისიოს გამოკლებით. იხილეთ ჩვენი <refund>დაბრუნების პოლიტიკა</refund> და <terms>პირობები</terms>."
+  },
+  "billing.refundedNote": {
+    "en": "Your last payment was refunded. We send approved refunds within {payout} business days, minus payment processing fees; your bank may need a few more days to show it. See our <refund>Refund Policy</refund>.",
+    "ru": "Ваш последний платёж возвращён. Одобренный возврат мы отправляем в течение {payout} рабочих дней за вычетом комиссии за обработку платежа; вашему банку может понадобиться ещё несколько дней, чтобы его отразить. См. нашу <refund>Политику возврата</refund>.",
+    "ka": "თქვენი ბოლო გადახდა დაგიბრუნდათ. დამტკიცებულ თანხას ვაბრუნებთ {payout} სამუშაო დღეში, გადახდის დამუშავების საკომისიოს გამოკლებით; ბანკს მის ასახვას შესაძლოა რამდენიმე დამატებითი დღე დასჭირდეს. იხილეთ ჩვენი <refund>დაბრუნების პოლიტიკა</refund>."
+  },
   "billing.unlockCapacity": {
     "en": "Unlock more capacity",
     "ru": "Откройте больше возможностей",
@@ -12518,5 +12528,35 @@
     "en": "Could not cancel with the payment provider. Please contact support.",
     "ru": "Не удалось отменить у платёжного сервиса. Обратитесь в поддержку.",
     "ka": "გადახდის სერვისთან გაუქმება ვერ მოხერხდა. გთხოვთ, დაუკავშირდეთ მხარდაჭერას."
+  },
+  "legal.back": {
+    "en": "← Back to HRHandle",
+    "ru": "← Назад в HRHandle",
+    "ka": "← დაბრუნება HRHandle-ზე"
+  },
+  "legal.lastUpdated": {
+    "en": "Last updated: {date}",
+    "ru": "Последнее обновление: {date}",
+    "ka": "ბოლო განახლება: {date}"
+  },
+  "legal.title.terms": {
+    "en": "Terms and Conditions",
+    "ru": "Условия использования",
+    "ka": "წესები და პირობები"
+  },
+  "legal.title.privacy": {
+    "en": "Privacy Policy",
+    "ru": "Политика конфиденциальности",
+    "ka": "კონფიდენციალურობის პოლიტიკა"
+  },
+  "legal.title.refund": {
+    "en": "Refund Policy",
+    "ru": "Политика возврата",
+    "ka": "დაბრუნების პოლიტიკა"
+  },
+  "legal.englishPrevails": {
+    "en": "This is the original English version.",
+    "ru": "Этот перевод предоставлен для удобства. В случае расхождений преимущественную силу имеет версия на английском языке.",
+    "ka": "ეს თარგმანი მოცემულია მოხერხებულობისთვის. შეუსაბამობის შემთხვევაში უპირატესი ძალა აქვს ინგლისურენოვან ვერსიას."
   }
 }

@@ -8,3 +8,16 @@ export const BUSINESS_ID = '01019062001'
 export const BUSINESS_ADDRESS = '29 Tskneti Highway, Tbilisi, Georgia'
 export const SUPPORT_EMAIL = 'support@hrhandle.com'
 export const SUPPORT_PHONE = '+995 599 89 29 17'
+
+/** The legal entity + address as written in each language on the legal pages. */
+export const BUSINESS_IDENTITY: Record<'en' | 'ka' | 'ru', { name: string; address: string }> = {
+  en: { name: BUSINESS_NAME, address: BUSINESS_ADDRESS },
+  ka: {
+    name: 'ინდივიდუალური მეწარმე ალექსანდრე მერაბიშვილი',
+    address: 'წყნეთის გზატკეცილი 29, თბილისი, საქართველო',
+  },
+  ru: {
+    name: 'Индивидуальный предприниматель Александре Мерабишвили',
+    address: 'Цкнетское шоссе, 29, Тбилиси, Грузия',
+  },
+}
