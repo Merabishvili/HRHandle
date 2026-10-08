@@ -26,12 +26,27 @@ export function daysRemaining(endAt: string, now: number = Date.now()): number {
  * the banner ate vertical space on every page; a pill collapses it into
  * the header without losing the count + upgrade affordance.
  *
- * Renders only while the subscription is in the `trial` state — paid
- * customers see nothing, and expired-trial users never reach the dashboard
- * layout (the layout redirects them to /subscription before render).
+ * Renders while the subscription is in the `trial` state, or — as a
+ * "payment failed" prompt — while a paid plan is `past_due` (failed renewal,
+ * still inside the grace period). Paid customers in good standing see nothing,
+ * and locked users never reach the dashboard layout (the layout redirects them
+ * to /settings/billing before render).
  */
 export function TrialPill({ trialEndAt, status }: TrialPillProps) {
   const t = useTranslations()
+  if (status === 'past_due') {
+    return (
+      <div className="hidden md:flex items-center gap-1 rounded-full border border-red-300 bg-red-50 py-0.5 pl-3 pr-1 text-xs font-medium text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
+        <span>{t('header.paymentFailed')}</span>
+        <Link
+          href="/settings/billing"
+          className="ml-1.5 rounded-full border border-red-300 bg-white px-2.5 py-0.5 font-semibold text-red-800 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
+        >
+          {t('header.fixPayment')}
+        </Link>
+      </div>
+    )
+  }
   if (status !== 'trial' || !trialEndAt) return null
 
   const days = daysRemaining(trialEndAt)

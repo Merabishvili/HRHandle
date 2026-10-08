@@ -11,6 +11,7 @@ import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
 import { PlanCards } from '@/components/subscription/plan-cards'
 import { BillingControls } from '@/components/subscription/billing-controls'
 import { PaymentMethods } from '@/components/subscription/payment-methods'
+import { isSubscriptionLocked, RENEWAL_GRACE_DAYS } from '@/lib/billing/access'
 
 interface ProfileRow {
   id: string
@@ -169,8 +170,11 @@ export default async function BillingSettingsPage({
   const currentPlan =
     PRICING_PLANS.find((plan) => plan.code === typedSubscription.plan_code) || PRICING_PLANS[0]
 
+  // Locked = trial over, or the paid period ended without a renewal (past the
+  // grace period). A locked or past_due org must be able to buy its plan again.
+  const isLocked = isSubscriptionLocked(typedSubscription)
   const isPaidActive =
-    typedSubscription.plan_code !== 'trial' && typedSubscription.status === 'active'
+    typedSubscription.plan_code !== 'trial' && typedSubscription.status === 'active' && !isLocked
 
   const currentCycle: 'monthly' | 'annual' =
     typedSubscription.billing_cycle === 'annual' ? 'annual' : 'monthly'
@@ -203,6 +207,18 @@ export default async function BillingSettingsPage({
           </p>
         </div>
       )}
+
+      {typedSubscription.plan_code !== 'trial' && isLocked ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+          <p className="font-medium">{t('billing.planEndedTitle')}</p>
+          <p className="mt-1">{t('billing.planEndedDesc')}</p>
+        </div>
+      ) : typedSubscription.status === 'past_due' ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+          <p className="font-medium">{t('billing.pastDueTitle')}</p>
+          <p className="mt-1">{t('billing.pastDueDesc', { days: RENEWAL_GRACE_DAYS })}</p>
+        </div>
+      ) : null}
 
       {/* Current plan — slim header ("Current plan / {plan}" + trial/status
           badge) with a compact usage row below. */}
@@ -248,7 +264,7 @@ export default async function BillingSettingsPage({
 
       <PlanCards
         plans={PRICING_PLANS}
-        currentPlanCode={typedSubscription.plan_code}
+        currentPlanCode={isPaidActive || isTrial ? typedSubscription.plan_code : ''}
         currency={currency}
         campaign={CAMPAIGN}
         campaignActive={isCampaignActive()}

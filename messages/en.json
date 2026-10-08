@@ -240,7 +240,9 @@
     "help": "Help",
     "upgrade": "Upgrade",
     "trialExpiresToday": "Trial · expires today",
-    "trialDaysLeft": "Trial · {days, plural, one {# day left} other {# days left}}"
+    "trialDaysLeft": "Trial · {days, plural, one {# day left} other {# days left}}",
+    "paymentFailed": "Payment failed",
+    "fixPayment": "Fix"
   },
   "nav": {
     "pipeline": "Pipeline",
@@ -2072,6 +2074,10 @@
     "subtitle": "Manage your subscription and billing.",
     "checkoutThanks": "Thanks — we're confirming your payment.",
     "checkoutDesc": "Your plan updates automatically once the payment is confirmed (usually within a moment). Refresh this page if it still shows your previous plan.",
+    "pastDueTitle": "Your last renewal payment didn't go through.",
+    "pastDueDesc": "Your plan stays available for {days} days after the period ends. To keep it, pay again by choosing your plan below.",
+    "planEndedTitle": "Your paid plan has ended.",
+    "planEndedDesc": "Choose a plan below to continue using HRHandle.",
     "currentPlan": "Current plan",
     "currentPlanDesc": "Your active subscription details",
     "status": {

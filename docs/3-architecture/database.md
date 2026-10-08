@@ -540,9 +540,12 @@ Billing/plan state for an organization.
 | created_at | timestamptz | NULL | — | |
 | updated_at | timestamptz | NULL | — | |
 
-Written by the Flitt callback route (via the admin client) on `approved` — see
-[`docs/4-integrations/flitt.md`](../4-integrations/flitt.md). When `status ===
-'expired'` or trial has ended, users are redirected to `/subscription`.
+Written by the Flitt callback route (via the admin client) — `active` on an
+approved payment/renewal, `past_due` on a failed renewal; see the lifecycle in
+[`docs/4-integrations/flitt.md`](../4-integrations/flitt.md). Users are
+redirected to `/settings/billing` when `lib/billing/access.ts`
+`isSubscriptionLocked` is true: status `expired`, trial ended, or the paid
+period ended (3-day grace while auto-renew is on).
 
 ---
 

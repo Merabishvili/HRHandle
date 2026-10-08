@@ -173,7 +173,7 @@ _Last updated: 2026-07-20_
 | Campaign pricing | Configurable discount campaign (currently "Spring Offer": 60% monthly, 70% annual) | `lib/campaign.ts` |
 | Usage display | Shows vacancies used / limit, candidates used / limit | `app/(dashboard)/subscription/page.tsx` |
 | Trial banner | Shows days remaining in trial, expired state | `components/dashboard/trial-banner.tsx` |
-| Expired redirect | When trial ends (or status=expired), auto-redirects to `/subscription` | `app/(dashboard)/layout.tsx` |
+| Expired redirect | When the trial ends, status=expired, or a paid period ends without renewal (3-day grace when auto-renew is on; none after cancel), auto-redirects to `/settings/billing` | `app/(dashboard)/layout.tsx`, `lib/billing/access.ts` |
 | Payment wiring | **Built (Flitt)** — Upgrade → hosted checkout, auto-recurring, signed callback grants the plan; multi-currency GEL/EUR/USD. Pending live switch. | `lib/actions/billing.ts`, `app/api/payments/flitt/callback/route.ts`, `components/subscription/plan-cards.tsx` |
 
 ## Guides
