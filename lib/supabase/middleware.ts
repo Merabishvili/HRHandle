@@ -13,6 +13,11 @@ export async function updateSession(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-nonce', nonce)
   requestHeaders.set('Content-Security-Policy', csp)
+  // Layouts don't receive the pathname (and Next 16 dropped `x-invoke-path`).
+  // The dashboard layout needs it to skip the locked-org redirect on the
+  // billing page itself — without it, /settings/billing redirected to itself
+  // forever. `set` also overwrites any client-sent value.
+  requestHeaders.set('x-pathname', request.nextUrl.pathname)
 
   let response = NextResponse.next({
     request: { headers: requestHeaders },
