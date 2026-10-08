@@ -74,7 +74,7 @@ The callback route does lookups + writes; every decision is the pure
 | `approved`, renewal | Period extended from the **current period end** (or now if it already lapsed). `past_due` → `active`. |
 | `declined`, renewal | `subscriptions.status` → `past_due`; header shows a "Payment failed · Fix" pill, billing page shows a notice. |
 | `declined` / `expired`, first payment | Recorded only (`last_payment_status`); plan unchanged. |
-| **Full refund** (`reversed`, or `reversal_amount` ≥ the charge) | **Plan ends now** (decision 2026-10-09): recurring **stopped** at Flitt, `subscriptions.status` → `expired` (locked; the org can buy again), `billing_refunded` audit row, Sentry info (error if the stop isn't confirmed). |
+| **Full refund** (`reversed`, or `reversal_amount` ≥ the charge) | **Paid plan ends now** (decision 2026-10-09): recurring **stopped** at Flitt; if the org's 7-day trial is still running it goes **back to the trial** for the remaining days (`refundedSubscriptionUpdate`), otherwise `status` → `expired` (locked; the org can buy again). `billing_refunded` audit row; Sentry info (error if the stop isn't confirmed). |
 | **Partial refund** (`reversal_amount` < the charge) | Recorded (`last_payment_status: partially_reversed`) + Sentry warning; access unchanged. |
 | Exact retry (same status + `payment_id`) | Ignored. |
 | Amount/currency mismatch | Ignored + Sentry error. |
@@ -89,7 +89,9 @@ shape on the test merchant before go-live.
 
 **Lockout** — [`lib/billing/access.ts`](../../lib/billing/access.ts)
 `isSubscriptionLocked`, used by the dashboard layout (redirect to
-`/settings/billing`) and the billing page:
+`/settings/billing` on full page loads, via `shouldRedirectToBilling` + the
+`x-pathname` header), `SubscriptionLockGate` (same rule on client navigation —
+layouts don't re-render there) and the billing page:
 - expired trial → locked (unchanged);
 - paid plan with auto-renew on → locked **3 days** (`RENEWAL_GRACE_DAYS`) after
   `current_period_end_at`, so a late or failed renewal can recover;

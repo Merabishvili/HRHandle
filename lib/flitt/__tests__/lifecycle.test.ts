@@ -5,6 +5,7 @@ import {
   findParentOrderId,
   isStopConfirmed,
   paymentIdOf,
+  refundedSubscriptionUpdate,
   type StoredOrder,
 } from '../lifecycle'
 import type { FlittCallback } from '../types'
@@ -187,5 +188,34 @@ describe('isStopConfirmed', () => {
     expect(isStopConfirmed({ response_status: 'success', status: 'active' })).toBe(false)
     expect(isStopConfirmed({ response_status: 'failure', status: 'stopped' })).toBe(false)
     expect(isStopConfirmed(undefined)).toBe(false)
+  })
+})
+
+describe('refundedSubscriptionUpdate', () => {
+  it('returns an org that bought during its trial to the remaining trial days', () => {
+    const r = refundedSubscriptionUpdate('2026-10-12T00:00:00Z', NOW)
+    expect(r.outcome).toBe('trial')
+    expect(r.update).toMatchObject({
+      plan_code: 'trial',
+      status: 'trial',
+      next_billing_at: null,
+      current_period_end_at: null,
+      vacancy_limit: 5,
+      candidate_limit: 100,
+      member_limit: 2,
+      last_payment_status: 'reversed',
+    })
+  })
+
+  it('ends the plan (locked) once the trial is over or unknown', () => {
+    for (const trialEnd of ['2026-10-01T00:00:00Z', null]) {
+      const r = refundedSubscriptionUpdate(trialEnd, NOW)
+      expect(r.outcome).toBe('ended')
+      expect(r.update).toMatchObject({
+        status: 'expired',
+        current_period_end_at: NOW.toISOString(),
+        next_billing_at: null,
+      })
+    }
   })
 })

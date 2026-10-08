@@ -9,6 +9,7 @@ import { DashboardHeader } from '@/components/dashboard/header'
 import { IntegrationConnectPrompt } from '@/components/integrations/integration-connect-prompt'
 import { NavigationLoader } from '@/components/navigation/navigation-loader'
 import { SessionGuard } from '@/components/auth/session-guard'
+import { SubscriptionLockGate } from '@/components/billing/subscription-lock-gate'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
 import { isSubscriptionLocked, shouldRedirectToBilling } from '@/lib/billing/access'
 
@@ -322,7 +323,11 @@ export default async function DashboardLayout({
               provider={user.app_metadata?.provider as string | undefined}
             />
           </Suspense>
-          <NavigationLoader>{children}</NavigationLoader>
+          {/* Re-applies the locked-org redirect on client navigation — the
+              redirect above only runs on full page loads. */}
+          <SubscriptionLockGate locked={isExpired}>
+            <NavigationLoader>{children}</NavigationLoader>
+          </SubscriptionLockGate>
         </main>
         <SessionGuard />
         <PostHogIdentify userId={user.id} orgId={profile.organization_id} role={profile.role} />

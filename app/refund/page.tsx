@@ -114,8 +114,9 @@ export default function RefundPage() {
               Requesting a refund does not automatically cancel your subscription. If you
               would like to cancel future billing, please cancel your subscription from
               within your account settings in addition to submitting a refund request.
-              If a full refund is issued, your subscription is cancelled and access ends
-              immediately.
+              If a full refund is issued, your paid subscription is cancelled immediately:
+              if your free trial period has not yet ended, you return to the trial for its
+              remaining days; otherwise access ends until you subscribe again.
             </p>
             <p className="mt-3">
               Upon cancellation, you will retain access to the Service until the end of your
