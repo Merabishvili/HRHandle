@@ -15,6 +15,7 @@ import * as Sentry from '@sentry/nextjs'
 import { env } from '@/lib/env'
 import type { FlittCurrency } from './types'
 import { buildRecurringData } from './recurring'
+import { isStopConfirmed } from './lifecycle'
 
 export { normalizeCallback } from './callback'
 
@@ -113,16 +114,36 @@ export async function createSubscriptionCheckout(p: CheckoutParams): Promise<Che
   }
 }
 
-/** Stop future recurring charges for an order (Flitt keeps the paid period). */
-export async function stopSubscription(orderId: string): Promise<{ ok: boolean }> {
+export interface StopResult {
+  /** True only when Flitt's reply confirms the stop (see isStopConfirmed). */
+  ok: boolean
+  /** Flitt's reported subscription status, kept for the audit log. */
+  status?: string
+}
+
+/**
+ * Stop future recurring charges for an order (Flitt keeps the paid period).
+ * The Flitt portal doesn't show a subscription's on/off state, so the reply is
+ * the only proof — callers record `status`. Stopping twice is harmless.
+ */
+export async function stopSubscription(orderId: string): Promise<StopResult> {
   const client = getClient()
   if (!client) return { ok: false }
   try {
-    await withTimeout(
+    const reply = (await withTimeout(
       client.SubscriptionActions({ order_id: orderId, action: 'stop' }),
       REQUEST_TIMEOUT_MS,
-    )
-    return { ok: true }
+    )) as Record<string, unknown> | undefined
+    const status = reply?.status === undefined ? undefined : String(reply.status)
+    if (!isStopConfirmed(reply)) {
+      Sentry.captureMessage('[flitt] subscription stop not confirmed', {
+        level: 'error',
+        tags: { feature: 'flitt_subscription_stop' },
+        extra: { order_id: orderId, response_status: reply?.response_status, status },
+      })
+      return { ok: false, ...(status ? { status } : {}) }
+    }
+    return { ok: true, ...(status ? { status } : {}) }
   } catch (err) {
     Sentry.captureException(err, { tags: { feature: 'flitt_subscription_stop' } })
     return { ok: false }

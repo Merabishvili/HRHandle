@@ -199,7 +199,8 @@ export async function cancelSubscription(): Promise<ActionResult<void>> {
     entityId: ctx.orgId,
     action: 'billing_subscription_canceled',
     message: 'Auto-renewal canceled',
-    details: { orderRef },
+    // Flitt's confirmed status — the portal doesn't show it, so this is the proof.
+    details: { orderRef, flittStatus: stop.status ?? null },
   })
 
   revalidatePath('/settings/billing')

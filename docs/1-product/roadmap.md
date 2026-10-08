@@ -227,7 +227,7 @@ Blocked on the EU AI Act risk-management framework for higher-risk features. Don
 
 **Intentionally last.** Until billing is wired, every billing-adjacent item stays parked.
 
-1. **Billing provider wiring** — ✅ built with **Flitt** (multi-currency GEL/EUR/USD, auto-recurring); see `docs/4-integrations/flitt.md`. Subscription lifecycle (renewals extend the period, failed renewal → `past_due` + 3-day grace → lockout, cancel → lockout at period end, refund → flagged) ✅ 2026-10-09. Remaining: Flitt's pre-production checklist in `docs/4-integrations/flitt.md` (test 3 methods, confirm EUR/USD + renewal callback shape, staging test merchant) then the live switch.
+1. **Billing provider wiring** — ✅ built with **Flitt** (multi-currency GEL/EUR/USD, auto-recurring); see `docs/4-integrations/flitt.md`. Subscription lifecycle (renewals extend the period, failed renewal → `past_due` + 3-day grace → lockout, cancel → lockout at period end, full refund → plan ends + recurring stopped, partial refund → flagged) ✅ 2026-10-09. Remaining: Flitt's pre-production checklist in `docs/4-integrations/flitt.md` (test 3 methods, confirm EUR/USD + renewal callback shape, staging test merchant) then the live switch.
 2. **F-004 — Cancel subscription UI** with confirmation flow.
 3. **BL-004 — `PLAN_LIMIT` structured error code + upgrade CTA** on every plan-limited action.
 4. **C-007 / C-008 — Move hardcoded plan limits + campaign config out of code** into a DB-backed plans table.
