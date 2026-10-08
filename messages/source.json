@@ -1154,6 +1154,16 @@
     "ru": "Пробный · осталось {days, plural, one {# день} few {# дня} many {# дней} other {# дней}}",
     "ka": "საცდელი · დარჩა {days, plural, one {# დღე} other {# დღე}}"
   },
+  "header.paymentFailed": {
+    "en": "Payment failed",
+    "ru": "Платёж не прошёл",
+    "ka": "გადახდა ვერ შესრულდა"
+  },
+  "header.fixPayment": {
+    "en": "Fix",
+    "ru": "Исправить",
+    "ka": "გამოსწორება"
+  },
   "nav.pipeline": {
     "en": "Pipeline",
     "ru": "Пайплайн",
@@ -8578,6 +8588,26 @@
     "en": "Your plan updates automatically once the payment is confirmed (usually within a moment). Refresh this page if it still shows your previous plan.",
     "ru": "Ваш план обновится автоматически после подтверждения платежа (обычно за пару мгновений). Обновите страницу, если она всё ещё показывает предыдущий план.",
     "ka": "თქვენი გეგმა ავტომატურად განახლდება გადახდის დადასტურების შემდეგ (ჩვეულებრივ რამდენიმე წამში). განაახლეთ გვერდი, თუ ის ისევ წინა გეგმას აჩვენებს."
+  },
+  "billing.pastDueTitle": {
+    "en": "Your last renewal payment didn't go through.",
+    "ru": "Последний платёж за продление не прошёл.",
+    "ka": "ბოლო განახლების გადახდა ვერ შესრულდა."
+  },
+  "billing.pastDueDesc": {
+    "en": "Your plan stays available for {days} days after the period ends. To keep it, pay again by choosing your plan below.",
+    "ru": "План остаётся доступным ещё {days} дн. после окончания периода. Чтобы сохранить его, оплатите снова, выбрав план ниже.",
+    "ka": "გეგმა ხელმისაწვდომი რჩება პერიოდის დასრულებიდან {days} დღის განმავლობაში. მის შესანარჩუნებლად ხელახლა გადაიხადეთ — აირჩიეთ გეგმა ქვემოთ."
+  },
+  "billing.planEndedTitle": {
+    "en": "Your paid plan has ended.",
+    "ru": "Ваш платный план закончился.",
+    "ka": "თქვენი ფასიანი გეგმა დასრულდა."
+  },
+  "billing.planEndedDesc": {
+    "en": "Choose a plan below to continue using HRHandle.",
+    "ru": "Выберите план ниже, чтобы продолжить пользоваться HRHandle.",
+    "ka": "HRHandle-ის გამოყენების გასაგრძელებლად აირჩიეთ გეგმა ქვემოთ."
   },
   "billing.currentPlan": {
     "en": "Current plan",

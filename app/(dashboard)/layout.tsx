@@ -10,6 +10,7 @@ import { IntegrationConnectPrompt } from '@/components/integrations/integration-
 import { NavigationLoader } from '@/components/navigation/navigation-loader'
 import { SessionGuard } from '@/components/auth/session-guard'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
+import { isSubscriptionLocked } from '@/lib/billing/access'
 
 interface ProfileRow {
   id: string
@@ -273,13 +274,11 @@ export default async function DashboardLayout({
     subscription = subscriptionRaw as SubscriptionRow | null
   }
 
-  const isExpired =
-    subscription?.status === 'expired' ||
-    (subscription?.status === 'trial' &&
-      !!subscription.trial_end_at &&
-      new Date(subscription.trial_end_at) < new Date())
+  // Expired trial, or a paid period that ended without a renewal (after the
+  // grace period) — see lib/billing/access.ts.
+  const isExpired = isSubscriptionLocked(subscription)
 
-  // Expired trial: send them to the canonical billing page. The legacy
+  // Locked: send them to the canonical billing page. The legacy
   // /subscription route still redirects to /settings/billing, so the
   // includes() check covers both URLs and avoids a redirect loop if the
   // user lands on /subscription themselves.

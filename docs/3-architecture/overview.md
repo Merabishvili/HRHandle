@@ -89,7 +89,7 @@ graph TB
    - Calls `supabase.auth.getUser()`.
    - Fetches profile and subscription.
    - If `profile.organization_id` is missing: redirects to `/join?token=...` (pending invite), else to `/onboarding/company` (no `user_metadata.company_name` — typical for OAuth sign-up), else calls `runOnboarding()` (email sign-up with company name already in metadata).
-   - Checks if trial expired → redirects to `/subscription`.
+   - Checks `isSubscriptionLocked` (`lib/billing/access.ts` — trial over, or paid period ended past the grace period) → redirects to `/settings/billing`.
 4. `app/(dashboard)/candidates/page.tsx` fetches data server-side.
 5. HTML streamed to browser with React hydration.
 

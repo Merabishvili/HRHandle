@@ -127,9 +127,9 @@ async function ensureSubscription(orgId: string): Promise<void> {
     .eq('organization_id', orgId)
     .maybeSingle()
 
+  // Complimentary plan: no period end, so lib/billing/access.ts never locks the
+  // demo org (a dated period would lock it RENEWAL_GRACE_DAYS after it ends).
   const now = new Date()
-  const periodEnd = new Date(now)
-  periodEnd.setDate(periodEnd.getDate() + 30)
 
   const payload = {
     organization_id: orgId,
@@ -139,8 +139,8 @@ async function ensureSubscription(orgId: string): Promise<void> {
     trial_start_at: null,
     trial_end_at: null,
     current_period_start_at: now.toISOString(),
-    current_period_end_at: periodEnd.toISOString(),
-    next_billing_at: periodEnd.toISOString(),
+    current_period_end_at: null,
+    next_billing_at: null,
     payment_method_linked: true,
     vacancy_limit: 50,
     candidate_limit: 1000,
