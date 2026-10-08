@@ -17,7 +17,7 @@ export default function RefundPage() {
         </div>
 
         <h1 className="mb-2 text-3xl font-bold text-foreground">Refund Policy</h1>
-        <p className="mb-10 text-sm text-muted-foreground">Last updated: April 22, 2026</p>
+        <p className="mb-10 text-sm text-muted-foreground">Last updated: October 9, 2026</p>
 
         <div className="space-y-8 text-sm leading-relaxed text-foreground">
 
@@ -114,6 +114,8 @@ export default function RefundPage() {
               Requesting a refund does not automatically cancel your subscription. If you
               would like to cancel future billing, please cancel your subscription from
               within your account settings in addition to submitting a refund request.
+              If a full refund is issued, your subscription is cancelled and access ends
+              immediately.
             </p>
             <p className="mt-3">
               Upon cancellation, you will retain access to the Service until the end of your
