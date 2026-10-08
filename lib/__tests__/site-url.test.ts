@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { siteBaseUrl } from '@/lib/site-url'
+import { callbackOrigin, siteBaseUrl } from '@/lib/site-url'
 
 const ORIGINAL = process.env.NEXT_PUBLIC_SITE_URL
 
@@ -36,5 +36,35 @@ describe('siteBaseUrl', () => {
   it('falls back to localhost for an empty string (avoids a bare relative redirect_uri)', () => {
     process.env.NEXT_PUBLIC_SITE_URL = ''
     expect(siteBaseUrl()).toBe('http://localhost:3000')
+  })
+})
+
+describe('callbackOrigin', () => {
+  const hdrs = (entries: Record<string, string>) => new Headers(entries)
+
+  it('uses the host serving the request, not the apex env value (apex 307s to www)', () => {
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://hrhandle.com/'
+    expect(
+      callbackOrigin(hdrs({ 'x-forwarded-host': 'www.hrhandle.com', 'x-forwarded-proto': 'https' })),
+    ).toBe('https://www.hrhandle.com')
+  })
+
+  it('falls back to the host header and defaults to https', () => {
+    expect(callbackOrigin(hdrs({ host: 'staging.hrhandle.com' }))).toBe('https://staging.hrhandle.com')
+  })
+
+  it('takes the first value of a comma-separated forwarded header', () => {
+    expect(
+      callbackOrigin(hdrs({ 'x-forwarded-host': 'www.hrhandle.com, proxy.internal', 'x-forwarded-proto': 'https, http' })),
+    ).toBe('https://www.hrhandle.com')
+  })
+
+  it('uses http for localhost', () => {
+    expect(callbackOrigin(hdrs({ host: 'localhost:3000' }))).toBe('http://localhost:3000')
+  })
+
+  it('falls back to siteBaseUrl() without a host', () => {
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://hrhandle.com/'
+    expect(callbackOrigin(hdrs({}))).toBe('https://hrhandle.com')
   })
 })

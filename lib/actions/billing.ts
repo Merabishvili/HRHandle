@@ -8,6 +8,7 @@ import { getRequestCountry } from '@/lib/sanctions'
 import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { callbackOrigin } from '@/lib/site-url'
 import { createSubscriptionCheckout, stopSubscription, isFlittConfigured } from '@/lib/flitt/client'
 import {
   resolveBillingCurrency,
@@ -23,17 +24,6 @@ import {
 } from '@/lib/types/subscription'
 
 const PAID_PLANS: PlanCode[] = ['individual', 'organization']
-
-/** Absolute site origin — NEXT_PUBLIC_SITE_URL when set, else the request host
- * (Flitt requires absolute HTTPS callback + return URLs). */
-async function getSiteUrl(): Promise<string> {
-  const configured = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')
-  if (configured) return configured
-  const h = await headers()
-  const host = h.get('x-forwarded-host') ?? h.get('host')
-  const proto = h.get('x-forwarded-proto') ?? 'https'
-  return host ? `${proto}://${host}` : ''
-}
 
 /**
  * Start a recurring Flitt checkout for a paid plan. Owner/admin only. Resolves
@@ -106,7 +96,9 @@ export async function startPlanCheckout(input: {
     return { success: false, error: t('checkoutFailed') }
   }
 
-  const siteUrl = await getSiteUrl()
+  // The host serving this request (www.hrhandle.com in prod) — NOT the apex
+  // NEXT_PUBLIC_SITE_URL, which 307-redirects and loses Flitt's server callback.
+  const siteUrl = callbackOrigin(await headers())
   const result = await createSubscriptionCheckout({
     orderId,
     orderDesc: `HRHandle ${plan.name} — ${input.cycle === 'annual' ? 'annual' : 'monthly'}`,

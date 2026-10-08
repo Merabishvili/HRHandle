@@ -25,7 +25,7 @@ _Last updated: 2026-07-20_
 | Name | Purpose | Service | Files That Use It | Example |
 |---|---|---|---|---|
 | `RESEND_API_KEY` | Resend API key for sending emails | Resend | `lib/email.ts`, `lib/env.ts` | `re_xxxxxxxxxxxx` |
-| `NEXT_PUBLIC_SITE_URL` | Canonical site URL — used in email links and OAuth redirects | App | `lib/email.ts`, `lib/google/calendar.ts`, `lib/zoom/meetings.ts`, `lib/microsoft/graph.ts`, `app/api/auth/*/route.ts`, `lib/env.ts` | `https://staging.hrhandle.com` |
+| `NEXT_PUBLIC_SITE_URL` | Canonical site URL — used in email links and OAuth redirects (browser-followed). **Not** for URLs an external server calls back (Flitt callback, Calendly webhook): prod's apex 307-redirects to www and those senders don't follow redirects — use `callbackOrigin()` (`lib/site-url.ts`) | App | `lib/email.ts`, `lib/google/calendar.ts`, `lib/zoom/meetings.ts`, `lib/microsoft/graph.ts`, `app/api/auth/*/route.ts`, `lib/env.ts` | `https://staging.hrhandle.com` |
 | `GOOGLE_CLIENT_ID` | Google OAuth app client ID (Calendar integration + sign-in) | Google | `lib/google/calendar.ts`, `lib/env.ts`, Supabase auth | `123456789-abc.apps.googleusercontent.com` |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth app client secret | Google | `lib/google/calendar.ts`, `lib/env.ts` | `GOCSPX-xxxxxxxx` |
 | `ZOOM_CLIENT_ID` | Zoom OAuth app client ID | Zoom | `lib/zoom/meetings.ts`, `lib/env.ts` | `AbCdEfGhIj` |
