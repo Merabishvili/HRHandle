@@ -8609,6 +8609,11 @@
     "ru": "Выберите план ниже, чтобы продолжить пользоваться HRHandle.",
     "ka": "HRHandle-ის გამოყენების გასაგრძელებლად აირჩიეთ გეგმა ქვემოთ."
   },
+  "billing.askAdminDesc": {
+    "en": "Ask your organization's owner or admin to choose a plan.",
+    "ru": "Попросите владельца или администратора организации выбрать план.",
+    "ka": "სთხოვეთ თქვენი ორგანიზაციის მფლობელს ან ადმინისტრატორს გეგმის არჩევა."
+  },
   "billing.currentPlan": {
     "en": "Current plan",
     "ru": "Текущий план",
@@ -8928,6 +8933,11 @@
     "en": "Upgrade",
     "ru": "Перейти",
     "ka": "გადასვლა"
+  },
+  "planCards.adminOnly": {
+    "en": "Only owners and admins can change the plan. Ask them to renew it.",
+    "ru": "Менять план могут только владельцы и администраторы. Попросите их продлить его.",
+    "ka": "გეგმის შეცვლა მხოლოდ მფლობელებსა და ადმინისტრატორებს შეუძლიათ. სთხოვეთ მათ მისი განახლება."
   },
   "pricing.promotion": {
     "en": "Promotion",

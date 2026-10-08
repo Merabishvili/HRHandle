@@ -231,6 +231,7 @@ Blocked on the EU AI Act risk-management framework for higher-risk features. Don
 2. **F-004 — Cancel subscription UI** with confirmation flow.
 3. **BL-004 — `PLAN_LIMIT` structured error code + upgrade CTA** on every plan-limited action.
 4. **C-007 / C-008 — Move hardcoded plan limits + campaign config out of code** into a DB-backed plans table.
+4a. 🟡 **Billing emails** (deferred 2026-10-09 — Vercel Hobby has no free cron slot): "plan ends in 3 days" (auto-renew off), "renewal payment failed" (can fire from the Flitt callback, no cron needed), "couldn't confirm your renewal" (period ended, no callback — the silent case), "plan ended, access paused". Owners/admins, org content locale, always sent; dedupe once per period via `activity_log`. Option: fold the daily scan into an existing cron (e.g. `expire-vacancies`) instead of a new one.
 5. **Self-serve upgrade flow** with prorated billing changes.
 
 ---

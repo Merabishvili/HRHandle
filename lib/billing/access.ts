@@ -46,3 +46,23 @@ export function isSubscriptionLocked(
   const deadline = autoRenewOn ? end + RENEWAL_GRACE_DAYS * DAY_MS : end
   return now.getTime() > deadline
 }
+
+/**
+ * Status to show on the billing page. A locked paid plan reads `expired`
+ * whatever is stored — nothing rewrites the row when a period simply runs out.
+ */
+export function displaySubscriptionStatus<T extends string>(
+  sub: SubscriptionAccessFields & { status: T; plan_code: string },
+  now: Date = new Date(),
+): T | 'expired' {
+  return sub.plan_code !== 'trial' && isSubscriptionLocked(sub, now) ? 'expired' : sub.status
+}
+
+/**
+ * Members don't manage billing, but when the org is locked the dashboard
+ * layout sends everyone to /settings/billing — redirecting a member away again
+ * would loop (pipeline → billing → pipeline …), so they get a read-only view.
+ */
+export function canViewBilling(role: string, locked: boolean): boolean {
+  return role === 'owner' || role === 'admin' || locked
+}

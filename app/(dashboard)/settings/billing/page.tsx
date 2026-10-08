@@ -11,7 +11,12 @@ import { isCampaignActive, CAMPAIGN } from '@/lib/campaign'
 import { PlanCards } from '@/components/subscription/plan-cards'
 import { BillingControls } from '@/components/subscription/billing-controls'
 import { PaymentMethods } from '@/components/subscription/payment-methods'
-import { isSubscriptionLocked, RENEWAL_GRACE_DAYS } from '@/lib/billing/access'
+import {
+  canViewBilling,
+  displaySubscriptionStatus,
+  isSubscriptionLocked,
+  RENEWAL_GRACE_DAYS,
+} from '@/lib/billing/access'
 
 interface ProfileRow {
   id: string
@@ -112,10 +117,6 @@ export default async function BillingSettingsPage({
     redirect('/pipeline')
   }
 
-  if (typedProfile.role === 'member') {
-    redirect('/pipeline')
-  }
-
   const organizationId = typedProfile.organization_id
 
   const { data: organization } = await supabase
@@ -173,6 +174,12 @@ export default async function BillingSettingsPage({
   // Locked = trial over, or the paid period ended without a renewal (past the
   // grace period). A locked or past_due org must be able to buy its plan again.
   const isLocked = isSubscriptionLocked(typedSubscription)
+  const canManage = typedProfile.role === 'owner' || typedProfile.role === 'admin'
+  // Members get a read-only view only while the org is locked (see canViewBilling).
+  if (!canViewBilling(typedProfile.role, isLocked)) {
+    redirect('/pipeline')
+  }
+  const displayStatus = displaySubscriptionStatus(typedSubscription)
   const isPaidActive =
     typedSubscription.plan_code !== 'trial' && typedSubscription.status === 'active' && !isLocked
 
@@ -211,12 +218,16 @@ export default async function BillingSettingsPage({
       {typedSubscription.plan_code !== 'trial' && isLocked ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
           <p className="font-medium">{t('billing.planEndedTitle')}</p>
-          <p className="mt-1">{t('billing.planEndedDesc')}</p>
+          <p className="mt-1">{t(canManage ? 'billing.planEndedDesc' : 'billing.askAdminDesc')}</p>
         </div>
       ) : typedSubscription.status === 'past_due' ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
           <p className="font-medium">{t('billing.pastDueTitle')}</p>
-          <p className="mt-1">{t('billing.pastDueDesc', { days: RENEWAL_GRACE_DAYS })}</p>
+          <p className="mt-1">
+            {canManage
+              ? t('billing.pastDueDesc', { days: RENEWAL_GRACE_DAYS })
+              : t('billing.askAdminDesc')}
+          </p>
         </div>
       ) : null}
 
@@ -240,8 +251,8 @@ export default async function BillingSettingsPage({
               {t(getPlanDisplayNameKey('trial'))} · {t('billing.trialDaysLeft', { count: remainingTrialDays })}
             </span>
           ) : (
-            <Badge variant="secondary" className={getSubscriptionBadgeClass(typedSubscription.status)}>
-              {t(`billing.status.${typedSubscription.status}`)}
+            <Badge variant="secondary" className={getSubscriptionBadgeClass(displayStatus)}>
+              {t(`billing.status.${displayStatus}`)}
             </Badge>
           )}
         </div>
@@ -268,10 +279,11 @@ export default async function BillingSettingsPage({
         currency={currency}
         campaign={CAMPAIGN}
         campaignActive={isCampaignActive()}
+        canManage={canManage}
       />
 
       <BillingControls
-        canManage={typedProfile.role === 'owner' || typedProfile.role === 'admin'}
+        canManage={canManage}
         showCancel={isPaidActive}
         autoRenewOff={isPaidActive && !typedSubscription.next_billing_at}
       />

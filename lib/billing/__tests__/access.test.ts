@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { isSubscriptionLocked, RENEWAL_GRACE_DAYS } from '../access'
+import {
+  canViewBilling,
+  displaySubscriptionStatus,
+  isSubscriptionLocked,
+  RENEWAL_GRACE_DAYS,
+} from '../access'
 
 const NOW = new Date('2026-10-08T12:00:00Z')
 const DAY = 24 * 60 * 60 * 1000
@@ -57,5 +62,32 @@ describe('isSubscriptionLocked', () => {
     expect(
       isSubscriptionLocked(sub({ current_period_end_at: null, next_billing_at: null }), NOW),
     ).toBe(false)
+  })
+})
+
+describe('displaySubscriptionStatus', () => {
+  it('shows expired for a locked paid plan whatever is stored', () => {
+    const ended = { current_period_end_at: iso(-1), next_billing_at: null }
+    expect(displaySubscriptionStatus({ ...sub(ended), plan_code: 'individual' }, NOW)).toBe('expired')
+  })
+  it('keeps the stored status while the plan is usable', () => {
+    expect(displaySubscriptionStatus({ ...sub({ status: 'past_due' }), plan_code: 'individual' }, NOW)).toBe(
+      'past_due',
+    )
+  })
+  it('leaves trials to their own trial badge', () => {
+    const trial = sub({ status: 'trial', trial_end_at: iso(-1) })
+    expect(displaySubscriptionStatus({ ...trial, plan_code: 'trial' }, NOW)).toBe('trial')
+  })
+})
+
+describe('canViewBilling', () => {
+  it('lets owners and admins in always', () => {
+    expect(canViewBilling('owner', false)).toBe(true)
+    expect(canViewBilling('admin', false)).toBe(true)
+  })
+  it('lets members in only while the org is locked (no redirect loop)', () => {
+    expect(canViewBilling('member', false)).toBe(false)
+    expect(canViewBilling('member', true)).toBe(true)
   })
 })
