@@ -3,7 +3,12 @@ import * as Sentry from '@sentry/nextjs'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyCallback, stopSubscription } from '@/lib/flitt/client'
 import { normalizeCallback } from '@/lib/flitt/callback'
-import { decideCallback, findParentOrderId, paymentIdOf } from '@/lib/flitt/lifecycle'
+import {
+  decideCallback,
+  findParentOrderId,
+  paymentIdOf,
+  refundedSubscriptionUpdate,
+} from '@/lib/flitt/lifecycle'
 import { PRICING_PLANS } from '@/lib/types/subscription'
 import { writeAuditLog } from '@/lib/audit-log'
 
@@ -116,7 +121,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const { data: sub } = await admin
     .from('subscriptions')
-    .select('current_period_end_at, payment_provider_subscription_ref')
+    .select('current_period_end_at, payment_provider_subscription_ref, trial_end_at')
     .eq('organization_id', order.organization_id)
     .maybeSingle()
   const currentRef = (sub?.payment_provider_subscription_ref as string | null | undefined) ?? null
@@ -222,30 +227,34 @@ export async function POST(req: Request): Promise<NextResponse> {
       break
     case 'refund':
       if (decision.full) {
-        // Full refund → the plan ends now (decision 2026-10-09): stop the
-        // recurring at Flitt so the card isn't charged again, and lock access
-        // (isSubscriptionLocked treats `expired` as locked; the org can buy again).
+        // Full refund → the paid plan ends now (decision 2026-10-09): stop the
+        // recurring at Flitt so the card isn't charged again, then either back
+        // to the remaining trial or locked (`expired`; the org can buy again).
         const stopped = await stopSubscription(rootOrderId)
+        const refunded = refundedSubscriptionUpdate(
+          (sub?.trial_end_at as string | null | undefined) ?? null,
+          now,
+        )
         await admin
           .from('subscriptions')
-          .update({
-            status: 'expired',
-            current_period_end_at: nowIso,
-            next_billing_at: null,
-            last_payment_status: 'reversed',
-            updated_at: nowIso,
-          })
+          .update(refunded.update)
           .eq('organization_id', order.organization_id)
+        const outcomeText = refunded.outcome === 'trial' ? 'back to trial' : 'plan ended'
         void writeAuditLog({
           orgId: order.organization_id,
           userId: null,
           entityType: 'organization',
           entityId: order.organization_id,
           action: 'billing_refunded',
-          message: 'Payment fully refunded — plan ended',
-          details: { orderId: cb.order_id, recurringStopped: stopped.ok, flittStatus: stopped.status ?? null },
+          message: `Payment fully refunded — ${outcomeText}`,
+          details: {
+            orderId: cb.order_id,
+            outcome: refunded.outcome,
+            recurringStopped: stopped.ok,
+            flittStatus: stopped.status ?? null,
+          },
         })
-        Sentry.captureMessage('[flitt/callback] full refund — plan ended', {
+        Sentry.captureMessage(`[flitt/callback] full refund — ${outcomeText}`, {
           // An unconfirmed stop means the card could be charged again — act on it.
           level: stopped.ok ? 'info' : 'error',
           tags: { feature: 'flitt_callback' },

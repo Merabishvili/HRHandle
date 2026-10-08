@@ -12,6 +12,7 @@
  *    order_id makes retries idempotent) and it is always treated as a renewal.
  */
 import type { FlittCallback } from './types'
+import { PRICING_PLANS } from '@/lib/types/subscription'
 
 /** Our order ids: `hrh_<12 hex>_<plan>_<cycle>_<epoch ms>` (lib/actions/billing.ts). */
 const ORDER_ID_PREFIX_RE = /^hrh_[0-9a-f]{12}_(?:individual|organization)_(?:monthly|annual)_\d+/
@@ -121,4 +122,51 @@ export function decideCallback(input: {
 export function isStopConfirmed(reply: Record<string, unknown> | null | undefined): boolean {
   if (!reply || reply.response_status !== 'success') return false
   return String(reply.status ?? '').toLowerCase() !== 'active'
+}
+
+/**
+ * `subscriptions` update for a **full refund** (decisions 2026-10-09). If the
+ * org's 7-day trial hasn't run out — it bought during the trial — it goes back
+ * to the trial for the remaining days (same plan/limits as onboarding).
+ * Otherwise the plan ends: `expired` → locked, and the org can buy again.
+ */
+export function refundedSubscriptionUpdate(
+  trialEndAt: string | null,
+  now: Date,
+): { outcome: 'trial' | 'ended'; update: Record<string, unknown> } {
+  const nowIso = now.toISOString()
+  if (trialEndAt && new Date(trialEndAt) > now) {
+    const trial = PRICING_PLANS.find((p) => p.code === 'trial')
+    return {
+      outcome: 'trial',
+      update: {
+        plan_code: 'trial',
+        billing_cycle: null,
+        status: 'trial',
+        current_period_start_at: null,
+        current_period_end_at: null,
+        next_billing_at: null,
+        payment_method_linked: false,
+        last_payment_status: 'reversed',
+        ...(trial
+          ? {
+              vacancy_limit: trial.vacancy_limit,
+              candidate_limit: trial.candidate_limit,
+              member_limit: trial.member_limit,
+            }
+          : {}),
+        updated_at: nowIso,
+      },
+    }
+  }
+  return {
+    outcome: 'ended',
+    update: {
+      status: 'expired',
+      current_period_end_at: nowIso,
+      next_billing_at: null,
+      last_payment_status: 'reversed',
+      updated_at: nowIso,
+    },
+  }
 }
