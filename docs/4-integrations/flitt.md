@@ -67,6 +67,20 @@ shape on the test merchant before go-live.
 A locked or `past_due` org can buy its plan again from the billing page (the
 "current plan" button is only disabled while the plan is in good standing).
 
+**What the user sees:**
+- `past_due` → red "Payment failed · Fix" pill in the header at **every** width
+  (compact link on mobile) + a notice on the billing page.
+- Locked → every dashboard page redirects to billing, which shows "Your paid plan
+  has ended" and an **`expired`** badge (`displaySubscriptionStatus` — the stored
+  row isn't rewritten when a period just runs out).
+- **Members** normally can't open billing, but while the org is locked they get
+  a **read-only** view (`canViewBilling`) — redirecting them away would loop
+  pipeline ⇄ billing. Plan buttons + currency are disabled with "Ask an owner or
+  admin".
+- **No billing emails yet** (plan ending / payment failed / plan ended) — deferred:
+  they need a daily cron and the Vercel Hobby plan has no free cron slot. See the
+  roadmap.
+
 ## SDK
 
 Uses the official [`@flittpayments/flitt-node-js-sdk`](https://github.com/flittpayments/node-js-sdk)

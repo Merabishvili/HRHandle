@@ -35,16 +35,26 @@ export function daysRemaining(endAt: string, now: number = Date.now()): number {
 export function TrialPill({ trialEndAt, status }: TrialPillProps) {
   const t = useTranslations()
   if (status === 'past_due') {
+    // Shown at every width (unlike the trial pill) — a failed payment is
+    // urgent. Mobile gets one compact link; md+ gets label + Fix button.
     return (
-      <div className="hidden md:flex items-center gap-1 rounded-full border border-red-300 bg-red-50 py-0.5 pl-3 pr-1 text-xs font-medium text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-        <span>{t('header.paymentFailed')}</span>
+      <>
         <Link
           href="/settings/billing"
-          className="ml-1.5 rounded-full border border-red-300 bg-white px-2.5 py-0.5 font-semibold text-red-800 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
+          className="flex md:hidden items-center rounded-full border border-red-300 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
         >
-          {t('header.fixPayment')}
+          {t('header.paymentFailed')}
         </Link>
-      </div>
+        <div className="hidden md:flex items-center gap-1 rounded-full border border-red-300 bg-red-50 py-0.5 pl-3 pr-1 text-xs font-medium text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
+          <span>{t('header.paymentFailed')}</span>
+          <Link
+            href="/settings/billing"
+            className="ml-1.5 rounded-full border border-red-300 bg-white px-2.5 py-0.5 font-semibold text-red-800 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
+          >
+            {t('header.fixPayment')}
+          </Link>
+        </div>
+      </>
     )
   }
   if (status !== 'trial' || !trialEndAt) return null

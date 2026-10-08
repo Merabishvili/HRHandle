@@ -30,9 +30,19 @@ interface PlanCardsProps {
   currency: Currency
   campaign: Campaign
   campaignActive: boolean
+  /** Owner/admin — members see the plans read-only (checkout + currency are
+   * admin-gated server-side; this just avoids a dead-end click). */
+  canManage?: boolean | undefined
 }
 
-export function PlanCards({ plans, currentPlanCode, currency, campaign, campaignActive }: PlanCardsProps) {
+export function PlanCards({
+  plans,
+  currentPlanCode,
+  currency,
+  campaign,
+  campaignActive,
+  canManage = true,
+}: PlanCardsProps) {
   const t = useTranslations()
   const router = useRouter()
   const [billing, setBilling] = useState<BillingCycle>('monthly')
@@ -104,7 +114,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
           </button>
         </div>
 
-        <Select value={currency} onValueChange={onCurrencyChange} disabled={currencyPending}>
+        <Select value={currency} onValueChange={onCurrencyChange} disabled={currencyPending || !canManage}>
           <SelectTrigger className="h-8 w-auto min-w-[88px] gap-1.5 text-sm font-medium" aria-label={t('billingCtl.billingCurrency')}>
             <SelectValue />
           </SelectTrigger>
@@ -198,7 +208,7 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
                 <Button
                   className="w-full"
                   variant={isCurrent ? 'outline' : plan.popular ? 'default' : 'outline'}
-                  disabled={isCurrent || isTrial || pendingCode !== null}
+                  disabled={isCurrent || isTrial || !canManage || pendingCode !== null}
                   onClick={() => !isCurrent && !isTrial && handleUpgrade(plan.code)}
                 >
                   {pendingCode === plan.code && (
@@ -211,6 +221,10 @@ export function PlanCards({ plans, currentPlanCode, currency, campaign, campaign
           )
         })}
       </div>
+
+      {!canManage && (
+        <p className="mt-4 text-sm text-muted-foreground">{t('planCards.adminOnly')}</p>
+      )}
     </div>
   )
 }

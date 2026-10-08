@@ -2078,6 +2078,7 @@
     "pastDueDesc": "Your plan stays available for {days} days after the period ends. To keep it, pay again by choosing your plan below.",
     "planEndedTitle": "Your paid plan has ended.",
     "planEndedDesc": "Choose a plan below to continue using HRHandle.",
+    "askAdminDesc": "Ask your organization's owner or admin to choose a plan.",
     "currentPlan": "Current plan",
     "currentPlanDesc": "Your active subscription details",
     "status": {
@@ -2138,7 +2139,8 @@
     "billedMonthly": "billed monthly",
     "currentPlan": "Current Plan",
     "trialPlan": "Trial Plan",
-    "upgrade": "Upgrade"
+    "upgrade": "Upgrade",
+    "adminOnly": "Only owners and admins can change the plan. Ask them to renew it."
   },
   "planFeat": {
     "freeTrial": "7-day free trial",
