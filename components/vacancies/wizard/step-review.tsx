@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { format, parseISO } from 'date-fns'
 import { Briefcase, Pencil, ChevronRight, Check, AlertTriangle, Star } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { sectorLabel } from '@/lib/vacancies/sector-i18n'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import type { BasicsState } from './step-basics'
 import type { DatesCompState } from './step-dates-comp'
 import type { DescriptionState } from './step-description'
@@ -47,6 +49,7 @@ export function StepReview({
   onEditStep,
 }: StepReviewProps) {
   const t = useTranslations()
+  const locale = useLocale()
   const [descOpen, setDescOpen] = useState(false)
   const sectorName = sectorLabel(t, sectors.find((s) => s.id === basics.sectorId)?.name) || null
   const descriptionComplete = description.description.trim().length > 0
@@ -117,8 +120,8 @@ export function StepReview({
         </FactSection>
 
         <FactSection title={t('wizard.stepDates')} onEdit={() => onEditStep('dates-comp')}>
-          <FactRow label={t('columns.startDate')} value={formatDate(datesComp.startDate) ?? t('wizard.onCreation')} />
-          <FactRow label={t('columns.endDate')} value={formatDate(datesComp.endDate) ?? '—'} muted={!datesComp.endDate} />
+          <FactRow label={t('columns.startDate')} value={formatDate(datesComp.startDate, locale) ?? t('wizard.onCreation')} />
+          <FactRow label={t('columns.endDate')} value={formatDate(datesComp.endDate, locale) ?? '—'} muted={!datesComp.endDate} />
           <FactRow label={t('wizard.salary')} value={formatSalary(datesComp, t)} />
           <FactRow label={t('vacancy.form.currency')} value={datesComp.salaryCurrency} />
         </FactSection>
@@ -371,11 +374,12 @@ function CommitOption({
   )
 }
 
-function formatDate(iso: string | null): string | null {
+/** "Nov 8, 2026" in the interface language (was hard-coded to English). */
+function formatDate(iso: string | null, locale: string): string | null {
   if (!iso) return null
-  const d = new Date(iso)
+  const d = parseISO(iso) // a YYYY-MM-DD day, read as local (no time-zone shift)
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return format(d, 'MMM d, yyyy', { locale: dateFnsLocale(locale) })
 }
 
 function formatSalary(dc: DatesCompState, t: T): string {

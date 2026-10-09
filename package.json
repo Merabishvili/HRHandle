@@ -12,8 +12,9 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "guide:screenshots": "tsx scripts/capture-screenshots.ts",
-    "guide:seed": "tsx scripts/seed-demo-org.ts",
+    "guide:screenshots": "tsx --env-file=.env.local scripts/capture-screenshots.ts",
+    "guide:seed": "tsx --env-file=.env.local scripts/seed-guide-demo.ts",
+    "guide:serve": "node scripts/with-env-local.mjs next build && node scripts/with-env-local.mjs next start -p 3123",
     "messages:build": "node scripts/build-messages.mjs",
     "messages:check": "node scripts/build-messages.mjs --check"
   },

@@ -745,9 +745,9 @@
     "ka": "ვაკანსიის ვადები და ხელფასის დიაპაზონი."
   },
   "wizard.salaryHint": {
-    "en": "Optional. Shown to candidates and used for salary-fit filtering.",
-    "ru": "Необязательно. Показывается кандидатам и используется для фильтрации по зарплате.",
-    "ka": "არასავალდებულო. ჩანს კანდიდატებისთვის და გამოიყენება ხელფასის მიხედვით ფილტრაციისთვის."
+    "en": "Optional. Only your team sees the salary range — it isn't shown to candidates.",
+    "ru": "Необязательно. Диапазон зарплаты видит только ваша команда — кандидатам он не показывается.",
+    "ka": "არასავალდებულო. ხელფასის დიაპაზონს მხოლოდ თქვენი გუნდი ხედავს — კანდიდატებს ის არ უჩანთ."
   },
   "wizard.detailsSubtitle": {
     "en": "Shown on the public jobs page and included when sharing on LinkedIn.",
@@ -10727,7 +10727,7 @@
   "guide.shellTitle": {
     "en": "HRHandle Guides",
     "ru": "Руководства HRHandle",
-    "ka": "HRHandle-ის სახელმძღვანელოები"
+    "ka": "HRHandle-ის გზამკვლევები"
   },
   "guide.backToHome": {
     "en": "Back to home",
@@ -10738,6 +10738,391 @@
     "en": "Coming soon",
     "ru": "Скоро",
     "ka": "მალე"
+  },
+  "guide.indexTitle": {
+    "en": "Guides",
+    "ru": "Руководства",
+    "ka": "გზამკვლევები"
+  },
+  "guide.indexIntro": {
+    "en": "Step-by-step walkthroughs of every HRHandle feature. Use them to set up your organization, onboard your team or try a feature for the first time.",
+    "ru": "Пошаговые инструкции по всем функциям HRHandle. Используйте их, чтобы настроить организацию, ввести в курс дела команду или впервые попробовать функцию.",
+    "ka": "HRHandle-ის ყველა ფუნქციის ნაბიჯ-ნაბიჯ აღწერა. გამოიყენეთ ისინი ორგანიზაციის მოსაწყობად, გუნდის გასაცნობად ან ახალი ფუნქციის პირველად გამოსაცდელად."
+  },
+  "guide.metaDescription": {
+    "en": "Step-by-step guides to HRHandle: vacancies, candidates, the pipeline, interviews, offers, AI features and more.",
+    "ru": "Пошаговые руководства по HRHandle: вакансии, кандидаты, пайплайн, собеседования, офферы, функции ИИ и многое другое.",
+    "ka": "HRHandle-ის ნაბიჯ-ნაბიჯ გზამკვლევები: ვაკანსიები, კანდიდატები, პაიპლაინი, გასაუბრებები, შეთავაზებები, AI ფუნქციები და სხვა."
+  },
+  "guide.eyebrow": {
+    "en": "Guide",
+    "ru": "Руководство",
+    "ka": "გზამკვლევი"
+  },
+  "guide.notTranslated": {
+    "en": "This guide isn't available in your language yet, so it's shown in English.",
+    "ru": "Это руководство пока недоступно на вашем языке, поэтому показано на английском.",
+    "ka": "ეს გზამკვლევი თქვენს ენაზე ჯერ არ არის ხელმისაწვდომი, ამიტომ ნაჩვენებია ინგლისურად."
+  },
+  "guide.faqTitle": {
+    "en": "Frequently asked questions",
+    "ru": "Частые вопросы",
+    "ka": "ხშირად დასმული კითხვები"
+  },
+  "guide.category.gettingStarted": {
+    "en": "Getting started",
+    "ru": "Начало работы",
+    "ka": "დაწყება"
+  },
+  "guide.category.vacancies": {
+    "en": "Vacancies",
+    "ru": "Вакансии",
+    "ka": "ვაკანსიები"
+  },
+  "guide.category.candidates": {
+    "en": "Candidates",
+    "ru": "Кандидаты",
+    "ka": "კანდიდატები"
+  },
+  "guide.category.hiring": {
+    "en": "Hiring",
+    "ru": "Найм",
+    "ka": "დაქირავება"
+  },
+  "guide.category.communication": {
+    "en": "Candidate communication",
+    "ru": "Общение с кандидатами",
+    "ka": "კომუნიკაცია კანდიდატებთან"
+  },
+  "guide.category.aiAndReports": {
+    "en": "AI and reports",
+    "ru": "ИИ и отчёты",
+    "ka": "AI და ანგარიშები"
+  },
+  "guide.category.administration": {
+    "en": "Administration",
+    "ru": "Администрирование",
+    "ka": "ადმინისტრირება"
+  },
+  "guide.topic.signUp.title": {
+    "en": "Sign up and create your organization",
+    "ru": "Регистрация и создание организации",
+    "ka": "რეგისტრაცია და ორგანიზაციის შექმნა"
+  },
+  "guide.topic.signUp.summary": {
+    "en": "Create your account and organization and start the 7-day free trial.",
+    "ru": "Создайте учётную запись и организацию и начните 7-дневный бесплатный пробный период.",
+    "ka": "შექმენით ანგარიში და ორგანიზაცია და დაიწყეთ 7-დღიანი უფასო საცდელი პერიოდი."
+  },
+  "guide.topic.navigation.title": {
+    "en": "Find your way around",
+    "ru": "Как устроен интерфейс",
+    "ka": "ორიენტაცია სისტემაში"
+  },
+  "guide.topic.navigation.summary": {
+    "en": "The sidebar, the Pipeline home screen, search, notifications and the interface language.",
+    "ru": "Боковое меню, главный экран «Пайплайн», поиск, уведомления и язык интерфейса.",
+    "ka": "გვერდითი მენიუ, მთავარი ეკრანი „პაიპლაინი“, ძიება, შეტყობინებები და ინტერფეისის ენა."
+  },
+  "guide.topic.profileSecurity.title": {
+    "en": "Your profile and security",
+    "ru": "Профиль и безопасность",
+    "ka": "პროფილი და უსაფრთხოება"
+  },
+  "guide.topic.profileSecurity.summary": {
+    "en": "Your name, photo and language, password, two-factor authentication and active sessions.",
+    "ru": "Имя, фото и язык, пароль, двухфакторная аутентификация и активные сеансы.",
+    "ka": "სახელი, ფოტო და ენა, პაროლი, ორფაქტორიანი ავთენტიფიკაცია და აქტიური სესიები."
+  },
+  "guide.topic.organization.title": {
+    "en": "Organization settings",
+    "ru": "Настройки организации",
+    "ka": "ორგანიზაციის პარამეტრები"
+  },
+  "guide.topic.organization.summary": {
+    "en": "Company name, logo, jobs page address, content languages and security rules for your team.",
+    "ru": "Название компании, логотип, адрес страницы вакансий, языки контента и правила безопасности для команды.",
+    "ka": "კომპანიის სახელი, ლოგო, ვაკანსიების გვერდის მისამართი, კონტენტის ენები და გუნდის უსაფრთხოების წესები."
+  },
+  "guide.topic.team.title": {
+    "en": "Team and roles",
+    "ru": "Команда и роли",
+    "ka": "გუნდი და როლები"
+  },
+  "guide.topic.team.summary": {
+    "en": "Invite teammates and decide what the owner, admins and members can do.",
+    "ru": "Приглашайте коллег и определяйте, что могут делать владелец, администраторы и участники.",
+    "ka": "მოიწვიეთ კოლეგები და განსაზღვრეთ, რა შეუძლიათ მფლობელს, ადმინისტრატორებს და წევრებს."
+  },
+  "guide.topic.createVacancy.title": {
+    "en": "Create a vacancy",
+    "ru": "Создание вакансии",
+    "ka": "ვაკანსიის შექმნა"
+  },
+  "guide.topic.createVacancy.summary": {
+    "en": "Create a job opening in five steps, with AI help for the description and the scorecard.",
+    "ru": "Создайте вакансию за пять шагов с помощью ИИ для описания и оценочного листа.",
+    "ka": "შექმენით ვაკანსია ხუთ ნაბიჯად, აღწერისა და შეფასების ფურცლისთვის AI-ის დახმარებით."
+  },
+  "guide.topic.vacancyPage.title": {
+    "en": "The vacancy page",
+    "ru": "Страница вакансии",
+    "ka": "ვაკანსიის გვერდი"
+  },
+  "guide.topic.vacancyPage.summary": {
+    "en": "Applications, job description, scorecard, application form and settings of a vacancy.",
+    "ru": "Отклики, описание, оценочный лист, форма отклика и настройки вакансии.",
+    "ka": "ვაკანსიის განაცხადები, აღწერა, შეფასების ფურცელი, განაცხადის ფორმა და პარამეტრები."
+  },
+  "guide.topic.shareVacancy.title": {
+    "en": "Share a vacancy",
+    "ru": "Публикация вакансии",
+    "ka": "ვაკანსიის გაზიარება"
+  },
+  "guide.topic.shareVacancy.summary": {
+    "en": "Share a vacancy through its apply link, your public jobs page and LinkedIn.",
+    "ru": "Публикуйте вакансию по ссылке для отклика, на публичной странице вакансий и в LinkedIn.",
+    "ka": "გააზიარეთ ვაკანსია განაცხადის ბმულით, საჯარო ვაკანსიების გვერდით და LinkedIn-ით."
+  },
+  "guide.topic.addCandidates.title": {
+    "en": "Add a candidate",
+    "ru": "Добавление кандидата",
+    "ka": "კანდიდატის დამატება"
+  },
+  "guide.topic.addCandidates.summary": {
+    "en": "Add a candidate by uploading a CV (AI fills in the details) or by hand.",
+    "ru": "Добавьте кандидата, загрузив резюме (ИИ заполнит данные), или вручную.",
+    "ka": "დაამატეთ კანდიდატი CV-ის ატვირთვით (AI თავად შეავსებს მონაცემებს) ან ხელით."
+  },
+  "guide.topic.importCandidates.title": {
+    "en": "Import candidates from Excel or CSV",
+    "ru": "Импорт кандидатов из Excel или CSV",
+    "ka": "კანდიდატების იმპორტი Excel-იდან ან CSV-დან"
+  },
+  "guide.topic.importCandidates.summary": {
+    "en": "Bring in many candidates at once from a spreadsheet.",
+    "ru": "Загрузите сразу много кандидатов из таблицы.",
+    "ka": "შემოიტანეთ ბევრი კანდიდატი ერთდროულად ცხრილიდან."
+  },
+  "guide.topic.candidateProfile.title": {
+    "en": "The candidate profile",
+    "ru": "Профиль кандидата",
+    "ka": "კანდიდატის პროფილი"
+  },
+  "guide.topic.candidateProfile.summary": {
+    "en": "Contact details, experience, documents, notes, activity and applications in one place.",
+    "ru": "Контакты, опыт, документы, заметки, активность и отклики в одном месте.",
+    "ka": "საკონტაქტო მონაცემები, გამოცდილება, დოკუმენტები, შენიშვნები, აქტივობა და განაცხადები ერთ ადგილას."
+  },
+  "guide.topic.search.title": {
+    "en": "Search, filters and saved views",
+    "ru": "Поиск, фильтры и сохранённые представления",
+    "ka": "ძიება, ფილტრები და შენახული ხედები"
+  },
+  "guide.topic.search.summary": {
+    "en": "Find anything quickly and save the list filters you use most.",
+    "ru": "Быстро находите нужное и сохраняйте часто используемые фильтры.",
+    "ka": "სწრაფად იპოვეთ ნებისმიერი რამ და შეინახეთ ხშირად გამოყენებული ფილტრები."
+  },
+  "guide.topic.pipeline.title": {
+    "en": "The pipeline",
+    "ru": "Пайплайн",
+    "ka": "პაიპლაინი"
+  },
+  "guide.topic.pipeline.summary": {
+    "en": "Move candidates through the hiring stages on a board, and customize the stages.",
+    "ru": "Перемещайте кандидатов по этапам найма на доске и настраивайте этапы.",
+    "ka": "გადაიყვანეთ კანდიდატები დაქირავების ეტაპებზე დაფაზე და მოარგეთ ეტაპები."
+  },
+  "guide.topic.assessments.title": {
+    "en": "Assessments and scorecards",
+    "ru": "Оценки и оценочные листы",
+    "ka": "შეფასებები და შეფასების ფურცლები"
+  },
+  "guide.topic.assessments.summary": {
+    "en": "Rate candidates against the vacancy's criteria, on your own or with colleagues.",
+    "ru": "Оценивайте кандидатов по критериям вакансии — самостоятельно или вместе с коллегами.",
+    "ka": "შეაფასეთ კანდიდატები ვაკანსიის კრიტერიუმებით — დამოუკიდებლად ან კოლეგებთან ერთად."
+  },
+  "guide.topic.reject.title": {
+    "en": "Reject candidates",
+    "ru": "Отказ кандидатам",
+    "ka": "კანდიდატებზე უარის თქმა"
+  },
+  "guide.topic.reject.summary": {
+    "en": "Reject one or several candidates with a reason and an optional email.",
+    "ru": "Отказывайте одному или нескольким кандидатам с указанием причины и, при желании, письмом.",
+    "ka": "უთხარით უარი ერთ ან რამდენიმე კანდიდატს მიზეზის მითითებით და, სურვილისამებრ, იმეილით."
+  },
+  "guide.topic.interviews.title": {
+    "en": "Schedule interviews",
+    "ru": "Планирование собеседований",
+    "ka": "გასაუბრებების დაგეგმვა"
+  },
+  "guide.topic.interviews.summary": {
+    "en": "Book interviews with Google Meet, Zoom or Teams links, or let candidates book a time through Calendly.",
+    "ru": "Назначайте собеседования со ссылками Google Meet, Zoom или Teams или дайте кандидатам записаться через Calendly.",
+    "ka": "დანიშნეთ გასაუბრებები Google Meet-ის, Zoom-ის ან Teams-ის ბმულით, ან მიეცით კანდიდატებს დროის Calendly-ით დაჯავშნის საშუალება."
+  },
+  "guide.topic.offers.title": {
+    "en": "Offers",
+    "ru": "Офферы",
+    "ka": "შეთავაზებები"
+  },
+  "guide.topic.offers.summary": {
+    "en": "Create and send job offers, and see when a candidate accepts or declines.",
+    "ru": "Создавайте и отправляйте офферы и следите, когда кандидат принимает или отклоняет их.",
+    "ka": "შექმენით და გაგზავნეთ სამუშაო შეთავაზებები და ნახეთ, როდის დაეთანხმება ან უარს იტყვის კანდიდატი."
+  },
+  "guide.topic.candidateExperience.title": {
+    "en": "What candidates see",
+    "ru": "Что видит кандидат",
+    "ka": "რას ხედავს კანდიდატი"
+  },
+  "guide.topic.candidateExperience.summary": {
+    "en": "The application form, emails, status page and offer page from the candidate's side.",
+    "ru": "Форма отклика, письма, страница статуса и страница оффера глазами кандидата.",
+    "ka": "განაცხადის ფორმა, იმეილები, სტატუსის გვერდი და შეთავაზების გვერდი კანდიდატის მხრიდან."
+  },
+  "guide.topic.emailTemplates.title": {
+    "en": "Email templates",
+    "ru": "Шаблоны писем",
+    "ka": "იმეილის შაბლონები"
+  },
+  "guide.topic.emailTemplates.summary": {
+    "en": "Edit the emails candidates receive and turn on automatic status updates.",
+    "ru": "Редактируйте письма кандидатам и включайте автоматические уведомления о статусе.",
+    "ka": "შეცვალეთ კანდიდატებისთვის გაგზავნილი იმეილები და ჩართეთ სტატუსის ავტომატური შეტყობინებები."
+  },
+  "guide.topic.notifications.title": {
+    "en": "Notifications, Slack and Teams",
+    "ru": "Уведомления, Slack и Teams",
+    "ka": "შეტყობინებები, Slack და Teams"
+  },
+  "guide.topic.notifications.summary": {
+    "en": "In-app notifications, @mentions, and alerts in your Slack or Microsoft Teams channels.",
+    "ru": "Уведомления в системе, @упоминания и оповещения в каналах Slack или Microsoft Teams.",
+    "ka": "შეტყობინებები სისტემაში, @მოხსენიებები და შეტყობინებები თქვენს Slack-ის ან Microsoft Teams-ის არხებში."
+  },
+  "guide.topic.ai.title": {
+    "en": "AI features",
+    "ru": "Функции ИИ",
+    "ka": "AI ფუნქციები"
+  },
+  "guide.topic.ai.summary": {
+    "en": "How AI helps with CVs, job descriptions, scorecards and fit analysis, and how you stay in control.",
+    "ru": "Как ИИ помогает с резюме, описаниями вакансий, оценочными листами и анализом соответствия и как вы сохраняете контроль.",
+    "ka": "როგორ გეხმარებათ AI CV-ებთან, ვაკანსიის აღწერებთან, შეფასების ფურცლებსა და შესაბამისობის ანალიზთან, და როგორ რჩება კონტროლი თქვენს ხელში."
+  },
+  "guide.topic.reports.title": {
+    "en": "Reports",
+    "ru": "Отчёты",
+    "ka": "ანგარიშები"
+  },
+  "guide.topic.reports.summary": {
+    "en": "Pipeline conversion, candidate sources and time to hire.",
+    "ru": "Конверсия пайплайна, источники кандидатов и время найма.",
+    "ka": "პაიპლაინის კონვერსია, კანდიდატების წყაროები და დაქირავების დრო."
+  },
+  "guide.topic.integrations.title": {
+    "en": "Integrations",
+    "ru": "Интеграции",
+    "ka": "ინტეგრაციები"
+  },
+  "guide.topic.integrations.summary": {
+    "en": "Connect Google, Microsoft, Zoom, Calendly, LinkedIn, Slack and Teams.",
+    "ru": "Подключите Google, Microsoft, Zoom, Calendly, LinkedIn, Slack и Teams.",
+    "ka": "დააკავშირეთ Google, Microsoft, Zoom, Calendly, LinkedIn, Slack და Teams."
+  },
+  "guide.topic.customFields.title": {
+    "en": "Custom fields",
+    "ru": "Пользовательские поля",
+    "ka": "მორგებული ველები"
+  },
+  "guide.topic.customFields.summary": {
+    "en": "Add your own fields to vacancies and candidates.",
+    "ru": "Добавляйте собственные поля к вакансиям и кандидатам.",
+    "ka": "დაამატეთ საკუთარი ველები ვაკანსიებსა და კანდიდატებს."
+  },
+  "guide.topic.auditTrash.title": {
+    "en": "Audit log and trash",
+    "ru": "Журнал аудита и корзина",
+    "ka": "აუდიტის ჟურნალი და სანაგვე"
+  },
+  "guide.topic.auditTrash.summary": {
+    "en": "See who changed what, and restore deleted candidates and vacancies.",
+    "ru": "Смотрите, кто что изменил, и восстанавливайте удалённых кандидатов и вакансии.",
+    "ka": "ნახეთ, ვინ რა შეცვალა, და აღადგინეთ წაშლილი კანდიდატები და ვაკანსიები."
+  },
+  "guide.topic.billing.title": {
+    "en": "Plans and billing",
+    "ru": "Тарифы и оплата",
+    "ka": "გეგმები და ბილინგი"
+  },
+  "guide.topic.billing.summary": {
+    "en": "Plans and limits, upgrading, auto-renewal, cancelling and refunds.",
+    "ru": "Тарифы и лимиты, переход на платный тариф, автопродление, отмена и возврат средств.",
+    "ka": "გეგმები და ლიმიტები, ფასიან გეგმაზე გადასვლა, ავტომატური განახლება, გაუქმება და თანხის დაბრუნება."
+  },
+  "guide.faq.trial.q": {
+    "en": "Is there a free trial?",
+    "ru": "Есть ли бесплатный пробный период?",
+    "ka": "არსებობს უფასო საცდელი პერიოდი?"
+  },
+  "guide.faq.trial.a": {
+    "en": "Yes. Every new organization gets a 7-day free trial with full access. No payment card is needed to start.",
+    "ru": "Да. Каждая новая организация получает 7-дневный бесплатный пробный период с полным доступом. Банковская карта для начала не нужна.",
+    "ka": "დიახ. ყოველი ახალი ორგანიზაცია იღებს 7-დღიან უფასო საცდელ პერიოდს სრული წვდომით. დასაწყებად საბანკო ბარათი არ არის საჭირო."
+  },
+  "guide.faq.languages.q": {
+    "en": "Which languages does HRHandle support?",
+    "ru": "На каких языках доступен HRHandle?",
+    "ka": "რომელ ენებზეა ხელმისაწვდომი HRHandle?"
+  },
+  "guide.faq.languages.a": {
+    "en": "The interface is available in English, Georgian and Russian, and each person chooses their own language in Settings → Profile. Candidates see your application forms, emails and job pages in your organization's content language.",
+    "ru": "Интерфейс доступен на английском, грузинском и русском языках, и каждый пользователь выбирает свой язык в разделе «Настройки → Профиль». Кандидаты видят формы отклика, письма и страницы вакансий на языке контента вашей организации.",
+    "ka": "ინტერფეისი ხელმისაწვდომია ინგლისურ, ქართულ და რუსულ ენებზე — თითოეული მომხმარებელი საკუთარ ენას ირჩევს „პარამეტრები → პროფილი“-ში. კანდიდატები განაცხადის ფორმებს, იმეილებსა და ვაკანსიების გვერდებს ხედავენ თქვენი ორგანიზაციის კონტენტის ენაზე."
+  },
+  "guide.faq.cv.q": {
+    "en": "Which CV formats can I upload?",
+    "ru": "Какие форматы резюме можно загрузить?",
+    "ka": "რა ფორმატის CV შემიძლია ავტვირთო?"
+  },
+  "guide.faq.cv.a": {
+    "en": "PDF and Word files up to 10 MB. HRHandle reads the CV with AI and fills in the candidate's details for you to check.",
+    "ru": "Файлы PDF и Word размером до 10 МБ. HRHandle читает резюме с помощью ИИ и заполняет данные кандидата, которые вы затем проверяете.",
+    "ka": "PDF და Word ფაილები 10 მბ-მდე. HRHandle კითხულობს CV-ს AI-ის დახმარებით და ავსებს კანდიდატის მონაცემებს, რომლებსაც თქვენ გადაამოწმებთ."
+  },
+  "guide.faq.export.q": {
+    "en": "Can I export my data?",
+    "ru": "Можно ли экспортировать данные?",
+    "ka": "შემიძლია მონაცემების ექსპორტი?"
+  },
+  "guide.faq.export.a": {
+    "en": "Yes. Candidates and each vacancy's applications can be exported as CSV files from their list pages. Owners and admins can also export the audit log.",
+    "ru": "Да. Кандидатов и отклики по каждой вакансии можно выгрузить в CSV со страниц их списков. Владелец и администраторы также могут выгрузить журнал аудита.",
+    "ka": "დიახ. კანდიდატების და თითოეული ვაკანსიის განაცხადების ექსპორტი შესაძლებელია CSV ფაილად მათივე სიის გვერდებიდან. მფლობელს და ადმინისტრატორებს ასევე შეუძლიათ აუდიტის ჟურნალის ექსპორტი."
+  },
+  "guide.faq.calendar.q": {
+    "en": "Which calendar and video tools work with HRHandle?",
+    "ru": "С какими календарями и сервисами видеосвязи работает HRHandle?",
+    "ka": "რომელ კალენდარსა და ვიდეოზარის ხელსაწყოებთან მუშაობს HRHandle?"
+  },
+  "guide.faq.calendar.a": {
+    "en": "Google Calendar with Google Meet, Microsoft 365 with Teams, and Zoom. With Calendly, candidates can book an interview time themselves. Connect them in Settings → Integrations.",
+    "ru": "Google Календарь с Google Meet, Microsoft 365 с Teams, а также Zoom. Через Calendly кандидаты могут сами выбрать время собеседования. Подключите их в разделе «Настройки → Интеграции».",
+    "ka": "Google Calendar და Google Meet, Microsoft 365 და Teams, ასევე Zoom. Calendly-ით კანდიდატებს თავად შეუძლიათ გასაუბრების დროის დაჯავშნა. დააკავშირეთ ისინი „პარამეტრები → ინტეგრაციები“-ში."
+  },
+  "guide.faq.support.q": {
+    "en": "How do I contact support?",
+    "ru": "Как связаться с поддержкой?",
+    "ka": "როგორ დავუკავშირდე მხარდაჭერას?"
+  },
+  "guide.faq.support.a": {
+    "en": "In the app, open Support in the sidebar and send us a message. You can also use the form at hrhandle.com/support or write to support@hrhandle.com.",
+    "ru": "В приложении откройте «Поддержка» в боковом меню и отправьте нам сообщение. Также можно воспользоваться формой на hrhandle.com/support или написать на support@hrhandle.com.",
+    "ka": "აპლიკაციაში გახსენით „მხარდაჭერა“ გვერდით მენიუში და მოგვწერეთ. ასევე შეგიძლიათ გამოიყენოთ ფორმა მისამართზე hrhandle.com/support ან მოგვწეროთ support@hrhandle.com-ზე."
   },
   "sidebar.primaryNav": {
     "en": "Primary navigation",

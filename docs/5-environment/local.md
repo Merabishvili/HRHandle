@@ -141,32 +141,31 @@ Note: The CI pipeline uses hardcoded placeholder env vars in the build step to a
 - Auth pages: `/auth/login`, `/auth/sign-up`, `/auth/forgot-password`, `/auth/reset-password`
 - If you sign up locally, you must confirm the email before accessing the dashboard — the confirmation email will use `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` as the redirect base if set
 
-## Capturing guide screenshots (one-time setup)
+## Capturing guide screenshots
 
-The guide pages under `/guide/[slug]` reference screenshots in `public/guide/screenshots/`. They are produced by a Playwright script that runs against staging:
+The guide (`/guide`) is written in English, Georgian and Russian, and every screenshot exists in all three languages (`public/guide/screenshots/<locale>/`). Playwright captures them from a **local production build that uses the staging database**:
 
 ```bash
 # 1. Install browser binaries (once)
 npx playwright install chromium
 
-# 2. Seed the demo org on staging Supabase (idempotent)
-NEXT_PUBLIC_SUPABASE_URL=https://quotchdymcnjlnwtjmgu.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=<staging legacy JWT service_role key> \
-npm run guide:seed
+# 2. Seed the three demo companies on staging (idempotent; refuses any other project)
+npm run guide:seed                 # or one language: npm run guide:seed -- --locale ka
 
-# 3. Add the printed credentials + the Vercel bypass token to .env.local
-#    STAGING_DEMO_EMAIL=demo.owner@hrhandle-demo.com
-#    STAGING_DEMO_PASSWORD=DemoUser!2026
-#    VERCEL_PROTECTION_BYPASS=<token from Vercel Protection Bypass for Automation>
-#    SUPABASE_SERVICE_ROLE_KEY=<staging legacy JWT service_role key>
+# 3. Build and start the app on staging data, port 3123 — leave it running
+npm run guide:serve
 
-# 4. Capture all configured shots
-npm run guide:screenshots
+# 4. In another terminal, capture
+npm run guide:screenshots                                   # every topic, EN + KA + RU at once
+npm run guide:screenshots -- --topic post-a-vacancy         # one topic (comma-separate for more)
+npm run guide:screenshots -- --locale ka                    # one language
+npm run guide:screenshots -- --preview /tmp/guide-preview   # also write EN | KA | RU side-by-side sheets
 ```
 
 What each piece does:
 
-- **Seed script** — creates the Acme Corporation demo org with users, vacancies, pipeline applications, vacancy questions, custom fields, rejection reasons + templates, and a demo LinkedIn integration. Refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at the staging project, so it cannot accidentally write to production.
-- **Service role key** — needs to be the **legacy JWT-based** `service_role` key (starts with `eyJ`), not the newer `sb_secret_*` key. Supabase's auth admin endpoints currently reject the new key format. Find the legacy key under Settings → API → Legacy anon/service_role API keys.
-- **Vercel bypass token** — staging is behind Vercel Deployment Protection. Without the bypass header, Playwright lands on Vercel's auth wall instead of the app. Generate the token under Vercel Project Settings → Deployment Protection → Protection Bypass for Automation.
-- **Demo email / password** — printed at the end of `guide:seed`. The screenshot script does not use the password directly (Supabase Turnstile blocks `signInWithPassword`); instead it uses the admin client to mint a magic-link `hashed_token` and exchanges it via `verifyOtp` for a session, which is then injected as a cookie into Playwright.
+- **Demo companies** — `scripts/guide-demo-data.ts` holds one fictional company per language (Acme Corporation / აკმე კორპორაცია / Акме Корпорация) with native names, vacancies and candidates, so each language's screenshots show native data. `scripts/seed-guide-demo.ts` creates the organization through the real sign-up code (`runOnboarding`), so it has a customer's defaults, then mirrors the server actions for the rest. Logins: `guide.<en|ka|ru>.<owner|admin|member>@example.com` (password in `guide-demo-data.ts`; staging only).
+- **`guide:serve`** — `next build` + `next start` with `.env.local` loaded first (`scripts/with-env-local.mjs`). **Don't use a plain `next start` for this:** a local production build reads `.env.production.local` before `.env.local`, and that file may point at the **production** database (it did on 2026-10-09).
+- **Capture** — `scripts/capture-screenshots.ts` logs in as each language's demo owner (a magic-link session, so no password or captcha), sets the `NEXT_LOCALE` cookie, and runs the flows in `scripts/screenshot-config.ts` in all three languages at the same time. A flow clicks through the real UI and finds elements by id/role and by the app's own translated labels, so one flow works in every language. Markers are numbered red boxes explained in the guide text, so no text on the images needs translating. Tall pages are captured by growing the window (a full-page capture misplaces the fixed sidebar). Shots are saved as WebP and their sizes written to `content/guides/screenshots.json`. Flows that create data (the vacancy wizard publishes a vacancy) delete it again afterwards.
+- **Service role key** — must be the **legacy JWT** `service_role` key (starts with `eyJ`), not the newer `sb_secret_*` key: the auth admin endpoints reject the new format.
+- **Deployed staging instead of local** — set `SCREENSHOT_BASE_URL=https://staging.hrhandle.com` and `VERCEL_PROTECTION_BYPASS=<token>` (Vercel → Project Settings → Deployment Protection → Protection Bypass for Automation). Staging then has to be running the code you want to show.

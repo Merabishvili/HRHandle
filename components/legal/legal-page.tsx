@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import { getLocale, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import { LanguageSwitcher } from '@/components/landing/language-switcher'
 import { LEGAL_CONTENT } from '@/components/legal/content'
 import { formatLegalDate, type LegalDoc } from '@/lib/legal/documents'
-import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n/locales'
+import type { Locale } from '@/lib/i18n/locales'
+import { visitorLocale } from '@/lib/i18n/visitor-locale'
 
 const OTHER_DOCS: Record<LegalDoc, LegalDoc[]> = {
   terms: ['privacy', 'refund'],
@@ -62,22 +63,16 @@ export async function LegalPage({
   )
 }
 
-/** The visitor's language (NEXT_LOCALE cookie, as on the landing page). */
-async function legalLocale(): Promise<Locale> {
-  const raw = await getLocale()
-  return isLocale(raw) ? raw : DEFAULT_LOCALE
-}
-
 /** Localized `<title>` for a legal page (the root layout's template adds
  * " — HRHandle"; the old hard-coded suffix doubled it). */
 export async function legalMetadata(doc: LegalDoc): Promise<Metadata> {
-  const t = await getTranslations({ locale: await legalLocale(), namespace: 'legal' })
+  const t = await getTranslations({ locale: await visitorLocale(), namespace: 'legal' })
   return { title: t(`title.${doc}`) }
 }
 
 /** A legal document in the visitor's language, inside the shared frame. */
 export async function LegalDocPage({ doc }: { doc: LegalDoc }) {
-  const locale = await legalLocale()
+  const locale = await visitorLocale()
   const Content = LEGAL_CONTENT[doc][locale]
   return (
     <LegalPage doc={doc} locale={locale}>

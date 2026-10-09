@@ -3,14 +3,16 @@ import { getTranslations } from 'next-intl/server'
 import { ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { GuideMeta } from '@/lib/guides/registry'
+import type { Locale } from '@/lib/i18n/locales'
 
 interface GuideCardProps {
+  locale: Locale
   guide: GuideMeta
   exists: boolean
 }
 
-export async function GuideCard({ guide, exists }: GuideCardProps) {
-  const t = await getTranslations()
+export async function GuideCard({ locale, guide, exists }: GuideCardProps) {
+  const t = await getTranslations({ locale, namespace: 'guide' })
   // Design fix: "Coming soon" cards use a dashed border + muted bg so they
   // read as deliberately deferred rather than broken links. Live guides keep
   // the solid border and hover affordance.
@@ -21,16 +23,16 @@ export async function GuideCard({ guide, exists }: GuideCardProps) {
   const inner = (
     <Card className={cardClasses}>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between text-base">
-          <span className={exists ? '' : 'text-muted-foreground'}>{guide.title}</span>
-          {exists && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+        <CardTitle className="flex items-center justify-between gap-2 text-base">
+          <span className={exists ? '' : 'text-muted-foreground'}>{t(`topic.${guide.id}.title`)}</span>
+          {exists && <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">{guide.summary}</p>
+        <p className="text-sm text-muted-foreground">{t(`topic.${guide.id}.summary`)}</p>
         {!exists && (
           <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
-            {t('guide.comingSoon')}
+            {t('comingSoon')}
           </p>
         )}
       </CardContent>

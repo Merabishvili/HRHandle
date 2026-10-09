@@ -1,8 +1,13 @@
+import type { ComponentProps } from 'react'
 import type { MDXComponents } from 'mdx/types'
+import type { Locale } from '@/lib/i18n/locales'
 import { Screenshot } from './screenshot'
 
-export const guideMdxComponents: MDXComponents = {
-  Screenshot,
+/** MDX elements for a guide body written in `locale` (screenshots load from that language's folder). */
+export const guideMdxComponents = (locale: Locale): MDXComponents => ({
+  Screenshot: (props: Omit<ComponentProps<typeof Screenshot>, 'locale'>) => (
+    <Screenshot {...props} locale={locale} />
+  ),
   h1: ({ children }) => (
     <h1 className="mb-4 mt-8 text-3xl font-bold tracking-tight text-foreground">{children}</h1>
   ),
@@ -49,4 +54,4 @@ export const guideMdxComponents: MDXComponents = {
     </th>
   ),
   td: ({ children }) => <td className="px-3 py-2 align-top text-foreground/90">{children}</td>,
-}
+})

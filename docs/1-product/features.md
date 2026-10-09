@@ -178,14 +178,14 @@ _Last updated: 2026-07-20_
 
 ## Guides
 
-Public feature walkthroughs with annotated screenshots, served from a static-cacheable Next.js route. Linked from the dashboard header (opens in a new tab) and shared with prospects.
+Public feature walkthroughs with annotated screenshots, in English, Georgian and Russian. Shown in the reader's language (the `NEXT_LOCALE` cookie — a signed-in user's UI language) with a language switcher. Linked from the dashboard header (opens in a new tab) and shared with prospects. Rewritten from scratch in 2026-10 (26 topics; see `lib/guides/registry.ts`).
 
 | Feature | Description | Files |
 |---------|-------------|-------|
-| Guide index | Lists every guide grouped by category plus a short FAQ | `app/guide/page.tsx`, `lib/guides/registry.ts` |
-| Guide page | MDX-rendered article with sidebar nav and annotated screenshots | `app/guide/[slug]/page.tsx`, `components/guide/guide-shell.tsx`, `components/guide/guide-sidebar.tsx`, `components/guide/mdx-components.tsx` |
-| Guide registry | Single source of truth for slug, title, summary, category, order; index page shows "Coming soon" for entries with no MDX yet | `lib/guides/registry.ts` |
-| Guide loader | Reads MDX file + frontmatter from `content/guides/*.mdx` | `lib/guides/loader.ts` |
+| Guide index | Every topic grouped by category, plus an FAQ; topics without content show "Coming soon" | `app/guide/page.tsx`, `components/guide/guide-card.tsx` |
+| Guide page | MDX article with sidebar nav and annotated screenshots; falls back to English (with a note) if a translation is missing; renamed topics' old URLs redirect | `app/guide/[slug]/page.tsx`, `components/guide/guide-shell.tsx`, `components/guide/guide-sidebar.tsx`, `components/guide/mdx-components.tsx`, `components/guide/screenshot.tsx` |
+| Guide registry | Topic slug, category and order, renamed-topic redirects, FAQ keys. Titles, summaries, categories and FAQ text are translated in `messages/source.json` (`guide.*`) | `lib/guides/registry.ts` |
+| Guide content | One MDX file per topic and language: `content/guides/{en,ka,ru}/<slug>.mdx` (English is the source). `<Screenshot name="…">` loads `public/guide/screenshots/<locale>/<name>.webp` | `lib/guides/loader.ts`, `content/guides/` |
 | Dashboard Help link | Top-right link in the dashboard header, opens `/guide` in a new tab | `components/dashboard/help-link.tsx`, `components/dashboard/header.tsx` |
-| Screenshot capture | Playwright script that logs into staging, navigates to each page, injects annotation overlays, saves PNGs to `public/guide/screenshots/` | `scripts/capture-screenshots.ts`, `scripts/screenshot-config.ts` |
-| Demo data seed | Idempotent script that creates a demo org (Acme Corporation), two demo users, and seeded vacancies on staging Supabase | `scripts/seed-demo-org.ts` |
+| Screenshot capture | Playwright flows click through the real UI in EN, KA and RU at the same time, add numbered markers, and save WebP shots + their sizes | `scripts/capture-screenshots.ts`, `scripts/screenshot-config.ts` |
+| Demo data seed | Three fictional companies on staging — one per language, with native names, vacancies and candidates — created through the real sign-up code | `scripts/seed-guide-demo.ts`, `scripts/guide-demo-data.ts` |

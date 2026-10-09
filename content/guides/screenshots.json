@@ -1,0 +1,104 @@
+{
+  "en": {
+    "create-vacancy-ai": [
+      830,
+      1165
+    ],
+    "create-vacancy-basics": [
+      1440,
+      900
+    ],
+    "create-vacancy-dates": [
+      1440,
+      900
+    ],
+    "create-vacancy-description": [
+      1440,
+      1230
+    ],
+    "create-vacancy-done": [
+      1440,
+      900
+    ],
+    "create-vacancy-review": [
+      1440,
+      1070
+    ],
+    "create-vacancy-scorecard": [
+      1440,
+      968
+    ],
+    "vacancies-list": [
+      1440,
+      900
+    ]
+  },
+  "ka": {
+    "create-vacancy-ai": [
+      830,
+      1187
+    ],
+    "create-vacancy-basics": [
+      1440,
+      900
+    ],
+    "create-vacancy-dates": [
+      1440,
+      900
+    ],
+    "create-vacancy-description": [
+      1440,
+      1270
+    ],
+    "create-vacancy-done": [
+      1440,
+      900
+    ],
+    "create-vacancy-review": [
+      1440,
+      1095
+    ],
+    "create-vacancy-scorecard": [
+      1440,
+      1003
+    ],
+    "vacancies-list": [
+      1440,
+      900
+    ]
+  },
+  "ru": {
+    "create-vacancy-ai": [
+      830,
+      1165
+    ],
+    "create-vacancy-basics": [
+      1440,
+      900
+    ],
+    "create-vacancy-dates": [
+      1440,
+      900
+    ],
+    "create-vacancy-description": [
+      1440,
+      1250
+    ],
+    "create-vacancy-done": [
+      1440,
+      900
+    ],
+    "create-vacancy-review": [
+      1440,
+      1070
+    ],
+    "create-vacancy-scorecard": [
+      1440,
+      968
+    ],
+    "vacancies-list": [
+      1440,
+      900
+    ]
+  }
+}

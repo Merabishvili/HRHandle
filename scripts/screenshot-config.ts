@@ -1,630 +1,274 @@
 /**
- * Configuration for the guide screenshot capture script.
+ * Guide screenshot flows — one per topic, run once per language by
+ * `scripts/capture-screenshots.ts`.
  *
- * Each shot describes how to land on a page in a known state, what overlays
- * to inject (arrows, numbered boxes), and where to save the resulting image.
+ * A flow drives the real UI like a user would and calls `shot()` along the way,
+ * so a multi-step walkthrough (the vacancy wizard) keeps its state between
+ * shots. Find elements by id or role and by the app's own translated labels
+ * (`t('wizard.createVacancy')`), never by English text, so the same flow works
+ * in every language. Type sample data from `demo` (the language's demo company).
  *
- * Add new shots here as guides need them. The capture script is generic and
- * does not need to change.
+ * Markers are numbered red boxes; the guide text explains each number, so
+ * nothing on the image needs translating.
  */
+import type { Locator, Page } from 'playwright'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Locale } from '@/lib/i18n/locales'
+import type { DemoOrg } from './guide-demo-data'
 
-import type { Page } from 'playwright'
-
-export interface Annotation {
-  /** CSS selector for the element the annotation points to. */
-  targetSelector: string
-  /** Short label shown next to the arrow/box. Keep it under ~20 chars. */
-  label: string
-  /** Where the arrow/label is positioned relative to the target element. */
-  position: 'top' | 'right' | 'bottom' | 'left'
-  /** Visual style of the annotation. */
-  style: 'arrow' | 'box'
+export interface Mark {
+  target: Locator
+  /** Number badge, referenced from the guide text. */
+  n?: number
+  /** Badge on the box's top-left corner (default; fine for padded cards and
+   * buttons) or outside its left edge (form fields, so the label stays readable). */
+  badge?: 'corner' | 'left'
+  pad?: number
 }
 
-export interface ShotConfig {
-  /** Used in logs only. */
-  name: string
-  /** Path relative to BASE_URL (e.g. "/vacancies/new"). */
-  url: string
-  /** Output path relative to repo root. */
-  output: string
-  /** Optional steps to run before capturing (fill fields, click buttons, etc.). */
-  preActions?: (page: Page) => Promise<void>
-  /** Annotations to inject before screenshot. */
-  annotations?: Annotation[]
-  /** Capture the full page (true) or just the viewport (false, default). */
+export interface ShotOptions {
+  marks?: Mark[]
+  /** Capture only this element (plus `clipPad`) instead of the window. */
+  clip?: Locator
+  clipPad?: number
+  /** Capture the whole page height (the window grows to fit it). */
   fullPage?: boolean
 }
 
-export const SHOTS: ShotConfig[] = [
-  // ---- post-a-vacancy ----
-  {
-    name: 'post-a-vacancy-list',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/post-a-vacancy-list.png',
-    preActions: async (page) => {
-      await page.waitForSelector('a[href="/vacancies/new"]', { timeout: 15_000 })
-    },
-    annotations: [
-      {
-        targetSelector: 'a[href="/vacancies/new"]',
-        label: 'Create Vacancy',
-        position: 'left',
-        style: 'arrow',
-      },
-    ],
-  },
-  {
-    name: 'post-a-vacancy-form',
-    url: '/vacancies/new',
-    output: 'public/guide/screenshots/post-a-vacancy-form.png',
-    fullPage: false,
-    preActions: async (page) => {
-      // Tag the Start Date picker button (no stable selector otherwise).
-      await page.waitForSelector('#title', { timeout: 15_000 })
-      await page.evaluate(() => {
-        const labels = Array.from(document.querySelectorAll('label')) as HTMLLabelElement[]
-        const startDateLabel = labels.find((l) =>
-          l.textContent?.trim().startsWith('Start Date')
-        )
-        const btn = startDateLabel?.parentElement?.querySelector('button')
-        if (btn) btn.setAttribute('data-shot', 'start-date')
-      })
-    },
-    annotations: [
-      {
-        targetSelector: '#title',
-        label: '1. Title',
-        position: 'right',
-        style: 'arrow',
-      },
-      {
-        targetSelector: '[data-shot="start-date"]',
-        label: '2. Start date',
-        position: 'right',
-        style: 'arrow',
-      },
-    ],
-  },
-  {
-    name: 'post-a-vacancy-form-description',
-    url: '/vacancies/new',
-    output: 'public/guide/screenshots/post-a-vacancy-form-description.png',
-    preActions: async (page) => {
-      await page.waitForSelector('#description', { timeout: 15_000 })
-      // Scroll the description field into view.
-      await page.evaluate(() => {
-        document.querySelector('#description')?.scrollIntoView({ block: 'center' })
-      })
-      await page.waitForTimeout(400)
-    },
-    annotations: [
-      {
-        targetSelector: '#description',
-        label: 'About the Job',
-        position: 'right',
-        style: 'arrow',
-      },
-    ],
-  },
-  // ---- sign-up-and-onboarding ----
-  {
-    name: 'sign-up-and-onboarding-form',
-    url: '/auth/sign-up',
-    output: 'public/guide/screenshots/sign-up-and-onboarding-form.png',
-    preActions: async (page) => {
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(500)
-    },
-  },
-  {
-    name: 'sign-up-and-onboarding-confirm',
-    url: '/auth/sign-up-success',
-    output: 'public/guide/screenshots/sign-up-and-onboarding-confirm.png',
-    preActions: async (page) => {
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(500)
-    },
-  },
+export interface ShotContext {
+  page: Page
+  locale: Locale
+  demo: DemoOrg
+  /** Service-role client for setup and cleanup (staging only). */
+  admin: SupabaseClient
+  /** The app's translation for this language. */
+  t: (key: string, values?: Record<string, string | number>) => string
+  goto: (path: string) => Promise<void>
+  shot: (name: string, opts?: ShotOptions) => Promise<void>
+}
 
-  // ---- linkedin-integration ----
-  {
-    name: 'linkedin-integration-settings',
-    url: '/settings/integrations',
-    output: 'public/guide/screenshots/linkedin-integration-settings.png',
-    preActions: async (page) => {
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(500)
-    },
-  },
-  {
-    name: 'linkedin-integration-vacancy-button',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/linkedin-integration-vacancy-button.png',
-    preActions: async (page) => {
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const href = await page.evaluate(() => {
-        const links = Array.from(
-          document.querySelectorAll('table a[href^="/vacancies/"]')
-        ) as HTMLAnchorElement[]
-        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
-        return target?.getAttribute('href') ?? null
-      })
-      if (!href) throw new Error('Could not find Senior Software Engineer row')
-      const baseUrl =
-        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
-      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
-      await page.waitForTimeout(500)
-      // Tag the Post to LinkedIn Jobs button so we can annotate it.
-      await page.evaluate(() => {
-        const btns = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[]
-        const target = btns.find((b) => (b.textContent || '').includes('Post to LinkedIn Jobs'))
-        if (target) target.setAttribute('data-shot', 'linkedin-btn')
-      })
-    },
-    annotations: [
-      {
-        targetSelector: '[data-shot="linkedin-btn"]',
-        label: 'Post to LinkedIn Jobs',
-        position: 'bottom',
-        style: 'arrow',
-      },
-    ],
-  },
-  {
-    name: 'linkedin-integration-modal',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/linkedin-integration-modal.png',
-    preActions: async (page) => {
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const href = await page.evaluate(() => {
-        const links = Array.from(
-          document.querySelectorAll('table a[href^="/vacancies/"]')
-        ) as HTMLAnchorElement[]
-        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
-        return target?.getAttribute('href') ?? null
-      })
-      if (!href) throw new Error('Could not find Senior Software Engineer row')
-      const baseUrl =
-        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
-      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
-      await page.waitForTimeout(500)
-      // Click the Post to LinkedIn Jobs button to open the modal.
-      await page
-        .getByRole('button', { name: /Post to LinkedIn Jobs/ })
-        .first()
-        .click()
-      await page.waitForTimeout(600)
-    },
-  },
+export interface Flow {
+  /** Guide slug the shots belong to (`--topic` filter). */
+  topic: string
+  run: (ctx: ShotContext) => Promise<void>
+  /** Undo anything the flow created, even after a failure. */
+  cleanup?: (ctx: ShotContext) => Promise<void>
+}
 
-  // ---- candidate-emails ----
-  {
-    name: 'candidate-emails-application-received',
-    url: '/settings/email-templates',
-    output: 'public/guide/screenshots/candidate-emails-application-received.png',
-    preActions: async (page) => {
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(500)
-    },
-  },
-  {
-    name: 'candidate-emails-rejection-reasons',
-    url: '/settings/rejection-reasons',
-    output: 'public/guide/screenshots/candidate-emails-rejection-reasons.png',
-    preActions: async (page) => {
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(500)
-    },
-  },
+// ── Helpers ───────────────────────────────────────────────────────────────
 
-  // ---- schedule-interview ----
-  {
-    name: 'schedule-interview-list',
-    url: '/interviews',
-    output: 'public/guide/screenshots/schedule-interview-list.png',
-    preActions: async (page) => {
-      await page.waitForSelector('a[href="/interviews/new"]', { timeout: 15_000 })
-    },
-    annotations: [
-      {
-        targetSelector: 'a[href="/interviews/new"]',
-        label: 'Schedule Interview',
-        position: 'bottom',
-        style: 'arrow',
-      },
-    ],
-  },
-  {
-    name: 'schedule-interview-form',
-    url: '/interviews/new',
-    output: 'public/guide/screenshots/schedule-interview-form.png',
-    preActions: async (page) => {
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(500)
-    },
-  },
+/** Pick an option in a Radix <Select> by its visible (translated) label. */
+async function pickSelect(page: Page, trigger: string, option: string): Promise<void> {
+  await page.locator(trigger).click()
+  await page.getByRole('option', { name: option, exact: true }).click()
+}
 
-  // ---- team-and-roles ----
-  {
-    name: 'team-and-roles-page',
-    url: '/settings/team',
-    output: 'public/guide/screenshots/team-and-roles-page.png',
-    preActions: async (page) => {
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(500)
-    },
-  },
+/** Pick an option in a SearchableSelect (combobox + search list). */
+async function pickSearchable(page: Page, trigger: string, option: string): Promise<void> {
+  await page.locator(trigger).click()
+  await page.getByRole('option', { name: option }).first().click()
+}
 
-  // ---- custom-fields ----
-  {
-    name: 'custom-fields-settings',
-    url: '/settings/custom-fields',
-    output: 'public/guide/screenshots/custom-fields-settings.png',
-    preActions: async (page) => {
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(400)
-      // Switch to the Vacancies tab — it has 4 seeded fields.
-      await page.getByRole('tab', { name: 'Vacancies' }).click()
-      await page.waitForTimeout(500)
-      // Expand the "Tech requirements" group. The toggle is a <button>
-      // wrapping the chevron + group name + badge.
-      await page
-        .getByRole('button', { name: /Tech requirements/ })
-        .first()
-        .click()
-      await page.waitForTimeout(500)
-    },
-  },
-  {
-    name: 'custom-fields-vacancy-display',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/custom-fields-vacancy-display.png',
-    preActions: async (page) => {
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const href = await page.evaluate(() => {
-        const links = Array.from(
-          document.querySelectorAll('table a[href^="/vacancies/"]')
-        ) as HTMLAnchorElement[]
-        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
-        return target?.getAttribute('href') ?? null
-      })
-      if (!href) throw new Error('Could not find Senior Software Engineer row')
-      const baseUrl =
-        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
-      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
-      await page.waitForTimeout(500)
-      // Scroll the Additional Information section into view.
-      await page.evaluate(() => {
-        const headings = Array.from(
-          document.querySelectorAll('h3, [class*="CardTitle"], div')
-        ) as HTMLElement[]
-        const target = headings.find((el) =>
-          (el.textContent || '').trim().startsWith('Additional Information')
-        )
-        target?.scrollIntoView({ block: 'center' })
-      })
-      await page.waitForTimeout(400)
-    },
-  },
+/** Pick a day in the DatePicker popover, paging months forward as needed. */
+async function pickDate(page: Page, trigger: Locator, isoDay: string): Promise<void> {
+  await trigger.click()
+  // Scope to the calendar that just opened (a closed one can linger while it animates out).
+  const calendar = page.locator('[data-radix-popper-content-wrapper]').last()
+  const day = calendar.locator(`td[data-day="${isoDay}"] button`)
+  for (let i = 0; i < 12 && !(await day.isVisible()); i++) {
+    await calendar.locator('.rdp-button_next').click()
+  }
+  await day.click()
+  await calendar.waitFor({ state: 'detached' }).catch(() => page.keyboard.press('Escape'))
+}
 
-  // ---- assessments-and-questions ----
-  {
-    name: 'assessments-vacancy-qe-tab',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/assessments-vacancy-qe-tab.png',
-    preActions: async (page) => {
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const href = await page.evaluate(() => {
-        const links = Array.from(
-          document.querySelectorAll('table a[href^="/vacancies/"]')
-        ) as HTMLAnchorElement[]
-        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
-        return target?.getAttribute('href') ?? null
-      })
-      if (!href) throw new Error('Could not find Senior Software Engineer row')
-      const baseUrl =
-        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
-      await page.goto(`${baseUrl}${href}?tab=qe`, { waitUntil: 'networkidle' })
-      await page.waitForTimeout(600)
-    },
-  },
-  {
-    name: 'assessments-application-form',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/assessments-application-form.png',
-    preActions: async (page) => {
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const href = await page.evaluate(() => {
-        const links = Array.from(
-          document.querySelectorAll('table a[href^="/vacancies/"]')
-        ) as HTMLAnchorElement[]
-        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
-        return target?.getAttribute('href') ?? null
-      })
-      if (!href) throw new Error('Could not find Senior Software Engineer row')
-      const baseUrl =
-        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
-      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
-      await page.waitForTimeout(500)
-      // Expand the application row for Lukas Becker by clicking its chevron.
-      await page.evaluate(() => {
-        // Each row has a ChevronRight inside a button with title "Assessment & Questionary".
-        // The candidate name lives in a sibling Link.
-        const rows = Array.from(document.querySelectorAll('div')) as HTMLElement[]
-        for (const row of rows) {
-          if (row.querySelector('button[title*="Assessment"]') && /Lukas Becker/.test(row.textContent || '')) {
-            const toggle = row.querySelector('button[title*="Assessment"]') as HTMLButtonElement | null
-            toggle?.click()
-            return
-          }
-        }
-      })
-      await page.waitForTimeout(700)
-      // Scroll the expanded form into view.
-      await page.evaluate(() => {
-        const textarea = document.querySelector('textarea[placeholder*="Enter answer"]') as HTMLElement | null
-        textarea?.scrollIntoView({ block: 'center' })
-      })
-      await page.waitForTimeout(300)
-    },
-  },
+const isoInDays = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10)
 
-  // ---- pipeline-kanban ----
-  {
-    name: 'pipeline-kanban-overview',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/pipeline-kanban-overview.png',
-    preActions: async (page) => {
-      // Find the Senior Software Engineer vacancy and navigate to its pipeline.
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const href = await page.evaluate(() => {
-        const links = Array.from(
-          document.querySelectorAll('table a[href^="/vacancies/"]')
-        ) as HTMLAnchorElement[]
-        const target = links.find((a) => (a.textContent || '').includes('Senior Software Engineer'))
-        return target?.getAttribute('href') ?? null
-      })
-      if (!href) throw new Error('Could not find Senior Software Engineer row')
-      const baseUrl =
-        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
-      await page.goto(`${baseUrl}${href}/pipeline`, { waitUntil: 'networkidle' })
-      await page.waitForTimeout(800)
-    },
-  },
-  // ---- manage-candidates ----
-  {
-    name: 'manage-candidates-list',
-    url: '/candidates',
-    output: 'public/guide/screenshots/manage-candidates-list.png',
-    preActions: async (page) => {
-      await page.waitForSelector('a[href="/candidates/new"]', { timeout: 15_000 })
-    },
-    annotations: [
-      {
-        targetSelector: 'a[href="/candidates/new"]',
-        label: 'Add Candidate',
-        position: 'bottom',
-        style: 'arrow',
-      },
-    ],
-  },
-  {
-    name: 'manage-candidates-entry-mode',
-    url: '/candidates/new',
-    output: 'public/guide/screenshots/manage-candidates-entry-mode.png',
-    preActions: async (page) => {
-      await page.waitForSelector('button:has-text("Upload CV first"), button >> text=Upload CV first', {
-        timeout: 15_000,
-      })
-      await page.waitForTimeout(300)
-      await page.evaluate(() => {
-        const btns = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[]
-        const cv = btns.find((b) => (b.textContent || '').includes('Upload CV first'))
-        const manual = btns.find((b) => (b.textContent || '').includes('Fill manually'))
-        if (cv) cv.setAttribute('data-shot', 'cv-path')
-        if (manual) manual.setAttribute('data-shot', 'manual-path')
-      })
-    },
-    annotations: [
-      {
-        targetSelector: '[data-shot="cv-path"]',
-        label: 'Auto-fill from CV',
-        position: 'bottom',
-        style: 'box',
-      },
-      {
-        targetSelector: '[data-shot="manual-path"]',
-        label: 'Enter by hand',
-        position: 'bottom',
-        style: 'box',
-      },
-    ],
-  },
-  {
-    name: 'manage-candidates-detail',
-    url: '/candidates',
-    output: 'public/guide/screenshots/manage-candidates-detail.png',
-    preActions: async (page) => {
-      // Read the Lukas Becker row's link href and navigate to it directly.
-      await page.waitForSelector('table a[href^="/candidates/"]:not([href="/candidates/new"])', {
-        timeout: 15_000,
-      })
-      const href = await page.evaluate(() => {
-        const links = Array.from(
-          document.querySelectorAll('table a[href^="/candidates/"]')
-        ) as HTMLAnchorElement[]
-        const target = links.find((a) => (a.textContent || '').includes('Lukas Becker'))
-        return target?.getAttribute('href') ?? null
-      })
-      if (!href) throw new Error('Could not find Lukas Becker row link')
-      const baseUrl =
-        process.env.SCREENSHOT_BASE_URL ?? 'https://staging.hrhandle.com'
-      await page.goto(`${baseUrl}${href}`, { waitUntil: 'networkidle' })
-      await page.waitForTimeout(600)
-    },
-  },
+/** The wizard footer's primary "Next: …" button. */
+const wizardNext = (ctx: ShotContext, nextStepKey: string) =>
+  ctx.page.getByRole('button', { name: ctx.t('wizard.next', { label: ctx.t(nextStepKey) }) })
 
-  // ---- public-apply-link ----
-  {
-    name: 'public-apply-link-activate',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/public-apply-link-activate.png',
-    preActions: async (page) => {
-      // Click the HR Coordinator vacancy (Draft, no apply token).
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const link = page.getByRole('link', { name: /HR Coordinator/ }).first()
-      await link.click()
-      await page.waitForLoadState('networkidle')
-      await page.getByRole('tab', { name: 'Apply Link' }).click()
-      await page.waitForTimeout(600)
-      // Tag the Activate button.
-      await page.evaluate(() => {
-        const btns = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[]
-        const activate = btns.find((b) => (b.textContent || '').includes('Activate Application Form'))
-        if (activate) activate.setAttribute('data-shot', 'activate-btn')
-      })
-    },
-    annotations: [
-      {
-        targetSelector: '[data-shot="activate-btn"]',
-        label: 'Activate',
-        position: 'right',
-        style: 'arrow',
-      },
-    ],
+/** Delete a demo vacancy created by a flow, with everything hanging off it. */
+async function deleteVacancyByTitle(ctx: ShotContext, title: string): Promise<void> {
+  const { data: profile } = await ctx.admin
+    .from('profiles')
+    .select('organization_id')
+    .eq('email', ctx.demo.users.find((u) => u.role === 'owner')!.email)
+    .single()
+  if (!profile?.organization_id) return
+  const { data: rows } = await ctx.admin
+    .from('vacancies')
+    .select('id')
+    .eq('organization_id', profile.organization_id)
+    .eq('title', title)
+  for (const { id } of rows ?? []) {
+    await ctx.admin.from('custom_field_values').delete().eq('entity_id', id)
+    await ctx.admin.from('activity_log').delete().eq('entity_id', id)
+    await ctx.admin.from('vacancies').delete().eq('id', id)
+  }
+}
+
+// ── Flows ────────────────────────────────────────────────────────────────
+
+const createVacancy: Flow = {
+  topic: 'post-a-vacancy',
+  async run(ctx) {
+    const { page, t, demo } = ctx
+    const w = demo.wizard
+    await deleteVacancyByTitle(ctx, w.title) // leftovers from an interrupted run
+
+    // 1 — The Vacancies list and its Create vacancy button.
+    await ctx.goto('/vacancies')
+    const create = page.getByRole('link', { name: t('wizard.createVacancy') }).first()
+    await create.waitFor()
+    await ctx.shot('vacancies-list', { marks: [{ target: create, n: 1 }] })
+
+    // 2 — Step 1, Basics.
+    await create.click()
+    await page.locator('#title').waitFor()
+    await page.fill('#title', w.title)
+    await page.fill('#department', w.department)
+    await pickSelect(page, '#sector', t('sector.it'))
+    await page.fill('#location', w.location)
+    await pickSelect(page, '#work_mode', t('enum.workMode.hybrid'))
+    await page.fill('#openings', '2')
+    await pickSearchable(page, '#hiring_manager', demo.users.find((u) => u.key === 'admin')!.fullName)
+    const rail = page.getByRole('complementary', { name: t('wizard.stepsAria') })
+    await ctx.shot('create-vacancy-basics', {
+      marks: [
+        { target: rail, n: 1 },
+        { target: page.locator('#title').locator('xpath=..'), n: 2, badge: 'left' },
+        { target: wizardNext(ctx, 'wizard.stepDates'), n: 3 },
+      ],
+    })
+
+    // 3 — Step 2, Dates & compensation (+ the org's custom fields).
+    await wizardNext(ctx, 'wizard.stepDates').click()
+    await page.locator('#salary_min').waitFor()
+    await pickDate(page, page.locator('button').filter({ hasText: t('common.dateFormat') }).first(), isoInDays(0))
+    await pickDate(page, page.locator('button').filter({ hasText: t('common.dateFormat') }).first(), isoInDays(30))
+    await page.fill('#salary_min', '3500')
+    await page.fill('#salary_max', '5000')
+    // The org's custom fields: a dropdown and a yes/no field.
+    const [priority, budget] = demo.vacancyFields.fields
+    await page.getByLabel(priority!.name).click()
+    await page.getByRole('option', { name: priority!.options![0]!, exact: true }).click()
+    await page.getByLabel(budget!.name).click()
+    await page.getByRole('option', { name: t('common.yes'), exact: true }).click()
+    const gridOf = (l: Locator) => l.locator('xpath=ancestor::div[contains(@class,"grid")][1]')
+    await ctx.shot('create-vacancy-dates', {
+      marks: [
+        { target: gridOf(page.locator('label[for="start_date"]')), n: 1, badge: 'left' },
+        { target: gridOf(page.locator('#salary_min')), n: 2, badge: 'left' },
+        // innermost <section> — the wizard's own panel is a <section> too
+        { target: page.locator('section').filter({ has: page.getByRole('heading', { name: demo.vacancyFields.group }) }).last(), n: 3, badge: 'left' },
+      ],
+    })
+
+    // 4 — Step 3, Description & AI: let the AI draft every section.
+    await wizardNext(ctx, 'wizard.stepDescription').click()
+    await page.locator('#description').waitFor()
+    await page.getByRole('button', { name: t('aiJd.headerTitle') }).click()
+    await page.fill('#ai-jd-context', w.aiContext)
+    const panel = page.locator('#ai-jd-context').locator('xpath=ancestor::div[contains(@class,"border-dashed")][1]')
+    for (let section = 0; section < 3; section++) {
+      // Retry a failed AI call (network hiccups happen); give up after 3 tries.
+      for (let attempt = 1; ; attempt++) {
+        await panel.getByRole('button', { name: t('aiJd.generate'), exact: true }).first().click()
+        const done = panel.getByRole('button', { name: t('aiJd.regenerate') }).nth(section)
+        const failed = panel.getByText(t('aiJd.failed'))
+        await done.or(failed).first().waitFor({ timeout: 90_000 })
+        if (await done.isVisible()) break
+        if (attempt === 3) throw new Error('the AI writer failed 3 times')
+        await page.waitForTimeout(3_000)
+      }
+    }
+    const applyAll = panel.getByRole('button', { name: t('aiJd.applyAll') })
+    await ctx.shot('create-vacancy-ai', {
+      clip: panel,
+      marks: [
+        { target: page.locator('#ai-jd-context'), n: 1, badge: 'left' },
+        { target: panel.getByRole('button', { name: t('aiJd.regenerate') }).first(), n: 2 },
+        { target: applyAll, n: 3 },
+      ],
+    })
+    await applyAll.click()
+    await page.getByRole('button', { name: t('aiJd.headerTitle') }).click() // collapse the panel again
+    const publicSwitch = page.getByRole('switch', { name: t('vacancy.form.showOnPublic') })
+    await publicSwitch.click()
+    await ctx.shot('create-vacancy-description', {
+      fullPage: true,
+      marks: [
+        { target: page.getByRole('button', { name: t('aiJd.headerTitle') }), n: 1, badge: 'left' },
+        { target: page.getByRole('button', { name: t('aiBias.headerTitle') }), n: 2, badge: 'left' },
+        { target: publicSwitch.locator('xpath=..'), n: 3, badge: 'left' },
+      ],
+    })
+
+    // 5 — Step 4, Scorecard & questions.
+    await wizardNext(ctx, 'wizard.stepScorecard').click()
+    const attrInput = page.getByRole('textbox', { name: t('wizard.newAttributeAria') })
+    await attrInput.waitFor()
+    for (const a of w.scorecard) {
+      await attrInput.fill(a.label)
+      await attrInput.press('Enter')
+      if (a.mustHave) {
+        await page
+          .getByRole('listitem')
+          .filter({ hasText: a.label })
+          .getByRole('button', { name: t('wizard.markMustHave') })
+          .click()
+      }
+    }
+    const questionInput = page.getByRole('textbox', { name: t('wizard.newQuestionAria') })
+    const screening = page.getByRole('region', { name: t('wizard.screeningQuestions') })
+    await questionInput.fill(w.screening.yesNo)
+    await screening.getByRole('button', { name: t('wizard.add'), exact: true }).click()
+    await questionInput.fill(w.screening.number)
+    await screening.getByRole('radio', { name: t('wizard.typeNumber') }).click()
+    await screening.getByRole('button', { name: t('wizard.add'), exact: true }).click()
+    const yesNoRow = screening.getByRole('listitem').filter({ hasText: w.screening.yesNo })
+    await yesNoRow.getByRole('button', { name: t('wizard.knockout'), exact: true }).click()
+    const numberRow = screening.getByRole('listitem').filter({ hasText: w.screening.number })
+    await numberRow.getByRole('button', { name: t('wizard.knockout'), exact: true }).click()
+    await numberRow.getByRole('combobox', { name: t('wizard.comparison') }).selectOption('gte')
+    await numberRow.getByRole('spinbutton', { name: t('wizard.knockoutValueAria') }).fill('2')
+    await ctx.shot('create-vacancy-scorecard', {
+      fullPage: true,
+      marks: [
+        { target: page.getByRole('region', { name: t('wizard.interviewScorecard') }), n: 1 },
+        { target: screening, n: 2 },
+      ],
+    })
+
+    // 6 — Step 5, Review & publish.
+    await wizardNext(ctx, 'wizard.stepReview').click()
+    const publish = page.getByRole('button', { name: t('wizard.publishNow'), exact: true }).last()
+    await publish.waitFor()
+    await ctx.shot('create-vacancy-review', {
+      fullPage: true,
+      marks: [
+        { target: page.getByText(t('wizard.howFinish')).locator('xpath=..'), n: 1 },
+        { target: publish, n: 2 },
+      ],
+    })
+
+    // 7 — Publish and land on the new vacancy.
+    await publish.click()
+    await page.waitForURL(/\/vacancies\/[0-9a-f-]{36}/, { timeout: 30_000 })
+    await page.waitForLoadState('networkidle')
+    await ctx.shot('create-vacancy-done', {
+      marks: [
+        { target: page.getByRole('button', { name: t('copyLink.button') }), n: 1 },
+        // first = the header button (Russian uses the same label further down)
+        { target: page.getByRole('link', { name: t('vacHeader.viewPipeline') }).first(), n: 2 },
+        { target: page.getByRole('tablist'), n: 3, badge: 'left' },
+      ],
+    })
   },
-  {
-    name: 'public-apply-link-active',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/public-apply-link-active.png',
-    preActions: async (page) => {
-      // Click the Senior Software Engineer (Open, has active token).
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const link = page.getByRole('link', { name: /Senior Software Engineer/ }).first()
-      await link.click()
-      await page.waitForLoadState('networkidle')
-      await page.getByRole('tab', { name: 'Apply Link' }).click()
-      await page.waitForTimeout(600)
-      // Tag the copy and open-in-new-tab controls inside the URL row.
-      await page.evaluate(() => {
-        const urlSpan = Array.from(document.querySelectorAll('span.font-mono')).find((el) =>
-          (el.textContent || '').includes('/apply/')
-        ) as HTMLElement | undefined
-        const container = urlSpan?.closest('div') as HTMLElement | undefined
-        if (!container) return
-        const copyBtn = container.querySelector('button')
-        if (copyBtn) copyBtn.setAttribute('data-shot', 'copy-btn')
-        const openLink = container.querySelector('a[target="_blank"]')
-        if (openLink) openLink.setAttribute('data-shot', 'open-btn')
-      })
-    },
-    annotations: [
-      {
-        targetSelector: '[data-shot="copy-btn"]',
-        label: 'Copy',
-        position: 'top',
-        style: 'arrow',
-      },
-      {
-        targetSelector: '[data-shot="open-btn"]',
-        label: 'Open',
-        position: 'bottom',
-        style: 'arrow',
-      },
-    ],
+  async cleanup(ctx) {
+    await deleteVacancyByTitle(ctx, ctx.demo.wizard.title)
   },
-  {
-    name: 'public-apply-link-public-form',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/public-apply-link-public-form.png',
-    preActions: async (page) => {
-      // Navigate via the dashboard so we always pick up the current token.
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const link = page.getByRole('link', { name: /Senior Software Engineer/ }).first()
-      await link.click()
-      await page.waitForLoadState('networkidle')
-      await page.getByRole('tab', { name: 'Apply Link' }).click()
-      await page.waitForTimeout(400)
-      const applyUrl = await page.evaluate(() => {
-        const urlSpan = Array.from(document.querySelectorAll('span.font-mono')).find((el) =>
-          (el.textContent || '').includes('/apply/')
-        ) as HTMLElement | undefined
-        return urlSpan?.textContent?.trim() ?? null
-      })
-      if (!applyUrl) throw new Error('Could not read public apply URL from dashboard')
-      await page.goto(applyUrl, { waitUntil: 'networkidle' })
-      // Tag the CV upload button.
-      await page.evaluate(() => {
-        const btns = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[]
-        const upload = btns.find((b) =>
-          (b.textContent || '').includes('Upload PDF or Word document')
-        )
-        if (upload) upload.setAttribute('data-shot', 'cv-upload')
-      })
-    },
-    annotations: [
-      {
-        targetSelector: '[data-shot="cv-upload"]',
-        label: 'Upload CV first',
-        position: 'right',
-        style: 'arrow',
-      },
-    ],
-  },
-  {
-    name: 'post-a-vacancy-apply-link',
-    url: '/vacancies',
-    output: 'public/guide/screenshots/post-a-vacancy-apply-link.png',
-    preActions: async (page) => {
-      // Open the Senior Software Engineer vacancy (Open status, has token).
-      await page.waitForSelector('table a[href^="/vacancies/"]:not([href="/vacancies/new"])', {
-        timeout: 15_000,
-      })
-      const link = page.getByRole('link', { name: /Senior Software Engineer/ }).first()
-      await link.click()
-      await page.waitForLoadState('networkidle')
-      // Switch to Apply Link tab.
-      await page.getByRole('tab', { name: 'Apply Link' }).click()
-      // The Apply Link tab may need to render the URL input.
-      await page.waitForTimeout(800)
-      // Tag the public apply URL display. UI renders it inside a span with
-      // font-mono. We tag the parent container so the box wraps the whole
-      // URL row (URL text + copy/open icons).
-      await page.evaluate(() => {
-        const spans = Array.from(
-          document.querySelectorAll('span.font-mono')
-        ) as HTMLElement[]
-        const urlSpan = spans.find((el) => (el.textContent || '').includes('/apply/'))
-        const container = (urlSpan?.closest('div') as HTMLElement) ?? urlSpan ?? null
-        if (container) container.setAttribute('data-shot', 'apply-url')
-      })
-    },
-    annotations: [
-      {
-        targetSelector: '[data-shot="apply-url"]',
-        label: 'Public apply URL',
-        position: 'top',
-        style: 'box',
-      },
-    ],
-  },
-]
+}
+
+export const FLOWS: Flow[] = [createVacancy]

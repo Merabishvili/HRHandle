@@ -157,7 +157,7 @@
     "toastSavedDraft": "Vacancy saved as draft.",
     "noSector": "No sector",
     "datesSubtitle": "Vacancy timeline and salary range.",
-    "salaryHint": "Optional. Shown to candidates and used for salary-fit filtering.",
+    "salaryHint": "Optional. Only your team sees the salary range — it isn't shown to candidates.",
     "detailsSubtitle": "Shown on the public jobs page and included when sharing on LinkedIn.",
     "interviewScorecard": "Interview scorecard",
     "suggestFromJd": "Suggest from JD",
@@ -2586,7 +2586,154 @@
   "guide": {
     "shellTitle": "HRHandle Guides",
     "backToHome": "Back to home",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "indexTitle": "Guides",
+    "indexIntro": "Step-by-step walkthroughs of every HRHandle feature. Use them to set up your organization, onboard your team or try a feature for the first time.",
+    "metaDescription": "Step-by-step guides to HRHandle: vacancies, candidates, the pipeline, interviews, offers, AI features and more.",
+    "eyebrow": "Guide",
+    "notTranslated": "This guide isn't available in your language yet, so it's shown in English.",
+    "faqTitle": "Frequently asked questions",
+    "category": {
+      "gettingStarted": "Getting started",
+      "vacancies": "Vacancies",
+      "candidates": "Candidates",
+      "hiring": "Hiring",
+      "communication": "Candidate communication",
+      "aiAndReports": "AI and reports",
+      "administration": "Administration"
+    },
+    "topic": {
+      "signUp": {
+        "title": "Sign up and create your organization",
+        "summary": "Create your account and organization and start the 7-day free trial."
+      },
+      "navigation": {
+        "title": "Find your way around",
+        "summary": "The sidebar, the Pipeline home screen, search, notifications and the interface language."
+      },
+      "profileSecurity": {
+        "title": "Your profile and security",
+        "summary": "Your name, photo and language, password, two-factor authentication and active sessions."
+      },
+      "organization": {
+        "title": "Organization settings",
+        "summary": "Company name, logo, jobs page address, content languages and security rules for your team."
+      },
+      "team": {
+        "title": "Team and roles",
+        "summary": "Invite teammates and decide what the owner, admins and members can do."
+      },
+      "createVacancy": {
+        "title": "Create a vacancy",
+        "summary": "Create a job opening in five steps, with AI help for the description and the scorecard."
+      },
+      "vacancyPage": {
+        "title": "The vacancy page",
+        "summary": "Applications, job description, scorecard, application form and settings of a vacancy."
+      },
+      "shareVacancy": {
+        "title": "Share a vacancy",
+        "summary": "Share a vacancy through its apply link, your public jobs page and LinkedIn."
+      },
+      "addCandidates": {
+        "title": "Add a candidate",
+        "summary": "Add a candidate by uploading a CV (AI fills in the details) or by hand."
+      },
+      "importCandidates": {
+        "title": "Import candidates from Excel or CSV",
+        "summary": "Bring in many candidates at once from a spreadsheet."
+      },
+      "candidateProfile": {
+        "title": "The candidate profile",
+        "summary": "Contact details, experience, documents, notes, activity and applications in one place."
+      },
+      "search": {
+        "title": "Search, filters and saved views",
+        "summary": "Find anything quickly and save the list filters you use most."
+      },
+      "pipeline": {
+        "title": "The pipeline",
+        "summary": "Move candidates through the hiring stages on a board, and customize the stages."
+      },
+      "assessments": {
+        "title": "Assessments and scorecards",
+        "summary": "Rate candidates against the vacancy's criteria, on your own or with colleagues."
+      },
+      "reject": {
+        "title": "Reject candidates",
+        "summary": "Reject one or several candidates with a reason and an optional email."
+      },
+      "interviews": {
+        "title": "Schedule interviews",
+        "summary": "Book interviews with Google Meet, Zoom or Teams links, or let candidates book a time through Calendly."
+      },
+      "offers": {
+        "title": "Offers",
+        "summary": "Create and send job offers, and see when a candidate accepts or declines."
+      },
+      "candidateExperience": {
+        "title": "What candidates see",
+        "summary": "The application form, emails, status page and offer page from the candidate's side."
+      },
+      "emailTemplates": {
+        "title": "Email templates",
+        "summary": "Edit the emails candidates receive and turn on automatic status updates."
+      },
+      "notifications": {
+        "title": "Notifications, Slack and Teams",
+        "summary": "In-app notifications, @mentions, and alerts in your Slack or Microsoft Teams channels."
+      },
+      "ai": {
+        "title": "AI features",
+        "summary": "How AI helps with CVs, job descriptions, scorecards and fit analysis, and how you stay in control."
+      },
+      "reports": {
+        "title": "Reports",
+        "summary": "Pipeline conversion, candidate sources and time to hire."
+      },
+      "integrations": {
+        "title": "Integrations",
+        "summary": "Connect Google, Microsoft, Zoom, Calendly, LinkedIn, Slack and Teams."
+      },
+      "customFields": {
+        "title": "Custom fields",
+        "summary": "Add your own fields to vacancies and candidates."
+      },
+      "auditTrash": {
+        "title": "Audit log and trash",
+        "summary": "See who changed what, and restore deleted candidates and vacancies."
+      },
+      "billing": {
+        "title": "Plans and billing",
+        "summary": "Plans and limits, upgrading, auto-renewal, cancelling and refunds."
+      }
+    },
+    "faq": {
+      "trial": {
+        "q": "Is there a free trial?",
+        "a": "Yes. Every new organization gets a 7-day free trial with full access. No payment card is needed to start."
+      },
+      "languages": {
+        "q": "Which languages does HRHandle support?",
+        "a": "The interface is available in English, Georgian and Russian, and each person chooses their own language in Settings → Profile. Candidates see your application forms, emails and job pages in your organization's content language."
+      },
+      "cv": {
+        "q": "Which CV formats can I upload?",
+        "a": "PDF and Word files up to 10 MB. HRHandle reads the CV with AI and fills in the candidate's details for you to check."
+      },
+      "export": {
+        "q": "Can I export my data?",
+        "a": "Yes. Candidates and each vacancy's applications can be exported as CSV files from their list pages. Owners and admins can also export the audit log."
+      },
+      "calendar": {
+        "q": "Which calendar and video tools work with HRHandle?",
+        "a": "Google Calendar with Google Meet, Microsoft 365 with Teams, and Zoom. With Calendly, candidates can book an interview time themselves. Connect them in Settings → Integrations."
+      },
+      "support": {
+        "q": "How do I contact support?",
+        "a": "In the app, open Support in the sidebar and send us a message. You can also use the form at hrhandle.com/support or write to support@hrhandle.com."
+      }
+    }
   },
   "layout": {
     "skipToMain": "Skip to main content"

@@ -112,13 +112,13 @@ export function KnockoutConditionEditor({
               onClick={() => onPatch({ passYesNo: v })}
               aria-pressed={q.passYesNo === v}
               className={cn(
-                'rounded-md border px-2.5 py-1 text-[11.5px] font-semibold capitalize transition-colors',
+                'rounded-md border px-2.5 py-1 text-[11.5px] font-semibold transition-colors',
                 q.passYesNo === v
                   ? 'border-[oklch(0.55_0.18_250)] bg-[oklch(0.98_0.015_250)] text-[oklch(0.2_0.16_250)]'
                   : 'border-[oklch(0.9_0.01_250)] text-foreground/75 hover:bg-muted/40',
               )}
             >
-              {v}
+              {t(v === 'yes' ? 'common.yes' : 'common.no')}
             </button>
           ))}
         </div>

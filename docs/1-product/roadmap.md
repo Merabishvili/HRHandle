@@ -84,6 +84,10 @@ Moved to "Recently shipped".
 
 ---
 
+## In progress
+
+- **Guide rewrite in EN/KA/RU (2026-10).** 26 topics (`lib/guides/registry.ts`), each written in three languages with screenshots captured in all three (native demo data per language). Iteration 1 — the trilingual setup + "Create a vacancy" — done and awaiting review; the other 25 topics follow in one iteration. Then a native-speaker review of the Georgian and Russian text.
+
 ## Tracked open items
 
 Live items from [issues-found.md](../issues-found.md). All are postponed for non-engineering reasons.
