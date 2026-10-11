@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { format } from 'date-fns'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ImportHeader } from './import-header'
@@ -34,8 +35,9 @@ export function DoneCard({
   onRestart: () => void
 }) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   const failedVariant = state.status === 'failed'
-  const when = state.finished_at ? format(new Date(state.finished_at), 'dd/MM/yyyy HH:mm') : ''
+  const when = state.finished_at ? format(new Date(state.finished_at), 'dd/MM/yyyy HH:mm', { locale: dateLocale }) : ''
 
   return (
     <div className="space-y-6">

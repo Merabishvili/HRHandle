@@ -13,6 +13,7 @@ import { shortSourceLabel } from '@/lib/pipeline/source-label'
 import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
 import type { ApplicationStatus } from '@/lib/types/application'
+import { submittedAssessmentScores } from '@/lib/scorecards/fit-scores'
 
 interface PipelineApplicationRow {
   id: string
@@ -136,13 +137,10 @@ export default async function VacancyPipelinePage({
   // 0–10 pill scale (matches the cross-vacancy board). Null when unrated.
   const fitScoreMap = new Map<string, number>()
   if (applicationsData.length > 0) {
-    const { data: evalRows } = await supabase
-      .from('candidate_evaluations')
-      .select('application_id, score')
-      .eq('submitted', true)
-      .in('application_id', applicationsData.map((a) => a.id))
+    // Service role, org-scoped — see lib/scorecards/fit-scores.
+    const evalRows = await submittedAssessmentScores(organizationId, applicationsData.map((a) => a.id))
     const agg = new Map<string, { total: number; count: number }>()
-    for (const row of (evalRows ?? []) as { application_id: string; score: number | null }[]) {
+    for (const row of evalRows) {
       if (typeof row.score === 'number') {
         const cur = agg.get(row.application_id) ?? { total: 0, count: 0 }
         cur.total += row.score

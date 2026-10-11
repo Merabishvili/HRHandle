@@ -19,8 +19,8 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   WEBHOOK_EVENTS,
-  WEBHOOK_EVENT_LABELS,
   DEFAULT_ENABLED_EVENTS,
+  isWebhookEvent,
   type WebhookEvent,
 } from '@/lib/notifications/events'
 import {
@@ -177,7 +177,7 @@ export function WebhooksManager({ initial }: Props) {
                       <span className="text-sm text-muted-foreground">{t('webhooks.noEvents')}</span>
                     )}
                     {wh.enabled_events.map((e) => (
-                      <Badge key={e} variant="secondary">{WEBHOOK_EVENT_LABELS[e as WebhookEvent] ?? e}</Badge>
+                      <Badge key={e} variant="secondary">{isWebhookEvent(e) ? t(`webhooks.event.${e}`) : e}</Badge>
                     ))}
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setEditing(wh.id)}>
@@ -267,7 +267,7 @@ function AddWebhookForm({
             placeholder={
               channel === 'slack'
                 ? 'https://hooks.slack.com/services/...'
-                : 'https://outlook.office.com/webhook/... or https://...webhook.office.com/...'
+                : 'https://...environment.api.powerplatform.com/...'
             }
           />
           <p className="text-xs text-muted-foreground">
@@ -328,7 +328,7 @@ function EventEditor({
               onChange={() => toggle(event)}
               className="h-4 w-4"
             />
-            {WEBHOOK_EVENT_LABELS[event]}
+            {t(`webhooks.event.${event}`)}
           </label>
         ))}
       </div>

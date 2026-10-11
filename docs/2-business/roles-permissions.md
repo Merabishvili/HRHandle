@@ -1,12 +1,13 @@
 # HRHandle — Roles & Permissions
 
-_Last updated: 2026-07-20_
+_Last updated: 2026-10-10_
 
 ## Changelog
 
+- 🆕 **(2026-10-10) Guide-rewrite fixes:** offers are created and sent by owners/admins only — members now see the offer read-only (with a note) instead of a form that failed on save; **assessment sharing** (one public link per submitted assessment) is owner/admin; **assessment visibility** — owners/admins see every submitted assessment on the profile, others see a colleague's once they've submitted their own for that application (`lib/scorecards/visibility.ts`; enforced by RLS since `20261012_assessment_visibility_rls.sql`, which also limits writes to your own card or owners/admins); **Billing** appears in the Settings nav for admins (it already worked via the account menu); **LinkedIn company page** save/disconnect routes now check owner/admin (they wrote with the service role and no role check), and members see the connection read-only; `organization_integrations` RLS tightened by `supabase/migrations/20261010_organization_integrations_fixes.sql` — writes owner/admin only, and the secret columns (`access_token`, `refresh_token`, `webhook_signing_key`) aren't selectable by `authenticated` at all (read them with the service role, e.g. `lib/calendly/tokens.ts`).
 - 🆕 **(2026-07-20 audit) Additional owner/admin-gated surfaces:** org-wide 2FA policy (`require_mfa`) — owner only; CSV candidate import (`/candidates/import`) — owner+admin; integrations (Slack/Teams webhooks, Calendly) — owner+admin; per-vacancy pipeline-stage management — owner+admin; self-serve org delete — owner. The dominant gate helper is `isOrgAdmin(ctx)` (~63 call sites); `role === 'owner'` guards ownership-only actions. Member-only redirects now target `/pipeline` (was `/dashboard`).
 - 🔄 (revised 2026-05-08) Live-DB verification confirms RLS is enabled on every public table — earlier "RLS gaps" claim retracted. See "Supabase RLS" section below.
-- 🆕 LinkedIn-integration management (save / disconnect) gated to owner+admin via `organization_integrations` RLS.
+- 🔄 LinkedIn-integration management (save / disconnect) gated to owner+admin — corrected 2026-10-10: the routes used the service role without a role check and the RLS allowed every member; both fixed (see above).
 - 🆕 Custom field management gated to owner+admin (`lib/actions/custom-fields.ts:104`).
 - 🆕 Rejection-reason management gated to owner+admin (`lib/actions/rejection-reasons.ts:35-36, 75-76, 99-100`).
 
@@ -39,6 +40,11 @@ _Last updated: 2026-07-20_
 | View team settings page | Yes | Yes | No (redirected to profile) |
 | View subscription page | Yes | Yes | No (redirected to dashboard) |
 | Access billing page | Yes | Yes | No |
+| Create / send / withdraw offers | Yes | Yes | No (sees the offer read-only) |
+| Share an assessment (public link) | Yes | Yes | No |
+| See colleagues' submitted assessments | Always | Always | After submitting their own for that application |
+| Connect LinkedIn page / Slack & Teams / Calendly | Yes | Yes | No (LinkedIn shown read-only) |
+| Generate a Calendly booking link | Yes | Yes | Yes |
 
 ## Where Checks Occur
 

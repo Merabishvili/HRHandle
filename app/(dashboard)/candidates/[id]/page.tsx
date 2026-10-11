@@ -570,12 +570,15 @@ export default async function CandidateDetailPage({
     { data: documentsRaw },
     customFieldGroups,
     customFieldValues,
+    { data: calendlyRow },
   ] = await Promise.all([
     supabase.from('candidate_experience').select('*').eq('candidate_id', id).eq('organization_id', organizationId).order('start_date', { ascending: false, nullsFirst: false }),
     supabase.from('candidate_education').select('*').eq('candidate_id', id).eq('organization_id', organizationId).order('start_year', { ascending: false, nullsFirst: false }),
     supabase.from('candidate_documents').select('id, file_name, file_size, mime_type, document_type, created_at').eq('candidate_id', id).eq('organization_id', organizationId).is('deleted_at', null).order('created_at', { ascending: false }),
     getCustomFieldSchema('candidate'),
     getCustomFieldValues(id),
+    // "Calendly link" needs a connected account with an event type picked.
+    supabase.from('organization_integrations').select('selected_event_type_uri').eq('organization_id', organizationId).eq('platform', 'calendly').eq('is_active', true).maybeSingle(),
   ])
 
   const experienceEntries = (experienceRaw || []) as CandidateExperience[]
@@ -698,6 +701,8 @@ export default async function CandidateDetailPage({
       }}
       organizationId={organizationId}
       currentUserId={user.id}
+      viewerIsAdmin={profile.role === 'owner' || profile.role === 'admin'}
+      calendlyEnabled={!!calendlyRow?.selected_event_type_uri}
       currentUserName={profile.full_name ?? null}
       availableVacancies={availableVacancies}
       activeApplications={activeApplications}

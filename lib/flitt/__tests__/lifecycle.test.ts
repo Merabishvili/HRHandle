@@ -6,6 +6,8 @@ import {
   isStopConfirmed,
   paymentIdOf,
   refundedSubscriptionUpdate,
+  refundHistoryCheck,
+  refundWindowStart,
   type StoredOrder,
 } from '../lifecycle'
 import type { FlittCallback } from '../types'
@@ -217,5 +219,20 @@ describe('refundedSubscriptionUpdate', () => {
         next_billing_at: null,
       })
     }
+  })
+})
+
+describe('refund history (one refund per organization per window)', () => {
+  it('computes the window start in calendar months', () => {
+    expect(refundWindowStart(NOW, 3).toISOString()).toBe('2026-07-08T12:00:00.000Z')
+  })
+  it('flags a second refund for another order inside the window', () => {
+    expect(refundHistoryCheck([{ orderId: 'hrh_old' }], ROOT)).toEqual({ alreadyRecorded: false, repeat: true })
+  })
+  it('treats a resend of the same refund as already recorded, not a repeat', () => {
+    expect(refundHistoryCheck([{ orderId: ROOT }], ROOT)).toEqual({ alreadyRecorded: true, repeat: false })
+  })
+  it('passes a first refund', () => {
+    expect(refundHistoryCheck([], ROOT)).toEqual({ alreadyRecorded: false, repeat: false })
   })
 })

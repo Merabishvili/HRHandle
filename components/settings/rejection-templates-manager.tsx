@@ -22,21 +22,11 @@ import {
 import type { RejectionReason } from '@/lib/actions/rejection-reasons'
 import { rejectionReasonLabel } from '@/lib/rejection-i18n'
 import { DEFAULT_REJECTION_SUBJECT, DEFAULT_REJECTION_BODY } from '@/lib/email-template-utils'
+import { fillPreview, previewSamples } from '@/lib/email-preview'
 import { Plus, Trash2, Loader2, Pencil, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
 const VARIABLES = ['{{candidate_name}}', '{{role}}', '{{company}}', '{{sender_name}}', '{{sender_email}}']
 const NO_REASON = '__none__'
-
-/** Render a template with sample data so admins see the real subject/body
- * before saving — same sample values as the other Email-template tabs. */
-function renderRejectionPreview(text: string): string {
-  return text
-    .replaceAll('{{candidate_name}}', 'Jane Smith')
-    .replaceAll('{{role}}', 'Senior Developer')
-    .replaceAll('{{company}}', 'Acme Corp')
-    .replaceAll('{{sender_name}}', 'Taylor Brooks')
-    .replaceAll('{{sender_email}}', 'taylor@acme.com')
-}
 
 /** Localize known machine error codes from the server actions; other errors
  * (validation strings) are already human-readable and shown as-is. */
@@ -47,15 +37,18 @@ function displayTemplateError(tr: (key: string) => string, error: string): strin
 /** Live subject + body preview panel, matching the other Email-template tabs. */
 function RejectionPreview({ subject, body }: { subject: string; body: string }) {
   const tr = useTranslations()
+  // Sample data, so admins see the real subject/body before saving — the same
+  // sample values as the other Email-template tabs.
+  const samples = previewSamples(tr)
   return (
     <div className="space-y-1.5">
       <Label className="text-xs">{tr('emailTpl.preview')}</Label>
       <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
         <p className="text-foreground">
-          <span className="font-medium">{tr('emailTpl.subjectPrefix')}</span> {renderRejectionPreview(subject) || '—'}
+          <span className="font-medium">{tr('emailTpl.subjectPrefix')}</span> {fillPreview(subject, samples) || '—'}
         </p>
         <p className="mt-2 whitespace-pre-wrap text-muted-foreground">
-          {renderRejectionPreview(body) || '—'}
+          {fillPreview(body, samples) || '—'}
         </p>
       </div>
     </div>

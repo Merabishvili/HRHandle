@@ -52,8 +52,7 @@ _Last updated: 2026-07-20_
 |---|---|---|---|---|
 | `SENTRY_AUTH_TOKEN` | Sentry CLI auth token for source-map upload at build time | Vercel build env only | `next.config.mjs` (via Sentry CLI) | `sntrys_xxxx` |
 | `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` | Overrides `emailRedirectTo` in sign-up to the local dev server. **MUST NOT be added to Vercel.** | Local `.env.local` only | `components/auth/sign-up-form.tsx` | `http://localhost:3000/auth/callback` |
-| `STAGING_DEMO_EMAIL` / `STAGING_DEMO_PASSWORD` | Seeded demo user the screenshot script logs in as | Local scripts only | `scripts/capture-screenshots.ts` | `demo.owner@hrhandle-demo.com` |
-| `SCREENSHOT_BASE_URL` | Override for the URL the screenshot script targets (defaults to staging) | Local scripts only | `scripts/capture-screenshots.ts` | `http://localhost:3000` |
+| `SCREENSHOT_BASE_URL` | URL the guide screenshot script captures from (defaults to the local `npm run guide:serve` on port 3123). The demo logins come from `scripts/guide-demo-data.ts` — no env vars needed | Local scripts only | `scripts/capture-screenshots.ts` | `http://localhost:3123` |
 | `VERCEL_PROTECTION_BYPASS` | Vercel Deployment Protection bypass token so Playwright can reach protected deployments | Local scripts only | `scripts/capture-screenshots.ts` | `<32-char token>` |
 
 ## Validation

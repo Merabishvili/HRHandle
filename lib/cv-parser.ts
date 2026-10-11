@@ -19,11 +19,11 @@ Rules:
 - Dates: use "YYYY-MM" format for month+year (e.g. "2021-03"), or "YYYY-01" if only year is given.
 - is_current: true only when the person explicitly states they still work there (e.g. "present", "current", "now", "დღემდე").
 - is_ongoing: true only when education is explicitly stated as ongoing/current.
-- Keep all text in the original language — do not translate.
+- Keep all text in the CV's own language, exactly as written — do not translate. This includes location, languages, job titles, companies and degrees.
 - current_position and current_company: the candidate's present or most recent job. Take the title and company from the most recent experience entry — the one marked present/current, or (if none) the one with the latest dates, or the one listed first. Only use null when there is no work experience at all.
-- location: city and/or country where the candidate is based (e.g. "Tbilisi, Georgia"). Use null if not stated.
+- location: city and/or country where the candidate is based, in the CV's language (e.g. "Tbilisi, Georgia" in an English CV, "თბილისი, საქართველო" in a Georgian one, "Тбилиси, Грузия" in a Russian one). Use null if not stated.
 - timezone: UTC offset or timezone name if mentioned (e.g. "GMT+4", "UTC+3", "Europe/London"). Use null if not stated.
-- languages: array of languages the candidate speaks (e.g. ["English", "Georgian"]). Use [] if none listed.
+- languages: array of languages the candidate speaks, named in the CV's language (e.g. ["English", "Georgian"] in an English CV, ["ინგლისური", "ქართული"] in a Georgian one, ["Английский", "Грузинский"] in a Russian one). Use [] if none listed.
 - salary_expectation: stated salary expectation as written (e.g. "5000 GEL/month"). Use null if not stated.
 - notice_period: stated notice period as written (e.g. "2 weeks", "1 month"). Use null if not stated.
 

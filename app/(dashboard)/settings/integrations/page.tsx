@@ -9,6 +9,7 @@ import { MicrosoftConnect } from '@/components/settings/microsoft-connect'
 import { LinkedInConnect } from '@/components/settings/linkedin-connect'
 import { DefaultMeetingProviderSelect } from '@/components/settings/default-meeting-provider-select'
 import { getLinkedInIntegration } from '@/lib/actions/integrations'
+import { isOrgAdmin, type OrgRole } from '@/lib/permissions'
 import type { DefaultMeetingProvider } from '@/lib/actions/settings'
 import Link from 'next/link'
 import { Bell, Calendar as CalendarIcon } from 'lucide-react'
@@ -21,13 +22,16 @@ export default async function IntegrationsSettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('google_refresh_token, zoom_refresh_token, microsoft_refresh_token, default_meeting_provider')
+    .select('role, google_refresh_token, zoom_refresh_token, microsoft_refresh_token, default_meeting_provider')
     .eq('id', user.id)
     .single()
 
   if (!profile) redirect('/pipeline')
 
   const linkedInIntegration = await getLinkedInIntegration()
+  // Org-wide connections (LinkedIn page, Slack/Teams, Calendly) are managed by
+  // owners and admins; the Slack/Teams and Calendly pages send members back here.
+  const isAdmin = isOrgAdmin(profile.role as OrgRole)
 
   const hasGoogle = !!profile.google_refresh_token
   const hasZoom = !!profile.zoom_refresh_token
@@ -69,46 +73,50 @@ export default async function IntegrationsSettingsPage() {
             )}
             <div className="border-t border-border pt-6">
               <Suspense fallback={null}>
-                <LinkedInConnect integration={linkedInIntegration} />
+                <LinkedInConnect integration={linkedInIntegration} canManage={isAdmin} />
               </Suspense>
             </div>
-            <div className="border-t border-border pt-6">
-              <Link
-                href="/settings/integrations/webhooks"
-                className="flex items-center justify-between gap-4 rounded-md border bg-card p-4 transition-colors hover:bg-accent/40"
-              >
-                <div className="flex items-start gap-3">
-                  <Bell className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{t('intPage.slackTeamsTitle')}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {t.rich('intPage.slackTeamsDesc', {
-                        b: (c) => <span className="font-medium">{c}</span>,
-                        em: (c) => <em>{c}</em>,
-                      })}
-                    </p>
-                  </div>
+            {isAdmin && (
+              <>
+                <div className="border-t border-border pt-6">
+                  <Link
+                    href="/settings/integrations/webhooks"
+                    className="flex items-center justify-between gap-4 rounded-md border bg-card p-4 transition-colors hover:bg-accent/40"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Bell className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{t('intPage.slackTeamsTitle')}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t.rich('intPage.slackTeamsDesc', {
+                            b: (c) => <span className="font-medium">{c}</span>,
+                            em: (c) => <em>{c}</em>,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-medium text-primary">{t('intPage.configure')}</span>
+                  </Link>
                 </div>
-                <span className="text-sm font-medium text-primary">{t('intPage.configure')}</span>
-              </Link>
-            </div>
-            <div className="border-t border-border pt-6">
-              <Link
-                href="/settings/integrations/calendly"
-                className="flex items-center justify-between gap-4 rounded-md border bg-card p-4 transition-colors hover:bg-accent/40"
-              >
-                <div className="flex items-start gap-3">
-                  <CalendarIcon className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Calendly</p>
-                    <p className="text-sm text-muted-foreground">
-                      {t('intPage.calendlyDesc')}
-                    </p>
-                  </div>
+                <div className="border-t border-border pt-6">
+                  <Link
+                    href="/settings/integrations/calendly"
+                    className="flex items-center justify-between gap-4 rounded-md border bg-card p-4 transition-colors hover:bg-accent/40"
+                  >
+                    <div className="flex items-start gap-3">
+                      <CalendarIcon className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">Calendly</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t('intPage.calendlyDesc')}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-medium text-primary">{t('intPage.configure')}</span>
+                  </Link>
                 </div>
-                <span className="text-sm font-medium text-primary">{t('intPage.configure')}</span>
-              </Link>
-            </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

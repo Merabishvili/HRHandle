@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { Sparkles } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/server'
 import { getAiFitOversight } from '@/lib/actions/ai-fit'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 /**
  * AI oversight (Settings → Data, admin-only). The bias-review surface for
@@ -12,6 +13,7 @@ import { getAiFitOversight } from '@/lib/actions/ai-fit'
  */
 export default async function AiFitOversightPage() {
   const t = await getTranslations()
+  const dateLocale = dateFnsLocale(await getLocale())
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -72,7 +74,7 @@ export default async function AiFitOversightPage() {
                   </p>
                 </div>
                 <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                  {o.assessed_at ? new Date(o.assessed_at).toLocaleDateString() : '—'}
+                  {o.assessed_at ? formatShortDate(o.assessed_at, dateLocale) : '—'}
                 </span>
               </li>
             ))}

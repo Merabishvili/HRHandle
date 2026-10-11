@@ -170,3 +170,26 @@ export function refundedSubscriptionUpdate(
     },
   }
 }
+
+/** Start of the refund-limit window: `months` calendar months before `now`. */
+export function refundWindowStart(now: Date, months: number): Date {
+  const d = new Date(now)
+  d.setUTCMonth(d.getUTCMonth() - months)
+  return d
+}
+
+/**
+ * "One refund per organization per REFUND_LIMIT_MONTHS" check. `prior` = the
+ * org's `billing_refunded` audit details from the window. A row for this same
+ * order means the callback is a resend (already recorded); a row for another
+ * order means a second refund inside the window — against the policy.
+ */
+export function refundHistoryCheck(
+  prior: Array<{ orderId?: unknown }>,
+  orderId: string,
+): { alreadyRecorded: boolean; repeat: boolean } {
+  return {
+    alreadyRecorded: prior.some((r) => r.orderId === orderId),
+    repeat: prior.some((r) => typeof r.orderId === 'string' && r.orderId !== orderId),
+  }
+}

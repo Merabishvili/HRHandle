@@ -1,0 +1,1148 @@
+{
+  "en": {
+    "add-candidate-application": [
+      1440,
+      900
+    ],
+    "add-candidate-background": [
+      1440,
+      900
+    ],
+    "add-candidate-path": [
+      1440,
+      900
+    ],
+    "add-candidate-personal": [
+      1440,
+      900
+    ],
+    "add-candidate-review": [
+      1440,
+      900
+    ],
+    "ai-bias-check": [
+      766,
+      577
+    ],
+    "ai-fit-card": [
+      686,
+      944
+    ],
+    "ai-fit-setting": [
+      720,
+      400
+    ],
+    "ai-oversight": [
+      1440,
+      945
+    ],
+    "assessment-open": [
+      702,
+      369
+    ],
+    "assessment-record": [
+      686,
+      751
+    ],
+    "assessment-share": [
+      686,
+      751
+    ],
+    "assessment-share-dialog": [
+      576,
+      376
+    ],
+    "assessment-shared-page": [
+      1440,
+      1093
+    ],
+    "assessment-sheet": [
+      636,
+      1368
+    ],
+    "audit-log": [
+      1440,
+      900
+    ],
+    "billing": [
+      1440,
+      1170
+    ],
+    "calendly-link": [
+      390,
+      215
+    ],
+    "calendly-link-dialog": [
+      576,
+      328
+    ],
+    "candidate-activity": [
+      718,
+      779
+    ],
+    "candidate-merge": [
+      560,
+      366
+    ],
+    "candidate-profile": [
+      1440,
+      900
+    ],
+    "candidate-status": [
+      1440,
+      900
+    ],
+    "candidate-status-closed": [
+      1440,
+      900
+    ],
+    "candidate-withdraw": [
+      560,
+      374
+    ],
+    "candidates-add-button": [
+      1440,
+      900
+    ],
+    "candidates-list-tools": [
+      1440,
+      900
+    ],
+    "columns-dialog": [
+      560,
+      575
+    ],
+    "create-vacancy-ai": [
+      830,
+      1165
+    ],
+    "create-vacancy-basics": [
+      1440,
+      900
+    ],
+    "create-vacancy-dates": [
+      1440,
+      900
+    ],
+    "create-vacancy-description": [
+      1440,
+      1230
+    ],
+    "create-vacancy-done": [
+      1440,
+      900
+    ],
+    "create-vacancy-review": [
+      1440,
+      1070
+    ],
+    "create-vacancy-scorecard": [
+      1440,
+      968
+    ],
+    "custom-field-add": [
+      870,
+      274
+    ],
+    "custom-fields": [
+      1440,
+      945
+    ],
+    "email-templates": [
+      1440,
+      945
+    ],
+    "email-templates-auto": [
+      1440,
+      945
+    ],
+    "email-templates-rejection": [
+      1440,
+      945
+    ],
+    "first-login": [
+      1440,
+      900
+    ],
+    "import-confirm": [
+      1440,
+      900
+    ],
+    "import-done": [
+      1440,
+      900
+    ],
+    "import-review": [
+      1440,
+      900
+    ],
+    "import-upload": [
+      1440,
+      900
+    ],
+    "integrations": [
+      1440,
+      900
+    ],
+    "integrations-calendly": [
+      1440,
+      900
+    ],
+    "integrations-linkedin": [
+      702,
+      126
+    ],
+    "interview-actions": [
+      338,
+      327
+    ],
+    "interview-form": [
+      1440,
+      900
+    ],
+    "interviews-list": [
+      1440,
+      1010
+    ],
+    "nav-account-menu": [
+      256,
+      230
+    ],
+    "nav-notifications": [
+      352,
+      495
+    ],
+    "nav-overview": [
+      1440,
+      900
+    ],
+    "notification-settings": [
+      1440,
+      945
+    ],
+    "offer-create": [
+      702,
+      584
+    ],
+    "offer-page": [
+      1440,
+      900
+    ],
+    "offer-sent": [
+      702,
+      372
+    ],
+    "onboarding-company": [
+      1440,
+      900
+    ],
+    "organization-policies": [
+      1440,
+      1848
+    ],
+    "organization-settings": [
+      768,
+      554
+    ],
+    "pipeline-board": [
+      1440,
+      900
+    ],
+    "pipeline-bulk": [
+      1440,
+      900
+    ],
+    "pipeline-closed": [
+      500,
+      478
+    ],
+    "pipeline-list": [
+      1440,
+      900
+    ],
+    "pipeline-main-settings": [
+      1440,
+      945
+    ],
+    "pipeline-review": [
+      1440,
+      900
+    ],
+    "profile-settings": [
+      1440,
+      945
+    ],
+    "reject-batch": [
+      560,
+      456
+    ],
+    "reject-dialog": [
+      496,
+      564
+    ],
+    "rejection-reasons": [
+      1440,
+      945
+    ],
+    "reports-pipeline": [
+      1440,
+      1162
+    ],
+    "reports-sources": [
+      1440,
+      1014
+    ],
+    "reports-time-to-hire": [
+      1440,
+      900
+    ],
+    "search-palette": [
+      560,
+      166
+    ],
+    "security-settings": [
+      1440,
+      945
+    ],
+    "share-apply-link": [
+      1440,
+      1349
+    ],
+    "share-apply-page": [
+      1440,
+      900
+    ],
+    "share-jobs-page": [
+      1440,
+      900
+    ],
+    "share-jobs-page-link": [
+      1440,
+      900
+    ],
+    "share-linkedin": [
+      420,
+      223
+    ],
+    "share-linkedin-dialog": [
+      576,
+      880
+    ],
+    "signup-check-email": [
+      1440,
+      900
+    ],
+    "signup-form": [
+      1440,
+      900
+    ],
+    "slack-teams": [
+      1440,
+      945
+    ],
+    "slack-teams-add": [
+      832,
+      572
+    ],
+    "team-member-menu": [
+      1440,
+      900
+    ],
+    "team-page": [
+      1440,
+      945
+    ],
+    "trash": [
+      1440,
+      945
+    ],
+    "vacancies-list": [
+      1440,
+      900
+    ],
+    "vacancy-actions-menu": [
+      264,
+      164
+    ],
+    "vacancy-jd": [
+      1440,
+      902
+    ],
+    "vacancy-overview": [
+      1440,
+      956
+    ],
+    "vacancy-scorecard": [
+      1440,
+      1098
+    ],
+    "vacancy-settings": [
+      1440,
+      1261
+    ]
+  },
+  "ka": {
+    "add-candidate-application": [
+      1440,
+      900
+    ],
+    "add-candidate-background": [
+      1440,
+      900
+    ],
+    "add-candidate-path": [
+      1440,
+      900
+    ],
+    "add-candidate-personal": [
+      1440,
+      900
+    ],
+    "add-candidate-review": [
+      1440,
+      900
+    ],
+    "ai-bias-check": [
+      766,
+      614
+    ],
+    "ai-fit-card": [
+      686,
+      1092
+    ],
+    "ai-fit-setting": [
+      720,
+      452
+    ],
+    "ai-oversight": [
+      1440,
+      945
+    ],
+    "assessment-open": [
+      702,
+      369
+    ],
+    "assessment-record": [
+      686,
+      790
+    ],
+    "assessment-share": [
+      686,
+      790
+    ],
+    "assessment-share-dialog": [
+      576,
+      396
+    ],
+    "assessment-shared-page": [
+      1440,
+      1175
+    ],
+    "assessment-sheet": [
+      636,
+      1401
+    ],
+    "audit-log": [
+      1440,
+      900
+    ],
+    "billing": [
+      1440,
+      1240
+    ],
+    "calendly-link": [
+      390,
+      215
+    ],
+    "calendly-link-dialog": [
+      576,
+      328
+    ],
+    "candidate-activity": [
+      718,
+      850
+    ],
+    "candidate-merge": [
+      560,
+      406
+    ],
+    "candidate-profile": [
+      1440,
+      900
+    ],
+    "candidate-status": [
+      1440,
+      900
+    ],
+    "candidate-status-closed": [
+      1440,
+      900
+    ],
+    "candidate-withdraw": [
+      560,
+      394
+    ],
+    "candidates-add-button": [
+      1440,
+      900
+    ],
+    "candidates-list-tools": [
+      1440,
+      900
+    ],
+    "columns-dialog": [
+      560,
+      575
+    ],
+    "create-vacancy-ai": [
+      830,
+      1187
+    ],
+    "create-vacancy-basics": [
+      1440,
+      900
+    ],
+    "create-vacancy-dates": [
+      1440,
+      900
+    ],
+    "create-vacancy-description": [
+      1440,
+      1270
+    ],
+    "create-vacancy-done": [
+      1440,
+      900
+    ],
+    "create-vacancy-review": [
+      1440,
+      1095
+    ],
+    "create-vacancy-scorecard": [
+      1440,
+      1003
+    ],
+    "custom-field-add": [
+      870,
+      274
+    ],
+    "custom-fields": [
+      1440,
+      945
+    ],
+    "email-templates": [
+      1440,
+      945
+    ],
+    "email-templates-auto": [
+      1440,
+      945
+    ],
+    "email-templates-rejection": [
+      1440,
+      945
+    ],
+    "first-login": [
+      1440,
+      900
+    ],
+    "import-confirm": [
+      1440,
+      900
+    ],
+    "import-done": [
+      1440,
+      900
+    ],
+    "import-review": [
+      1440,
+      900
+    ],
+    "import-upload": [
+      1440,
+      900
+    ],
+    "integrations": [
+      1440,
+      900
+    ],
+    "integrations-calendly": [
+      1440,
+      900
+    ],
+    "integrations-linkedin": [
+      702,
+      146
+    ],
+    "interview-actions": [
+      398,
+      327
+    ],
+    "interview-form": [
+      1440,
+      900
+    ],
+    "interviews-list": [
+      1440,
+      1010
+    ],
+    "nav-account-menu": [
+      256,
+      230
+    ],
+    "nav-notifications": [
+      352,
+      507
+    ],
+    "nav-overview": [
+      1440,
+      900
+    ],
+    "notification-settings": [
+      1440,
+      945
+    ],
+    "offer-create": [
+      702,
+      642
+    ],
+    "offer-page": [
+      1440,
+      1029
+    ],
+    "offer-sent": [
+      702,
+      416
+    ],
+    "onboarding-company": [
+      1440,
+      900
+    ],
+    "organization-policies": [
+      1440,
+      1976
+    ],
+    "organization-settings": [
+      768,
+      554
+    ],
+    "pipeline-board": [
+      1440,
+      900
+    ],
+    "pipeline-bulk": [
+      1440,
+      900
+    ],
+    "pipeline-closed": [
+      500,
+      547
+    ],
+    "pipeline-list": [
+      1440,
+      900
+    ],
+    "pipeline-main-settings": [
+      1440,
+      945
+    ],
+    "pipeline-review": [
+      1440,
+      900
+    ],
+    "profile-settings": [
+      1440,
+      946
+    ],
+    "reject-batch": [
+      560,
+      476
+    ],
+    "reject-dialog": [
+      496,
+      596
+    ],
+    "rejection-reasons": [
+      1440,
+      945
+    ],
+    "reports-pipeline": [
+      1440,
+      1162
+    ],
+    "reports-sources": [
+      1440,
+      1014
+    ],
+    "reports-time-to-hire": [
+      1440,
+      900
+    ],
+    "search-palette": [
+      560,
+      254
+    ],
+    "security-settings": [
+      1440,
+      945
+    ],
+    "share-apply-link": [
+      1440,
+      1386
+    ],
+    "share-apply-page": [
+      1440,
+      900
+    ],
+    "share-jobs-page": [
+      1440,
+      900
+    ],
+    "share-jobs-page-link": [
+      1440,
+      900
+    ],
+    "share-linkedin": [
+      420,
+      223
+    ],
+    "share-linkedin-dialog": [
+      576,
+      936
+    ],
+    "signup-check-email": [
+      1440,
+      900
+    ],
+    "signup-form": [
+      1440,
+      900
+    ],
+    "slack-teams": [
+      1440,
+      945
+    ],
+    "slack-teams-add": [
+      832,
+      572
+    ],
+    "team-member-menu": [
+      1440,
+      900
+    ],
+    "team-page": [
+      1440,
+      945
+    ],
+    "trash": [
+      1440,
+      945
+    ],
+    "vacancies-list": [
+      1440,
+      900
+    ],
+    "vacancy-actions-menu": [
+      264,
+      164
+    ],
+    "vacancy-jd": [
+      1440,
+      902
+    ],
+    "vacancy-overview": [
+      1440,
+      956
+    ],
+    "vacancy-scorecard": [
+      1440,
+      1151
+    ],
+    "vacancy-settings": [
+      1440,
+      1315
+    ]
+  },
+  "ru": {
+    "add-candidate-application": [
+      1440,
+      900
+    ],
+    "add-candidate-background": [
+      1440,
+      900
+    ],
+    "add-candidate-path": [
+      1440,
+      900
+    ],
+    "add-candidate-personal": [
+      1440,
+      900
+    ],
+    "add-candidate-review": [
+      1440,
+      900
+    ],
+    "ai-bias-check": [
+      766,
+      595
+    ],
+    "ai-fit-card": [
+      686,
+      1018
+    ],
+    "ai-fit-setting": [
+      720,
+      452
+    ],
+    "ai-oversight": [
+      1440,
+      965
+    ],
+    "assessment-open": [
+      702,
+      369
+    ],
+    "assessment-record": [
+      686,
+      771
+    ],
+    "assessment-share": [
+      686,
+      771
+    ],
+    "assessment-share-dialog": [
+      576,
+      376
+    ],
+    "assessment-shared-page": [
+      1440,
+      1116
+    ],
+    "assessment-sheet": [
+      636,
+      1386
+    ],
+    "audit-log": [
+      1440,
+      900
+    ],
+    "billing": [
+      1440,
+      1224
+    ],
+    "calendly-link": [
+      390,
+      215
+    ],
+    "calendly-link-dialog": [
+      576,
+      328
+    ],
+    "candidate-activity": [
+      718,
+      814
+    ],
+    "candidate-merge": [
+      560,
+      366
+    ],
+    "candidate-profile": [
+      1440,
+      900
+    ],
+    "candidate-status": [
+      1440,
+      900
+    ],
+    "candidate-status-closed": [
+      1440,
+      900
+    ],
+    "candidate-withdraw": [
+      560,
+      374
+    ],
+    "candidates-add-button": [
+      1440,
+      900
+    ],
+    "candidates-list-tools": [
+      1440,
+      900
+    ],
+    "columns-dialog": [
+      560,
+      575
+    ],
+    "create-vacancy-ai": [
+      830,
+      1119
+    ],
+    "create-vacancy-basics": [
+      1440,
+      900
+    ],
+    "create-vacancy-dates": [
+      1440,
+      900
+    ],
+    "create-vacancy-description": [
+      1440,
+      1190
+    ],
+    "create-vacancy-done": [
+      1440,
+      900
+    ],
+    "create-vacancy-review": [
+      1440,
+      1070
+    ],
+    "create-vacancy-scorecard": [
+      1440,
+      968
+    ],
+    "custom-field-add": [
+      870,
+      274
+    ],
+    "custom-fields": [
+      1440,
+      965
+    ],
+    "email-templates": [
+      1440,
+      965
+    ],
+    "email-templates-auto": [
+      1440,
+      965
+    ],
+    "email-templates-rejection": [
+      1440,
+      965
+    ],
+    "first-login": [
+      1440,
+      900
+    ],
+    "import-confirm": [
+      1440,
+      900
+    ],
+    "import-done": [
+      1440,
+      900
+    ],
+    "import-review": [
+      1440,
+      900
+    ],
+    "import-upload": [
+      1440,
+      900
+    ],
+    "integrations": [
+      1440,
+      900
+    ],
+    "integrations-calendly": [
+      1440,
+      900
+    ],
+    "integrations-linkedin": [
+      702,
+      146
+    ],
+    "interview-actions": [
+      378,
+      327
+    ],
+    "interview-form": [
+      1440,
+      900
+    ],
+    "interviews-list": [
+      1440,
+      1010
+    ],
+    "nav-account-menu": [
+      256,
+      230
+    ],
+    "nav-notifications": [
+      352,
+      495
+    ],
+    "nav-overview": [
+      1440,
+      900
+    ],
+    "notification-settings": [
+      1440,
+      965
+    ],
+    "offer-create": [
+      702,
+      618
+    ],
+    "offer-page": [
+      1440,
+      950
+    ],
+    "offer-sent": [
+      702,
+      398
+    ],
+    "onboarding-company": [
+      1440,
+      900
+    ],
+    "organization-policies": [
+      1440,
+      1936
+    ],
+    "organization-settings": [
+      768,
+      554
+    ],
+    "pipeline-board": [
+      1440,
+      900
+    ],
+    "pipeline-bulk": [
+      1440,
+      900
+    ],
+    "pipeline-closed": [
+      500,
+      529
+    ],
+    "pipeline-list": [
+      1440,
+      900
+    ],
+    "pipeline-main-settings": [
+      1440,
+      965
+    ],
+    "pipeline-review": [
+      1440,
+      900
+    ],
+    "profile-settings": [
+      1440,
+      965
+    ],
+    "reject-batch": [
+      560,
+      456
+    ],
+    "reject-dialog": [
+      496,
+      564
+    ],
+    "rejection-reasons": [
+      1440,
+      965
+    ],
+    "reports-pipeline": [
+      1440,
+      1162
+    ],
+    "reports-sources": [
+      1440,
+      1014
+    ],
+    "reports-time-to-hire": [
+      1440,
+      900
+    ],
+    "search-palette": [
+      560,
+      254
+    ],
+    "security-settings": [
+      1440,
+      965
+    ],
+    "share-apply-link": [
+      1440,
+      1349
+    ],
+    "share-apply-page": [
+      1440,
+      900
+    ],
+    "share-jobs-page": [
+      1440,
+      900
+    ],
+    "share-jobs-page-link": [
+      1440,
+      900
+    ],
+    "share-linkedin": [
+      420,
+      223
+    ],
+    "share-linkedin-dialog": [
+      576,
+      900
+    ],
+    "signup-check-email": [
+      1440,
+      900
+    ],
+    "signup-form": [
+      1440,
+      900
+    ],
+    "slack-teams": [
+      1440,
+      965
+    ],
+    "slack-teams-add": [
+      832,
+      572
+    ],
+    "team-member-menu": [
+      1440,
+      900
+    ],
+    "team-page": [
+      1440,
+      965
+    ],
+    "trash": [
+      1440,
+      965
+    ],
+    "vacancies-list": [
+      1440,
+      900
+    ],
+    "vacancy-actions-menu": [
+      264,
+      164
+    ],
+    "vacancy-jd": [
+      1440,
+      902
+    ],
+    "vacancy-overview": [
+      1440,
+      956
+    ],
+    "vacancy-scorecard": [
+      1440,
+      1133
+    ],
+    "vacancy-settings": [
+      1440,
+      1315
+    ]
+  }
+}

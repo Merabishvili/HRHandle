@@ -35,17 +35,26 @@ describe('buildSlackPayload', () => {
   })
 })
 
+type TeamsMessage = {
+  type: string
+  attachments: { contentType: string; content: { type: string; version: string; body: Record<string, unknown>[]; actions?: { type: string; url: string }[] } }[]
+}
+
 describe('buildTeamsPayload', () => {
-  it('returns a MessageCard with title and summary set', () => {
-    const p = buildTeamsPayload({ title: 'Hello', body: '' }) as Record<string, unknown>
-    expect(p['@type']).toBe('MessageCard')
-    expect(p.title).toBe('Hello')
-    expect(p.summary).toBe('Hello')
+  it('wraps an Adaptive Card in a Teams message with the title first', () => {
+    const p = buildTeamsPayload({ title: 'Hello', body: '' }) as TeamsMessage
+    expect(p.type).toBe('message')
+    expect(p.attachments[0]!.contentType).toBe('application/vnd.microsoft.card.adaptive')
+    const card = p.attachments[0]!.content
+    expect(card.type).toBe('AdaptiveCard')
+    expect(card.body[0]).toMatchObject({ type: 'TextBlock', text: 'Hello', weight: 'Bolder' })
+    expect(card.body).toHaveLength(1)
+    expect(card.actions).toBeUndefined()
   })
 
-  it('sets `text` from body', () => {
-    const p = buildTeamsPayload({ title: 'T', body: 'b' }) as Record<string, unknown>
-    expect(p.text).toBe('b')
+  it('adds the body as a second text block', () => {
+    const p = buildTeamsPayload({ title: 'T', body: 'b' }) as TeamsMessage
+    expect(p.attachments[0]!.content.body[1]).toMatchObject({ type: 'TextBlock', text: 'b' })
   })
 
   it('adds facts when fields are provided', () => {
@@ -53,15 +62,15 @@ describe('buildTeamsPayload', () => {
       title: 'T',
       body: '',
       fields: [{ label: 'A', value: '1' }],
-    }) as { sections: { facts: { name: string; value: string }[] }[] }
-    expect(p.sections[0]!.facts).toEqual([{ name: 'A', value: '1' }])
+    }) as TeamsMessage
+    expect(p.attachments[0]!.content.body[1]).toEqual({ type: 'FactSet', facts: [{ title: 'A', value: '1' }] })
   })
 
-  it('adds an OpenUri action when a URL is set', () => {
-    const p = buildTeamsPayload({ title: 'T', body: '', url: 'https://example.com' }) as {
-      potentialAction: { '@type': string }[]
-    }
-    expect(p.potentialAction[0]!['@type']).toBe('OpenUri')
+  it('adds an open-URL action when a URL is set', () => {
+    const p = buildTeamsPayload({ title: 'T', body: '', url: 'https://example.com' }) as TeamsMessage
+    expect(p.attachments[0]!.content.actions).toEqual([
+      { type: 'Action.OpenUrl', title: 'Open in HRHandle', url: 'https://example.com' },
+    ])
   })
 })
 
@@ -84,6 +93,20 @@ describe('isPlausibleWebhookUrl', () => {
     expect(
       isPlausibleWebhookUrl('https://prod-00.westus.logic.azure.com/workflows/abc', 'teams')
     ).toBe(true)
+  })
+
+  it('accepts a Teams Workflows (Power Platform) webhook URL', () => {
+    expect(
+      isPlausibleWebhookUrl(
+        'https://default0a1b2c.3d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/abc/triggers/manual/paths/invoke',
+        'teams'
+      )
+    ).toBe(true)
+  })
+
+  it('rejects look-alike hosts for Teams', () => {
+    expect(isPlausibleWebhookUrl('https://evil-powerplatform.com/x', 'teams')).toBe(false)
+    expect(isPlausibleWebhookUrl('https://example.com/webhook.office.com', 'teams')).toBe(false)
   })
 
   it('rejects http (non-tls) URLs', () => {

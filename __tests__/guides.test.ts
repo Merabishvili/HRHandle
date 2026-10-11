@@ -2,78 +2,121 @@ import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import matter from 'gray-matter'
-import { GUIDES, getGuidesByCategory } from '@/lib/guides/registry'
+import {
+  CATEGORY_KEY,
+  GUIDES,
+  GUIDE_CATEGORIES,
+  GUIDE_FAQ_KEYS,
+  LEGACY_GUIDE_SLUGS,
+  getGuidesByCategory,
+} from '@/lib/guides/registry'
+import { LOCALES } from '@/lib/i18n/locales'
+import source from '@/messages/source.json'
 
 const CONTENT_DIR = path.join(process.cwd(), 'content', 'guides')
+const SHOTS_DIR = path.join(process.cwd(), 'public', 'guide', 'screenshots')
+const SIZES = JSON.parse(fs.readFileSync(path.join(CONTENT_DIR, 'screenshots.json'), 'utf8')) as Record<
+  string,
+  Record<string, [number, number]>
+>
+const messages = source as Record<string, Record<string, string>>
+
+const slugsIn = (locale: string): string[] => {
+  const dir = path.join(CONTENT_DIR, locale)
+  return fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter((f) => f.endsWith('.mdx')).map((f) => f.replace(/\.mdx$/, ''))
+    : []
+}
+const read = (locale: string, slug: string) => fs.readFileSync(path.join(CONTENT_DIR, locale, `${slug}.mdx`), 'utf8')
+const headings = (body: string) => body.split('\n').filter((l) => /^#{2,3} /.test(l)).map((l) => l.match(/^#+/)![0])
+const shotNames = (body: string) => Array.from(body.matchAll(/<Screenshot\b[^>]*\bname="([^"]+)"/g)).map((m) => m[1]!)
+const published = slugsIn('en')
 
 describe('guide registry', () => {
-  it('has no duplicate slugs', () => {
-    const slugs = GUIDES.map((g) => g.slug)
-    const unique = new Set(slugs)
-    expect(unique.size).toBe(slugs.length)
-  })
-
-  it('has no duplicate order values', () => {
-    const orders = GUIDES.map((g) => g.order)
-    const unique = new Set(orders)
-    expect(unique.size).toBe(orders.length)
-  })
-
-  it('every guide has a non-empty title and summary', () => {
-    for (const g of GUIDES) {
-      expect(g.title.trim().length, `title for ${g.slug}`).toBeGreaterThan(0)
-      expect(g.summary.trim().length, `summary for ${g.slug}`).toBeGreaterThan(0)
+  it('has unique slugs, ids and order values', () => {
+    for (const key of ['slug', 'id', 'order'] as const) {
+      const values = GUIDES.map((g) => g[key])
+      expect(new Set(values).size, key).toBe(values.length)
     }
   })
 
-  it('groups guides into known categories', () => {
+  it('puts every guide in a known category, and no category is empty', () => {
     const grouped = getGuidesByCategory()
-    const totalGrouped = Object.values(grouped).reduce((sum, list) => sum + list.length, 0)
-    expect(totalGrouped).toBe(GUIDES.length)
+    expect(Object.keys(grouped)).toEqual([...GUIDE_CATEGORIES])
+    for (const category of GUIDE_CATEGORIES) expect(grouped[category].length, category).toBeGreaterThan(0)
+    expect(Object.values(grouped).flat()).toHaveLength(GUIDES.length)
+  })
+
+  it('redirects renamed topics to a current topic', () => {
+    const slugs = new Set(GUIDES.map((g) => g.slug))
+    for (const [old, target] of Object.entries(LEGACY_GUIDE_SLUGS)) {
+      expect(slugs.has(old), `${old} is still a current slug`).toBe(false)
+      expect(slugs.has(target), `${old} → ${target}`).toBe(true)
+    }
   })
 })
 
-describe('guide MDX files', () => {
-  it('every MDX file in content/guides has a matching registry entry', () => {
-    const files = fs.existsSync(CONTENT_DIR) ? fs.readdirSync(CONTENT_DIR) : []
+describe('guide messages', () => {
+  const keys = [
+    ...GUIDES.flatMap((g) => [`guide.topic.${g.id}.title`, `guide.topic.${g.id}.summary`]),
+    ...GUIDE_CATEGORIES.map((c) => `guide.category.${CATEGORY_KEY[c]}`),
+    ...GUIDE_FAQ_KEYS.flatMap((k) => [`guide.faq.${k}.q`, `guide.faq.${k}.a`]),
+  ]
+
+  it('has every title, summary, category and FAQ entry in every language', () => {
+    for (const key of keys) {
+      for (const locale of LOCALES) {
+        expect(messages[key]?.[locale]?.trim(), `${key} [${locale}]`).toBeTruthy()
+      }
+    }
+  })
+})
+
+describe('guide content', () => {
+  it('has a registry entry for every guide file', () => {
     const slugs = new Set(GUIDES.map((g) => g.slug))
-    for (const file of files) {
-      if (!file.endsWith('.mdx')) continue
-      const slug = file.replace(/\.mdx$/, '')
-      expect(slugs.has(slug), `MDX file ${file} has no registry entry`).toBe(true)
+    for (const locale of LOCALES) {
+      for (const slug of slugsIn(locale)) expect(slugs.has(slug), `${locale}/${slug}.mdx`).toBe(true)
     }
   })
 
-  it('every registry entry has a corresponding MDX file', () => {
-    // Phase B is complete: every guide listed in the registry must ship.
-    for (const guide of GUIDES) {
-      const filePath = path.join(CONTENT_DIR, `${guide.slug}.mdx`)
-      expect(fs.existsSync(filePath), `missing MDX file for registry slug ${guide.slug}`).toBe(true)
+  it('publishes every guide in all three languages', () => {
+    expect(published.length).toBeGreaterThan(0)
+    for (const locale of LOCALES) expect(slugsIn(locale).sort(), locale).toEqual([...published].sort())
+  })
+
+  it('keeps the same sections and screenshots in every translation', () => {
+    for (const slug of published) {
+      const en = matter(read('en', slug)).content
+      for (const locale of LOCALES) {
+        const { data, content } = matter(read(locale, slug))
+        expect(data.updated, `${locale}/${slug}: updated`).toBeTruthy()
+        expect(headings(content), `${locale}/${slug}: headings`).toEqual(headings(en))
+        expect(shotNames(content), `${locale}/${slug}: screenshots`).toEqual(shotNames(en))
+      }
     }
   })
 
-  it('every MDX file parses and has frontmatter with title and summary', () => {
-    const files = fs.existsSync(CONTENT_DIR) ? fs.readdirSync(CONTENT_DIR) : []
-    for (const file of files) {
-      if (!file.endsWith('.mdx')) continue
-      const raw = fs.readFileSync(path.join(CONTENT_DIR, file), 'utf8')
-      const { data } = matter(raw)
-      expect(typeof data.title, `title in ${file}`).toBe('string')
-      expect(typeof data.summary, `summary in ${file}`).toBe('string')
+  it('has every referenced screenshot on disk, with its size recorded', () => {
+    for (const slug of published) {
+      for (const locale of LOCALES) {
+        const body = read(locale, slug)
+        expect(body, `${locale}/${slug}: use name=, not src=`).not.toMatch(/<Screenshot\b[^>]*\bsrc=/)
+        for (const name of shotNames(body)) {
+          expect(fs.existsSync(path.join(SHOTS_DIR, locale, `${name}.webp`)), `${locale}/${name}.webp`).toBe(true)
+          expect(SIZES[locale]?.[name], `size of ${locale}/${name}`).toHaveLength(2)
+        }
+      }
     }
   })
 
-  it('every <Screenshot src=...> in an MDX file points to a real PNG', () => {
-    const files = fs.existsSync(CONTENT_DIR) ? fs.readdirSync(CONTENT_DIR) : []
-    const publicDir = path.join(process.cwd(), 'public')
-    for (const file of files) {
-      if (!file.endsWith('.mdx')) continue
-      const raw = fs.readFileSync(path.join(CONTENT_DIR, file), 'utf8')
-      const srcs = Array.from(raw.matchAll(/<Screenshot[^>]*\bsrc="([^"]+)"/g)).map((m) => m[1])
-      for (const src of srcs) {
-        if (!src) continue
-        const abs = path.join(publicDir, src.startsWith('/') ? src.slice(1) : src)
-        expect(fs.existsSync(abs), `screenshot ${src} referenced from ${file} does not exist`).toBe(true)
+  it('links only to topics that exist', () => {
+    const slugs = new Set(GUIDES.map((g) => g.slug))
+    for (const slug of published) {
+      for (const locale of LOCALES) {
+        for (const [, target] of read(locale, slug).matchAll(/\]\(\/guide\/([a-z0-9-]+)/g)) {
+          expect(slugs.has(target!), `${locale}/${slug} → ${target}`).toBe(true)
+        }
       }
     }
   })

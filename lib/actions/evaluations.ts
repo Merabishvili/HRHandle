@@ -4,6 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from './index'
 import { normalizeVacancyQuestionEntries } from '@/lib/vacancy-questions/normalize'
 import { projectScorecard } from '@/lib/scorecards/projection'
+import { visibleAssessments } from '@/lib/scorecards/visibility'
+import { isOrgAdmin } from '@/lib/permissions'
+import { otherSubmittedAssessmentCount } from '@/lib/scorecards/fit-scores'
 
 export async function addVacancyQuestion(
   vacancyId: string,
@@ -392,7 +395,9 @@ export async function getScorecardData(
   }
 
   // Other reviewers' submitted cards — counted always, but only revealed once
-  // this reviewer has submitted their own (anti-anchoring).
+  // this reviewer has submitted their own (anti-anchoring). The database hides
+  // them from members until then, so the count is read with the service role.
+  const otherSubmittedCount = await otherSubmittedAssessmentCount(ctx.orgId, applicationId, ctx.userId)
   const { data: submittedRows } = await ctx.supabase
     .from('candidate_evaluations')
     .select('score, recommendation, recommendation_reason, reviewer_id')
@@ -437,7 +442,7 @@ export async function getScorecardData(
       questions,
       existing,
       otherCards,
-      otherSubmittedCount: otherRows.length,
+      otherSubmittedCount: Math.max(otherSubmittedCount, otherRows.length),
     },
   }
 }
@@ -476,6 +481,8 @@ export interface AssessmentRecord {
   totalCriteria: number
   /** Total text-type questions configured on the vacancy (for "{answered}/{total}"). */
   totalQuestions: number
+  /** A live share link exists (owners/admins see a "Shared" tag). */
+  isShared: boolean
 }
 
 /**
@@ -514,21 +521,28 @@ export async function getAssessmentRecords(
 
   const { data: evalRows } = await ctx.supabase
     .from('candidate_evaluations')
-    .select('id, application_id, vacancy_id, reviewer_id, score, recommendation, recommendation_reason, updated_at')
+    .select('id, application_id, vacancy_id, reviewer_id, score, recommendation, recommendation_reason, updated_at, scorecard_token')
     .in('application_id', [...titleByApp.keys()])
     .eq('submitted', true)
     .order('updated_at', { ascending: false })
 
-  const evals = (evalRows ?? []) as {
-    id: string
-    application_id: string
-    vacancy_id: string
-    reviewer_id: string | null
-    score: number | null
-    recommendation: string | null
-    recommendation_reason: string | null
-    updated_at: string
-  }[]
+  // Teammates see other people's assessments only once they've submitted
+  // their own for that application; the owner and admins see them all.
+  const evals = visibleAssessments(
+    (evalRows ?? []) as {
+      id: string
+      application_id: string
+      vacancy_id: string
+      reviewer_id: string | null
+      score: number | null
+      recommendation: string | null
+      recommendation_reason: string | null
+      updated_at: string
+      scorecard_token: string | null
+    }[],
+    ctx.userId,
+    isOrgAdmin(ctx.role),
+  )
   if (evals.length === 0) return { success: true, data: [] }
 
   // Reviewer names — resolved separately (single-FK to profiles, but fetched
@@ -596,6 +610,7 @@ export async function getAssessmentRecords(
         .map((i) => ({ label: i.label, text: i.text })),
       totalCriteria: questions.filter((q) => q.type === 'score').length,
       totalQuestions: questions.filter((q) => q.type === 'text').length,
+      isShared: !!e.scorecard_token,
     }
   })
 

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { Briefcase, Copy, Check, ExternalLink } from 'lucide-react'
 
-interface VacancyData {
+export interface LinkedInJobVacancy {
   title: string
   description: string
   responsibilities: string | null
@@ -29,10 +29,13 @@ interface VacancyData {
 
 interface LinkedInPostJobButtonProps {
   pageId: string
-  vacancy: VacancyData
+  vacancy: LinkedInJobVacancy
+  /** Section headings for the pasted description, in the vacancy's language
+   * (the org content language) — defaults to the viewer's UI language. */
+  sectionLabels?: { responsibilities: string; requirements: string }
 }
 
-function buildFullDescription(vacancy: VacancyData, labels: { responsibilities: string; requirements: string }): string {
+function buildFullDescription(vacancy: LinkedInJobVacancy, labels: { responsibilities: string; requirements: string }): string {
   const parts: string[] = [vacancy.description.trim()]
   if (vacancy.responsibilities?.trim()) {
     parts.push(`\n\n${labels.responsibilities}\n${vacancy.responsibilities.trim()}`)
@@ -80,7 +83,7 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
-export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButtonProps) {
+export function LinkedInPostJobButton({ pageId, vacancy, sectionLabels }: LinkedInPostJobButtonProps) {
   const t = useTranslations()
   // Trailing slash stripped so a "https://host.com/" SITE_URL doesn't yield a
   // double-slash apply URL (https://host.com//apply/...) that 404s.
@@ -92,13 +95,16 @@ export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButton
 
   const [title, setTitle] = useState(vacancy.title)
   const [description, setDescription] = useState(
-    buildFullDescription(vacancy, { responsibilities: t('apply.responsibilities'), requirements: t('apply.requirements') }),
+    buildFullDescription(
+      vacancy,
+      sectionLabels ?? { responsibilities: t('apply.responsibilities'), requirements: t('apply.requirements') },
+    ),
   )
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" size="sm" className="w-full">
           <Briefcase className="mr-2 h-4 w-4 text-[#0A66C2]" />
           {t('liPost.postToLinkedIn')}
         </Button>
@@ -123,7 +129,7 @@ export function LinkedInPostJobButton({ pageId, vacancy }: LinkedInPostJobButton
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={6}
-              className="text-xs break-all"
+              className="text-xs break-words"
             />
             <p className="text-xs text-muted-foreground">
               {t('liPost.step2Hint')}

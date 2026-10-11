@@ -1,9 +1,10 @@
 import Link from 'next/link'
-import { format, formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { getTranslations } from 'next-intl/server'
-import { dateFnsLocale } from '@/lib/i18n/date-locale'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 import { AlertTriangle, ArrowRight, Copy } from 'lucide-react'
 
+import { LinkedInPostJobButton, type LinkedInJobVacancy } from '@/components/vacancies/linkedin-post-job-button'
 import { getStageStyle } from '@/lib/pipeline/stage-style'
 import { statusLabel } from '@/lib/pipeline/status-i18n'
 import type { ApplicationStatus } from '@/lib/types/application'
@@ -41,7 +42,18 @@ interface OverviewTabProps {
   hiringManagerName: string | null
   currentUserName: string
   applicationFormToken: string | null
+  /** Set when the org has connected its LinkedIn company page — shows
+   * "Post to LinkedIn Jobs" in the Share card. */
+  linkedInJob?: {
+    pageId: string
+    vacancy: LinkedInJobVacancy
+    sectionLabels: { responsibilities: string; requirements: string }
+  } | null
 }
+
+// Trailing slash stripped so a "https://host.com/" SITE_URL doesn't yield a
+// double-slash apply URL.
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')
 
 /**
  * Wave 2.4 Overview tab — Version B (needs-attention first) with Version
@@ -60,6 +72,7 @@ export async function OverviewTab({
   hiringManagerName,
   currentUserName,
   applicationFormToken,
+  linkedInJob,
 }: OverviewTabProps) {
   const t = await getTranslations()
   const healthStyle = getHealthStyle(meta.healthLabel)
@@ -231,21 +244,32 @@ export async function OverviewTab({
         </section>
 
         {/* Share */}
-        {applicationFormToken && (
+        {(applicationFormToken || linkedInJob) && (
           <section className="rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4" aria-label={t('vacOverview.share')}>
             <h2 className="mb-2.5 text-[15px] font-bold text-foreground">{t('vacOverview.share')}</h2>
-            <div className="flex items-center gap-2 rounded-lg border border-[oklch(0.92_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2 text-[11.5px]">
-              <span className="flex-1 truncate text-muted-foreground">
-                {process.env.NEXT_PUBLIC_APP_URL ?? ''}/apply/{applicationFormToken.slice(0, 14)}…
-              </span>
-              <Link
-                href={`/vacancies/${vacancyId}?tab=application-form`}
-                className="inline-flex items-center gap-0.5 font-semibold text-[oklch(0.55_0.18_250)] hover:underline"
-              >
-                <Copy className="h-3 w-3" aria-hidden />
-                {t('aiJd.copy')}
-              </Link>
-            </div>
+            {applicationFormToken && (
+              <div className="flex items-center gap-2 rounded-lg border border-[oklch(0.92_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3 py-2 text-[11.5px]">
+                <span className="flex-1 truncate text-muted-foreground">
+                  {SITE_URL}/apply/{applicationFormToken.slice(0, 14)}…
+                </span>
+                <Link
+                  href={`/vacancies/${vacancyId}?tab=application-form`}
+                  className="inline-flex items-center gap-0.5 font-semibold text-[oklch(0.55_0.18_250)] hover:underline"
+                >
+                  <Copy className="h-3 w-3" aria-hidden />
+                  {t('aiJd.copy')}
+                </Link>
+              </div>
+            )}
+            {linkedInJob && (
+              <div className={applicationFormToken ? 'mt-2.5' : undefined}>
+                <LinkedInPostJobButton
+                  pageId={linkedInJob.pageId}
+                  vacancy={linkedInJob.vacancy}
+                  sectionLabels={linkedInJob.sectionLabels}
+                />
+              </div>
+            )}
           </section>
         )}
       </aside>
@@ -345,11 +369,14 @@ export function buildAttentionList(
   {
     vacancyId,
     pendingOffers,
+    offersToSend = [],
     upcomingInterviewsTomorrow,
     newApplicantCount,
   }: {
     vacancyId: string
     pendingOffers: { applicationId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; daysAwaiting: number }[]
+    /** Candidates at the Offer stage with no sent offer (none yet, or only a draft). */
+    offersToSend?: { applicationId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; hasDraft: boolean }[]
     upcomingInterviewsTomorrow: { interviewId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; scheduledAt: string }[]
     newApplicantCount: number
   },
@@ -368,6 +395,16 @@ export function buildAttentionList(
       ctaLabel: t('vacOverview.followUp'),
       // Link to the candidate (there is no per-application route); the CTA
       // previously pointed at /candidates/<applicationId>, which 404s.
+      ctaHref: `/candidates/${o.candidateId}`,
+    })
+  }
+  for (const o of offersToSend) {
+    items.push({
+      id: `offer-to-send-${o.applicationId}`,
+      initials: o.candidateInitials,
+      initialsHue: 'cyan',
+      message: t.rich(o.hasDraft ? 'vacOverview.offerDraft' : 'vacOverview.offerNotSent', { name: o.candidateFirstName, ...bold }),
+      ctaLabel: t(o.hasDraft ? 'vacOverview.sendOffer' : 'vacOverview.createOffer'),
       ctaHref: `/candidates/${o.candidateId}`,
     })
   }
@@ -400,6 +437,6 @@ export function buildAttentionList(
 // the format() call.
 export function formatEndDate(value: string | null, locale: string): string | null {
   if (!value) return null
-  return format(new Date(value), 'MMM d, yyyy', { locale: dateFnsLocale(locale) })
+  return formatShortDate(new Date(value), dateFnsLocale(locale))
 }
 

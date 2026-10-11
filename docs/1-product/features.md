@@ -1,9 +1,11 @@
 # HRHandle — Features
 
-_Last updated: 2026-07-20_
+_Last updated: 2026-10-10_
 
 ## Changelog
 
+- 🔄 **(2026-10-12) Follow-ups:** a candidate cancelling their Calendly booking cancels the interview in HRHandle; assessment visibility is enforced by the database (RLS), not only the app; the public "link no longer valid" pages (status, offer, shared assessment, apply, jobs) are translated.
+- 🔄 **(2026-10-10) Restored + fixed while rewriting the guide:** "Post to LinkedIn Jobs" back on the vacancy Overview → Share box (when the company page is connected); "Calendly link" back in the candidate profile's Actions rail (when Calendly is connected with an event type); assessment sharing is per assessment (Share on each record in the profile's Assessments; translated public page with assessor, average /5 and recommendation); the inline offer form has the personal-note field again and members see the offer read-only; the candidate's withdrawal reason reaches the notification, the audit log and the activity feed; the offer decline reason shows in the offer history; vacancy "Needs your attention" distinguishes sent offers from offers still to create/send; Teams posts are Adaptive Cards (Workflows); audit-log action names, the account-deletion page and the date picker's month names are translated. Details and what's still open: roadmap → "Found while writing the guide".
 - 🆕 **(2026-07-20 audit) Major features shipped since 2026-05-08:** Offers (G-018, incl. candidate `/offer/<token>`); Reports (G-029: conversion / time-to-hire / source); Slack+Teams webhooks (G-030) + Calendly (G-031); 2FA/TOTP (G-032); CSV candidate import (G-028); cmd-K global search (G-023); scorecard sharing (G-025); custom per-vacancy pipeline stages (Wave 2.6); multi-reviewer scorecards; vacancy work mode; profile language + avatar upload; @-mentions in notes (G-021); candidate self-withdraw (G-022); audit-log viewer (G-019) + trash restore (G-020).
 - 🔄 **Pipeline replaced the Dashboard as the home surface (redesign A-1)** — `/dashboard` redirects to `/pipeline` (cross-vacancy kanban). The vacancy + candidate edit forms migrated to react-hook-form (A-005).
 - 🆕 CV parsing on both internal "New Candidate" form and public apply form (Gemini Flash; PDF/DOCX → structured fields)
@@ -41,8 +43,8 @@ _Last updated: 2026-07-20_
 | Cross-vacancy pipeline (home) | The `/pipeline` board renders one column per **Main pipeline** stage (`org_pipeline_stage_templates`, custom names; falls back to the canonical 7 when an org has none). Each app is placed on the column its per-vacancy stage was cloned from via `pipeline_stages.origin_template_id`; moves go through `moveApplicationToMainColumn`. | `app/(dashboard)/pipeline/page.tsx`, `components/pipeline/cross-vacancy-board.tsx`, `lib/actions/applications/status-actions.ts#moveApplicationToMainColumn` |
 | Kanban pipeline | Per-vacancy Kanban board with drag-and-drop stage moves. Shares the cross-vacancy board's visual design (`TintedKanbanColumn` + `CrossVacancyCard`) but shows the vacancy's **custom** `pipeline_stages` as columns (each bucket-mapped to a canonical code for its tint/spine). Stages cloned from the Main pipeline show an "inherited" badge in the vacancy's Settings tab. | `app/(dashboard)/vacancies/[id]/pipeline/page.tsx`, `components/pipeline/vacancy-pipeline-board.tsx` |
 | Public page toggle | `show_on_public_page` flag; generates `application_form_token` if not yet set | `lib/actions/vacancies.ts` |
-| LinkedIn share | 🔄 Share single vacancy to LinkedIn profile (deep-link) | `components/vacancies/linkedin-share-button.tsx` |
-| 🆕 LinkedIn post-as-page | Post a vacancy to the org's connected LinkedIn company page | `components/vacancies/linkedin-post-job-button.tsx`, `app/api/integrations/linkedin/save/route.ts` |
+| LinkedIn share | ⏪ Feed-post deep-link — removed from the vacancy page 2026-05-21 (47da7c0); the component is unused | `components/vacancies/linkedin-share-button.tsx` |
+| 🆕 LinkedIn Jobs | "Post to LinkedIn Jobs" in the vacancy Overview → Share box when the org's company page is connected (owner/admin, Settings → Integrations): a dialog with the title, the description (headings in the org's content language) and the apply link to paste into LinkedIn's free job form, plus a link to that form | `components/vacancies/linkedin-post-job-button.tsx`, `components/vacancies/detail/overview-tab.tsx`, `app/api/integrations/linkedin/save/route.ts` |
 | Vacancy questions | Add custom scoring/text questions per vacancy for evaluations | `components/vacancies/vacancy-questions.tsx` |
 | CSV export | Download all applications for a vacancy as CSV | `app/api/export/applications/route.ts` |
 | Auto-expiry cron | Daily cron calls `expire_past_vacancies()` Supabase RPC to close past vacancies | `app/api/cron/expire-vacancies/route.ts`, `vercel.json` |
@@ -76,7 +78,7 @@ _Last updated: 2026-07-20_
 | Application row | Shows candidate info, status, actions per application | `components/vacancies/vacancy-application-row.tsx` |
 | 🆕 Status auto-emails | Per-org opt-in transactional emails when an application moves into Screening or Interview | `lib/actions/applications.ts#updateApplicationStatus`, `lib/applications-status-emails.ts` |
 | 🆕 Bulk move-to-stage | Vacancy applications toolbar "Move to stage ▾" dropdown lets recruiters move multiple selected applications to a chosen status at once; 50-row cap; skips rows already at the target | `components/vacancies/bulk-move-dialog.tsx`, `components/vacancies/vacancy-applications-list.tsx`, `lib/actions/applications.ts#moveApplicationsBatch`, `lib/applications/batch.ts` |
-| 🆕 Scorecard sharing | Token-gated public page at `/scorecard/<token>` lets owners/admins share a candidate's evaluation answers + scores with a non-HRHandle stakeholder; lazy token generation; revocable; stable first-sharer attribution across revoke/re-share; hides contact info / status / notes / AI / offer details / audit | `app/scorecard/[token]/page.tsx`, `components/scorecards/share-scorecard-dialog.tsx`, `components/scorecards/share-scorecard-button.tsx`, `lib/actions/scorecards.ts`, `lib/scorecards/projection.ts` |
+| 🆕 Assessment sharing | Owners/admins share one submitted assessment (Share on its record in the profile's Assessments) via a token-gated public page at `/scorecard/<token>`, rendered in the org's content language: candidate, vacancy, company, assessor + date, average /5, criteria ratings, answers, recommendation + reason; lazy token generation; revocable; stable first-sharer attribution across revoke/re-share; hides contact info / stage / notes / AI / offer details / audit. Records with a live link show "Shared" | `app/scorecard/[token]/page.tsx`, `components/scorecards/share-scorecard-dialog.tsx`, `components/candidates/profile/assessment-record.tsx`, `lib/actions/scorecards.ts`, `lib/scorecards/projection.ts` |
 | 🆕 Saved filter views | Per-user, per-list-kind saved filter combinations on the candidates and vacancies list pages; loaded from a dropdown; inline Update / Rename / Delete on the active view; "Modified" badge when filters diverge | `components/saved-views/saved-views-menu.tsx`, `lib/actions/saved-views.ts`, `lib/saved-views/filter-encoding.ts`, `lib/saved-views/list-kinds.ts` |
 
 ## Offers
@@ -116,7 +118,7 @@ _Last updated: 2026-07-20_
 | 🆕 Status page | Token-gated `/status/<token>` showing abstracted Applied/In review/Interview/Decision/Closed bucket, role, employer, applied date, last update; robots-noindex | `app/status/[token]/page.tsx`, `components/status/status-stepper.tsx`, `lib/application-status-bucket.ts` |
 | 🆕 Tracking-link CTA | Confirmation email includes a "Track your application" button pointing at the candidate's status URL | `lib/email.ts#sendApplicationConfirmationEmail` |
 | 🆕 Status-change auto-emails | Per-org opt-in transactional emails on Screening / Interview transitions, all linking back to the status page | `lib/actions/applications.ts#updateApplicationStatus`, `lib/applications-status-emails.ts` |
-| 🆕 Candidate self-withdraw | Withdraw button on non-terminal applications; confirm dialog with optional reason; cancels any active offer; notifies recruiter owners + admins | `components/status/withdraw-button.tsx`, `lib/actions/applications.ts#withdrawApplicationByToken` |
+| 🆕 Candidate self-withdraw | Withdraw button on non-terminal applications; confirm dialog with optional reason; cancels any active offer; notifies owners + admins with the candidate's name, vacancy and reason; the reason is kept in the audit log and shown in the activity feed | `components/status/withdraw-button.tsx`, `lib/actions/applications/lifecycle-actions.ts#withdrawApplicationByToken`, `lib/applications/withdrawal.ts` |
 
 ## Interviews
 
@@ -178,14 +180,15 @@ _Last updated: 2026-07-20_
 
 ## Guides
 
-Public feature walkthroughs with annotated screenshots, served from a static-cacheable Next.js route. Linked from the dashboard header (opens in a new tab) and shared with prospects.
+Public feature walkthroughs with annotated screenshots, in English, Georgian and Russian. Shown in the reader's language (the `NEXT_LOCALE` cookie — a signed-in user's UI language) with a language switcher. Linked from the dashboard header (opens in a new tab) and shared with prospects. Rewritten from scratch in 2026-10: all 26 topics (`lib/guides/registry.ts`) written in the three languages, with screenshots in each.
 
 | Feature | Description | Files |
 |---------|-------------|-------|
-| Guide index | Lists every guide grouped by category plus a short FAQ | `app/guide/page.tsx`, `lib/guides/registry.ts` |
-| Guide page | MDX-rendered article with sidebar nav and annotated screenshots | `app/guide/[slug]/page.tsx`, `components/guide/guide-shell.tsx`, `components/guide/guide-sidebar.tsx`, `components/guide/mdx-components.tsx` |
-| Guide registry | Single source of truth for slug, title, summary, category, order; index page shows "Coming soon" for entries with no MDX yet | `lib/guides/registry.ts` |
-| Guide loader | Reads MDX file + frontmatter from `content/guides/*.mdx` | `lib/guides/loader.ts` |
+| Guide index | Every topic grouped by category, plus an FAQ; topics without content show "Coming soon" | `app/guide/page.tsx`, `components/guide/guide-card.tsx` |
+| Guide page | MDX article with sidebar nav and annotated screenshots; falls back to English (with a note) if a translation is missing; renamed topics' old URLs redirect | `app/guide/[slug]/page.tsx`, `components/guide/guide-shell.tsx`, `components/guide/guide-sidebar.tsx`, `components/guide/mdx-components.tsx`, `components/guide/screenshot.tsx` |
+| Guide registry | Topic slug, category and order, renamed-topic redirects, FAQ keys. Titles, summaries, categories and FAQ text are translated in `messages/source.json` (`guide.*`) | `lib/guides/registry.ts` |
+| Guide content | One MDX file per topic and language: `content/guides/{en,ka,ru}/<slug>.mdx` (English is the source). `<Screenshot name="…">` loads `public/guide/screenshots/<locale>/<name>.webp` | `lib/guides/loader.ts`, `content/guides/` |
 | Dashboard Help link | Top-right link in the dashboard header, opens `/guide` in a new tab | `components/dashboard/help-link.tsx`, `components/dashboard/header.tsx` |
-| Screenshot capture | Playwright script that logs into staging, navigates to each page, injects annotation overlays, saves PNGs to `public/guide/screenshots/` | `scripts/capture-screenshots.ts`, `scripts/screenshot-config.ts` |
-| Demo data seed | Idempotent script that creates a demo org (Acme Corporation), two demo users, and seeded vacancies on staging Supabase | `scripts/seed-demo-org.ts` |
+| Screenshot capture | Playwright flows click through the real UI in EN, KA and RU at the same time, add numbered markers, and save WebP shots + their sizes | `scripts/capture-screenshots.ts`, `scripts/screenshot-config.ts` |
+| Demo data seed | Three fictional companies on staging — one per language, with native names, vacancies and candidates — created through the real sign-up code | `scripts/seed-guide-demo.ts`, `scripts/guide-demo-data.ts` |
+| Screenshot flows | One Playwright flow per topic, run in all three languages at once | `scripts/guide-flows/`, `scripts/screenshot-config.ts`, `scripts/capture-screenshots.ts` |

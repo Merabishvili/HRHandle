@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch'
 import { RejectionTemplatesManager } from '@/components/settings/rejection-templates-manager'
 import type { RejectionTemplate } from '@/lib/actions/rejection-templates'
 import type { RejectionReason } from '@/lib/actions/rejection-reasons'
+import { fillPreview, previewSamples } from '@/lib/email-preview'
 
 // Labels/descriptions/preview headings are looked up by i18n key at render;
 // variables are template tokens (locale-independent) and stay literal.
@@ -115,22 +116,9 @@ function TemplateEditor({
     })
   }
 
-  const previewSubject = subject
-    .replace('{{candidate_name}}', 'Jane Smith')
-    .replace('{{role}}', 'Senior Developer')
-    .replace('{{company}}', 'Acme Corp')
-
-  const previewBody = body
-    .replace('{{candidate_name}}', 'Jane Smith')
-    .replace('{{role}}', 'Senior Developer')
-    .replace('{{company}}', 'Acme Corp')
-    .replace('{{interview_date}}', 'Monday, May 5, 2025')
-    .replace('{{interview_time}}', '2:00 PM')
-    .replace('{{meeting_link}}', 'https://meet.google.com/abc-xyz')
-    .replace('{{interviewer_name}}', 'Taylor Brooks')
-    .replace('{{interviewer_email}}', 'taylor@acme.com')
-    .replace('{{sender_name}}', 'Taylor Brooks')
-    .replace('{{sender_email}}', 'taylor@acme.com')
+  const samples = previewSamples(t)
+  const previewSubject = fillPreview(subject, samples)
+  const previewBody = fillPreview(body, samples)
 
   return (
     <div className="space-y-6">
@@ -223,12 +211,12 @@ function TemplateEditor({
               <p className="font-semibold text-gray-900">
                 {t(meta.previewKey)}
               </p>
-              <p>{t.rich('emailTpl.previewDear', { name: 'Jane Smith', b: (c) => <strong>{c}</strong> })}</p>
+              <p>{t.rich('emailTpl.previewDear', { name: samples['{{candidate_name}}']!, b: (c) => <strong>{c}</strong> })}</p>
               <p>{previewBody}</p>
               {type === 'interview_invitation' && (
                 <div className="rounded bg-white border border-border p-2 text-xs space-y-1">
-                  <div><span className="text-gray-500">{t('emailTpl.pvDate')}</span> <strong>Monday, May 5, 2025</strong></div>
-                  <div><span className="text-gray-500">{t('emailTpl.pvTime')}</span> <strong>2:00 PM</strong></div>
+                  <div><span className="text-gray-500">{t('emailTpl.pvDate')}</span> <strong>{samples['{{interview_date}}']}</strong></div>
+                  <div><span className="text-gray-500">{t('emailTpl.pvTime')}</span> <strong>{samples['{{interview_time}}']}</strong></div>
                   <div><span className="text-gray-500">{t('emailTpl.pvDuration')}</span> {t('emailTpl.pvDurationValue')}</div>
                   <div><span className="text-gray-500">{t('emailTpl.pvFormat')}</span> {t('emailTpl.pvFormatValue')}</div>
                 </div>

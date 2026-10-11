@@ -157,7 +157,7 @@
     "toastSavedDraft": "Vacancy saved as draft.",
     "noSector": "No sector",
     "datesSubtitle": "Vacancy timeline and salary range.",
-    "salaryHint": "Optional. Shown to candidates and used for salary-fit filtering.",
+    "salaryHint": "Optional. Only your team sees the salary range — it isn't shown to candidates.",
     "detailsSubtitle": "Shown on the public jobs page and included when sharing on LinkedIn.",
     "interviewScorecard": "Interview scorecard",
     "suggestFromJd": "Suggest from JD",
@@ -741,13 +741,14 @@
     "emptyHires": "No hires in this period yet. Try a wider range.",
     "median": "Median",
     "p25p75": "25th–75th",
+    "daysValue": "{n}d",
+    "source": "Source",
     "mean": "Mean",
     "vacancy": "Vacancy",
     "sourceEffectiveness": "Source effectiveness",
     "overallConversion": "Overall conversion",
     "sourcesWhereHires": "Sources · where hires come from",
     "appliedHiredRow": "{applied} applied · {hires} hired",
-    "source": "Source",
     "stage": {
       "applied": "Applied",
       "screening": "Screening",
@@ -767,7 +768,7 @@
     },
     "typeDesc": {
       "standard": "Move & notes only",
-      "review": "Scorecard only — no scheduling",
+      "review": "Screening checks — no scheduling",
       "interview": "Schedule interview · add scorecard · feedback",
       "offer": "Create & track offer"
     },
@@ -855,8 +856,10 @@
       "title": "Offer declined: {name}"
     },
     "applicationWithdrawn": {
-      "title": "A candidate withdrew their application"
-    }
+      "title": "A candidate withdrew their application",
+      "titleNamed": "{name} withdrew their application"
+    },
+    "withdrawnReason": "Reason: {reason}"
   },
   "source": {
     "publicForm": "Public Form",
@@ -1009,6 +1012,7 @@
     "offerSavedDraft": "Offer saved as draft.",
     "createOffer": "Create offer",
     "createOfferHint": "Sends the candidate an accept/decline link. Compensation and dates are optional.",
+    "offerAdminsOnly": "Only the owner and admins can create and send offers. Ask one of them to send this candidate an offer.",
     "compensation": "Compensation",
     "compensationPlaceholder": "e.g. 95000",
     "currency": "Currency",
@@ -1016,6 +1020,8 @@
     "respondByDate": "Respond-by date",
     "offerDetails": "Offer details",
     "offerDetailsPlaceholder": "Benefits, equity, signing bonus, vacation, remote/hybrid, reporting line — anything the candidate needs to know. Line breaks are preserved.",
+    "personalNote": "Personal note to the candidate (optional)",
+    "personalNotePlaceholder": "e.g. It was a pleasure to meet you — we hope you’ll join us!",
     "saveDraft": "Save draft",
     "saveSend": "Save & send",
     "defaultState": "Application is in the <stage>{name}</stage> stage. Use the right-rail actions to advance, schedule, or close it."
@@ -1210,7 +1216,7 @@
     },
     "interviewInvitation": {
       "label": "Interview invitation",
-      "desc": "Sent to a candidate when an interview is scheduled with \"Send email\" checked.",
+      "desc": "Sent to a candidate when an interview is scheduled with \"Email candidate\" ticked.",
       "preview": "Interview invitation"
     },
     "statusScreening": {
@@ -1253,7 +1259,16 @@
     "pvDurationValue": "60 minutes",
     "pvFormat": "Format:",
     "pvFormatValue": "Video Call",
-    "sentVia": "Sent via HRHandle"
+    "sentVia": "Sent via HRHandle",
+    "sample": {
+      "candidateName": "Jane Smith",
+      "role": "Senior Developer",
+      "company": "Acme Corp",
+      "interviewDate": "Monday, May 5",
+      "interviewTime": "2:00 PM",
+      "interviewerName": "Taylor Brooks",
+      "interviewerEmail": "taylor@acme.com"
+    }
   },
   "rejectTpl": {
     "templateName": "Template name",
@@ -1382,6 +1397,7 @@
     "draftDeleted": "Draft deleted.",
     "copyFailed": "Could not copy link.",
     "previousOffers": "Previous offers ({count})",
+    "declineReasonShown": "Candidate’s reason: “{reason}”",
     "withdrawTitle": "Withdraw this offer?",
     "withdrawDesc": "The candidate's offer page will show that the offer has been withdrawn. You can create a new offer afterwards if you want to revise.",
     "withdrawing": "Withdrawing…",
@@ -1542,9 +1558,19 @@
     "nameLabel": "Name (e.g., #hiring)",
     "urlLabel": "Webhook URL",
     "slackHint": "Slack → Apps → Incoming Webhooks → Add to Slack → choose channel → copy the URL.",
-    "teamsHint": "Teams channel → ⋯ → Connectors → Incoming Webhook → Configure → copy the URL.",
+    "teamsHint": "Teams channel → ⋯ → Workflows → “Post to a channel when a webhook request is received” → finish the steps → copy the URL.",
     "events": "Events",
-    "saveWebhook": "Save webhook"
+    "saveWebhook": "Save webhook",
+    "event": {
+      "application_received": "New application",
+      "application_hired": "Candidate hired",
+      "application_rejected": "Candidate rejected",
+      "application_withdrawn": "Candidate withdrew",
+      "offer_sent": "Offer sent",
+      "offer_accepted": "Offer accepted",
+      "offer_declined": "Offer declined",
+      "interview_scheduled": "Interview scheduled"
+    }
   },
   "aiJd": {
     "headerTitle": "AI assist — suggest job description sections",
@@ -1687,7 +1713,9 @@
     "recordTitle": "Assessments",
     "criteriaHeading": "Criteria",
     "answersHeading": "Answers",
-    "criteriaCountLabel": "{count, plural, one {# criterion} other {# criteria}}"
+    "criteriaCountLabel": "{count, plural, one {# criterion} other {# criteria}}",
+    "share": "Share",
+    "shared": "Shared"
   },
   "support": {
     "title": "Contact support",
@@ -1818,11 +1846,15 @@
     "recruiter": "Recruiter",
     "share": "Share",
     "offerAwaiting": "{name}'s offer awaiting reply <b>{count, plural, one {# day} other {# days}}</b>",
-    "followUp": "Follow up →",
+    "followUp": "Follow up",
+    "offerNotSent": "{name} is at the offer stage — <b>no offer sent yet</b>",
+    "offerDraft": "{name}’s offer is <b>still a draft</b>",
+    "createOffer": "Create offer",
+    "sendOffer": "Send offer",
     "interviewWith": "Interview with {name} <b>{time}</b> — add scorecard after",
-    "view": "View →",
+    "view": "View",
     "newApplicants": "<b>{count, plural, one {# new applicant} other {# new applicants}}</b> to review",
-    "review": "Review →"
+    "review": "Review"
   },
   "vacDetail": {
     "scorecardIntro": "How your team evaluates candidates in interviews — none of this is shown to candidates. (Questions candidates answer when applying live on the <b>Apply form</b> tab.)",
@@ -1901,6 +1933,7 @@
     "disconnectTitle": "Disconnect LinkedIn?",
     "disconnectDesc": "You won't be able to post jobs directly to LinkedIn from this workspace until you reconnect. Existing posts on LinkedIn remain unchanged.",
     "pageIdPlaceholder": "e.g. 12345678",
+    "adminsOnly": "Owners and admins connect the company page.",
     "findItAt": "Find it at: linkedin.com/company/<b>ID</b>/admin/"
   },
   "zoomConnect": {
@@ -1945,9 +1978,7 @@
     "subtitle": "Per-user preferences. Choose how you hear about each event.",
     "eventCol": "Event",
     "inApp": "In-app",
-    "slackColHint": "Connect a Slack webhook in Settings → Integrations to enable this column",
     "mentionsAlwaysOn": "In-app @mentions are always on",
-    "connectSlack": "Connect Slack in Settings → Integrations",
     "cellAria": "{title} — {channel}",
     "emailDelivery": "Email delivery",
     "emailDeliveryDesc": "Slack channel set in Settings → Integrations. In-app notifications always on for @mentions.",
@@ -1956,6 +1987,8 @@
     "dailyDigest": "Daily digest",
     "dailyDesc": "One summary email each morning",
     "savePrefs": "Save preferences",
+    "channelsHint": "What your team’s Slack or Microsoft Teams channel receives is set for the whole organization by the owner and admins.",
+    "channelsHintAdmin": "What your team’s Slack or Microsoft Teams channel receives is set for the whole organization in <link>Slack & Microsoft Teams notifications</link>.",
     "event": {
       "new_applicant": {
         "title": "New application",
@@ -2047,7 +2080,7 @@
     "typeStandard": "Standard",
     "typeStandardDesc": "Plain pipeline stage with no special tooling.",
     "typeReview": "Review",
-    "typeReviewDesc": "Lightweight screening — Yes/No advance with a one-line reason.",
+    "typeReviewDesc": "Screening checks — the candidate’s answers to the screening questions, with failed knockout questions flagged.",
     "typeInterview": "Interview",
     "typeInterviewDesc": "Inherits the full Interview toolkit — schedule + scorecard + feedback.",
     "typeOffer": "Offer",
@@ -2105,6 +2138,8 @@
     "trialRemaining": "Trial period: {count, plural, one {# day remaining} other {# days remaining}}",
     "trialAfter": "After the free trial, the account should move to Professional if a payment method is linked.",
     "renewNote": "Subscriptions renew automatically. Cancel anytime — you keep access until the end of your paid period. See our <refund>Refund Policy</refund> and <terms>Terms</terms>.",
+    "cancelledNote": "Auto-renewal is off — you won't be charged again. You can request a refund within {days} days of a payment; approved refunds are sent within {payout} business days, minus payment processing fees. See our <refund>Refund Policy</refund> and <terms>Terms</terms>.",
+    "refundedNote": "Your last payment was refunded. We send approved refunds within {payout} business days, minus payment processing fees; your bank may need a few more days to show it. See our <refund>Refund Policy</refund>.",
     "unlockCapacity": "Unlock more capacity",
     "upgradeDesc": "Upgrade to Individual or Organization to manage more vacancies and candidates.",
     "upgradeNow": "Upgrade now"
@@ -2181,8 +2216,8 @@
   "shareScorecard": {
     "revokeConfirm": "Revoke this share link? The current URL will stop working immediately. You can generate a new link afterwards.",
     "revoked": "Share link revoked.",
-    "title": "Share scorecard",
-    "desc": "Share <b>{name}</b>'s evaluation for <b>{title}</b> with someone who isn't in HRHandle. They see only the answers and scores — no recruiter notes, no contact details, no pipeline status.",
+    "title": "Share assessment",
+    "desc": "Share this assessment with someone who isn't in HRHandle: <b>{name}</b> for <b>{title}</b>, by {assessor}. They see the scores, answers and recommendation — no notes, contact details or pipeline status.",
     "checking": "Checking share status…",
     "shareLink": "Share link",
     "firstSharedByOn": "First shared by {name} on {date}.",
@@ -2191,7 +2226,10 @@
     "revokeLink": "Revoke link",
     "noLinkYet": "No share link yet. Click below to generate one — you can revoke it at any time.",
     "prevRevoked": "Previous link revoked on {date}. Generating a new link below produces a different URL.",
-    "generateLink": "Generate link"
+    "generateLink": "Generate link",
+    "errForbidden": "Only owners and admins can share assessments.",
+    "errNotFound": "This assessment is no longer available.",
+    "errFailed": "Something went wrong. Try again."
   },
   "rail": {
     "advanceFailed": "Failed to advance — try again.",
@@ -2550,6 +2588,9 @@
     "button": "Calendly link",
     "title": "Calendly scheduling link",
     "desc": "Send this to the candidate. When they book, HRHandle will create the interview record automatically.",
+    "errNotSetUp": "Calendly isn't set up yet. An owner or admin connects it and picks an event type in Settings → Integrations.",
+    "errEventGone": "The chosen Calendly event type no longer exists. An owner or admin picks a new one in Settings → Integrations.",
+    "errCalendly": "Couldn't get the link from Calendly. Try again, or ask an owner or admin to reconnect Calendly.",
     "generating": "Generating link…"
   },
   "calPicker": {
@@ -2584,7 +2625,154 @@
   "guide": {
     "shellTitle": "HRHandle Guides",
     "backToHome": "Back to home",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "indexTitle": "Guides",
+    "indexIntro": "Step-by-step walkthroughs of every HRHandle feature. Use them to set up your organization, onboard your team or try a feature for the first time.",
+    "metaDescription": "Step-by-step guides to HRHandle: vacancies, candidates, the pipeline, interviews, offers, AI features and more.",
+    "eyebrow": "Guide",
+    "notTranslated": "This guide isn't available in your language yet, so it's shown in English.",
+    "faqTitle": "Frequently asked questions",
+    "category": {
+      "gettingStarted": "Getting started",
+      "vacancies": "Vacancies",
+      "candidates": "Candidates",
+      "hiring": "Hiring",
+      "communication": "Candidate communication",
+      "aiAndReports": "AI and reports",
+      "administration": "Administration"
+    },
+    "topic": {
+      "signUp": {
+        "title": "Sign up and create your organization",
+        "summary": "Create your account and organization and start the 7-day free trial."
+      },
+      "navigation": {
+        "title": "Find your way around",
+        "summary": "The sidebar, the Pipeline home screen, search, notifications and the interface language."
+      },
+      "profileSecurity": {
+        "title": "Your profile and security",
+        "summary": "Your name, photo and language, password, two-factor authentication and active sessions."
+      },
+      "organization": {
+        "title": "Organization settings",
+        "summary": "Company name, logo, jobs page address, content languages and security rules for your team."
+      },
+      "team": {
+        "title": "Team and roles",
+        "summary": "Invite teammates and decide what the owner, admins and members can do."
+      },
+      "createVacancy": {
+        "title": "Create a vacancy",
+        "summary": "Create a job opening in five steps, with AI help for the description and the scorecard."
+      },
+      "vacancyPage": {
+        "title": "The vacancy page",
+        "summary": "Applications, job description, scorecard, application form and settings of a vacancy."
+      },
+      "shareVacancy": {
+        "title": "Share a vacancy",
+        "summary": "Share a vacancy through its apply link, your public jobs page and LinkedIn."
+      },
+      "addCandidates": {
+        "title": "Add a candidate",
+        "summary": "Add a candidate by uploading a CV (AI fills in the details) or by hand."
+      },
+      "importCandidates": {
+        "title": "Import candidates from Excel or CSV",
+        "summary": "Bring in many candidates at once from a spreadsheet."
+      },
+      "candidateProfile": {
+        "title": "The candidate profile",
+        "summary": "Contact details, experience, documents, notes, activity and applications in one place."
+      },
+      "search": {
+        "title": "Search and filters",
+        "summary": "Find any candidate, vacancy or note quickly, and narrow down long lists."
+      },
+      "pipeline": {
+        "title": "The pipeline",
+        "summary": "Move candidates through the hiring stages on a board, and customize the stages."
+      },
+      "assessments": {
+        "title": "Assessments and scorecards",
+        "summary": "Rate candidates against the vacancy's criteria, on your own or with colleagues."
+      },
+      "reject": {
+        "title": "Reject candidates",
+        "summary": "Reject one or several candidates with a reason and an optional email."
+      },
+      "interviews": {
+        "title": "Schedule interviews",
+        "summary": "Book interviews with Google Meet, Zoom or Teams links, or let candidates book a time through Calendly."
+      },
+      "offers": {
+        "title": "Offers",
+        "summary": "Create and send job offers, and see when a candidate accepts or declines."
+      },
+      "candidateExperience": {
+        "title": "What candidates see",
+        "summary": "The application form, emails, status page and offer page from the candidate's side."
+      },
+      "emailTemplates": {
+        "title": "Email templates",
+        "summary": "Edit the emails candidates receive and turn on automatic status updates."
+      },
+      "notifications": {
+        "title": "Notifications, Slack and Teams",
+        "summary": "In-app notifications, @mentions, and alerts in your Slack or Microsoft Teams channels."
+      },
+      "ai": {
+        "title": "AI features",
+        "summary": "How AI helps with CVs, job descriptions, scorecards and fit analysis, and how you stay in control."
+      },
+      "reports": {
+        "title": "Reports",
+        "summary": "Pipeline conversion, candidate sources and time to hire."
+      },
+      "integrations": {
+        "title": "Integrations",
+        "summary": "Connect Google, Microsoft, Zoom, Calendly, LinkedIn, Slack and Teams."
+      },
+      "customFields": {
+        "title": "Custom fields",
+        "summary": "Add your own fields to vacancies and candidates."
+      },
+      "auditTrash": {
+        "title": "Audit log and trash",
+        "summary": "See who changed what, and restore deleted candidates and vacancies."
+      },
+      "billing": {
+        "title": "Plans and billing",
+        "summary": "Plans and limits, upgrading, auto-renewal, cancelling and refunds."
+      }
+    },
+    "faq": {
+      "trial": {
+        "q": "Is there a free trial?",
+        "a": "Yes. Every new organization gets a 7-day free trial with full access. No payment card is needed to start."
+      },
+      "languages": {
+        "q": "Which languages does HRHandle support?",
+        "a": "The interface is available in English, Georgian and Russian, and each person chooses their own language in Settings → Profile. Candidates see your application forms, emails and job pages in your organization's content language."
+      },
+      "cv": {
+        "q": "Which CV formats can I upload?",
+        "a": "PDF and Word files up to 10 MB. HRHandle reads the CV with AI and fills in the candidate's details for you to check."
+      },
+      "export": {
+        "q": "Can I export my data?",
+        "a": "Yes. The Candidates page has an Export CSV button that downloads all your candidates as a spreadsheet file. Owners and admins can also export the audit log."
+      },
+      "calendar": {
+        "q": "Which calendar and video tools work with HRHandle?",
+        "a": "Google Calendar with Google Meet, Microsoft 365 with Teams, and Zoom. With Calendly, candidates can book an interview time themselves. Connect them in Settings → Integrations."
+      },
+      "support": {
+        "q": "How do I contact support?",
+        "a": "In the app, open Support in the sidebar and send us a message. You can also use the form at hrhandle.com/support or write to support@hrhandle.com."
+      }
+    }
   },
   "layout": {
     "skipToMain": "Skip to main content"
@@ -2661,15 +2849,16 @@
       "offer_declined": "Offer declined by candidate",
       "offer_sent": "Offer sent to candidate",
       "offer_withdrawn": "Offer withdrawn",
-      "scorecard_revoked": "Scorecard share link revoked",
-      "scorecard_shared": "Scorecard share link generated",
+      "scorecard_revoked": "Assessment share link revoked",
+      "scorecard_shared": "Assessment share link created",
       "vacancy_hard_deleted": "Vacancy permanently deleted from trash",
       "vacancy_restored": "Vacancy restored",
       "webhook_notification_created": "Webhook added",
       "webhook_notification_deleted": "Webhook deleted",
       "webhook_notification_dispatched": "Webhook dispatched",
       "webhook_notification_updated": "Webhook subscriptions updated"
-    }
+    },
+    "withdrawnWithReason": "Application withdrawn by candidate: “{reason}”"
   },
   "rejectReason": {
     "general": "General"
@@ -2771,7 +2960,7 @@
     "desc": "You're about to withdraw your application for {role} at {company}. The recruiter will be notified and this cannot be undone from this page.",
     "reasonLabel": "Reason (optional)",
     "reasonPlaceholder": "e.g. Took a different role. Timing isn't right.",
-    "reasonHelp": "Only the recruiter who hired for this role sees this message.",
+    "reasonHelp": "Only the company's hiring team sees this message.",
     "confirm": "Confirm withdraw",
     "withdrawing": "Withdrawing…"
   },
@@ -2972,5 +3161,98 @@
     "currencyUpdateFailed": "Could not update the billing currency.",
     "noSubscription": "No active subscription to cancel.",
     "cancelFailed": "Could not cancel with the payment provider. Please contact support."
+  },
+  "legal": {
+    "back": "← Back to HRHandle",
+    "lastUpdated": "Last updated: {date}",
+    "title": {
+      "terms": "Terms and Conditions",
+      "privacy": "Privacy Policy",
+      "refund": "Refund Policy"
+    },
+    "englishPrevails": "This is the original English version."
+  },
+  "scorecardPage": {
+    "eyebrow": "Candidate assessment",
+    "forRoleAt": "for <b>{role}</b> at <b>{org}</b>",
+    "sharedBy": "Shared by {name} · {date}",
+    "candidate": "Candidate",
+    "role": "Role",
+    "employer": "Employer",
+    "average": "Average score",
+    "assessor": "Assessed by",
+    "unknownAssessor": "A team member",
+    "empty": "No scores or answers were filled in.",
+    "footer": "This page shows one assessment only. It doesn't include contact details, notes or pipeline status."
+  },
+  "auditAction": {
+    "ai_assist": "AI assist",
+    "ai_fit_invoked": "AI fit analysis",
+    "application_withdrawn": "Application withdrawn",
+    "billing_checkout_started": "Checkout started",
+    "billing_refunded": "Refund",
+    "billing_subscription_canceled": "Auto-renewal canceled",
+    "calendly_connected": "Calendly connected",
+    "calendly_disconnected": "Calendly disconnected",
+    "calendly_link_generated": "Calendly link",
+    "candidate_deleted": "Candidate deleted",
+    "candidate_hard_deleted": "Deleted permanently",
+    "candidate_merged": "Candidates merged",
+    "candidate_merge_split": "Merge undone",
+    "candidate_restored": "Candidate restored",
+    "candidates_imported": "Candidates imported",
+    "connected": "Integration connected",
+    "deletion_scheduled": "Deletion scheduled",
+    "disconnected": "Integration disconnected",
+    "interview_canceled": "Interview canceled",
+    "interview_scheduled": "Interview scheduled",
+    "mfa_admin_reset": "2FA reset",
+    "mfa_enrolled": "2FA turned on",
+    "mfa_policy_updated": "2FA policy changed",
+    "mfa_removed": "2FA turned off",
+    "offer_accepted": "Offer accepted",
+    "offer_created": "Offer drafted",
+    "offer_declined": "Offer declined",
+    "offer_sent": "Offer sent",
+    "offer_withdrawn": "Offer withdrawn",
+    "org_content_locale_updated": "Content language changed",
+    "scorecard_revoked": "Assessment link revoked",
+    "scorecard_shared": "Assessment shared",
+    "status_change_email_sent": "Status email sent",
+    "status_changed": "Stage changed",
+    "vacancy_hard_deleted": "Deleted permanently",
+    "vacancy_restored": "Vacancy restored",
+    "webhook_notification_created": "Channel added",
+    "webhook_notification_deleted": "Channel removed",
+    "webhook_notification_dispatched": "Channel message sent",
+    "webhook_notification_updated": "Channel updated"
+  },
+  "deletionPage": {
+    "title": "Account scheduled for deletion",
+    "descOrg": "Your organization {org} is scheduled for permanent deletion.",
+    "descGeneric": "This account has been scheduled for permanent deletion.",
+    "daysRemaining": "{count, plural, one {# day remaining} other {# days remaining}}",
+    "scheduledFor": "Permanent deletion is scheduled for {date}.",
+    "duringTitle": "What happens during this period",
+    "during1": "The pipeline and all settings are not accessible.",
+    "during2": "You can request an export of your data by email.",
+    "during3": "You can cancel the deletion by email if this was unintended.",
+    "during4": "Team members of the organization see this same page.",
+    "afterTitle": "After the grace period",
+    "afterBody": "All organization, account, candidate, document and application data is permanently and irreversibly deleted from our systems. See our <link>Privacy Policy</link> for details.",
+    "helpTitle": "Need to cancel or export?",
+    "helpBody": "Email <email>support@hrhandle.com</email> from the address on the account. We'll reply within two business days.",
+    "home": "Home"
+  },
+  "publicLink": {
+    "notFoundTitle": "Link no longer valid",
+    "goHome": "Go to HRHandle",
+    "statusGone": "This application status link is invalid or has expired. If you applied recently, use the link in the latest email from the recruiter, or contact the recruiter directly.",
+    "offerGone": "This offer link is invalid, has expired or has been withdrawn. If you think this is a mistake, contact the recruiter directly.",
+    "scorecardGone": "This assessment link is invalid or has been revoked. If you think this is a mistake, contact the person who sent it.",
+    "applyGoneTitle": "This job isn't open",
+    "applyGone": "This vacancy no longer accepts applications, or the link is wrong. Ask the company for a current link.",
+    "jobsGoneTitle": "Page not found",
+    "jobsGone": "We couldn't find this jobs page. Check the address, or ask the company for the current link."
   }
 }

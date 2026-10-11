@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  averageOfScores,
   projectScorecard,
   type ScorecardAnswer,
   type ScorecardQuestion,
@@ -132,5 +133,15 @@ describe('projectScorecard', () => {
     ]
     const view = projectScorecard({ overallScore: null, questions: [Q1, Q2], answers })
     expect(view.items.map((i) => i.questionId)).toEqual(['q2'])
+  })
+})
+
+describe('averageOfScores', () => {
+  it('averages the 1–5 scores to one decimal', () => {
+    expect(averageOfScores([{ score: 4 }, { score: 5 }, { score: 4 }])).toBe('4.3')
+  })
+
+  it('is null without scores', () => {
+    expect(averageOfScores([])).toBeNull()
   })
 })

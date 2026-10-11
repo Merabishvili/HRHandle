@@ -1,15 +1,19 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { Briefcase, Mail, Calendar } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SignOutLink } from '@/components/auth/sign-out-link'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 const GRACE_DAYS = 30
 
 export default async function AccountDeletionScheduledPage() {
+  const t = await getTranslations()
+  const dfLocale = dateFnsLocale(await getLocale())
   const supabase = await createClient()
   const {
     data: { user },
@@ -66,11 +70,11 @@ export default async function AccountDeletionScheduledPage() {
 
         <Card className="border-border">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Account scheduled for deletion</CardTitle>
+            <CardTitle className="text-2xl">{t('deletionPage.title')}</CardTitle>
             <CardDescription>
               {orgName
-                ? `Your organisation ${orgName} is scheduled for permanent deletion.`
-                : 'This account has been scheduled for permanent deletion.'}
+                ? t('deletionPage.descOrg', { org: orgName })
+                : t('deletionPage.descGeneric')}
             </CardDescription>
           </CardHeader>
 
@@ -79,55 +83,55 @@ export default async function AccountDeletionScheduledPage() {
               <div className="rounded-lg border border-border bg-muted/40 p-4">
                 <div className="flex items-center gap-2 text-foreground font-medium">
                   <Calendar className="h-4 w-4" />
-                  {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
+                  {t('deletionPage.daysRemaining', { count: daysRemaining })}
                 </div>
                 <p className="mt-1 text-muted-foreground">
-                  Permanent deletion is scheduled for{' '}
-                  {new Date(
-                    scheduledAt.getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000,
-                  ).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
+                  {t('deletionPage.scheduledFor', {
+                    date: formatShortDate(
+                      new Date(scheduledAt.getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000),
+                      dfLocale,
+                    ),
                   })}
-                  .
                 </p>
               </div>
             )}
 
             <div>
-              <h3 className="font-semibold text-foreground">What happens during this period</h3>
+              <h3 className="font-semibold text-foreground">{t('deletionPage.duringTitle')}</h3>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
-                <li>The pipeline and all settings are not accessible.</li>
-                <li>You can request an export of your data by email.</li>
-                <li>You can cancel the deletion by email if this was unintended.</li>
-                <li>Team members of the organization see this same page.</li>
+                <li>{t('deletionPage.during1')}</li>
+                <li>{t('deletionPage.during2')}</li>
+                <li>{t('deletionPage.during3')}</li>
+                <li>{t('deletionPage.during4')}</li>
               </ul>
             </div>
 
             <div>
-              <h3 className="font-semibold text-foreground">After the grace period</h3>
+              <h3 className="font-semibold text-foreground">{t('deletionPage.afterTitle')}</h3>
               <p className="mt-1 text-muted-foreground">
-                All organisation, account, candidate, document, and application data is
-                permanently and irreversibly deleted from our systems. See our{' '}
-                <Link href="/privacy" className="underline hover:text-foreground">
-                  Privacy Policy
-                </Link>{' '}
-                for details.
+                {t.rich('deletionPage.afterBody', {
+                  link: (c) => (
+                    <Link href="/privacy" className="underline hover:text-foreground">
+                      {c}
+                    </Link>
+                  ),
+                })}
               </p>
             </div>
 
             <div className="rounded-lg border border-border p-4">
               <div className="flex items-center gap-2 font-medium text-foreground">
                 <Mail className="h-4 w-4" />
-                Need to cancel or export?
+                {t('deletionPage.helpTitle')}
               </div>
               <p className="mt-1 text-muted-foreground">
-                Email{' '}
-                <a href="mailto:support@hrhandle.com" className="underline hover:text-foreground">
-                  support@hrhandle.com
-                </a>{' '}
-                from the address on the account. We&apos;ll respond within two business days.
+                {t.rich('deletionPage.helpBody', {
+                  email: (c) => (
+                    <a href="mailto:support@hrhandle.com" className="underline hover:text-foreground">
+                      {c}
+                    </a>
+                  ),
+                })}
               </p>
             </div>
 
@@ -135,16 +139,16 @@ export default async function AccountDeletionScheduledPage() {
               {user ? (
                 <SignOutLink className="w-full">
                   <Button variant="outline" className="w-full">
-                    Sign out
+                    {t('header.signOut')}
                   </Button>
                 </SignOutLink>
               ) : (
                 <Button asChild variant="outline" className="w-full">
-                  <Link href="/auth/login">Sign in</Link>
+                  <Link href="/auth/login">{t('auth.signIn')}</Link>
                 </Button>
               )}
               <Button asChild variant="ghost" className="w-full">
-                <Link href="/">Home</Link>
+                <Link href="/">{t('deletionPage.home')}</Link>
               </Button>
             </div>
           </CardContent>

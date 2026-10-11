@@ -75,8 +75,18 @@ export function renderNotification(t: Translate, n: NotificationForRender): Rend
       return { title: d.name ? t('notif.offerAccepted.title', { name: str(d.name) }) : n.title, body: null }
     case 'offer_declined':
       return { title: d.name ? t('notif.offerDeclined.title', { name: str(d.name) }) : n.title, body: null }
-    case 'application_withdrawn':
-      return { title: t('notif.applicationWithdrawn.title'), body: null }
+    case 'application_withdrawn': {
+      // Name + vacancy since 2026-10; older rows carry no data and keep the generic title.
+      // The body is the candidate's reason (their own words — never localized).
+      const lines = [
+        d.vacancy ? t('notif.forVacancy', { vacancy: str(d.vacancy) }) : null,
+        n.body ? t('notif.withdrawnReason', { reason: n.body }) : null,
+      ].filter(Boolean)
+      return {
+        title: d.name ? t('notif.applicationWithdrawn.titleNamed', { name: str(d.name) }) : t('notif.applicationWithdrawn.title'),
+        body: lines.length ? lines.join(' · ') : null,
+      }
+    }
     default:
       return { title: n.title, body: n.body ?? null }
   }

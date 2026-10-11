@@ -78,3 +78,21 @@ export function shouldRedirectToBilling(locked: boolean, pathname: string): bool
   if (!locked || !pathname) return false
   return !pathname.startsWith('/settings/billing') && !pathname.startsWith('/subscription')
 }
+
+/**
+ * Which footer note the billing page shows (decision 2026-10-09): refund
+ * information replaces the "renews automatically" note once the last payment
+ * was refunded, or auto-renewal is off.
+ */
+export function billingNoteKind(sub: {
+  plan_code: string
+  status: string
+  next_billing_at: string | null
+  last_payment_status: string | null
+}): 'refunded' | 'cancelled' | 'renew' {
+  if (sub.last_payment_status === 'reversed' || sub.last_payment_status === 'partially_reversed') {
+    return 'refunded'
+  }
+  if (sub.plan_code !== 'trial' && sub.status === 'active' && !sub.next_billing_at) return 'cancelled'
+  return 'renew'
+}

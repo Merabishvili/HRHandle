@@ -35,6 +35,7 @@ import {
   type VacancyOption,
 } from '@/lib/candidates/list-derivation'
 import type { CandidateStatusOption } from '@/lib/types/database'
+import { submittedAssessmentScores } from '@/lib/scorecards/fit-scores'
 
 type SearchParams = Promise<{
   vacancy?: string
@@ -220,15 +221,9 @@ export default async function CandidatesPage({
   // cards per application; stage/fit are then attributed to each candidate's
   // active (non-terminal, else first) application. See lib/candidates/list-derivation.
   const applicationIds = applications.map((a) => a.id)
-  let evalRows: EvaluationRow[] = []
-  if (applicationIds.length > 0) {
-    const { data } = await supabase
-      .from('candidate_evaluations')
-      .select('application_id, score')
-      .eq('submitted', true)
-      .in('application_id', applicationIds)
-    evalRows = (data ?? []) as EvaluationRow[]
-  }
+  // Service role (org-scoped): members can't read colleagues' assessments
+  // before submitting their own, but everyone sees the team's Fit average.
+  const evalRows: EvaluationRow[] = await submittedAssessmentScores(organizationId, applicationIds)
   const fitScoreByApplication = aggregateFitScores(evalRows)
   const { stageByCandidate, fitScoreByCandidate } = deriveStageAndFit(
     applicationsByCandidate,

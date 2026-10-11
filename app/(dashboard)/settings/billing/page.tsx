@@ -16,7 +16,9 @@ import {
   displaySubscriptionStatus,
   isSubscriptionLocked,
   RENEWAL_GRACE_DAYS,
+  billingNoteKind,
 } from '@/lib/billing/access'
+import { REFUND_PAYOUT_BUSINESS_DAYS, REFUND_REQUEST_DAYS } from '@/lib/legal/documents'
 
 interface ProfileRow {
   id: string
@@ -44,6 +46,7 @@ interface SubscriptionRow {
   current_period_end_at: string | null
   next_billing_at: string | null
   payment_method_linked: boolean
+  last_payment_status: string | null
   vacancy_limit: number
   candidate_limit: number
   member_limit: number
@@ -66,6 +69,14 @@ function getSubscriptionBadgeClass(status: SubscriptionRow['status']) {
       return 'bg-gray-100 text-gray-800'
   }
 }
+
+/** Footer note per billing state — refund info replaces the auto-renew note
+ * after a cancel or a refund (decision 2026-10-09). */
+const NOTE_KEY = {
+  renew: 'billing.renewNote',
+  cancelled: 'billing.cancelledNote',
+  refunded: 'billing.refundedNote',
+} as const
 
 function getPlanDisplayNameKey(planCode: 'trial' | 'individual' | 'organization') {
   return `planCards.name.${planCode}`
@@ -145,6 +156,7 @@ export default async function BillingSettingsPage({
       current_period_end_at,
       next_billing_at,
       payment_method_linked,
+      last_payment_status,
       vacancy_limit,
       candidate_limit,
       created_at,
@@ -304,7 +316,9 @@ export default async function BillingSettingsPage({
       </section>
 
       <p className="text-center text-xs text-muted-foreground">
-        {t.rich('billing.renewNote', {
+        {t.rich(NOTE_KEY[billingNoteKind(typedSubscription)], {
+          days: REFUND_REQUEST_DAYS,
+          payout: REFUND_PAYOUT_BUSINESS_DAYS,
           refund: (c) => <a href="/refund" className="underline">{c}</a>,
           terms: (c) => <a href="/terms" className="underline">{c}</a>,
         })}

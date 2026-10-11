@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  billingNoteKind,
   canViewBilling,
   displaySubscriptionStatus,
   isSubscriptionLocked,
@@ -107,5 +108,23 @@ describe('shouldRedirectToBilling', () => {
   })
   it('never redirects an unlocked org', () => {
     expect(shouldRedirectToBilling(false, '/pipeline')).toBe(false)
+  })
+})
+
+describe('billingNoteKind', () => {
+  const paid = { plan_code: 'individual', status: 'active', next_billing_at: iso(20), last_payment_status: 'approved' }
+
+  it('shows the auto-renew note for a renewing paid plan or a trial', () => {
+    expect(billingNoteKind(paid)).toBe('renew')
+    expect(billingNoteKind({ ...paid, plan_code: 'trial', status: 'trial', next_billing_at: null })).toBe('renew')
+  })
+  it('switches to refund info once auto-renew is off', () => {
+    expect(billingNoteKind({ ...paid, next_billing_at: null })).toBe('cancelled')
+  })
+  it('shows refund info after a full or partial refund (even back on the trial)', () => {
+    expect(billingNoteKind({ ...paid, last_payment_status: 'partially_reversed' })).toBe('refunded')
+    expect(
+      billingNoteKind({ plan_code: 'trial', status: 'trial', next_billing_at: null, last_payment_status: 'reversed' }),
+    ).toBe('refunded')
   })
 })

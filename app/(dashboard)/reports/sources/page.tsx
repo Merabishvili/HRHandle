@@ -22,6 +22,16 @@ const SOURCE_HUES = [
 
 type SearchParams = Promise<{ period?: string }>
 
+/** Source names in the interface language (the stored source types are English keys). */
+const SOURCE_NAME_KEY: Record<string, string> = {
+  public_form: 'reports.source.publicForm',
+  manual: 'reports.source.manual',
+  csv_import: 'reports.source.csv',
+  linkedin: 'reports.source.linkedin',
+  internal: 'reports.source.internal',
+  unknown: 'reports.source.unknown',
+}
+
 export default async function SourcesPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams
   const period = parsePeriod(sp.period)
@@ -32,7 +42,11 @@ export default async function SourcesPage({ searchParams }: { searchParams: Sear
     return <ReportEmpty message={t('reports.loadError')} />
   }
 
-  const { rows, totalApplications, totalHires } = report
+  const { totalApplications, totalHires } = report
+  const rows = report.rows.map((row) => ({
+    ...row,
+    label: SOURCE_NAME_KEY[row.key] ? t(SOURCE_NAME_KEY[row.key]!) : row.label,
+  }))
   const overallConversion = totalApplications === 0 ? null : totalHires / totalApplications
 
   return (

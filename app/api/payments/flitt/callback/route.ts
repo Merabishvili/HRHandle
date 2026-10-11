@@ -8,7 +8,10 @@ import {
   findParentOrderId,
   paymentIdOf,
   refundedSubscriptionUpdate,
+  refundHistoryCheck,
+  refundWindowStart,
 } from '@/lib/flitt/lifecycle'
+import { REFUND_LIMIT_MONTHS } from '@/lib/legal/documents'
 import { PRICING_PLANS } from '@/lib/types/subscription'
 import { writeAuditLog } from '@/lib/audit-log'
 
@@ -225,7 +228,50 @@ export async function POST(req: Request): Promise<NextResponse> {
         .update({ status: 'past_due', last_payment_status: cb.order_status, updated_at: nowIso })
         .eq('organization_id', order.organization_id)
       break
-    case 'refund':
+    case 'refund': {
+      // Refund history — "one refund per organization per REFUND_LIMIT_MONTHS"
+      // (Refund Policy §3). Refunds are issued by hand in the Flitt portal, so
+      // this can't block one; it records every refund (the operator checks the
+      // history before approving — docs/4-integrations/flitt.md) and alerts on
+      // a second one inside the window.
+      const { data: priorRows } = await admin
+        .from('activity_log')
+        .select('details')
+        .eq('organization_id', order.organization_id)
+        .eq('action', 'billing_refunded')
+        .gte('created_at', refundWindowStart(now, REFUND_LIMIT_MONTHS).toISOString())
+      const history = refundHistoryCheck(
+        (priorRows ?? []).map((r) => (r.details ?? {}) as { orderId?: unknown }),
+        cb.order_id,
+      )
+      if (history.repeat && !history.alreadyRecorded) {
+        Sentry.captureMessage('[flitt/callback] second refund within the refund-limit window', {
+          level: 'error',
+          tags: { feature: 'flitt_callback' },
+          extra: { order_id: cb.order_id, organization_id: order.organization_id, months: REFUND_LIMIT_MONTHS },
+        })
+      }
+      const reversalMinor = Number(cb.reversal_amount ?? 0) || null
+      const recordRefund = (message: string, extra: Record<string, unknown>) => {
+        if (history.alreadyRecorded) return // a resent callback — already in the history
+        void writeAuditLog({
+          orgId: order.organization_id,
+          userId: null,
+          entityType: 'organization',
+          entityId: order.organization_id,
+          action: 'billing_refunded',
+          message,
+          details: {
+            orderId: cb.order_id,
+            full: decision.full,
+            reversalMinor,
+            currency: order.currency,
+            repeatWithinWindow: history.repeat,
+            ...extra,
+          },
+        })
+      }
+
       if (decision.full) {
         // Full refund → the paid plan ends now (decision 2026-10-09): stop the
         // recurring at Flitt so the card isn't charged again, then either back
@@ -240,19 +286,10 @@ export async function POST(req: Request): Promise<NextResponse> {
           .update(refunded.update)
           .eq('organization_id', order.organization_id)
         const outcomeText = refunded.outcome === 'trial' ? 'back to trial' : 'plan ended'
-        void writeAuditLog({
-          orgId: order.organization_id,
-          userId: null,
-          entityType: 'organization',
-          entityId: order.organization_id,
-          action: 'billing_refunded',
-          message: `Payment fully refunded — ${outcomeText}`,
-          details: {
-            orderId: cb.order_id,
-            outcome: refunded.outcome,
-            recurringStopped: stopped.ok,
-            flittStatus: stopped.status ?? null,
-          },
+        recordRefund(`Payment fully refunded — ${outcomeText}`, {
+          outcome: refunded.outcome,
+          recurringStopped: stopped.ok,
+          flittStatus: stopped.status ?? null,
         })
         Sentry.captureMessage(`[flitt/callback] full refund — ${outcomeText}`, {
           // An unconfirmed stop means the card could be charged again — act on it.
@@ -261,18 +298,24 @@ export async function POST(req: Request): Promise<NextResponse> {
           extra: { order_id: cb.order_id, organization_id: order.organization_id, flitt_status: stopped.status },
         })
       } else {
-        // Partial refund — record + flag only; access unchanged.
+        // Partial refund (e.g. processing fee deducted) — record + flag; the
+        // operator stops auto-renewal and ends access by hand (runbook in
+        // docs/4-integrations/flitt.md).
         await admin
           .from('subscriptions')
           .update({ last_payment_status: 'partially_reversed', updated_at: nowIso })
           .eq('organization_id', order.organization_id)
-        Sentry.captureMessage('[flitt/callback] partial refund — review access manually', {
-          level: 'warning',
-          tags: { feature: 'flitt_callback' },
-          extra: { order_id: cb.order_id, organization_id: order.organization_id, reversal: cb.reversal_amount },
-        })
+        recordRefund('Payment partially refunded', {})
+        if (!history.alreadyRecorded) {
+          Sentry.captureMessage('[flitt/callback] partial refund — stop renewal + end access manually', {
+            level: 'warning',
+            tags: { feature: 'flitt_callback' },
+            extra: { order_id: cb.order_id, organization_id: order.organization_id, reversal: cb.reversal_amount },
+          })
+        }
       }
       break
+    }
     case 'record':
       // First-payment failure / interim state — the plan is unchanged.
       if (cb.order_status === 'declined' || cb.order_status === 'expired') {

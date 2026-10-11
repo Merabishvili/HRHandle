@@ -33,6 +33,20 @@ describe('renderNotification', () => {
     expect(renderNotification(t, { type: 'application_withdrawn', data: {}, title: 'x', body: null }).title).toBe('notif.applicationWithdrawn.title')
   })
 
+  it('application_withdrawn: names the candidate and shows the vacancy and their reason', () => {
+    const r = renderNotification(t, {
+      type: 'application_withdrawn',
+      data: { name: 'Ana B', vacancy: 'Dev' },
+      title: 'x',
+      body: 'Took another offer',
+    })
+    expect(r.title).toBe('notif.applicationWithdrawn.titleNamed|name=Ana B')
+    expect(r.body).toBe('notif.forVacancy|vacancy=Dev · notif.withdrawnReason|reason=Took another offer')
+    // No reason given → just the vacancy.
+    expect(renderNotification(t, { type: 'application_withdrawn', data: { name: 'Ana B', vacancy: 'Dev' }, title: 'x', body: null }).body)
+      .toBe('notif.forVacancy|vacancy=Dev')
+  })
+
   it('offer accepted/declined: uses the candidate name when present, else the stored title', () => {
     expect(renderNotification(t, { type: 'offer_accepted', data: { name: 'Ana B' }, title: 'x', body: null }).title).toBe('notif.offerAccepted.title|name=Ana B')
     expect(renderNotification(t, { type: 'offer_declined', data: { name: 'Ana B' }, title: 'x', body: null }).title).toBe('notif.offerDeclined.title|name=Ana B')

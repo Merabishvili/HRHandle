@@ -1,5 +1,6 @@
-import { formatDistanceToNow, format } from 'date-fns'
-import { getTranslations } from 'next-intl/server'
+import { formatDistanceToNow } from 'date-fns'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { sourceLabel } from '@/lib/pipeline/source-i18n'
 
 interface MetadataFooterProps {
@@ -26,6 +27,7 @@ function MetaItem({ label, value, mono }: MetaItemProps) {
 
 export async function MetadataFooter({ source, createdAt, updatedAt, candidateId }: MetadataFooterProps) {
   const t = await getTranslations()
+  const dateLocale = dateFnsLocale(await getLocale())
   const shortId = candidateId.slice(0, 8).toUpperCase()
 
   return (
@@ -33,7 +35,7 @@ export async function MetadataFooter({ source, createdAt, updatedAt, candidateId
       <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
         <MetaItem label={t('candWizard.application.sourceLabel')} value={sourceLabel(t, source) || '—'} />
         <MetaItem label={t('profile.fact.added')}        value={formatDistanceToNow(new Date(createdAt), { addSuffix: true })} />
-        <MetaItem label={t('profile.meta.lastUpdated')} value={format(new Date(updatedAt), 'MMM d, yyyy')} />
+        <MetaItem label={t('profile.meta.lastUpdated')} value={formatShortDate(new Date(updatedAt), dateLocale)} />
         <MetaItem label={t('profile.meta.candidateId')} value={shortId} mono />
       </div>
     </div>

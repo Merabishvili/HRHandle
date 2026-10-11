@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { AlertTriangle, ArrowRight, ChevronLeft, Loader2, Search, Shield } from 'lucide-react'
 
@@ -20,6 +20,7 @@ import {
   type MergeRisks,
 } from '@/lib/actions/candidate-merge'
 import { defaultMergeChoice, type MergeChoice } from '@/lib/candidate-merge/defaults'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 /**
  * A-3 Merge candidates dialog — 3 steps:
@@ -354,6 +355,7 @@ function Step1({
   onSelect: (c: MergeCandidateSummary) => void
 }) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
@@ -402,7 +404,7 @@ function Step1({
                     <p className="truncate text-xs text-muted-foreground">
                       {t('merge.resultMeta', {
                         email: c.email ?? t('merge.noEmail'),
-                        date: new Date(c.created_at).toLocaleDateString(),
+                        date: formatShortDate(c.created_at, dateLocale),
                         count: c.applications_count,
                       })}
                     </p>

@@ -126,6 +126,7 @@ HRHandle does not use a global client-side state manager (no Redux, Zustand, etc
 - **UI primitives**: `components/ui/` — shadcn/ui components (accordion, button, card, dialog, etc.).
 - **Feature components**: `components/[domain]/` — compose UI primitives, call server actions.
 - **cn() utility**: `lib/utils.ts` — combines `clsx` + `tailwind-merge` for conditional class names.
+- **Dates in the UI language**: format short dates with `formatShortDate(date, dateFnsLocale(locale))` (`lib/i18n/date-locale.ts`) — "Sep 20, 2026" in English, day first in Georgian and Russian. Date + time: `formatShortDateTime`. Never a fixed `'MMM d, yyyy'` (month first in every language) and never `toLocale…String()` without the app locale (that's the browser's language, not the user's). Interview date/time: `lib/interviews/format.ts`.
 
 ### Forms — react-hook-form + zod (A-005)
 
@@ -137,11 +138,13 @@ Larger edit forms use **react-hook-form** with a **zodResolver**, not hand-rolle
 - Scroll-to-first-error on submit is preserved via an `onInvalid` handler that maps the first error field (by a fixed priority) to a DOM id and scrolls + focuses it.
 - Non-form orchestration state (custom-field values, loading, server error) stays in `useState` alongside the form.
 
-## Guide pattern (`content/guides/*.mdx` + `lib/guides/`)
+## Guide pattern (`content/guides/<locale>/*.mdx` + `lib/guides/`)
 
-Guides are static MDX files in `content/guides/`, registered in `lib/guides/registry.ts` (slug, title, summary, category, order). The `[slug]` route uses `next-mdx-remote/rsc` to compile MDX server-side at request time and `generateStaticParams` to prerender every guide that has an MDX file. `remark-gfm` is passed in `MDXRemote` options so GitHub-flavored markdown tables render. Custom `<Screenshot>` is the only authoring component required; styled defaults for headings, lists, links, and GFM tables live in `components/guide/mdx-components.tsx`.
+The guide is trilingual (EN source, KA, RU) and rendered in the visitor's language — `visitorLocale()` (`lib/i18n/visitor-locale.ts`, shared with the legal pages) reads the `NEXT_LOCALE` cookie; `GuideShell` has the language switcher. `lib/guides/registry.ts` lists the topics (slug, message id, category, order), the FAQ keys, and `LEGACY_GUIDE_SLUGS` (renamed topics; the `[slug]` page `permanentRedirect`s them). Titles, summaries, category names and the FAQ are catalog strings (`guide.*` in `messages/source.json`). Bodies are MDX, one file per language: `content/guides/{en,ka,ru}/<slug>.mdx` (frontmatter: `updated`). `loadGuide(slug, locale)` falls back to English when a translation is missing and the page then shows a note. The `[slug]` route compiles MDX at request time with `next-mdx-remote/rsc` + `remark-gfm` (tables).
 
-Annotated screenshots are produced by `scripts/capture-screenshots.ts` (Playwright). Each shot in `scripts/screenshot-config.ts` declares a URL, optional pre-actions, and CSS-selector-based annotations. The script logs into a seeded demo org on staging, navigates, injects DOM overlays (red arrows + numbered boxes), and saves PNGs to `public/guide/screenshots/`.
+`guideMdxComponents(locale)` binds the article's language into `<Screenshot name="…" alt="…" caption="…" />`, which loads `public/guide/screenshots/<locale>/<name>.webp` (sizes from `content/guides/screenshots.json`) and links to the full-size image. `__tests__/guides.test.ts` checks every published topic exists in all three languages with the same headings and the same screenshots in the same order, that every screenshot file exists, and that internal links point at real topics.
+
+Screenshots are captured by `scripts/capture-screenshots.ts` (Playwright) from the flows in `scripts/guide-flows/` (registered in `scripts/screenshot-config.ts`) — see `docs/5-environment/local.md` → "Capturing guide screenshots".
 
 ## Candidate Components (`components/candidates/`)
 

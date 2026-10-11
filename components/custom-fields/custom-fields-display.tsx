@@ -1,6 +1,8 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import type { Locale as DateFnsLocale } from 'date-fns'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
 
@@ -19,6 +21,7 @@ function formatValue(
   fieldType: string,
   yes: string,
   no: string,
+  dateLocale: DateFnsLocale,
 ): string | null {
   if (fieldType === 'checkbox') {
     if (value.value_boolean === true) return yes
@@ -37,7 +40,7 @@ function formatValue(
     if (!value.value_text) return null
     const d = new Date(value.value_text)
     if (isNaN(d.getTime())) return value.value_text
-    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    return formatShortDate(d, dateLocale)
   }
   return value.value_text || null
 }
@@ -51,6 +54,7 @@ function formatValue(
  */
 export function CustomFieldsDisplay({ groups, values }: Props) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   const yes = t('common.yes')
   const no = t('common.no')
   const valueMap = new Map(values.map((v) => [v.field_id, v]))
@@ -61,7 +65,7 @@ export function CustomFieldsDisplay({ groups, values }: Props) {
       group,
       filledFields: group.fields.filter((f) => {
         const v = valueMap.get(f.id)
-        return v && formatValue(v, f.field_type, yes, no) !== null
+        return v && formatValue(v, f.field_type, yes, no, dateLocale) !== null
       }),
     }))
     .filter((g) => g.filledFields.length > 0)
@@ -79,7 +83,7 @@ export function CustomFieldsDisplay({ groups, values }: Props) {
           <h3 className="mb-3 text-[15px] font-bold text-foreground">{group.name}</h3>
           <div className="flex flex-col gap-3">
             {filledFields.map((field) => {
-              const display = formatValue(valueMap.get(field.id)!, field.field_type, yes, no)
+              const display = formatValue(valueMap.get(field.id)!, field.field_type, yes, no, dateLocale)
               // Long-text fields, or any value too long to fit on one line, stack
               // (label above, value below) so nothing overflows the card.
               const stacked = field.field_type === 'long_text' || (display?.length ?? 0) > STACK_VALUE_OVER

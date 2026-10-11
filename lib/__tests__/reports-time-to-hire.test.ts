@@ -115,3 +115,10 @@ describe('formatDays', () => {
     expect(formatDays(null)).toBe('—')
   })
 })
+
+describe('formatDays with a translated unit', () => {
+  it('passes the rounded number to the formatter', () => {
+    expect(formatDays(20.37, (n) => `${n} дн.`)).toBe('20.4 дн.')
+    expect(formatDays(null, (n) => `${n} დღე`)).toBe('—')
+  })
+})

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Sparkles, Shield, ChevronDown, ChevronRight, Check, CircleAlert, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { requestAiFitAnalysis, getAiFitAnalysis, submitFitAssessment } from '@/lib/actions/ai-fit'
 import type { AiFitAnalysis, FitConfidence } from '@/lib/types/ai-fit'
+import { dateFnsLocale, formatShortDateTime } from '@/lib/i18n/date-locale'
 
 const CONFIDENCE_STYLE: Record<FitConfidence, string> = {
   low: 'bg-muted text-muted-foreground',
@@ -44,6 +45,7 @@ const AUTO_RETRY_REASONS = new Set(['timeout', 'failed'])
  */
 export function AiFitCard({ applicationId, enabled }: { applicationId: string; enabled: boolean }) {
   const tr = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   const [expanded, setExpanded] = useState(false)
   const [analysis, setAnalysis] = useState<AiFitAnalysis | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -327,8 +329,8 @@ export function AiFitCard({ applicationId, enabled }: { applicationId: string; e
                   provenance for the audit trail); they're just not surfaced in
                   the recruiter UI (#N10). */}
               <div className="rounded-lg border border-[oklch(0.93_0.01_250)] px-3 py-2 text-[10.5px] leading-relaxed text-muted-foreground">
-                {tr('aiFit.generated')} {new Date(analysis.created_at).toLocaleString()}
-                {analysis.assessed_at && <> · {tr('aiFit.reviewed')} {new Date(analysis.assessed_at).toLocaleString()}</>}
+                {tr('aiFit.generated')} {formatShortDateTime(analysis.created_at, dateLocale)}
+                {analysis.assessed_at && <> · {tr('aiFit.reviewed')} {formatShortDateTime(analysis.assessed_at, dateLocale)}</>}
               </div>
             </div>
           )}

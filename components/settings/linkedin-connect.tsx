@@ -23,9 +23,12 @@ import type { LinkedInIntegration } from '@/lib/actions/integrations'
 
 interface LinkedInConnectProps {
   integration: LinkedInIntegration | null
+  /** Owners/admins connect and disconnect the org's company page; members
+   * only see whether it's connected. */
+  canManage: boolean
 }
 
-export function LinkedInConnect({ integration }: LinkedInConnectProps) {
+export function LinkedInConnect({ integration, canManage }: LinkedInConnectProps) {
   const t = useTranslations()
   const params = useSearchParams()
   const status = params.get('linkedin')
@@ -48,6 +51,12 @@ export function LinkedInConnect({ integration }: LinkedInConnectProps) {
         <Alert variant="destructive">
           <XCircle className="h-4 w-4" />
           <AlertDescription>{t('liConnect.errFailed')}</AlertDescription>
+        </Alert>
+      )}
+      {status === 'forbidden' && (
+        <Alert variant="destructive">
+          <XCircle className="h-4 w-4" />
+          <AlertDescription>{t('liConnect.adminsOnly')}</AlertDescription>
         </Alert>
       )}
       {status === 'invalid_page_id' && (
@@ -74,9 +83,12 @@ export function LinkedInConnect({ integration }: LinkedInConnectProps) {
               ? t('liConnect.connectedDesc', { id: integration.external_page_id })
               : t('liConnect.connectDesc')}
           </p>
+          {!canManage && !integration && (
+            <p className="text-xs text-muted-foreground">{t('liConnect.adminsOnly')}</p>
+          )}
         </div>
 
-        {integration ? (
+        {!canManage ? null : integration ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm">{t('integrations.disconnect')}</Button>

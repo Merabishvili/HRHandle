@@ -745,9 +745,9 @@
     "ka": "ვაკანსიის ვადები და ხელფასის დიაპაზონი."
   },
   "wizard.salaryHint": {
-    "en": "Optional. Shown to candidates and used for salary-fit filtering.",
-    "ru": "Необязательно. Показывается кандидатам и используется для фильтрации по зарплате.",
-    "ka": "არასავალდებულო. ჩანს კანდიდატებისთვის და გამოიყენება ხელფასის მიხედვით ფილტრაციისთვის."
+    "en": "Optional. Only your team sees the salary range — it isn't shown to candidates.",
+    "ru": "Необязательно. Диапазон зарплаты видит только ваша команда — кандидатам он не показывается.",
+    "ka": "არასავალდებულო. ხელფასის დიაპაზონს მხოლოდ თქვენი გუნდი ხედავს — კანდიდატებს ის არ უჩანთ."
   },
   "wizard.detailsSubtitle": {
     "en": "Shown on the public jobs page and included when sharing on LinkedIn.",
@@ -1106,7 +1106,7 @@
   },
   "header.billing": {
     "en": "Billing",
-    "ru": "Биллинг",
+    "ru": "Оплата",
     "ka": "ბილინგი"
   },
   "header.signOut": {
@@ -1446,7 +1446,7 @@
   },
   "settings.nav.aiOversight": {
     "en": "AI oversight",
-    "ru": "AI-надзор",
+    "ru": "ИИ-надзор",
     "ka": "AI ზედამხედველობა"
   },
   "settings.nav.trash": {
@@ -1681,7 +1681,7 @@
   },
   "settings.aiFit.title": {
     "en": "AI Fit Analysis",
-    "ru": "AI-анализ соответствия",
+    "ru": "ИИ-анализ соответствия",
     "ka": "AI შესაბამისობის ანალიზი"
   },
   "settings.aiFit.subtitle": {
@@ -1691,7 +1691,7 @@
   },
   "settings.aiFit.enable": {
     "en": "Enable AI Fit Analysis",
-    "ru": "Включить AI-анализ соответствия",
+    "ru": "Включить ИИ-анализ соответствия",
     "ka": "AI შესაბამისობის ანალიზის ჩართვა"
   },
   "settings.aiFit.enableHelp": {
@@ -1701,17 +1701,17 @@
   },
   "settings.aiFit.acknowledgement": {
     "en": "I understand AI Fit Analysis is advisory only: it produces no overall score, a human always makes the decision and must record an assessment, and outputs are based only on job-relevant evidence. Under the EU AI Act this is a limited-risk, human-in-the-loop use and my organisation acknowledges these terms.",
-    "ru": "Я понимаю, что AI-анализ соответствия носит только совещательный характер: он не выставляет общий балл, решение всегда принимает человек и обязан зафиксировать оценку, а результаты основаны только на релевантных для работы данных. Согласно Закону ЕС об ИИ это использование с ограниченным риском и участием человека, и моя организация принимает эти условия.",
+    "ru": "Я понимаю, что ИИ-анализ соответствия носит только совещательный характер: он не выставляет общий балл, решение всегда принимает человек и обязан зафиксировать оценку, а результаты основаны только на релевантных для работы данных. Согласно Закону ЕС об ИИ это использование с ограниченным риском и участием человека, и моя организация принимает эти условия.",
     "ka": "მესმის, რომ AI შესაბამისობის ანალიზი მხოლოდ სარეკომენდაციოა: ის არ გამოსცემს საერთო ქულას, გადაწყვეტილებას ყოველთვის ადამიანი იღებს და ვალდებულია დააფიქსიროს შეფასება, ხოლო შედეგები ეფუძნება მხოლოდ სამუშაოსთან დაკავშირებულ მონაცემებს. ევროკავშირის AI-აქტის მიხედვით ეს შეზღუდული რისკის, ადამიანის ჩართულობით გამოყენებაა და ჩემი ორგანიზაცია ეთანხმება ამ პირობებს."
   },
   "settings.aiFit.onNotice": {
     "en": "AI Fit Analysis is on. Recruiters will see the advisory card on candidate profiles.",
-    "ru": "AI-анализ соответствия включён. Рекрутеры увидят совещательную карточку в профилях кандидатов.",
+    "ru": "ИИ-анализ соответствия включён. Рекрутеры увидят совещательную карточку в профилях кандидатов.",
     "ka": "AI შესაბამისობის ანალიზი ჩართულია. რეკრუტერები დაინახავენ სარეკომენდაციო ბარათს კანდიდატების პროფილებში."
   },
   "settings.aiFit.offNotice": {
     "en": "AI Fit Analysis is off. The card is hidden everywhere.",
-    "ru": "AI-анализ соответствия выключен. Карточка скрыта везде.",
+    "ru": "ИИ-анализ соответствия выключен. Карточка скрыта везде.",
     "ka": "AI შესაბამისობის ანალიზი გამორთულია. ბარათი ყველგან დამალულია."
   },
   "common.selectedCount": {
@@ -3032,7 +3032,7 @@
   "reports.rejectedWithdrawn": {
     "en": "Rejected / withdrawn",
     "ru": "Отклонены / отозваны",
-    "ka": "უარყოფილი / გატანილი"
+    "ka": "უარყოფილი / გაწვეული"
   },
   "reports.rejWdHint": {
     "en": "{rej} rej · {wd} wd",
@@ -3068,6 +3068,41 @@
     "en": "25th–75th",
     "ru": "25-й–75-й",
     "ka": "25-ე–75-ე"
+  },
+  "reports.daysValue": {
+    "en": "{n}d",
+    "ru": "{n} дн.",
+    "ka": "{n} დღე"
+  },
+  "reports.source.publicForm": {
+    "en": "Public apply form",
+    "ru": "Публичная форма отклика",
+    "ka": "საჯარო განაცხადის ფორმა"
+  },
+  "reports.source.manual": {
+    "en": "Manual entry",
+    "ru": "Добавлен вручную",
+    "ka": "ხელით დამატებული"
+  },
+  "reports.source.csv": {
+    "en": "CSV import",
+    "ru": "Импорт CSV",
+    "ka": "CSV იმპორტი"
+  },
+  "reports.source.linkedin": {
+    "en": "LinkedIn",
+    "ru": "LinkedIn",
+    "ka": "LinkedIn"
+  },
+  "reports.source.internal": {
+    "en": "Internal",
+    "ru": "Внутренний",
+    "ka": "შიდა"
+  },
+  "reports.source.unknown": {
+    "en": "Unknown",
+    "ru": "Неизвестно",
+    "ka": "უცნობი"
   },
   "reports.mean": {
     "en": "Mean",
@@ -3155,9 +3190,9 @@
     "ka": "შეფასება"
   },
   "pipelineStages.typeDesc.review": {
-    "en": "Scorecard only — no scheduling",
-    "ru": "Только оценочный лист — без планирования",
-    "ka": "მხოლოდ შეფასების ფურცელი — დაგეგმვის გარეშე"
+    "en": "Screening checks — no scheduling",
+    "ru": "Проверки скрининга — без планирования",
+    "ka": "სკრინინგის შემოწმებები — დაგეგმვის გარეშე"
   },
   "pipelineStages.type.interview": {
     "en": "Interview",
@@ -3297,7 +3332,7 @@
   "pipelineStages.terminalHint": {
     "en": "Terminal — candidates in this stage are out of the active pipeline (Hired, Rejected, Withdrawn).",
     "ru": "Терминальный — кандидаты на этом этапе вне активной воронки (Нанят, Отклонён, Отозван).",
-    "ka": "საბოლოო — ამ ეტაპზე მყოფი კანდიდატები აქტიური პაიპლაინის გარეთ არიან (დაქირავებული, უარყოფილი, გატანილი)."
+    "ka": "საბოლოო — ამ ეტაპზე მყოფი კანდიდატები აქტიური პაიპლაინის გარეთ არიან (დაქირავებული, უარყოფილი, გაწვეული)."
   },
   "pipelineStages.adding": {
     "en": "Adding…",
@@ -3452,7 +3487,17 @@
   "notif.applicationWithdrawn.title": {
     "en": "A candidate withdrew their application",
     "ru": "Кандидат отозвал заявку",
-    "ka": "კანდიდატმა გაიხმო თავისი განაცხადი"
+    "ka": "კანდიდატმა თავისი განაცხადი გაიწვია"
+  },
+  "notif.applicationWithdrawn.titleNamed": {
+    "en": "{name} withdrew their application",
+    "ru": "{name} отозвал(а) отклик",
+    "ka": "{name}-მ განაცხადი გაიწვია"
+  },
+  "notif.withdrawnReason": {
+    "en": "Reason: {reason}",
+    "ru": "Причина: {reason}",
+    "ka": "მიზეზი: {reason}"
   },
   "notifications.ariaUnread": {
     "en": "Notifications, {count} unread",
@@ -3622,7 +3667,7 @@
   "pipeline.status.withdrawn": {
     "en": "Withdrawn",
     "ru": "Отозван",
-    "ka": "გატანილი"
+    "ka": "გაწვეული"
   },
   "interviews.title": {
     "en": "Interviews",
@@ -4132,7 +4177,7 @@
   "stageBlock.screeningChecks": {
     "en": "Screening checks",
     "ru": "Проверки скрининга",
-    "ka": "სქრინინგის შემოწმებები"
+    "ka": "სკრინინგის შემოწმებები"
   },
   "stageBlock.autoFlagged": {
     "en": "· auto-flagged from the apply form",
@@ -4284,6 +4329,11 @@
     "ru": "Отправляет кандидату ссылку для принятия/отклонения. Компенсация и даты необязательны.",
     "ka": "უგზავნის კანდიდატს მიღების/უარყოფის ბმულს. ანაზღაურება და თარიღები არასავალდებულოა."
   },
+  "stageBlock.offerAdminsOnly": {
+    "en": "Only the owner and admins can create and send offers. Ask one of them to send this candidate an offer.",
+    "ru": "Создавать и отправлять офферы могут только владелец и администраторы. Попросите одного из них отправить оффер этому кандидату.",
+    "ka": "შეთავაზების შექმნა და გაგზავნა მხოლოდ მფლობელსა და ადმინისტრატორებს შეუძლიათ. სთხოვეთ ერთ-ერთ მათგანს, ამ კანდიდატს შეთავაზება გაუგზავნოს."
+  },
   "stageBlock.compensation": {
     "en": "Compensation",
     "ru": "Компенсация",
@@ -4318,6 +4368,16 @@
     "en": "Benefits, equity, signing bonus, vacation, remote/hybrid, reporting line — anything the candidate needs to know. Line breaks are preserved.",
     "ru": "Льготы, опционы, бонус за подписание, отпуск, удалёнка/гибрид, кому подчиняется — всё, что нужно знать кандидату. Переносы строк сохраняются.",
     "ka": "ბენეფიტები, წილი, ხელმოწერის ბონუსი, შვებულება, დისტანციური/ჰიბრიდული, ვის ექვემდებარება — ყველაფერი, რაც კანდიდატმა უნდა იცოდეს. სტრიქონების გადატანა შენარჩუნებულია."
+  },
+  "stageBlock.personalNote": {
+    "en": "Personal note to the candidate (optional)",
+    "ru": "Личное сообщение кандидату (необязательно)",
+    "ka": "პირადი შეტყობინება კანდიდატს (არასავალდებულო)"
+  },
+  "stageBlock.personalNotePlaceholder": {
+    "en": "e.g. It was a pleasure to meet you — we hope you’ll join us!",
+    "ru": "напр. Было приятно познакомиться — надеемся, вы присоединитесь к нам!",
+    "ka": "მაგ. სასიამოვნო იყო თქვენი გაცნობა — იმედი გვაქვს, შემოგვიერთდებით!"
   },
   "stageBlock.saveDraft": {
     "en": "Save draft",
@@ -5080,9 +5140,9 @@
     "ka": "გასაუბრების მოწვევა"
   },
   "emailTpl.interviewInvitation.desc": {
-    "en": "Sent to a candidate when an interview is scheduled with \"Send email\" checked.",
-    "ru": "Отправляется кандидату при планировании собеседования с отмеченным «Отправить письмо».",
-    "ka": "ეგზავნება კანდიდატს გასაუბრების დაგეგმვისას, როცა მონიშნულია „იმეილის გაგზავნა“."
+    "en": "Sent to a candidate when an interview is scheduled with \"Email candidate\" ticked.",
+    "ru": "Отправляется кандидату при планировании собеседования с отметкой «Отправить письмо кандидату».",
+    "ka": "ეგზავნება კანდიდატს გასაუბრების დაგეგმვისას, როცა მონიშნულია „იმეილი კანდიდატს“."
   },
   "emailTpl.interviewInvitation.preview": {
     "en": "Interview invitation",
@@ -5097,7 +5157,7 @@
   "emailTpl.statusScreening.desc": {
     "en": "Sent automatically when a recruiter moves an application to the \"Screening\" stage. Disabled by default — toggle on below to opt in. Each candidate gets a link back to their status page.",
     "ru": "Отправляется автоматически, когда рекрутер переводит заявку на этап «Скрининг». По умолчанию отключено — включите ниже. Каждый кандидат получает ссылку на страницу своего статуса.",
-    "ka": "იგზავნება ავტომატურად, როცა რეკრუტერი განაცხადს გადაიტანს „სქრინინგის“ ეტაპზე. ნაგულისხმევად გამორთულია — ჩართეთ ქვემოთ. თითოეული კანდიდატი იღებს ბმულს თავისი სტატუსის გვერდზე."
+    "ka": "იგზავნება ავტომატურად, როცა რეკრუტერი განაცხადს გადაიტანს „სკრინინგის“ ეტაპზე. ნაგულისხმევად გამორთულია — ჩართეთ ქვემოთ. თითოეული კანდიდატი იღებს ბმულს თავისი სტატუსის გვერდზე."
   },
   "emailTpl.statusScreening.preview": {
     "en": "Your application is under review",
@@ -5253,6 +5313,41 @@
     "en": "Sent via HRHandle",
     "ru": "Отправлено через HRHandle",
     "ka": "გაგზავნილია HRHandle-ით"
+  },
+  "emailTpl.sample.candidateName": {
+    "en": "Jane Smith",
+    "ru": "Анна Смирнова",
+    "ka": "თამთა ხელაძე"
+  },
+  "emailTpl.sample.role": {
+    "en": "Senior Developer",
+    "ru": "Старший разработчик",
+    "ka": "უფროსი დეველოპერი"
+  },
+  "emailTpl.sample.company": {
+    "en": "Acme Corp",
+    "ru": "Акме Корп",
+    "ka": "აკმე კორპ"
+  },
+  "emailTpl.sample.interviewDate": {
+    "en": "Monday, May 5",
+    "ru": "понедельник, 5 мая",
+    "ka": "ორშაბათი, 5 მაისი"
+  },
+  "emailTpl.sample.interviewTime": {
+    "en": "2:00 PM",
+    "ru": "14:00",
+    "ka": "14:00"
+  },
+  "emailTpl.sample.interviewerName": {
+    "en": "Taylor Brooks",
+    "ru": "Илья Морозов",
+    "ka": "ლაშა მამულაშვილი"
+  },
+  "emailTpl.sample.interviewerEmail": {
+    "en": "taylor@acme.com",
+    "ru": "ilya@acme.com",
+    "ka": "lasha@acme.ge"
   },
   "rejectTpl.templateName": {
     "en": "Template name",
@@ -5767,7 +5862,7 @@
   "offer.status.withdrawn": {
     "en": "Withdrawn",
     "ru": "Отозван",
-    "ka": "გატანილი"
+    "ka": "გაუქმებული"
   },
   "offer.periodShort.annual": {
     "en": "per year",
@@ -5823,6 +5918,11 @@
     "en": "Previous offers ({count})",
     "ru": "Предыдущие офферы ({count})",
     "ka": "წინა შეთავაზებები ({count})"
+  },
+  "offer.declineReasonShown": {
+    "en": "Candidate’s reason: “{reason}”",
+    "ru": "Причина кандидата: «{reason}»",
+    "ka": "კანდიდატის მიზეზი: „{reason}“"
   },
   "offer.withdrawTitle": {
     "en": "Withdraw this offer?",
@@ -6031,17 +6131,17 @@
   },
   "aiFitErr.notEnabled": {
     "en": "AI Fit Analysis is not enabled for your organization.",
-    "ru": "AI-анализ соответствия не включён для вашей организации.",
+    "ru": "ИИ-анализ соответствия не включён для вашей организации.",
     "ka": "AI შესაბამისობის ანალიზი თქვენი ორგანიზაციისთვის ჩართული არ არის."
   },
   "aiFitErr.euAck": {
     "en": "AI Fit Analysis requires EU acknowledgement in Settings.",
-    "ru": "AI-анализ соответствия требует подтверждения ЕС в настройках.",
+    "ru": "ИИ-анализ соответствия требует подтверждения ЕС в настройках.",
     "ka": "AI შესაბამისობის ანალიზი საჭიროებს ევროკავშირის დადასტურებას პარამეტრებში."
   },
   "aiFitErr.monthlyCap": {
     "en": "Monthly AI Fit Analysis limit reached. Upgrade to run more.",
-    "ru": "Достигнут месячный лимит AI-анализа соответствия. Обновите тариф, чтобы запускать больше.",
+    "ru": "Достигнут месячный лимит ИИ-анализа соответствия. Обновите тариф, чтобы запускать больше.",
     "ka": "AI შესაბამისობის ანალიზის თვიური ლიმიტი ამოიწურა. მეტის გასაშვებად განაახლეთ გეგმა."
   },
   "aiFitErr.applicationNotFound": {
@@ -6320,9 +6420,9 @@
     "ka": "Slack → Apps → Incoming Webhooks → Add to Slack → აირჩიეთ არხი → დააკოპირეთ URL."
   },
   "webhooks.teamsHint": {
-    "en": "Teams channel → ⋯ → Connectors → Incoming Webhook → Configure → copy the URL.",
-    "ru": "Канал Teams → ⋯ → Connectors → Incoming Webhook → Configure → скопируйте URL.",
-    "ka": "Teams არხი → ⋯ → Connectors → Incoming Webhook → Configure → დააკოპირეთ URL."
+    "en": "Teams channel → ⋯ → Workflows → “Post to a channel when a webhook request is received” → finish the steps → copy the URL.",
+    "ru": "Канал Teams → ⋯ → Workflows → «Post to a channel when a webhook request is received» → пройдите шаги → скопируйте URL.",
+    "ka": "Teams არხი → ⋯ → Workflows → „Post to a channel when a webhook request is received“ → გაიარეთ ნაბიჯები → დააკოპირეთ URL."
   },
   "webhooks.events": {
     "en": "Events",
@@ -6333,6 +6433,46 @@
     "en": "Save webhook",
     "ru": "Сохранить вебхук",
     "ka": "ვებჰუკის შენახვა"
+  },
+  "webhooks.event.application_received": {
+    "en": "New application",
+    "ru": "Новый отклик",
+    "ka": "ახალი განაცხადი"
+  },
+  "webhooks.event.application_hired": {
+    "en": "Candidate hired",
+    "ru": "Кандидат нанят",
+    "ka": "კანდიდატი დაქირავდა"
+  },
+  "webhooks.event.application_rejected": {
+    "en": "Candidate rejected",
+    "ru": "Кандидату отказано",
+    "ka": "კანდიდატს უარი ეთქვა"
+  },
+  "webhooks.event.application_withdrawn": {
+    "en": "Candidate withdrew",
+    "ru": "Кандидат отозвал отклик",
+    "ka": "კანდიდატმა განაცხადი გაიწვია"
+  },
+  "webhooks.event.offer_sent": {
+    "en": "Offer sent",
+    "ru": "Оффер отправлен",
+    "ka": "შეთავაზება გაიგზავნა"
+  },
+  "webhooks.event.offer_accepted": {
+    "en": "Offer accepted",
+    "ru": "Оффер принят",
+    "ka": "შეთავაზება მიღებულია"
+  },
+  "webhooks.event.offer_declined": {
+    "en": "Offer declined",
+    "ru": "Оффер отклонён",
+    "ka": "შეთავაზება უარყოფილია"
+  },
+  "webhooks.event.interview_scheduled": {
+    "en": "Interview scheduled",
+    "ru": "Собеседование назначено",
+    "ka": "გასაუბრება დაიგეგმა"
   },
   "aiJd.headerTitle": {
     "en": "AI assist — suggest job description sections",
@@ -7321,17 +7461,17 @@
   },
   "aiFit.override": {
     "en": "Override",
-    "ru": "Отклонить",
+    "ru": "Переопределить",
     "ka": "უარყოფა"
   },
   "aiFit.overridePlaceholder": {
     "en": "Why are you overriding the analysis? (required)",
-    "ru": "Почему вы отклоняете анализ? (обязательно)",
+    "ru": "Почему вы переопределяете анализ? (обязательно)",
     "ka": "რატომ უარყოფთ ანალიზს? (სავალდებულო)"
   },
   "aiFit.saveOverride": {
     "en": "Save override",
-    "ru": "Сохранить отклонение",
+    "ru": "Сохранить переопределение",
     "ka": "უარყოფის შენახვა"
   },
   "aiFit.toastAgreed": {
@@ -7341,7 +7481,7 @@
   },
   "aiFit.toastOverride": {
     "en": "Override recorded.",
-    "ru": "Отклонение записано.",
+    "ru": "Переопределение записано.",
     "ka": "უარყოფა დაფიქსირდა."
   },
   "aiFit.generated": {
@@ -7536,23 +7676,43 @@
   },
   "vacOverview.offerAwaiting": {
     "en": "{name}'s offer awaiting reply <b>{count, plural, one {# day} other {# days}}</b>",
-    "ru": "Оффер {name} ждёт ответа <b>{count, plural, one {# день} few {# дня} many {# дней} other {# дня}}</b>",
+    "ru": "{name}: оффер ждёт ответа <b>{count, plural, one {# день} few {# дня} many {# дней} other {# дня}}</b>",
     "ka": "{name}-ის შეთავაზება ელოდება პასუხს <b>{count, plural, one {# დღე} other {# დღე}}</b>"
   },
   "vacOverview.followUp": {
-    "en": "Follow up →",
-    "ru": "Напомнить →",
-    "ka": "შეხსენება →"
+    "en": "Follow up",
+    "ru": "Напомнить",
+    "ka": "შეხსენება"
+  },
+  "vacOverview.offerNotSent": {
+    "en": "{name} is at the offer stage — <b>no offer sent yet</b>",
+    "ru": "{name} на этапе оффера — <b>оффер ещё не отправлен</b>",
+    "ka": "{name} შეთავაზების ეტაპზეა — <b>შეთავაზება ჯერ არ გაგზავნილა</b>"
+  },
+  "vacOverview.offerDraft": {
+    "en": "{name}’s offer is <b>still a draft</b>",
+    "ru": "{name}: оффер — <b>пока черновик</b>",
+    "ka": "{name}-ის შეთავაზება <b>ჯერ მონახაზია</b>"
+  },
+  "vacOverview.createOffer": {
+    "en": "Create offer",
+    "ru": "Создать оффер",
+    "ka": "შეთავაზების შექმნა"
+  },
+  "vacOverview.sendOffer": {
+    "en": "Send offer",
+    "ru": "Отправить оффер",
+    "ka": "შეთავაზების გაგზავნა"
   },
   "vacOverview.interviewWith": {
     "en": "Interview with {name} <b>{time}</b> — add scorecard after",
-    "ru": "Собеседование с {name} <b>{time}</b> — добавьте оценочную карту после",
+    "ru": "{name}: собеседование <b>{time}</b> — после него добавьте оценочную карту",
     "ka": "გასაუბრება {name}-თან <b>{time}</b> — დაამატეთ შეფასების ბარათი შემდეგ"
   },
   "vacOverview.view": {
-    "en": "View →",
-    "ru": "Открыть →",
-    "ka": "ნახვა →"
+    "en": "View",
+    "ru": "Открыть",
+    "ka": "ნახვა"
   },
   "vacOverview.newApplicants": {
     "en": "<b>{count, plural, one {# new applicant} other {# new applicants}}</b> to review",
@@ -7560,9 +7720,9 @@
     "ka": "<b>{count, plural, one {# ახალი კანდიდატი} other {# ახალი კანდიდატი}}</b> გადასახედი"
   },
   "vacOverview.review": {
-    "en": "Review →",
-    "ru": "Проверить →",
-    "ka": "გადახედვა →"
+    "en": "Review",
+    "ru": "Проверить",
+    "ka": "გადახედვა"
   },
   "vacDetail.scorecardIntro": {
     "en": "How your team evaluates candidates in interviews — none of this is shown to candidates. (Questions candidates answer when applying live on the <b>Apply form</b> tab.)",
@@ -7677,7 +7837,7 @@
   "jdTab.private": {
     "en": "Private",
     "ru": "Приватно",
-    "ka": "პირადი"
+    "ka": "არასაჯარო"
   },
   "jdTab.language": {
     "en": "Language",
@@ -7894,6 +8054,11 @@
     "ru": "напр. 12345678",
     "ka": "მაგ. 12345678"
   },
+  "liConnect.adminsOnly": {
+    "en": "Owners and admins connect the company page.",
+    "ru": "Страницу компании подключают владельцы и администраторы.",
+    "ka": "კომპანიის გვერდს მფლობელები და ადმინისტრატორები აკავშირებენ."
+  },
   "liConnect.findItAt": {
     "en": "Find it at: linkedin.com/company/<b>ID</b>/admin/",
     "ru": "Найдите его: linkedin.com/company/<b>ID</b>/admin/",
@@ -8074,20 +8239,10 @@
     "ru": "В приложении",
     "ka": "აპლიკაციაში"
   },
-  "notifPrefs.slackColHint": {
-    "en": "Connect a Slack webhook in Settings → Integrations to enable this column",
-    "ru": "Подключите вебхук Slack в «Настройки → Интеграции», чтобы включить этот столбец",
-    "ka": "დააკავშირეთ Slack-ის ვებჰუკი «პარამეტრები → ინტეგრაციები»-ში ამ სვეტის ჩასართავად"
-  },
   "notifPrefs.mentionsAlwaysOn": {
     "en": "In-app @mentions are always on",
     "ru": "@упоминания в приложении всегда включены",
     "ka": "აპლიკაციაში @ხსენებები ყოველთვის ჩართულია"
-  },
-  "notifPrefs.connectSlack": {
-    "en": "Connect Slack in Settings → Integrations",
-    "ru": "Подключите Slack в «Настройки → Интеграции»",
-    "ka": "დააკავშირეთ Slack «პარამეტრები → ინტეგრაციები»-ში"
   },
   "notifPrefs.cellAria": {
     "en": "{title} — {channel}",
@@ -8128,6 +8283,16 @@
     "en": "Save preferences",
     "ru": "Сохранить настройки",
     "ka": "პარამეტრების შენახვა"
+  },
+  "notifPrefs.channelsHint": {
+    "en": "What your team’s Slack or Microsoft Teams channel receives is set for the whole organization by the owner and admins.",
+    "ru": "Что получает канал вашей команды в Slack или Microsoft Teams, настраивают для всей организации владелец и администраторы.",
+    "ka": "რას მიიღებს თქვენი გუნდის Slack-ის ან Microsoft Teams-ის არხი, მთელი ორგანიზაციისთვის მფლობელი და ადმინისტრატორები განსაზღვრავენ."
+  },
+  "notifPrefs.channelsHintAdmin": {
+    "en": "What your team’s Slack or Microsoft Teams channel receives is set for the whole organization in <link>Slack & Microsoft Teams notifications</link>.",
+    "ru": "Что получает канал вашей команды в Slack или Microsoft Teams, настраивается для всей организации в разделе <link>Уведомления Slack и Microsoft Teams</link>.",
+    "ka": "რას მიიღებს თქვენი გუნდის Slack-ის ან Microsoft Teams-ის არხი, მთელი ორგანიზაციისთვის განისაზღვრება განყოფილებაში <link>Slack და Microsoft Teams შეტყობინებები</link>."
   },
   "notifPrefs.event.new_applicant.title": {
     "en": "New application",
@@ -8465,9 +8630,9 @@
     "ka": "განხილვა"
   },
   "pipeStages.typeReviewDesc": {
-    "en": "Lightweight screening — Yes/No advance with a one-line reason.",
-    "ru": "Лёгкий скрининг — да/нет с кратким обоснованием.",
-    "ka": "მსუბუქი სქრინინგი — კი/არა მოკლე დასაბუთებით."
+    "en": "Screening checks — the candidate’s answers to the screening questions, with failed knockout questions flagged.",
+    "ru": "Проверки скрининга — ответы кандидата на вопросы скрининга; непройденные отсеивающие вопросы отмечены.",
+    "ka": "სკრინინგის შემოწმებები — კანდიდატის პასუხები სკრინინგის კითხვებზე; ჩავარდნილი გამომრიცხავი კითხვები მონიშნულია."
   },
   "pipeStages.typeInterview": {
     "en": "Interview",
@@ -8512,7 +8677,7 @@
   "pipeStages.typeHint": {
     "en": "A stage's <b>type</b> drives the candidate profile actions — pick Interview for round-by-round scorecards, Review for screening gates, Offer for the offer state.",
     "ru": "<b>Тип</b> этапа определяет действия в профиле кандидата — выберите «Собеседование» для оценочных карт по раундам, «Проверка» для скрининга, «Оффер» для состояния оффера.",
-    "ka": "ეტაპის <b>ტიპი</b> განსაზღვრავს კანდიდატის პროფილის მოქმედებებს — აირჩიეთ „გასაუბრება“ რაუნდობრივი შეფასების ბარათებისთვის, „განხილვა“ სქრინინგისთვის, „შეთავაზება“ შეთავაზების მდგომარეობისთვის."
+    "ka": "ეტაპის <b>ტიპი</b> განსაზღვრავს კანდიდატის პროფილის მოქმედებებს — აირჩიეთ „გასაუბრება“ რაუნდობრივი შეფასების ბარათებისთვის, „განხილვა“ სკრინინგისთვის, „შეთავაზება“ შეთავაზების მდგომარეობისთვის."
   },
   "pipeStages.dragReorder": {
     "en": "Drag to reorder",
@@ -8733,6 +8898,16 @@
     "en": "Subscriptions renew automatically. Cancel anytime — you keep access until the end of your paid period. See our <refund>Refund Policy</refund> and <terms>Terms</terms>.",
     "ru": "Подписки продлеваются автоматически. Отменить можно в любой момент — доступ сохраняется до конца оплаченного периода. См. нашу <refund>Политику возврата</refund> и <terms>Условия</terms>.",
     "ka": "გამოწერები ავტომატურად ახლდება. გააუქმეთ ნებისმიერ დროს — წვდომა გრჩებათ ანაზღაურებული პერიოდის ბოლომდე. იხილეთ ჩვენი <refund>დაბრუნების პოლიტიკა</refund> და <terms>პირობები</terms>."
+  },
+  "billing.cancelledNote": {
+    "en": "Auto-renewal is off — you won't be charged again. You can request a refund within {days} days of a payment; approved refunds are sent within {payout} business days, minus payment processing fees. See our <refund>Refund Policy</refund> and <terms>Terms</terms>.",
+    "ru": "Автопродление отключено — больше списаний не будет. Запросить возврат можно в течение {days} дней после платежа; одобренный возврат мы отправляем в течение {payout} рабочих дней за вычетом комиссии за обработку платежа. См. нашу <refund>Политику возврата</refund> и <terms>Условия</terms>.",
+    "ka": "ავტომატური განახლება გამორთულია — თანხა აღარ ჩამოგეჭრებათ. თანხის დაბრუნება შეგიძლიათ მოითხოვოთ გადახდიდან {days} დღის განმავლობაში; დამტკიცებულ თანხას ვაბრუნებთ {payout} სამუშაო დღეში, გადახდის დამუშავების საკომისიოს გამოკლებით. იხილეთ ჩვენი <refund>დაბრუნების პოლიტიკა</refund> და <terms>პირობები</terms>."
+  },
+  "billing.refundedNote": {
+    "en": "Your last payment was refunded. We send approved refunds within {payout} business days, minus payment processing fees; your bank may need a few more days to show it. See our <refund>Refund Policy</refund>.",
+    "ru": "Ваш последний платёж возвращён. Одобренный возврат мы отправляем в течение {payout} рабочих дней за вычетом комиссии за обработку платежа; вашему банку может понадобиться ещё несколько дней, чтобы его отразить. См. нашу <refund>Политику возврата</refund>.",
+    "ka": "თქვენი ბოლო გადახდა დაგიბრუნდათ. დამტკიცებულ თანხას ვაბრუნებთ {payout} სამუშაო დღეში, გადახდის დამუშავების საკომისიოს გამოკლებით; ბანკს მის ასახვას შესაძლოა რამდენიმე დამატებითი დღე დასჭირდეს. იხილეთ ჩვენი <refund>დაბრუნების პოლიტიკა</refund>."
   },
   "billing.unlockCapacity": {
     "en": "Unlock more capacity",
@@ -9025,14 +9200,14 @@
     "ka": "გაზიარების ბმული გაუქმდა."
   },
   "shareScorecard.title": {
-    "en": "Share scorecard",
-    "ru": "Поделиться оценочной картой",
-    "ka": "შეფასების ბარათის გაზიარება"
+    "en": "Share assessment",
+    "ru": "Поделиться оценкой",
+    "ka": "შეფასების გაზიარება"
   },
   "shareScorecard.desc": {
-    "en": "Share <b>{name}</b>'s evaluation for <b>{title}</b> with someone who isn't in HRHandle. They see only the answers and scores — no recruiter notes, no contact details, no pipeline status.",
-    "ru": "Поделитесь оценкой <b>{name}</b> для <b>{title}</b> с тем, кто не в HRHandle. Он увидит только ответы и оценки — без заметок рекрутера, контактов и статуса пайплайна.",
-    "ka": "გაუზიარეთ <b>{name}</b>-ის შეფასება <b>{title}</b>-სთვის ვინც HRHandle-ში არ არის. ის ხედავს მხოლოდ პასუხებსა და ქულებს — რეკრუტერის შენიშვნების, საკონტაქტო დეტალებისა და პაიპლაინის სტატუსის გარეშე."
+    "en": "Share this assessment with someone who isn't in HRHandle: <b>{name}</b> for <b>{title}</b>, by {assessor}. They see the scores, answers and recommendation — no notes, contact details or pipeline status.",
+    "ru": "Поделитесь этой оценкой с человеком, которого нет в HRHandle: <b>{name}</b>, вакансия <b>{title}</b>, автор оценки — {assessor}. Он увидит баллы, ответы и рекомендацию — без заметок, контактов и статуса в пайплайне.",
+    "ka": "გაუზიარეთ ეს შეფასება ადამიანს, ვინც HRHandle-ში არ არის: <b>{name}</b>, ვაკანსია <b>{title}</b>, შემფასებელი — {assessor}. ის დაინახავს ქულებს, პასუხებსა და რეკომენდაციას — შენიშვნების, საკონტაქტო მონაცემებისა და პაიპლაინის სტატუსის გარეშე."
   },
   "shareScorecard.checking": {
     "en": "Checking share status…",
@@ -9047,12 +9222,12 @@
   "shareScorecard.firstSharedByOn": {
     "en": "First shared by {name} on {date}.",
     "ru": "Впервые поделился {name} {date}.",
-    "ka": "პირველად გააზიარა {name}-მა {date}."
+    "ka": "პირველად გააზიარა: {name}, {date}."
   },
   "shareScorecard.firstSharedBy": {
     "en": "First shared by {name}.",
     "ru": "Впервые поделился {name}.",
-    "ka": "პირველად გააზიარა {name}-მა."
+    "ka": "პირველად გააზიარა: {name}."
   },
   "shareScorecard.firstSharedOn": {
     "en": "First shared on {date}.",
@@ -9911,7 +10086,7 @@
   },
   "candWizard.wizard.tagAiPrefill": {
     "en": "AI prefill",
-    "ru": "AI-заполнение",
+    "ru": "ИИ-заполнение",
     "ka": "AI შევსება"
   },
   "candWizard.path.question": {
@@ -9926,7 +10101,7 @@
   },
   "candWizard.path.cvBody": {
     "en": "Upload a PDF/Word CV — AI fills name, contact, experience & education for review.",
-    "ru": "Загрузите резюме в PDF/Word — AI заполнит имя, контакты, опыт и образование для проверки.",
+    "ru": "Загрузите резюме в PDF/Word — ИИ заполнит имя, контакты, опыт и образование для проверки.",
     "ka": "ატვირთეთ PDF/Word CV — AI შეავსებს სახელს, კონტაქტს, გამოცდილებასა და განათლებას გადასახედად."
   },
   "candWizard.path.manualTitle": {
@@ -10482,7 +10657,7 @@
   "repeatBanner.appliedTo": {
     "en": "Applied to {count, plural, one {# previous vacancy} other {# previous vacancies}} here — {rejected} rejected, {withdrawn} withdrawn.",
     "ru": "Откликался на {count, plural, one {# предыдущую вакансию} few {# предыдущие вакансии} many {# предыдущих вакансий} other {# предыдущей вакансии}} здесь — {rejected} отклонено, {withdrawn} отозвано.",
-    "ka": "აქ განაცხადი გააკეთა {count, plural, one {# წინა ვაკანსიაზე} other {# წინა ვაკანსიაზე}} — {rejected} უარყოფილი, {withdrawn} გატანილი."
+    "ka": "აქ განაცხადი გააკეთა {count, plural, one {# წინა ვაკანსიაზე} other {# წინა ვაკანსიაზე}} — {rejected} უარყოფილი, {withdrawn} გაწვეული."
   },
   "repeatBanner.mostRecent": {
     "en": " Most recent: <b>{title}</b>, {outcome} {relative}{reason}.",
@@ -10527,7 +10702,7 @@
   "appHistory.withdrawnSuffix": {
     "en": " · {count} withdrawn",
     "ru": " · {count} отозвано",
-    "ka": " · {count} გატანილი"
+    "ka": " · {count} გაწვეული"
   },
   "appHistory.hiredSuffix": {
     "en": " · {count} hired",
@@ -10537,7 +10712,7 @@
   "appHistory.candidateWithdrew": {
     "en": "Candidate withdrew",
     "ru": "Кандидат отозвал заявку",
-    "ka": "კანდიდატმა გაიტანა განაცხადი"
+    "ka": "კანდიდატმა განაცხადი გაიწვია"
   },
   "appHistory.reachedSuffix": {
     "en": " · reached {stage}",
@@ -10613,6 +10788,21 @@
     "en": "Send this to the candidate. When they book, HRHandle will create the interview record automatically.",
     "ru": "Отправьте это кандидату. Когда он забронирует, HRHandle автоматически создаст запись о собеседовании.",
     "ka": "გაუგზავნეთ ეს კანდიდატს. როცა ის დაჯავშნის, HRHandle ავტომატურად შექმნის გასაუბრების ჩანაწერს."
+  },
+  "calLink.errNotSetUp": {
+    "en": "Calendly isn't set up yet. An owner or admin connects it and picks an event type in Settings → Integrations.",
+    "ru": "Calendly ещё не настроен. Владелец или администратор подключает его и выбирает тип события в разделе «Настройки» → «Интеграции».",
+    "ka": "Calendly ჯერ არ არის მომართული. მფლობელი ან ადმინისტრატორი აკავშირებს მას და ირჩევს მოვლენის ტიპს: „პარამეტრები“ → „ინტეგრაციები“."
+  },
+  "calLink.errEventGone": {
+    "en": "The chosen Calendly event type no longer exists. An owner or admin picks a new one in Settings → Integrations.",
+    "ru": "Выбранного типа события в Calendly больше нет. Владелец или администратор выбирает новый в разделе «Настройки» → «Интеграции».",
+    "ka": "არჩეული Calendly-ის მოვლენის ტიპი აღარ არსებობს. მფლობელი ან ადმინისტრატორი ირჩევს ახალს: „პარამეტრები“ → „ინტეგრაციები“."
+  },
+  "calLink.errCalendly": {
+    "en": "Couldn't get the link from Calendly. Try again, or ask an owner or admin to reconnect Calendly.",
+    "ru": "Не удалось получить ссылку от Calendly. Попробуйте ещё раз или попросите владельца или администратора переподключить Calendly.",
+    "ka": "Calendly-დან ბმულის მიღება ვერ მოხერხდა. სცადეთ ხელახლა ან სთხოვეთ მფლობელს ან ადმინისტრატორს Calendly-ის ხელახლა დაკავშირება."
   },
   "calLink.generating": {
     "en": "Generating link…",
@@ -10717,7 +10907,7 @@
   "guide.shellTitle": {
     "en": "HRHandle Guides",
     "ru": "Руководства HRHandle",
-    "ka": "HRHandle-ის სახელმძღვანელოები"
+    "ka": "HRHandle-ის გზამკვლევები"
   },
   "guide.backToHome": {
     "en": "Back to home",
@@ -10728,6 +10918,391 @@
     "en": "Coming soon",
     "ru": "Скоро",
     "ka": "მალე"
+  },
+  "guide.indexTitle": {
+    "en": "Guides",
+    "ru": "Руководства",
+    "ka": "გზამკვლევები"
+  },
+  "guide.indexIntro": {
+    "en": "Step-by-step walkthroughs of every HRHandle feature. Use them to set up your organization, onboard your team or try a feature for the first time.",
+    "ru": "Пошаговые инструкции по всем функциям HRHandle. Используйте их, чтобы настроить организацию, ввести в курс дела команду или впервые попробовать функцию.",
+    "ka": "HRHandle-ის ყველა ფუნქციის ნაბიჯ-ნაბიჯ აღწერა. გამოიყენეთ ისინი ორგანიზაციის მოსაწყობად, გუნდის გასაცნობად ან ახალი ფუნქციის პირველად გამოსაცდელად."
+  },
+  "guide.metaDescription": {
+    "en": "Step-by-step guides to HRHandle: vacancies, candidates, the pipeline, interviews, offers, AI features and more.",
+    "ru": "Пошаговые руководства по HRHandle: вакансии, кандидаты, пайплайн, собеседования, офферы, функции ИИ и многое другое.",
+    "ka": "HRHandle-ის ნაბიჯ-ნაბიჯ გზამკვლევები: ვაკანსიები, კანდიდატები, პაიპლაინი, გასაუბრებები, შეთავაზებები, AI ფუნქციები და სხვა."
+  },
+  "guide.eyebrow": {
+    "en": "Guide",
+    "ru": "Руководство",
+    "ka": "გზამკვლევი"
+  },
+  "guide.notTranslated": {
+    "en": "This guide isn't available in your language yet, so it's shown in English.",
+    "ru": "Это руководство пока недоступно на вашем языке, поэтому показано на английском.",
+    "ka": "ეს გზამკვლევი თქვენს ენაზე ჯერ არ არის ხელმისაწვდომი, ამიტომ ნაჩვენებია ინგლისურად."
+  },
+  "guide.faqTitle": {
+    "en": "Frequently asked questions",
+    "ru": "Частые вопросы",
+    "ka": "ხშირად დასმული კითხვები"
+  },
+  "guide.category.gettingStarted": {
+    "en": "Getting started",
+    "ru": "Начало работы",
+    "ka": "დაწყება"
+  },
+  "guide.category.vacancies": {
+    "en": "Vacancies",
+    "ru": "Вакансии",
+    "ka": "ვაკანსიები"
+  },
+  "guide.category.candidates": {
+    "en": "Candidates",
+    "ru": "Кандидаты",
+    "ka": "კანდიდატები"
+  },
+  "guide.category.hiring": {
+    "en": "Hiring",
+    "ru": "Найм",
+    "ka": "დაქირავება"
+  },
+  "guide.category.communication": {
+    "en": "Candidate communication",
+    "ru": "Общение с кандидатами",
+    "ka": "კომუნიკაცია კანდიდატებთან"
+  },
+  "guide.category.aiAndReports": {
+    "en": "AI and reports",
+    "ru": "ИИ и отчёты",
+    "ka": "AI და ანგარიშები"
+  },
+  "guide.category.administration": {
+    "en": "Administration",
+    "ru": "Администрирование",
+    "ka": "ადმინისტრირება"
+  },
+  "guide.topic.signUp.title": {
+    "en": "Sign up and create your organization",
+    "ru": "Регистрация и создание организации",
+    "ka": "რეგისტრაცია და ორგანიზაციის შექმნა"
+  },
+  "guide.topic.signUp.summary": {
+    "en": "Create your account and organization and start the 7-day free trial.",
+    "ru": "Создайте учётную запись и организацию и начните 7-дневный бесплатный пробный период.",
+    "ka": "შექმენით ანგარიში და ორგანიზაცია და დაიწყეთ 7-დღიანი უფასო საცდელი პერიოდი."
+  },
+  "guide.topic.navigation.title": {
+    "en": "Find your way around",
+    "ru": "Как устроен интерфейс",
+    "ka": "ორიენტაცია სისტემაში"
+  },
+  "guide.topic.navigation.summary": {
+    "en": "The sidebar, the Pipeline home screen, search, notifications and the interface language.",
+    "ru": "Боковое меню, главный экран «Пайплайн», поиск, уведомления и язык интерфейса.",
+    "ka": "გვერდითი მენიუ, მთავარი ეკრანი „პაიპლაინი“, ძიება, შეტყობინებები და ინტერფეისის ენა."
+  },
+  "guide.topic.profileSecurity.title": {
+    "en": "Your profile and security",
+    "ru": "Профиль и безопасность",
+    "ka": "პროფილი და უსაფრთხოება"
+  },
+  "guide.topic.profileSecurity.summary": {
+    "en": "Your name, photo and language, password, two-factor authentication and active sessions.",
+    "ru": "Имя, фото и язык, пароль, двухфакторная аутентификация и активные сеансы.",
+    "ka": "სახელი, ფოტო და ენა, პაროლი, ორფაქტორიანი ავთენტიფიკაცია და აქტიური სესიები."
+  },
+  "guide.topic.organization.title": {
+    "en": "Organization settings",
+    "ru": "Настройки организации",
+    "ka": "ორგანიზაციის პარამეტრები"
+  },
+  "guide.topic.organization.summary": {
+    "en": "Company name, logo, jobs page address, content languages and security rules for your team.",
+    "ru": "Название компании, логотип, адрес страницы вакансий, языки контента и правила безопасности для команды.",
+    "ka": "კომპანიის სახელი, ლოგო, ვაკანსიების გვერდის მისამართი, კონტენტის ენები და გუნდის უსაფრთხოების წესები."
+  },
+  "guide.topic.team.title": {
+    "en": "Team and roles",
+    "ru": "Команда и роли",
+    "ka": "გუნდი და როლები"
+  },
+  "guide.topic.team.summary": {
+    "en": "Invite teammates and decide what the owner, admins and members can do.",
+    "ru": "Приглашайте коллег и определяйте, что могут делать владелец, администраторы и участники.",
+    "ka": "მოიწვიეთ კოლეგები და განსაზღვრეთ, რა შეუძლიათ მფლობელს, ადმინისტრატორებს და წევრებს."
+  },
+  "guide.topic.createVacancy.title": {
+    "en": "Create a vacancy",
+    "ru": "Создание вакансии",
+    "ka": "ვაკანსიის შექმნა"
+  },
+  "guide.topic.createVacancy.summary": {
+    "en": "Create a job opening in five steps, with AI help for the description and the scorecard.",
+    "ru": "Создайте вакансию за пять шагов с помощью ИИ для описания и оценочного листа.",
+    "ka": "შექმენით ვაკანსია ხუთ ნაბიჯად, აღწერისა და შეფასების ფურცლისთვის AI-ის დახმარებით."
+  },
+  "guide.topic.vacancyPage.title": {
+    "en": "The vacancy page",
+    "ru": "Страница вакансии",
+    "ka": "ვაკანსიის გვერდი"
+  },
+  "guide.topic.vacancyPage.summary": {
+    "en": "Applications, job description, scorecard, application form and settings of a vacancy.",
+    "ru": "Отклики, описание, оценочный лист, форма отклика и настройки вакансии.",
+    "ka": "ვაკანსიის განაცხადები, აღწერა, შეფასების ფურცელი, განაცხადის ფორმა და პარამეტრები."
+  },
+  "guide.topic.shareVacancy.title": {
+    "en": "Share a vacancy",
+    "ru": "Публикация вакансии",
+    "ka": "ვაკანსიის გაზიარება"
+  },
+  "guide.topic.shareVacancy.summary": {
+    "en": "Share a vacancy through its apply link, your public jobs page and LinkedIn.",
+    "ru": "Публикуйте вакансию по ссылке для отклика, на публичной странице вакансий и в LinkedIn.",
+    "ka": "გააზიარეთ ვაკანსია განაცხადის ბმულით, საჯარო ვაკანსიების გვერდით და LinkedIn-ით."
+  },
+  "guide.topic.addCandidates.title": {
+    "en": "Add a candidate",
+    "ru": "Добавление кандидата",
+    "ka": "კანდიდატის დამატება"
+  },
+  "guide.topic.addCandidates.summary": {
+    "en": "Add a candidate by uploading a CV (AI fills in the details) or by hand.",
+    "ru": "Добавьте кандидата, загрузив резюме (ИИ заполнит данные), или вручную.",
+    "ka": "დაამატეთ კანდიდატი CV-ის ატვირთვით (AI თავად შეავსებს მონაცემებს) ან ხელით."
+  },
+  "guide.topic.importCandidates.title": {
+    "en": "Import candidates from Excel or CSV",
+    "ru": "Импорт кандидатов из Excel или CSV",
+    "ka": "კანდიდატების იმპორტი Excel-იდან ან CSV-დან"
+  },
+  "guide.topic.importCandidates.summary": {
+    "en": "Bring in many candidates at once from a spreadsheet.",
+    "ru": "Загрузите сразу много кандидатов из таблицы.",
+    "ka": "შემოიტანეთ ბევრი კანდიდატი ერთდროულად ცხრილიდან."
+  },
+  "guide.topic.candidateProfile.title": {
+    "en": "The candidate profile",
+    "ru": "Профиль кандидата",
+    "ka": "კანდიდატის პროფილი"
+  },
+  "guide.topic.candidateProfile.summary": {
+    "en": "Contact details, experience, documents, notes, activity and applications in one place.",
+    "ru": "Контакты, опыт, документы, заметки, активность и отклики в одном месте.",
+    "ka": "საკონტაქტო მონაცემები, გამოცდილება, დოკუმენტები, შენიშვნები, აქტივობა და განაცხადები ერთ ადგილას."
+  },
+  "guide.topic.search.title": {
+    "en": "Search and filters",
+    "ru": "Поиск и фильтры",
+    "ka": "ძიება და ფილტრები"
+  },
+  "guide.topic.search.summary": {
+    "en": "Find any candidate, vacancy or note quickly, and narrow down long lists.",
+    "ru": "Быстро находите любого кандидата, вакансию или заметку и сужайте длинные списки.",
+    "ka": "სწრაფად იპოვეთ ნებისმიერი კანდიდატი, ვაკანსია თუ შენიშვნა და შეავიწროვეთ გრძელი სიები."
+  },
+  "guide.topic.pipeline.title": {
+    "en": "The pipeline",
+    "ru": "Пайплайн",
+    "ka": "პაიპლაინი"
+  },
+  "guide.topic.pipeline.summary": {
+    "en": "Move candidates through the hiring stages on a board, and customize the stages.",
+    "ru": "Перемещайте кандидатов по этапам найма на доске и настраивайте этапы.",
+    "ka": "გადაიყვანეთ კანდიდატები დაქირავების ეტაპებზე დაფაზე და მოარგეთ ეტაპები."
+  },
+  "guide.topic.assessments.title": {
+    "en": "Assessments and scorecards",
+    "ru": "Оценки и оценочные листы",
+    "ka": "შეფასებები და შეფასების ფურცლები"
+  },
+  "guide.topic.assessments.summary": {
+    "en": "Rate candidates against the vacancy's criteria, on your own or with colleagues.",
+    "ru": "Оценивайте кандидатов по критериям вакансии — самостоятельно или вместе с коллегами.",
+    "ka": "შეაფასეთ კანდიდატები ვაკანსიის კრიტერიუმებით — დამოუკიდებლად ან კოლეგებთან ერთად."
+  },
+  "guide.topic.reject.title": {
+    "en": "Reject candidates",
+    "ru": "Отказ кандидатам",
+    "ka": "კანდიდატებზე უარის თქმა"
+  },
+  "guide.topic.reject.summary": {
+    "en": "Reject one or several candidates with a reason and an optional email.",
+    "ru": "Отказывайте одному или нескольким кандидатам с указанием причины и, при желании, письмом.",
+    "ka": "უთხარით უარი ერთ ან რამდენიმე კანდიდატს მიზეზის მითითებით და, სურვილისამებრ, იმეილით."
+  },
+  "guide.topic.interviews.title": {
+    "en": "Schedule interviews",
+    "ru": "Планирование собеседований",
+    "ka": "გასაუბრებების დაგეგმვა"
+  },
+  "guide.topic.interviews.summary": {
+    "en": "Book interviews with Google Meet, Zoom or Teams links, or let candidates book a time through Calendly.",
+    "ru": "Назначайте собеседования со ссылками Google Meet, Zoom или Teams или дайте кандидатам записаться через Calendly.",
+    "ka": "დანიშნეთ გასაუბრებები Google Meet-ის, Zoom-ის ან Teams-ის ბმულით, ან მიეცით კანდიდატებს დროის Calendly-ით დაჯავშნის საშუალება."
+  },
+  "guide.topic.offers.title": {
+    "en": "Offers",
+    "ru": "Офферы",
+    "ka": "შეთავაზებები"
+  },
+  "guide.topic.offers.summary": {
+    "en": "Create and send job offers, and see when a candidate accepts or declines.",
+    "ru": "Создавайте и отправляйте офферы и следите, когда кандидат принимает или отклоняет их.",
+    "ka": "შექმენით და გაგზავნეთ სამუშაო შეთავაზებები და ნახეთ, როდის დაეთანხმება ან უარს იტყვის კანდიდატი."
+  },
+  "guide.topic.candidateExperience.title": {
+    "en": "What candidates see",
+    "ru": "Что видит кандидат",
+    "ka": "რას ხედავს კანდიდატი"
+  },
+  "guide.topic.candidateExperience.summary": {
+    "en": "The application form, emails, status page and offer page from the candidate's side.",
+    "ru": "Форма отклика, письма, страница статуса и страница оффера глазами кандидата.",
+    "ka": "განაცხადის ფორმა, იმეილები, სტატუსის გვერდი და შეთავაზების გვერდი კანდიდატის მხრიდან."
+  },
+  "guide.topic.emailTemplates.title": {
+    "en": "Email templates",
+    "ru": "Шаблоны писем",
+    "ka": "იმეილის შაბლონები"
+  },
+  "guide.topic.emailTemplates.summary": {
+    "en": "Edit the emails candidates receive and turn on automatic status updates.",
+    "ru": "Редактируйте письма кандидатам и включайте автоматические уведомления о статусе.",
+    "ka": "შეცვალეთ კანდიდატებისთვის გაგზავნილი იმეილები და ჩართეთ სტატუსის ავტომატური შეტყობინებები."
+  },
+  "guide.topic.notifications.title": {
+    "en": "Notifications, Slack and Teams",
+    "ru": "Уведомления, Slack и Teams",
+    "ka": "შეტყობინებები, Slack და Teams"
+  },
+  "guide.topic.notifications.summary": {
+    "en": "In-app notifications, @mentions, and alerts in your Slack or Microsoft Teams channels.",
+    "ru": "Уведомления в системе, @упоминания и оповещения в каналах Slack или Microsoft Teams.",
+    "ka": "შეტყობინებები სისტემაში, @მოხსენიებები და შეტყობინებები თქვენს Slack-ის ან Microsoft Teams-ის არხებში."
+  },
+  "guide.topic.ai.title": {
+    "en": "AI features",
+    "ru": "Функции ИИ",
+    "ka": "AI ფუნქციები"
+  },
+  "guide.topic.ai.summary": {
+    "en": "How AI helps with CVs, job descriptions, scorecards and fit analysis, and how you stay in control.",
+    "ru": "Как ИИ помогает с резюме, описаниями вакансий, оценочными листами и анализом соответствия и как вы сохраняете контроль.",
+    "ka": "როგორ გეხმარებათ AI CV-ებთან, ვაკანსიის აღწერებთან, შეფასების ფურცლებსა და შესაბამისობის ანალიზთან, და როგორ რჩება კონტროლი თქვენს ხელში."
+  },
+  "guide.topic.reports.title": {
+    "en": "Reports",
+    "ru": "Отчёты",
+    "ka": "ანგარიშები"
+  },
+  "guide.topic.reports.summary": {
+    "en": "Pipeline conversion, candidate sources and time to hire.",
+    "ru": "Конверсия пайплайна, источники кандидатов и время найма.",
+    "ka": "პაიპლაინის კონვერსია, კანდიდატების წყაროები და დაქირავების დრო."
+  },
+  "guide.topic.integrations.title": {
+    "en": "Integrations",
+    "ru": "Интеграции",
+    "ka": "ინტეგრაციები"
+  },
+  "guide.topic.integrations.summary": {
+    "en": "Connect Google, Microsoft, Zoom, Calendly, LinkedIn, Slack and Teams.",
+    "ru": "Подключите Google, Microsoft, Zoom, Calendly, LinkedIn, Slack и Teams.",
+    "ka": "დააკავშირეთ Google, Microsoft, Zoom, Calendly, LinkedIn, Slack და Teams."
+  },
+  "guide.topic.customFields.title": {
+    "en": "Custom fields",
+    "ru": "Пользовательские поля",
+    "ka": "მორგებული ველები"
+  },
+  "guide.topic.customFields.summary": {
+    "en": "Add your own fields to vacancies and candidates.",
+    "ru": "Добавляйте собственные поля к вакансиям и кандидатам.",
+    "ka": "დაამატეთ საკუთარი ველები ვაკანსიებსა და კანდიდატებს."
+  },
+  "guide.topic.auditTrash.title": {
+    "en": "Audit log and trash",
+    "ru": "Журнал аудита и корзина",
+    "ka": "აუდიტის ჟურნალი და სანაგვე"
+  },
+  "guide.topic.auditTrash.summary": {
+    "en": "See who changed what, and restore deleted candidates and vacancies.",
+    "ru": "Смотрите, кто что изменил, и восстанавливайте удалённых кандидатов и вакансии.",
+    "ka": "ნახეთ, ვინ რა შეცვალა, და აღადგინეთ წაშლილი კანდიდატები და ვაკანსიები."
+  },
+  "guide.topic.billing.title": {
+    "en": "Plans and billing",
+    "ru": "Тарифы и оплата",
+    "ka": "გეგმები და ბილინგი"
+  },
+  "guide.topic.billing.summary": {
+    "en": "Plans and limits, upgrading, auto-renewal, cancelling and refunds.",
+    "ru": "Тарифы и лимиты, переход на платный тариф, автопродление, отмена и возврат средств.",
+    "ka": "გეგმები და ლიმიტები, ფასიან გეგმაზე გადასვლა, ავტომატური განახლება, გაუქმება და თანხის დაბრუნება."
+  },
+  "guide.faq.trial.q": {
+    "en": "Is there a free trial?",
+    "ru": "Есть ли бесплатный пробный период?",
+    "ka": "არსებობს უფასო საცდელი პერიოდი?"
+  },
+  "guide.faq.trial.a": {
+    "en": "Yes. Every new organization gets a 7-day free trial with full access. No payment card is needed to start.",
+    "ru": "Да. Каждая новая организация получает 7-дневный бесплатный пробный период с полным доступом. Банковская карта для начала не нужна.",
+    "ka": "დიახ. ყოველი ახალი ორგანიზაცია იღებს 7-დღიან უფასო საცდელ პერიოდს სრული წვდომით. დასაწყებად საბანკო ბარათი არ არის საჭირო."
+  },
+  "guide.faq.languages.q": {
+    "en": "Which languages does HRHandle support?",
+    "ru": "На каких языках доступен HRHandle?",
+    "ka": "რომელ ენებზეა ხელმისაწვდომი HRHandle?"
+  },
+  "guide.faq.languages.a": {
+    "en": "The interface is available in English, Georgian and Russian, and each person chooses their own language in Settings → Profile. Candidates see your application forms, emails and job pages in your organization's content language.",
+    "ru": "Интерфейс доступен на английском, грузинском и русском языках, и каждый пользователь выбирает свой язык в разделе «Настройки → Профиль». Кандидаты видят формы отклика, письма и страницы вакансий на языке контента вашей организации.",
+    "ka": "ინტერფეისი ხელმისაწვდომია ინგლისურ, ქართულ და რუსულ ენებზე — თითოეული მომხმარებელი საკუთარ ენას ირჩევს „პარამეტრები → პროფილი“-ში. კანდიდატები განაცხადის ფორმებს, იმეილებსა და ვაკანსიების გვერდებს ხედავენ თქვენი ორგანიზაციის კონტენტის ენაზე."
+  },
+  "guide.faq.cv.q": {
+    "en": "Which CV formats can I upload?",
+    "ru": "Какие форматы резюме можно загрузить?",
+    "ka": "რა ფორმატის CV შემიძლია ავტვირთო?"
+  },
+  "guide.faq.cv.a": {
+    "en": "PDF and Word files up to 10 MB. HRHandle reads the CV with AI and fills in the candidate's details for you to check.",
+    "ru": "Файлы PDF и Word размером до 10 МБ. HRHandle читает резюме с помощью ИИ и заполняет данные кандидата, которые вы затем проверяете.",
+    "ka": "PDF და Word ფაილები 10 მბ-მდე. HRHandle კითხულობს CV-ს AI-ის დახმარებით და ავსებს კანდიდატის მონაცემებს, რომლებსაც თქვენ გადაამოწმებთ."
+  },
+  "guide.faq.export.q": {
+    "en": "Can I export my data?",
+    "ru": "Можно ли экспортировать данные?",
+    "ka": "შემიძლია მონაცემების ექსპორტი?"
+  },
+  "guide.faq.export.a": {
+    "en": "Yes. The Candidates page has an Export CSV button that downloads all your candidates as a spreadsheet file. Owners and admins can also export the audit log.",
+    "ru": "Да. На странице «Кандидаты» есть кнопка экспорта в CSV — она скачивает всех ваших кандидатов в виде таблицы. Владелец и администраторы также могут выгрузить журнал аудита.",
+    "ka": "დიახ. გვერდზე „კანდიდატები“ არის CSV ექსპორტის ღილაკი, რომელიც ყველა თქვენს კანდიდატს ცხრილის ფაილად ჩამოტვირთავს. მფლობელს და ადმინებს ასევე შეუძლიათ აუდიტის ჟურნალის ექსპორტი."
+  },
+  "guide.faq.calendar.q": {
+    "en": "Which calendar and video tools work with HRHandle?",
+    "ru": "С какими календарями и сервисами видеосвязи работает HRHandle?",
+    "ka": "რომელ კალენდარსა და ვიდეოზარის ხელსაწყოებთან მუშაობს HRHandle?"
+  },
+  "guide.faq.calendar.a": {
+    "en": "Google Calendar with Google Meet, Microsoft 365 with Teams, and Zoom. With Calendly, candidates can book an interview time themselves. Connect them in Settings → Integrations.",
+    "ru": "Google Календарь с Google Meet, Microsoft 365 с Teams, а также Zoom. Через Calendly кандидаты могут сами выбрать время собеседования. Подключите их в разделе «Настройки → Интеграции».",
+    "ka": "Google Calendar და Google Meet, Microsoft 365 და Teams, ასევე Zoom. Calendly-ით კანდიდატებს თავად შეუძლიათ გასაუბრების დროის დაჯავშნა. დააკავშირეთ ისინი „პარამეტრები → ინტეგრაციები“-ში."
+  },
+  "guide.faq.support.q": {
+    "en": "How do I contact support?",
+    "ru": "Как связаться с поддержкой?",
+    "ka": "როგორ დავუკავშირდე მხარდაჭერას?"
+  },
+  "guide.faq.support.a": {
+    "en": "In the app, open Support in the sidebar and send us a message. You can also use the form at hrhandle.com/support or write to support@hrhandle.com.",
+    "ru": "В приложении откройте «Поддержка» в боковом меню и отправьте нам сообщение. Также можно воспользоваться формой на hrhandle.com/support или написать на support@hrhandle.com.",
+    "ka": "აპლიკაციაში გახსენით „მხარდაჭერა“ გვერდით მენიუში და მოგვწერეთ. ასევე შეგიძლიათ გამოიყენოთ ფორმა მისამართზე hrhandle.com/support ან მოგვწეროთ support@hrhandle.com-ზე."
   },
   "sidebar.primaryNav": {
     "en": "Primary navigation",
@@ -10891,7 +11466,7 @@
   },
   "auditMsg.aiFit": {
     "en": "AI fit analysis run",
-    "ru": "Запущен AI-анализ соответствия",
+    "ru": "Запущен ИИ-анализ соответствия",
     "ka": "AI შესაბამისობის ანალიზი შესრულდა"
   },
   "auditMsg.ai_assist.candidate_summary": {
@@ -10921,13 +11496,18 @@
   },
   "auditMsg.ai_assist.generic": {
     "en": "AI assistance used",
-    "ru": "Использована помощь AI",
+    "ru": "Использована помощь ИИ",
     "ka": "გამოყენებულია AI დახმარება"
   },
   "auditMsg.action.application_withdrawn": {
     "en": "Application withdrawn by candidate",
-    "ru": "Заявка отозвана кандидатом",
-    "ka": "განაცხადი გაიტანა კანდიდატმა"
+    "ru": "Кандидат отозвал отклик",
+    "ka": "კანდიდატმა განაცხადი გაიწვია"
+  },
+  "auditMsg.withdrawnWithReason": {
+    "en": "Application withdrawn by candidate: “{reason}”",
+    "ru": "Кандидат отозвал отклик: «{reason}»",
+    "ka": "კანდიდატმა განაცხადი გაიწვია: „{reason}“"
   },
   "auditMsg.action.billing_checkout_started": {
     "en": "Checkout started",
@@ -11030,14 +11610,14 @@
     "ka": "შეთავაზება გაუქმდა"
   },
   "auditMsg.action.scorecard_revoked": {
-    "en": "Scorecard share link revoked",
-    "ru": "Ссылка на оценочный лист отозвана",
-    "ka": "შეფასების ბარათის ბმული გაუქმდა"
+    "en": "Assessment share link revoked",
+    "ru": "Ссылка на оценку отозвана",
+    "ka": "შეფასების ბმული გაუქმდა"
   },
   "auditMsg.action.scorecard_shared": {
-    "en": "Scorecard share link generated",
-    "ru": "Создана ссылка на оценочный лист",
-    "ka": "შეიქმნა შეფასების ბარათის ბმული"
+    "en": "Assessment share link created",
+    "ru": "Создана ссылка на оценку",
+    "ka": "შეიქმნა შეფასების ბმული"
   },
   "auditMsg.action.vacancy_hard_deleted": {
     "en": "Vacancy permanently deleted from trash",
@@ -11472,27 +12052,27 @@
   "status.subtitle.withdrawn": {
     "en": "This application has been withdrawn.",
     "ru": "Этот отклик отозван.",
-    "ka": "ეს განაცხადი გატანილია."
+    "ka": "ეს განაცხადი გაწვეულია."
   },
   "withdraw.prompt": {
     "en": "Not interested anymore? You can withdraw your application below.",
     "ru": "Больше не интересно? Вы можете отозвать свой отклик ниже.",
-    "ka": "აღარ ხართ დაინტერესებული? შეგიძლიათ ქვემოთ გაიტანოთ თქვენი განაცხადი."
+    "ka": "აღარ ხართ დაინტერესებული? შეგიძლიათ ქვემოთ გაიწვიოთ თქვენი განაცხადი."
   },
   "withdraw.button": {
     "en": "Withdraw application",
     "ru": "Отозвать отклик",
-    "ka": "განაცხადის გატანა"
+    "ka": "განაცხადის გაწვევა"
   },
   "withdraw.title": {
     "en": "Withdraw your application?",
     "ru": "Отозвать ваш отклик?",
-    "ka": "გავიტანოთ თქვენი განაცხადი?"
+    "ka": "გსურთ განაცხადის გაწვევა?"
   },
   "withdraw.desc": {
     "en": "You're about to withdraw your application for {role} at {company}. The recruiter will be notified and this cannot be undone from this page.",
     "ru": "Вы собираетесь отозвать свой отклик на {role} в {company}. Рекрутер получит уведомление, и это действие нельзя отменить на этой странице.",
-    "ka": "თქვენ აპირებთ გაიტანოთ თქვენი განაცხადი პოზიციაზე {role} კომპანიაში {company}. რეკრუტერი მიიღებს შეტყობინებას და ამ გვერდიდან ამის გაუქმება შეუძლებელია."
+    "ka": "თქვენ აპირებთ გაიწვიოთ თქვენი განაცხადი პოზიციაზე {role} კომპანიაში {company}. რეკრუტერი მიიღებს შეტყობინებას და ამ გვერდიდან ამის გაუქმება შეუძლებელია."
   },
   "withdraw.reasonLabel": {
     "en": "Reason (optional)",
@@ -11505,19 +12085,19 @@
     "ka": "მაგ. სხვა პოზიცია ავირჩიე. ახლა შესაფერისი დრო არ არის."
   },
   "withdraw.reasonHelp": {
-    "en": "Only the recruiter who hired for this role sees this message.",
-    "ru": "Это сообщение видит только рекрутер по этой вакансии.",
-    "ka": "ამ შეტყობინებას ხედავს მხოლოდ ამ პოზიციის რეკრუტერი."
+    "en": "Only the company's hiring team sees this message.",
+    "ru": "Это сообщение видит только команда найма компании.",
+    "ka": "ამ შეტყობინებას მხოლოდ კომპანიის დაქირავების გუნდი ხედავს."
   },
   "withdraw.confirm": {
     "en": "Confirm withdraw",
     "ru": "Подтвердить отзыв",
-    "ka": "გატანის დადასტურება"
+    "ka": "გაწვევის დადასტურება"
   },
   "withdraw.withdrawing": {
     "en": "Withdrawing…",
     "ru": "Отзыв…",
-    "ka": "მიმდინარეობს გატანა…"
+    "ka": "მიმდინარეობს გაწვევა…"
   },
   "jobs.metaTitle": {
     "en": "Jobs",
@@ -11702,12 +12282,12 @@
   "offer.withdrawn.title": {
     "en": "This offer has been withdrawn.",
     "ru": "Это предложение отозвано.",
-    "ka": "ეს შეთავაზება გატანილია."
+    "ka": "ეს შეთავაზება გაუქმებულია."
   },
   "offer.withdrawn.body": {
     "en": "The recruiter has retracted this offer. Contact them if you have questions.",
     "ru": "Рекрутер отозвал это предложение. Свяжитесь с ним, если у вас есть вопросы.",
-    "ka": "რეკრუტერმა გაიტანა ეს შეთავაზება. დაუკავშირდით მას, თუ კითხვები გაქვთ."
+    "ka": "რეკრუტერმა ეს შეთავაზება გააუქმა. დაუკავშირდით მას, თუ კითხვები გაქვთ."
   },
   "offer.showFull": {
     "en": "Show full offer",
@@ -12518,5 +13098,435 @@
     "en": "Could not cancel with the payment provider. Please contact support.",
     "ru": "Не удалось отменить у платёжного сервиса. Обратитесь в поддержку.",
     "ka": "გადახდის სერვისთან გაუქმება ვერ მოხერხდა. გთხოვთ, დაუკავშირდეთ მხარდაჭერას."
+  },
+  "legal.back": {
+    "en": "← Back to HRHandle",
+    "ru": "← Назад в HRHandle",
+    "ka": "← დაბრუნება HRHandle-ზე"
+  },
+  "legal.lastUpdated": {
+    "en": "Last updated: {date}",
+    "ru": "Последнее обновление: {date}",
+    "ka": "ბოლო განახლება: {date}"
+  },
+  "legal.title.terms": {
+    "en": "Terms and Conditions",
+    "ru": "Условия использования",
+    "ka": "წესები და პირობები"
+  },
+  "legal.title.privacy": {
+    "en": "Privacy Policy",
+    "ru": "Политика конфиденциальности",
+    "ka": "კონფიდენციალურობის პოლიტიკა"
+  },
+  "legal.title.refund": {
+    "en": "Refund Policy",
+    "ru": "Политика возврата",
+    "ka": "დაბრუნების პოლიტიკა"
+  },
+  "legal.englishPrevails": {
+    "en": "This is the original English version.",
+    "ru": "Этот перевод предоставлен для удобства. В случае расхождений преимущественную силу имеет версия на английском языке.",
+    "ka": "ეს თარგმანი მოცემულია მოხერხებულობისთვის. შეუსაბამობის შემთხვევაში უპირატესი ძალა აქვს ინგლისურენოვან ვერსიას."
+  },
+  "shareScorecard.errForbidden": {
+    "en": "Only owners and admins can share assessments.",
+    "ru": "Делиться оценками могут только владельцы и администраторы.",
+    "ka": "შეფასებების გაზიარება მხოლოდ მფლობელებსა და ადმინისტრატორებს შეუძლიათ."
+  },
+  "shareScorecard.errNotFound": {
+    "en": "This assessment is no longer available.",
+    "ru": "Эта оценка больше недоступна.",
+    "ka": "ეს შეფასება აღარ არის ხელმისაწვდომი."
+  },
+  "shareScorecard.errFailed": {
+    "en": "Something went wrong. Try again.",
+    "ru": "Что-то пошло не так. Попробуйте ещё раз.",
+    "ka": "რაღაც შეცდომა მოხდა. სცადეთ ხელახლა."
+  },
+  "assess.share": {
+    "en": "Share",
+    "ru": "Поделиться",
+    "ka": "გაზიარება"
+  },
+  "assess.shared": {
+    "en": "Shared",
+    "ru": "Доступ по ссылке",
+    "ka": "გაზიარებულია"
+  },
+  "scorecardPage.eyebrow": {
+    "en": "Candidate assessment",
+    "ru": "Оценка кандидата",
+    "ka": "კანდიდატის შეფასება"
+  },
+  "scorecardPage.forRoleAt": {
+    "en": "for <b>{role}</b> at <b>{org}</b>",
+    "ru": "вакансия <b>{role}</b> · <b>{org}</b>",
+    "ka": "ვაკანსია <b>{role}</b> · <b>{org}</b>"
+  },
+  "scorecardPage.sharedBy": {
+    "en": "Shared by {name} · {date}",
+    "ru": "Отправитель: {name} · {date}",
+    "ka": "გაზიარებულია: {name} · {date}"
+  },
+  "scorecardPage.candidate": {
+    "en": "Candidate",
+    "ru": "Кандидат",
+    "ka": "კანდიდატი"
+  },
+  "scorecardPage.role": {
+    "en": "Role",
+    "ru": "Вакансия",
+    "ka": "ვაკანსია"
+  },
+  "scorecardPage.employer": {
+    "en": "Employer",
+    "ru": "Работодатель",
+    "ka": "დამსაქმებელი"
+  },
+  "scorecardPage.average": {
+    "en": "Average score",
+    "ru": "Средний балл",
+    "ka": "საშუალო ქულა"
+  },
+  "scorecardPage.assessor": {
+    "en": "Assessed by",
+    "ru": "Автор оценки",
+    "ka": "შემფასებელი"
+  },
+  "scorecardPage.unknownAssessor": {
+    "en": "A team member",
+    "ru": "Участник команды",
+    "ka": "გუნდის წევრი"
+  },
+  "scorecardPage.empty": {
+    "en": "No scores or answers were filled in.",
+    "ru": "Баллы и ответы не заполнены.",
+    "ka": "ქულები და პასუხები არ არის შევსებული."
+  },
+  "scorecardPage.footer": {
+    "en": "This page shows one assessment only. It doesn't include contact details, notes or pipeline status.",
+    "ru": "На этой странице только одна оценка — без контактов, заметок и статуса в пайплайне.",
+    "ka": "ეს გვერდი აჩვენებს მხოლოდ ერთ შეფასებას — საკონტაქტო მონაცემების, შენიშვნებისა და პაიპლაინის სტატუსის გარეშე."
+  },
+  "auditAction.ai_assist": {
+    "en": "AI assist",
+    "ru": "Помощь ИИ",
+    "ka": "AI დახმარება"
+  },
+  "auditAction.ai_fit_invoked": {
+    "en": "AI fit analysis",
+    "ru": "ИИ-анализ соответствия",
+    "ka": "AI შესაბამისობის ანალიზი"
+  },
+  "auditAction.application_withdrawn": {
+    "en": "Application withdrawn",
+    "ru": "Отклик отозван",
+    "ka": "განაცხადი გაწვეულია"
+  },
+  "auditAction.billing_checkout_started": {
+    "en": "Checkout started",
+    "ru": "Начата оплата",
+    "ka": "გადახდა დაიწყო"
+  },
+  "auditAction.billing_refunded": {
+    "en": "Refund",
+    "ru": "Возврат средств",
+    "ka": "თანხის დაბრუნება"
+  },
+  "auditAction.billing_subscription_canceled": {
+    "en": "Auto-renewal canceled",
+    "ru": "Автопродление отменено",
+    "ka": "ავტოგანახლება გაუქმდა"
+  },
+  "auditAction.calendly_connected": {
+    "en": "Calendly connected",
+    "ru": "Calendly подключён",
+    "ka": "Calendly დაკავშირდა"
+  },
+  "auditAction.calendly_disconnected": {
+    "en": "Calendly disconnected",
+    "ru": "Calendly отключён",
+    "ka": "Calendly გაითიშა"
+  },
+  "auditAction.calendly_link_generated": {
+    "en": "Calendly link",
+    "ru": "Ссылка Calendly",
+    "ka": "Calendly ბმული"
+  },
+  "auditAction.candidate_deleted": {
+    "en": "Candidate deleted",
+    "ru": "Кандидат удалён",
+    "ka": "კანდიდატი წაიშალა"
+  },
+  "auditAction.candidate_hard_deleted": {
+    "en": "Deleted permanently",
+    "ru": "Удалено навсегда",
+    "ka": "სამუდამოდ წაიშალა"
+  },
+  "auditAction.candidate_merged": {
+    "en": "Candidates merged",
+    "ru": "Кандидаты объединены",
+    "ka": "კანდიდატები გაერთიანდა"
+  },
+  "auditAction.candidate_merge_split": {
+    "en": "Merge undone",
+    "ru": "Объединение отменено",
+    "ka": "გაერთიანება გაუქმდა"
+  },
+  "auditAction.candidate_restored": {
+    "en": "Candidate restored",
+    "ru": "Кандидат восстановлен",
+    "ka": "კანდიდატი აღდგა"
+  },
+  "auditAction.candidates_imported": {
+    "en": "Candidates imported",
+    "ru": "Кандидаты импортированы",
+    "ka": "კანდიდატები იმპორტირდა"
+  },
+  "auditAction.connected": {
+    "en": "Integration connected",
+    "ru": "Интеграция подключена",
+    "ka": "ინტეგრაცია დაკავშირდა"
+  },
+  "auditAction.deletion_scheduled": {
+    "en": "Deletion scheduled",
+    "ru": "Удаление запланировано",
+    "ka": "წაშლა დაიგეგმა"
+  },
+  "auditAction.disconnected": {
+    "en": "Integration disconnected",
+    "ru": "Интеграция отключена",
+    "ka": "ინტეგრაცია გაითიშა"
+  },
+  "auditAction.interview_canceled": {
+    "en": "Interview canceled",
+    "ru": "Собеседование отменено",
+    "ka": "გასაუბრება გაუქმდა"
+  },
+  "auditAction.interview_scheduled": {
+    "en": "Interview scheduled",
+    "ru": "Собеседование запланировано",
+    "ka": "გასაუბრება დაიგეგმა"
+  },
+  "auditAction.mfa_admin_reset": {
+    "en": "2FA reset",
+    "ru": "Сброс 2FA",
+    "ka": "2FA-ის გასუფთავება"
+  },
+  "auditAction.mfa_enrolled": {
+    "en": "2FA turned on",
+    "ru": "2FA включена",
+    "ka": "2FA ჩაირთო"
+  },
+  "auditAction.mfa_policy_updated": {
+    "en": "2FA policy changed",
+    "ru": "Политика 2FA изменена",
+    "ka": "2FA პოლიტიკა შეიცვალა"
+  },
+  "auditAction.mfa_removed": {
+    "en": "2FA turned off",
+    "ru": "2FA отключена",
+    "ka": "2FA გამოირთო"
+  },
+  "auditAction.offer_accepted": {
+    "en": "Offer accepted",
+    "ru": "Оффер принят",
+    "ka": "შეთავაზება მიღებულია"
+  },
+  "auditAction.offer_created": {
+    "en": "Offer drafted",
+    "ru": "Черновик оффера",
+    "ka": "შეთავაზების მონახაზი"
+  },
+  "auditAction.offer_declined": {
+    "en": "Offer declined",
+    "ru": "Оффер отклонён",
+    "ka": "შეთავაზება უარყოფილია"
+  },
+  "auditAction.offer_sent": {
+    "en": "Offer sent",
+    "ru": "Оффер отправлен",
+    "ka": "შეთავაზება გაიგზავნა"
+  },
+  "auditAction.offer_withdrawn": {
+    "en": "Offer withdrawn",
+    "ru": "Оффер отозван",
+    "ka": "შეთავაზება გაუქმდა"
+  },
+  "auditAction.org_content_locale_updated": {
+    "en": "Content language changed",
+    "ru": "Язык контента изменён",
+    "ka": "კონტენტის ენა შეიცვალა"
+  },
+  "auditAction.scorecard_revoked": {
+    "en": "Assessment link revoked",
+    "ru": "Ссылка на оценку отозвана",
+    "ka": "შეფასების ბმული გაუქმდა"
+  },
+  "auditAction.scorecard_shared": {
+    "en": "Assessment shared",
+    "ru": "Оценка отправлена по ссылке",
+    "ka": "შეფასება გაზიარდა"
+  },
+  "auditAction.status_change_email_sent": {
+    "en": "Status email sent",
+    "ru": "Письмо о статусе отправлено",
+    "ka": "სტატუსის წერილი გაიგზავნა"
+  },
+  "auditAction.status_changed": {
+    "en": "Stage changed",
+    "ru": "Этап изменён",
+    "ka": "ეტაპი შეიცვალა"
+  },
+  "auditAction.vacancy_hard_deleted": {
+    "en": "Deleted permanently",
+    "ru": "Удалено навсегда",
+    "ka": "სამუდამოდ წაიშალა"
+  },
+  "auditAction.vacancy_restored": {
+    "en": "Vacancy restored",
+    "ru": "Вакансия восстановлена",
+    "ka": "ვაკანსია აღდგა"
+  },
+  "auditAction.webhook_notification_created": {
+    "en": "Channel added",
+    "ru": "Канал добавлен",
+    "ka": "არხი დაემატა"
+  },
+  "auditAction.webhook_notification_deleted": {
+    "en": "Channel removed",
+    "ru": "Канал удалён",
+    "ka": "არხი წაიშალა"
+  },
+  "auditAction.webhook_notification_dispatched": {
+    "en": "Channel message sent",
+    "ru": "Сообщение в канал отправлено",
+    "ka": "არხში შეტყობინება გაიგზავნა"
+  },
+  "auditAction.webhook_notification_updated": {
+    "en": "Channel updated",
+    "ru": "Канал изменён",
+    "ka": "არხი განახლდა"
+  },
+  "deletionPage.title": {
+    "en": "Account scheduled for deletion",
+    "ru": "Аккаунт будет удалён",
+    "ka": "ანგარიში წასაშლელადაა დაგეგმილი"
+  },
+  "deletionPage.descOrg": {
+    "en": "Your organization {org} is scheduled for permanent deletion.",
+    "ru": "Организация «{org}» будет удалена безвозвратно.",
+    "ka": "ორგანიზაცია „{org}“ სამუდამოდ წაიშლება."
+  },
+  "deletionPage.descGeneric": {
+    "en": "This account has been scheduled for permanent deletion.",
+    "ru": "Этот аккаунт будет удалён безвозвратно.",
+    "ka": "ეს ანგარიში სამუდამოდ წაიშლება."
+  },
+  "deletionPage.daysRemaining": {
+    "en": "{count, plural, one {# day remaining} other {# days remaining}}",
+    "ru": "{count, plural, one {Остался # день} few {Осталось # дня} many {Осталось # дней} other {Осталось # дня}}",
+    "ka": "დარჩა {count} დღე"
+  },
+  "deletionPage.scheduledFor": {
+    "en": "Permanent deletion is scheduled for {date}.",
+    "ru": "Окончательное удаление запланировано на {date}.",
+    "ka": "სამუდამო წაშლის თარიღი: {date}."
+  },
+  "deletionPage.duringTitle": {
+    "en": "What happens during this period",
+    "ru": "Что происходит в этот период",
+    "ka": "რა ხდება ამ პერიოდში"
+  },
+  "deletionPage.during1": {
+    "en": "The pipeline and all settings are not accessible.",
+    "ru": "Пайплайн и все настройки недоступны.",
+    "ka": "პაიპლაინი და ყველა პარამეტრი მიუწვდომელია."
+  },
+  "deletionPage.during2": {
+    "en": "You can request an export of your data by email.",
+    "ru": "Можно запросить выгрузку данных по email.",
+    "ka": "შეგიძლიათ იმეილით მოითხოვოთ თქვენი მონაცემების ექსპორტი."
+  },
+  "deletionPage.during3": {
+    "en": "You can cancel the deletion by email if this was unintended.",
+    "ru": "Если удаление было ошибкой, его можно отменить по email.",
+    "ka": "თუ წაშლა შემთხვევით მოხდა, მისი გაუქმება იმეილით შეგიძლიათ."
+  },
+  "deletionPage.during4": {
+    "en": "Team members of the organization see this same page.",
+    "ru": "Участники организации видят эту же страницу.",
+    "ka": "ორგანიზაციის წევრები იმავე გვერდს ხედავენ."
+  },
+  "deletionPage.afterTitle": {
+    "en": "After the grace period",
+    "ru": "После окончания этого срока",
+    "ka": "ამ ვადის გასვლის შემდეგ"
+  },
+  "deletionPage.afterBody": {
+    "en": "All organization, account, candidate, document and application data is permanently and irreversibly deleted from our systems. See our <link>Privacy Policy</link> for details.",
+    "ru": "Все данные организации, аккаунтов, кандидатов, документов и откликов безвозвратно удаляются из наших систем. Подробнее — в <link>Политике конфиденциальности</link>.",
+    "ka": "ორგანიზაციის, ანგარიშების, კანდიდატების, დოკუმენტებისა და განაცხადების ყველა მონაცემი სამუდამოდ და შეუქცევადად იშლება ჩვენი სისტემებიდან. დეტალები იხილეთ <link>კონფიდენციალურობის პოლიტიკაში</link>."
+  },
+  "deletionPage.helpTitle": {
+    "en": "Need to cancel or export?",
+    "ru": "Нужно отменить удаление или выгрузить данные?",
+    "ka": "გსურთ წაშლის გაუქმება ან მონაცემების ექსპორტი?"
+  },
+  "deletionPage.helpBody": {
+    "en": "Email <email>support@hrhandle.com</email> from the address on the account. We'll reply within two business days.",
+    "ru": "Напишите на <email>support@hrhandle.com</email> с адреса, указанного в аккаунте. Мы ответим в течение двух рабочих дней.",
+    "ka": "მოგვწერეთ <email>support@hrhandle.com</email>-ზე ანგარიშზე მითითებული მისამართიდან. ორი სამუშაო დღის განმავლობაში გიპასუხებთ."
+  },
+  "deletionPage.home": {
+    "en": "Home",
+    "ru": "На главную",
+    "ka": "მთავარი"
+  },
+  "publicLink.notFoundTitle": {
+    "en": "Link no longer valid",
+    "ru": "Ссылка больше не действует",
+    "ka": "ბმული აღარ მოქმედებს"
+  },
+  "publicLink.goHome": {
+    "en": "Go to HRHandle",
+    "ru": "Перейти в HRHandle",
+    "ka": "HRHandle-ზე გადასვლა"
+  },
+  "publicLink.statusGone": {
+    "en": "This application status link is invalid or has expired. If you applied recently, use the link in the latest email from the recruiter, or contact the recruiter directly.",
+    "ru": "Эта ссылка на статус отклика неверна или устарела. Если вы откликнулись недавно, воспользуйтесь ссылкой из последнего письма рекрутера или свяжитесь с рекрутером напрямую.",
+    "ka": "განაცხადის სტატუსის ეს ბმული არასწორია ან ვადაგასულია. თუ ახლახან გამოაგზავნეთ განაცხადი, გამოიყენეთ ბმული რეკრუტერის ბოლო წერილიდან ან პირდაპირ დაუკავშირდით რეკრუტერს."
+  },
+  "publicLink.offerGone": {
+    "en": "This offer link is invalid, has expired or has been withdrawn. If you think this is a mistake, contact the recruiter directly.",
+    "ru": "Ссылка на оффер неверна или устарела, либо оффер отозван. Если это ошибка, свяжитесь с рекрутером напрямую.",
+    "ka": "შეთავაზების ეს ბმული არასწორია, ვადაგასულია ან შეთავაზება გაუქმებულია. თუ ფიქრობთ, რომ ეს შეცდომაა, პირდაპირ დაუკავშირდით რეკრუტერს."
+  },
+  "publicLink.scorecardGone": {
+    "en": "This assessment link is invalid or has been revoked. If you think this is a mistake, contact the person who sent it.",
+    "ru": "Ссылка на оценку неверна или отозвана. Если это ошибка, свяжитесь с тем, кто её прислал.",
+    "ka": "შეფასების ეს ბმული არასწორია ან გაუქმებულია. თუ ფიქრობთ, რომ ეს შეცდომაა, დაუკავშირდით ბმულის გამომგზავნს."
+  },
+  "publicLink.applyGoneTitle": {
+    "en": "This job isn't open",
+    "ru": "Эта вакансия закрыта",
+    "ka": "ეს ვაკანსია აღარ არის ღია"
+  },
+  "publicLink.applyGone": {
+    "en": "This vacancy no longer accepts applications, or the link is wrong. Ask the company for a current link.",
+    "ru": "Эта вакансия больше не принимает отклики, или ссылка неверна. Попросите у компании актуальную ссылку.",
+    "ka": "ეს ვაკანსია აღარ იღებს განაცხადებს, ან ბმული არასწორია. სთხოვეთ კომპანიას მოქმედი ბმული."
+  },
+  "publicLink.jobsGoneTitle": {
+    "en": "Page not found",
+    "ru": "Страница не найдена",
+    "ka": "გვერდი ვერ მოიძებნა"
+  },
+  "publicLink.jobsGone": {
+    "en": "We couldn't find this jobs page. Check the address, or ask the company for the current link.",
+    "ru": "Мы не нашли эту страницу вакансий. Проверьте адрес или попросите у компании актуальную ссылку.",
+    "ka": "ვაკანსიების ეს გვერდი ვერ მოიძებნა. შეამოწმეთ მისამართი ან სთხოვეთ კომპანიას მოქმედი ბმული."
   }
 }

@@ -22,7 +22,7 @@ import {
   PurposeButton,
   KnockoutConditionEditor,
 } from '@/components/vacancies/wizard/step-scorecard-parts'
-import { encodeKnockoutAnswer } from '@/lib/screening-questions/knockout-condition'
+import { encodeKnockoutAnswer, formatKnockoutExpected } from '@/lib/screening-questions/knockout-condition'
 
 type AnswerType = 'yes_no' | 'short_text' | 'number' | 'select'
 
@@ -182,7 +182,7 @@ export function ScreeningQuestionsCard({
                   {q.is_knockout ? (
                     <span className="inline-flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" aria-hidden />
-                      {tr('screenQ.knockoutMust', { answer: q.knockout_answer ?? '—' })}
+                      {tr('screenQ.knockoutMust', { answer: knockoutLabel(q.answer_type, q.knockout_answer, tr) })}
                     </span>
                   ) : (
                     tr('screenQ.informational')
@@ -311,4 +311,17 @@ export function ScreeningQuestionsCard({
       </p>
     </section>
   )
+}
+
+/** The passing answer in words ("Yes", "≥ 3", "2–5", option names) — the stored
+ * value is an encoded rule (`{"op":"gte","value":3}`), never shown raw. */
+function knockoutLabel(
+  answerType: ScreeningQuestionItem['answer_type'],
+  knockoutAnswer: string | null,
+  tr: (key: string) => string,
+): string {
+  const expected = formatKnockoutExpected(answerType, knockoutAnswer)
+  if (!expected) return '—'
+  if (answerType === 'yes_no') return tr(expected.trim().toLowerCase() === 'no' ? 'common.no' : 'common.yes')
+  return expected
 }

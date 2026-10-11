@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { createInterview } from '@/lib/actions/interviews'
 import { Button } from '@/components/ui/button'
@@ -35,6 +35,7 @@ import {
   MeetChip,
   SummaryRow,
 } from './interview-form-parts'
+import { formatInterviewWhen } from '@/lib/interviews/format'
 
 const durationOptions = [
   { value: 30, labelKey: 'interviews.dur30m' },
@@ -61,6 +62,7 @@ export function InterviewForm({
   onCancel,
 }: InterviewFormProps) {
   const t = useTranslations()
+  const locale = useLocale()
   const router = useRouter()
 
   const [isLoading, setIsLoading] = useState(false)
@@ -262,13 +264,7 @@ export function InterviewForm({
     if (!scheduledDate || !scheduledTime) return '—'
     const dt = new Date(`${scheduledDate}T${scheduledTime}`)
     if (Number.isNaN(dt.getTime())) return '—'
-    return dt.toLocaleString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    return formatInterviewWhen(dt, locale)
   })()
 
   return (

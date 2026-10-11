@@ -84,6 +84,10 @@ Moved to "Recently shipped".
 
 ---
 
+## In progress
+
+- **Guide rewrite in EN/KA/RU (2026-10).** 26 topics (`lib/guides/registry.ts`), each written in three languages with screenshots captured in all three (native demo data per language). All 26 topics written (iteration 1 — setup + "Create a vacancy" — on staging; the other 25 in iteration 2). Next: the owner's review, then a native-speaker review of the Georgian and Russian text. Product issues found while writing are listed below under "Found while writing the guide" — fixed on 2026-10-10 and documented in the guide (LinkedIn Jobs, Calendly, assessment sharing).
+
 ## Tracked open items
 
 Live items from [issues-found.md](../issues-found.md). All are postponed for non-engineering reasons.
@@ -96,6 +100,41 @@ Live items from [issues-found.md](../issues-found.md). All are postponed for non
 | C-012 / A-007 | `exactOptionalPropertyTypes` (remaining strict flag) | ✅ Shipped 2026-07-20 — flag enabled in `tsconfig.json`; 40 cosmetic errors fixed (optional props/params widened to `\| undefined`; Radix wrapper spreads made conditional). |
 | A-002 / A-005 | Component splits (`candidates/page.tsx`, `vacancy-form.tsx`, `candidate-form.tsx`) | ✅ Shipped 2026-07-20 — candidates list split into `lib/candidates/list-derivation.ts` + row/cell components; vacancy + candidate forms migrated to react-hook-form and split into section components. |
 
+### Found while writing the guide (2026-10-10) — fixed 2026-10-10
+
+All on `staging`, uncommitted with the guide rewrite. **Three migrations to apply on both Supabase projects:** `20261010_candidate_activity_withdrawals.sql` (withdrawal reason in the activity feed), `20261010_organization_integrations_fixes.sql` (see the security item) and `20261012_assessment_visibility_rls.sql` (after the code is deployed — see below).
+
+Regressions (entry points lost in a redesign) — restored:
+- ✅ **LinkedIn Jobs** — "Post to LinkedIn Jobs" is back in the vacancy Overview → Share box when the company page is connected; the pasted description's headings use the org's content language. The old "Share on LinkedIn" feed post stays removed (deliberately dropped 2026-05-21, 47da7c0; `linkedin-share-button.tsx` is unused).
+- ✅ **Calendly booking link** — "Calendly link" in the profile's Actions rail when Calendly is connected with an event type. The link action now refreshes the 2-hour token (`lib/calendly/tokens.ts`; it used the stored token as-is) and its errors are localized.
+- ✅ **Assessment sharing** — "Share" on each submitted assessment in the profile's Assessments record (owners/admins), one link per assessment (`lib/actions/scorecards.ts` is keyed by evaluation id — the old per-application lookup broke with several reviewers). The public `/scorecard/[token]` page is translated (org content language) and shows the assessor, average /5 and recommendation.
+
+Behaviour fixed:
+- ✅ **Withdrawal reason** — kept in the audit log (`details.reason`), shown in the notification (with the candidate's name) and in the candidate's activity feed. **Offer decline reason** shown in the offer history.
+- ✅ **Settings → Notifications** has no Slack column any more; a hint points to the org-wide Slack & Teams page.
+- ✅ **Review stage type** described as screening checks.
+- ✅ **Assessment visibility** — owners/admins see every submitted assessment; others see colleagues' once they've submitted their own for that application (`lib/scorecards/visibility.ts`, and since 2026-10-12 the database too — see below).
+- ✅ **Offer personal note** field restored; **members** see the offer read-only with a note instead of a form that fails on save.
+- ✅ **Billing** in the Settings nav for admins.
+- ✅ **Teams** posts are Adaptive Card messages (Workflows webhooks); `*.api.powerplatform.com` URLs accepted.
+- ✅ **Needs your attention** — only sent offers count as awaiting a reply; Offer-stage candidates without a sent offer get "Create offer" / "Send offer"; the buttons no longer show a double arrow, and the RU lines no longer put names in the wrong case.
+- ✅ Wording: RU «Оплата»; KA გაწვეული/გაწვევა (application withdrawn) and გაუქმებული (offer withdrawn); KA «არასაჯარო»; RU «Переопределить» and ИИ throughout; translated audit-log action names (table + filter); translated account-deletion page; date-picker month names in the app language; the CV parser keeps the CV's language for location and languages.
+
+Found while fixing — fixed too:
+- ✅ **`organization_integrations` security** — every org member could read the Calendly OAuth tokens and webhook signing key and insert/update/delete the org's integrations through the API (RLS was "any member, all columns"). The migration limits writes to owners/admins and revokes member access to the secret columns; the app reads secrets with the service role. LinkedIn save/disconnect routes now check the role too (they used the service role without a role check).
+- ✅ **Calendly couldn't be connected or disconnected per the repo schema** — the platform CHECK only allowed `'linkedin'` and `access_token` was NOT NULL; both writes ignored their errors. Staging's live DB already accepts Calendly rows (schema drift from the repo files); the migration makes both explicit, and the actions now report save errors.
+- ✅ Settings → Integrations no longer shows members the Slack/Teams and Calendly tiles that only bounced them back.
+- ✅ The vacancy Share box and the Vacancies list's public jobs page link showed a path without a host (`NEXT_PUBLIC_APP_URL` doesn't exist).
+- ✅ The LinkedIn dialog broke the description mid-word (`break-all`).
+
+Follow-ups fixed 2026-10-12:
+- ✅ **Calendly cancellations sync** — `invitee.canceled` now cancels the interview the booking created (matched by application + booked start time, `lib/calendly/bookings.ts`; a reschedule is a cancel + a new booking). Booking inserts no longer send `duration_minutes: null` (NOT NULL → the interview silently wasn't created when Calendly sent no end time) and log insert errors.
+- ✅ **Assessment visibility is enforced by RLS** — `supabase/migrations/20261012_assessment_visibility_rls.sql`: members read their own cards and a colleague's submitted card only after submitting their own for that application; owners/admins read every card; writes are own card or owner/admin; answers follow their assessment. `merge_candidates()` moves assessments through a definer helper (a member's merge has to move cards they can't see). The pipeline/candidates-list Fit average and the sheet's "N teammates have submitted" count are read org-scoped with the service role (`lib/scorecards/fit-scores.ts`), so they're unchanged for everyone. **Deploy the code before applying the migration.**
+- ✅ **Public "link no longer valid" pages are translated** (visitor's language) — status, offer and shared-assessment pages, plus new ones for a dead apply link and an unknown jobs page (they showed Next's default English 404). One component: `components/public/link-not-found.tsx`.
+
+Still open:
+- ⚠️ LinkedIn, Calendly and Teams were checked with stand-ins only (guide stand-in for Calendly's API, payload tests for Teams) — try a real Calendly account (webhooks need a paid Calendly plan) and a real Teams Workflows webhook before announcing them.
+
 ---
 
 ## ATS gaps (not yet tracked anywhere)
@@ -106,11 +145,11 @@ Real features competing ATSes have that HRHandle does not. Some are 1–2 day wi
 
 - ⚪ **Bulk operations beyond batch reject** — bulk add tags + bulk assign to a vacancy (bulk move-to-stage shipped 2026-06-19 as G-024).
 - ✅ Global search across candidates / vacancies / notes (cmd-K) — shipped 2026-06-18 as G-023.
-- ✅ Saved filters / smart lists — shipped 2026-06-21 as G-026.
+- ⏪ Saved filters / smart lists — shipped 2026-06-21 as G-026, later removed (f663ca1).
 - ✅ Internal @-mentions in notes — shipped 2026-06-17 as G-021.
 - ✅ CSV import — shipped 2026-06-22 as G-028. Admin-only `/candidates/import` wizard with downloadable template, auto column-mapping, preview, skip-duplicate-emails, downloadable error report.
 - ⚪ **Reference checks workflow** — request, collect, store references against a candidate.
-- ✅ Scorecard sharing — shipped 2026-06-20 as G-025.
+- ✅ Scorecard sharing — shipped 2026-06-20 as G-025; per assessment since 2026-10-10 (Share on each record in the profile's Assessments).
 - ✅ Candidate withdraw button on `/status/[token]` — shipped 2026-06-17 as G-022.
 
 ### Reporting
@@ -123,7 +162,7 @@ Real features competing ATSes have that HRHandle does not. Some are 1–2 day wi
 ### Integrations
 
 - ✅ Slack / Teams notifications — shipped 2026-06-24 as G-030. Per-org webhooks, 8 event types.
-- ✅ Calendly — shipped 2026-06-24 as G-031. OAuth + UTM-tracked links + webhook-driven interview creation. Cal.com deferred.
+- ✅ Calendly — shipped 2026-06-24 as G-031 (OAuth + UTM-tracked links + webhook-driven interview creation; Cal.com deferred). Booking-link button restored 2026-10-10; cancellations sync since 2026-10-12.
 - ⚪ **Email tracking** — open/click tracking on recruiter-sent emails (Resend supports it; needs a toggle in `/settings/email-templates`).
 - ⚪ **LinkedIn job auto-cross-post** — current LinkedIn integration is page-post only; v2 would be cross-posting to Jobs.
 
@@ -227,7 +266,7 @@ Blocked on the EU AI Act risk-management framework for higher-risk features. Don
 
 **Intentionally last.** Until billing is wired, every billing-adjacent item stays parked.
 
-1. **Billing provider wiring** — ✅ built with **Flitt** (multi-currency GEL/EUR/USD, auto-recurring); see `docs/4-integrations/flitt.md`. Subscription lifecycle (renewals extend the period, failed renewal → `past_due` + 3-day grace → lockout, cancel → lockout at period end, full refund → plan ends + recurring stopped, partial refund → flagged) ✅ 2026-10-09. Remaining: Flitt's pre-production checklist in `docs/4-integrations/flitt.md` (test 3 methods, confirm EUR/USD + renewal callback shape, staging test merchant) then the live switch.
+1. **Billing provider wiring** — ✅ built with **Flitt** (multi-currency GEL/EUR/USD, auto-recurring); see `docs/4-integrations/flitt.md`. Subscription lifecycle (renewals extend the period, failed renewal → `past_due` + 3-day grace → lockout, cancel → lockout at period end, full refund → plan ends + recurring stopped, partial refund → flagged) ✅ 2026-10-09. Legal pages audited + translated EN/KA/RU, refund policy: 7-day request window, 14-business-day payout, fee deducted, one refund per org per 3 months (operator runbook in `flitt.md`) ✅ 2026-10-09. Remaining: Flitt's pre-production checklist in `docs/4-integrations/flitt.md` (test 3 methods, confirm EUR/USD + renewal callback shape, staging test merchant) then the live switch.
 2. **F-004 — Cancel subscription UI** with confirmation flow.
 3. **BL-004 — `PLAN_LIMIT` structured error code + upgrade CTA** on every plan-limited action.
 4. **C-007 / C-008 — Move hardcoded plan limits + campaign config out of code** into a DB-backed plans table.

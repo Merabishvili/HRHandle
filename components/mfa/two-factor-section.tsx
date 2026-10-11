@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Check, KeyRound, Shield, Smartphone, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,7 @@ import { RecoveryCodesRow } from './recovery-codes-row'
 import { unenrollFactor } from '@/lib/actions/mfa'
 import { evaluatePolicy, type OrgMfaPolicy, type OrgRole } from '@/lib/mfa/policy'
 import { hasVerifiedFactor, verifiedFactors, type FactorSummary } from '@/lib/mfa/factors'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 interface Props {
   factors: FactorSummary[]
@@ -23,6 +24,7 @@ interface Props {
 
 export function TwoFactorSection({ factors, role, orgPolicy, recoveryCodesRemaining }: Props) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   const router = useRouter()
   const [enrollOpen, setEnrollOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -93,7 +95,7 @@ export function TwoFactorSection({ factors, role, orgPolicy, recoveryCodesRemain
                   <div>
                     <p className="text-sm font-medium">{f.friendly_name ?? t('mfa.authenticator')}</p>
                     <p className="text-xs text-muted-foreground">
-                      {t('mfa.addedOn', { date: new Date(f.created_at).toLocaleDateString() })}
+                      {t('mfa.addedOn', { date: formatShortDate(f.created_at, dateLocale) })}
                     </p>
                   </div>
                   <Badge variant="secondary">{t('mfa.active')}</Badge>

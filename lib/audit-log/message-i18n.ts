@@ -16,6 +16,15 @@ export function auditEntityLabel(t: Translator, entityType: string | null): stri
   return t.has(key) ? t(key) : entityType
 }
 
+/** Short localized name of an audit action code (the Action column + filter).
+ * An unknown code still reads as words: `some_new_action` → "Some new action". */
+export function auditActionLabel(t: Translator, action: string): string {
+  const key = `auditAction.${action}`
+  if (t.has(key)) return t(key)
+  const words = action.replace(/_/g, ' ').trim()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
 /** Integration platform → brand name (never translated). */
 const PROVIDER_LABEL: Record<string, string> = {
   google_calendar: 'Google Calendar',
@@ -90,6 +99,13 @@ export function auditMessage(t: Translator, row: AuditLogRow): string {
     case 'candidates_imported': {
       const count = typeof d.rows_imported === 'number' ? d.rows_imported : 0
       return t('auditMsg.candidatesImported', { count })
+    }
+
+    case 'application_withdrawn': {
+      const reason = str(d.reason)
+      return reason
+        ? t('auditMsg.withdrawnWithReason', { reason })
+        : t('auditMsg.action.application_withdrawn')
     }
 
     case 'connected':

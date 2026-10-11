@@ -133,7 +133,8 @@ export function WizardShell({
                 <div className="min-w-0">
                   <p
                     className={cn(
-                      'truncate text-[13px] font-semibold',
+                      // wraps rather than truncates: Georgian/Russian step names are long
+                      'text-[13px] font-semibold leading-snug',
                       isCurrent ? 'text-[oklch(0.2_0.16_250)]' : 'text-foreground/80',
                     )}
                   >
