@@ -2,11 +2,14 @@
 
 import { revalidatePath } from 'next/cache'
 
-import { getAuthContext, type ActionResult } from './index'
+import { getAuthContext, type ActionErrorCode, type ActionResult } from './index'
 import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
+import type { Locale } from '@/lib/i18n/locales'
+import type { ScorecardRecommendation } from '@/lib/actions/evaluations'
 import {
   projectScorecard,
   type ScorecardAnswer,
@@ -38,17 +41,20 @@ interface ScorecardEvalRow {
   shared_at: string | null
 }
 
-/** Resolve the evaluation tied to an application and verify that the caller
- * can manage its scorecard share. Authors of the evaluation OR org
- * owners/admins are allowed. Returns the evaluation row or an error. */
-async function authorizedEvaluationFor(
-  applicationId: string,
+/** Resolve one submitted assessment and verify the caller may share it —
+ * owners and admins only. Each reviewer's assessment of an application is its
+ * own row with its own link, so everything is keyed by the evaluation id. */
+async function authorizedEvaluation(
+  evaluationId: string,
 ): Promise<
   | { ok: true; ctx: NonNullable<Awaited<ReturnType<typeof getAuthContext>>>; row: ScorecardEvalRow }
-  | { ok: false; error: string }
+  | { ok: false; error: string; code: ActionErrorCode }
 > {
   const ctx = await getAuthContext()
-  if (!ctx) return { ok: false, error: 'Not authenticated' }
+  if (!ctx) return { ok: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
+  if (!isOrgAdmin(ctx.role)) {
+    return { ok: false, error: 'Only owners and admins can share assessments.', code: 'FORBIDDEN' }
+  }
 
   const { data: row } = await ctx.supabase
     .from('candidate_evaluations')
@@ -56,14 +62,11 @@ async function authorizedEvaluationFor(
       `id, application_id, candidate_id, vacancy_id, organization_id,
        scorecard_token, scorecard_revoked_at, shared_by, shared_at`,
     )
-    .eq('application_id', applicationId)
+    .eq('id', evaluationId)
     .eq('organization_id', ctx.orgId)
-    .single()
-  if (!row) return { ok: false, error: 'Evaluation not found' }
-
-  if (!isOrgAdmin(ctx.role)) {
-    return { ok: false, error: 'Only owners and admins can share scorecards.' }
-  }
+    .eq('submitted', true)
+    .maybeSingle()
+  if (!row) return { ok: false, error: 'Assessment not found', code: 'NOT_FOUND' }
 
   return { ok: true, ctx, row: row as ScorecardEvalRow }
 }
@@ -78,10 +81,10 @@ function buildShareUrl(token: string): string {
  * `scorecard_shared` audit row the first time. Calling this after a
  * revoke generates a new token (the old one is gone permanently). */
 export async function getOrCreateScorecardToken(
-  applicationId: string,
+  evaluationId: string,
 ): Promise<ActionResult<ScorecardShareState>> {
-  const authz = await authorizedEvaluationFor(applicationId)
-  if (!authz.ok) return { success: false, error: authz.error }
+  const authz = await authorizedEvaluation(evaluationId)
+  if (!authz.ok) return { success: false, error: authz.error, code: authz.code }
   const { ctx, row } = authz
 
   if (row.scorecard_token) {
@@ -122,7 +125,7 @@ export async function getOrCreateScorecardToken(
     .eq('organization_id', ctx.orgId)
   if (updateErr) {
     console.error('[scorecards] generate token failed:', updateErr.message)
-    return { success: false, error: 'Failed to generate share link' }
+    return { success: false, error: 'Failed to generate share link', code: 'DB_ERROR' }
   }
 
   void writeAuditLog({
@@ -156,10 +159,10 @@ export async function getOrCreateScorecardToken(
  * `scorecard_revoked_at` timestamp is preserved so the share dialog can
  * show "Revoked on …" the next time it opens. */
 export async function revokeScorecardToken(
-  applicationId: string,
+  evaluationId: string,
 ): Promise<ActionResult<ScorecardShareState>> {
-  const authz = await authorizedEvaluationFor(applicationId)
-  if (!authz.ok) return { success: false, error: authz.error }
+  const authz = await authorizedEvaluation(evaluationId)
+  if (!authz.ok) return { success: false, error: authz.error, code: authz.code }
   const { ctx, row } = authz
 
   if (!row.scorecard_token) {
@@ -189,7 +192,7 @@ export async function revokeScorecardToken(
     .eq('organization_id', ctx.orgId)
   if (updateErr) {
     console.error('[scorecards] revoke failed:', updateErr.message)
-    return { success: false, error: 'Failed to revoke share link' }
+    return { success: false, error: 'Failed to revoke share link', code: 'DB_ERROR' }
   }
 
   void writeAuditLog({
@@ -221,10 +224,10 @@ export async function revokeScorecardToken(
  * on open so the UI can show "Last shared on …" / "Revoked …" without
  * generating a fresh token until the recruiter clicks Copy. */
 export async function getScorecardShareState(
-  applicationId: string,
+  evaluationId: string,
 ): Promise<ActionResult<ScorecardShareState>> {
-  const authz = await authorizedEvaluationFor(applicationId)
-  if (!authz.ok) return { success: false, error: authz.error }
+  const authz = await authorizedEvaluation(evaluationId)
+  if (!authz.ok) return { success: false, error: authz.error, code: authz.code }
   const { ctx, row } = authz
 
   return {
@@ -245,6 +248,13 @@ export interface PublicScorecard {
   candidate_full_name: string
   role_title: string
   organization_name: string
+  /** The organization's content language — the page renders in it. */
+  locale: Locale
+  assessor_name: string | null
+  /** When the assessment was last saved (submission). */
+  assessed_at: string
+  recommendation: ScorecardRecommendation | null
+  recommendation_reason: string | null
   shared_by_name: string | null
   shared_at: string | null
   view: ScorecardView
@@ -266,6 +276,7 @@ export async function getScorecardByToken(
     .from('candidate_evaluations')
     .select(
       `id, organization_id, application_id, candidate_id, vacancy_id, score,
+       reviewer_id, recommendation, recommendation_reason, updated_at,
        shared_by, shared_at, scorecard_token,
        candidates ( first_name, last_name, deleted_at ),
        vacancies ( title, deleted_at ),
@@ -273,6 +284,7 @@ export async function getScorecardByToken(
        applications ( deleted_at )`,
     )
     .eq('scorecard_token', token)
+    .eq('submitted', true)
     .maybeSingle()
   if (!row) return { success: false, error: 'Not found' }
 
@@ -307,7 +319,7 @@ export async function getScorecardByToken(
   if (!application || application.deleted_at) return { success: false, error: 'Not found' }
 
   // Fetch the vacancy's questions + this evaluation's answers in parallel.
-  const [{ data: rawQuestions }, { data: rawAnswers }, sharedByName] = await Promise.all([
+  const [{ data: rawQuestions }, { data: rawAnswers }, sharedByName, assessorName, locale] = await Promise.all([
     admin
       .from('vacancy_questions')
       .select('id, label, type, sort_order')
@@ -318,6 +330,8 @@ export async function getScorecardByToken(
       .select('question_id, text_value, score_value')
       .eq('evaluation_id', row.id as string),
     row.shared_by ? displayNameFor(admin, row.shared_by as string) : Promise.resolve(null),
+    row.reviewer_id ? displayNameFor(admin, row.reviewer_id as string) : Promise.resolve(null),
+    fetchOrgContentLocale(admin, row.organization_id as string),
   ])
 
   const view = projectScorecard({
@@ -334,6 +348,11 @@ export async function getScorecardByToken(
       candidate_full_name: candidateFullName || 'Candidate',
       role_title: vacancy.title,
       organization_name: org.name,
+      locale,
+      assessor_name: assessorName,
+      assessed_at: row.updated_at as string,
+      recommendation: (row.recommendation as ScorecardRecommendation | null) ?? null,
+      recommendation_reason: (row.recommendation_reason as string | null) ?? null,
       shared_by_name: sharedByName,
       shared_at: (row.shared_at as string | null) ?? null,
       view,
@@ -341,7 +360,7 @@ export async function getScorecardByToken(
   }
 }
 
-// Tiny helper used by all four actions above to look up a profile's display
+// Tiny helper used by the actions above to look up a profile's display
 // name without each caller wiring its own .select. Returns null when the
 // profile was deleted (e.g. the recruiter who shared has left the org).
 async function displayNameFor(

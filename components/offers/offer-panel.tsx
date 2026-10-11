@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import {
   Briefcase,
@@ -17,7 +17,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { format } from 'date-fns'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -86,6 +86,7 @@ export function OfferPanel({
   canEdit,
 }: OfferPanelProps) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<OfferRow | null>(null)
@@ -101,6 +102,10 @@ export function OfferPanel({
   const history = useMemo(
     () => offers.filter((o) => o !== active),
     [offers, active],
+  )
+  // Open the history when there's a candidate's decline reason to read.
+  const [historyOpen, setHistoryOpen] = useState(() =>
+    offers.some((o) => o !== active && o.status === 'declined' && !!o.decline_reason),
   )
 
   const openCreate = () => {
@@ -231,7 +236,11 @@ export function OfferPanel({
       )}
 
       {history.length > 0 && (
-        <details className="mt-3 text-sm">
+        <details
+          className="mt-3 text-sm"
+          open={historyOpen}
+          onToggle={(e) => setHistoryOpen(e.currentTarget.open)}
+        >
           <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground">
             <ChevronRight className="mr-1 inline h-3 w-3" aria-hidden />
             {t('offer.previousOffers', { count: history.length })}
@@ -241,14 +250,21 @@ export function OfferPanel({
               const style = STATUS_STYLE[o.status]
               const at = o.responded_at ?? o.sent_at
               return (
-                <li key={o.id} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs">
-                  <Badge variant="secondary" className={style.className}>
-                    {t(style.labelKey)}
-                  </Badge>
-                  <span className="text-muted-foreground">{o.role_title}</span>
-                  <span className="ml-auto text-muted-foreground">
-                    {at ? format(new Date(at), 'MMM d, yyyy') : '—'}
-                  </span>
+                <li key={o.id} className="rounded-md border border-border px-3 py-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className={style.className}>
+                      {t(style.labelKey)}
+                    </Badge>
+                    <span className="text-muted-foreground">{o.role_title}</span>
+                    <span className="ml-auto text-muted-foreground">
+                      {at ? formatShortDate(new Date(at), dateLocale) : '—'}
+                    </span>
+                  </div>
+                  {o.status === 'declined' && o.decline_reason && (
+                    <p className="mt-1.5 text-foreground">
+                      {t('offer.declineReasonShown', { reason: o.decline_reason })}
+                    </p>
+                  )}
                 </li>
               )
             })}
@@ -335,6 +351,7 @@ function ActiveOfferCard({
   copied,
 }: ActiveOfferCardProps) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   const style = STATUS_STYLE[offer.status]
   const showDraftActions = offer.status === 'draft'
   const showSentActions = offer.status === 'sent'
@@ -366,12 +383,12 @@ function ActiveOfferCard({
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           {offer.start_date && (
             <span className="inline-flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> {t('offer.startOn', { date: format(new Date(offer.start_date), 'MMM d, yyyy') })}
+              <Calendar className="h-3 w-3" /> {t('offer.startOn', { date: formatShortDate(new Date(offer.start_date), dateLocale) })}
             </span>
           )}
           {offer.expiry_date && (
             <span className="inline-flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> {t('offer.respondByOn', { date: format(new Date(offer.expiry_date), 'MMM d, yyyy') })}
+              <Calendar className="h-3 w-3" /> {t('offer.respondByOn', { date: formatShortDate(new Date(offer.expiry_date), dateLocale) })}
             </span>
           )}
         </div>

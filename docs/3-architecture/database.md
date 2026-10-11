@@ -20,7 +20,7 @@ _Last updated: 2026-07-20_
 - 🔄 (2026-05-23) `activity_log` table is now actively written to via `lib/audit-log.ts` (helper added). Wired call sites: vacancy status change, application status change, LinkedIn integration connect/disconnect. The table itself was always present in the schema (`001_create_schema.sql`) but had zero writers and zero rows until this change.
 - 🆕 `candidate_experience` table — work history (migration `20260514_candidate_background.sql`). RLS enabled.
 - 🆕 `candidate_education` table — education history (migration `20260514_candidate_background.sql`). RLS enabled.
-- 🆕 `organization_integrations` table — third-party platform credential storage, currently scoped to `platform = 'linkedin'` (migration `20260517_organization_integrations.sql`). RLS enabled.
+- 🆕 `organization_integrations` table — third-party platform credential storage for LinkedIn and Calendly (migrations `20260517_organization_integrations.sql`, `041`, `20261010_organization_integrations_fixes.sql` — the last one tightens RLS and hides the secret columns from user clients). RLS enabled.
 - 🆕 `candidates` columns added (migration `20260515_candidate_profile_fields.sql`): `location`, `timezone`, `languages text[]`, `salary_expectation`, `notice_period`.
 - 🔄 `candidate_activity` view rebuilt with **breaking column rename**: `type` → `kind`, `title` → `headline`. Queries that read the old names will return no rows (silent, not an error). Search & replace required in any direct view consumers.
 - 🔄 (revised 2026-05-08) Live-DB verification via Supabase MCP confirms **every public table has RLS enabled with at least one policy** (`vacancies`, `candidates`, `applications` each have 4 policies; `profiles` has 6). An earlier audit pass incorrectly claimed RLS was missing on most tables because the original RLS migration is not in the repo's `supabase/migrations/` folder — only newer additive migrations are. The RLS itself is live in the DB. See `docs/issues-found.md` retraction of `S-004`.
@@ -167,6 +167,8 @@ A scoring/evaluation record for a candidate's application.
 
 _🆕 Constraint: `UNIQUE(application_id, reviewer_id)` (was `UNIQUE(application_id)`) — one card per reviewer per application._
 
+_🔒 RLS (`20261012_assessment_visibility_rls.sql`; before it any org member could read and write every card and answer): **read** — your own cards (draft or submitted), every card for owners/admins, a colleague's **submitted** card once you've submitted your own for the same application (`public.can_view_evaluation(...)`, SECURITY DEFINER so it can look at your own cards without recursing); **write** — your own card, or any card for owners/admins (`public.auth_is_org_admin(org)`); `candidate_evaluation_answers` follow their assessment. The migration drops every existing policy on both tables by lookup (live policy names differ from the repo). Aggregates everyone sees — the pipeline/candidates-list Fit average and the assessment sheet's "N teammates have submitted" count — are read org-scoped with the service role in `lib/scorecards/fit-scores.ts`; don't read them with a user client. `merge_candidates()` (SECURITY INVOKER) moves assessments via the definer helper `public.repoint_candidate_evaluations(loser, winner)`, limited to the caller's organization._
+
 ---
 
 ### `candidate_notes`
@@ -200,6 +202,8 @@ Read-only view unioning all activity events for a candidate. Used by the candida
 | actor_name | text | 🆕 Display name of the user who triggered the event |
 | created_at | timestamptz | Used for feed ordering |
 | params | jsonb | 🆕 (`20260820_candidate_activity_i18n_params.sql`) Structured params for render-time i18n — `{title}` (application), `{file,docType}` (document), `{type,at}` (interview), `{audit,action,entity_type,details}` (stage/offer → reuse `lib/audit-log/message-i18n`). `lib/candidates/activity-i18n.ts` rebuilds a localized headline from `kind`+`params`, falling back to `headline`. |
+
+🆕 (`20261010_candidate_activity_withdrawals.sql`) A candidate withdrawing from the status page is a `stage` row too: `activity_log` action `application_withdrawn` joined to its application, `body` = the reason the candidate gave (`details->>'reason'`, null without one), `actor_name` null, and `params` without the reason so it isn't repeated in the headline. Must be applied on both Supabase projects.
 
 ---
 
@@ -419,23 +423,28 @@ The tenant record. One organization per account (no multi-org memberships).
 ---
 
 ### `organization_integrations` 🆕
-Per-org credentials for third-party platforms. Currently only used for LinkedIn company-page metadata.
+Per-org connections to third-party platforms: the LinkedIn company page (a page id only — `access_token` is the literal `'manual'`) and Calendly (OAuth tokens, webhook subscription + signing key, the chosen event type). Migrations `20260517_organization_integrations.sql`, `scripts/041_organization_integrations_calendly.sql`, `20261010_organization_integrations_fixes.sql`.
 
 | Column | Type | Nullable | Default | Notes |
 |---|---|---|---|---|
 | id | uuid | NOT NULL | gen_random_uuid() | PK |
 | organization_id | uuid | NOT NULL | — | FK → organizations (cascade delete) |
-| platform | text | NOT NULL | — | CHECK constraint: must be `'linkedin'` |
-| external_page_id | text | NULL | — | LinkedIn numeric company-page ID |
-| external_page_name | text | NULL | — | Display name (when known) |
-| access_token | text | NULL | — | Reserved for future OAuth — unused today |
-| token_expires_at | timestamptz | NULL | — | Reserved for future OAuth — unused today |
+| platform | text | NOT NULL | — | CHECK: `'linkedin'` or `'calendly'` (Calendly allowed by the 2026-10-10 migration; staging's live DB already accepted it) |
+| external_page_id | text | NOT NULL | — | LinkedIn numeric page id / Calendly user URI |
+| external_page_name | text | NOT NULL | — | Display name (Calendly: the account's name) |
+| access_token | text | NULL | — | 🔒 Calendly OAuth access token (2 h; refreshed by `lib/calendly/tokens.ts`). Nullable since 2026-10-10 so disconnect can clear it |
+| refresh_token | text | NULL | — | 🔒 Calendly refresh token |
+| token_expires_at | timestamptz | NULL | — | |
+| webhook_subscription_id | text | NULL | — | Calendly webhook subscription URI |
+| webhook_signing_key | text | NULL | — | 🔒 Verifies Calendly webhook signatures |
+| selected_event_type_uri / _name | text | NULL | — | The Calendly event type candidates book |
+| external_user_uri | text | NULL | — | Calendly user URI (partial index for webhook routing) |
 | connected_by | uuid | NULL | — | FK → profiles (SET NULL on delete) |
 | connected_at | timestamptz | NOT NULL | now() | |
 | is_active | boolean | NOT NULL | true | |
 
 **Constraints:** UNIQUE(`organization_id`, `platform`) — one row per platform per org.
-**RLS:** `org_members_can_read_integrations` (SELECT) and `org_members_can_manage_integrations` (ALL). Both gate on caller's `profiles.organization_id`.
+**RLS (since `20261010_organization_integrations_fixes.sql`):** `org_members_can_read_integrations` (SELECT, any org member) and `org_admins_can_manage_integrations` (ALL, owner/admin). **Column privileges:** `authenticated` may select every column except the 🔒 ones — a user-client select that names them is refused, so secrets are read with the service role only. Before this migration every member could read the tokens and signing key and write any row. All app writes go through the service role.
 
 ---
 

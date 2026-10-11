@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { format } from 'date-fns'
 import { useLocale, useTranslations } from 'next-intl'
-import { ChevronRight, ClipboardCheck } from 'lucide-react'
+import { ChevronRight, ClipboardCheck, Link as LinkIcon, Share2 } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
+import { ShareScorecardDialog } from '@/components/scorecards/share-scorecard-dialog'
 import { cn } from '@/lib/utils'
-import { dateFnsLocale } from '@/lib/i18n/date-locale'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
+import { averageOfScores } from '@/lib/scorecards/projection'
 import type { AssessmentRecord, ScorecardRecommendation } from '@/lib/actions/evaluations'
 
 const REC_LABEL_KEY: Record<ScorecardRecommendation, string> = {
@@ -23,13 +25,6 @@ const REC_STYLE: Record<ScorecardRecommendation, string> = {
   no: 'bg-[oklch(0.96_0.04_27)] text-[oklch(0.5_0.19_27)]',
 }
 
-/** 1–5 average across the record's scored criteria, for the score tile. */
-function avgOfFive(record: AssessmentRecord): string | null {
-  if (record.scores.length === 0) return null
-  const sum = record.scores.reduce((a, s) => a + s.score, 0)
-  return (sum / record.scores.length).toFixed(1)
-}
-
 function barColor(percentage: number): string {
   if (percentage >= 90) return 'bg-[oklch(0.6_0.15_145)]'
   if (percentage >= 50) return 'bg-[oklch(0.55_0.18_250)]'
@@ -43,7 +38,16 @@ function barColor(percentage: number): string {
  * records exist, independent of the current pipeline stage, so an assessment
  * stays visible after the candidate is hired / rejected / re-applied.
  */
-export function AssessmentRecord({ records }: { records: AssessmentRecord[] }) {
+export function AssessmentRecord({
+  records,
+  candidateName,
+  canShare,
+}: {
+  records: AssessmentRecord[]
+  candidateName: string
+  /** Owners/admins may share an assessment with someone outside HRHandle. */
+  canShare: boolean
+}) {
   const t = useTranslations()
   if (records.length === 0) return null
   return (
@@ -59,19 +63,28 @@ export function AssessmentRecord({ records }: { records: AssessmentRecord[] }) {
       </div>
       <div className="flex flex-col gap-2.5">
         {records.map((r) => (
-          <RecordCard key={r.evaluationId} record={r} />
+          <RecordCard key={r.evaluationId} record={r} candidateName={candidateName} canShare={canShare} />
         ))}
       </div>
     </section>
   )
 }
 
-function RecordCard({ record }: { record: AssessmentRecord }) {
+function RecordCard({
+  record,
+  candidateName,
+  canShare,
+}: {
+  record: AssessmentRecord
+  candidateName: string
+  canShare: boolean
+}) {
   const t = useTranslations()
   const dfLocale = dateFnsLocale(useLocale())
   const [open, setOpen] = useState(false)
-  const avg = avgOfFive(record)
-  const submitted = format(new Date(record.submittedAt), 'dd/MM/yyyy', { locale: dfLocale })
+  const [shareOpen, setShareOpen] = useState(false)
+  const avg = averageOfScores(record.scores)
+  const submitted = formatShortDate(new Date(record.submittedAt), dfLocale)
 
   return (
     <div className="overflow-hidden rounded-lg border border-border">
@@ -91,6 +104,12 @@ function RecordCard({ record }: { record: AssessmentRecord }) {
             {record.recommendation && (
               <span className={cn('rounded px-1.5 py-0.5 text-[10.5px] font-semibold', REC_STYLE[record.recommendation])}>
                 {t(REC_LABEL_KEY[record.recommendation])}
+              </span>
+            )}
+            {canShare && record.isShared && (
+              <span className="inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
+                <LinkIcon className="h-3 w-3" aria-hidden />
+                {t('assess.shared')}
               </span>
             )}
           </span>
@@ -154,7 +173,27 @@ function RecordCard({ record }: { record: AssessmentRecord }) {
               )}
             </div>
           )}
+
+          {canShare && (
+            <div className="border-t border-border pt-3">
+              <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setShareOpen(true)}>
+                <Share2 className="h-3.5 w-3.5" aria-hidden />
+                {t('assess.share')}
+              </Button>
+            </div>
+          )}
         </div>
+      )}
+
+      {canShare && (
+        <ShareScorecardDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          evaluationId={record.evaluationId}
+          candidateName={candidateName}
+          vacancyTitle={record.vacancyTitle}
+          assessorName={record.assessorName}
+        />
       )}
     </div>
   )

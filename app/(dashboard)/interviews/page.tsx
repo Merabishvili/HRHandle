@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Calendar, Video, Phone, Building, ExternalLink } from 'lucide-react'
-import { isPast, isToday, isTomorrow, isThisWeek, format } from 'date-fns'
+import { isPast } from 'date-fns'
 import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
 import { InterviewActions } from '@/components/interviews/interview-actions'
 import { InterviewTimeDisplay } from '@/components/interviews/interview-time-display'
+import { interviewDayBucket, type InterviewDayBucket } from '@/lib/interviews/day-bucket'
 
 interface InterviewRow {
   id: string
@@ -159,7 +160,7 @@ export default async function InterviewsPage({
   // chronological list. Today is always first (and pinned at the top of
   // the scroll); the day groups proceed chronologically forward, then
   // past interviews appear at the bottom.
-  type Bucket = 'today' | 'tomorrow' | 'this_week' | 'later' | 'past'
+  type Bucket = InterviewDayBucket
   const bucketLabels: Record<Bucket, string> = {
     today: t('interviews.group.today'),
     tomorrow: t('interviews.group.tomorrow'),
@@ -169,14 +170,7 @@ export default async function InterviewsPage({
   }
   const bucketOrder: Bucket[] = ['today', 'tomorrow', 'this_week', 'later', 'past']
 
-  const bucketFor = (i: InterviewRow): Bucket => {
-    const d = new Date(i.scheduled_at)
-    if (isToday(d)) return 'today'
-    if (i.status === 'scheduled' && isPast(d)) return 'past'
-    if (isTomorrow(d)) return 'tomorrow'
-    if (isThisWeek(d, { weekStartsOn: 1 })) return 'this_week'
-    return 'later'
-  }
+  const bucketFor = (i: InterviewRow): Bucket => interviewDayBucket(new Date(i.scheduled_at))
 
   const grouped = new Map<Bucket, InterviewRow[]>()
   for (const i of filtered) {

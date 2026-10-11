@@ -16,22 +16,21 @@ import {
 
 interface Props {
   initial: NotificationPreferences
-  /** True when the org has at least one active Slack webhook (G-030). */
-  slackAvailable: boolean
 }
 
-type Channel = 'in_app' | 'email' | 'slack'
+type Channel = 'in_app' | 'email'
 
 /**
  * A-7 Settings → Notifications: per-user event × channel matrix.
  *
  * Rows are events (defined in MATRIX_EVENTS); columns are channels
- * (In-app, Email, Slack). The matrix reads from / writes to the flat
- * `email`, `in_app_events`, and `slack_events` objects on the JSONB
- * column so dispatcher code only ever consults one boolean per
- * (event, channel) pair.
+ * (In-app, Email). The matrix reads from / writes to the flat `email` and
+ * `in_app_events` objects on the JSONB column. There's no per-person Slack
+ * column: Slack / Teams posts go to a shared channel, so what a channel
+ * receives is set per channel (Settings → Integrations → Slack & Teams). The
+ * old `slack_events` key stays in the JSON (unused) and is saved back as-is.
  */
-export function NotificationPreferencesForm({ initial, slackAvailable }: Props) {
+export function NotificationPreferencesForm({ initial }: Props) {
   const t = useTranslations()
   const [prefs, setPrefs] = useState<NotificationPreferences>(initial)
   const [isPending, startTransition] = useTransition()
@@ -41,21 +40,16 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
       if (event.inAppLocked) return true
       return prefs.in_app_events[event.inAppKey]
     }
-    if (channel === 'email') return prefs.email[event.emailKey]
-    return prefs.slack_events[event.slackKey]
+    return prefs.email[event.emailKey]
   }
 
   const setChannel = (event: MatrixEventMeta, channel: Channel, value: boolean) => {
     if (channel === 'in_app' && event.inAppLocked) return
-    if (channel === 'slack' && !slackAvailable) return
     setPrefs((p) => {
       if (channel === 'in_app') {
         return { ...p, in_app_events: { ...p.in_app_events, [event.inAppKey]: value } }
       }
-      if (channel === 'email') {
-        return { ...p, email: { ...p.email, [event.emailKey]: value } }
-      }
-      return { ...p, slack_events: { ...p.slack_events, [event.slackKey]: value } }
+      return { ...p, email: { ...p.email, [event.emailKey]: value } }
     })
   }
 
@@ -81,23 +75,10 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
         </CardHeader>
         <CardContent className="p-0">
           {/* Header row */}
-          <div className="grid grid-cols-[1fr_72px_72px_72px] items-center gap-2 border-y border-border bg-muted/40 px-5 py-2.5 text-[11.5px] font-semibold text-muted-foreground sm:px-6">
+          <div className="grid grid-cols-[1fr_72px_72px] items-center gap-2 border-y border-border bg-muted/40 px-5 py-2.5 text-[11.5px] font-semibold text-muted-foreground sm:px-6">
             <span>{t('notifPrefs.eventCol')}</span>
             <span className="text-center">{t('notifPrefs.inApp')}</span>
             <span className="text-center">{t('candWizard.personal.email')}</span>
-            <span
-              className={cn(
-                'text-center',
-                !slackAvailable && 'text-muted-foreground/50',
-              )}
-              title={
-                slackAvailable
-                  ? undefined
-                  : t('notifPrefs.slackColHint')
-              }
-            >
-              Slack
-            </span>
           </div>
 
           {/* Event rows */}
@@ -105,7 +86,7 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
             <div
               key={event.key}
               className={cn(
-                'grid grid-cols-[1fr_72px_72px_72px] items-center gap-2 px-5 py-3 sm:px-6',
+                'grid grid-cols-[1fr_72px_72px] items-center gap-2 px-5 py-3 sm:px-6',
                 idx !== MATRIX_EVENTS.length - 1 && 'border-b border-border/60',
               )}
             >
@@ -127,17 +108,6 @@ export function NotificationPreferencesForm({ initial, slackAvailable }: Props) 
                 onChange={(v) => setChannel(event, 'email', v)}
                 disabled={isPending}
                 ariaLabel={t('notifPrefs.cellAria', { title: t(`notifPrefs.event.${event.key}.title`), channel: t('candWizard.personal.email') })}
-              />
-              <MatrixCheckbox
-                checked={isChannelOn(event, 'slack')}
-                onChange={(v) => setChannel(event, 'slack', v)}
-                disabled={isPending || !slackAvailable}
-                lockedReason={
-                  !slackAvailable
-                    ? t('notifPrefs.connectSlack')
-                    : undefined
-                }
-                ariaLabel={t('notifPrefs.cellAria', { title: t(`notifPrefs.event.${event.key}.title`), channel: 'Slack' })}
               />
             </div>
           ))}

@@ -15,6 +15,7 @@ import {
 import { resolvePipelineStageId } from '@/lib/pipeline-stages/resolve'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { unwrapRelation, type StageRelation } from '../applications-shared'
+import { withdrawalReason } from '@/lib/applications/withdrawal'
 
 export async function createApplication(input: {
   candidateId: string
@@ -225,6 +226,16 @@ export async function withdrawApplicationByToken(
       .in('id', liveOfferIds)
   }
 
+  // The candidate's reason (optional) is shown to the owner and admins: in the
+  // audit log (and so the candidate's activity feed) and in their notification.
+  const note = withdrawalReason(reason)
+  const [{ data: cand }, { data: vac }] = await Promise.all([
+    admin.from('candidates').select('first_name, last_name').eq('id', app.candidate_id as string).single(),
+    admin.from('vacancies').select('title').eq('id', app.vacancy_id as string).single(),
+  ])
+  const candidateName = cand ? `${cand.first_name ?? ''} ${cand.last_name ?? ''}`.trim() || null : null
+  const vacancyTitle = (vac?.title as string | undefined) ?? null
+
   void writeAuditLog({
     orgId: app.organization_id as string,
     userId: null,
@@ -235,7 +246,9 @@ export async function withdrawApplicationByToken(
     details: {
       via: 'candidate_token',
       before: beforeCode ?? null,
-      has_reason: !!reason,
+      has_reason: !!note,
+      reason: note,
+      candidate_id: app.candidate_id ?? null,
       cancelled_offers: liveOfferIds.length,
     },
   })
@@ -251,10 +264,10 @@ export async function withdrawApplicationByToken(
     if (recipientIds.length > 0) {
       await createOrgNotifications(app.organization_id as string, recipientIds, {
         type: 'application_withdrawn',
-        title: 'A candidate withdrew their application',
-        body: undefined,
+        title: candidateName ? `${candidateName} withdrew their application` : 'A candidate withdrew their application',
+        body: note ?? undefined,
         link: app.candidate_id ? `/candidates/${app.candidate_id as string}` : undefined,
-        data: {},
+        data: { name: candidateName, vacancy: vacancyTitle },
       })
     }
   } catch (err) {
@@ -262,25 +275,14 @@ export async function withdrawApplicationByToken(
   }
 
   try {
-    const { data: cand } = await admin
-      .from('candidates')
-      .select('first_name, last_name')
-      .eq('id', app.candidate_id as string)
-      .single()
-    const { data: vac } = await admin
-      .from('applications')
-      .select('vacancies(title)')
-      .eq('id', app.id as string)
-      .single()
-    const vacTitle = (vac as unknown as { vacancies: { title: string } | null } | null)?.vacancies?.title ?? null
     await dispatchWebhookNotification(
       app.organization_id as string,
       'application_withdrawn',
       applicationWithdrawnCtx({
         applicationId: app.id as string,
         candidateId: app.candidate_id as string,
-        candidateName: cand ? `${cand.first_name} ${cand.last_name}`.trim() : 'Candidate',
-        vacancyTitle: vacTitle,
+        candidateName: candidateName ?? 'Candidate',
+        vacancyTitle,
       })
     )
   } catch (err) {

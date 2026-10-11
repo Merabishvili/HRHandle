@@ -15,12 +15,23 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { buildCalendlyLinkForApplication } from '@/lib/actions/calendly-link'
+import { cn } from '@/lib/utils'
 
 interface Props {
   applicationId: string
+  className?: string
 }
 
-export function CalendlyLinkButton({ applicationId }: Props) {
+// The action's messages are English; show the reader's language by code.
+function linkErrorKey(code: string | undefined): string {
+  switch (code) {
+    case 'VALIDATION': return 'calLink.errNotSetUp'
+    case 'CONFLICT': return 'calLink.errEventGone'
+    default: return 'calLink.errCalendly'
+  }
+}
+
+export function CalendlyLinkButton({ applicationId, className }: Props) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const [url, setUrl] = useState<string | null>(null)
@@ -35,7 +46,7 @@ export function CalendlyLinkButton({ applicationId }: Props) {
     startTransition(async () => {
       const res = await buildCalendlyLinkForApplication(applicationId)
       if (res.success) setUrl(res.data.url_with_tracking)
-      else setError(res.error)
+      else setError(t(linkErrorKey(res.code)))
     })
   }
 
@@ -52,7 +63,7 @@ export function CalendlyLinkButton({ applicationId }: Props) {
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={onOpen} className="gap-2">
+      <Button variant="outline" size="sm" onClick={onOpen} className={cn('gap-2', className)}>
         <CalendarIcon className="h-3.5 w-3.5" />
         {t('calLink.button')}
       </Button>

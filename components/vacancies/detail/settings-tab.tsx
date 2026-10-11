@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { format } from 'date-fns'
-import { getTranslations } from 'next-intl/server'
 
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { Button } from '@/components/ui/button'
 import { VacancyStatusSelect } from '@/components/vacancies/vacancy-status-select'
 import { DeleteVacancyButton } from '@/components/vacancies/delete-vacancy-button'
@@ -50,6 +50,7 @@ export async function SettingsTab({
   canEditStages,
 }: SettingsTabProps) {
   const t = await getTranslations()
+  const dateLocale = dateFnsLocale(await getLocale())
   return (
     <div className="grid gap-4 bg-[oklch(0.985_0.002_247)] p-5 sm:p-6 lg:grid-cols-2">
       {/* Vacancy details */}
@@ -71,7 +72,7 @@ export async function SettingsTab({
           <div className="flex gap-2.5">
             <SettingsField
               label={t('vacOverview.endDate')}
-              value={roleDetails.endDate ? format(new Date(roleDetails.endDate), 'MMM d, yyyy') : '—'}
+              value={roleDetails.endDate ? formatShortDate(new Date(roleDetails.endDate), dateLocale) : '—'}
             />
           </div>
         </div>

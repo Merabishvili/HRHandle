@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
-import { format, formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { getTranslations, getLocale } from 'next-intl/server'
-import { dateFnsLocale } from '@/lib/i18n/date-locale'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -14,6 +14,8 @@ import { ScreeningQuestionsCard } from '@/components/vacancies/screening-questio
 import { getCustomFieldSchema, getCustomFieldValues } from '@/lib/actions/custom-fields'
 import { ApplicationFormTab } from '@/components/vacancies/application-form-tab'
 import { getLinkedInIntegration } from '@/lib/actions/integrations'
+import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
+import { LOCALE_LABELS } from '@/lib/i18n/locales'
 import { AiAssessmentSuggester } from '@/components/vacancies/ai-assessment-suggester'
 import { PrevNextNav } from '@/components/ui/prev-next-nav'
 
@@ -28,6 +30,7 @@ import { SettingsTab } from '@/components/vacancies/detail/settings-tab'
 import type { ApplicationStatus } from '@/lib/types/application'
 import { mapPipelineStageToBucket, type PipelineStageRowForBucket } from '@/lib/pipeline-stages/bucket'
 import type { LegacyStatusCode } from '@/lib/pipeline-stages/resolve'
+import { offerAttention, type OfferStageOffer } from '@/lib/vacancies/offer-attention'
 
 /**
  * Wave 2.4 vacancy detail rebuild per `redesign/Vacancy Detail.dc.html`.
@@ -183,7 +186,7 @@ export default async function VacancyDetailPage({
   if (!profile?.organization_id) redirect('/pipeline')
   const organizationId = profile.organization_id
 
-  const [vacancyStatusesRaw, _candidateStatusesRaw, _linkedInIntegration] = await Promise.all([
+  const [vacancyStatusesRaw, _candidateStatusesRaw, linkedInIntegration] = await Promise.all([
     getVacancyStatuses(),
     null,
     getLinkedInIntegration(),
@@ -210,6 +213,8 @@ export default async function VacancyDetailPage({
   ])
 
   const vacancy = vacancyRaw as VacancyRow | null
+  // The job description is written in the org's content language (one per org).
+  const contentLocale = await fetchOrgContentLocale(supabase, organizationId)
   if (!vacancy) notFound()
 
   const vacancyStatuses = (vacancyStatusesRaw || []).filter((s) => s.is_active) as {
@@ -332,22 +337,37 @@ export default async function VacancyDetailPage({
     return b !== null && !['rejected', 'withdrawn', 'hired'].includes(b)
   }).length
 
-  // Pending offers (bucket = offer, awaiting candidate response) — days
-  // since the application reached the offer stage drives the urgency.
-  const pendingOfferApps = allApplications.filter((a) => bucketOf(a) === 'offer')
+  // Candidates at the Offer stage — what they need depends on their actual
+  // offers: a sent offer awaiting a reply, an unsent draft, or no offer yet.
+  const offerStageApps = allApplications.filter((a) => bucketOf(a) === 'offer')
   const now = Date.now()
-  const pendingOffers = pendingOfferApps.map((a) => {
+  const offersByApp = new Map<string, OfferStageOffer[]>()
+  if (offerStageApps.length > 0) {
+    const { data: offerRows } = await supabase
+      .from('offers')
+      .select('application_id, status, sent_at')
+      .in('application_id', offerStageApps.map((a) => a.id))
+      .is('deleted_at', null)
+    for (const o of (offerRows ?? []) as { application_id: string; status: string; sent_at: string | null }[]) {
+      const list = offersByApp.get(o.application_id) ?? []
+      list.push({ status: o.status, sent_at: o.sent_at })
+      offersByApp.set(o.application_id, list)
+    }
+  }
+  const pendingOffers: { applicationId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; daysAwaiting: number }[] = []
+  const offersToSend: { applicationId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; hasDraft: boolean }[] = []
+  for (const a of offerStageApps) {
     const candidate = candidateMap.get(a.candidate_id)
-    const sinceMs = a.last_status_changed_at ? Date.parse(a.last_status_changed_at) : Date.parse(a.applied_at)
-    const days = Math.max(0, Math.floor((now - sinceMs) / (1000 * 60 * 60 * 24)))
-    return {
+    const who = {
       applicationId: a.id,
       candidateId: a.candidate_id,
       candidateInitials: candidate ? getInitials(candidate.first_name, candidate.last_name) : '??',
       candidateFirstName: candidate?.first_name ?? 'Candidate',
-      daysAwaiting: days,
     }
-  })
+    const state = offerAttention(offersByApp.get(a.id) ?? [], now)
+    if (state?.kind === 'awaiting') pendingOffers.push({ ...who, daysAwaiting: state.daysAwaiting })
+    else if (state) offersToSend.push({ ...who, hasDraft: state.kind === 'draft' })
+  }
 
   // Upcoming interviews — next 36 hours, scheduled status only
   const appIds = allApplications.map((a) => a.id)
@@ -395,9 +415,12 @@ export default async function VacancyDetailPage({
 
   const t = await getTranslations()
   const locale = await getLocale()
+  // LinkedIn's pasted description uses the vacancy's language for its headings.
+  const tContent = await getTranslations({ locale: contentLocale })
   const attention = buildAttentionList({
     vacancyId: id,
     pendingOffers,
+    offersToSend,
     upcomingInterviewsTomorrow,
     newApplicantCount,
   }, t, locale)
@@ -476,7 +499,7 @@ export default async function VacancyDetailPage({
                 timeOpenDays,
                 activeCandidateCount,
                 salaryRangeLabel: formatSalary(vacancy),
-                endDate: vacancy.end_date ? format(new Date(vacancy.end_date), 'MMM d, yyyy', { locale: dateFnsLocale(locale) }) : null,
+                endDate: vacancy.end_date ? formatShortDate(new Date(vacancy.end_date), dateFnsLocale(locale)) : null,
                 healthLabel,
               }}
               attention={attention}
@@ -484,6 +507,26 @@ export default async function VacancyDetailPage({
               hiringManagerName={vacancy.hiring_manager_name}
               currentUserName={profile.full_name ?? user.email ?? t('vacOverview.you')}
               applicationFormToken={vacancy.application_form_token}
+              linkedInJob={
+                linkedInIntegration
+                  ? {
+                      pageId: linkedInIntegration.external_page_id,
+                      vacancy: {
+                        title: vacancy.title,
+                        description: vacancy.description,
+                        responsibilities: vacancy.responsibilities,
+                        requirements: vacancy.requirements,
+                        location: vacancy.location,
+                        employment_type: vacancy.employment_type,
+                        application_form_token: vacancy.application_form_token,
+                      },
+                      sectionLabels: {
+                        responsibilities: tContent('apply.responsibilities'),
+                        requirements: tContent('apply.requirements'),
+                      },
+                    }
+                  : null
+              }
             />
           </TabsContent>
 
@@ -495,7 +538,7 @@ export default async function VacancyDetailPage({
               requirements={vacancy.requirements}
               postingDetails={{
                 visibility: vacancy.show_on_public_page ? 'public' : 'private',
-                language: 'English',
+                language: LOCALE_LABELS[contentLocale],
                 lastEditedAt: vacancy.updated_at,
               }}
               applicationFormToken={vacancy.application_form_token}

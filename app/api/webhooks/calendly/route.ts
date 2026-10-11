@@ -5,6 +5,7 @@ import { applicationIdFromTracking } from '@/lib/calendly/link-builder'
 import { writeAuditLog } from '@/lib/audit-log'
 import { dispatchWebhookNotification } from '@/lib/notifications/webhook-dispatcher'
 import { interviewScheduledCtx } from '@/lib/notifications/event-builders'
+import { cancelBookedInterview } from '@/lib/calendly/bookings'
 
 interface CalendlyWebhookBody {
   event: 'invitee.created' | 'invitee.canceled' | string
@@ -99,20 +100,21 @@ export async function POST(req: NextRequest) {
     // Create interview row if interviews table is in use. The schema for the
     // existing `interviews` page may differ; we attempt a minimal insert and
     // continue on failure.
-    try {
-      await admin.from('interviews').insert({
-        organization_id: app.organization_id,
-        candidate_id: app.candidate_id,
-        vacancy_id: app.vacancy_id,
-        application_id: app.id,
-        scheduled_at: startTime,
-        duration_minutes: durationMin,
-        meeting_link: meetingUrl,
-        type: 'video',
-        status: 'scheduled',
-      })
-    } catch (err) {
-      console.error('[calendly-webhook] insert interview failed (continuing):', err)
+    // duration_minutes is NOT NULL with a default — leave it out rather than
+    // sending null when Calendly gives no end time.
+    const { error: insertError } = await admin.from('interviews').insert({
+      organization_id: app.organization_id,
+      candidate_id: app.candidate_id,
+      vacancy_id: app.vacancy_id,
+      application_id: app.id,
+      scheduled_at: startTime,
+      ...(durationMin ? { duration_minutes: durationMin } : {}),
+      meeting_link: meetingUrl,
+      type: 'video',
+      status: 'scheduled',
+    })
+    if (insertError) {
+      console.error('[calendly-webhook] insert interview failed (continuing):', insertError.message)
     }
 
     await writeAuditLog({
@@ -140,6 +142,11 @@ export async function POST(req: NextRequest) {
       )
     }
   } else if (parsed.event === 'invitee.canceled') {
+    const cancelled = await cancelBookedInterview(
+      admin,
+      app.id as string,
+      parsed.payload?.scheduled_event?.start_time,
+    )
     await writeAuditLog({
       orgId: app.organization_id as string,
       userId: null,
@@ -147,7 +154,7 @@ export async function POST(req: NextRequest) {
       entityId: app.id as string,
       action: 'interview_canceled',
       message: `Interview canceled via Calendly`,
-      details: { reason: parsed.payload?.cancellation?.reason ?? null },
+      details: { reason: parsed.payload?.cancellation?.reason ?? null, interviews_cancelled: cancelled },
     })
   }
 

@@ -5,6 +5,7 @@ import {
   DEFAULT_ENABLED_EVENTS,
   isWebhookEvent,
 } from '@/lib/notifications/events'
+import messages from '@/messages/source.json'
 
 describe('WEBHOOK_EVENTS', () => {
   it('contains exactly the canonical 8 events', () => {
@@ -16,6 +17,13 @@ describe('WEBHOOK_EVENTS', () => {
   it('every event has a label', () => {
     for (const e of WEBHOOK_EVENTS) {
       expect(WEBHOOK_EVENT_LABELS[e]).toBeTruthy()
+    }
+  })
+
+  it('every event has an interface label in each language (Settings → Slack & Teams)', () => {
+    const catalog = messages as Record<string, Record<string, string>>
+    for (const e of WEBHOOK_EVENTS) {
+      for (const locale of ['en', 'ka', 'ru']) expect(catalog[`webhooks.event.${e}`]?.[locale]).toBeTruthy()
     }
   })
 })

@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
-import { format } from 'date-fns'
+import { useLocale, useTranslations } from 'next-intl'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 import { toast } from 'sonner'
 import {
   Loader2,
@@ -212,6 +212,7 @@ function CandidatesPanel({
   onHardDelete: (c: TrashedCandidate) => void
 }) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   if (rows.length === 0) {
     return <EmptyState icon={<UserCircle className="h-10 w-10 text-muted-foreground/40" />} label={t('trash.noCandidates')} />
   }
@@ -231,7 +232,7 @@ function CandidatesPanel({
               <p className="text-xs text-muted-foreground">
                 {c.email ?? '—'} ·{' '}
                 <span className="inline-flex items-center gap-1">
-                  <CalendarClock className="h-3 w-3" /> {t('trash.deletedOn', { date: format(new Date(c.deleted_at), 'MMM d, yyyy') })}
+                  <CalendarClock className="h-3 w-3" /> {t('trash.deletedOn', { date: formatShortDate(new Date(c.deleted_at), dateLocale) })}
                 </span>
               </p>
               {c.cascadedApplicationIds.length > 0 && (
@@ -285,6 +286,7 @@ function VacanciesPanel({
   onHardDelete: (v: TrashedVacancy) => void
 }) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   if (rows.length === 0) {
     return <EmptyState icon={<Briefcase className="h-10 w-10 text-muted-foreground/40" />} label={t('trash.noVacancies')} />
   }
@@ -302,7 +304,7 @@ function VacanciesPanel({
               <p className="text-xs text-muted-foreground">
                 {[v.department, v.location].filter(Boolean).join(' · ') || '—'} ·{' '}
                 <span className="inline-flex items-center gap-1">
-                  <CalendarClock className="h-3 w-3" /> {t('trash.deletedOn', { date: format(new Date(v.deleted_at), 'MMM d, yyyy') })}
+                  <CalendarClock className="h-3 w-3" /> {t('trash.deletedOn', { date: formatShortDate(new Date(v.deleted_at), dateLocale) })}
                 </span>
               </p>
             </div>

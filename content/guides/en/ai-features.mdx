@@ -1,0 +1,79 @@
+---
+updated: 2026-10-09
+---
+
+HRHandle uses AI (Google's Gemini models) to save you typing and to give you a second opinion. The AI only suggests: nothing it writes is saved or sent until a person accepts it, and it never rejects or ranks anyone. It writes in your organization's content language.
+
+## Where HRHandle uses AI
+
+| Where | What the AI does |
+|---|---|
+| Creating or editing a vacancy | Drafts the job description, responsibilities and requirements — see [Create a vacancy](/guide/post-a-vacancy). |
+| The vacancy's **Scorecard & interview** tab | Suggests scorecard attributes and interview questions from the job description — see [The vacancy page](/guide/vacancy-page). |
+| Adding a candidate | Reads the uploaded CV and fills in the form — see [Add a candidate](/guide/add-candidates). |
+| The job description | Checks the wording for phrases that may put candidates off (below). |
+| The candidate profile | AI Fit Analysis, if your organization turns it on (below). |
+
+## Check a job description for inclusive language
+
+When you create or edit a vacancy, open **AI assist — check inclusive language** under the description and click **Run check**.
+
+<Screenshot
+  name="ai-bias-check"
+  alt="The inclusive-language check with three findings in the requirements"
+  caption="Each finding explains the concern and suggests other wording."
+/>
+
+Each finding shows the phrase, the kind of concern — for example **age-coded** or **gender-coded** — why it may put candidates off, and a suggestion you can copy. The check never changes your text. Only the vacancy text is sent to the AI, never candidate data.
+
+## AI Fit Analysis
+
+AI Fit Analysis compares a candidate's application with the vacancy's scorecard and shows the evidence for each criterion. It's off until the owner turns it on.
+
+### Turn it on
+
+The owner opens **Settings → Organization**.
+
+<Screenshot
+  name="ai-fit-setting"
+  alt="The AI Fit Analysis setting with the enable box and the acknowledgement ticked"
+  caption="Only the owner can turn AI Fit Analysis on or off."
+/>
+
+1. **Enable AI Fit Analysis** — tick it.
+2. **The acknowledgement** — confirm that you understand the analysis is advisory: it gives no overall score, and a person always decides and records an assessment. Then click **Enable**.
+
+While it's on, your apply form tells candidates that an AI assistant may help review applications and that a person always decides.
+
+### Read an analysis
+
+On a candidate's profile, open **AI fit analysis** and click **Run analysis**. The result is usually ready within a minute.
+
+<Screenshot
+  name="ai-fit-card"
+  alt="An AI fit analysis with the must-have summary, the criteria, strengths, points to verify, suggested questions and the assessment buttons highlighted"
+  caption="Evidence for each criterion — and the decision stays with you."
+/>
+
+1. **Meets 2 of 2 must-have criteria** — how many of the vacancy's must-have criteria the application meets. There's deliberately no overall score.
+2. **The criteria** — how well the application matches each one, with the evidence from the CV in brackets.
+3. **Strengths**, **To verify** and **Suggested screening questions** — what stands out, what to check, and questions that would settle it.
+4. **Your assessment** — **Agree with AI** or **Override** with a reason. The result carries no weight until a person has recorded an assessment.
+
+The AI only sees job-relevant information: the candidate's name, contact details, photo, age, gender and other protected details are removed first. An organization can run up to 100 analyses a month.
+
+### AI oversight
+
+Owners and admins can see how the analysis is used in **Settings → AI oversight**.
+
+<Screenshot
+  name="ai-oversight"
+  alt="The AI oversight page with usage numbers, analyses awaiting review and the override log highlighted"
+  caption="Watch how often your team disagrees with the AI."
+/>
+
+1. **Usage and agreement** — analyses used this month out of 100, how many your team agreed with or overrode, and the override rate. A rising override rate can mean the AI is out of step with your judgement.
+2. **Awaiting review** — analyses nobody has assessed yet.
+3. **Override log** — every override with its reason.
+
+Every analysis, agreement and override is also recorded in the [audit log](/guide/audit-log-and-trash).

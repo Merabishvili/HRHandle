@@ -44,36 +44,41 @@ export function buildSlackPayload(ctx: WebhookEventContext): unknown {
 }
 
 /**
- * Microsoft Teams MessageCard. Newer Adaptive Cards via Workflows would
- * also work but MessageCard is still accepted by Incoming Webhook
- * connectors and is much simpler to construct.
+ * Microsoft Teams message carrying an Adaptive Card. This is the format the
+ * Teams Workflows template "Post to a channel when a webhook request is
+ * received" expects (it replaces the retired Office 365 connectors), and the
+ * classic Incoming Webhook connector accepts it too.
  */
 export function buildTeamsPayload(ctx: WebhookEventContext): unknown {
-  const card: Record<string, unknown> = {
-    '@type': 'MessageCard',
-    '@context': 'https://schema.org/extensions',
-    summary: ctx.title,
-    themeColor: '0078D4',
-    title: ctx.title,
-  }
-  if (ctx.body) card.text = ctx.body
+  const body: Record<string, unknown>[] = [
+    { type: 'TextBlock', text: ctx.title, weight: 'Bolder', size: 'Medium', wrap: true },
+  ]
+  if (ctx.body) body.push({ type: 'TextBlock', text: ctx.body, wrap: true })
   if (ctx.fields && ctx.fields.length > 0) {
-    card.sections = [
-      {
-        facts: ctx.fields.map((f) => ({ name: f.label, value: f.value })),
-      },
-    ]
+    body.push({
+      type: 'FactSet',
+      facts: ctx.fields.map((f) => ({ title: f.label, value: f.value })),
+    })
+  }
+  const card: Record<string, unknown> = {
+    $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+    type: 'AdaptiveCard',
+    version: '1.4',
+    body,
   }
   if (ctx.url) {
-    card.potentialAction = [
-      {
-        '@type': 'OpenUri',
-        name: 'Open in HRHandle',
-        targets: [{ os: 'default', uri: ctx.url }],
-      },
-    ]
+    card.actions = [{ type: 'Action.OpenUrl', title: 'Open in HRHandle', url: ctx.url }]
   }
-  return card
+  return {
+    type: 'message',
+    attachments: [
+      {
+        contentType: 'application/vnd.microsoft.card.adaptive',
+        contentUrl: null,
+        content: card,
+      },
+    ],
+  }
 }
 
 /** Validate that a string looks like a plausible Slack or Teams webhook URL. */
@@ -90,14 +95,15 @@ export function isPlausibleWebhookUrl(value: string, channel: 'slack' | 'teams')
     return url.hostname === 'hooks.slack.com'
   }
   // Microsoft Teams hostname varies by tenant region but always ends in
-  // a Microsoft-owned domain. We accept the common ones.
+  // a Microsoft-owned domain. We accept the common ones: Workflows URLs
+  // (`*.environment.api.powerplatform.com`, older `*.logic.azure.com`) and
+  // the classic connector hosts.
   const allowed = [
     'webhook.office.com',
     'outlook.office.com',
     'outlook.office365.com',
-    'prod-00.westus.logic.azure.com',
+    'logic.azure.com',
+    'api.powerplatform.com',
   ]
-  return allowed.some((h) => url.hostname === h || url.hostname.endsWith(`.${h}`)) ||
-    url.hostname.endsWith('.webhook.office.com') ||
-    url.hostname.endsWith('.logic.azure.com')
+  return allowed.some((h) => url.hostname === h || url.hostname.endsWith(`.${h}`))
 }

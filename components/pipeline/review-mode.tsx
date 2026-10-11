@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { format } from 'date-fns'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 import { toast } from 'sonner'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import {
   X,
   ChevronLeft,
@@ -83,6 +83,7 @@ function avatarStyle(seed: string): { background: string; color: string } {
  */
 export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject }: ReviewModeProps) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   const [index, setIndex] = useState(0)
   const [pending, setPending] = useState(false)
 
@@ -308,7 +309,7 @@ export function ReviewMode({ queue, activeStatuses, onClose, onAdvance, onReject
                     {t('review.appliedTo')}{' '}
                     <strong className="text-[oklch(0.35_0.02_250)]">{current.vacancy_title}</strong>
                     {' · '}
-                    {format(new Date(current.applied_at), 'MMM d, yyyy')}
+                    {formatShortDate(new Date(current.applied_at), dateLocale)}
                     {current.source ? ` · ${t('review.via', { source: current.source })}` : ''}
                   </p>
                 </div>

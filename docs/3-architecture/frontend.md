@@ -126,6 +126,7 @@ HRHandle does not use a global client-side state manager (no Redux, Zustand, etc
 - **UI primitives**: `components/ui/` — shadcn/ui components (accordion, button, card, dialog, etc.).
 - **Feature components**: `components/[domain]/` — compose UI primitives, call server actions.
 - **cn() utility**: `lib/utils.ts` — combines `clsx` + `tailwind-merge` for conditional class names.
+- **Dates in the UI language**: format short dates with `formatShortDate(date, dateFnsLocale(locale))` (`lib/i18n/date-locale.ts`) — "Sep 20, 2026" in English, day first in Georgian and Russian. Date + time: `formatShortDateTime`. Never a fixed `'MMM d, yyyy'` (month first in every language) and never `toLocale…String()` without the app locale (that's the browser's language, not the user's). Interview date/time: `lib/interviews/format.ts`.
 
 ### Forms — react-hook-form + zod (A-005)
 
@@ -143,7 +144,7 @@ The guide is trilingual (EN source, KA, RU) and rendered in the visitor's langua
 
 `guideMdxComponents(locale)` binds the article's language into `<Screenshot name="…" alt="…" caption="…" />`, which loads `public/guide/screenshots/<locale>/<name>.webp` (sizes from `content/guides/screenshots.json`) and links to the full-size image. `__tests__/guides.test.ts` checks every published topic exists in all three languages with the same headings and the same screenshots in the same order, that every screenshot file exists, and that internal links point at real topics.
 
-Screenshots are captured by `scripts/capture-screenshots.ts` (Playwright) from flows in `scripts/screenshot-config.ts` — see `docs/5-environment/local.md` → "Capturing guide screenshots".
+Screenshots are captured by `scripts/capture-screenshots.ts` (Playwright) from the flows in `scripts/guide-flows/` (registered in `scripts/screenshot-config.ts`) — see `docs/5-environment/local.md` → "Capturing guide screenshots".
 
 ## Candidate Components (`components/candidates/`)
 

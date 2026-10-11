@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { format } from 'date-fns'
-import { getTranslations } from 'next-intl/server'
-import { Sparkles, Pencil, ExternalLink } from 'lucide-react'
 
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { Sparkles, Pencil, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CustomFieldsDisplay } from '@/components/custom-fields/custom-fields-display'
 import type { CustomFieldGroupWithFields, CustomFieldValue } from '@/lib/actions/custom-fields'
@@ -46,6 +46,7 @@ export async function JdTab({
   customFieldValues = [],
 }: JdTabProps) {
   const t = await getTranslations()
+  const dateLocale = dateFnsLocale(await getLocale())
   return (
     <div className="flex flex-col gap-4 bg-[oklch(0.985_0.002_247)] p-5 sm:flex-row sm:p-6">
       {/* Left — About the role */}
@@ -101,7 +102,7 @@ export async function JdTab({
               <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t('jdTab.lastEdited')}</span>
                 <span className="font-semibold text-foreground">
-                  {format(new Date(postingDetails.lastEditedAt), 'MMM d, yyyy')}
+                  {formatShortDate(new Date(postingDetails.lastEditedAt), dateLocale)}
                 </span>
               </li>
             )}

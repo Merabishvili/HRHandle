@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { format } from 'date-fns'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 import { Check, Copy, Link as LinkIcon, Loader2, X } from 'lucide-react'
 
 import {
@@ -27,9 +27,18 @@ import {
 export interface ShareScorecardDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  applicationId: string
+  /** The one assessment (a reviewer's submitted card) being shared. */
+  evaluationId: string
   candidateName: string
   vacancyTitle: string
+  assessorName: string
+}
+
+// The actions' messages are English; show the reader's language by code.
+function shareErrorKey(code: string | undefined): string {
+  if (code === 'FORBIDDEN') return 'shareScorecard.errForbidden'
+  if (code === 'NOT_FOUND') return 'shareScorecard.errNotFound'
+  return 'shareScorecard.errFailed'
 }
 
 // Three-row dialog: copy link, last-shared timestamp, revoke. The link is
@@ -39,11 +48,13 @@ export interface ShareScorecardDialogProps {
 export function ShareScorecardDialog({
   open,
   onOpenChange,
-  applicationId,
+  evaluationId,
   candidateName,
   vacancyTitle,
+  assessorName,
 }: ShareScorecardDialogProps) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
   const [state, setState] = useState<ScorecardShareState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -60,26 +71,26 @@ export function ShareScorecardDialog({
     }
     let cancelled = false
     setIsLoading(true)
-    getScorecardShareState(applicationId).then((r) => {
+    getScorecardShareState(evaluationId).then((r) => {
       if (cancelled) return
       setIsLoading(false)
       if (r.success) {
         setState(r.data)
       } else {
-        setError(r.error)
+        setError(t(shareErrorKey(r.code)))
       }
     })
     return () => {
       cancelled = true
     }
-  }, [open, applicationId])
+  }, [open, evaluationId, t])
 
   const handleGenerate = () => {
     setError(null)
     startTransition(async () => {
-      const r = await getOrCreateScorecardToken(applicationId)
+      const r = await getOrCreateScorecardToken(evaluationId)
       if (!r.success) {
-        setError(r.error)
+        setError(t(shareErrorKey(r.code)))
         return
       }
       setState(r.data)
@@ -92,9 +103,9 @@ export function ShareScorecardDialog({
       return
     }
     startTransition(async () => {
-      const r = await revokeScorecardToken(applicationId)
+      const r = await revokeScorecardToken(evaluationId)
       if (!r.success) {
-        setError(r.error)
+        setError(t(shareErrorKey(r.code)))
         return
       }
       setState(r.data)
@@ -122,7 +133,7 @@ export function ShareScorecardDialog({
         <DialogHeader>
           <DialogTitle>{t('shareScorecard.title')}</DialogTitle>
           <DialogDescription>
-            {t.rich('shareScorecard.desc', { name: candidateName, title: vacancyTitle, b: (c) => <strong>{c}</strong> })}
+            {t.rich('shareScorecard.desc', { name: candidateName, title: vacancyTitle, assessor: assessorName, b: (c) => <strong>{c}</strong> })}
           </DialogDescription>
         </DialogHeader>
 
@@ -170,10 +181,10 @@ export function ShareScorecardDialog({
               {(state.sharedByName || state.sharedAt) && (
                 <p className="text-xs text-muted-foreground">
                   {state.sharedByName && state.sharedAt
-                    ? t('shareScorecard.firstSharedByOn', { name: state.sharedByName, date: format(new Date(state.sharedAt), 'MMM d, yyyy') })
+                    ? t('shareScorecard.firstSharedByOn', { name: state.sharedByName, date: formatShortDate(new Date(state.sharedAt), dateLocale) })
                     : state.sharedByName
                       ? t('shareScorecard.firstSharedBy', { name: state.sharedByName })
-                      : t('shareScorecard.firstSharedOn', { date: format(new Date(state.sharedAt!), 'MMM d, yyyy') })}
+                      : t('shareScorecard.firstSharedOn', { date: formatShortDate(new Date(state.sharedAt!), dateLocale) })}
                 </p>
               )}
 
@@ -205,7 +216,7 @@ export function ShareScorecardDialog({
 
               {state?.revokedAt && (
                 <p className="text-xs text-muted-foreground">
-                  {t('shareScorecard.prevRevoked', { date: format(new Date(state.revokedAt), 'MMM d, yyyy') })}
+                  {t('shareScorecard.prevRevoked', { date: formatShortDate(new Date(state.revokedAt), dateLocale) })}
                 </p>
               )}
 

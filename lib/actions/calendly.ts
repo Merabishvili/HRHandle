@@ -10,9 +10,9 @@ import { callbackOrigin } from '@/lib/site-url'
 import {
   isCalendlyConfigured,
   exchangeCodeForTokens,
-  refreshAccessToken,
   revokeToken,
 } from '@/lib/calendly/oauth'
+import { ensureFreshToken } from '@/lib/calendly/tokens'
 import {
   getCurrentUser,
   listEventTypes,
@@ -31,39 +31,6 @@ export interface CalendlyIntegrationStatus {
   selected_event_type_uri: string | null
   selected_event_type_name: string | null
   available_event_types?: CalendlyEventType[]
-}
-
-function isExpired(expiresAt: string | null): boolean {
-  if (!expiresAt) return true
-  return new Date(expiresAt).getTime() <= Date.now() + 60_000 // 1 min skew
-}
-
-async function ensureFreshToken(integrationId: string): Promise<string | null> {
-  const supabase = createAdminClient()
-  const { data: row } = await supabase
-    .from('organization_integrations')
-    .select('access_token, refresh_token, token_expires_at')
-    .eq('id', integrationId)
-    .single()
-  if (!row) return null
-  if (!isExpired(row.token_expires_at as string | null)) return row.access_token as string
-  if (!row.refresh_token) return null
-  try {
-    const fresh = await refreshAccessToken(row.refresh_token as string)
-    const expiresAt = new Date(Date.now() + fresh.expires_in * 1000).toISOString()
-    await supabase
-      .from('organization_integrations')
-      .update({
-        access_token: fresh.access_token,
-        refresh_token: fresh.refresh_token,
-        token_expires_at: expiresAt,
-      })
-      .eq('id', integrationId)
-    return fresh.access_token
-  } catch (err) {
-    console.error('[calendly] refresh failed:', err)
-    return null
-  }
 }
 
 export async function getCalendlyStatus(): Promise<ActionResult<CalendlyIntegrationStatus>> {
@@ -179,10 +146,12 @@ export async function completeCalendlyConnect(
     is_active: true,
   }
 
-  if (existing?.id) {
-    await admin.from('organization_integrations').update(payload).eq('id', existing.id)
-  } else {
-    await admin.from('organization_integrations').insert(payload)
+  const { error: saveError } = existing?.id
+    ? await admin.from('organization_integrations').update(payload).eq('id', existing.id)
+    : await admin.from('organization_integrations').insert(payload)
+  if (saveError) {
+    console.error('[calendly] saving the connection failed:', saveError.message)
+    return { success: false, error: 'Failed to save the Calendly connection', code: 'DB_ERROR' }
   }
 
   await writeAuditLog({
@@ -241,7 +210,7 @@ export async function disconnectCalendly(): Promise<ActionResult<void>> {
     if (row.access_token) await revokeToken(row.access_token as string)
     if (row.refresh_token) await revokeToken(row.refresh_token as string)
 
-    await admin
+    const { error: updateError } = await admin
       .from('organization_integrations')
       .update({
         is_active: false,
@@ -251,6 +220,10 @@ export async function disconnectCalendly(): Promise<ActionResult<void>> {
         webhook_signing_key: null,
       })
       .eq('id', row.id as string)
+    if (updateError) {
+      console.error('[calendly] disconnect update failed:', updateError.message)
+      return { success: false, error: 'Failed to disconnect Calendly', code: 'DB_ERROR' }
+    }
   }
 
   await writeAuditLog({

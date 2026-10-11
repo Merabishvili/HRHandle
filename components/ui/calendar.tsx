@@ -36,8 +36,10 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) =>
-          date.toLocaleString('default', { month: 'short' }),
+        // Through DayPicker's date library so the month names follow the
+        // `locale` prop (the app language), not the browser's language.
+        formatMonthDropdown: (date, dateLib) =>
+          dateLib ? dateLib.format(date, 'LLL') : date.toLocaleString('default', { month: 'short' }),
         ...formatters,
       }}
       classNames={{

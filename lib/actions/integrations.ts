@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { writeAuditLog } from '@/lib/audit-log'
 import { getAuthContext } from './index'
+import { isOrgAdmin } from '@/lib/permissions'
 
 export type LinkedInIntegration = {
   external_page_id: string
@@ -32,6 +33,7 @@ export async function disconnectLinkedInIntegration(): Promise<
 > {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
+  if (!isOrgAdmin(ctx.role)) return { success: false, error: 'Only owners and admins can disconnect LinkedIn' }
 
   const admin = createAdminClient()
   const { error } = await admin

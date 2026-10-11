@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getVacancyStatuses } from '@/lib/cache/lookups'
-import { getTranslations } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +34,7 @@ import { TablePagination } from '@/components/ui/table-pagination'
 import { parsePageSize, type PageSize } from '@/lib/pagination'
 import { vacancyRecencyLabel } from '@/lib/vacancy-age'
 import { sectorLabel } from '@/lib/vacancies/sector-i18n'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 type SearchParams = Promise<{
   page?: string
@@ -111,6 +112,7 @@ export default async function VacanciesPage({
   const to = from + pageSize - 1
 
   const t = await getTranslations()
+  const dateLocale = dateFnsLocale(await getLocale())
   const supabase = await createClient()
 
   const {
@@ -320,7 +322,7 @@ export default async function VacanciesPage({
             target="_blank"
             className="font-medium text-primary hover:underline truncate"
           >
-            {process.env.NEXT_PUBLIC_APP_URL ?? ''}/jobs/{publicPageSlug}
+            {(process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')}/jobs/{publicPageSlug}
           </Link>
         </div>
       )}
@@ -440,7 +442,7 @@ export default async function VacanciesPage({
                               return (
                                 <TableCell key={col} className="text-sm text-muted-foreground whitespace-nowrap">
                                   {vacancy.end_date
-                                    ? new Date(vacancy.end_date).toLocaleDateString()
+                                    ? formatShortDate(vacancy.end_date, dateLocale)
                                     : '—'}
                                 </TableCell>
                               )
@@ -461,7 +463,7 @@ export default async function VacanciesPage({
                             case 'start_date':
                               return (
                                 <TableCell key={col} className="text-sm text-muted-foreground whitespace-nowrap">
-                                  {new Date(vacancy.start_date).toLocaleDateString()}
+                                  {formatShortDate(vacancy.start_date, dateLocale)}
                                 </TableCell>
                               )
                             case 'openings_count':

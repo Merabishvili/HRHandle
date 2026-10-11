@@ -105,10 +105,22 @@ async function signIn(context: BrowserContext, email: string, locale: Locale): P
 // ── Markers: red boxes with an optional number badge ───────────────────────
 
 async function drawMarks(page: Page, marks: Mark[]): Promise<void> {
-  const rects: { x: number; y: number; w: number; h: number; n: number | null; left: boolean }[] = []
+  const rects: { x: number; y: number; w: number; h: number; n: number | null; badge: string }[] = []
   for (const [i, m] of marks.entries()) {
-    const box = await m.target.boundingBox({ timeout: 5_000 }).catch(() => null)
-    if (!box) throw new Error(`marker ${m.n ?? `#${i + 1}`} not found: ${m.target}`)
+    // `union`: one box around every element the locator matches (e.g. all nav links).
+    const targets = m.union ? await m.target.all() : [m.target]
+    const boxes = (await Promise.all(targets.map((l) => l.boundingBox({ timeout: 5_000 }).catch(() => null)))).filter(
+      (b): b is NonNullable<typeof b> => b !== null,
+    )
+    if (!boxes.length) throw new Error(`marker ${m.n ?? `#${i + 1}`} not found: ${m.target}`)
+    const left = Math.min(...boxes.map((b) => b.x))
+    const top = Math.min(...boxes.map((b) => b.y))
+    const box = {
+      x: left,
+      y: top,
+      width: Math.max(...boxes.map((b) => b.x + b.width)) - left,
+      height: Math.max(...boxes.map((b) => b.y + b.height)) - top,
+    }
     const pad = m.pad ?? 4
     rects.push({
       x: box.x - pad,
@@ -116,7 +128,7 @@ async function drawMarks(page: Page, marks: Mark[]): Promise<void> {
       w: box.width + pad * 2,
       h: box.height + pad * 2,
       n: m.n ?? null,
-      left: m.badge === 'left',
+      badge: m.badge ?? 'corner',
     })
   }
   await page.evaluate((items) => {
@@ -139,9 +151,12 @@ async function drawMarks(page: Page, marks: Mark[]): Promise<void> {
       if (r.n !== null) {
         const badge = document.createElement('div')
         badge.textContent = String(r.n)
-        // 'left': outside the box, so it never covers a field label; else on the corner.
-        const bx = r.left ? r.x - 34 : r.x - 13
-        const by = r.left ? (r.h <= 44 ? r.y + r.h / 2 - 13 : r.y + 4) : r.y - 13
+        // 'left': outside the box, so it never covers a field label; 'below': under
+        // the box (small controls side by side, e.g. header icons); else the corner.
+        const side = r.badge === 'left' || r.badge === 'right'
+        const bx =
+          r.badge === 'left' ? r.x - 34 : r.badge === 'right' ? r.x + r.w + 8 : r.badge === 'below' ? r.x + r.w / 2 - 13 : r.x - 13
+        const by = side ? (r.h <= 44 ? r.y + r.h / 2 - 13 : r.y + 4) : r.badge === 'below' ? r.y + r.h + 6 : r.y - 13
         badge.style.cssText = [
           'position:absolute',
           `left:${bx + window.scrollX}px`,
@@ -185,32 +200,63 @@ async function fitWindowToPage(page: Page): Promise<number> {
   return fitted
 }
 
-async function takeShot(page: Page, locale: Locale, name: string, opts: ShotOptions = {}): Promise<void> {
+/** Make the window exactly this tall (a side sheet that should fit without scrolling). */
+async function setWindowHeight(page: Page, height: number): Promise<number> {
+  const fitted = Math.min(Math.max(Math.ceil(height), VIEWPORT.height), 3200)
+  await page.setViewportSize({ width: VIEWPORT.width, height: fitted })
+  await page.waitForTimeout(300)
+  return fitted
+}
+
+/** Show production addresses instead of the local server's (apply links, etc.). */
+async function showProductionUrls(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const local = /https?:\/\/(?:localhost|127\.0\.0\.1):\d+/g
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (node.nodeValue && local.test(node.nodeValue)) node.nodeValue = node.nodeValue.replace(local, 'https://hrhandle.com')
+    }
+    for (const input of Array.from(document.querySelectorAll('input'))) {
+      if (local.test(input.value)) input.value = input.value.replace(local, 'https://hrhandle.com')
+    }
+  })
+}
+
+async function takeShot(ownerPage: Page, locale: Locale, name: string, opts: ShotOptions = {}): Promise<void> {
+  const page = opts.page ?? ownerPage
+  await showProductionUrls(page)
   // Park the mouse (no hover states; a hovered toast never times out), then let
   // toasts ("Vacancy published.") finish, so every language's shot matches.
   await page.mouse.move(1, 1)
   await page.locator('[data-sonner-toast]').first().waitFor({ state: 'detached', timeout: 8_000 }).catch(() => {})
-  const windowHeight = opts.fullPage || opts.clip ? await fitWindowToPage(page) : VIEWPORT.height
-  if (opts.marks?.length) await drawMarks(page, opts.marks)
-  await page.waitForTimeout(200)
+  const windowHeight = opts.windowHeight
+    ? await setWindowHeight(page, opts.windowHeight)
+    : opts.fullPage || opts.clip ? await fitWindowToPage(page) : VIEWPORT.height
+  let png: Buffer
+  try {
+    if (opts.marks?.length) await drawMarks(page, opts.marks)
+    await page.waitForTimeout(200)
 
-  let clip: { x: number; y: number; width: number; height: number } | undefined
-  if (opts.clip) {
-    const b = await opts.clip.boundingBox()
-    if (!b) throw new Error(`clip target for "${name}" is not visible`)
-    const pad = opts.clipPad ?? 24
-    const x = Math.max(0, b.x - pad)
-    const y = Math.max(0, b.y - pad)
-    clip = {
-      x,
-      y,
-      width: Math.min(VIEWPORT.width - x, b.width + pad * 2),
-      height: Math.min(windowHeight - y, b.height + pad * 2),
+    let clip: { x: number; y: number; width: number; height: number } | undefined
+    if (opts.clip) {
+      const b = await opts.clip.boundingBox()
+      if (!b) throw new Error(`clip target for "${name}" is not visible`)
+      const pad = opts.clipPad ?? 24
+      const x = Math.max(0, b.x - pad)
+      const y = Math.max(0, b.y - pad)
+      clip = {
+        x,
+        y,
+        width: Math.min(VIEWPORT.width - x, b.width + pad * 2),
+        height: Math.min(windowHeight - y, b.height + pad * 2),
+      }
     }
+    png = await page.screenshot({ ...(clip ? { clip } : {}), animations: 'disabled', caret: 'hide' })
+  } finally {
+    // Always undo markers and the taller window, or the next shot inherits them.
+    await clearMarks(page).catch(() => {})
+    if (windowHeight !== VIEWPORT.height) await page.setViewportSize(VIEWPORT)
   }
-  const png = await page.screenshot({ ...(clip ? { clip } : {}), animations: 'disabled', caret: 'hide' })
-  if (opts.marks?.length) await clearMarks(page)
-  if (windowHeight !== VIEWPORT.height) await page.setViewportSize(VIEWPORT)
 
   fs.mkdirSync(path.join(OUT_DIR, locale), { recursive: true })
   const image = sharp(png)
@@ -220,9 +266,8 @@ async function takeShot(page: Page, locale: Locale, name: string, opts: ShotOpti
   console.log(`  [${locale}] ✓ ${name}  ${width}×${height}`)
 }
 
-async function runLocale(browser: Browser, locale: Locale, topics: Set<string> | null): Promise<string[]> {
-  const demo = DEMO[locale]
-  const owner = demo.users.find((u) => u.role === 'owner')!
+/** A browser for one language: its NEXT_LOCALE cookie, optionally signed in. */
+async function newLocaleContext(browser: Browser, locale: Locale, email: string | null): Promise<BrowserContext> {
   const context = await browser.newContext({
     viewport: VIEWPORT,
     locale: locale === 'ka' ? 'ka-GE' : locale === 'ru' ? 'ru-RU' : 'en-US',
@@ -230,23 +275,48 @@ async function runLocale(browser: Browser, locale: Locale, topics: Set<string> |
       ? { extraHTTPHeaders: { 'x-vercel-protection-bypass': VERCEL_BYPASS, 'x-vercel-set-bypass-cookie': 'true' } }
       : {}),
   })
-  await signIn(context, owner.email, locale)
+  if (email) {
+    await signIn(context, email, locale)
+  } else {
+    const url = new URL(BASE_URL)
+    await context.addCookies([{ name: 'NEXT_LOCALE', value: locale, domain: url.hostname, path: '/', sameSite: 'Lax' }])
+  }
+  return context
+}
+
+async function runLocale(browser: Browser, locale: Locale, topics: Set<string> | null): Promise<string[]> {
+  const demo = DEMO[locale]
+  const owner = demo.users.find((u) => u.role === 'owner')!
+  const { data: ownerProfile } = await admin.from('profiles').select('id, organization_id').eq('email', owner.email).single()
+  if (!ownerProfile?.organization_id) throw new Error(`[${locale}] demo owner has no organization — run npm run guide:seed`)
+  const context = await newLocaleContext(browser, locale, owner.email)
   const page = await context.newPage()
   page.setDefaultTimeout(20_000)
   const taken: string[] = []
+  const extraContexts: BrowserContext[] = []
 
   const ctx: ShotContext = {
     page,
     locale,
     demo,
+    orgId: ownerProfile.organization_id as string,
     admin,
     t: translator(locale),
-    goto: async (p) => {
-      await page.goto(`${BASE_URL}${p}`, { waitUntil: 'networkidle', timeout: 45_000 })
+    goto: async (p, target = page) => {
+      await target.goto(`${BASE_URL}${p}`, { waitUntil: 'load', timeout: 45_000 })
+      // Some pages keep a connection open (e.g. live session lists); don't wait forever.
+      await target.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => {})
     },
     shot: async (name, opts) => {
       await takeShot(page, locale, name, opts)
       taken.push(name)
+    },
+    openPage: async ({ email = null } = {}) => {
+      const extra = await newLocaleContext(browser, locale, email)
+      extraContexts.push(extra)
+      const p = await extra.newPage()
+      p.setDefaultTimeout(20_000)
+      return p
     },
   }
 
@@ -261,6 +331,7 @@ async function runLocale(browser: Browser, locale: Locale, topics: Set<string> |
       console.error(`  [${locale}] ✗ ${flow.topic}: ${(err as Error).message}\n    page: ${page.url()}\n    debug screenshot: ${debug}`)
     } finally {
       await flow.cleanup?.(ctx).catch((err) => console.error(`  [${locale}] cleanup failed: ${(err as Error).message}`))
+      for (const extra of extraContexts.splice(0)) await extra.close().catch(() => {})
     }
   }
   await context.close()

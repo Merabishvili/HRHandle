@@ -26,7 +26,7 @@ export default async function NotificationsSettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('notification_preferences, organization_id')
+    .select('notification_preferences, role')
     .eq('id', user.id)
     .single()
 
@@ -34,16 +34,7 @@ export default async function NotificationsSettingsPage() {
     profile?.notification_preferences as Partial<NotificationPreferences> | null,
   )
 
-  let slackAvailable = false
-  if (profile?.organization_id) {
-    const { count } = await supabase
-      .from('webhook_notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('organization_id', profile.organization_id)
-      .eq('channel_type', 'slack')
-      .eq('is_active', true)
-    slackAvailable = (count ?? 0) > 0
-  }
+  const isAdmin = profile?.role === 'owner' || profile?.role === 'admin'
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -53,7 +44,13 @@ export default async function NotificationsSettingsPage() {
           {t('notifPrefs.subtitle')}
         </p>
       </div>
-      <NotificationPreferencesForm initial={initial} slackAvailable={slackAvailable} />
+      <NotificationPreferencesForm initial={initial} />
+      {/* Slack / Teams channels are set for the whole organization, per channel. */}
+      <p className="text-sm text-muted-foreground">
+        {t.rich(isAdmin ? 'notifPrefs.channelsHintAdmin' : 'notifPrefs.channelsHint', {
+          link: (c) => <a href="/settings/integrations/webhooks" className="underline underline-offset-2 hover:text-foreground">{c}</a>,
+        })}
+      </p>
     </div>
   )
 }

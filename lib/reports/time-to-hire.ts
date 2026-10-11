@@ -78,7 +78,8 @@ export function byVacancy(samples: TimeToHireSample[]): PerVacancyBreakdown[] {
 }
 
 /** Round a day-count to one decimal place, or return '—' for null. */
-export function formatDays(value: number | null): string {
+/** "12.3d" by default; pass `fmt` to word it in the interface language ("12.3 дн."). */
+export function formatDays(value: number | null, fmt: (n: string) => string = (n) => `${n}d`): string {
   if (value === null) return '—'
-  return `${value.toFixed(1)}d`
+  return fmt(value.toFixed(1))
 }

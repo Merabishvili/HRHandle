@@ -17,8 +17,9 @@ Run BOTH of these in Supabase → SQL Editor on EACH project (staging and produc
 |---|---|---|---|
 | 040 webhook notifications | `scripts/040_webhook_notifications.sql` | `quotchdymcnjlnwtjmgu` | `fnpyfwhvgzoxgyjafbsg` |
 | 041 calendly fields | `scripts/041_organization_integrations_calendly.sql` | same | same |
+| 2026-10-10 integration fixes | `supabase/migrations/20261010_organization_integrations_fixes.sql` | same | same |
 
-Both are safe to re-run (use `IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`).
+All three are safe to re-run. The 2026-10-10 one allows `platform = 'calendly'` (041 forgot it), lets disconnect clear `access_token`, and locks the table down: writes owner/admin only, and the token/signing-key columns can't be selected by signed-in users at all (the app reads them with the service role). Apply it before relying on Calendly.
 
 After applying, the Slack/Teams integration is fully live — no further setup required. Customers can already start adding webhooks via `/settings/integrations/webhooks` if they're admins.
 
@@ -34,9 +35,11 @@ You'll create one OAuth app per environment (staging and production). Calendly d
    - **App name**: `HRHandle (staging)` for the first one, `HRHandle (production)` for the second
    - **Website URL**: `https://staging.hrhandle.com` / `https://hrhandle.com`
    - **Webhook signing key**: leave blank (the per-subscription signing key Calendly returns is what we use)
-   - **Redirect URI**: `https://staging.hrhandle.com/api/auth/calendly/callback` for staging; `https://hrhandle.com/api/auth/calendly/callback` for production. For local dev, also add `http://localhost:3000/api/auth/calendly/callback` to the staging app.
+   - **Redirect URI**: `https://staging.hrhandle.com/api/auth/calendly/callback` for staging; `https://hrhandle.com/api/auth/calendly/callback` for production. It must match `<NEXT_PUBLIC_SITE_URL of that Vercel environment>/api/auth/calendly/callback` exactly — the app builds it from that variable (`app/api/auth/calendly/route.ts`). For local dev, also add `http://localhost:3000/api/auth/calendly/callback` to the staging app.
    - **Scopes**: select `default` (full read/write to the user's data — required for `event_types`, `webhook_subscriptions`)
 4. Save. You'll see a **Client ID** + **Client Secret** on the resulting page. Copy both.
+
+> **Paid Calendly plan.** Calendly only allows webhook subscriptions on paid plans (Standard and up). On a free plan the connection and the booking links still work, but bookings and cancellations never reach HRHandle, so no interview is created.
 
 You should now have:
 
@@ -78,7 +81,7 @@ After saving, **redeploy** both environments (Vercel does this automatically on 
 1. Visit `/settings/integrations/webhooks` as an org admin.
 2. Click **Add webhook**.
 3. **Slack path**: in Slack → "+ Add apps" → Incoming Webhooks → "Add to Slack" → pick channel → copy the URL → paste into HRHandle → name it (e.g., `#hiring`) → save.
-4. **Teams path**: in the target channel → "···" menu → Connectors → Incoming Webhook → Configure → name + image → copy URL → paste into HRHandle → save.
+4. **Teams path**: in the target channel → "···" menu → **Workflows** → template "Post to a channel when a webhook request is received" → confirm the team + channel → copy the URL it shows → paste into HRHandle → save. (Office 365 "Incoming Webhook" connectors are being retired by Microsoft; HRHandle sends an Adaptive Card message, which both Workflows and the old connectors accept. Workflows URLs live on `*.environment.api.powerplatform.com` or the older `*.logic.azure.com`.)
 5. Click the **Test** button — you should see a "HRHandle test notification" appear in the channel within a second.
 6. Trigger a real event (e.g., move an application to Hired) and confirm it lands.
 

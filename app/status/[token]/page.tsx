@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { format } from 'date-fns'
 import { Building2, Briefcase, MapPin, Calendar, FileText } from 'lucide-react'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, getTranslations } from 'next-intl/server'
@@ -8,7 +7,7 @@ import { getMessages, getTranslations } from 'next-intl/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { statusCodeToBucket, BUCKET_LABEL_KEY, statusSubtitleKey } from '@/lib/application-status-bucket'
 import { resolveOrgContentLocale } from '@/lib/i18n/org-locale'
-import { dateFnsLocale } from '@/lib/i18n/date-locale'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { isOfferExpired } from '@/lib/offers/expiry'
 import { StatusStepper } from '@/components/status/status-stepper'
@@ -154,9 +153,9 @@ export default async function StatusPage({ params }: PageProps) {
     return row as { public_token: string; expiry_date: string | null; sent_at: string | null }
   })()
 
-  const appliedAt = format(new Date(app.applied_at), 'MMM d, yyyy', { locale: dfLocale })
+  const appliedAt = formatShortDate(new Date(app.applied_at), dfLocale)
   const lastUpdatedAt = app.last_status_changed_at
-    ? format(new Date(app.last_status_changed_at), 'MMM d, yyyy', { locale: dfLocale })
+    ? formatShortDate(new Date(app.last_status_changed_at), dfLocale)
     : appliedAt
 
   return (
@@ -233,7 +232,7 @@ export default async function StatusPage({ params }: PageProps) {
                 <p className="text-sm font-semibold text-emerald-900">{t('status.hasOffer')}</p>
                 {pendingOffer.expiry_date && (
                   <p className="mt-0.5 text-xs text-emerald-800">
-                    {t('status.respondBy', { date: format(new Date(pendingOffer.expiry_date), 'MMM d, yyyy', { locale: dfLocale }) })}
+                    {t('status.respondBy', { date: formatShortDate(new Date(pendingOffer.expiry_date), dfLocale) })}
                   </p>
                 )}
               </div>

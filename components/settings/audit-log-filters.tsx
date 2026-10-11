@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Search, X } from 'lucide-react'
-import { auditEntityLabel } from '@/lib/audit-log/message-i18n'
+import { auditActionLabel, auditEntityLabel } from '@/lib/audit-log/message-i18n'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
@@ -44,12 +44,18 @@ const ENTITY_TYPES = [
 
 const ACTION_TYPES = [
   'ai_assist',
+  'ai_fit_invoked',
   'application_withdrawn',
+  'billing_checkout_started',
+  'billing_refunded',
+  'billing_subscription_canceled',
   'calendly_connected',
   'calendly_disconnected',
   'calendly_link_generated',
   'candidate_deleted',
   'candidate_hard_deleted',
+  'candidate_merge_split',
+  'candidate_merged',
   'candidate_restored',
   'candidates_imported',
   'connected',
@@ -66,6 +72,7 @@ const ACTION_TYPES = [
   'offer_declined',
   'offer_sent',
   'offer_withdrawn',
+  'org_content_locale_updated',
   'scorecard_revoked',
   'scorecard_shared',
   'status_change_email_sent',
@@ -84,6 +91,7 @@ export function AuditLogFilters({
   basePath = '/settings/audit-log',
 }: AuditLogFiltersProps) {
   const t = useTranslations()
+  const locale = useLocale()
   const router = useRouter()
   // Date range is controlled (a localized DatePicker, not a native date input)
   // and read from state on submit.
@@ -139,9 +147,12 @@ export function AuditLogFilters({
           </SelectTrigger>
           <SelectContent className="max-h-72">
             <SelectItem value={ANY}>{t('auditFilters.anyAction')}</SelectItem>
-            {ACTION_TYPES.map((a) => (
-              <SelectItem key={a} value={a} className="font-mono text-xs">{a}</SelectItem>
-            ))}
+            {ACTION_TYPES
+              .map((a) => ({ code: a, label: auditActionLabel(t, a) }))
+              .sort((x, y) => x.label.localeCompare(y.label, locale))
+              .map(({ code, label }) => (
+                <SelectItem key={code} value={code}>{label}</SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>

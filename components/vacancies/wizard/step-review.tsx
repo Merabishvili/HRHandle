@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { format, parseISO } from 'date-fns'
+import { parseISO } from 'date-fns'
 import { Briefcase, Pencil, ChevronRight, Check, AlertTriangle, Star } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { sectorLabel } from '@/lib/vacancies/sector-i18n'
-import { dateFnsLocale } from '@/lib/i18n/date-locale'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 import type { BasicsState } from './step-basics'
 import type { DatesCompState } from './step-dates-comp'
 import type { DescriptionState } from './step-description'
@@ -379,7 +379,7 @@ function formatDate(iso: string | null, locale: string): string | null {
   if (!iso) return null
   const d = parseISO(iso) // a YYYY-MM-DD day, read as local (no time-zone shift)
   if (Number.isNaN(d.getTime())) return iso
-  return format(d, 'MMM d, yyyy', { locale: dateFnsLocale(locale) })
+  return formatShortDate(d, dateFnsLocale(locale))
 }
 
 function formatSalary(dc: DatesCompState, t: T): string {

@@ -63,7 +63,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/settings/organization', label: 'settings.nav.organization', icon: Building2,  ownerOnly: true },
       { href: '/settings/team',         label: 'settings.nav.team',         icon: Users,      adminOnly: true },
-      { href: '/settings/billing',      label: 'settings.nav.billing',      icon: CreditCard, ownerOnly: true },
+      { href: '/settings/billing',      label: 'settings.nav.billing',      icon: CreditCard, adminOnly: true },
     ],
   },
   {

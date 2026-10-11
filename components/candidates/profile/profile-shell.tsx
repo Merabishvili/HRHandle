@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { sourceLabel } from '@/lib/pipeline/source-i18n'
 import { Pencil, MoreHorizontal, Trash2 } from 'lucide-react'
 
@@ -54,6 +54,7 @@ import { AiFitCard } from './ai-fit-card'
 import { AssessmentRecord } from './assessment-record'
 import { RailActions, RailDetails } from './rail-sections'
 import type { AssessmentRecord as AssessmentRecordItem } from '@/lib/actions/evaluations'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 interface ProfileShellProps {
   candidate: {
@@ -79,6 +80,11 @@ interface ProfileShellProps {
   }
   organizationId: string
   currentUserId: string
+  /** Owner or admin — may send offers and share assessments. */
+  viewerIsAdmin: boolean
+  /** The org has connected Calendly with an event type — shows "Calendly
+   * link" in the Actions rail. */
+  calendlyEnabled: boolean
   currentUserName: string | null
   /** Open/draft vacancies the candidate can be added to (excludes ones they
    * are already active on) — feeds the "Add to Vacancy" dialog. */
@@ -181,6 +187,8 @@ export function CandidateProfileShell({
   nextCandidateId = null,
   organizationId: _organizationId,
   currentUserId,
+  viewerIsAdmin,
+  calendlyEnabled,
   currentUserName,
   availableVacancies,
   activeApplications,
@@ -205,6 +213,7 @@ export function CandidateProfileShell({
   recentMerge,
 }: ProfileShellProps) {
   const t = useTranslations()
+  const locale = useLocale()
   // Default-select the active application closest to a decision (Offer >
   // Interview > Screening > Applied). When tied, take the most recently
   // updated. Empty when there are no live applications.
@@ -417,6 +426,7 @@ export function CandidateProfileShell({
                 }
                 screeningAnswers={screeningAnswersByApplication.get(selectedApp.id) ?? []}
                 evaluation={myEvaluationByApplication.get(selectedApp.id) ?? null}
+                canManageOffers={viewerIsAdmin}
               />
             )}
 
@@ -426,7 +436,11 @@ export function CandidateProfileShell({
                 the selected application / stage, so it persists after a
                 candidate is hired / rejected / re-applies. Self-hides when
                 there are no submitted assessments. */}
-            <AssessmentRecord records={assessmentRecords} />
+            <AssessmentRecord
+              records={assessmentRecords}
+              candidateName={candidate.fullName}
+              canShare={viewerIsAdmin}
+            />
 
             {!selectedApp && (
               <div className="rounded-xl border border-dashed border-border bg-white p-6 text-center text-[13px] text-muted-foreground">
@@ -450,6 +464,7 @@ export function CandidateProfileShell({
                   nextStage={nextStage}
                   advanceUsesPipelineStage={advanceUsesPipelineStage}
                   onReject={triggerReject}
+                  calendlyEnabled={calendlyEnabled}
                 />
               </div>
             )}
@@ -513,6 +528,7 @@ export function CandidateProfileShell({
                   nextStage={nextStage}
                   advanceUsesPipelineStage={advanceUsesPipelineStage}
                   onReject={triggerReject}
+                  calendlyEnabled={calendlyEnabled}
                 />
               </div>
             )}
@@ -546,7 +562,7 @@ export function CandidateProfileShell({
                   { label: t('candWizard.personal.timezone'), value: candidate.timezone ?? '—' },
                   { label: t('candWizard.personal.languages'), value: candidate.languages.join(', ') || '—' },
                   { label: t('candWizard.application.sourceLabel'), value: sourceLabel(t, candidate.source) || '—' },
-                  { label: t('profileShell.added'), value: new Date(candidate.addedAt).toLocaleDateString() },
+                  { label: t('profileShell.added'), value: formatShortDate(candidate.addedAt, dateFnsLocale(locale)) },
                 ]}
               />
             </div>

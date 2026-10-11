@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { Calendar, Mail, XCircle, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { CalendlyLinkButton } from '@/components/integrations/calendly-link-button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { updateApplicationStatus, updateApplicationPipelineStage } from '@/lib/actions/applications'
@@ -31,6 +32,9 @@ interface RailActionsProps {
    * application. Held by the parent so the dialog can render at the page
    * level. */
   onReject: () => void
+  /** The org has connected Calendly and picked an event type — offers a
+   * self-booking link next to Schedule. */
+  calendlyEnabled?: boolean
 }
 
 /**
@@ -47,6 +51,7 @@ export function RailActions({
   nextStage,
   advanceUsesPipelineStage,
   onReject,
+  calendlyEnabled = false,
 }: RailActionsProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -119,7 +124,7 @@ export function RailActions({
 
       <div className="grid grid-cols-3 gap-1.5">
         <SecondaryRailButton href={`/interviews/new?candidate=${candidateId}&application=${applicationId}`}>
-          <Calendar className="h-3.5 w-3.5" aria-hidden />
+          <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {t('rail.schedule')}
         </SecondaryRailButton>
         <SecondaryRailButton
@@ -127,7 +132,7 @@ export function RailActions({
           disabled={!candidateEmail}
           title={candidateEmail ? undefined : t('rail.noEmailTitle')}
         >
-          <Mail className="h-3.5 w-3.5" aria-hidden />
+          <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {t('candWizard.personal.email')}
         </SecondaryRailButton>
         <button
@@ -138,10 +143,17 @@ export function RailActions({
             'flex items-center justify-center gap-1 rounded-[9px] border border-[oklch(0.88_0.04_27)] py-2 text-[12px] font-semibold text-[oklch(0.5_0.19_27)] transition-colors hover:bg-[oklch(0.97_0.03_27)]',
           )}
         >
-          <XCircle className="h-3.5 w-3.5" aria-hidden />
+          <XCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {t('rail.reject')}
         </button>
       </div>
+
+      {calendlyEnabled && (
+        <CalendlyLinkButton
+          applicationId={applicationId}
+          className="w-full gap-1 rounded-[9px] border-[oklch(0.88_0.01_250)] py-2 text-[12px] font-semibold"
+        />
+      )}
     </section>
   )
 }

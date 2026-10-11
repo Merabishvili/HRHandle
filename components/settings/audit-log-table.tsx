@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { format } from 'date-fns'
+import { dateFnsLocale } from '@/lib/i18n/date-locale'
 import { Badge } from '@/components/ui/badge'
 import type { AuditLogRow } from '@/lib/actions/audit-log'
-import { auditEntityLabel, auditMessage } from '@/lib/audit-log/message-i18n'
+import { auditActionLabel, auditEntityLabel, auditMessage } from '@/lib/audit-log/message-i18n'
 
 interface AuditLogTableProps {
   rows: AuditLogRow[]
@@ -62,11 +63,12 @@ export function AuditLogTable({ rows }: AuditLogTableProps) {
 
 function Row({ row }: { row: AuditLogRow }) {
   const t = useTranslations()
+  const dateLocale = dateFnsLocale(useLocale())
 
   return (
     <tr className="hover:bg-muted/30">
         <td className="whitespace-nowrap px-4 py-2.5 text-xs text-muted-foreground">
-          {format(new Date(row.created_at), 'dd.MM.yyyy HH:mm')}
+          {format(new Date(row.created_at), 'dd.MM.yyyy HH:mm', { locale: dateLocale })}
         </td>
         <td className="px-4 py-2.5">
           <div className="text-sm text-foreground">
@@ -76,8 +78,8 @@ function Row({ row }: { row: AuditLogRow }) {
           </div>
         </td>
         <td className="px-4 py-2.5">
-          <Badge variant="secondary" className="font-mono text-[11px]">
-            {row.action}
+          <Badge variant="secondary" className="whitespace-nowrap text-[11px]" title={row.action}>
+            {auditActionLabel(t, row.action)}
           </Badge>
         </td>
         <td className="px-4 py-2.5">

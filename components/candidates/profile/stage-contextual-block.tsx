@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
-import { format } from 'date-fns'
+import { useLocale, useTranslations } from 'next-intl'
 import {
   Video,
   Calendar,
@@ -31,6 +30,7 @@ import { statusLabel } from '@/lib/pipeline/status-i18n'
 import { StageTracker } from './stage-tracker'
 import { AssessmentSheet } from './assessment-sheet'
 import { RescheduleInterviewDialog } from '@/components/interviews/reschedule-interview-dialog'
+import { formatInterviewDate, formatInterviewTime } from '@/lib/interviews/format'
 
 /** Recommendation value → i18n label key (reused from the score modal). */
 const REC_LABEL_KEY: Record<string, string> = {
@@ -49,6 +49,9 @@ export interface StageContextualBlockProps {
   /** Offers on this application — when present, the Offer stage shows the sent
    * offer's summary + actions instead of a bare create form. */
   offers: OfferRow[]
+  /** Owner or admin. Only they can create or send offers (the server enforces
+   * it too); members see a short note instead of a form that would fail. */
+  canManageOffers?: boolean
   /** Ordered list of non-terminal stages — used by the tracker. */
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentStage: { code: ApplicationStatus['code']; name: string; id: string }
@@ -123,6 +126,7 @@ export function StageContextualBlock({
   upcomingInterview,
   screeningAnswers,
   evaluation,
+  canManageOffers = true,
 }: StageContextualBlockProps) {
   switch (currentStage.code) {
     case 'screening':
@@ -157,6 +161,7 @@ export function StageContextualBlock({
           stages={stages}
           currentCode={currentStage.code}
           currentId={currentStage.id}
+          canManage={canManageOffers}
         />
       )
     default:
@@ -331,6 +336,7 @@ function InterviewState({
   evaluation: StageContextualBlockProps['evaluation']
 }) {
   const t = useTranslations()
+  const locale = useLocale()
   const [scoreOpen, setScoreOpen] = useState(false)
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const hasScorecard = !!evaluation?.submitted
@@ -361,7 +367,8 @@ function InterviewState({
               {t('stageBlock.typeInterview', { type: t(typeLabelKey) })}
             </p>
             <p className="text-[11.5px] text-muted-foreground">
-              {format(new Date(upcomingInterview.scheduledAt), "MMM d · HH:mm")} ·{' '}
+              {formatInterviewDate(new Date(upcomingInterview.scheduledAt), locale)} ·{' '}
+              {formatInterviewTime(new Date(upcomingInterview.scheduledAt), locale)} ·{' '}
               {t('interviews.form.minutes', { count: upcomingInterview.durationMinutes })}
             </p>
           </div>
@@ -476,6 +483,7 @@ function OfferState({
   stages,
   currentCode,
   currentId,
+  canManage,
 }: {
   applicationId: string
   vacancyTitle: string
@@ -483,6 +491,7 @@ function OfferState({
   stages: { code: ApplicationStatus['code']; name: string; id: string }[]
   currentCode: ApplicationStatus['code']
   currentId: string
+  canManage: boolean
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -496,6 +505,7 @@ function OfferState({
   const [startDate, setStartDate] = useState(draftOffer?.start_date ?? '')
   const [expiryDate, setExpiryDate] = useState(draftOffer?.expiry_date ?? '')
   const [body, setBody] = useState(draftOffer?.body ?? '')
+  const [note, setNote] = useState(draftOffer?.recruiter_message ?? '')
   const [pending, startTransition] = useTransition()
 
   const submit = (send: boolean) => {
@@ -506,7 +516,7 @@ function OfferState({
     const input = {
       role_title: vacancyTitle.trim() || t('stageBlock.theRole'),
       body: body.trim(),
-      recruiter_message: draftOffer?.recruiter_message ?? null,
+      recruiter_message: note.trim() || null,
       compensation_amount: amount.trim() ? Number(amount) : null,
       compensation_currency: currency.trim() ? currency.trim().toUpperCase() : null,
       compensation_period: draftOffer?.compensation_period ?? null,
@@ -572,7 +582,7 @@ function OfferState({
           applicationId={applicationId}
           vacancyTitle={vacancyTitle}
           offers={offers}
-          canEdit
+          canEdit={canManage}
         />
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[oklch(0.92_0.01_250)] pt-3">
           <p className="text-[12px] text-muted-foreground">{t('stageBlock.hireSentHint')}</p>
@@ -604,6 +614,22 @@ function OfferState({
         currentCode={currentCode}
         currentId={currentId}
       />
+    )
+  }
+
+  // Members can't create or send offers (owners and admins only) — say so
+  // instead of showing a form that would fail on save.
+  if (!canManage) {
+    return (
+      <article className="space-y-3.5 rounded-xl border border-[oklch(0.91_0.01_250)] bg-white p-4 sm:p-[18px]">
+        <StageTracker stages={stages} currentCode={currentCode} currentId={currentId} compact />
+        <p className="rounded-[10px] border border-dashed border-[oklch(0.9_0.01_250)] bg-[oklch(0.985_0.002_247)] px-3.5 py-3 text-[12.5px] text-muted-foreground">
+          {t('stageBlock.offerAdminsOnly')}
+        </p>
+        {offers.length > 0 && (
+          <OfferPanel applicationId={applicationId} vacancyTitle={vacancyTitle} offers={offers} canEdit={false} />
+        )}
+      </article>
     )
   }
 
@@ -676,6 +702,21 @@ function OfferState({
           rows={5}
           maxLength={20000}
           placeholder={t('stageBlock.offerDetailsPlaceholder')}
+          disabled={pending}
+          className="text-[12.5px]"
+        />
+      </div>
+
+      {/* Shown on the candidate's offer page as "A note from the recruiter". */}
+      <div className="space-y-1">
+        <Label htmlFor="of-note" className="text-[12px]">{t('stageBlock.personalNote')}</Label>
+        <Textarea
+          id="of-note"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={2}
+          maxLength={2000}
+          placeholder={t('stageBlock.personalNotePlaceholder')}
           disabled={pending}
           className="text-[12.5px]"
         />

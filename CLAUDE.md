@@ -55,6 +55,10 @@ When adding inline `<script>` tags in server components, **always** stamp the no
 | Admin | `lib/supabase/admin.ts` | Privileged operations (bypasses RLS) — server-side only |
 | Middleware | `lib/supabase/middleware.ts` | Session refresh in middleware only |
 
+**Assessments are row-restricted.** Once `20261012_assessment_visibility_rls.sql` is applied, a member's user client only sees their own `candidate_evaluations` (+ answers) and colleagues' submitted ones after submitting their own for that application; owners/admins see all. Anything everyone must see as a number — the Fit average, the "N teammates have submitted" count — goes through `lib/scorecards/fit-scores.ts` (service role, org-scoped). A user-client aggregate would silently count only the rows the viewer may see.
+
+**Integration secrets are service-role only.** `organization_integrations.access_token` / `refresh_token` / `webhook_signing_key` (Calendly OAuth + webhook key) can't be selected with the browser/server client once `20261010_organization_integrations_fixes.sql` is applied (column grants) — before it, every org member could read them. Read them with the admin client (`lib/calendly/tokens.ts#ensureFreshToken`, which also refreshes the 2-hour Calendly token). Never export a token helper from a `'use server'` file — every export there is a callable server action.
+
 ### Environment variables — critical rules
 - `NEXT_PUBLIC_SITE_URL` — optional but must be a valid URL if set; **never set to empty string** — t3-oss/env-nextjs will throw at build time
 - `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` — local `.env.local` only, overrides `emailRedirectTo` in sign-up; **must NOT be added to Vercel**
@@ -102,7 +106,7 @@ See [`docs/1-product/roadmap.md`](docs/1-product/roadmap.md) — single index of
 
 ### Guide (`/guide`)
 - Trilingual like the legal pages: one MDX per topic and language in `content/guides/{en,ka,ru}/<slug>.mdx` (English is the source); titles/summaries/FAQ in `messages/source.json` (`guide.*`); topic list + renamed-topic redirects in `lib/guides/registry.ts`. **Any change goes into all three languages** with the same headings and the same `<Screenshot name>`s in the same order — `__tests__/guides.test.ts` enforces it. Bold UI names in the text must match the app's label in that language (copy them from `messages/source.json`).
-- Screenshots: `npm run guide:seed` (EN/KA/RU demo companies on staging) → `npm run guide:serve` → `npm run guide:screenshots -- --topic <slug> --preview <dir>`. One flow per topic in `scripts/screenshot-config.ts` captures all three languages at once; check the `--preview` side-by-side sheets. Details: `docs/5-environment/local.md`.
+- Screenshots: `npm run guide:seed` (EN/KA/RU demo companies on staging) → `npm run guide:serve` → `npm run guide:screenshots -- --topic <slug> --preview <dir>` (a full run under `caffeinate -i` — a sleeping Mac stalls it and expires the sessions). The demo orgs have LinkedIn and Calendly "connected"; `guide:serve` preloads a Calendly API stand-in that answers only the demo tokens (`scripts/guide-mocks/`). One flow per topic in `scripts/guide-flows/` (registered in `scripts/screenshot-config.ts`) captures all three languages at once; check the `--preview` side-by-side sheets. Details: `docs/5-environment/local.md`.
 
 ## Things that went wrong before — don't repeat
 

@@ -91,3 +91,11 @@ export function projectScorecard(input: ScorecardInput): ScorecardView {
 
   return { overallScore, items }
 }
+
+/** The 1–5 average across scored criteria, one decimal ("4.3") — what the
+ * assessment record and the shared page show. `null` with no scores. */
+export function averageOfScores(scores: ReadonlyArray<{ score: number }>): string | null {
+  if (scores.length === 0) return null
+  const sum = scores.reduce((a, s) => a + s.score, 0)
+  return (sum / scores.length).toFixed(1)
+}

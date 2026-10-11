@@ -16,6 +16,7 @@ import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
 import { shortSourceLabel } from '@/lib/pipeline/source-label'
 import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
+import { submittedAssessmentScores } from '@/lib/scorecards/fit-scores'
 
 /**
  * Top-level `/pipeline` route — Wave 2.1 Version B.
@@ -220,14 +221,12 @@ export default async function PipelinePage() {
       const m = new Map<string, number>()
       const ids = appRows.map((a) => a.id)
       if (ids.length === 0) return m
-      // Fit score = average of *submitted* reviewer cards per application.
-      const { data } = await supabase
-        .from('candidate_evaluations')
-        .select('application_id, score')
-        .eq('submitted', true)
-        .in('application_id', ids)
+      // Fit score = average of *submitted* reviewer cards per application —
+      // read org-scoped with the service role so members who haven't
+      // assessed yet still see the team's average (see lib/scorecards/fit-scores).
+      const data = await submittedAssessmentScores(orgId, ids)
       const agg = new Map<string, { total: number; count: number }>()
-      for (const row of (data ?? []) as { application_id: string; score: number | null }[]) {
+      for (const row of data) {
         if (typeof row.score === 'number') {
           const cur = agg.get(row.application_id) ?? { total: 0, count: 0 }
           cur.total += row.score

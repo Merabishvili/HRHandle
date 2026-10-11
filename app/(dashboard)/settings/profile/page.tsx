@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfileForm } from '@/components/settings/profile-form'
 import { AvatarUpload } from '@/components/settings/avatar-upload'
+import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
 
 /**
  * Personal → Profile sub-page.
@@ -58,7 +59,7 @@ export default async function ProfileSettingsPage() {
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">{t('settings.profile.memberSince')}</span>
             <span className="text-sm font-medium">
-              {new Date(profile.created_at).toLocaleDateString()}
+              {formatShortDate(profile.created_at, dateFnsLocale(await getLocale()))}
             </span>
           </div>
         </CardContent>
