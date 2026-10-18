@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-09
+updated: 2026-10-18
 ---
 
 When a candidate isn't moving forward, reject them with a reason. The reason stays with the application, and you decide each time whether the candidate gets an email. You can reject from the candidate's profile (**Reject** under **Actions**), by dragging their card to **Rejected** on the pipeline, or with R in Review mode.
@@ -17,7 +17,7 @@ When a candidate isn't moving forward, reject them with a reason. The reason sta
 3. **Email template** — the template linked to the reason is picked for you, with a preview of the subject and text. Placeholders such as `{{candidate_name}}` and `{{role}}` are replaced with the candidate's name and the vacancy when the email is sent.
 4. **Confirm Rejection** — rejects the candidate (and sends the email, if it's on).
 
-The candidate leaves the active stages and appears among the closed outcomes on the pipeline, with the reason. If they have no other open applications, their status changes to **Inactive**.
+The candidate leaves the active stages and appears among the closed outcomes on the pipeline, with the reason. If they have no other open applications, their status changes to **Inactive**. A sent offer is withdrawn, so it can no longer be accepted, and their upcoming interviews are cancelled. The rejection shows in their activity and in the audit log.
 
 ## Reject several candidates at once
 
@@ -29,7 +29,25 @@ On the [pipeline](/guide/pipeline), tick the candidates' cards and click **Rejec
   caption="One reason and one email template for everyone you selected."
 />
 
-The same reason applies to everyone. With **Send rejection email to each candidate** on, each of them gets their own personalised email.
+The same reason applies to everyone. **Send rejection email to each candidate** is off by default, as for a single rejection. Turn it on and each of them gets their own personalised email.
+
+## Reject everyone left when a vacancy closes
+
+When a vacancy is filled or cancelled, close it out in one go. Owners and admins choose **Reject remaining candidates** in the vacancy's **⋯** menu. HRHandle also offers it when you close a vacancy that still has candidates in progress, and a closed vacancy keeps a reminder under **Needs your attention** until they're dealt with.
+
+<Screenshot
+  name="reject-remaining"
+  alt="The Reject remaining candidates window with the candidate list, the candidates not included, the reason, the email switch and the reject button highlighted"
+  caption="Everyone still in progress, in one go."
+/>
+
+1. **Candidates** — everyone still at the Applied, screening or interview stages, ticked. Untick anyone you want to keep.
+2. **Not included** — candidates at the Offer stage are listed but never rejected here: decide on each of them yourself. Hired, rejected and withdrawn candidates are never changed.
+3. **Rejection reason** — one reason for everyone.
+4. **Send rejection email to each candidate** — off by default. Turn it on to send everyone their own email with the template linked to the reason. The window tells you if someone has no email address.
+5. **Reject** — rejects the ticked candidates.
+
+Each of them moves to **Rejected** with the reason, as with a single rejection, and a summary shows how many were rejected and how many emails were sent.
 
 ## Rejection reasons
 

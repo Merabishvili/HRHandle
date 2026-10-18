@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
+import { Suspense } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { dateFnsLocale, formatShortDate } from '@/lib/i18n/date-locale'
@@ -18,6 +19,7 @@ import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { LOCALE_LABELS } from '@/lib/i18n/locales'
 import { AiAssessmentSuggester } from '@/components/vacancies/ai-assessment-suggester'
 import { PrevNextNav } from '@/components/ui/prev-next-nav'
+import { RejectRemainingLauncher } from '@/components/vacancies/reject-remaining-launcher'
 
 import { VacancyHeader } from '@/components/vacancies/detail/vacancy-header'
 import {
@@ -413,6 +415,15 @@ export default async function VacancyDetailPage({
     (a) => bucketOf(a) === 'applied' && !a.last_status_changed_at,
   ).length
 
+  // A closed (or archived / expired) vacancy that still has candidates in
+  // progress: owners/admins are reminded to reject the rest.
+  const canRejectRemaining = profile.role === 'owner' || profile.role === 'admin'
+  const vacancyClosed = vacancyStatus?.code === 'closed' || vacancyStatus?.code === 'archived' || !!vacancy.archived_at
+  const remainingInProgress = allApplications.filter((a) => {
+    const b = bucketOf(a) ?? 'applied'
+    return b === 'applied' || b === 'screening' || b === 'interview'
+  }).length
+
   const t = await getTranslations()
   const locale = await getLocale()
   // LinkedIn's pasted description uses the vacancy's language for its headings.
@@ -423,6 +434,7 @@ export default async function VacancyDetailPage({
     offersToSend,
     upcomingInterviewsTomorrow,
     newApplicantCount,
+    closedWithRemaining: canRejectRemaining && vacancyClosed ? remainingInProgress : 0,
   }, t, locale)
 
   // Time-open + health
@@ -468,6 +480,11 @@ export default async function VacancyDetailPage({
         prevLabel={t('nav.prevVacancy')}
         nextLabel={t('nav.nextVacancy')}
       />
+      {canRejectRemaining && (
+        <Suspense fallback={null}>
+          <RejectRemainingLauncher vacancyId={vacancy.id} />
+        </Suspense>
+      )}
       <article className="overflow-hidden rounded-xl border border-[oklch(0.88_0.01_250)] bg-white shadow-[0_1px_3px_0_oklch(0_0_0_/_0.08)]">
         <VacancyHeader
           vacancyId={vacancy.id}
@@ -481,6 +498,7 @@ export default async function VacancyDetailPage({
             endDate: formatEndDate(vacancy.end_date, locale),
           }}
           applicationFormToken={vacancy.application_form_token}
+          canRejectRemaining={canRejectRemaining}
         />
 
         <Tabs key={defaultTab} defaultValue={defaultTab} className="border-t border-[oklch(0.93_0.01_250)]">

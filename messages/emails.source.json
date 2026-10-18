@@ -1,21 +1,63 @@
 {
   "_comment": "Candidate-facing email templates (lib/email-template-utils.ts DEFAULT_TEMPLATES). These localize to the ORG CONTENT language, not the recruiter's UI language, and use {{role}}/{{company}} Handlebars vars substituted by applyVariables — NOT next-intl. Kept out of messages/source.json so the ICU generator never touches the double braces. Reviewable en/ru/ka, same format.",
-
-  "email.applicationReceived.subject": { "en": "You applied for {{role}} at {{company}}", "ru": "Вы откликнулись на {{role}} в {{company}}", "ka": "თქვენ განაცხადი გააგზავნეთ პოზიციაზე {{role}} ({{company}})" },
-  "email.applicationReceived.body": { "en": "We have received your details and will review them shortly. We will be in touch if your profile matches our requirements. We appreciate your interest and the time you took to apply.", "ru": "Мы получили ваши данные и вскоре их рассмотрим. Мы свяжемся с вами, если ваш профиль соответствует нашим требованиям. Благодарим за интерес и время, уделённое отклику.", "ka": "მივიღეთ თქვენი მონაცემები და მალე განვიხილავთ. დაგიკავშირდებით, თუ თქვენი პროფილი ჩვენს მოთხოვნებს დაემთხვევა. გმადლობთ ინტერესისა და განაცხადზე დახარჯული დროისთვის." },
-
-  "email.interviewInvitation.subject": { "en": "Interview Invitation — {{role}} at {{company}}", "ru": "Приглашение на собеседование — {{role}} в {{company}}", "ka": "გასაუბრების მოწვევა — {{role}} ({{company}})" },
-  "email.interviewInvitation.body": { "en": "You have been invited to an interview for the {{role}} position at {{company}}. Please find the details below. If you have any questions, please reply to this email or contact {{interviewer_name}} at {{interviewer_email}}.", "ru": "Вас пригласили на собеседование на позицию {{role}} в {{company}}. Детали приведены ниже. Если у вас есть вопросы, ответьте на это письмо или свяжитесь с {{interviewer_name}}: {{interviewer_email}}.", "ka": "თქვენ მოწვეული ხართ გასაუბრებაზე პოზიციაზე {{role}} კომპანიაში {{company}}. დეტალები იხილეთ ქვემოთ. თუ გაქვთ შეკითხვები, უპასუხეთ ამ წერილს ან დაუკავშირდით {{interviewer_name}}-ს: {{interviewer_email}}." },
-
-  "email.rejection.subject": { "en": "An update from {{company}} — {{role}}", "ru": "Обновление от {{company}} — {{role}}", "ka": "განახლება {{company}}-სგან — {{role}}" },
-  "email.rejection.body": { "en": "After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background. If you have any questions, you are welcome to contact {{sender_name}} at {{sender_email}}.", "ru": "После внимательного рассмотрения мы решили продолжить с другими кандидатами, чей опыт ближе к нашим текущим потребностям. Будем рады вашему отклику на будущие вакансии, соответствующие вашему опыту. Если у вас есть вопросы, вы можете связаться с {{sender_name}}: {{sender_email}}.", "ka": "გმადლობთ დროისა და ინტერესისთვის. საფუძვლიანი განხილვის შემდეგ, სამწუხაროდ, ამ ეტაპზე გადავწყვიტეთ სხვა კანდიდატებთან გაგრძელება, რომელთა გამოცდილება უფრო ახლოსაა ჩვენს მიმდინარე საჭიროებებთან. მოხარული ვიქნებით, მომავალში კვლავ განიხილოთ ჩვენთან თანამშრომლობა თქვენს გამოცდილებასთან შესაბამის ვაკანსიებზე. წარმატებას გისურვებთ. თუ გაქვთ შეკითხვები, შეგიძლიათ დაუკავშირდეთ {{sender_name}}-ს: {{sender_email}}." },
-
-  "email.statusChangeScreening.subject": { "en": "Your application is under review — {{role}} at {{company}}", "ru": "Ваш отклик на рассмотрении — {{role}} в {{company}}", "ka": "თქვენი განაცხადი განხილვაშია — {{role}} ({{company}})" },
-  "email.statusChangeScreening.body": { "en": "Thanks again for applying for the {{role}} role at {{company}}. A recruiter has started reviewing your application. We will be in touch as soon as we have an update.", "ru": "Ещё раз спасибо за отклик на позицию {{role}} в {{company}}. Рекрутер начал рассматривать ваш отклик. Мы свяжемся с вами, как только появится обновление.", "ka": "კიდევ ერთხელ გმადლობთ პოზიციაზე {{role}} ({{company}}) განაცხადისთვის. რეკრუტერმა დაიწყო თქვენი განაცხადის განხილვა. დაგიკავშირდებით, როგორც კი განახლება გვექნება." },
-
-  "email.statusChangeInterview.subject": { "en": "Your application is moving to the interview stage — {{role}}", "ru": "Ваш отклик переходит на этап собеседования — {{role}}", "ka": "თქვენი განაცხადი გადადის გასაუბრების ეტაპზე — {{role}}" },
-  "email.statusChangeInterview.body": { "en": "Good news — your application for the {{role}} role at {{company}} is now in the interview stage. The recruiter will contact you directly with the interview details.", "ru": "Хорошие новости — ваш отклик на позицию {{role}} в {{company}} теперь на этапе собеседования. Рекрутер свяжется с вами напрямую с деталями собеседования.", "ka": "კარგი ამბავია — თქვენი განაცხადი პოზიციაზე {{role}} ({{company}}) ახლა გასაუბრების ეტაპზეა. რეკრუტერი პირდაპირ დაგიკავშირდებათ გასაუბრების დეტალებით." },
-
-  "email.offerSent.subject": { "en": "Your offer from {{company}} — {{role}}", "ru": "Ваш оффер от {{company}} — {{role}}", "ka": "თქვენი შეთავაზება {{company}}-სგან — {{role}}" },
-  "email.offerSent.body": { "en": "{{company}} is pleased to extend you an offer for the {{role}} role. The full details are available at the link below. You can accept or decline directly from that page.", "ru": "{{company}} рада предложить вам позицию {{role}}. Полные детали доступны по ссылке ниже. Вы можете принять или отклонить предложение прямо на этой странице.", "ka": "{{company}} სიამოვნებით გთავაზობთ პოზიციას {{role}}. სრული დეტალები ხელმისაწვდომია ქვემოთ მოცემულ ბმულზე. შეთავაზების მიღება ან უარყოფა შეგიძლიათ პირდაპირ ამ გვერდიდან." }
+  "email.applicationReceived.subject": {
+    "en": "You applied for {{role}} at {{company}}",
+    "ru": "Вы откликнулись на {{role}} в {{company}}",
+    "ka": "თქვენ განაცხადი გააგზავნეთ პოზიციაზე {{role}} ({{company}})"
+  },
+  "email.applicationReceived.body": {
+    "en": "We have received your details and will review them shortly. We will be in touch if your profile matches our requirements. We appreciate your interest and the time you took to apply.",
+    "ru": "Мы получили ваши данные и вскоре их рассмотрим. Мы свяжемся с вами, если ваш профиль соответствует нашим требованиям. Благодарим за интерес и время, уделённое отклику.",
+    "ka": "მივიღეთ თქვენი მონაცემები და მალე განვიხილავთ. დაგიკავშირდებით, თუ თქვენი პროფილი ჩვენს მოთხოვნებს დაემთხვევა. გმადლობთ ინტერესისა და განაცხადზე დახარჯული დროისთვის."
+  },
+  "email.interviewInvitation.subject": {
+    "en": "Interview Invitation — {{role}} at {{company}}",
+    "ru": "Приглашение на собеседование — {{role}} в {{company}}",
+    "ka": "გასაუბრების მოწვევა — {{role}} ({{company}})"
+  },
+  "email.interviewInvitation.body": {
+    "en": "You have been invited to an interview for the {{role}} position at {{company}}. Please find the details below. If you have any questions, please reply to this email or contact {{interviewer_name}} at {{interviewer_email}}.",
+    "ru": "Вас пригласили на собеседование на позицию {{role}} в {{company}}. Детали приведены ниже. Если у вас есть вопросы, ответьте на это письмо или свяжитесь с {{interviewer_name}}: {{interviewer_email}}.",
+    "ka": "თქვენ მოწვეული ხართ გასაუბრებაზე პოზიციაზე {{role}} კომპანიაში {{company}}. დეტალები იხილეთ ქვემოთ. თუ გაქვთ შეკითხვები, უპასუხეთ ამ წერილს ან დაუკავშირდით {{interviewer_name}}-ს: {{interviewer_email}}."
+  },
+  "email.rejection.subject": {
+    "en": "An update from {{company}} — {{role}}",
+    "ru": "Обновление от {{company}} — {{role}}",
+    "ka": "განახლება {{company}}-სგან — {{role}}"
+  },
+  "email.rejection.body": {
+    "en": "Thank you for your interest in the {{role}} role at {{company}} and for the time you put into your application. Unfortunately, we won't be moving forward with your application for this role. We'd be glad to hear from you again about future openings that match your experience. We wish you every success. If you have any questions, you are welcome to contact {{sender_name}} at {{sender_email}}.",
+    "ru": "Спасибо за интерес к вакансии «{{role}}» в компании {{company}} и за время, уделённое отклику. К сожалению, мы не можем продолжить рассмотрение вашей кандидатуры на эту позицию. Будем рады вашим откликам на будущие вакансии, соответствующие вашему опыту. Желаем вам успехов! Если у вас есть вопросы, вы можете связаться с {{sender_name}}: {{sender_email}}.",
+    "ka": "გმადლობთ, რომ დაინტერესდით პოზიციით „{{role}}“ კომპანიაში {{company}} და დრო დაუთმეთ განაცხადს. სამწუხაროდ, ამ პოზიციაზე თქვენს კანდიდატურას ვეღარ განვიხილავთ. მოხარული ვიქნებით, თუ მომავალში კვლავ გამოგვიგზავნით განაცხადს თქვენს გამოცდილებასთან შესაბამის ვაკანსიებზე. წარმატებას გისურვებთ. თუ გაქვთ შეკითხვები, შეგიძლიათ დაუკავშირდეთ {{sender_name}}-ს: {{sender_email}}."
+  },
+  "email.statusChangeScreening.subject": {
+    "en": "Your application is under review — {{role}} at {{company}}",
+    "ru": "Ваш отклик на рассмотрении — {{role}} в {{company}}",
+    "ka": "თქვენი განაცხადი განხილვაშია — {{role}} ({{company}})"
+  },
+  "email.statusChangeScreening.body": {
+    "en": "Thanks again for applying for the {{role}} role at {{company}}. A recruiter has started reviewing your application. We will be in touch as soon as we have an update.",
+    "ru": "Ещё раз спасибо за отклик на позицию {{role}} в {{company}}. Рекрутер начал рассматривать ваш отклик. Мы свяжемся с вами, как только появится обновление.",
+    "ka": "კიდევ ერთხელ გმადლობთ პოზიციაზე {{role}} ({{company}}) განაცხადისთვის. რეკრუტერმა დაიწყო თქვენი განაცხადის განხილვა. დაგიკავშირდებით, როგორც კი განახლება გვექნება."
+  },
+  "email.statusChangeInterview.subject": {
+    "en": "Your application is moving to the interview stage — {{role}}",
+    "ru": "Ваш отклик переходит на этап собеседования — {{role}}",
+    "ka": "თქვენი განაცხადი გადადის გასაუბრების ეტაპზე — {{role}}"
+  },
+  "email.statusChangeInterview.body": {
+    "en": "Good news — your application for the {{role}} role at {{company}} is now in the interview stage. The recruiter will contact you directly with the interview details.",
+    "ru": "Хорошие новости — ваш отклик на позицию {{role}} в {{company}} теперь на этапе собеседования. Рекрутер свяжется с вами напрямую с деталями собеседования.",
+    "ka": "კარგი ამბავია — თქვენი განაცხადი პოზიციაზე {{role}} ({{company}}) ახლა გასაუბრების ეტაპზეა. რეკრუტერი პირდაპირ დაგიკავშირდებათ გასაუბრების დეტალებით."
+  },
+  "email.offerSent.subject": {
+    "en": "Your offer from {{company}} — {{role}}",
+    "ru": "Ваш оффер от {{company}} — {{role}}",
+    "ka": "თქვენი შეთავაზება {{company}}-სგან — {{role}}"
+  },
+  "email.offerSent.body": {
+    "en": "{{company}} is pleased to extend you an offer for the {{role}} role. The full details are available at the link below. You can accept or decline directly from that page.",
+    "ru": "{{company}} рада предложить вам позицию {{role}}. Полные детали доступны по ссылке ниже. Вы можете принять или отклонить предложение прямо на этой странице.",
+    "ka": "{{company}} სიამოვნებით გთავაზობთ პოზიციას {{role}}. სრული დეტალები ხელმისაწვდომია ქვემოთ მოცემულ ბმულზე. შეთავაზების მიღება ან უარყოფა შეგიძლიათ პირდაპირ ამ გვერდიდან."
+  }
 }

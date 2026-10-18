@@ -46,7 +46,7 @@ export const DEFAULT_TEMPLATES: Record<TemplateType, EmailTemplate> = {
   rejection: {
     template_type: 'rejection',
     subject: 'An update from {{company}} — {{role}}',
-    body: 'After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background. If you have any questions, you are welcome to contact {{sender_name}} at {{sender_email}}.',
+    body: 'Thank you for your interest in the {{role}} role at {{company}} and for the time you put into your application. Unfortunately, we won\'t be moving forward with your application for this role. We\'d be glad to hear from you again about future openings that match your experience. We wish you every success. If you have any questions, you are welcome to contact {{sender_name}} at {{sender_email}}.',
   },
   status_change_screening: {
     template_type: 'status_change_screening',
@@ -63,6 +63,22 @@ export const DEFAULT_TEMPLATES: Record<TemplateType, EmailTemplate> = {
     subject: 'Your offer from {{company}} — {{role}}',
     body: '{{company}} is pleased to extend you an offer for the {{role}} role. The full details are available at the link below. You can accept or decline directly from that page.',
   },
+}
+
+/**
+ * Earlier built-in defaults, per type. A stored template that still matches one
+ * of them was never customized, so it's treated as the default and swapped for
+ * the current localized text when sent. Organizations' seeded "General"
+ * rejection templates hold the 2026 wording below until someone edits them.
+ */
+const PREVIOUS_DEFAULTS: Partial<Record<TemplateType, { subject: string; body: string }[]>> = {
+  // Until 2026-10-18 — replaced because it claimed "careful consideration" and
+  // that someone else was chosen, which isn't true when a vacancy simply closes.
+  rejection: [
+    { subject: "An update from {{company}} — {{role}}", body: "After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background. If you have any questions, you are welcome to contact {{sender_name}} at {{sender_email}}." },
+    { subject: "განახლება {{company}}-სგან — {{role}}", body: "გმადლობთ დროისა და ინტერესისთვის. საფუძვლიანი განხილვის შემდეგ, სამწუხაროდ, ამ ეტაპზე გადავწყვიტეთ სხვა კანდიდატებთან გაგრძელება, რომელთა გამოცდილება უფრო ახლოსაა ჩვენს მიმდინარე საჭიროებებთან. მოხარული ვიქნებით, მომავალში კვლავ განიხილოთ ჩვენთან თანამშრომლობა თქვენს გამოცდილებასთან შესაბამის ვაკანსიებზე. წარმატებას გისურვებთ. თუ გაქვთ შეკითხვები, შეგიძლიათ დაუკავშირდეთ {{sender_name}}-ს: {{sender_email}}." },
+    { subject: "Обновление от {{company}} — {{role}}", body: "После внимательного рассмотрения мы решили продолжить с другими кандидатами, чей опыт ближе к нашим текущим потребностям. Будем рады вашему отклику на будущие вакансии, соответствующие вашему опыту. Если у вас есть вопросы, вы можете связаться с {{sender_name}}: {{sender_email}}." },
+  ],
 }
 
 // Localized default subject/body live in the reviewable `messages/emails.source.json`
@@ -124,6 +140,7 @@ export function isDefaultTemplateContentAnyLocale(
   const s = subject.trim()
   const b = body.trim()
   if (isDefaultTemplateContent(type, subject, body)) return true
+  if (PREVIOUS_DEFAULTS[type]?.some((d) => s === d.subject.trim() && b === d.body.trim())) return true
   return LOCALES.some((locale) => {
     const d = defaultTemplate(type, locale)
     return s === d.subject.trim() && b === d.body.trim()

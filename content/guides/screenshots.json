@@ -280,6 +280,10 @@
       496,
       564
     ],
+    "reject-remaining": [
+      576,
+      681
+    ],
     "rejection-reasons": [
       1440,
       945
@@ -361,8 +365,8 @@
       900
     ],
     "vacancy-actions-menu": [
-      264,
-      164
+      296,
+      196
     ],
     "vacancy-jd": [
       1440,
@@ -662,6 +666,10 @@
       496,
       596
     ],
+    "reject-remaining": [
+      576,
+      697
+    ],
     "rejection-reasons": [
       1440,
       945
@@ -743,8 +751,8 @@
       900
     ],
     "vacancy-actions-menu": [
-      264,
-      164
+      296,
+      216
     ],
     "vacancy-jd": [
       1440,
@@ -1044,6 +1052,10 @@
       496,
       564
     ],
+    "reject-remaining": [
+      576,
+      697
+    ],
     "rejection-reasons": [
       1440,
       965
@@ -1125,8 +1137,8 @@
       900
     ],
     "vacancy-actions-menu": [
-      264,
-      164
+      296,
+      216
     ],
     "vacancy-jd": [
       1440,

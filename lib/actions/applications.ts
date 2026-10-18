@@ -16,7 +16,11 @@ export type { BulkMoveResult } from './applications/status-actions'
 export {
   rejectApplication,
   rejectApplicationsBatch,
+  getRemainingRejection,
+  countRemainingCandidates,
+  rejectRemainingCandidates,
 } from './applications/rejection-actions'
+export type { RemainingRejectionData, RemainingRejectionResult } from './applications/rejection-actions'
 
 export {
   createApplication,

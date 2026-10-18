@@ -26,6 +26,28 @@ describe('isDefaultTemplateContentAnyLocale', () => {
   it('is false once the recruiter customizes the content', () => {
     expect(isDefaultTemplateContentAnyLocale('rejection', 'Custom subject', 'Custom body')).toBe(false)
   })
+
+  it("still recognizes the previous General rejection text that organizations' seeded templates hold", () => {
+    const subject = 'An update from {{company}} — {{role}}'
+    const body =
+      'After careful consideration, we have decided to move forward with other candidates whose experience more closely matches our current needs. We encourage you to apply for future opportunities that match your background. If you have any questions, you are welcome to contact {{sender_name}} at {{sender_email}}.'
+    expect(isDefaultTemplateContentAnyLocale('rejection', subject, body)).toBe(true)
+    // …and it's swapped for today's text when sent — the old wording is gone.
+    expect(defaultTemplate('rejection', 'en').body).not.toContain('careful consideration')
+  })
+})
+
+describe('the General rejection email', () => {
+  it('fits a closed vacancy too: thanks the candidate, names the role, no claim about other candidates', () => {
+    for (const locale of ['en', 'ka', 'ru'] as const) {
+      const body = defaultTemplate('rejection', locale).body
+      expect(body).toContain('{{role}}')
+      expect(body).toContain('{{company}}')
+      expect(body).toContain('{{sender_name}}')
+      expect(body).toContain('{{sender_email}}')
+    }
+    expect(defaultTemplate('rejection', 'en').body).not.toMatch(/other candidates/i)
+  })
 })
 
 // ─── escapeHtml ───────────────────────────────────────────────────────────────

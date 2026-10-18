@@ -3,7 +3,9 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import { updateVacancyStatus, deleteVacancy, duplicateVacancy } from '@/lib/actions/vacancies'
+import { countRemainingCandidates } from '@/lib/actions/applications'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { Loader2 } from 'lucide-react'
 
@@ -29,8 +31,23 @@ export function VacancyActions({
   const [isDuplicating, setIsDuplicating] = useState(false)
 
   const handleStatusChange = async (statusId: string) => {
-    await updateVacancyStatus(vacancyId, statusId)
+    const result = await updateVacancyStatus(vacancyId, statusId)
     router.refresh()
+    // Closing leaves candidates waiting — offer to reject the rest (owners/
+    // admins; the count is 0 for everyone else).
+    const code = statusOptions.find((s) => s.id === statusId)?.code
+    if (result.success && (code === 'closed' || code === 'archived')) {
+      const remaining = await countRemainingCandidates(vacancyId)
+      if (remaining > 0) {
+        toast(t('rejectRemaining.closedToast', { count: remaining }), {
+          duration: 10000,
+          action: {
+            label: t('vacOverview.rejectRemaining'),
+            onClick: () => router.push(`/vacancies/${vacancyId}?rejectRemaining=closed`),
+          },
+        })
+      }
+    }
   }
 
   const handleDuplicate = async () => {

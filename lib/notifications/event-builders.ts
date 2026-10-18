@@ -40,6 +40,20 @@ export function applicationRejectedCtx(input: ApplicationContext): WebhookEventC
   }
 }
 
+/** One message for a batch rejection (e.g. closing a vacancy) instead of one per candidate. */
+export function applicationsRejectedCtx(input: {
+  count: number
+  vacancyTitle: string | null
+  vacancyId: string | null
+}): WebhookEventContext {
+  const who = input.count === 1 ? '1 candidate was' : `${input.count} candidates were`
+  return {
+    title: input.count === 1 ? '1 candidate rejected' : `${input.count} candidates rejected`,
+    body: `${who} rejected${input.vacancyTitle ? ` for ${input.vacancyTitle}` : ''}.`,
+    url: appUrl(input.vacancyId ? `/vacancies/${input.vacancyId}` : '/pipeline'),
+  }
+}
+
 export function applicationWithdrawnCtx(input: ApplicationContext): WebhookEventContext {
   return {
     title: 'Candidate withdrew',

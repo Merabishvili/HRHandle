@@ -56,3 +56,34 @@ export async function writeAuditLog(entry: AuditLogEntry): Promise<void> {
     })
   }
 }
+
+/**
+ * Several audit rows in one insert (a batch rejection writes one per
+ * application). Same best-effort contract as {@link writeAuditLog}.
+ */
+export async function writeAuditLogs(entries: AuditLogEntry[]): Promise<void> {
+  if (entries.length === 0) return
+  try {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('activity_log').insert(
+      entries.map((entry) => ({
+        organization_id: entry.orgId,
+        user_id: entry.userId,
+        entity_type: entry.entityType,
+        entity_id: entry.entityId,
+        action: entry.action,
+        message: entry.message ?? null,
+        details: entry.details ?? null,
+      })),
+    )
+    if (error) {
+      console.error('[audit-log] batch insert failed:', error.message, { rows: entries.length })
+      Sentry.captureException(new Error(`audit-log batch insert failed: ${error.message}`), {
+        tags: { feature: 'audit_log', action: entries[0]!.action },
+      })
+    }
+  } catch (err) {
+    console.error('[audit-log] unexpected error:', err)
+    Sentry.captureException(err, { tags: { feature: 'audit_log', action: entries[0]!.action } })
+  }
+}

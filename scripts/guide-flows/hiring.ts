@@ -5,7 +5,7 @@
  */
 import type { Locator } from 'playwright'
 import type { Flow, ShotContext } from '../screenshot-config'
-import { candidateId, candidateName, escapeRegExp, isoInDays, pickDate, pickSearchable, settle, userName, vacancyTitle } from './helpers'
+import { candidateId, candidateName, escapeRegExp, isoInDays, pickDate, pickSearchable, settle, userName, vacancyId, vacancyTitle } from './helpers'
 
 const startsWith = (s: string) => new RegExp(`^${escapeRegExp(s)}`)
 
@@ -236,9 +236,35 @@ const reject: Flow = {
     await page.getByRole('region', { name: t('pipeline.bulk.regionAria') }).getByRole('button', { name: t('pipeline.bulk.reject') }).click()
     const batch = page.getByRole('dialog')
     await batch.getByRole('button', { name: t('batchReject.confirm', { count: 2 }) }).waitFor()
+    // The email is off by default — switch it on so the template choice shows.
+    await batch.locator('#batch-send-email').click()
     await settle(page, 300)
     await ctx.shot('reject-batch', { clip: batch, clipPad: 24 })
     await batch.getByRole('button', { name: t('common.cancel') }).click()
+
+    // Everyone left on a vacancy (opened via the ⋯ menu's address). Looked at,
+    // never confirmed — Escape closes it without rejecting anyone.
+    await ctx.goto(`/vacancies/${await vacancyId(ctx, 'engineer')}?rejectRemaining=1`)
+    const remaining = page.getByRole('dialog')
+    const remainingList = remaining.getByText(t('rejectRemaining.candidates'), { exact: true })
+    await remainingList.waitFor()
+    // The window focuses a button when it opens; drop that for the picture.
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+    await settle(page, 300)
+    const confirmRemaining = new RegExp(`^${escapeRegExp(t('batchReject.confirm', { count: 7777 })).replace('7777', '\\d+')}$`)
+    await ctx.shot('reject-remaining', {
+      clip: remaining,
+      clipPad: 32,
+      marks: [
+        { target: remainingList.locator('xpath=ancestor::div[contains(@class,"space-y-2")][1]'), n: 1, badge: 'left' },
+        { target: remaining.getByText(t('rejectRemaining.notIncluded'), { exact: true }).locator('xpath=..'), n: 2, badge: 'left' },
+        { target: remaining.getByText(t('rejectDialog.reason'), { exact: true }).locator('xpath=..'), n: 3, badge: 'left' },
+        { target: remaining.locator('#rr-send-email').locator('xpath=..'), n: 4, badge: 'left' },
+        { target: remaining.getByRole('button', { name: confirmRemaining }), n: 5, badge: 'right' },
+      ],
+    })
+    await page.keyboard.press('Escape')
+    await remaining.waitFor({ state: 'detached' })
 
     // Settings → Rejection reasons.
     await ctx.goto('/settings/rejection-reasons')
