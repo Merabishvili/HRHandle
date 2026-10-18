@@ -1721,6 +1721,15 @@
     "title": "Contact support",
     "subtitle": "Send us a message and we'll reply to your account email.",
     "publicSubtitle": "Have a question or an issue? Send us a message and we'll get back to you by email.",
+    "help": {
+      "title": "How we help",
+      "hours": "Support hours: Monday to Friday, 10:00–18:00 Georgia time (UTC+4).",
+      "response": "First response: within two business days.",
+      "email": "Email: <email>support@hrhandle.com</email>",
+      "form": "Open a support case: use the form below.",
+      "guide": "Knowledge base: <link>the HRHandle guide</link>",
+      "zoom": "Zoom app: <link>add, use and remove the app</link>"
+    },
     "backHome": "Back to HRHandle",
     "emailLabel": "Your email",
     "emailPlaceholder": "you@example.com",
@@ -2735,6 +2744,10 @@
       "integrations": {
         "title": "Integrations",
         "summary": "Connect Google, Microsoft, Zoom, Calendly, LinkedIn, Slack and Teams."
+      },
+      "zoom": {
+        "title": "Zoom app",
+        "summary": "Add, use and remove the HRHandle app for Zoom, and what it can access."
       },
       "customFields": {
         "title": "Custom fields",
