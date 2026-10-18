@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { VacancyActions } from '@/components/vacancies/vacancy-actions'
+import { CloseVacancyProvider } from '@/components/vacancies/close-vacancy-provider'
 import { VacanciesToolbar } from '@/components/vacancies/vacancies-toolbar'
 import { FilterPillTabs } from '@/components/shared/filter-pill-tabs'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
@@ -298,6 +299,7 @@ export default async function VacanciesPage({
   if (statusFilter) paginationPreserved.status = statusFilter
 
   return (
+    <CloseVacancyProvider>
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -603,5 +605,6 @@ export default async function VacanciesPage({
           )}
       </div>
     </div>
+    </CloseVacancyProvider>
   )
 }

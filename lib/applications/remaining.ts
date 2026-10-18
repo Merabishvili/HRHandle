@@ -6,7 +6,8 @@ export interface RemainingApplicationRow {
   candidateId: string
   candidateName: string
   email: string | null
-  /** The application's pipeline stage (null for a legacy row without one). */
+  /** The application's pipeline stage id (null for a legacy row without one). */
+  stageId: string | null
   stage: (PipelineStageRowForBucket & { sort_order?: number | null }) | null
 }
 
@@ -14,57 +15,85 @@ export interface RemainingCandidate {
   applicationId: string
   candidateId: string
   candidateName: string
-  stageName: string
-  bucket: LegacyStatusCode
   hasEmail: boolean
 }
 
-export interface RemainingSplit {
-  /** Still in progress — Applied, review (screening) and interview stages. */
-  toReject: RemainingCandidate[]
-  /** At an Offer stage — never rejected in bulk; the recruiter decides each one. */
-  atOffer: RemainingCandidate[]
+export interface RemainingStage {
+  /** The pipeline stage id — `none` for legacy applications without a stage. */
+  key: string
+  /** The stored stage name (localize the seeded ones with `pipelineStageLabel`). */
+  name: string
+  bucket: LegacyStatusCode
+  /** Offer stages start unticked — someone there may be about to accept. */
+  isOffer: boolean
+  candidates: RemainingCandidate[]
 }
 
-/** Stages "Reject remaining candidates" covers. Hired, rejected and withdrawn
- * applications are final and left out; Offer is handled one by one. */
-export const BULK_REJECTABLE_BUCKETS: readonly LegacyStatusCode[] = ['applied', 'screening', 'interview']
+/** Buckets still "in progress". Hired, rejected and withdrawn are final. */
+const IN_PROGRESS: readonly LegacyStatusCode[] = ['applied', 'screening', 'interview', 'offer']
+
+export const NO_STAGE_KEY = 'none'
 
 /**
- * Splits one vacancy's applications for "Reject remaining candidates": who is
- * still in progress (rejected together) and who sits at the Offer stage
- * (listed, not touched). Ordered as on the board — by stage, then by name.
+ * One vacancy's candidates who are still in progress, grouped by their
+ * pipeline stage in board order (custom stages included) — the rows of the
+ * "Reject remaining candidates" window. Final stages are left out.
  */
-export function splitRemaining(rows: RemainingApplicationRow[]): RemainingSplit {
-  const toReject: (RemainingCandidate & { order: number })[] = []
-  const atOffer: (RemainingCandidate & { order: number })[] = []
+export function groupRemainingByStage(rows: RemainingApplicationRow[]): RemainingStage[] {
+  const stages = new Map<string, RemainingStage & { order: number }>()
   for (const row of rows) {
     // A legacy row with no stage sits in the first column on the board.
     const bucket: LegacyStatusCode = row.stage ? mapPipelineStageToBucket(row.stage) : 'applied'
-    const item = {
+    if (!IN_PROGRESS.includes(bucket)) continue
+    const key = row.stageId ?? NO_STAGE_KEY
+    let stage = stages.get(key)
+    if (!stage) {
+      stage = {
+        key,
+        name: row.stage?.name ?? '',
+        bucket,
+        isOffer: bucket === 'offer',
+        candidates: [],
+        order: row.stage?.sort_order ?? -1,
+      }
+      stages.set(key, stage)
+    }
+    stage.candidates.push({
       applicationId: row.applicationId,
       candidateId: row.candidateId,
       candidateName: row.candidateName,
-      stageName: row.stage?.name ?? '',
-      bucket,
       hasEmail: !!row.email?.trim(),
-      order: row.stage?.sort_order ?? 0,
-    }
-    if (BULK_REJECTABLE_BUCKETS.includes(bucket)) toReject.push(item)
-    else if (bucket === 'offer') atOffer.push(item)
+    })
   }
-  const byBoardOrder = (a: { order: number; candidateName: string }, b: { order: number; candidateName: string }) =>
-    a.order - b.order || a.candidateName.localeCompare(b.candidateName)
-  const strip = ({ order: _order, ...rest }: RemainingCandidate & { order: number }): RemainingCandidate => rest
-  return {
-    toReject: toReject.sort(byBoardOrder).map(strip),
-    atOffer: atOffer.sort(byBoardOrder).map(strip),
-  }
+  return [...stages.values()]
+    .sort((a, b) => a.order - b.order)
+    .map(({ order: _order, ...stage }) => ({
+      ...stage,
+      candidates: stage.candidates.sort((a, b) => a.candidateName.localeCompare(b.candidateName)),
+    }))
 }
 
-/** Candidate counts per stage name, in board order — "Applied 7 · Screening 3". */
-export function countByStage(candidates: RemainingCandidate[]): { stageName: string; count: number }[] {
-  const counts = new Map<string, number>()
-  for (const c of candidates) counts.set(c.stageName, (counts.get(c.stageName) ?? 0) + 1)
-  return [...counts].map(([stageName, count]) => ({ stageName, count }))
+/** Stages ticked when the window opens: everything except Offer. */
+export function defaultStageKeys(stages: RemainingStage[]): string[] {
+  return stages.filter((s) => !s.isOffer).map((s) => s.key)
+}
+
+/** Everyone still in progress, Offer included. */
+export function remainingTotal(stages: RemainingStage[]): number {
+  return stages.reduce((sum, s) => sum + s.candidates.length, 0)
+}
+
+/** The applications to reject: candidates of the ticked stages, minus exceptions. */
+export function applicationsToReject(
+  stages: RemainingStage[],
+  checkedKeys: Iterable<string>,
+  excludedApplicationIds: Iterable<string>,
+): string[] {
+  const checked = new Set(checkedKeys)
+  const excluded = new Set(excludedApplicationIds)
+  return stages
+    .filter((s) => checked.has(s.key))
+    .flatMap((s) => s.candidates)
+    .filter((c) => !excluded.has(c.applicationId))
+    .map((c) => c.applicationId)
 }

@@ -3,13 +3,15 @@
 import { getAuthContext, type ActionResult } from '../index'
 import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
-import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
+import { defaultTemplate, localizeRejectionTemplateRow } from '@/lib/email-template-utils'
 import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
 import { rejectApplicationsCore, type RejectionOutcome } from '@/lib/applications/reject-core'
 import {
-  splitRemaining,
+  applicationsToReject,
+  groupRemainingByStage,
+  remainingTotal,
   type RemainingApplicationRow,
-  type RemainingCandidate,
+  type RemainingStage,
 } from '@/lib/applications/remaining'
 
 export async function rejectApplication(input: {
@@ -91,20 +93,32 @@ export async function rejectApplicationsBatch(input: {
 
 export interface RemainingRejectionData {
   vacancyTitle: string
-  /** Still in progress — rejected together (the recruiter can untick some). */
-  toReject: RemainingCandidate[]
-  /** At an Offer stage — listed, never rejected in bulk. */
-  atOffer: RemainingCandidate[]
+  /** Stages holding candidates still in progress, in board order (Offer included). */
+  stages: RemainingStage[]
   reasons: { id: string; name: string }[]
   templates: { id: string; name: string; subject: string; body: string; reason_id: string | null }[]
+  /** The default rejection email in the organization's language (no template picked). */
+  defaultTemplate: { subject: string; body: string }
+  /** For the email preview's placeholders. */
+  companyName: string
+  senderName: string
+  senderEmail: string
   /** The canonical "rejected" application status id. */
   rejectedStatusId: string | null
 }
 
+export interface RemainingSummary {
+  vacancyTitle: string
+  total: number
+  stages: { key: string; name: string; count: number; isOffer: boolean }[]
+}
+
+type AuthCtx = NonNullable<Awaited<ReturnType<typeof getAuthContext>>>
+
 async function loadRemaining(
-  ctx: NonNullable<Awaited<ReturnType<typeof getAuthContext>>>,
+  ctx: AuthCtx,
   vacancyId: string,
-): Promise<{ vacancyTitle: string; toReject: RemainingCandidate[]; atOffer: RemainingCandidate[] } | null> {
+): Promise<{ vacancyTitle: string; stages: RemainingStage[] } | null> {
   const [{ data: vacancy }, { data: appRows }] = await Promise.all([
     ctx.supabase
       .from('vacancies')
@@ -116,7 +130,7 @@ async function loadRemaining(
     ctx.supabase
       .from('applications')
       .select(
-        'id, candidate_id, candidates ( first_name, last_name, email ), pipeline_stages ( type, name, is_terminal, sort_order )',
+        'id, candidate_id, pipeline_stage_id, candidates ( first_name, last_name, email ), pipeline_stages ( type, name, is_terminal, sort_order )',
       )
       .eq('vacancy_id', vacancyId)
       .eq('organization_id', ctx.orgId)
@@ -124,10 +138,12 @@ async function loadRemaining(
   ])
   if (!vacancy) return null
 
+  type CandidateJoin = { first_name: string; last_name: string; email: string | null }
   type Row = {
     id: string
     candidate_id: string
-    candidates: { first_name: string; last_name: string; email: string | null } | { first_name: string; last_name: string; email: string | null }[] | null
+    pipeline_stage_id: string | null
+    candidates: CandidateJoin | CandidateJoin[] | null
     pipeline_stages: RemainingApplicationRow['stage'] | NonNullable<RemainingApplicationRow['stage']>[]
   }
   const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v)
@@ -138,10 +154,11 @@ async function loadRemaining(
       candidateId: r.candidate_id,
       candidateName: candidate ? `${candidate.first_name} ${candidate.last_name}`.trim() : '',
       email: candidate?.email ?? null,
+      stageId: r.pipeline_stage_id,
       stage: one(r.pipeline_stages),
     }
   })
-  return { vacancyTitle: vacancy.title as string, ...splitRemaining(rows) }
+  return { vacancyTitle: vacancy.title as string, stages: groupRemainingByStage(rows) }
 }
 
 /** Everything the "Reject remaining candidates" window shows. Owners/admins. */
@@ -155,22 +172,27 @@ export async function getRemainingRejection(
   const remaining = await loadRemaining(ctx, vacancyId)
   if (!remaining) return { success: false, error: 'Vacancy not found', code: 'NOT_FOUND' }
 
-  const [{ data: reasons }, { data: templates }, { data: rejectedStatus }, locale] = await Promise.all([
-    ctx.supabase
-      .from('rejection_reasons')
-      .select('id, name')
-      .eq('organization_id', ctx.orgId)
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: true }),
-    ctx.supabase
-      .from('rejection_templates')
-      .select('id, name, subject, body, reason_id')
-      .eq('organization_id', ctx.orgId)
-      .order('sort_order', { ascending: true }),
-    ctx.supabase.from('application_statuses').select('id').eq('code', 'rejected').maybeSingle(),
-    fetchOrgContentLocale(ctx.supabase, ctx.orgId),
-  ])
+  const [{ data: reasons }, { data: templates }, { data: rejectedStatus }, { data: org }, { data: me }, locale] =
+    await Promise.all([
+      ctx.supabase
+        .from('rejection_reasons')
+        .select('id, name')
+        .eq('organization_id', ctx.orgId)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true }),
+      ctx.supabase
+        .from('rejection_templates')
+        .select('id, name, subject, body, reason_id')
+        .eq('organization_id', ctx.orgId)
+        .order('sort_order', { ascending: true }),
+      ctx.supabase.from('application_statuses').select('id').eq('code', 'rejected').maybeSingle(),
+      ctx.supabase.from('organizations').select('name').eq('id', ctx.orgId).single(),
+      ctx.supabase.from('profiles').select('full_name, email').eq('id', ctx.userId).single(),
+      fetchOrgContentLocale(ctx.supabase, ctx.orgId),
+    ])
 
+  const companyName = (org?.name as string | undefined) ?? ''
+  const fallback = defaultTemplate('rejection', locale)
   return {
     success: true,
     data: {
@@ -180,35 +202,46 @@ export async function getRemainingRejection(
       templates: ((templates ?? []) as RemainingRejectionData['templates']).map((t) =>
         localizeRejectionTemplateRow(t, locale),
       ),
+      defaultTemplate: { subject: fallback.subject, body: fallback.body },
+      companyName,
+      senderName: (me?.full_name as string | null) ?? companyName,
+      senderEmail: (me?.email as string | null) ?? '',
       rejectedStatusId: (rejectedStatus?.id as string | undefined) ?? null,
     },
   }
 }
 
-/** How many candidates are still in progress — for the prompt after closing a
- * vacancy. 0 for anyone who isn't an owner/admin (they can't act on it). */
-export async function countRemainingCandidates(vacancyId: string): Promise<number> {
+/**
+ * Who is still in progress, per stage — for the "Close vacancy" / "Archive
+ * vacancy" question. `null` for anyone who isn't an owner/admin (they can't
+ * reject in bulk, so they close without being asked).
+ */
+export async function getRemainingSummary(vacancyId: string): Promise<RemainingSummary | null> {
   const ctx = await getAuthContext()
-  if (!ctx || !isOrgAdmin(ctx.role)) return 0
+  if (!ctx || !isOrgAdmin(ctx.role)) return null
   const remaining = await loadRemaining(ctx, vacancyId)
-  return remaining?.toReject.length ?? 0
+  if (!remaining) return null
+  return {
+    vacancyTitle: remaining.vacancyTitle,
+    total: remainingTotal(remaining.stages),
+    stages: remaining.stages.map((s) => ({ key: s.key, name: s.name, count: s.candidates.length, isOffer: s.isOffer })),
+  }
 }
 
 export type RemainingRejectionResult = Omit<RejectionOutcome, 'rejected' | 'failed'> & {
   rejected: number
   failed: number
-  /** Ticked candidates who were no longer in progress when confirmed. */
-  skipped: number
 }
 
 /**
- * Rejects the ticked candidates who are still in progress for this vacancy.
- * Anyone who moved to Offer, Hired or out of the pipeline since the window
- * opened is skipped — the list is re-checked here, not trusted from the client.
+ * Rejects the candidates of the ticked stages, minus the exceptions. The list
+ * is worked out here from the current pipeline, not trusted from the browser,
+ * so someone who moved to an unticked stage since the window opened stays.
  */
 export async function rejectRemainingCandidates(input: {
   vacancyId: string
-  applicationIds: string[]
+  stageKeys: string[]
+  excludedApplicationIds: string[]
   rejectionReasonId: string | null
   templateId: string | null
   sendEmail: boolean
@@ -216,15 +249,13 @@ export async function rejectRemainingCandidates(input: {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
   if (!isOrgAdmin(ctx.role)) return { success: false, error: 'Owners and admins only', code: 'FORBIDDEN' }
-  if (input.applicationIds.length === 0) {
-    return { success: false, error: 'No candidates selected', code: 'VALIDATION' }
-  }
 
   const remaining = await loadRemaining(ctx, input.vacancyId)
   if (!remaining) return { success: false, error: 'Vacancy not found', code: 'NOT_FOUND' }
-  const stillInProgress = new Set(remaining.toReject.map((c) => c.applicationId))
-  const requested = [...new Set(input.applicationIds)]
-  const applicationIds = requested.filter((id) => stillInProgress.has(id))
+  const applicationIds = applicationsToReject(remaining.stages, input.stageKeys, input.excludedApplicationIds)
+  if (applicationIds.length === 0) {
+    return { success: false, error: 'No candidates selected', code: 'VALIDATION' }
+  }
 
   const { data: rejectedStatus } = await ctx.supabase
     .from('application_statuses')
@@ -233,18 +264,16 @@ export async function rejectRemainingCandidates(input: {
     .maybeSingle()
   if (!rejectedStatus) return { success: false, error: 'Rejected status missing', code: 'DB_ERROR' }
 
-  const outcome = applicationIds.length
-    ? await rejectApplicationsCore(ctx, {
-        applicationIds,
-        statusId: rejectedStatus.id as string,
-        rejectionReasonId: input.rejectionReasonId,
-        templateId: input.templateId,
-        sendEmail: input.sendEmail,
-        channelMessages: 'summary',
-      })
-    : null
+  const outcome = await rejectApplicationsCore(ctx, {
+    applicationIds,
+    statusId: rejectedStatus.id as string,
+    rejectionReasonId: input.rejectionReasonId,
+    templateId: input.templateId,
+    sendEmail: input.sendEmail,
+    channelMessages: 'summary',
+  })
 
-  if (outcome && outcome.rejected.length > 0) {
+  if (outcome.rejected.length > 0) {
     void writeAuditLog({
       orgId: ctx.orgId,
       userId: ctx.userId,
@@ -254,9 +283,12 @@ export async function rejectRemainingCandidates(input: {
       message: `Rejected ${outcome.rejected.length} remaining candidates`,
       details: {
         count: outcome.rejected.length,
+        stages: input.stageKeys,
+        exceptions: input.excludedApplicationIds.length,
         rejection_reason_id: input.rejectionReasonId,
         emails_sent: outcome.emailsSent,
         interviews_cancelled: outcome.interviewsCancelled,
+        offers_withdrawn: outcome.offersWithdrawn,
       },
     })
   }
@@ -264,14 +296,13 @@ export async function rejectRemainingCandidates(input: {
   return {
     success: true,
     data: {
-      rejected: outcome?.rejected.length ?? 0,
-      failed: outcome?.failed.length ?? 0,
-      skipped: requested.length - applicationIds.length,
-      emailsSent: outcome?.emailsSent ?? 0,
-      emailsFailed: outcome?.emailsFailed ?? 0,
-      withoutEmail: outcome?.withoutEmail ?? 0,
-      interviewsCancelled: outcome?.interviewsCancelled ?? 0,
-      offersWithdrawn: outcome?.offersWithdrawn ?? 0,
+      rejected: outcome.rejected.length,
+      failed: outcome.failed.length,
+      emailsSent: outcome.emailsSent,
+      emailsFailed: outcome.emailsFailed,
+      withoutEmail: outcome.withoutEmail,
+      interviewsCancelled: outcome.interviewsCancelled,
+      offersWithdrawn: outcome.offersWithdrawn,
     },
   }
 }

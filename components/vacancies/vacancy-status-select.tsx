@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Loader2, ChevronDown } from 'lucide-react'
 import { updateVacancyStatus } from '@/lib/actions/vacancies'
-import { countRemainingCandidates } from '@/lib/actions/applications'
+import { useCloseVacancy } from '@/components/vacancies/use-close-vacancy'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 import {
   DropdownMenu,
@@ -41,22 +41,35 @@ export function VacancyStatusSelect({ vacancyId, current, options }: VacancyStat
   const statusLabel = (o: StatusOption) =>
     t.has(`vacStatus.${o.code}`) ? t(`vacStatus.${o.code}`) : o.name
 
+  // Closing / archiving asks first when candidates are still in progress;
+  // "Close and reject" then opens "Reject remaining candidates" on this page.
+  const { requestClose, closeDialog } = useCloseVacancy({
+    onRejectNext: () => {
+      const next = new URLSearchParams(searchParams.toString())
+      next.set('rejectRemaining', '1')
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false })
+    },
+  })
+
   async function handleSelect(option: StatusOption) {
     if (option.id === activeStatus.id) return
     setIsPending(true)
+    if (option.code === 'closed' || option.code === 'archived') {
+      await requestClose({
+        vacancyId,
+        statusId: option.id,
+        action: option.code === 'archived' ? 'archive' : 'close',
+        onDone: (changed) => {
+          if (changed) setActiveStatus(option)
+        },
+      })
+      setIsPending(false)
+      return
+    }
     setActiveStatus(option)
     const result = await updateVacancyStatus(vacancyId, option.id)
     if (!result.success) {
       setActiveStatus(current)
-    } else if (
-      (option.code === 'closed' || option.code === 'archived') &&
-      (await countRemainingCandidates(vacancyId)) > 0
-    ) {
-      // Candidates are still in progress: open "Reject remaining candidates"
-      // (owners/admins — the count is 0 for everyone else).
-      const next = new URLSearchParams(searchParams.toString())
-      next.set('rejectRemaining', 'closed')
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false })
     } else {
       router.refresh()
     }
@@ -64,6 +77,8 @@ export function VacancyStatusSelect({ vacancyId, current, options }: VacancyStat
   }
 
   return (
+    <>
+    {closeDialog}
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={isPending}>
         <button className="inline-flex items-center gap-1 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -101,5 +116,6 @@ export function VacancyStatusSelect({ vacancyId, current, options }: VacancyStat
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   )
 }

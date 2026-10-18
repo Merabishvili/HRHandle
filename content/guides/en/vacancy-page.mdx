@@ -14,7 +14,7 @@ Every vacancy has its own page that brings everything about the role together. O
 
 1. **Header actions** — **Copy apply link** copies the link candidates use to apply. **View pipeline →** opens this vacancy's board. **⋯** holds more actions (see below).
 2. **The tabs** — Overview, Job description, Scorecard & interview, Apply form and Settings.
-3. **Needs your attention** — what's waiting for you on this vacancy: a sent offer the candidate hasn't answered yet, a candidate at the **Offer** stage whose offer isn't created or sent yet, an interview in the next day and a half, and new applicants to review. Each item has a button that takes you there. When nothing is waiting, HRHandle tells you so.
+3. **Needs your attention** — what's waiting for you on this vacancy: a sent offer the candidate hasn't answered yet, a candidate at the **Offer** stage whose offer isn't created or sent yet, an interview in the next day and a half, new applicants to review, and — on a closed vacancy — candidates still waiting for an answer. Each item has a button that takes you there. When nothing is waiting, HRHandle tells you so.
 4. **Pipeline** — how many candidates are in each stage. **Open pipeline →** opens the board.
 5. **At a glance** — how long the vacancy has been open, the number of active candidates, the salary range, the end date and its **Health**.
 
@@ -92,3 +92,17 @@ The **Apply form** tab holds the screening questions applicants answer and the v
 | On hold | Paused: the apply link stops accepting applications. Candidates already in the pipeline stay. |
 | Closed | Finished: no new applications. The vacancy and its candidates stay. |
 | Archived | Hidden from the active vacancy list and kept for your records. |
+
+When owners and admins close or archive a vacancy that still has candidates in progress, HRHandle first asks what to do with them.
+
+<Screenshot
+  name="vacancy-close"
+  alt="The Close vacancy question with the candidates still in progress per stage and the Close only and Close and reject buttons highlighted"
+  caption="Close it, or close it and reject the rest."
+/>
+
+1. **Candidates still in progress** — how many, per stage. They haven't had an answer yet.
+2. **Close only** — closes the vacancy and leaves the candidates where they are. The vacancy keeps a reminder under **Needs your attention**.
+3. **Close and reject** — closes it and opens **Reject remaining candidates** — see [Reject candidates](/guide/reject-candidates).
+
+Archiving asks the same question, with **Archive only** and **Archive and reject**.

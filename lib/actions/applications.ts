@@ -17,10 +17,14 @@ export {
   rejectApplication,
   rejectApplicationsBatch,
   getRemainingRejection,
-  countRemainingCandidates,
+  getRemainingSummary,
   rejectRemainingCandidates,
 } from './applications/rejection-actions'
-export type { RemainingRejectionData, RemainingRejectionResult } from './applications/rejection-actions'
+export type {
+  RemainingRejectionData,
+  RemainingRejectionResult,
+  RemainingSummary,
+} from './applications/rejection-actions'
 
 export {
   createApplication,
