@@ -236,6 +236,27 @@ const vacancyPage: Flow = {
         { target: region(ctx, 'vacSettings.dangerZone'), n: 4, badge: 'left' },
       ],
     })
+
+    // Closing a vacancy that still has candidates in progress asks what to do
+    // with them. Looked at, then cancelled — the demo vacancy stays open.
+    await region(ctx, 'vacSettings.statusVisibility').getByRole('button', { name: t('vacStatus.open') }).click()
+    await page.getByRole('menuitem', { name: t('vacStatus.closed') }).click()
+    const closeDialog = page.getByRole('dialog')
+    const closeOnly = closeDialog.getByRole('button', { name: t('closeVacancy.closeOnly') })
+    await closeOnly.waitFor()
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+    await settle(page, 300)
+    await ctx.shot('vacancy-close', {
+      clip: closeDialog,
+      clipPad: 32,
+      marks: [
+        { target: closeDialog.getByRole('group'), n: 1, badge: 'left' },
+        { target: closeOnly, n: 2, badge: 'below' },
+        { target: closeDialog.getByRole('button', { name: t('closeVacancy.closeAndReject') }), n: 3, badge: 'below' },
+      ],
+    })
+    await closeDialog.getByRole('button', { name: t('common.cancel') }).click()
+    await closeDialog.waitFor({ state: 'detached' })
   },
 }
 

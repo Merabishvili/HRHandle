@@ -242,13 +242,16 @@ const reject: Flow = {
     await ctx.shot('reject-batch', { clip: batch, clipPad: 24 })
     await batch.getByRole('button', { name: t('common.cancel') }).click()
 
-    // Everyone left on a vacancy (opened via the ⋯ menu's address). Looked at,
-    // never confirmed — Escape closes it without rejecting anyone.
+    // Everyone left on a vacancy (opened via the ⋯ menu's address): stages as
+    // checkboxes, one candidate kept back by search. Looked at, never
+    // confirmed — Escape closes it without rejecting anyone.
     await ctx.goto(`/vacancies/${await vacancyId(ctx, 'engineer')}?rejectRemaining=1`)
     const remaining = page.getByRole('dialog')
-    const remainingList = remaining.getByText(t('rejectRemaining.candidates'), { exact: true })
-    await remainingList.waitFor()
-    // The window focuses a button when it opens; drop that for the picture.
+    const stageList = remaining.getByRole('list', { name: t('rejectRemaining.stagesLabel') })
+    await stageList.waitFor()
+    const keepBack = candidateName(ctx, 'c1')
+    await remaining.locator('#rr-search').fill(keepBack.split(' ')[0]!)
+    await remaining.getByRole('option', { name: new RegExp(escapeRegExp(keepBack)) }).click()
     await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
     await settle(page, 300)
     const confirmRemaining = new RegExp(`^${escapeRegExp(t('batchReject.confirm', { count: 7777 })).replace('7777', '\\d+')}$`)
@@ -256,10 +259,10 @@ const reject: Flow = {
       clip: remaining,
       clipPad: 32,
       marks: [
-        { target: remainingList.locator('xpath=ancestor::div[contains(@class,"space-y-2")][1]'), n: 1, badge: 'left' },
-        { target: remaining.getByText(t('rejectRemaining.notIncluded'), { exact: true }).locator('xpath=..'), n: 2, badge: 'left' },
-        { target: remaining.getByText(t('rejectDialog.reason'), { exact: true }).locator('xpath=..'), n: 3, badge: 'left' },
-        { target: remaining.locator('#rr-send-email').locator('xpath=..'), n: 4, badge: 'left' },
+        { target: stageList, n: 1, badge: 'left' },
+        { target: remaining.locator('#rr-search').locator('xpath=ancestor::div[contains(@class,"space-y-1.5")][1]'), n: 2, badge: 'left' },
+        { target: remaining.getByText(t('rejectDialog.reason'), { exact: true }).locator('xpath=ancestor::div[contains(@class,"grid")][1]'), n: 3, badge: 'left' },
+        { target: remaining.locator('#rr-send-email').locator('xpath=ancestor::div[contains(@class,"justify-between")][1]'), n: 4, badge: 'left' },
         { target: remaining.getByRole('button', { name: confirmRemaining }), n: 5, badge: 'right' },
       ],
     })

@@ -47,6 +47,7 @@ _Last updated: 2026-10-10_
 | Generate a Calendly booking link | Yes | Yes | Yes |
 | Reject one candidate / a board selection | Yes | Yes | Yes |
 | Reject remaining candidates of a vacancy | Yes | Yes | No |
+| Asked "Close only / Close and reject" when closing or archiving a vacancy with candidates in progress | Yes | Yes | No (closes directly) |
 
 ## Where Checks Occur
 

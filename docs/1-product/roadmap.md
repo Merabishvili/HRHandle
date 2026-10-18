@@ -144,7 +144,7 @@ Real features competing ATSes have that HRHandle does not. Some are 1–2 day wi
 ### Workflow
 
 - ⚪ **Bulk operations beyond batch reject** — bulk add tags + bulk assign to a vacancy (bulk move-to-stage shipped 2026-06-19 as G-024).
-- ✅ **Reject remaining candidates** when closing a vacancy — shipped 2026-10-18 (owners/admins; Offer stage excluded; email optional; batched sending). Possible follow-up: schedule the rejection emails for later ("send in 2 days").
+- ✅ **Reject remaining candidates** when closing a vacancy — shipped 2026-10-18 and redesigned the same day (close/archive question; stages as checkboxes with Offer unticked by default; exceptions by name search; email preview). Owners/admins; email optional; batched sending. Possible follow-up: schedule the rejection emails for later ("send in 2 days").
 - ✅ Global search across candidates / vacancies / notes (cmd-K) — shipped 2026-06-18 as G-023.
 - ⏪ Saved filters / smart lists — shipped 2026-06-21 as G-026, later removed (f663ca1).
 - ✅ Internal @-mentions in notes — shipped 2026-06-17 as G-021.

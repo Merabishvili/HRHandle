@@ -5,9 +5,8 @@ import { RejectRemainingDialog } from './reject-remaining-dialog'
 
 /**
  * Opens "Reject remaining candidates" on the vacancy page when the address
- * carries `?rejectRemaining=1` (the ⋯ menu, Needs your attention) or
- * `?rejectRemaining=closed` (right after the vacancy was closed). Closing the
- * window removes the parameter again.
+ * carries `?rejectRemaining=1` — from the ⋯ menu, Needs your attention, or
+ * "Close and reject". Closing the window removes the parameter again.
  */
 export function RejectRemainingLauncher({ vacancyId }: { vacancyId: string }) {
   const params = useSearchParams()
@@ -29,7 +28,6 @@ export function RejectRemainingLauncher({ vacancyId }: { vacancyId: string }) {
       onOpenChange={(open) => {
         if (!open) close()
       }}
-      afterClose={value === 'closed'}
     />
   )
 }
