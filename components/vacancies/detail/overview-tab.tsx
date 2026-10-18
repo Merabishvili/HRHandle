@@ -372,6 +372,7 @@ export function buildAttentionList(
     offersToSend = [],
     upcomingInterviewsTomorrow,
     newApplicantCount,
+    closedWithRemaining = 0,
   }: {
     vacancyId: string
     pendingOffers: { applicationId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; daysAwaiting: number }[]
@@ -379,6 +380,9 @@ export function buildAttentionList(
     offersToSend?: { applicationId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; hasDraft: boolean }[]
     upcomingInterviewsTomorrow: { interviewId: string; candidateId: string; candidateInitials: string; candidateFirstName: string; scheduledAt: string }[]
     newApplicantCount: number
+    /** The vacancy is closed but this many candidates are still in progress
+     * (owners/admins only — 0 hides the item). */
+    closedWithRemaining?: number
   },
   t: OverviewTranslator,
   locale: string,
@@ -386,6 +390,16 @@ export function buildAttentionList(
   const bold = { b: (chunks: React.ReactNode) => <strong className="font-semibold">{chunks}</strong> }
   const df = dateFnsLocale(locale)
   const items: AttentionItem[] = []
+  if (closedWithRemaining > 0) {
+    items.push({
+      id: 'closed-remaining',
+      initials: null,
+      initialsHue: 'neutral',
+      message: t.rich('vacOverview.closedRemaining', { count: closedWithRemaining, ...bold }),
+      ctaLabel: t('vacOverview.rejectRemaining'),
+      ctaHref: `/vacancies/${vacancyId}?rejectRemaining=1`,
+    })
+  }
   for (const o of pendingOffers) {
     items.push({
       id: `offer-${o.applicationId}`,

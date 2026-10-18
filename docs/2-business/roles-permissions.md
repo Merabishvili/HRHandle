@@ -45,6 +45,8 @@ _Last updated: 2026-10-10_
 | See colleagues' submitted assessments | Always | Always | After submitting their own for that application |
 | Connect LinkedIn page / Slack & Teams / Calendly | Yes | Yes | No (LinkedIn shown read-only) |
 | Generate a Calendly booking link | Yes | Yes | Yes |
+| Reject one candidate / a board selection | Yes | Yes | Yes |
+| Reject remaining candidates of a vacancy | Yes | Yes | No |
 
 ## Where Checks Occur
 

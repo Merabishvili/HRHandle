@@ -532,17 +532,7 @@ export async function sendOfferEmail({
   })
 }
 
-export async function sendApplicationRejectionEmail({
-  to,
-  candidateName,
-  vacancyTitle,
-  organizationName,
-  senderName,
-  senderEmail,
-  customSubject,
-  customBody,
-  contentLocale,
-}: {
+export interface RejectionEmailInput {
   to: string
   candidateName: string
   vacancyTitle: string
@@ -552,7 +542,20 @@ export async function sendApplicationRejectionEmail({
   customSubject?: string | undefined
   customBody?: string | undefined
   contentLocale?: Locale | undefined
-}) {
+}
+
+/** The rejection email for one candidate, ready to send (single or batched). */
+export function buildApplicationRejectionEmail({
+  to,
+  candidateName,
+  vacancyTitle,
+  organizationName,
+  senderName,
+  senderEmail,
+  customSubject,
+  customBody,
+  contentLocale,
+}: RejectionEmailInput) {
   const vars = {
     candidate_name: candidateName,
     role: vacancyTitle,
@@ -566,11 +569,10 @@ export async function sendApplicationRejectionEmail({
   const subject = applyVariables(customSubject ?? defaults.subject, vars)
   const body = applyVariables(customBody ?? defaults.body, vars)
   const safeCandidate = escapeHtml(candidateName)
-
-  return getResend().emails.send({
+  return {
     from: senderFrom(senderName),
     to,
-    replyTo: senderEmail,
+    ...(senderEmail ? { replyTo: senderEmail } : {}),
     subject,
     html: `
 <!DOCTYPE html>
@@ -588,7 +590,48 @@ export async function sendApplicationRejectionEmail({
   </div>
 </body>
 </html>`,
-  })
+  }
+}
+
+export async function sendApplicationRejectionEmail(input: RejectionEmailInput) {
+  return getResend().emails.send(buildApplicationRejectionEmail(input))
+}
+
+/** Resend's batch endpoint takes at most 100 emails per request. */
+export const REJECTION_EMAIL_BATCH_SIZE = 100
+
+/**
+ * Many rejection emails at once — one request per 100 emails, so a vacancy's
+ * worth of rejections stays inside Resend's request rate limit and finishes in
+ * a few seconds. Permissive validation reports a failure per email instead of
+ * failing the whole batch. Never throws; returns how many were sent / failed.
+ */
+export async function sendApplicationRejectionEmails(
+  inputs: RejectionEmailInput[],
+): Promise<{ sent: number; failed: number }> {
+  let sent = 0
+  let failed = 0
+  if (inputs.length === 0) return { sent, failed }
+  const emails = inputs.map(buildApplicationRejectionEmail)
+  for (let i = 0; i < emails.length; i += REJECTION_EMAIL_BATCH_SIZE) {
+    const chunk = emails.slice(i, i + REJECTION_EMAIL_BATCH_SIZE)
+    try {
+      const { data, error } = await getResend().batch.send(chunk, { batchValidation: 'permissive' })
+      if (error || !data) {
+        console.error('[email] rejection batch failed:', error?.message ?? 'no response')
+        failed += chunk.length
+        continue
+      }
+      const errors = data.errors?.length ?? 0
+      if (errors > 0) console.error('[email] some rejection emails failed:', data.errors)
+      sent += chunk.length - errors
+      failed += errors
+    } catch (err) {
+      console.error('[email] rejection batch threw:', err)
+      failed += chunk.length
+    }
+  }
+  return { sent, failed }
 }
 
 // ── Support tickets ────────────────────────────────────────────────────────

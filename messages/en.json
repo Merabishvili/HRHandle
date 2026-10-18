@@ -1854,7 +1854,9 @@
     "interviewWith": "Interview with {name} <b>{time}</b> — add scorecard after",
     "view": "View",
     "newApplicants": "<b>{count, plural, one {# new applicant} other {# new applicants}}</b> to review",
-    "review": "Review"
+    "review": "Review",
+    "closedRemaining": "The vacancy is closed, but <b>{count, plural, one {# candidate is} other {# candidates are}} still in progress</b>",
+    "rejectRemaining": "Reject remaining"
   },
   "vacDetail": {
     "scorecardIntro": "How your team evaluates candidates in interviews — none of this is shown to candidates. (Questions candidates answer when applying live on the <b>Apply form</b> tab.)",
@@ -2858,7 +2860,8 @@
       "webhook_notification_dispatched": "Webhook dispatched",
       "webhook_notification_updated": "Webhook subscriptions updated"
     },
-    "withdrawnWithReason": "Application withdrawn by candidate: “{reason}”"
+    "withdrawnWithReason": "Application withdrawn by candidate: “{reason}”",
+    "bulkRejected": "{count, plural, one {Rejected # remaining candidate} other {Rejected # remaining candidates}}"
   },
   "rejectReason": {
     "general": "General"
@@ -3225,7 +3228,8 @@
     "webhook_notification_created": "Channel added",
     "webhook_notification_deleted": "Channel removed",
     "webhook_notification_dispatched": "Channel message sent",
-    "webhook_notification_updated": "Channel updated"
+    "webhook_notification_updated": "Channel updated",
+    "applications_bulk_rejected": "Remaining candidates rejected"
   },
   "deletionPage": {
     "title": "Account scheduled for deletion",
@@ -3254,5 +3258,29 @@
     "applyGone": "This vacancy no longer accepts applications, or the link is wrong. Ask the company for a current link.",
     "jobsGoneTitle": "Page not found",
     "jobsGone": "We couldn't find this jobs page. Check the address, or ask the company for the current link."
+  },
+  "rejectRemaining": {
+    "menuItem": "Reject remaining candidates",
+    "title": "Reject remaining candidates",
+    "titleAfterClose": "Vacancy closed — reject the remaining candidates?",
+    "intro": "{count, plural, one {# candidate is} other {# candidates are}} still in progress for {title}. They'll move to Rejected.",
+    "none": "No candidates are in progress for this vacancy.",
+    "loading": "Loading candidates…",
+    "loadFailed": "Couldn't load the candidates. Close the window and try again.",
+    "candidates": "Candidates",
+    "untickHint": "Untick anyone you want to keep in the pipeline.",
+    "notIncluded": "Not included",
+    "atOffer": "At the Offer stage — decide one by one: {names}",
+    "finalNote": "Hired, rejected and withdrawn candidates are never changed.",
+    "noEmail": "{count, plural, one {# candidate has} other {# candidates have}} no email address and won't get an email.",
+    "notNow": "Not now",
+    "failed": "Couldn't reject the candidates. Try again.",
+    "doneRejected": "{count, plural, one {# candidate rejected} other {# candidates rejected}}",
+    "doneEmails": "{count, plural, one {# email sent} other {# emails sent}}",
+    "doneInterviews": "{count, plural, one {# interview cancelled} other {# interviews cancelled}}",
+    "emailsFailed": "{count, plural, one {# email couldn't be sent} other {# emails couldn't be sent}}.",
+    "someFailed": "{count, plural, one {# candidate couldn't be rejected} other {# candidates couldn't be rejected}} — try them one by one.",
+    "skipped": "{count, plural, one {# candidate was} other {# candidates were}} left as is — they had already moved to another stage.",
+    "closedToast": "Vacancy closed. {count, plural, one {# candidate is} other {# candidates are}} still in progress."
   }
 }

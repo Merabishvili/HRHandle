@@ -1,17 +1,16 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { getAuthContext, type ActionResult } from '../index'
-import { sendApplicationRejectionEmail } from '@/lib/email'
+import { isOrgAdmin } from '@/lib/permissions'
+import { writeAuditLog } from '@/lib/audit-log'
+import { localizeRejectionTemplateRow } from '@/lib/email-template-utils'
 import { fetchOrgContentLocale } from '@/lib/i18n/org-locale'
-import { isDefaultTemplateContentAnyLocale } from '@/lib/email-template-utils'
-import { APPLICATION_STATUS, CANDIDATE_STATUS } from '@/lib/types/constants'
+import { rejectApplicationsCore, type RejectionOutcome } from '@/lib/applications/reject-core'
 import {
-  resolvePipelineStageId,
-  type LegacyStatusCode,
-} from '@/lib/pipeline-stages/resolve'
-import { mapPipelineStageToBucket } from '@/lib/pipeline-stages/bucket'
-import { unwrapRelation, type StageRelation } from '../applications-shared'
+  splitRemaining,
+  type RemainingApplicationRow,
+  type RemainingCandidate,
+} from '@/lib/applications/remaining'
 
 export async function rejectApplication(input: {
   applicationId: string
@@ -34,189 +33,29 @@ export async function rejectApplication(input: {
   const ctx = await getAuthContext()
   if (!ctx) return { success: false, error: 'Not authenticated' }
 
-  const { data: application } = await ctx.supabase
-    .from('applications')
-    .select('id, candidate_id, vacancy_id')
-    .eq('id', input.applicationId)
-    .eq('organization_id', ctx.orgId)
-    .is('deleted_at', null)
-    .single()
-
-  if (!application) return { success: false, error: 'Application not found' }
-
-  // Wave 2.6 Slice 1 — resolve the per-vacancy 'Rejected' stage. We
-  // look up the legacy status's code so this works for any rejection
-  // status_id the caller passes, not just the default 'rejected'.
-  // Slice 2b adds the override: if the caller passed a specific
-  // pipeline_stage_id (drop on a custom rejection stage), trust it.
-  const { data: targetStatusRow } = await ctx.supabase
-    .from('application_statuses')
-    .select('code')
-    .eq('id', input.statusId)
-    .single()
-  const targetCode = (targetStatusRow?.code as LegacyStatusCode | undefined) ?? 'rejected'
-  const defaultPipelineStageId = await resolvePipelineStageId(
-    ctx.supabase,
-    application.vacancy_id,
-    targetCode,
-  )
-  const targetPipelineStageId = input.targetPipelineStageId ?? defaultPipelineStageId
-
-  // Wave 2.6 Slice 4 — status_id is gone; only pipeline_stage_id is set.
-  const rejectPayload: Record<string, unknown> = {
-    rejection_reason_id: input.rejectionReasonId ?? null,
-    rejection_template_id: input.templateId ?? null,
-    last_status_changed_at: new Date().toISOString(),
-  }
-  if (targetPipelineStageId) {
-    rejectPayload.pipeline_stage_id = targetPipelineStageId
-  }
-
-  const { error: updateError } = await ctx.supabase
-    .from('applications')
-    .update(rejectPayload)
-    .eq('id', input.applicationId)
-    .eq('organization_id', ctx.orgId)
-    .is('deleted_at', null)
-
-  if (updateError) return { success: false, error: 'Failed to update application status' }
-
-  // Sync candidate general_status (rejected → keep as active unless hired)
-  const { data: candidateStatuses } = await ctx.supabase
-    .from('candidate_statuses')
-    .select('id, code')
-
-  const statusMap = new Map((candidateStatuses || []).map((s) => [s.code, s.id]))
-
-  const { data: hiredApps } = await ctx.supabase
-    .from('applications')
-    .select('id, pipeline_stages ( type, name, is_terminal )')
-    .eq('candidate_id', application.candidate_id)
-    .eq('organization_id', ctx.orgId)
-    .is('deleted_at', null)
-    .neq('id', input.applicationId)
-
-  type AppWithStage = { id: string; pipeline_stages: StageRelation | StageRelation[] | null }
-  const hasOtherHired = ((hiredApps as AppWithStage[] | null) ?? []).some((a) => {
-    const row = unwrapRelation(a.pipeline_stages)
-    return row ? mapPipelineStageToBucket(row) === APPLICATION_STATUS.HIRED : false
+  const outcome = await rejectApplicationsCore(ctx, {
+    applicationIds: [input.applicationId],
+    statusId: input.statusId,
+    rejectionReasonId: input.rejectionReasonId,
+    templateId: input.templateId,
+    sendEmail: input.sendEmail,
+    customSubject: input.customSubject,
+    customBody: input.customBody,
+    targetPipelineStageId: input.targetPipelineStageId,
+    channelMessages: 'each',
   })
-
-  if (!hasOtherHired) {
-    const { data: candidate } = await ctx.supabase
-      .from('candidates')
-      .select('general_status_id')
-      .eq('id', application.candidate_id)
-      .single()
-
-    const currentCode = (candidateStatuses || []).find(
-      (s) => s.id === candidate?.general_status_id
-    )?.code
-
-    if (currentCode === CANDIDATE_STATUS.HIRED) {
-      const activeId = statusMap.get(CANDIDATE_STATUS.ACTIVE)
-      if (activeId) {
-        await ctx.supabase
-          .from('candidates')
-          .update({ general_status_id: activeId })
-          .eq('id', application.candidate_id)
-          .eq('organization_id', ctx.orgId)
-      }
-    }
+  if (outcome.rejected.length === 0) {
+    return { success: false, error: outcome.failed[0]?.error ?? 'Failed to update application status' }
   }
-
-  if (input.sendEmail) {
-    try {
-      const [{ data: candidateData }, { data: vacancyData }, { data: orgData }, { data: profileData }] =
-        await Promise.all([
-          ctx.supabase
-            .from('candidates')
-            .select('first_name, last_name, email')
-            .eq('id', application.candidate_id)
-            .eq('organization_id', ctx.orgId)
-            .single(),
-          ctx.supabase
-            .from('vacancies')
-            .select('title')
-            .eq('id', application.vacancy_id)
-            .eq('organization_id', ctx.orgId)
-            .single(),
-          ctx.supabase
-            .from('organizations')
-            .select('name')
-            .eq('id', ctx.orgId)
-            .single(),
-          ctx.supabase
-            .from('profiles')
-            .select('full_name, email')
-            .eq('id', ctx.userId)
-            .single(),
-        ])
-
-      // Resolve subject/body: custom override > stored template > built-in default
-      let finalSubject: string | undefined = input.customSubject ?? undefined
-      let finalBody: string | undefined = input.customBody ?? undefined
-
-      if ((!finalSubject || !finalBody) && input.templateId) {
-        const { data: templateData } = await ctx.supabase
-          .from('rejection_templates')
-          .select('subject, body')
-          .eq('id', input.templateId)
-          .eq('organization_id', ctx.orgId)
-          .single()
-        if (templateData) {
-          finalSubject = finalSubject ?? templateData.subject
-          finalBody = finalBody ?? templateData.body
-        }
-      }
-
-      // If the resolved subject/body are still the built-in English default —
-      // i.e. the untouched seeded "General" template — drop them so the sender
-      // falls back to the localized default for the org's content language.
-      if (finalSubject && finalBody && isDefaultTemplateContentAnyLocale('rejection', finalSubject, finalBody)) {
-        finalSubject = undefined
-        finalBody = undefined
-      }
-
-      if (candidateData?.email && vacancyData && orgData) {
-        await sendApplicationRejectionEmail({
-          to: candidateData.email,
-          candidateName: `${candidateData.first_name} ${candidateData.last_name}`.trim(),
-          vacancyTitle: vacancyData.title,
-          organizationName: orgData.name,
-          senderName: profileData?.full_name ?? orgData.name,
-          senderEmail: profileData?.email ?? '',
-          customSubject: finalSubject,
-          customBody: finalBody,
-          contentLocale: await fetchOrgContentLocale(ctx.supabase, ctx.orgId),
-        })
-      }
-    } catch (err) {
-      // Email failure is non-fatal; status was already updated. Log so the
-      // operator can investigate Resend / template / SMTP issues.
-      console.error('[applications] rejection email send failed:', err)
-    }
-  }
-
-  revalidatePath('/vacancies/[id]/pipeline', 'page')
-  revalidatePath('/candidates', 'page')
   return { success: true, data: undefined }
 }
 
 /**
- * Reject multiple applications in one batch — used by the bulk-action toolbar
- * on a vacancy's Candidates tab. Same per-row behaviour as `rejectApplication`
- * (status update, rejection_reason_id + rejection_template_id stamped on the
- * row, candidate's general status synced, optional templated email sent), just
- * iterated. Each application is processed independently, so a failure on one
- * does not block the rest — the caller receives counts of {succeeded, failed}.
- *
- * Implementation note: applications are processed serially rather than in
- * parallel, because the candidate_statuses join inside `rejectApplication`
- * fans out a handful of DB reads per call. At typical batch sizes (5-30
- * applications) the serial latency is fine and we keep the request pattern
- * predictable. If batch sizes grow into the hundreds, this is the obvious
- * place to switch to a chunked Promise.all.
+ * Reject several applications at once — the bulk bar on the pipeline boards.
+ * Same per-application behaviour as `rejectApplication` (see
+ * `rejectApplicationsCore`), with emails sent in batches and one Slack/Teams
+ * summary instead of a message per candidate. Each application succeeds or
+ * fails on its own; the caller gets the counts.
  */
 export async function rejectApplicationsBatch(input: {
   applicationIds: string[]
@@ -234,33 +73,205 @@ export async function rejectApplicationsBatch(input: {
     return { success: false, error: 'No applications selected' }
   }
 
-  // De-duplicate the input — if the UI ever double-counts a selection, we
-  // shouldn't double-process the rejection.
-  const uniqueIds = Array.from(new Set(input.applicationIds))
-
-  let succeeded = 0
-  const failures: { id: string; error: string }[] = []
-
-  for (const applicationId of uniqueIds) {
-    const result = await rejectApplication({
-      applicationId,
-      statusId: input.statusId,
-      rejectionReasonId: input.rejectionReasonId,
-      templateId: input.templateId,
-      sendEmail: input.sendEmail,
-    })
-    if (result.success) {
-      succeeded++
-    } else {
-      failures.push({ id: applicationId, error: result.error })
-    }
-  }
-
-  // Each rejectApplication call already revalidates the relevant paths, so
-  // we don't add another revalidate here — that would just thrash the cache.
+  const outcome = await rejectApplicationsCore(ctx, {
+    applicationIds: input.applicationIds,
+    statusId: input.statusId,
+    rejectionReasonId: input.rejectionReasonId,
+    templateId: input.templateId,
+    sendEmail: input.sendEmail,
+    channelMessages: 'summary',
+  })
   return {
     success: true,
-    data: { succeeded, failed: failures.length, failures },
+    data: { succeeded: outcome.rejected.length, failed: outcome.failed.length, failures: outcome.failed },
   }
 }
 
+// ── Reject remaining candidates (closing a vacancy) ─────────────────────────
+
+export interface RemainingRejectionData {
+  vacancyTitle: string
+  /** Still in progress — rejected together (the recruiter can untick some). */
+  toReject: RemainingCandidate[]
+  /** At an Offer stage — listed, never rejected in bulk. */
+  atOffer: RemainingCandidate[]
+  reasons: { id: string; name: string }[]
+  templates: { id: string; name: string; subject: string; body: string; reason_id: string | null }[]
+  /** The canonical "rejected" application status id. */
+  rejectedStatusId: string | null
+}
+
+async function loadRemaining(
+  ctx: NonNullable<Awaited<ReturnType<typeof getAuthContext>>>,
+  vacancyId: string,
+): Promise<{ vacancyTitle: string; toReject: RemainingCandidate[]; atOffer: RemainingCandidate[] } | null> {
+  const [{ data: vacancy }, { data: appRows }] = await Promise.all([
+    ctx.supabase
+      .from('vacancies')
+      .select('id, title')
+      .eq('id', vacancyId)
+      .eq('organization_id', ctx.orgId)
+      .is('deleted_at', null)
+      .maybeSingle(),
+    ctx.supabase
+      .from('applications')
+      .select(
+        'id, candidate_id, candidates ( first_name, last_name, email ), pipeline_stages ( type, name, is_terminal, sort_order )',
+      )
+      .eq('vacancy_id', vacancyId)
+      .eq('organization_id', ctx.orgId)
+      .is('deleted_at', null),
+  ])
+  if (!vacancy) return null
+
+  type Row = {
+    id: string
+    candidate_id: string
+    candidates: { first_name: string; last_name: string; email: string | null } | { first_name: string; last_name: string; email: string | null }[] | null
+    pipeline_stages: RemainingApplicationRow['stage'] | NonNullable<RemainingApplicationRow['stage']>[]
+  }
+  const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v)
+  const rows: RemainingApplicationRow[] = ((appRows ?? []) as Row[]).map((r) => {
+    const candidate = one(r.candidates)
+    return {
+      applicationId: r.id,
+      candidateId: r.candidate_id,
+      candidateName: candidate ? `${candidate.first_name} ${candidate.last_name}`.trim() : '',
+      email: candidate?.email ?? null,
+      stage: one(r.pipeline_stages),
+    }
+  })
+  return { vacancyTitle: vacancy.title as string, ...splitRemaining(rows) }
+}
+
+/** Everything the "Reject remaining candidates" window shows. Owners/admins. */
+export async function getRemainingRejection(
+  vacancyId: string,
+): Promise<ActionResult<RemainingRejectionData>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
+  if (!isOrgAdmin(ctx.role)) return { success: false, error: 'Owners and admins only', code: 'FORBIDDEN' }
+
+  const remaining = await loadRemaining(ctx, vacancyId)
+  if (!remaining) return { success: false, error: 'Vacancy not found', code: 'NOT_FOUND' }
+
+  const [{ data: reasons }, { data: templates }, { data: rejectedStatus }, locale] = await Promise.all([
+    ctx.supabase
+      .from('rejection_reasons')
+      .select('id, name')
+      .eq('organization_id', ctx.orgId)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+    ctx.supabase
+      .from('rejection_templates')
+      .select('id, name, subject, body, reason_id')
+      .eq('organization_id', ctx.orgId)
+      .order('sort_order', { ascending: true }),
+    ctx.supabase.from('application_statuses').select('id').eq('code', 'rejected').maybeSingle(),
+    fetchOrgContentLocale(ctx.supabase, ctx.orgId),
+  ])
+
+  return {
+    success: true,
+    data: {
+      ...remaining,
+      reasons: (reasons ?? []) as RemainingRejectionData['reasons'],
+      // The untouched default ("General") template previews in the org's language.
+      templates: ((templates ?? []) as RemainingRejectionData['templates']).map((t) =>
+        localizeRejectionTemplateRow(t, locale),
+      ),
+      rejectedStatusId: (rejectedStatus?.id as string | undefined) ?? null,
+    },
+  }
+}
+
+/** How many candidates are still in progress — for the prompt after closing a
+ * vacancy. 0 for anyone who isn't an owner/admin (they can't act on it). */
+export async function countRemainingCandidates(vacancyId: string): Promise<number> {
+  const ctx = await getAuthContext()
+  if (!ctx || !isOrgAdmin(ctx.role)) return 0
+  const remaining = await loadRemaining(ctx, vacancyId)
+  return remaining?.toReject.length ?? 0
+}
+
+export type RemainingRejectionResult = Omit<RejectionOutcome, 'rejected' | 'failed'> & {
+  rejected: number
+  failed: number
+  /** Ticked candidates who were no longer in progress when confirmed. */
+  skipped: number
+}
+
+/**
+ * Rejects the ticked candidates who are still in progress for this vacancy.
+ * Anyone who moved to Offer, Hired or out of the pipeline since the window
+ * opened is skipped — the list is re-checked here, not trusted from the client.
+ */
+export async function rejectRemainingCandidates(input: {
+  vacancyId: string
+  applicationIds: string[]
+  rejectionReasonId: string | null
+  templateId: string | null
+  sendEmail: boolean
+}): Promise<ActionResult<RemainingRejectionResult>> {
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: 'Not authenticated', code: 'NOT_AUTHENTICATED' }
+  if (!isOrgAdmin(ctx.role)) return { success: false, error: 'Owners and admins only', code: 'FORBIDDEN' }
+  if (input.applicationIds.length === 0) {
+    return { success: false, error: 'No candidates selected', code: 'VALIDATION' }
+  }
+
+  const remaining = await loadRemaining(ctx, input.vacancyId)
+  if (!remaining) return { success: false, error: 'Vacancy not found', code: 'NOT_FOUND' }
+  const stillInProgress = new Set(remaining.toReject.map((c) => c.applicationId))
+  const requested = [...new Set(input.applicationIds)]
+  const applicationIds = requested.filter((id) => stillInProgress.has(id))
+
+  const { data: rejectedStatus } = await ctx.supabase
+    .from('application_statuses')
+    .select('id')
+    .eq('code', 'rejected')
+    .maybeSingle()
+  if (!rejectedStatus) return { success: false, error: 'Rejected status missing', code: 'DB_ERROR' }
+
+  const outcome = applicationIds.length
+    ? await rejectApplicationsCore(ctx, {
+        applicationIds,
+        statusId: rejectedStatus.id as string,
+        rejectionReasonId: input.rejectionReasonId,
+        templateId: input.templateId,
+        sendEmail: input.sendEmail,
+        channelMessages: 'summary',
+      })
+    : null
+
+  if (outcome && outcome.rejected.length > 0) {
+    void writeAuditLog({
+      orgId: ctx.orgId,
+      userId: ctx.userId,
+      entityType: 'vacancy',
+      entityId: input.vacancyId,
+      action: 'applications_bulk_rejected',
+      message: `Rejected ${outcome.rejected.length} remaining candidates`,
+      details: {
+        count: outcome.rejected.length,
+        rejection_reason_id: input.rejectionReasonId,
+        emails_sent: outcome.emailsSent,
+        interviews_cancelled: outcome.interviewsCancelled,
+      },
+    })
+  }
+
+  return {
+    success: true,
+    data: {
+      rejected: outcome?.rejected.length ?? 0,
+      failed: outcome?.failed.length ?? 0,
+      skipped: requested.length - applicationIds.length,
+      emailsSent: outcome?.emailsSent ?? 0,
+      emailsFailed: outcome?.emailsFailed ?? 0,
+      withoutEmail: outcome?.withoutEmail ?? 0,
+      interviewsCancelled: outcome?.interviewsCancelled ?? 0,
+      offersWithdrawn: outcome?.offersWithdrawn ?? 0,
+    },
+  }
+}

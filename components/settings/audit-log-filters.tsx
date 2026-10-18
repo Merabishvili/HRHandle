@@ -46,6 +46,7 @@ const ACTION_TYPES = [
   'ai_assist',
   'ai_fit_invoked',
   'application_withdrawn',
+  'applications_bulk_rejected',
   'billing_checkout_started',
   'billing_refunded',
   'billing_subscription_canceled',

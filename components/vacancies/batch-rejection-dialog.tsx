@@ -59,7 +59,7 @@ export function BatchRejectionDialog({
   const tr = useTranslations()
   const [reasonId, setReasonId] = useState<string>(reasons[0]?.id ?? '')
   const [templateId, setTemplateId] = useState<string>(NO_TEMPLATE)
-  const [sendEmail, setSendEmail] = useState(true)
+  const [sendEmail, setSendEmail] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   // When dialog opens, reset to defaults so a previous use of the dialog
@@ -70,7 +70,7 @@ export function BatchRejectionDialog({
       setReasonId(firstReason)
       const linked = templates.find((t) => t.reason_id === firstReason)
       setTemplateId(linked?.id ?? (templates[0]?.id ?? NO_TEMPLATE))
-      setSendEmail(true)
+      setSendEmail(false)
     }
   }, [open, reasons, templates])
 

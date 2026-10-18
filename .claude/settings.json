@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git fetch*)",
+      "Bash(git pull*)",
+      "Bash(npm run lint*)",
+      "Bash(npm run test*)",
+      "Bash(npm run build*)",
+      "Bash(npm test*)",
+      "Bash(npx vitest*)",
+      "Bash(gh pr list*)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr checks*)",
+      "Bash(gh pr diff*)",
+      "Bash(gh run list*)",
+      "Bash(gh run view*)",
+      "Bash(gh issue list*)",
+      "Bash(gh issue view*)",
+      "Bash(vercel ls*)",
+      "Bash(vercel list*)",
+      "Bash(vercel inspect*)",
+      "Bash(vercel logs*)",
+      "Bash(supabase migration list*)",
+      "Bash(supabase --version)"
+    ],
+    "deny": [
+      "Bash(git push origin main*)",
+      "Bash(git push * main)",
+      "Bash(git push * HEAD:main*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(gh pr merge*)",
+      "Bash(vercel --prod*)",
+      "Bash(vercel deploy --prod*)",
+      "Bash(vercel promote*)",
+      "Bash(vercel env rm*)",
+      "Bash(supabase db reset*)",
+      "Read(./.env.local)",
+      "Read(./.env.production*)"
+    ]
+  },
+  "enabledMcpjsonServers": ["supabase-staging", "vercel", "sentry"]
+}

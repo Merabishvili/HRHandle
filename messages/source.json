@@ -13528,5 +13528,135 @@
     "en": "We couldn't find this jobs page. Check the address, or ask the company for the current link.",
     "ru": "Мы не нашли эту страницу вакансий. Проверьте адрес или попросите у компании актуальную ссылку.",
     "ka": "ვაკანსიების ეს გვერდი ვერ მოიძებნა. შეამოწმეთ მისამართი ან სთხოვეთ კომპანიას მოქმედი ბმული."
+  },
+  "auditAction.applications_bulk_rejected": {
+    "en": "Remaining candidates rejected",
+    "ru": "Оставшиеся кандидаты отклонены",
+    "ka": "დარჩენილი კანდიდატები უარყოფილია"
+  },
+  "auditMsg.bulkRejected": {
+    "en": "{count, plural, one {Rejected # remaining candidate} other {Rejected # remaining candidates}}",
+    "ru": "{count, plural, one {Отклонён # оставшийся кандидат} few {Отклонены # оставшихся кандидата} many {Отклонены # оставшихся кандидатов} other {Отклонены # оставшихся кандидата}}",
+    "ka": "უარყოფილია დარჩენილი {count} კანდიდატი"
+  },
+  "rejectRemaining.menuItem": {
+    "en": "Reject remaining candidates",
+    "ru": "Отклонить оставшихся кандидатов",
+    "ka": "დარჩენილი კანდიდატების უარყოფა"
+  },
+  "rejectRemaining.title": {
+    "en": "Reject remaining candidates",
+    "ru": "Отклонить оставшихся кандидатов",
+    "ka": "დარჩენილი კანდიდატების უარყოფა"
+  },
+  "rejectRemaining.titleAfterClose": {
+    "en": "Vacancy closed — reject the remaining candidates?",
+    "ru": "Вакансия закрыта — отклонить оставшихся кандидатов?",
+    "ka": "ვაკანსია დაიხურა — უარვყოთ დარჩენილი კანდიდატები?"
+  },
+  "rejectRemaining.intro": {
+    "en": "{count, plural, one {# candidate is} other {# candidates are}} still in progress for {title}. They'll move to Rejected.",
+    "ru": "{count, plural, one {# кандидат ещё в процессе} few {# кандидата ещё в процессе} many {# кандидатов ещё в процессе} other {# кандидата ещё в процессе}} по вакансии «{title}». Они перейдут на этап «Отклонён».",
+    "ka": "ვაკანსიაზე „{title}“ პროცესში ჯერ კიდევ {count} კანდიდატია. ისინი გადავლენ ეტაპზე „უარყოფილი“."
+  },
+  "rejectRemaining.none": {
+    "en": "No candidates are in progress for this vacancy.",
+    "ru": "По этой вакансии нет кандидатов в процессе.",
+    "ka": "ამ ვაკანსიაზე პროცესში კანდიდატები არ არიან."
+  },
+  "rejectRemaining.loading": {
+    "en": "Loading candidates…",
+    "ru": "Загрузка кандидатов…",
+    "ka": "კანდიდატები იტვირთება…"
+  },
+  "rejectRemaining.loadFailed": {
+    "en": "Couldn't load the candidates. Close the window and try again.",
+    "ru": "Не удалось загрузить кандидатов. Закройте окно и попробуйте снова.",
+    "ka": "კანდიდატების ჩატვირთვა ვერ მოხერხდა. დახურეთ ფანჯარა და სცადეთ ხელახლა."
+  },
+  "rejectRemaining.candidates": {
+    "en": "Candidates",
+    "ru": "Кандидаты",
+    "ka": "კანდიდატები"
+  },
+  "rejectRemaining.untickHint": {
+    "en": "Untick anyone you want to keep in the pipeline.",
+    "ru": "Снимите отметку с тех, кого хотите оставить в пайплайне.",
+    "ka": "მოხსენით მონიშვნა მათ, ვისი დატოვებაც გსურთ პაიპლაინში."
+  },
+  "rejectRemaining.notIncluded": {
+    "en": "Not included",
+    "ru": "Не входят",
+    "ka": "არ შედის"
+  },
+  "rejectRemaining.atOffer": {
+    "en": "At the Offer stage — decide one by one: {names}",
+    "ru": "На этапе «Оффер» — решите по каждому отдельно: {names}",
+    "ka": "ეტაპზე „შეთავაზება“ — გადაწყვიტეთ თითოეულზე ცალ-ცალკე: {names}"
+  },
+  "rejectRemaining.finalNote": {
+    "en": "Hired, rejected and withdrawn candidates are never changed.",
+    "ru": "Нанятые, отклонённые и отозвавшие отклик кандидаты не меняются.",
+    "ka": "დაქირავებული, უარყოფილი და გაწვეული კანდიდატები არ იცვლება."
+  },
+  "rejectRemaining.noEmail": {
+    "en": "{count, plural, one {# candidate has} other {# candidates have}} no email address and won't get an email.",
+    "ru": "{count, plural, one {У # кандидата нет} few {У # кандидатов нет} many {У # кандидатов нет} other {У # кандидата нет}} адреса email — письмо им не придёт.",
+    "ka": "{count} კანდიდატს არ აქვს ელფოსტის მისამართი და წერილს ვერ მიიღებს."
+  },
+  "rejectRemaining.notNow": {
+    "en": "Not now",
+    "ru": "Не сейчас",
+    "ka": "ახლა არა"
+  },
+  "rejectRemaining.failed": {
+    "en": "Couldn't reject the candidates. Try again.",
+    "ru": "Не удалось отклонить кандидатов. Попробуйте ещё раз.",
+    "ka": "კანდიდატების უარყოფა ვერ მოხერხდა. სცადეთ ხელახლა."
+  },
+  "rejectRemaining.doneRejected": {
+    "en": "{count, plural, one {# candidate rejected} other {# candidates rejected}}",
+    "ru": "{count, plural, one {Отклонён # кандидат} few {Отклонены # кандидата} many {Отклонены # кандидатов} other {Отклонены # кандидата}}",
+    "ka": "უარყოფილია {count} კანდიდატი"
+  },
+  "rejectRemaining.doneEmails": {
+    "en": "{count, plural, one {# email sent} other {# emails sent}}",
+    "ru": "{count, plural, one {отправлено # письмо} few {отправлено # письма} many {отправлено # писем} other {отправлено # письма}}",
+    "ka": "გაიგზავნა {count} წერილი"
+  },
+  "rejectRemaining.doneInterviews": {
+    "en": "{count, plural, one {# interview cancelled} other {# interviews cancelled}}",
+    "ru": "{count, plural, one {отменено # собеседование} few {отменено # собеседования} many {отменено # собеседований} other {отменено # собеседования}}",
+    "ka": "გაუქმდა {count} გასაუბრება"
+  },
+  "rejectRemaining.emailsFailed": {
+    "en": "{count, plural, one {# email couldn't be sent} other {# emails couldn't be sent}}.",
+    "ru": "{count, plural, one {# письмо не удалось отправить} few {# письма не удалось отправить} many {# писем не удалось отправить} other {# письма не удалось отправить}}.",
+    "ka": "{count} წერილის გაგზავნა ვერ მოხერხდა."
+  },
+  "rejectRemaining.someFailed": {
+    "en": "{count, plural, one {# candidate couldn't be rejected} other {# candidates couldn't be rejected}} — try them one by one.",
+    "ru": "{count, plural, one {# кандидата не удалось отклонить} few {# кандидатов не удалось отклонить} many {# кандидатов не удалось отклонить} other {# кандидата не удалось отклонить}} — попробуйте по одному.",
+    "ka": "{count} კანდიდატის უარყოფა ვერ მოხერხდა — სცადეთ ცალ-ცალკე."
+  },
+  "rejectRemaining.skipped": {
+    "en": "{count, plural, one {# candidate was} other {# candidates were}} left as is — they had already moved to another stage.",
+    "ru": "{count, plural, one {# кандидат оставлен} few {# кандидата оставлены} many {# кандидатов оставлены} other {# кандидата оставлены}} без изменений — они уже перешли на другой этап.",
+    "ka": "{count} კანდიდატი უცვლელი დარჩა — ისინი უკვე სხვა ეტაპზე გადავიდნენ."
+  },
+  "rejectRemaining.closedToast": {
+    "en": "Vacancy closed. {count, plural, one {# candidate is} other {# candidates are}} still in progress.",
+    "ru": "Вакансия закрыта. {count, plural, one {# кандидат ещё в процессе} few {# кандидата ещё в процессе} many {# кандидатов ещё в процессе} other {# кандидата ещё в процессе}}.",
+    "ka": "ვაკანსია დაიხურა. პროცესში ჯერ კიდევ {count} კანდიდატია."
+  },
+  "vacOverview.closedRemaining": {
+    "en": "The vacancy is closed, but <b>{count, plural, one {# candidate is} other {# candidates are}} still in progress</b>",
+    "ru": "Вакансия закрыта, но <b>{count, plural, one {# кандидат ещё в процессе} few {# кандидата ещё в процессе} many {# кандидатов ещё в процессе} other {# кандидата ещё в процессе}}</b>",
+    "ka": "ვაკანსია დახურულია, მაგრამ <b>პროცესში ჯერ კიდევ {count} კანდიდატია</b>"
+  },
+  "vacOverview.rejectRemaining": {
+    "en": "Reject remaining",
+    "ru": "Отклонить оставшихся",
+    "ka": "დარჩენილების უარყოფა"
   }
 }

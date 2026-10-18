@@ -101,6 +101,11 @@ export function auditMessage(t: Translator, row: AuditLogRow): string {
       return t('auditMsg.candidatesImported', { count })
     }
 
+    case 'applications_bulk_rejected': {
+      const count = typeof d.count === 'number' ? d.count : 0
+      return t('auditMsg.bulkRejected', { count })
+    }
+
     case 'application_withdrawn': {
       const reason = str(d.reason)
       return reason

@@ -55,9 +55,10 @@ The `getResend()` helper in `lib/email.ts` throws `Error('RESEND_API_KEY is not 
 **Variables available:** `candidate_name`, `role`, `company`
 **Content:** Confirmation message, reply-not instructions
 
-### 4. Application Rejection (`sendApplicationRejectionEmail`)
+### 4. Application Rejection (`sendApplicationRejectionEmails`)
 
-**Trigger:** `rejectApplication()` in `lib/actions/applications.ts`
+**Trigger:** every rejection — single, board selection, "Reject remaining candidates" — through `rejectApplicationsCore` (`lib/applications/reject-core.ts`), when "Send rejection email" is on (off by default).
+**Sending:** `sendApplicationRejectionEmails` (`lib/email.ts`) uses Resend's **batch** endpoint — up to 100 emails per request with `batchValidation: 'permissive'` — so a whole vacancy's rejections stay inside the API rate limit, and failures are counted per email and reported back to the recruiter (they used to be swallowed). `buildApplicationRejectionEmail` renders one email; `sendApplicationRejectionEmail` (single send) still exists.
 **From:** `{senderName} <noreply@hrhandle.com>` (Reply-To: `senderEmail`)
 **To:** Candidate's email
 **Subject:** From custom override, stored rejection template, or default `An update from {{company}} — {{role}}`
@@ -92,7 +93,7 @@ Built-in fallback templates for all three email types:
 |---|---|---|
 | `application_received` | `You applied for {{role}} at {{company}}` | "We have received your details and will review them shortly..." |
 | `interview_invitation` | `Interview Invitation — {{role}} at {{company}}` | "You have been invited to an interview for the {{role}} position..." |
-| `rejection` | `An update from {{company}} — {{role}}` | "After careful consideration, we have decided to move forward with other candidates..." |
+| `rejection` | `An update from {{company}} — {{role}}` | "Thank you for your interest in the {{role}} role at {{company}}… Unfortunately, we won't be moving forward with your application for this role…" (neutral since 2026-10-18 so it also fits a closed vacancy; the previous wording is still recognized as the untouched default via `PREVIOUS_DEFAULTS` in `lib/email-template-utils.ts`) |
 
 ### `resolveTemplate(saved, type)`
 

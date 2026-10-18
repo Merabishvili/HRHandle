@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Loader2, ChevronDown } from 'lucide-react'
 import { updateVacancyStatus } from '@/lib/actions/vacancies'
+import { countRemainingCandidates } from '@/lib/actions/applications'
 import { VACANCY_STATUS_COLORS } from '@/lib/types/vacancy'
 import {
   DropdownMenu,
@@ -29,6 +30,8 @@ interface VacancyStatusSelectProps {
 
 export function VacancyStatusSelect({ vacancyId, current, options }: VacancyStatusSelectProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const t = useTranslations()
   const [isPending, setIsPending] = useState(false)
   const [activeStatus, setActiveStatus] = useState(current)
@@ -45,6 +48,15 @@ export function VacancyStatusSelect({ vacancyId, current, options }: VacancyStat
     const result = await updateVacancyStatus(vacancyId, option.id)
     if (!result.success) {
       setActiveStatus(current)
+    } else if (
+      (option.code === 'closed' || option.code === 'archived') &&
+      (await countRemainingCandidates(vacancyId)) > 0
+    ) {
+      // Candidates are still in progress: open "Reject remaining candidates"
+      // (owners/admins — the count is 0 for everyone else).
+      const next = new URLSearchParams(searchParams.toString())
+      next.set('rejectRemaining', 'closed')
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false })
     } else {
       router.refresh()
     }

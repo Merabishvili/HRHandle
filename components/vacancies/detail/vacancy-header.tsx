@@ -18,6 +18,8 @@ interface VacancyHeaderProps {
     endDate: string | null
   }
   applicationFormToken: string | null
+  /** Owners/admins get "Reject remaining candidates" in the ⋯ menu. */
+  canRejectRemaining?: boolean
 }
 
 /**
@@ -39,6 +41,7 @@ export async function VacancyHeader({
   status,
   meta,
   applicationFormToken,
+  canRejectRemaining = false,
 }: VacancyHeaderProps) {
   const t = await getTranslations()
   return (
@@ -99,7 +102,7 @@ export async function VacancyHeader({
               {t('vacHeader.viewPipeline')}
             </Link>
           </Button>
-          <VacancyActionsMenu vacancyId={vacancyId} title={title} />
+          <VacancyActionsMenu vacancyId={vacancyId} title={title} canRejectRemaining={canRejectRemaining} />
         </div>
       </div>
     </header>

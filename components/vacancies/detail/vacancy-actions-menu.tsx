@@ -16,7 +16,8 @@ import { DuplicateVacancyButton } from '@/components/vacancies/duplicate-vacancy
 import { DeleteVacancyButton } from '@/components/vacancies/delete-vacancy-button'
 
 /**
- * The ⋯ actions menu (Edit / Duplicate / Delete) for the vacancy header.
+ * The ⋯ actions menu (Edit / Reject remaining candidates / Duplicate /
+ * Delete) for the vacancy header.
  * Split into its own client component because the header
  * (`VacancyHeader`) is an async server component, and `DropdownMenuItem`'s
  * `onSelect` handler is an event handler that can't be passed across the
@@ -27,9 +28,12 @@ import { DeleteVacancyButton } from '@/components/vacancies/delete-vacancy-butto
 export function VacancyActionsMenu({
   vacancyId,
   title,
+  canRejectRemaining = false,
 }: {
   vacancyId: string
   title: string
+  /** Owners/admins: "Reject remaining candidates" (opens via the page URL). */
+  canRejectRemaining?: boolean
 }) {
   const t = useTranslations()
   return (
@@ -44,10 +48,17 @@ export function VacancyActionsMenu({
           <MoreHorizontal className="h-4 w-4" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuItem asChild>
           <Link href={`/vacancies/${vacancyId}/edit`}>{t('vacancies.editVacancy')}</Link>
         </DropdownMenuItem>
+        {canRejectRemaining && (
+          <DropdownMenuItem asChild>
+            <Link href={`/vacancies/${vacancyId}?rejectRemaining=1`} scroll={false}>
+              {t('rejectRemaining.menuItem')}
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         {/* preventDefault keeps the menu open so the nested button's own click
             reliably fires (and its loading/error state is visible). The buttons
