@@ -71,6 +71,7 @@ export const GUIDES: readonly GuideMeta[] = [
   { slug: 'reports', id: 'reports', category: 'ai-and-reports', order: 220 },
 
   { slug: 'integrations', id: 'integrations', category: 'administration', order: 230 },
+  { slug: 'zoom', id: 'zoom', category: 'administration', order: 235 },
   { slug: 'custom-fields', id: 'customFields', category: 'administration', order: 240 },
   { slug: 'audit-log-and-trash', id: 'auditTrash', category: 'administration', order: 250 },
   { slug: 'billing', id: 'billing', category: 'administration', order: 260 },
