@@ -1721,6 +1721,15 @@
     "title": "Связаться с поддержкой",
     "subtitle": "Отправьте нам сообщение — мы ответим на почту вашего аккаунта.",
     "publicSubtitle": "Есть вопрос или проблема? Напишите нам, и мы ответим по электронной почте.",
+    "help": {
+      "title": "Как мы помогаем",
+      "hours": "Часы работы поддержки: понедельник–пятница, 10:00–18:00 по времени Грузии (UTC+4).",
+      "response": "Первый ответ: в течение двух рабочих дней.",
+      "email": "Почта: <email>support@hrhandle.com</email>",
+      "form": "Создать обращение: воспользуйтесь формой ниже.",
+      "guide": "База знаний: <link>руководство HRHandle</link>",
+      "zoom": "Приложение Zoom: <link>установка, использование и удаление</link>"
+    },
     "backHome": "Назад в HRHandle",
     "emailLabel": "Ваш email",
     "emailPlaceholder": "you@example.com",
@@ -2735,6 +2744,10 @@
       "integrations": {
         "title": "Интеграции",
         "summary": "Подключите Google, Microsoft, Zoom, Calendly, LinkedIn, Slack и Teams."
+      },
+      "zoom": {
+        "title": "Приложение Zoom",
+        "summary": "Как установить, использовать и удалить приложение HRHandle для Zoom и к чему у него есть доступ."
       },
       "customFields": {
         "title": "Пользовательские поля",

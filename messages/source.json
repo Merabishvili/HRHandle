@@ -7114,6 +7114,41 @@
     "ru": "Есть вопрос или проблема? Напишите нам, и мы ответим по электронной почте.",
     "ka": "გაქვთ შეკითხვა ან პრობლემა? მოგვწერეთ და ჩვენ ელფოსტით გიპასუხებთ."
   },
+  "support.help.title": {
+    "en": "How we help",
+    "ru": "Как мы помогаем",
+    "ka": "როგორ გეხმარებით"
+  },
+  "support.help.hours": {
+    "en": "Support hours: Monday to Friday, 10:00–18:00 Georgia time (UTC+4).",
+    "ru": "Часы работы поддержки: понедельник–пятница, 10:00–18:00 по времени Грузии (UTC+4).",
+    "ka": "მხარდაჭერის საათები: ორშაბათი–პარასკევი, 10:00–18:00 საქართველოს დროით (UTC+4)."
+  },
+  "support.help.response": {
+    "en": "First response: within two business days.",
+    "ru": "Первый ответ: в течение двух рабочих дней.",
+    "ka": "პირველი პასუხი: ორი სამუშაო დღის განმავლობაში."
+  },
+  "support.help.email": {
+    "en": "Email: <email>support@hrhandle.com</email>",
+    "ru": "Почта: <email>support@hrhandle.com</email>",
+    "ka": "ელფოსტა: <email>support@hrhandle.com</email>"
+  },
+  "support.help.form": {
+    "en": "Open a support case: use the form below.",
+    "ru": "Создать обращение: воспользуйтесь формой ниже.",
+    "ka": "მიმართვის გაგზავნა: გამოიყენეთ ქვემოთ მოცემული ფორმა."
+  },
+  "support.help.guide": {
+    "en": "Knowledge base: <link>the HRHandle guide</link>",
+    "ru": "База знаний: <link>руководство HRHandle</link>",
+    "ka": "ცოდნის ბაზა: <link>HRHandle-ის გზამკვლევი</link>"
+  },
+  "support.help.zoom": {
+    "en": "Zoom app: <link>add, use and remove the app</link>",
+    "ru": "Приложение Zoom: <link>установка, использование и удаление</link>",
+    "ka": "Zoom-ის აპლიკაცია: <link>დამატება, გამოყენება და წაშლა</link>"
+  },
   "support.backHome": {
     "en": "Back to HRHandle",
     "ru": "Назад в HRHandle",
@@ -11213,6 +11248,16 @@
     "en": "Connect Google, Microsoft, Zoom, Calendly, LinkedIn, Slack and Teams.",
     "ru": "Подключите Google, Microsoft, Zoom, Calendly, LinkedIn, Slack и Teams.",
     "ka": "დააკავშირეთ Google, Microsoft, Zoom, Calendly, LinkedIn, Slack და Teams."
+  },
+  "guide.topic.zoom.title": {
+    "en": "Zoom app",
+    "ru": "Приложение Zoom",
+    "ka": "Zoom-ის აპლიკაცია"
+  },
+  "guide.topic.zoom.summary": {
+    "en": "Add, use and remove the HRHandle app for Zoom, and what it can access.",
+    "ru": "Как установить, использовать и удалить приложение HRHandle для Zoom и к чему у него есть доступ.",
+    "ka": "HRHandle-ის Zoom-ის აპლიკაციის დამატება, გამოყენება და წაშლა, და რაზე აქვს მას წვდომა."
   },
   "guide.topic.customFields.title": {
     "en": "Custom fields",

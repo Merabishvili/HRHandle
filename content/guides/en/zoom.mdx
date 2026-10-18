@@ -1,0 +1,66 @@
+---
+updated: 2026-10-18
+---
+
+The HRHandle app for Zoom creates a Zoom meeting for every video interview you schedule in HRHandle and puts its join link on the interview and in the candidate's invitation. Each person connects their own Zoom account, and the meetings are created on that account.
+
+## Before you start
+
+- An HRHandle account. Any plan works, including the free trial. Sign up at [hrhandle.com](https://hrhandle.com).
+- A Zoom account. Any plan works, including Zoom Basic.
+
+## Add the app
+
+1. Sign in to HRHandle and open **Settings → Integrations**.
+2. Next to **Zoom**, click **Connect Zoom**.
+3. Zoom opens. Sign in to the Zoom account you want to use, review what HRHandle asks for and click **Allow**.
+4. You're taken back to **Settings → Integrations** with the message **Zoom connected successfully.** Zoom now shows as connected.
+
+If it doesn't connect, see **Troubleshooting** below.
+
+## Use the app
+
+1. Open **Interviews** and click **Schedule interview**, or click **Schedule** under **Actions** on a candidate's profile.
+2. Choose the candidate and the vacancy, and set **Interview type** to **Video**.
+3. Pick the **Date**, **Time**, **Duration** and **Interviewer**.
+4. Under the meeting link, choose **Auto Zoom**.
+5. Tick **Email candidate** if the candidate should get an invitation, then click **Schedule**.
+
+HRHandle creates a scheduled Zoom meeting on your Zoom account, named "Interview: candidate name — vacancy". The join link appears on the interview, and **Join** opens it. The candidate's invitation contains the same link. The meeting also shows in your Zoom app and on zoom.us under **Meetings**.
+
+When you cancel the interview in HRHandle (**⋯ → Cancel interview** on the **Interviews** page), HRHandle deletes the Zoom meeting it created.
+
+If you have connected more than one meeting provider, **Default for video interviews** in **Settings → Integrations** decides which one is offered first. More on scheduling: [Schedule interviews](/guide/schedule-interview).
+
+## What HRHandle can access
+
+- **Create and delete meetings** on your Zoom account, only when you schedule or cancel an interview with **Auto Zoom**.
+- **Your Zoom user ID**, so HRHandle can find your connection and delete it if you remove the app from Zoom.
+
+HRHandle does not read your other meetings, recordings, chats or contacts. It stores only the access tokens Zoom issues and your Zoom user ID. See the [Privacy Policy](/privacy).
+
+## Remove the app
+
+You can remove the app from either side:
+
+- **From HRHandle:** open **Settings → Integrations** and click **Disconnect** next to Zoom. HRHandle revokes its access with Zoom and deletes the stored tokens.
+- **From Zoom:** sign in to the [Zoom App Marketplace](https://marketplace.zoom.us), click **Manage → Added Apps**, find **HRHandle** and click **Remove**. Zoom tells HRHandle, which immediately deletes your Zoom tokens and Zoom user ID.
+
+What happens after removal:
+
+- HRHandle can no longer create or delete Zoom meetings for you. When you schedule a video interview, choose **Manual** and paste a link, or use another connected provider.
+- Zoom meetings that were already created stay in your Zoom account, and existing interviews keep their join links.
+- Your other HRHandle data (candidates, vacancies, interviews) is not affected.
+
+You can connect again at any time with **Connect Zoom**.
+
+## Troubleshooting
+
+- **"Failed to connect Zoom. Please try again."** — make sure you're signed in to the right Zoom account in this browser, then click **Connect Zoom** again. If your Zoom account is managed by your company, your Zoom admin may need to allow the app.
+- **"Zoom OAuth credentials are not configured on the server"** — this is on our side; contact support.
+- **No Auto Zoom option** — the **Interview type** must be **Video**, and Zoom must show as connected in **Settings → Integrations**.
+- **The meeting wasn't created** — your connection may have expired or been removed in Zoom. Click **Disconnect**, then **Connect Zoom** again, and reschedule the interview.
+
+## Get help
+
+Email [support@hrhandle.com](mailto:support@hrhandle.com) or use the [support form](/support). We answer Monday to Friday, 10:00–18:00 Georgia time (UTC+4), and reply within two business days.

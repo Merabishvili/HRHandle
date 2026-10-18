@@ -1,12 +1,13 @@
 # Zoom Integration
 
-_Last updated: 2026-08-20_
+_Last updated: 2026-10-18_
 
 ## Changelog
 
+- 🆕 2026-10-18 — **Marketplace review fixes** (functional review returned 2026-08-25 with 7 notes): public end-user docs at **`/guide/zoom`** (EN/KA/RU: add, use, remove, data, troubleshooting) = the app's **Documentation URL**; `/support` now lists hours, first-response time and channels = the **Support URL**; reviewer test plan in `docs/4-integrations/zoom-test-plan.md`; Dev/Prod credentials split documented below. Corrected the stale note below: cancelling an interview **does** delete the Zoom meeting (since 2026-05-23, BL-010), which needs the `meeting:delete:meeting` scope.
 - 🆕 2026-08-20 — **deauthorization webhook** for Marketplace publishing: `POST /api/webhooks/zoom/deauthorization` (CRC + signature + data-compliance), `profiles.zoom_user_id` mapping (migration `20260820_zoom_user_id.sql`), `ZOOM_SECRET_TOKEN` env var. Plus a publishing checklist.
 - 🆕 2026-08-20 — documented the **redirect-URI registration** on the Zoom Marketplace app (fixes `Invalid redirect … (4,700)`). No code change; the redirect URI was always correct — it just wasn't in the app's OAuth allow list.
-- 🔄 No code changes. Note: there is still no Zoom-meeting deletion when an interview is cancelled (Google Calendar **does** delete events) — tracked as `BL-zoom-cleanup`.
+- 🔄 No code changes. ~~Note: there is still no Zoom-meeting deletion when an interview is cancelled~~ — outdated: fixed 2026-05-23 (BL-010), see *Deleting Zoom meetings*.
 
 ---
 
@@ -49,7 +50,9 @@ To disconnect: `POST /api/auth/zoom/disconnect` calls Zoom's OAuth revoke endpoi
 - Returns `{ joinUrl: string, meetingId: string }` or `null` on failure
 - `joinUrl` is stored in `interviews.meeting_link`
 
-Note: No meeting deletion when an interview is cancelled (unlike Google Calendar). The Zoom meeting remains active.
+## Deleting Zoom meetings
+
+When an interview is cancelled, `updateInterviewStatus(_, 'cancelled')` (`lib/actions/interviews.ts`) recovers the meeting ID from the stored join URL (`parseZoomMeetingIdFromJoinUrl`) and calls `deleteZoomMeeting` (`DELETE /v2/meetings/{id}`, best-effort; 404 counts as success). Requires the `meeting:delete:meeting` scope.
 
 ## When Zoom Meeting Is Created
 
@@ -109,10 +112,18 @@ Notification → Endpoint URL**: `https://hrhandle.com/api/webhooks/zoom/deautho
 
 ## Publishing checklist (Zoom Marketplace)
 
-- **Scopes:** two, both minimal:
+- **Scopes:** three, all minimal:
   - `meeting:write:meeting` — create a meeting for the authorized user (`POST /v2/users/me/meetings`).
+  - `meeting:delete:meeting` — delete that meeting when the interview is cancelled (`DELETE /v2/meetings/{id}`). Without it the cancel cleanup fails silently and Zoom's reviewers see an API call outside the declared scopes.
   - `user:read:user` — read the connected user's own id (`GET /v2/users/me`) so a deauthorization event can be mapped back to their profile (`zoom_user_id`) and their data deleted.
-- **OAuth Redirect URL + Allow List:** `https://hrhandle.com/api/auth/zoom/callback` (+ `staging`, `localhost`). Apex `hrhandle.com` (matches `NEXT_PUBLIC_SITE_URL`).
+- **OAuth Redirect URL — separate per tab** (reviewer asked for it; no localhost on either):
+  - **Development** tab → `https://staging.hrhandle.com/api/auth/zoom/callback`; its client ID/secret are the **Preview** (staging) Vercel `ZOOM_CLIENT_ID`/`ZOOM_CLIENT_SECRET`.
+  - **Production** tab → `https://hrhandle.com/api/auth/zoom/callback`; its client ID/secret are the **Production** Vercel vars. Reviewers refuse to test if production authorizes with the Development client ID.
+- **Documentation URL:** `https://hrhandle.com/guide/zoom` (content in `content/guides/{en,ka,ru}/zoom.mdx`). Keep it in sync with scopes and the remove flow.
+- **Support URL:** `https://hrhandle.com/support` — must show hours, first-response time and channels (`support.help.*` messages).
+- **Developer contact:** a person's name + a company-domain email (`support@hrhandle.com`), not Gmail.
+- **Zoom account:** "Free with Credit Card" (a plain free account blocks review).
+- **Test credentials + test plan:** two HRHandle accounts (admin + member, one org, active plan, sample data, MFA off) and the plan in `zoom-test-plan.md`, published as a shared doc and linked in **Release Notes** on every (re)submission.
 - **Deauthorization endpoint:** the webhook above + `ZOOM_SECRET_TOKEN` set on Vercel.
 - **App Listing:** name, short/long description, icon, screenshots, **Privacy Policy** `https://hrhandle.com/privacy`, **Terms** `https://hrhandle.com/terms`, support contact.
 - **Dev vs Prod:** an **unpublished** app only authorizes the owner + test users; real customers can connect only **after** the app passes Functional + Security review and is published.
@@ -125,9 +136,11 @@ The redirect URI the app sends is built from `NEXT_PUBLIC_SITE_URL`:
 authorize step and returns **error 4700 `Invalid redirect: …`** on any URI that
 isn't registered **exactly** (scheme + host + path, no trailing slash).
 
-**Register all three** on the Zoom app (Zoom Marketplace → your app → **OAuth
-Information**): set **Redirect URL for OAuth** to the production URI and add every
-environment to the **OAuth Allow List**:
+Register each environment on its own tab (Zoom Marketplace → your app →
+**OAuth Information**). Staging authorizes with the Development credentials,
+production with the Production ones. Local dev uses the Development credentials
+too and needs `http://localhost:3000/...` on the Development allow list only while
+you test locally — Zoom's reviewers ask that submitted URLs are not localhost:
 
 - `https://hrhandle.com/api/auth/zoom/callback` — production
 - `https://staging.hrhandle.com/api/auth/zoom/callback` — staging
