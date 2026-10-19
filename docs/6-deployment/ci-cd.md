@@ -16,7 +16,7 @@ _Last updated: 2026-07-20_
 
 ## GitHub Actions CI (`.github/workflows/ci.yml`)
 
-Triggers: `push` and `pull_request` on `main` and `staging`. Node.js `20`, npm cache. Two jobs:
+Triggers: `push` and `pull_request` on `main` and `staging`. Node.js `24`, npm cache. Two jobs:
 
 1. **`lint-and-test` (Lint & Test)** — `npm ci` → `npm run lint` → `npm run test` (Vitest). A lint error or a failing test fails the job.
 2. **`build` (Build check)** — `needs: lint-and-test`. `npm ci` → `npm run build`. Runs with **placeholder** Supabase env vars (falls back to `https://placeholder.supabase.co` / placeholder keys when the repo secrets aren't set) and `NEXT_PUBLIC_SITE_URL=https://hrhandle.com`, so the build validates without real secrets.
