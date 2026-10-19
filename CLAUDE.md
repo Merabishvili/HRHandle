@@ -117,7 +117,7 @@ Full detail in `docs/claude-code-workflow.md`. Summary:
 
 **Every change touches four things: code, docs, tests, and a ripple-check.**
 
-**Skills and agents:** use the skills in `.claude/skills/` (`release-to-production`, `db-migration`, `trilingual-change`, `incident-triage`) for those tasks, and run the review agents in `.claude/agents/` (`security-reviewer`, `i18n-checker`, `docs-sync`) on a diff before pushing. Index: `docs/claude-code-workflow.md`.
+**Skills and agents:** use the skills in `.claude/skills/` (`release-to-production`, `db-migration`, `trilingual-change`, `incident-triage`) for those tasks, and run the review agents in `.claude/agents/` (`security-reviewer`, `i18n-checker`, `docs-sync`) on a diff before pushing. Safety hooks in `.claude/hooks/` ask before production-touching commands, check EN/KA/RU after message edits, and remind about docs at the end of a task. Index: `docs/claude-code-workflow.md`.
 
 ## What's left to build
 

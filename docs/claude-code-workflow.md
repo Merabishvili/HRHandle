@@ -277,3 +277,16 @@ Read-only review agents in `.claude/agents/` run before a push (Phase 5 of this 
 | `docs-sync` | The code → docs → tests → ripple-check rule above |
 
 Shared project facts (release state, connector IDs, glossary, decisions) are in the Claude project's knowledge base, `/mnt/project-files/kb/`.
+
+### Safety hooks
+
+`.claude/settings.json` wires these scripts from `.claude/hooks/` (Claude Code runs them automatically; review or disable with `/hooks`):
+
+| Hook | When | What it does |
+|---|---|---|
+| `session-start.sh` | Session start (cloud only) | `npm ci` so lint, tests and build work |
+| `guard-production.mjs` | Before a Bash or Supabase MCP call | Asks first if the call names the production project (`fnpyfwhvgzoxgyjafbsg`), runs a Supabase CLI write without the staging ref, or runs `next start` without `with-env-local` (which would read `.env.production.local`, i.e. the production DB) |
+| `check-messages.mjs` | After editing `messages/source.json` or `messages/emails.source.json` | Fails back to Claude if any key lacks `en`/`ka`/`ru` text or `messages/{en,ka,ru}.json` are stale (`npm run messages:build`) |
+| `docs-reminder.mjs` | When Claude finishes | Blocks once if `app/`, `lib/`, `components/`, `middleware.ts` or `supabase/migrations/` changed (uncommitted or unpushed) with no `docs/` or `CLAUDE.md` change |
+
+The hooks only add prompts and reminders; the permission deny list (no push to `main`, no `vercel --prod`, no reading `.env.production*`) still does the hard blocking.
