@@ -21,7 +21,7 @@ Removal candidates found during the deep re-audit. **Confidence: "Safe to remove
 | `docs/1-product/outstanding-2026-07.md` | Snapshot doc "as of 2026-07-04"; the migration checklist + manual steps may now be partially done. | It's a live tracking doc, not dead — may still be actively referenced. Confirm before pruning. |
 | `docs/redesign/*` (audit.md, fidelity-audit.md, phase-0-kickoff.md, tech-debt.md) | The redesign project is ~complete (per `docs/redesign/roadmap.md`); some sub-docs may be historical. | Historical/reference value; not code. Prune only if you want a leaner docs tree. |
 | Large action/component files (A-201 in issues-found) | `applications.ts` (1081), `offers.ts` (771), `interview-form.tsx` (771), etc. | These are *refactor* candidates, not deletions — no dead code, just size. Tracked as A-201, not here. |
-| `redesign/` (repo-root, gitignored) + `"Redisign New.zip"` + `r8kel9lt` (untracked, repo root) | Source handoff artifacts / stray files in the working tree. | Untracked/gitignored — outside the committed codebase; delete manually if unwanted. Not removed by this audit. |
+| `redesign/` (repo-root, gitignored) | Source handoff artifacts in the working tree. | Gitignored — outside the committed codebase. `Redisign New.zip`, `design_handoff_candidate_details/` and `r8kel9lt` were removed from git on 2026-10-19; the zip and handoff folder are archived in the Claude project files (`design-archive/`). |
 
 ## Notes
 
