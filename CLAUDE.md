@@ -1,6 +1,8 @@
 # HRHandle — Claude Context
 
 > For full documentation see `docs/`. This file contains only operational info and architecture gotchas relevant to making changes safely.
+>
+> **Claude project threads:** read the knowledge base in the project files (`/mnt/project-files/kb/README.md`) first: product brief, release state, connector IDs, glossary, decisions, open issues. Add new decisions and release changes there.
 
 ## Two environments
 
