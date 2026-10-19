@@ -1,6 +1,6 @@
 # HRHandle — Product Roadmap
 
-_Last updated: 2026-07-20_
+_Last updated: 2026-10-19_
 _Owner: Aleksandre Merabishvili_
 
 > **Current outstanding work + manual steps:** [`outstanding-2026-07.md`](outstanding-2026-07.md) — what's left after the 2026-07-03/04 fix batch (4 deferred code tasks + the manual migration / Azure / org-rename steps).
@@ -15,6 +15,17 @@ The roadmap is intentionally opinionated — it includes items that are tracked,
 - 🟢 **Ready** — scoped enough to start; no external blocker
 - 🟡 **Blocked** — waiting on something concrete (billing, framework, decision)
 - ⚪ **Idea** — not scoped yet; one-line description is the entire spec right now
+
+> **Live backlog: GitHub Issues** (from 2026-10-19). Every item carries `priority:highest|high|medium|low|lowest` and a story-point label `sp:1|2|3|5|8|13`. The sorted list lives in the project knowledge base (`kb/open-issues.md`); this doc keeps the product context.
+
+### New items scoped 2026-10-19 (owner)
+
+| Issue | Item | Priority | SP | Status |
+|---|---|---|---|---|
+| [#118](https://github.com/Merabishvili/HRHandle/issues/118) | Interview reminders close to the start (every 15 min) + unanswered-application alerts | High | 5 | 🟡 Blocked on Vercel Pro (Hobby crons run once a day) |
+| [#101](https://github.com/Merabishvili/HRHandle/issues/101) | Billing reminder emails (the second cron job Pro unblocks) | High | 5 | 🟡 Blocked on Vercel Pro |
+| [#119](https://github.com/Merabishvili/HRHandle/issues/119) | Offer stage v2: templates, PDF letter, approval, counter-offers, **e-signature** of the offer agreement | High | 13 (epic) | 🟢 Ready to plan (provider vs built-in signature is the open question) |
+| [#120](https://github.com/Merabishvili/HRHandle/issues/120) | Hire webhook: signed `candidate.hired` payload to a payroll / HR system, retries + delivery log | Medium | 8 | 🟢 Ready to plan |
 
 ---
 
@@ -295,3 +306,4 @@ Blocked on the EU AI Act risk-management framework for higher-risk features. Don
 | 2026-06-24 | Phase 5 partial shipped: Slack + Teams notifications (G-030) and Calendly (G-031). Two new tables (`webhook_notifications`, plus Calendly fields on `organization_integrations`). 34 unit tests on the pure helpers (payload builders, link builder, webhook HMAC verify, event allow-list). Manual deployment steps for the founder collected in `docs/4-integrations/phase-5-manual-steps.md`. Remaining Phase 5 items: LinkedIn jobs auto-cross-post + reference checks workflow. | Aleksandre Merabishvili |
 | 2026-06-23 | Phase 4 shipped: Reports (G-029). New `/reports` route with three sub-tabs — pipeline conversion funnel, time-to-hire stats + per-vacancy breakdown, source effectiveness. Period selector (7/30/90/365 days + all-time). Migration 039 backfills `applications.source_type = 'manual'` on existing NULLs + sets DEFAULT 'manual' for future inserts. Recharts added (~80KB) for the funnel bar chart. 40 unit tests on the four pure helpers (period, funnel, time-to-hire, source-summary). Recruiter productivity deliberately skipped. Next: Phase 5 (Integrations). | Aleksandre Merabishvili |
 | 2026-07-20 | Phase 9 completed: `exactOptionalPropertyTypes` enabled (C-012/A-007; 40 cosmetic errors fixed) + component splits / react-hook-form migration (A-002/A-005): `candidates/page.tsx` → `lib/candidates/list-derivation.ts` + row/cell components; `vacancy-form.tsx` + `candidate-form.tsx` → RHF (`VacancyFormSchema` / `CandidateFormSchema`) split into `components/{vacancies,candidates}/form/`. 29 new tests. | Aleksandre Merabishvili |
+| 2026-10-19 | Backlog moved to GitHub Issues with five-level priorities and story points. New items: #118 timely interview reminders + unanswered-application alerts, #119 offer stage v2 with e-signature, #120 hire webhook to payroll. #101 billing emails unblocked once Vercel is upgraded to Pro. | Aleksandre Merabishvili |
