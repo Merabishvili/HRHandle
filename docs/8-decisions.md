@@ -202,7 +202,7 @@
 
 ### Redesign deliverables live in `docs/redesign/`, source materials in `redesign/`
 
-**Decision:** A full UX/IA audit + revised roadmap + per-flow mobile design for the proposed HRHandle redesign (zipped handoff package `Redisign New.zip`) is captured at:
+**Decision:** A full UX/IA audit + revised roadmap + per-flow mobile design for the proposed HRHandle redesign (zipped handoff package `Redisign New.zip`, removed from git 2026-10-19 and archived in the Claude project files under `design-archive/`) is captured at:
 - [`docs/redesign/audit.md`](redesign/audit.md) — critical audit (cross-cutting problems, regression risk register, per-screen audit, inconsistencies, mobile assessment, feasibility flags, open questions)
 - [`docs/redesign/roadmap.md`](redesign/roadmap.md) — revised roadmap with KEEP / REVISE / DROP / ADD verdicts on each item from the redesign's `ROADMAP.md`, plus a new Phase 0 of foundation pre-work
 - [`docs/redesign/mobile/`](redesign/mobile/) — design output for the four must-work-on-phone flows (apply form / candidate profile / offer approval / today's interviews)
