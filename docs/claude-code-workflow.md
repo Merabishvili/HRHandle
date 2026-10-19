@@ -254,3 +254,26 @@ New task arrives
 | Only update the file you're editing | Ripple effects cause subtle bugs |
 | Ask Claude Code to "just fix this one thing" | Claude needs full context to avoid missing impacts |
 | Merge without checking docs checklist | One stale doc makes the whole docs folder less trustworthy |
+
+---
+
+## Claude skills and review agents (added 2026-10-19)
+
+Repeatable procedures live in `.claude/skills/` and are picked up automatically by Claude Code (locally and in cloud sessions):
+
+| Skill | Use it for |
+|---|---|
+| `release-to-production` | Preparing a `staging` → `main` release: what's waiting, migration order, env/config steps, the PR checklist. Claude never merges. |
+| `db-migration` | Any schema, RLS, grant, function or view change: live-schema check, dated file, staging first, production only with approval. |
+| `trilingual-change` | Any user-facing text: UI strings, emails, guide, legal — EN/KA/RU together. |
+| `incident-triage` | A bug report or error spike: Sentry, Vercel, Supabase, Resend evidence → root cause → fix on staging. |
+
+Read-only review agents in `.claude/agents/` run before a push (Phase 5 of this workflow):
+
+| Agent | Checks |
+|---|---|
+| `security-reviewer` | Tenant isolation, service-role use, server actions, secrets, webhooks, auth, CSP |
+| `i18n-checker` | Hardcoded text, missing KA/RU, glossary terms, guide/legal parity, currency symbols |
+| `docs-sync` | The code → docs → tests → ripple-check rule above |
+
+Shared project facts (release state, connector IDs, glossary, decisions) are in the Claude project's knowledge base, `/mnt/project-files/kb/`.
