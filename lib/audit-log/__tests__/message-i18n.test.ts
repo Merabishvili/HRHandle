@@ -22,6 +22,16 @@ describe('auditMessage — candidate withdrawal', () => {
   })
 })
 
+describe('auditMessage — Georgian residency declaration', () => {
+  const declared = (resident: boolean) =>
+    ({ action: 'billing_residency_declared', entity_type: 'organization', details: { resident }, message: '' }) as unknown as AuditLogRow
+
+  it('says which answer was given', () => {
+    expect(auditMessage(t, declared(true))).toBe('auditMsg.residencyResident')
+    expect(auditMessage(t, declared(false))).toBe('auditMsg.residencyNonResident')
+  })
+})
+
 describe('auditActionLabel', () => {
   it('uses the translated name of a known action', () => {
     expect(auditActionLabel(t, 'offer_sent')).toBe('auditAction.offer_sent')

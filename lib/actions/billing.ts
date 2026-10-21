@@ -11,6 +11,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { callbackOrigin } from '@/lib/site-url'
 import { createSubscriptionCheckout, stopSubscription, isFlittConfigured } from '@/lib/flitt/client'
 import {
+  allowedCurrencies,
   resolveBillingCurrency,
   toMinorUnits,
   isCurrency,
@@ -29,7 +30,9 @@ const PAID_PLANS: PlanCode[] = ['individual', 'organization']
  * Start a recurring Flitt checkout for a paid plan. Owner/admin only. Resolves
  * the org's currency (GEL/EUR/USD), records a pending `payment_orders` row (via
  * the service-role admin client — clients can never write orders), then asks
- * Flitt for a hosted checkout URL. The subscription only flips to active when
+ * Flitt for a hosted checkout URL. Refuses until the org has answered the
+ * Georgian-residency question (`billing_ge_resident`), since that decides
+ * whether it may pay in a foreign currency. The subscription only flips to active when
  * the signed server callback arrives (see the callback route) — this action
  * just gets the user to the payment page.
  */
@@ -56,14 +59,18 @@ export async function startPlanCheckout(input: {
 
   const { data: org } = await ctx.supabase
     .from('organizations')
-    .select('name, billing_country, billing_currency')
+    .select('name, billing_country, billing_currency, billing_ge_resident')
     .eq('id', ctx.orgId)
     .single()
+
+  const geResident = (org?.billing_ge_resident as boolean | null | undefined) ?? null
+  if (geResident === null) return { success: false, error: t('residencyRequired') }
 
   const requestCountry = getRequestCountry(await headers())
   const currency: Currency = resolveBillingCurrency(
     org?.billing_country || requestCountry,
     org?.billing_currency,
+    geResident,
   )
 
   const plan = PRICING_PLANS.find((p) => p.code === input.planCode)
@@ -144,11 +151,65 @@ export async function setBillingCurrency(currency: Currency): Promise<ActionResu
   }
   if (!isCurrency(currency)) return { success: false, error: t('invalidCurrency') }
 
+  const { data: org } = await ctx.supabase
+    .from('organizations')
+    .select('billing_ge_resident')
+    .eq('id', ctx.orgId)
+    .single()
+  if (!allowedCurrencies(org?.billing_ge_resident as boolean | null | undefined).includes(currency)) {
+    return { success: false, error: t('residentGelOnly') }
+  }
+
   const { error } = await ctx.supabase
     .from('organizations')
     .update({ billing_currency: currency })
     .eq('id', ctx.orgId)
   if (error) return { success: false, error: t('currencyUpdateFailed') }
+
+  revalidatePath('/settings/billing')
+  return { success: true, data: undefined }
+}
+
+/**
+ * Owner/admin: answer the required "I am a resident of Georgia (individual or
+ * legal entity)" question on the billing page. A resident is charged in GEL
+ * only (Organic Law on the National Bank, art. 34), so a yes also clears any
+ * foreign-currency override. Who answered and when is kept on the org row and
+ * in the audit log: the customer is responsible for the declaration (Terms §5).
+ * An existing Flitt recurring keeps the currency it was bought in.
+ */
+export async function setBillingResidency(geResident: boolean): Promise<ActionResult<void>> {
+  // Errors are shown in a toast — localize to the caller's UI language.
+  const t = await getTranslations('billingErr')
+  const ctx = await getAuthContext()
+  if (!ctx) return { success: false, error: t('notAuthenticated') }
+  if (!isOrgAdmin(ctx.role)) {
+    return { success: false, error: t('adminOnly') }
+  }
+  if (typeof geResident !== 'boolean') return { success: false, error: t('residencyUpdateFailed') }
+
+  const { error } = await ctx.supabase
+    .from('organizations')
+    .update({
+      billing_ge_resident: geResident,
+      billing_residency_declared_at: new Date().toISOString(),
+      billing_residency_declared_by: ctx.userId,
+      ...(geResident ? { billing_currency: 'GEL' } : {}),
+    })
+    .eq('id', ctx.orgId)
+  if (error) return { success: false, error: t('residencyUpdateFailed') }
+
+  void writeAuditLog({
+    orgId: ctx.orgId,
+    userId: ctx.userId,
+    entityType: 'organization',
+    entityId: ctx.orgId,
+    action: 'billing_residency_declared',
+    message: geResident
+      ? 'Declared a resident of Georgia (charged in GEL)'
+      : 'Declared not a resident of Georgia',
+    details: { resident: geResident },
+  })
 
   revalidatePath('/settings/billing')
   return { success: true, data: undefined }

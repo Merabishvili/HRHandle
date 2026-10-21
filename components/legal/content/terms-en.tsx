@@ -81,8 +81,17 @@ export function TermsEn() {
         <P>
           Prices are shown in your local currency on our pricing page — Georgian Lari (GEL) for
           customers in Georgia, Euro (EUR) in the European Union, and US Dollars (USD) elsewhere. The
-          amounts above are the GEL prices; the EUR and USD equivalents are displayed at checkout. An
-          owner or admin can change the billing currency on the billing page.
+          amounts above are the GEL prices; the EUR and USD equivalents are displayed at checkout.
+        </P>
+        <P>
+          <strong>Residency and currency.</strong> Before the first payment, an owner or admin of
+          your organization must state on the billing page whether the customer is a resident of
+          Georgia (an individual or a legal entity, including an individual entrepreneur). Under the
+          laws of Georgia, residents of Georgia are charged in Georgian Lari (GEL) only; non-residents
+          may choose GEL, EUR or USD on the billing page. You are responsible for the accuracy of this
+          statement and must update it if it changes. If a resident of Georgia states otherwise, you
+          bear the consequences, including any fines or costs imposed on us as a result, and we may
+          switch your subscription to GEL from the next billing period.
         </P>
         <P>
           <strong>Digital delivery.</strong> HRHandle is a digital software-as-a-service product.

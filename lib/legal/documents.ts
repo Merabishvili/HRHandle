@@ -7,7 +7,7 @@ export type LegalDoc = 'terms' | 'privacy' | 'refund'
 
 /** "Last updated" date per document (YYYY-MM-DD). Bump when the text changes. */
 export const LEGAL_UPDATED: Record<LegalDoc, string> = {
-  terms: '2026-10-09',
+  terms: '2026-10-21',
   privacy: '2026-10-09',
   refund: '2026-10-09',
 }

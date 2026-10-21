@@ -18,11 +18,12 @@ import {
 import { CheckCircle, Zap } from 'lucide-react'
 import type { PricingPlan, PlanCode, BillingCycle } from '@/lib/types/subscription'
 import { getPlanMonthly } from '@/lib/types/subscription'
-import { CURRENCIES, CURRENCY_LABEL, CURRENCY_SYMBOL, type Currency } from '@/lib/pricing/currency'
+import { allowedCurrencies, CURRENCY_LABEL, CURRENCY_SYMBOL, type Currency } from '@/lib/pricing/currency'
 import { planName, planFeatures } from '@/lib/pricing/plan-i18n'
 import { startPlanCheckout, setBillingCurrency } from '@/lib/actions/billing'
 import type { Campaign } from '@/lib/campaign'
 import { getCampaignPrice } from '@/lib/campaign'
+import { ResidencyQuestion } from './residency-question'
 
 interface PlanCardsProps {
   plans: PricingPlan[]
@@ -33,6 +34,9 @@ interface PlanCardsProps {
   /** Owner/admin — members see the plans read-only (checkout + currency are
    * admin-gated server-side; this just avoids a dead-end click). */
   canManage?: boolean | undefined
+  /** Answer to the Georgian-residency question; `null` = not answered yet,
+   * which keeps checkout disabled. A resident can only pick GEL. */
+  geResident?: boolean | null | undefined
 }
 
 export function PlanCards({
@@ -42,6 +46,7 @@ export function PlanCards({
   campaign,
   campaignActive,
   canManage = true,
+  geResident = null,
 }: PlanCardsProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -58,6 +63,8 @@ export function PlanCards({
     })
   }
 
+  const currencies = allowedCurrencies(geResident)
+  const residencyAnswered = geResident !== null
   const symbol = CURRENCY_SYMBOL[currency]
   const annualDiscount = Math.round(campaign.discounts.annual * 100)
   const monthlyDiscount = Math.round(campaign.discounts.monthly * 100)
@@ -114,18 +121,20 @@ export function PlanCards({
           </button>
         </div>
 
-        <Select value={currency} onValueChange={onCurrencyChange} disabled={currencyPending || !canManage}>
+        <Select value={currency} onValueChange={onCurrencyChange} disabled={currencyPending || !canManage || currencies.length < 2}>
           <SelectTrigger className="h-8 w-auto min-w-[88px] gap-1.5 text-sm font-medium" aria-label={t('billingCtl.billingCurrency')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {CURRENCIES.map((c) => (
+            {currencies.map((c) => (
               <SelectItem key={c} value={c}>{CURRENCY_LABEL[c]}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         </div>
       </div>
+
+      <ResidencyQuestion geResident={geResident} canManage={canManage} />
 
       {campaignActive && (
         <div className="mb-4 flex items-center gap-2 rounded-lg bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700">
@@ -208,7 +217,7 @@ export function PlanCards({
                 <Button
                   className="w-full"
                   variant={isCurrent ? 'outline' : plan.popular ? 'default' : 'outline'}
-                  disabled={isCurrent || isTrial || !canManage || pendingCode !== null}
+                  disabled={isCurrent || isTrial || !canManage || !residencyAnswered || pendingCode !== null}
                   onClick={() => !isCurrent && !isTrial && handleUpgrade(plan.code)}
                 >
                   {pendingCode === plan.code && (

@@ -1,6 +1,6 @@
 # Flitt — payment gateway (subscription billing)
 
-_Last updated: 2026-10-09_
+_Last updated: 2026-10-21_
 
 Flitt (portal.flitt.com — the rebranded Fondy engine) processes subscription
 payments for the paid plans. Multi-currency (**GEL / EUR / USD**), auto-recurring,
@@ -239,7 +239,20 @@ One processor, three currencies. Currency is resolved per org from
 manual `organizations.billing_currency` override on the billing page. Georgian
 customers **must** be shown GEL (local law) — the public landing pricing defaults
 to GEL for the same reason. See [`lib/pricing/currency.ts`](../../lib/pricing/currency.ts)
-(reuses the EU/EEA list from `lib/ai/fit-geofence.ts`). Prices live in
+(reuses the EU/EEA list from `lib/ai/fit-geofence.ts`).
+
+**Georgian residency (2026-10-21).** The Organic Law on the National Bank
+(art. 34) lets residents of Georgia be charged only in GEL; the NBG's 2017
+exceptions allow a foreign currency for non-residents. Before the first payment
+an owner/admin must answer **"I am a resident of Georgia (individual or legal
+entity)" — Yes / No** on the billing page (nothing preselected;
+`components/subscription/residency-question.tsx` → `setBillingResidency`,
+audited). `organizations.billing_ge_resident = true` forces GEL in
+`resolveBillingCurrency` and limits the picker to GEL (`allowedCurrencies`);
+`startPlanCheckout` refuses while it is `NULL`. The Terms (§5, "Residency and
+currency") make the customer responsible for the answer. An existing recurring
+keeps the currency it was bought in. Flitt charges a 4% fee on EUR/USD payments
+(owner's note from Flitt, 2026-10-21). Prices live in
 `PRICING_PLANS` ([`lib/types/subscription.ts`](../../lib/types/subscription.ts)),
 per-currency; amounts are converted to minor units (tetri/cents, ×100) for Flitt.
 
@@ -253,13 +266,15 @@ per-currency; amounts are converted to minor units (tetri/cents, ×100) for Flit
 | `lib/flitt/recurring.ts` | Pure `buildRecurringData` — the `recurring_data` contract (`start_time` / `end_time` in Tbilisi time, `state`) |
 | `lib/flitt/lifecycle.ts` | Pure `decideCallback`, renewal detection (`findParentOrderId`), `addPeriod` |
 | `lib/billing/access.ts` | Pure `isSubscriptionLocked` + `RENEWAL_GRACE_DAYS` (dashboard lockout) |
-| `lib/actions/billing.ts` | `startPlanCheckout`, `cancelSubscription`, `setBillingCurrency` (owner/admin) |
+| `lib/actions/billing.ts` | `startPlanCheckout`, `cancelSubscription`, `setBillingCurrency`, `setBillingResidency` (owner/admin) |
 | `app/api/payments/flitt/callback/route.ts` | Signed callback → updates `subscriptions` |
 | `lib/pricing/currency.ts` | Currency resolution + formatting |
-| `components/subscription/plan-cards.tsx` | Upgrade buttons (wired) |
+| `components/subscription/plan-cards.tsx` | Upgrade buttons (wired), currency picker |
+| `components/subscription/residency-question.tsx` | Required Georgian-residency yes/no |
 | `components/subscription/billing-controls.tsx` | Currency override + cancel |
 | `components/subscription/payment-methods.tsx` | Visa/MC/GPay/ApplePay marks |
 | `supabase/migrations/20260804_flitt_billing.sql` | `payment_orders` + `organizations.billing_currency` |
+| `supabase/migrations/20261021_billing_residency.sql` | `organizations.billing_ge_resident` + who/when declared |
 
 ## Portal settings (production merchant `hrhandle.com`)
 

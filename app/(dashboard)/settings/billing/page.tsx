@@ -32,6 +32,7 @@ interface OrganizationRow {
   slug: string
   billing_country: string | null
   billing_currency: string | null
+  billing_ge_resident: boolean | null
 }
 
 interface SubscriptionRow {
@@ -132,7 +133,7 @@ export default async function BillingSettingsPage({
 
   const { data: organization } = await supabase
     .from('organizations')
-    .select('id, name, slug, billing_country, billing_currency')
+    .select('id, name, slug, billing_country, billing_currency, billing_ge_resident')
     .eq('id', organizationId)
     .single()
 
@@ -173,11 +174,14 @@ export default async function BillingSettingsPage({
 
   // Default the currency by the visitor's location when the org hasn't set a
   // billing country — a Georgian visitor (x-vercel-ip-country = GE) defaults to
-  // GEL. The saved billing_currency override always wins.
+  // GEL. The saved billing_currency override wins over the location, and a
+  // declared resident of Georgia is GEL whatever the override (Georgian law).
   const requestCountry = getRequestCountry(await headers())
+  const geResident = typedOrganization.billing_ge_resident ?? null
   const currency = resolveBillingCurrency(
     typedOrganization.billing_country || requestCountry,
     typedOrganization.billing_currency,
+    geResident,
   )
 
   const currentPlan =
@@ -292,6 +296,7 @@ export default async function BillingSettingsPage({
         campaign={CAMPAIGN}
         campaignActive={isCampaignActive()}
         canManage={canManage}
+        geResident={geResident}
       />
 
       <BillingControls

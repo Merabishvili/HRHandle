@@ -49,6 +49,7 @@ const ACTION_TYPES = [
   'applications_bulk_rejected',
   'billing_checkout_started',
   'billing_refunded',
+  'billing_residency_declared',
   'billing_subscription_canceled',
   'calendly_connected',
   'calendly_disconnected',

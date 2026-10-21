@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { resolveBillingCurrency, resolveOrgDefaultCurrency, toMinorUnits } from '@/lib/pricing/currency'
+import {
+  allowedCurrencies,
+  resolveBillingCurrency,
+  resolveOrgDefaultCurrency,
+  toMinorUnits,
+} from '@/lib/pricing/currency'
 import { getPlanMonthly, getPlanChargeTotal, PRICING_PLANS } from '@/lib/types/subscription'
 
 describe('resolveBillingCurrency', () => {
@@ -28,6 +33,30 @@ describe('resolveBillingCurrency', () => {
   })
   it('invalid override is ignored (falls back to country)', () => {
     expect(resolveBillingCurrency('GE', 'XXX')).toBe('GEL')
+  })
+  it('a declared resident of Georgia is always GEL, whatever the override or country', () => {
+    expect(resolveBillingCurrency('GE', 'USD', true)).toBe('GEL')
+    expect(resolveBillingCurrency('DE', 'EUR', true)).toBe('GEL')
+    expect(resolveBillingCurrency(null, null, true)).toBe('GEL')
+  })
+  it('a declared non-resident keeps the override, and a Georgian IP defaults to USD', () => {
+    expect(resolveBillingCurrency('GE', 'EUR', false)).toBe('EUR')
+    expect(resolveBillingCurrency('GE', null, false)).toBe('USD')
+    expect(resolveBillingCurrency('DE', null, false)).toBe('EUR')
+  })
+  it('undeclared residency keeps the old behaviour', () => {
+    expect(resolveBillingCurrency('GE', null, null)).toBe('GEL')
+    expect(resolveBillingCurrency('GE', 'USD', null)).toBe('USD')
+  })
+})
+
+describe('allowedCurrencies', () => {
+  it('residents of Georgia may only pick GEL', () => {
+    expect(allowedCurrencies(true)).toEqual(['GEL'])
+  })
+  it('non-residents and undeclared orgs may pick any currency', () => {
+    expect(allowedCurrencies(false)).toEqual(['GEL', 'EUR', 'USD'])
+    expect(allowedCurrencies(null)).toEqual(['GEL', 'EUR', 'USD'])
   })
 })
 
