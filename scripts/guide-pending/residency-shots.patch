@@ -1,0 +1,126 @@
+diff --git a/content/guides/en/billing.mdx b/content/guides/en/billing.mdx
+index b59f899..7da6aef 100644
+--- a/content/guides/en/billing.mdx
++++ b/content/guides/en/billing.mdx
+@@ -14,9 +14,19 @@ Every organization starts with a free 7-day trial. When you're ready, choose a p
+ 
+ 1. **Current plan** — your plan, its price and status, and how many vacancies and candidates you have out of your plan's limit.
+ 2. **Monthly** / **Annual** — see the prices per month when you pay monthly or for a year in advance (cheaper). Next to it you can change the currency you pay in — lari, euro or US dollar. Residents of Georgia pay in lari only.
+-3. **The plans** — click **Upgrade** on a plan to pay for it. The first time, a window asks **I am a resident of Georgia (an individual or a legal entity)** — **Yes** or **No** — and shows the final price: Georgian law lets residents of Georgia pay in lari only. Click **Continue to payment**. You're taken to a secure payment page and, once the payment goes through, the new plan starts straight away.
++3. **The plans** — click **Upgrade** on a plan to pay for it. The first time, a short question comes first (see below). You're taken to a secure payment page and, once the payment goes through, the new plan starts straight away.
+ 4. **Payment method** — whether a card is linked. Payments are handled securely by Flitt.
+ 
++<Screenshot
++  name="billing-residency"
++  alt="The window that opens from Upgrade, with the residency question, the final price and the Continue to payment button highlighted"
++  caption="Asked once, before your first payment."
++/>
++
++1. **I am a resident of Georgia (an individual or a legal entity)** — choose **Yes** or **No**. Georgian law lets residents of Georgia pay in lari only; if you choose **No**, pick the currency you pay in. Your organization's owner can also answer this in **Settings → Organization**.
++2. The final price, in the currency you'll pay in.
++3. **Continue to payment** — saves your answer and opens the payment page. After your first payment the answer can only be changed through **Support**.
++
+ | | Free Trial | Individual | Organization |
+ |---|---|---|---|
+ | Price | Free for 7 days | ₾49 a month, or ₾39 a month paid annually | ₾99 a month, or ₾79 a month paid annually |
+diff --git a/content/guides/en/organization-settings.mdx b/content/guides/en/organization-settings.mdx
+index 6fcec59..36014d2 100644
+--- a/content/guides/en/organization-settings.mdx
++++ b/content/guides/en/organization-settings.mdx
+@@ -35,6 +35,12 @@ Click **Save changes** when you're done.
+ 
+ **Residency** asks **I am a resident of Georgia (an individual or a legal entity)** — **Yes** or **No**. Georgian law requires residents of Georgia to pay in lari; non-residents can pay in lari, euro or US dollars. You can change the answer until your first payment. After that it's locked, and only **Support** can change it.
+ 
++<Screenshot
++  name="organization-residency"
++  alt="The Residency card in organization settings with the Yes and No answers highlighted"
++  caption="Editable until your first payment."
++/>
++
+ ## Related settings
+ 
+ - **Team** — invite teammates and choose their roles. See [Team and roles](/guide/team-and-roles).
+diff --git a/content/guides/ka/billing.mdx b/content/guides/ka/billing.mdx
+index 4a740fe..70a48c7 100644
+--- a/content/guides/ka/billing.mdx
++++ b/content/guides/ka/billing.mdx
+@@ -14,9 +14,19 @@ updated: 2026-10-22
+ 
+ 1. **მიმდინარე გეგმა** — თქვენი გეგმა, მისი ფასი და სტატუსი, ასევე რამდენი ვაკანსია და კანდიდატი გაქვთ გეგმის ლიმიტიდან.
+ 2. **ყოველთვიური** / **წლიური** — ნახეთ თვიური ფასი ყოველთვიური გადახდისას ან წლის წინასწარ გადახდისას (უფრო იაფია). გვერდით შეგიძლიათ შეცვალოთ გადახდის ვალუტა — ლარი, ევრო ან აშშ დოლარი. საქართველოს რეზიდენტები იხდიან მხოლოდ ლარში.
+-3. **გეგმები** — გეგმის შესაძენად დააჭირეთ მასზე ღილაკს **გადასვლა**. პირველად გაიხსნება ფანჯარა კითხვით **ვარ საქართველოს რეზიდენტი ფიზიკური ან იურიდიული პირი** — **კი** ან **არა** — და საბოლოო ფასით: საქართველოს კანონმდებლობით, საქართველოს რეზიდენტები იხდიან მხოლოდ ლარში. დააჭირეთ **გადახდაზე გადასვლა**. გადახვალთ გადახდის დაცულ გვერდზე და, გადახდის შემდეგ, ახალი გეგმა მაშინვე ამოქმედდება.
++3. **გეგმები** — გეგმის შესაძენად დააჭირეთ მასზე ღილაკს **გადასვლა**. პირველად ჯერ მოკლე კითხვას უპასუხებთ (იხ. ქვემოთ). გადახვალთ გადახდის დაცულ გვერდზე და, გადახდის შემდეგ, ახალი გეგმა მაშინვე ამოქმედდება.
+ 4. **გადახდის მეთოდი** — მიბმულია თუ არა ბარათი. გადახდებს უსაფრთხოდ Flitt ამუშავებს.
+ 
++<Screenshot
++  name="billing-residency"
++  alt="ფანჯარა, რომელიც ღილაკ „გადასვლაზე“ დაჭერისას იხსნება, მონიშნული რეზიდენტობის კითხვით, საბოლოო ფასითა და ღილაკით „გადახდაზე გადასვლა“"
++  caption="ეკითხებით ერთხელ, პირველ გადახდამდე."
++/>
++
++1. **ვარ საქართველოს რეზიდენტი ფიზიკური ან იურიდიული პირი** — აირჩიეთ **კი** ან **არა**. საქართველოს კანონმდებლობით, საქართველოს რეზიდენტები იხდიან მხოლოდ ლარში; თუ აირჩევთ **არა**-ს, აირჩიეთ გადახდის ვალუტაც. ამ კითხვას ორგანიზაციის მფლობელს **პარამეტრები → ორგანიზაცია**-შიც შეუძლია უპასუხოს.
++2. საბოლოო ფასი იმ ვალუტაში, რომლითაც გადაიხდით.
++3. **გადახდაზე გადასვლა** — ინახავს პასუხს და ხსნის გადახდის გვერდს. პირველი გადახდის შემდეგ პასუხის შეცვლა მხოლოდ **მხარდაჭერის** გზით შეიძლება.
++
+ | | საცდელი | ინდივიდუალური | კორპორატიული |
+ |---|---|---|---|
+ | ფასი | უფასოდ 7 დღე | ₾49 თვეში, ან ₾39 თვეში წლიური გადახდით | ₾99 თვეში, ან ₾79 თვეში წლიური გადახდით |
+diff --git a/content/guides/ka/organization-settings.mdx b/content/guides/ka/organization-settings.mdx
+index 587fedd..7028d90 100644
+--- a/content/guides/ka/organization-settings.mdx
++++ b/content/guides/ka/organization-settings.mdx
+@@ -35,6 +35,12 @@ updated: 2026-10-22
+ 
+ **რეზიდენტობა** გეკითხებათ: **ვარ საქართველოს რეზიდენტი ფიზიკური ან იურიდიული პირი** — **კი** თუ **არა**. საქართველოს კანონმდებლობით, საქართველოს რეზიდენტები იხდიან ლარში; არარეზიდენტებს შეუძლიათ გადაიხადონ ლარში, ევროში ან აშშ დოლარში. პასუხის შეცვლა პირველ გადახდამდე შეგიძლიათ. ამის შემდეგ ის ჩაიკეტება და მისი შეცვლა მხოლოდ **მხარდაჭერას** შეუძლია.
+ 
++<Screenshot
++  name="organization-residency"
++  alt="ბარათი „რეზიდენტობა“ ორგანიზაციის პარამეტრებში, მონიშნული პასუხებით „კი“ და „არა“"
++  caption="შეცვლა შესაძლებელია პირველ გადახდამდე."
++/>
++
+ ## დაკავშირებული პარამეტრები
+ 
+ - **გუნდი** — მოიწვიეთ კოლეგები და აირჩიეთ მათი როლები. იხ. [გუნდი და როლები](/guide/team-and-roles).
+diff --git a/content/guides/ru/billing.mdx b/content/guides/ru/billing.mdx
+index e0c07c5..13054f9 100644
+--- a/content/guides/ru/billing.mdx
++++ b/content/guides/ru/billing.mdx
+@@ -14,9 +14,19 @@ updated: 2026-10-22
+ 
+ 1. **Текущий план** — ваш тариф, его цена и статус, а также сколько вакансий и кандидатов у вас из лимита тарифа.
+ 2. **Ежемесячно** / **Ежегодно** — посмотрите цену в месяц при ежемесячной оплате или при оплате за год вперёд (так дешевле). Рядом можно сменить валюту оплаты — лари, евро или доллары США. Резиденты Грузии платят только в лари.
+-3. **Планы** — чтобы оплатить тариф, нажмите на нём **Перейти**. В первый раз откроется окно с вопросом **Я резидент Грузии (физическое или юридическое лицо)** — **Да** или **Нет** — и итоговой ценой: по законодательству Грузии резиденты Грузии платят только в лари. Нажмите **Перейти к оплате**. Вы попадёте на защищённую страницу оплаты, и после оплаты новый тариф начнёт действовать сразу.
++3. **Планы** — чтобы оплатить тариф, нажмите на нём **Перейти**. В первый раз сначала нужно ответить на короткий вопрос (см. ниже). Вы попадёте на защищённую страницу оплаты, и после оплаты новый тариф начнёт действовать сразу.
+ 4. **Способ оплаты** — привязана ли карта. Платежи безопасно обрабатывает Flitt.
+ 
++<Screenshot
++  name="billing-residency"
++  alt="Окно, которое открывается по кнопке «Перейти», с выделенными вопросом о резидентстве, итоговой ценой и кнопкой «Перейти к оплате»"
++  caption="Спрашиваем один раз, перед первой оплатой."
++/>
++
++1. **Я резидент Грузии (физическое или юридическое лицо)** — выберите **Да** или **Нет**. По законодательству Грузии резиденты Грузии платят только в лари; если выбрали **Нет**, укажите валюту оплаты. Владелец организации может ответить на этот вопрос и в разделе **Настройки → Организация**.
++2. Итоговая цена в валюте, в которой вы будете платить.
++3. **Перейти к оплате** — сохраняет ответ и открывает страницу оплаты. После первой оплаты изменить ответ можно только через **Поддержку**.
++
+ | | Пробный | Индивидуальный | Корпоративный |
+ |---|---|---|---|
+ | Цена | Бесплатно 7 дней | ₾49 в месяц или ₾39 в месяц при оплате за год | ₾99 в месяц или ₾79 в месяц при оплате за год |
+diff --git a/content/guides/ru/organization-settings.mdx b/content/guides/ru/organization-settings.mdx
+index fc460b0..724f454 100644
+--- a/content/guides/ru/organization-settings.mdx
++++ b/content/guides/ru/organization-settings.mdx
+@@ -35,6 +35,12 @@ updated: 2026-10-22
+ 
+ В разделе **Резидентство** нужно ответить на вопрос **Я резидент Грузии (физическое или юридическое лицо)** — **Да** или **Нет**. По законодательству Грузии резиденты Грузии платят в лари; нерезиденты могут платить в лари, евро или долларах США. Ответ можно изменить до первой оплаты. После этого он закрепляется, и изменить его может только **Поддержка**.
+ 
++<Screenshot
++  name="organization-residency"
++  alt="Карточка «Резидентство» в настройках организации с выделенными ответами «Да» и «Нет»"
++  caption="Можно изменить до первой оплаты."
++/>
++
+ ## Связанные настройки
+ 
+ - **Команда** — приглашайте коллег и выбирайте их роли. См. [Команда и роли](/guide/team-and-roles).
