@@ -20,10 +20,10 @@ import type { PricingPlan, PlanCode, BillingCycle } from '@/lib/types/subscripti
 import { getPlanMonthly } from '@/lib/types/subscription'
 import { allowedCurrencies, CURRENCY_LABEL, CURRENCY_SYMBOL, type Currency } from '@/lib/pricing/currency'
 import { planName, planFeatures } from '@/lib/pricing/plan-i18n'
-import { startPlanCheckout, setBillingCurrency } from '@/lib/actions/billing'
+import { startPlanCheckout, setBillingCurrency, setBillingResidency } from '@/lib/actions/billing'
 import type { Campaign } from '@/lib/campaign'
 import { getCampaignPrice } from '@/lib/campaign'
-import { ResidencyQuestion } from './residency-question'
+import { ResidencyDialog } from './residency-dialog'
 
 interface PlanCardsProps {
   plans: PricingPlan[]
@@ -34,9 +34,11 @@ interface PlanCardsProps {
   /** Owner/admin — members see the plans read-only (checkout + currency are
    * admin-gated server-side; this just avoids a dead-end click). */
   canManage?: boolean | undefined
-  /** Answer to the Georgian-residency question; `null` = not answered yet,
-   * which keeps checkout disabled. A resident can only pick GEL. */
+  /** Answer to the Georgian-residency question; `null` = not answered yet, so
+   * Upgrade first opens the residency dialog. A resident can only pick GEL. */
   geResident?: boolean | null | undefined
+  /** Currency the org pays in if it answers "No" in the dialog. */
+  nonResidentCurrency?: Currency | undefined
 }
 
 export function PlanCards({
@@ -47,6 +49,7 @@ export function PlanCards({
   campaignActive,
   canManage = true,
   geResident = null,
+  nonResidentCurrency = 'USD',
 }: PlanCardsProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -64,22 +67,56 @@ export function PlanCards({
   }
 
   const currencies = allowedCurrencies(geResident)
-  const residencyAnswered = geResident !== null
+  const [residencyFor, setResidencyFor] = useState<PlanCode | null>(null)
   const symbol = CURRENCY_SYMBOL[currency]
   const annualDiscount = Math.round(campaign.discounts.annual * 100)
   const monthlyDiscount = Math.round(campaign.discounts.monthly * 100)
 
+  const goToCheckout = async (code: PlanCode) => {
+    const res = await startPlanCheckout({ planCode: code, cycle: billing })
+    if (res.success) {
+      window.location.href = res.data.checkoutUrl
+    } else {
+      toast.error(res.error)
+      setPendingCode(null)
+    }
+  }
+
   const handleUpgrade = (code: PlanCode) => {
+    // Not answered yet → ask in the dialog first (it then continues to checkout).
+    if (geResident === null) {
+      setResidencyFor(code)
+      return
+    }
+    setPendingCode(code)
+    startTransition(() => goToCheckout(code))
+  }
+
+  const confirmResidency = (resident: boolean, chosen: Currency) => {
+    const code = residencyFor
+    if (!code) return
     setPendingCode(code)
     startTransition(async () => {
-      const res = await startPlanCheckout({ planCode: code, cycle: billing })
-      if (res.success) {
-        window.location.href = res.data.checkoutUrl
-      } else {
-        toast.error(res.error)
+      const saved = await setBillingResidency(resident)
+      const currencySaved =
+        saved.success && !resident && chosen !== currency ? await setBillingCurrency(chosen) : saved
+      if (!saved.success || !currencySaved.success) {
+        toast.error(!saved.success ? saved.error : !currencySaved.success ? currencySaved.error : '')
         setPendingCode(null)
+        return
       }
+      router.refresh()
+      await goToCheckout(code)
     })
+  }
+
+  /** "₾49/mo · billed monthly" for the plan the dialog is open for. */
+  const priceLine = (c: Currency): string => {
+    const plan = plans.find((p) => p.code === residencyFor)
+    const base = plan ? getPlanMonthly(plan, c, billing) : null
+    const price = campaignActive && base ? getCampaignPrice(base, billing) : base
+    const billed = billing === 'annual' ? t('planCards.billedAnnually') : t('planCards.billedMonthly')
+    return `${CURRENCY_SYMBOL[c]}${price ?? ''}${t('planCards.perMo')} · ${billed}`
   }
 
   return (
@@ -134,7 +171,15 @@ export function PlanCards({
         </div>
       </div>
 
-      <ResidencyQuestion geResident={geResident} canManage={canManage} />
+      <ResidencyDialog
+        key={residencyFor ?? 'closed'}
+        open={residencyFor !== null}
+        onOpenChange={(o) => !o && setResidencyFor(null)}
+        nonResidentCurrency={nonResidentCurrency}
+        priceLine={priceLine}
+        pending={pendingCode !== null}
+        onConfirm={confirmResidency}
+      />
 
       {campaignActive && (
         <div className="mb-4 flex items-center gap-2 rounded-lg bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700">
@@ -217,7 +262,7 @@ export function PlanCards({
                 <Button
                   className="w-full"
                   variant={isCurrent ? 'outline' : plan.popular ? 'default' : 'outline'}
-                  disabled={isCurrent || isTrial || !canManage || !residencyAnswered || pendingCode !== null}
+                  disabled={isCurrent || isTrial || !canManage || pendingCode !== null}
                   onClick={() => !isCurrent && !isTrial && handleUpgrade(plan.code)}
                 >
                   {pendingCode === plan.code && (

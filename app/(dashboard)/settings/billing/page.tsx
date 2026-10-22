@@ -32,7 +32,6 @@ interface OrganizationRow {
   slug: string
   billing_country: string | null
   billing_currency: string | null
-  billing_ge_resident: boolean | null
 }
 
 interface SubscriptionRow {
@@ -133,7 +132,7 @@ export default async function BillingSettingsPage({
 
   const { data: organization } = await supabase
     .from('organizations')
-    .select('id, name, slug, billing_country, billing_currency, billing_ge_resident')
+    .select('id, name, slug, billing_country, billing_currency')
     .eq('id', organizationId)
     .single()
 
@@ -176,13 +175,19 @@ export default async function BillingSettingsPage({
   // billing country — a Georgian visitor (x-vercel-ip-country = GE) defaults to
   // GEL. The saved billing_currency override wins over the location, and a
   // declared resident of Georgia is GEL whatever the override (Georgian law).
+  // Separate, graceful read (migration 20261021_billing_residency): if the
+  // column is missing the page still renders, as "not answered".
+  const { data: residency } = await supabase
+    .from('organizations')
+    .select('billing_ge_resident')
+    .eq('id', organizationId)
+    .single()
+  const geResident = (residency?.billing_ge_resident as boolean | null | undefined) ?? null
   const requestCountry = getRequestCountry(await headers())
-  const geResident = typedOrganization.billing_ge_resident ?? null
-  const currency = resolveBillingCurrency(
-    typedOrganization.billing_country || requestCountry,
-    typedOrganization.billing_currency,
-    geResident,
-  )
+  const billingCountry = typedOrganization.billing_country || requestCountry
+  const currency = resolveBillingCurrency(billingCountry, typedOrganization.billing_currency, geResident)
+  // What the Upgrade dialog starts a "No" answer with.
+  const nonResidentCurrency = resolveBillingCurrency(billingCountry, typedOrganization.billing_currency, false)
 
   const currentPlan =
     PRICING_PLANS.find((plan) => plan.code === typedSubscription.plan_code) || PRICING_PLANS[0]
@@ -297,6 +302,7 @@ export default async function BillingSettingsPage({
         campaignActive={isCampaignActive()}
         canManage={canManage}
         geResident={geResident}
+        nonResidentCurrency={nonResidentCurrency}
       />
 
       <BillingControls

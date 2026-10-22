@@ -9,6 +9,7 @@ import { isOrgAdmin } from '@/lib/permissions'
 import { writeAuditLog } from '@/lib/audit-log'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { callbackOrigin } from '@/lib/site-url'
+import { isResidencyLocked } from '@/lib/billing/residency'
 import { createSubscriptionCheckout, stopSubscription, isFlittConfigured } from '@/lib/flitt/client'
 import {
   allowedCurrencies,
@@ -176,7 +177,9 @@ export async function setBillingCurrency(currency: Currency): Promise<ActionResu
  * only (Organic Law on the National Bank, art. 34), so a yes also clears any
  * foreign-currency override. Who answered and when is kept on the org row and
  * in the audit log: the customer is responsible for the declaration (Terms §5).
- * An existing Flitt recurring keeps the currency it was bought in.
+ * Locked after the org's first successful payment (`isResidencyLocked`); from
+ * then on only support changes it. Answered in Settings → Organization or in
+ * the dialog that opens from Upgrade on the billing page.
  */
 export async function setBillingResidency(geResident: boolean): Promise<ActionResult<void>> {
   // Errors are shown in a toast — localize to the caller's UI language.
@@ -187,6 +190,9 @@ export async function setBillingResidency(geResident: boolean): Promise<ActionRe
     return { success: false, error: t('adminOnly') }
   }
   if (typeof geResident !== 'boolean') return { success: false, error: t('residencyUpdateFailed') }
+  if (await isResidencyLocked(ctx.supabase, ctx.orgId)) {
+    return { success: false, error: t('residencyLocked') }
+  }
 
   const { error } = await ctx.supabase
     .from('organizations')
@@ -212,6 +218,7 @@ export async function setBillingResidency(geResident: boolean): Promise<ActionRe
   })
 
   revalidatePath('/settings/billing')
+  revalidatePath('/settings/organization')
   return { success: true, data: undefined }
 }
 

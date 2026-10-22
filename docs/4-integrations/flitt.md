@@ -1,6 +1,6 @@
 # Flitt — payment gateway (subscription billing)
 
-_Last updated: 2026-10-21_
+_Last updated: 2026-10-22_
 
 Flitt (portal.flitt.com — the rebranded Fondy engine) processes subscription
 payments for the paid plans. Multi-currency (**GEL / EUR / USD**), auto-recurring,
@@ -245,11 +245,21 @@ to GEL for the same reason. See [`lib/pricing/currency.ts`](../../lib/pricing/cu
 (art. 34) lets residents of Georgia be charged only in GEL; the NBG's 2017
 exceptions allow a foreign currency for non-residents. Before the first payment
 an owner/admin must answer **"I am a resident of Georgia (individual or legal
-entity)" — Yes / No** on the billing page (nothing preselected;
-`components/subscription/residency-question.tsx` → `setBillingResidency`,
-audited). `organizations.billing_ge_resident = true` forces GEL in
-`resolveBillingCurrency` and limits the picker to GEL (`allowedCurrencies`);
-`startPlanCheckout` refuses while it is `NULL`. The Terms (§5, "Residency and
+entity)" — Yes / No** (nothing preselected; `setBillingResidency`, audited):
+- **Upgrade** stays clickable; if the org hasn't answered, it opens
+  `components/subscription/residency-dialog.tsx` (question, currency pick for a
+  "No", the final price) and then continues to checkout;
+- the owner can also answer in **Settings → Organization**
+  (`components/settings/residency-card.tsx`).
+
+The answer is **locked after the first successful payment**
+(`lib/billing/residency.ts#isResidencyLocked`: any `payment_orders` row
+`approved` or `reversed`; a failed read counts as locked) — only support changes
+it then (update the org row with the admin client). `organizations.billing_ge_resident
+= true` forces GEL in `resolveBillingCurrency` and limits the picker to GEL
+(`allowedCurrencies`); `startPlanCheckout` refuses while it is `NULL`. Both pages
+read the column in a separate, graceful select, so they still render before the
+migration is applied. The Terms (§5, "Residency and
 currency") make the customer responsible for the answer. An existing recurring
 keeps the currency it was bought in. Flitt charges a 4% fee on EUR/USD payments
 (owner's note from Flitt, 2026-10-21). Prices live in
@@ -270,7 +280,9 @@ per-currency; amounts are converted to minor units (tetri/cents, ×100) for Flit
 | `app/api/payments/flitt/callback/route.ts` | Signed callback → updates `subscriptions` |
 | `lib/pricing/currency.ts` | Currency resolution + formatting |
 | `components/subscription/plan-cards.tsx` | Upgrade buttons (wired), currency picker |
-| `components/subscription/residency-question.tsx` | Required Georgian-residency yes/no |
+| `components/subscription/residency-dialog.tsx` | Georgian-residency question + final price, opened from Upgrade |
+| `components/settings/residency-card.tsx` | Residency answer in Settings → Organization (read-only after the first payment) |
+| `lib/billing/residency.ts` | `isResidencyLocked` |
 | `components/subscription/billing-controls.tsx` | Currency override + cancel |
 | `components/subscription/payment-methods.tsx` | Visa/MC/GPay/ApplePay marks |
 | `supabase/migrations/20260804_flitt_billing.sql` | `payment_orders` + `organizations.billing_currency` |

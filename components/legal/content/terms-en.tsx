@@ -85,11 +85,12 @@ export function TermsEn() {
         </P>
         <P>
           <strong>Residency and currency.</strong> Before the first payment, an owner or admin of
-          your organization must state on the billing page whether the customer is a resident of
-          Georgia (an individual or a legal entity, including an individual entrepreneur). Under the
+          your organization must state whether the customer is a resident of Georgia (an individual
+          or a legal entity, including an individual entrepreneur). After the first payment this
+          statement can only be changed by contacting us. Under the
           laws of Georgia, residents of Georgia are charged in Georgian Lari (GEL) only; non-residents
-          may choose GEL, EUR or USD on the billing page. You are responsible for the accuracy of this
-          statement and must update it if it changes. If a resident of Georgia states otherwise, you
+          may choose GEL, EUR or USD. You are responsible for the accuracy of this
+          statement and must tell us if it changes. If a resident of Georgia states otherwise, you
           bear the consequences, including any fines or costs imposed on us as a result, and we may
           switch your subscription to GEL from the next billing period.
         </P>
