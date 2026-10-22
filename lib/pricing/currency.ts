@@ -5,6 +5,11 @@
  * customers must be shown GEL by law; the EU is billed in EUR; everyone else in
  * USD. The org's currency derives from `organizations.billing_country`, with a
  * manual `billing_currency` override an owner can set on the billing page.
+ *
+ * Residency (`organizations.billing_ge_resident`) beats both: Georgian law
+ * (Organic Law on the National Bank, art. 34) lets residents of Georgia be
+ * charged only in GEL; the NBG exceptions allow foreign currency for
+ * non-residents. A declared resident is always GEL, whatever the override.
  */
 import { isEuCountry } from '@/lib/ai/fit-geofence'
 
@@ -27,17 +32,27 @@ export function isCurrency(v: unknown): v is Currency {
   return v === 'GEL' || v === 'EUR' || v === 'USD'
 }
 
+/** Currencies the org may pick: residents of Georgia are GEL-only by law. */
+export function allowedCurrencies(geResident: boolean | null | undefined): readonly Currency[] {
+  return geResident === true ? ['GEL'] : CURRENCIES
+}
+
 /**
  * Georgia → GEL (legal display requirement), EU/EEA → EUR, everything else →
- * USD. An explicit `override` (the org's saved `billing_currency`) always wins.
+ * USD. An explicit `override` (the org's saved `billing_currency`) wins over
+ * the country, but never over `geResident`: a declared resident of Georgia is
+ * always GEL. A declared non-resident whose country reads as Georgia (e.g. a
+ * foreign company browsing from Tbilisi) defaults to USD.
  */
 export function resolveBillingCurrency(
   billingCountry: string | null | undefined,
   override?: string | null,
+  geResident?: boolean | null,
 ): Currency {
+  if (geResident === true) return 'GEL'
   if (isCurrency(override)) return override
   const code = (billingCountry ?? '').trim().toUpperCase()
-  if (code === 'GE') return 'GEL'
+  if (code === 'GE') return geResident === false ? 'USD' : 'GEL'
   if (isEuCountry(code)) return 'EUR'
   return 'USD'
 }

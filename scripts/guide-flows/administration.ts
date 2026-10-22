@@ -149,6 +149,32 @@ const billing: Flow = {
         { target: page.getByText(t('billing.paymentMethod'), { exact: true }).locator('xpath=ancestor::section[1]'), n: 4, badge: 'left' },
       ],
     })
+
+    // The residency window Upgrade opens while the org hasn't answered. Clear a
+    // saved answer first (demo orgs never pay, so it's never locked), answer —
+    // the Georgian company as a resident, the others not — and stop before
+    // "Continue to payment".
+    await ctx.admin
+      .from('organizations')
+      .update({ billing_ge_resident: null, billing_residency_declared_at: null, billing_residency_declared_by: null })
+      .eq('id', ctx.orgId)
+    await ctx.goto('/settings/billing')
+    await plans.waitFor()
+    await page.getByRole('button', { name: t('planCards.upgrade') }).first().click()
+    const dialog = page.getByRole('dialog')
+    await dialog.waitFor()
+    await dialog.getByLabel(ctx.locale === 'ka' ? t('billingResidency.yes') : t('billingResidency.no'), { exact: true }).click()
+    await settle(page, 400)
+    await ctx.shot('billing-residency', {
+      clip: dialog,
+      clipPad: 32,
+      marks: [
+        { target: dialog.getByRole('radiogroup'), n: 1, badge: 'left', pad: 8 },
+        { target: dialog.getByText(startsWith(t('billingResidency.youPay', { price: '' }))).locator('xpath=..'), n: 2, badge: 'left' },
+        { target: dialog.getByRole('button', { name: t('billingResidency.continue') }), n: 3, badge: 'right' },
+      ],
+    })
+    await page.keyboard.press('Escape')
   },
 }
 

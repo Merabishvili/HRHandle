@@ -46,7 +46,7 @@ describe('legal documents', () => {
   })
 
   it('formats the last-updated date in each language', () => {
-    expect(formatLegalDate('terms', 'en')).toBe('October 9, 2026')
+    expect(formatLegalDate('terms', 'en')).toBe('October 22, 2026')
     expect(formatLegalDate('terms', 'ru')).toContain('октября 2026')
     expect(formatLegalDate('terms', 'ka')).toContain('2026')
   })

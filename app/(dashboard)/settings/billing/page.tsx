@@ -173,12 +173,21 @@ export default async function BillingSettingsPage({
 
   // Default the currency by the visitor's location when the org hasn't set a
   // billing country — a Georgian visitor (x-vercel-ip-country = GE) defaults to
-  // GEL. The saved billing_currency override always wins.
+  // GEL. The saved billing_currency override wins over the location, and a
+  // declared resident of Georgia is GEL whatever the override (Georgian law).
+  // Separate, graceful read (migration 20261021_billing_residency): if the
+  // column is missing the page still renders, as "not answered".
+  const { data: residency } = await supabase
+    .from('organizations')
+    .select('billing_ge_resident')
+    .eq('id', organizationId)
+    .single()
+  const geResident = (residency?.billing_ge_resident as boolean | null | undefined) ?? null
   const requestCountry = getRequestCountry(await headers())
-  const currency = resolveBillingCurrency(
-    typedOrganization.billing_country || requestCountry,
-    typedOrganization.billing_currency,
-  )
+  const billingCountry = typedOrganization.billing_country || requestCountry
+  const currency = resolveBillingCurrency(billingCountry, typedOrganization.billing_currency, geResident)
+  // What the Upgrade dialog starts a "No" answer with.
+  const nonResidentCurrency = resolveBillingCurrency(billingCountry, typedOrganization.billing_currency, false)
 
   const currentPlan =
     PRICING_PLANS.find((plan) => plan.code === typedSubscription.plan_code) || PRICING_PLANS[0]
@@ -292,6 +301,8 @@ export default async function BillingSettingsPage({
         campaign={CAMPAIGN}
         campaignActive={isCampaignActive()}
         canManage={canManage}
+        geResident={geResident}
+        nonResidentCurrency={nonResidentCurrency}
       />
 
       <BillingControls

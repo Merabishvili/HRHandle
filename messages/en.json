@@ -2874,7 +2874,9 @@
       "webhook_notification_updated": "Webhook subscriptions updated"
     },
     "withdrawnWithReason": "Application withdrawn by candidate: “{reason}”",
-    "bulkRejected": "{count, plural, one {Rejected # remaining candidate} other {Rejected # remaining candidates}}"
+    "bulkRejected": "{count, plural, one {Rejected # remaining candidate} other {Rejected # remaining candidates}}",
+    "residencyResident": "Declared a resident of Georgia (pays in GEL)",
+    "residencyNonResident": "Declared not a resident of Georgia"
   },
   "rejectReason": {
     "general": "General"
@@ -3176,7 +3178,11 @@
     "invalidCurrency": "Invalid currency.",
     "currencyUpdateFailed": "Could not update the billing currency.",
     "noSubscription": "No active subscription to cancel.",
-    "cancelFailed": "Could not cancel with the payment provider. Please contact support."
+    "cancelFailed": "Could not cancel with the payment provider. Please contact support.",
+    "residencyRequired": "Answer whether you are a resident of Georgia before paying.",
+    "residentGelOnly": "Residents of Georgia can only pay in GEL.",
+    "residencyUpdateFailed": "Could not save your answer. Please try again.",
+    "residencyLocked": "Your residency answer is locked after the first payment. Contact Support to change it."
   },
   "legal": {
     "back": "← Back to HRHandle",
@@ -3242,7 +3248,8 @@
     "webhook_notification_deleted": "Channel removed",
     "webhook_notification_dispatched": "Channel message sent",
     "webhook_notification_updated": "Channel updated",
-    "applications_bulk_rejected": "Remaining candidates rejected"
+    "applications_bulk_rejected": "Remaining candidates rejected",
+    "billing_residency_declared": "Residency declared"
   },
   "deletionPage": {
     "title": "Account scheduled for deletion",
@@ -3311,5 +3318,23 @@
     "archiveOnly": "Archive only",
     "archiveAndReject": "Archive and reject",
     "failed": "Couldn't change the vacancy status. Try again."
+  },
+  "billingResidency": {
+    "question": "I am a resident of Georgia (an individual or a legal entity)",
+    "yes": "Yes",
+    "no": "No",
+    "required": "Answer this before paying: under Georgian law, residents of Georgia pay in GEL only.",
+    "residentNote": "You are charged in GEL, as Georgian law requires for residents of Georgia.",
+    "nonResidentNote": "You can pay in GEL, EUR or USD.",
+    "termsNote": "You are responsible for the accuracy of this answer (see the <terms>Terms and Conditions</terms>).",
+    "dialogTitle": "One question before you pay",
+    "dialogWhy": "Georgian law requires residents of Georgia to pay in GEL. Non-residents can pay in GEL, EUR or USD.",
+    "payIn": "Pay in",
+    "youPay": "You pay {price}",
+    "lockNote": "After the first payment this answer can only be changed through support.",
+    "cancel": "Cancel",
+    "continue": "Continue to payment",
+    "cardTitle": "Residency",
+    "lockedNote": "Locked after the first payment. To change it, contact <support>Support</support>."
   }
 }

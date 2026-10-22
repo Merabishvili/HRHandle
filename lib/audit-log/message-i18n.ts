@@ -113,6 +113,11 @@ export function auditMessage(t: Translator, row: AuditLogRow): string {
         : t('auditMsg.action.application_withdrawn')
     }
 
+    case 'billing_residency_declared':
+      return d.resident === true
+        ? t('auditMsg.residencyResident')
+        : t('auditMsg.residencyNonResident')
+
     case 'connected':
       return t('auditMsg.integrationConnected', {
         provider: PROVIDER_LABEL[str(d.platform) ?? ''] ?? str(d.platform) ?? '',

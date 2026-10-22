@@ -209,6 +209,14 @@ const organizationSettings: Flow = {
         { target: cardTitled(page, t('vacSettings.dangerZone')), n: 4, badge: 'left' },
       ],
     })
+    const residency = cardTitled(page, t('billingResidency.cardTitle'))
+    await residency.scrollIntoViewIfNeeded()
+    await settle(page, 300)
+    await ctx.shot('organization-residency', {
+      clip: residency,
+      clipPad: 40,
+      marks: [{ target: residency.getByRole('radiogroup'), n: 1, badge: 'left', pad: 8 }],
+    })
   },
 }
 

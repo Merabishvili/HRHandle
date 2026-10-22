@@ -7,6 +7,8 @@ import { DangerZone } from '@/components/settings/danger-zone'
 import { MfaPolicyCard } from '@/components/settings/mfa-policy-card'
 import { AiFitPolicyCard } from '@/components/settings/ai-fit-policy-card'
 import { OrgLanguageCard } from '@/components/settings/org-language-card'
+import { ResidencyCard } from '@/components/settings/residency-card'
+import { isResidencyLocked } from '@/lib/billing/residency'
 import { orgDefaultLocale } from '@/lib/i18n/org-locale'
 
 export default async function OrganizationSettingsPage() {
@@ -48,6 +50,14 @@ export default async function OrganizationSettingsPage() {
     .eq('id', organization.id)
     .single()
 
+  // Graceful too (migration 20261021_billing_residency): unmigrated → unanswered.
+  const { data: residency } = await supabase
+    .from('organizations')
+    .select('billing_ge_resident')
+    .eq('id', organization.id)
+    .single()
+  const residencyLocked = await isResidencyLocked(supabase, organization.id)
+
   return (
     <div className="max-w-2xl space-y-6">
       <Card className="border-border">
@@ -68,6 +78,11 @@ export default async function OrganizationSettingsPage() {
       />
 
       <OrgLanguageCard initial={{ locale: orgDefaultLocale(orgLang) }} />
+
+      <ResidencyCard
+        geResident={(residency?.billing_ge_resident as boolean | null | undefined) ?? null}
+        locked={residencyLocked}
+      />
 
       <AiFitPolicyCard initial={{ ai_fit_enabled: !!aiFit?.ai_fit_enabled }} />
 

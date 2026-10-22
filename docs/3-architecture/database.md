@@ -583,6 +583,15 @@ own rows.
 **`organizations.billing_currency`** (same migration) — manual currency override;
 `NULL` → derived from `billing_country` (GE→GEL, EU/EEA→EUR, else→USD).
 
+**`organizations.billing_ge_resident`** / **`billing_residency_declared_at`** /
+**`billing_residency_declared_by`** (`20261021_billing_residency.sql`) — the
+owner/admin's answer to the required "I am a resident of Georgia (individual or
+legal entity)" yes/no on the billing page. `NULL` = not answered (checkout is
+refused); `true` → always GEL (Georgian law), whatever `billing_currency` says;
+`false` → GEL/EUR/USD. Locked once the org has an `approved`/`reversed` payment order; then only support changes it. `declared_by` is a plain uuid (no FK, to avoid a third
+`profiles` ⇄ `organizations` embed path). Each answer is also an
+`audit_logs` row (`billing_residency_declared`).
+
 ---
 
 ### `team_invitations`
