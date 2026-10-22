@@ -169,9 +169,9 @@ const billing: Flow = {
       clip: dialog,
       clipPad: 32,
       marks: [
-        { target: dialog.getByRole('radiogroup'), n: 1, badge: 'left' },
+        { target: dialog.getByRole('radiogroup'), n: 1, badge: 'left', pad: 8 },
         { target: dialog.getByText(startsWith(t('billingResidency.youPay', { price: '' }))).locator('xpath=..'), n: 2, badge: 'left' },
-        { target: dialog.getByRole('button', { name: t('billingResidency.continue') }), n: 3, badge: 'left' },
+        { target: dialog.getByRole('button', { name: t('billingResidency.continue') }), n: 3, badge: 'right' },
       ],
     })
     await page.keyboard.press('Escape')

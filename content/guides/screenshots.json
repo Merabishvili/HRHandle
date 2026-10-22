@@ -68,6 +68,10 @@
       1440,
       1170
     ],
+    "billing-residency": [
+      512,
+      472
+    ],
     "calendly-link": [
       390,
       215
@@ -238,7 +242,11 @@
     ],
     "organization-policies": [
       1440,
-      1848
+      2118
+    ],
+    "organization-residency": [
+      752,
+      326
     ],
     "organization-settings": [
       768,
@@ -458,6 +466,10 @@
       1440,
       1240
     ],
+    "billing-residency": [
+      512,
+      560
+    ],
     "calendly-link": [
       390,
       215
@@ -628,7 +640,11 @@
     ],
     "organization-policies": [
       1440,
-      1976
+      2262
+    ],
+    "organization-residency": [
+      752,
+      342
     ],
     "organization-settings": [
       768,
@@ -848,6 +864,10 @@
       1440,
       1224
     ],
+    "billing-residency": [
+      512,
+      492
+    ],
     "calendly-link": [
       390,
       215
@@ -1018,7 +1038,11 @@
     ],
     "organization-policies": [
       1440,
-      1936
+      2206
+    ],
+    "organization-residency": [
+      752,
+      326
     ],
     "organization-settings": [
       768,

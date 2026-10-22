@@ -215,7 +215,7 @@ const organizationSettings: Flow = {
     await ctx.shot('organization-residency', {
       clip: residency,
       clipPad: 40,
-      marks: [{ target: residency.getByRole('radiogroup'), n: 1, badge: 'left' }],
+      marks: [{ target: residency.getByRole('radiogroup'), n: 1, badge: 'left', pad: 8 }],
     })
   },
 }
