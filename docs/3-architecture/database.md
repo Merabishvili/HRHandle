@@ -566,8 +566,9 @@ callback route use the admin client); RLS gives org members read access to their
 own rows. Rows are **kept 5 years** from their last transaction, also after the
 org is purged (`20261023_payment_records.sql`: `organization_id` → `NULL`, a
 snapshot of who paid stays on the row); the purge-deleted cron removes them after
-`retain_until`. Members can't read `flitt_rectoken` or `consent_ip` (column
-grants). A renewal charged under the same order id gets its own row
+`retain_until`. Members can read only the plain order columns (column grants): the card token,
+consent IP and payer/card details are read with the service role after an
+owner/admin check (`lib/billing/payment-history.ts`). A renewal charged under the same order id gets its own row
 `<order_id>:<payment_id>` so each charge has a receipt.
 
 | Column | Type | Nullable | Default | Notes |

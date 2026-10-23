@@ -124,7 +124,7 @@ export function TermsKa() {
         </P>
         <P>
           გადახდებს უსაფრთხოდ ამუშავებს ჩვენი გადახდის პროვაიდერი {PAYMENT_PROVIDER_BRAND}{' '}
-          (საქართველოში მას ამუშავებს {PAYMENT_PROVIDER.ka.operator}); ექვაირერი ბანკია{' '}
+          (საქართველოში მისი ოპერატორია {PAYMENT_PROVIDER.ka.operator}); ექვაირერი ბანკია{' '}
           {PAYMENT_PROVIDER.ka.acquirer}. ვიღებთ Visa-სა და Mastercard-ს, ასევე Google Pay-სა და
           Apple Pay-ს. თქვენი ბარათის მონაცემებს არ ვინახავთ.
         </P>

@@ -10,6 +10,8 @@
 import type { FlittCallback } from '@/lib/flitt/types'
 import { CURRENCY_SYMBOL } from '@/lib/pricing/currency'
 
+// The RU legal text says "{N} лет" — correct for 5–20; re-check the wording
+// in components/legal/content/privacy-ru.tsx if this changes.
 export const PAYMENT_RECORD_RETENTION_YEARS = 5
 
 /** `from` + the retention period (calendar years, UTC). */

@@ -42,7 +42,8 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   if (!orgId) redirect('/pipeline')
   if (profile?.role !== 'owner' && profile?.role !== 'admin') redirect('/pipeline')
 
-  const payment = await getPayment(supabase, orgId, id)
+  // Role checked above; getPayment reads with the service role, scoped to orgId.
+  const payment = await getPayment(orgId, id)
   if (!payment || !hasReceipt(payment.status)) notFound()
 
   const { data: org } = await supabase.from('organizations').select('name').eq('id', orgId).single()

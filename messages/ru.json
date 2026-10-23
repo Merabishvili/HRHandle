@@ -3351,7 +3351,7 @@
   },
   "paymentHistory": {
     "title": "Платежи",
-    "kept": "Хранятся 5 лет",
+    "kept": "{years, plural, one {Хранятся # год} few {Хранятся # года} many {Хранятся # лет} other {Хранятся # года}}",
     "empty": "Платежей пока нет.",
     "date": "Дата",
     "plan": "Тариф",
@@ -3362,7 +3362,7 @@
       "paid": "Оплачено",
       "refunded": "Возвращено",
       "partly_refunded": "Частично возвращено",
-      "failed": "Не прошёл"
+      "failed": "Не оплачено"
     }
   },
   "receipt": {
@@ -3375,7 +3375,7 @@
     "rrn": "Банковский референс (RRN)",
     "approvalCode": "Код авторизации",
     "seller": "Продавец",
-    "sellerId": "ИН: {id}",
+    "sellerId": "Идентификационный код: {id}",
     "billedTo": "Покупатель",
     "amountPaid": "Оплачено",
     "refunded": "Возвращено",
@@ -3402,7 +3402,7 @@
       "consent": "Согласие",
       "legitimate_interest": "Законный интерес",
       "vital_interest": "Жизненно важные интересы",
-      "public_task": "Публичная задача"
+      "public_task": "Задача в общественных интересах"
     },
     "category": {
       "email": "Email",

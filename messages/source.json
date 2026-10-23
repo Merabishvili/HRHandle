@@ -13912,7 +13912,7 @@
   "checkout.consent": {
     "en": "I agree to the <terms>Terms and Conditions</terms> and the <refund>Refund Policy</refund>, and I authorise automatic renewal charges to my card until I cancel.",
     "ru": "Я принимаю <terms>Условия использования</terms> и <refund>Политику возврата</refund> и разрешаю автоматически списывать оплату за продление с моей карты, пока я не отменю подписку.",
-    "ka": "ვეთანხმები <terms>წესებსა და პირობებს</terms> და <refund>თანხის დაბრუნების პოლიტიკას</refund> და ვთანხმდები, რომ ჩემი ბარათიდან ავტომატურად ჩამოიჭრება განახლების საფასური, სანამ არ გავაუქმებ."
+    "ka": "ვეთანხმები <terms>წესებსა და პირობებს</terms> და <refund>თანხის დაბრუნების პოლიტიკას</refund> და ვაძლევ თანხმობას, რომ ჩემი ბარათიდან ავტომატურად ჩამოიჭრას განახლების საფასური, სანამ არ გავაუქმებ."
   },
   "checkout.securePage": {
     "en": "You pay on {provider}'s secure page; HRHandle never sees your card number.",
@@ -13945,9 +13945,9 @@
     "ka": "გადახდები"
   },
   "paymentHistory.kept": {
-    "en": "Kept for 5 years",
-    "ru": "Хранятся 5 лет",
-    "ka": "ინახება 5 წელი"
+    "en": "{years, plural, one {Kept for # year} other {Kept for # years}}",
+    "ru": "{years, plural, one {Хранятся # год} few {Хранятся # года} many {Хранятся # лет} other {Хранятся # года}}",
+    "ka": "ინახება {years} წელი"
   },
   "paymentHistory.empty": {
     "en": "No payments yet.",
@@ -13996,7 +13996,7 @@
   },
   "paymentHistory.statusLabel.failed": {
     "en": "Failed",
-    "ru": "Не прошёл",
+    "ru": "Не оплачено",
     "ka": "წარუმატებელი"
   },
   "receipt.title": {
@@ -14046,7 +14046,7 @@
   },
   "receipt.sellerId": {
     "en": "ID: {id}",
-    "ru": "ИН: {id}",
+    "ru": "Идентификационный код: {id}",
     "ka": "ს/კ: {id}"
   },
   "receipt.billedTo": {
@@ -14156,7 +14156,7 @@
   },
   "disclosures.basis.public_task": {
     "en": "Public task",
-    "ru": "Публичная задача",
+    "ru": "Задача в общественных интересах",
     "ka": "საჯარო ამოცანა"
   },
   "disclosures.category.email": {

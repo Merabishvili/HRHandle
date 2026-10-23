@@ -1,10 +1,12 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
- * The org's payments for the billing page and the receipt page, read with the
- * user's client (RLS: own org only; column grants hide the card token and the
- * consent IP). Falls back to the original columns when migration
- * 20261023_payment_records.sql isn't applied yet, so the page still renders.
+ * The org's payments for the billing page and the receipt page. The payer and
+ * card columns aren't granted to signed-in users (members could read them
+ * through the role-less RLS policy), so this reads with the service role:
+ * callers MUST have checked that the viewer is an owner/admin of `orgId`, and
+ * pass the org id from the viewer's own profile. Falls back to the original
+ * columns when migration 20261023_payment_records.sql isn't applied yet.
  */
 export interface PaymentRecord {
   id: string
@@ -34,11 +36,8 @@ const FULL = `${BASE}, org_name, billing_country, payer_email, paid_at, masked_c
 
 const LISTED_STATUSES = ['approved', 'reversed', 'declined', 'expired']
 
-export async function listPayments(
-  supabase: SupabaseClient,
-  orgId: string,
-  limit = 24,
-): Promise<PaymentRecord[]> {
+export async function listPayments(orgId: string, limit = 24): Promise<PaymentRecord[]> {
+  const supabase = createAdminClient()
   for (const cols of [FULL, BASE]) {
     const { data, error } = await supabase
       .from('payment_orders')
@@ -52,11 +51,9 @@ export async function listPayments(
   return []
 }
 
-export async function getPayment(
-  supabase: SupabaseClient,
-  orgId: string,
-  id: string,
-): Promise<PaymentRecord | null> {
+export async function getPayment(orgId: string, id: string): Promise<PaymentRecord | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null
+  const supabase = createAdminClient()
   for (const cols of [FULL, BASE]) {
     const { data, error } = await supabase
       .from('payment_orders')

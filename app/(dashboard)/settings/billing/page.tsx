@@ -229,7 +229,8 @@ export default async function BillingSettingsPage({
   const remainingTrialDays = getRemainingTrialDays(typedSubscription.trial_end_at)
   const isTrial = typedSubscription.plan_code === 'trial'
   const t = await getTranslations()
-  const payments = canManage ? await listPayments(supabase, organizationId) : []
+  // Owner/admin only — listPayments reads the payer columns with the service role.
+  const payments = canManage ? await listPayments(organizationId) : []
 
   return (
     <div className="max-w-4xl space-y-6">

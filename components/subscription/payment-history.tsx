@@ -3,7 +3,13 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { Receipt } from 'lucide-react'
 import { planName } from '@/lib/pricing/plan-i18n'
 import type { PaymentRecord } from '@/lib/billing/payment-history'
-import { cardLast4, formatAmountMinor, hasReceipt, paymentRowStatus } from '@/lib/billing/payment-records'
+import {
+  cardLast4,
+  formatAmountMinor,
+  hasReceipt,
+  PAYMENT_RECORD_RETENTION_YEARS,
+  paymentRowStatus,
+} from '@/lib/billing/payment-records'
 
 const STATUS_CLASS = {
   paid: 'bg-green-100 text-green-800',
@@ -35,7 +41,7 @@ export async function PaymentHistory({ payments }: { payments: PaymentRecord[] }
     <section className="rounded-xl border border-border">
       <div className="flex items-center justify-between gap-3 px-5 py-4">
         <h2 className="text-base font-semibold text-foreground">{t('paymentHistory.title')}</h2>
-        <p className="text-xs text-muted-foreground">{t('paymentHistory.kept')}</p>
+        <p className="text-xs text-muted-foreground">{t('paymentHistory.kept', { years: PAYMENT_RECORD_RETENTION_YEARS })}</p>
       </div>
       {rows.length === 0 ? (
         <p className="border-t border-border px-5 py-4 text-sm text-muted-foreground">{t('paymentHistory.empty')}</p>

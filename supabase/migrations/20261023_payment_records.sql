@@ -57,15 +57,16 @@ ALTER TABLE public.payment_orders
 CREATE INDEX IF NOT EXISTS idx_payment_orders_retain_until
   ON public.payment_orders (retain_until);
 
--- 3) Column grants: members keep reading their org's history (RLS policy
---    unchanged), but never the recurring card token or the consent IP.
+-- 3) Column grants: the members' read policy has no role check, so members
+--    keep only the plain order columns. The card token, the consent IP and the
+--    payer/card details (email, masked card, RRN, approval code, country) are
+--    read by server code with the service role after an owner/admin check
+--    (lib/billing/payment-history.ts).
 REVOKE SELECT ON public.payment_orders FROM anon, authenticated;
 GRANT SELECT (
   id, organization_id, order_id, plan_code, billing_cycle, currency, amount_minor,
   status, flitt_payment_id, created_by, created_at, updated_at,
-  org_name, billing_country, ge_resident, payer_email, terms_version, consent_at,
-  paid_at, masked_card, card_type, rrn, approval_code, reversal_amount_minor,
-  reversed_at, retain_until
+  paid_at, reversal_amount_minor, reversed_at, retain_until
 ) ON public.payment_orders TO authenticated;
 
 -- 4) Register of personal-data disclosures. Written only by server code with
@@ -104,13 +105,15 @@ CREATE POLICY "org_admins_read_data_disclosures"
     )
   );
 
-REVOKE INSERT, UPDATE, DELETE ON public.data_disclosures FROM anon, authenticated;
+REVOKE ALL ON public.data_disclosures FROM anon, authenticated;
+GRANT SELECT ON public.data_disclosures TO authenticated;
 
 -- Check afterwards:
 --   select pg_get_constraintdef(oid) from pg_constraint where conname = 'payment_orders_organization_id_fkey';
 --     → ... ON DELETE SET NULL
 --   select count(*) from information_schema.column_privileges
 --   where table_name = 'payment_orders' and grantee = 'authenticated'
---     and column_name in ('flitt_rectoken', 'consent_ip') and privilege_type = 'SELECT';
+--     and column_name in ('flitt_rectoken', 'consent_ip', 'payer_email', 'masked_card', 'rrn')
+--     and privilege_type = 'SELECT';
 --     → 0
 --   select policyname from pg_policies where tablename = 'data_disclosures';

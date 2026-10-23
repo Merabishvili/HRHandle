@@ -14,7 +14,7 @@ export const PAYMENT_PROVIDER_BRAND = 'Flitt'
 export const PAYMENT_PROVIDER: Record<'en' | 'ka' | 'ru', { operator: string; acquirer: string }> = {
   en: { operator: 'TPAY LLC', acquirer: 'TBC Bank' },
   ka: { operator: 'შპს „თიფეი“', acquirer: 'სს „თიბისი ბანკი“' },
-  ru: { operator: 'ООО «ТиПэй» (TPAY LLC)', acquirer: 'АО «ТБС Банк» (TBC Bank)' },
+  ru: { operator: 'ООО «ТиПэй»', acquirer: 'АО «ТБС Банк»' },
 }
 
 /** How the register of disclosures names the payment recipient. */

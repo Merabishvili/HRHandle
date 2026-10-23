@@ -3351,7 +3351,7 @@
   },
   "paymentHistory": {
     "title": "Payments",
-    "kept": "Kept for 5 years",
+    "kept": "{years, plural, one {Kept for # year} other {Kept for # years}}",
     "empty": "No payments yet.",
     "date": "Date",
     "plan": "Plan",

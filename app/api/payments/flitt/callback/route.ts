@@ -215,6 +215,15 @@ export async function POST(req: Request): Promise<NextResponse> {
         .eq('id', detailsRowId)
       if (detErr) console.warn('[flitt/callback] transaction details not saved:', detErr.message)
     }
+    // The root row anchors the recurring: keep it as long as its newest charge,
+    // or the retention purge would drop it under a live subscription.
+    if (detailsRowId !== order.id) {
+      const { error: rootErr } = await admin
+        .from('payment_orders')
+        .update({ retain_until: transactionDetails(cb, now).retain_until })
+        .eq('id', order.id)
+      if (rootErr) console.warn('[flitt/callback] root retention not moved:', rootErr.message)
+    }
   }
 
   // A renewal / failure for a recurring the org has since replaced (e.g. a
