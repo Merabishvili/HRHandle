@@ -1,5 +1,7 @@
 import { ContactBlock, List, Mail, P, Section, Sub, Table } from '../parts'
 import { BUSINESS_ID } from '@/lib/legal/contact'
+import { PAYMENT_PROVIDER, PAYMENT_PROVIDER_BRAND } from '@/lib/legal/payment-provider'
+import { PAYMENT_RECORD_RETENTION_YEARS } from '@/lib/billing/payment-records'
 
 export function PrivacyEn() {
   return (
@@ -31,8 +33,16 @@ export function PrivacyEn() {
           </li>
           <li>
             Billing records: your plan, billing cycle, amounts, currency, payment status, and the
-            order and payment identifiers from our payment provider, Flitt. Flitt processes your
-            card or wallet details; we never receive or store full card numbers.
+            order and payment identifiers from our payment provider, {PAYMENT_PROVIDER_BRAND}{' '}
+            (operated in Georgia by {PAYMENT_PROVIDER.en.operator}), plus the details it returns
+            for each payment: the masked card number (first six and last four digits), card type,
+            bank reference and approval code. You enter your card or wallet details on{' '}
+            {PAYMENT_PROVIDER_BRAND}&apos;s payment page, which may also ask for your email and
+            phone number; {PAYMENT_PROVIDER_BRAND} and the acquiring bank,{' '}
+            {PAYMENT_PROVIDER.en.acquirer}, process them under their own terms. We pass{' '}
+            {PAYMENT_PROVIDER_BRAND} only your email address, and we never receive or store full
+            card numbers. When you subscribe we also record that you accepted the Terms and
+            automatic renewal, with the time and your IP address.
           </li>
           <li>
             Support requests: when you contact us by email or through our support form, your name,
@@ -146,7 +156,7 @@ export function PrivacyEn() {
       <Section title="3. How We Use Your Data">
         <ul className="list-disc space-y-1 pl-5">
           <li>To provide, operate, and improve the Service</li>
-          <li>To manage your subscription and process payments (through Flitt)</li>
+          <li>To manage your subscription and process payments (through {PAYMENT_PROVIDER_BRAND})</li>
           <li>
             To send emails: account invitations and password resets, notifications to your team, the
             candidate emails described in Section 2.5, and replies to support requests
@@ -195,7 +205,8 @@ export function PrivacyEn() {
             ['Sentry', 'Error monitoring (personal data removed before sending)', 'USA'],
             ['PostHog', 'Product analytics', 'EU'],
             ['Cloudflare (Turnstile)', 'Bot protection on sign-in, sign-up, password, application, and support forms', 'USA / Global'],
-            ['Flitt', 'Payment processing (cards, Google Pay, Apple Pay)', 'Georgia'],
+            [`${PAYMENT_PROVIDER_BRAND} (${PAYMENT_PROVIDER.en.operator})`, 'Payment processing (cards, Google Pay, Apple Pay)', 'Georgia'],
+            [PAYMENT_PROVIDER.en.acquirer, 'Acquiring bank: authorises and settles card payments', 'Georgia'],
             ['Google (Gemini API)', 'AI-assisted features — see Section 5.1', 'USA / Global'],
             ['ImprovMX and Google (Gmail)', 'Receiving and handling support emails', 'USA / Global'],
             ['Google (optional)', 'Sign-in and Google Calendar', 'USA / Global'],
@@ -292,6 +303,13 @@ export function PrivacyEn() {
           your account, organization, and all associated candidate data, documents, and application
           records are permanently deleted, except where we are required by law to keep specific
           records longer (for example, payment and invoicing records under Georgian tax law).
+        </P>
+        <P>
+          <strong>Payment records</strong> (order, amount, masked card details, refunds, and your
+          acceptance of the Terms) are kept for {PAYMENT_RECORD_RETENTION_YEARS} years from each
+          payment, also after your account is deleted, as payment-card rules and Georgian law
+          require. They are then deleted. We also keep a record of which personal data we passed to
+          whom, when and on what legal basis, for as long as the data itself.
         </P>
         <P>
           While your account is active, a candidate or document you delete is marked for deletion

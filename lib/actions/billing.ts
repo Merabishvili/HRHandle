@@ -10,6 +10,11 @@ import { writeAuditLog } from '@/lib/audit-log'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { callbackOrigin } from '@/lib/site-url'
 import { isResidencyLocked } from '@/lib/billing/residency'
+import { clientIp } from '@/lib/billing/payment-records'
+import { paymentsPausedUntil } from '@/lib/billing/payments-pause'
+import { recordDisclosure } from '@/lib/data-disclosures'
+import { LEGAL_UPDATED } from '@/lib/legal/documents'
+import { PAYMENT_RECIPIENT_LABEL } from '@/lib/legal/payment-provider'
 import { createSubscriptionCheckout, stopSubscription, isFlittConfigured } from '@/lib/flitt/client'
 import {
   allowedCurrencies,
@@ -36,10 +41,16 @@ const PAID_PLANS: PlanCode[] = ['individual', 'organization']
  * whether it may pay in a foreign currency. The subscription only flips to active when
  * the signed server callback arrives (see the callback route) — this action
  * just gets the user to the payment page.
+ *
+ * `consent` is the checkbox on the checkout confirmation (price, renewal,
+ * Terms + Refund Policy). It is stored on the order with the Terms version,
+ * time and IP — the evidence if the charge is ever disputed. Refused while
+ * payments are paused (lib/billing/payments-pause.ts).
  */
 export async function startPlanCheckout(input: {
   planCode: PlanCode
   cycle: BillingCycle
+  consent: boolean
 }): Promise<ActionResult<{ checkoutUrl: string }>> {
   // Errors are shown in a toast — localize to the caller's UI language.
   const t = await getTranslations('billingErr')
@@ -56,6 +67,12 @@ export async function startPlanCheckout(input: {
   }
   if (!isFlittConfigured()) {
     return { success: false, error: t('notConfigured') }
+  }
+  if (paymentsPausedUntil()) {
+    return { success: false, error: t('paymentsPaused') }
+  }
+  if (input.consent !== true) {
+    return { success: false, error: t('consentRequired') }
   }
 
   const { data: org } = await ctx.supabase
@@ -104,9 +121,28 @@ export async function startPlanCheckout(input: {
     return { success: false, error: t('checkoutFailed') }
   }
 
+  // Who paid and what they agreed to, kept with the order for 5 years (also
+  // after the org is deleted) — receipts and dispute evidence. A separate,
+  // best-effort write so checkout still works before migration
+  // 20261023_payment_records.sql is applied.
+  const reqHeaders = await headers()
+  const { error: snapErr } = await admin
+    .from('payment_orders')
+    .update({
+      org_name: (org?.name as string | null | undefined) ?? null,
+      billing_country: (org?.billing_country as string | null | undefined) || requestCountry || null,
+      ge_resident: geResident,
+      payer_email: user?.email ?? null,
+      terms_version: LEGAL_UPDATED.terms,
+      consent_at: new Date().toISOString(),
+      consent_ip: clientIp(reqHeaders),
+    })
+    .eq('order_id', orderId)
+  if (snapErr) console.warn('[billing] order snapshot not saved:', snapErr.message)
+
   // The host serving this request (www.hrhandle.com in prod) — NOT the apex
   // NEXT_PUBLIC_SITE_URL, which 307-redirects and loses Flitt's server callback.
-  const siteUrl = callbackOrigin(await headers())
+  const siteUrl = callbackOrigin(reqHeaders)
   const result = await createSubscriptionCheckout({
     orderId,
     orderDesc: `HRHandle ${plan.name} — ${input.cycle === 'annual' ? 'annual' : 'monthly'}`,
@@ -128,6 +164,20 @@ export async function startPlanCheckout(input: {
     }
   }
 
+  if (user?.email) {
+    void recordDisclosure({
+      orgId: ctx.orgId,
+      subjectType: 'payer',
+      subjectRef: user.email,
+      dataCategories: ['email'],
+      recipient: PAYMENT_RECIPIENT_LABEL,
+      purpose: 'payment_processing',
+      legalBasis: 'contract',
+      relatedRef: orderId,
+      recordedBy: ctx.userId,
+    })
+  }
+
   void writeAuditLog({
     orgId: ctx.orgId,
     userId: ctx.userId,
@@ -135,7 +185,14 @@ export async function startPlanCheckout(input: {
     entityId: ctx.orgId,
     action: 'billing_checkout_started',
     message: `Checkout started — ${plan.name} ${input.cycle} (${currency} ${total})`,
-    details: { orderId, planCode: input.planCode, cycle: input.cycle, currency, amountMinor },
+    details: {
+      orderId,
+      planCode: input.planCode,
+      cycle: input.cycle,
+      currency,
+      amountMinor,
+      termsVersion: LEGAL_UPDATED.terms,
+    },
   })
 
   return { success: true, data: { checkoutUrl: result.checkoutUrl } }

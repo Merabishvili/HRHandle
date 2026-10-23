@@ -33,6 +33,11 @@ These caused past incidents (details in `CLAUDE.md`):
 - RLS hiding rows: a user-client count or aggregate that should use the service role (`lib/scorecards/fit-scores.ts`).
 - Integration secrets read with a user client after the column grants.
 - Missing migration on one project (compare with a read-only query on both).
+- Payments: a paid customer still locked → a lost callback (`npm run flitt:reconcile -- pending`, then resend it from the Flitt portal).
+
+## 3a. Does the payment provider need to know?
+
+The merchant agreement makes three things reportable to the payment provider (Flitt / TPAY): a data incident or site tampering (at once), an outside request about payer or payment data (at once), and anything that stops payments working for more than a day — a broken callback, an outage, a domain or bank-account change (within days). If any applies, say so first in your report and draft the notice from `docs/9-compliance/breach-response.md` Template D for the owner; never send it. If payments will be down for long, suggest the payments pause (`BILLING_PAUSED_UNTIL`, `docs/4-integrations/flitt.md` → "If payments stop").
 
 ## 4. Reproduce, then fix on staging
 

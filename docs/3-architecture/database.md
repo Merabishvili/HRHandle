@@ -563,12 +563,18 @@ Ledger of Flitt checkout attempts (migration `20260804_flitt_billing.sql`). One
 row per checkout; correlates the signed callback to an org + plan and enforces
 idempotency + anti-tamper. **Writes are service-role only** (checkout action +
 callback route use the admin client); RLS gives org members read access to their
-own rows.
+own rows. Rows are **kept 5 years** from their last transaction, also after the
+org is purged (`20261023_payment_records.sql`: `organization_id` → `NULL`, a
+snapshot of who paid stays on the row); the purge-deleted cron removes them after
+`retain_until`. Members can read only the plain order columns (column grants): the card token,
+consent IP and payer/card details are read with the service role after an
+owner/admin check (`lib/billing/payment-history.ts`). A renewal charged under the same order id gets its own row
+`<order_id>:<payment_id>` so each charge has a receipt.
 
 | Column | Type | Nullable | Default | Notes |
 |---|---|---|---|---|
 | id | uuid | NOT NULL | gen_random_uuid() | PK |
-| organization_id | uuid | NOT NULL | — | → organizations, ON DELETE CASCADE |
+| organization_id | uuid | NULL | — | → organizations, ON DELETE SET NULL (was CASCADE before `20261023`) |
 | order_id | text | NOT NULL | — | UNIQUE — correlation key + recurring handle |
 | plan_code | text | NOT NULL | — | 'individual' \| 'organization' |
 | billing_cycle | text | NOT NULL | — | 'monthly' \| 'annual' |
@@ -579,6 +585,20 @@ own rows.
 | flitt_rectoken | text | NULL | — | Recurring token once tokenized |
 | created_by | uuid | NULL | — | → profiles, ON DELETE SET NULL |
 | created_at / updated_at | timestamptz | NOT NULL | now() | |
+| org_name / billing_country / ge_resident / payer_email | text/text/bool/text | NULL | — | Snapshot at checkout (`20261023`) |
+| terms_version / consent_at / consent_ip | text/timestamptz/text | NULL | — | Checkout consent; `consent_ip` not readable by members |
+| paid_at / masked_card / card_type / rrn / approval_code | timestamptz/text… | NULL | — | From the signed callback; receipt + dispute evidence. `masked_card` only when really masked |
+| reversal_amount_minor / reversed_at | int/timestamptz | NULL | — | Refund recorded by the callback |
+| retain_until | timestamptz | NOT NULL | now() + 5 years | Moved forward on each callback; purged after |
+
+### `data_disclosures`
+Register of personal data HRHandle disclosed (`20261023_payment_records.sql`):
+what (`data_categories`), to whom (`recipient`), why (`purpose`), on what basis
+(`legal_basis`), when (`disclosed_at`), kept until `retain_until`. Written only
+with the service role (`lib/data-disclosures.ts#recordDisclosure`, and
+`scripts/record-disclosure.ts` for ad-hoc entries); owners/admins read their
+org's rows (shown on Settings → Audit log). `organization_id` → organizations ON
+DELETE SET NULL, so the register outlives the org.
 
 **`organizations.billing_currency`** (same migration) — manual currency override;
 `NULL` → derived from `billing_country` (GE→GEL, EU/EEA→EUR, else→USD).

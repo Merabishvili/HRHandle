@@ -80,9 +80,9 @@ For each activity: purpose, legal basis, data subject categories, personal data 
 | Purpose | Manage trial state, plan tier, billing cycle, payment status, plan limits. |
 | Legal basis (Art. 6) | (b) Contract performance; (c) Legal obligation (Georgian tax and accounting requirements for invoicing records once billing is live). |
 | Data subject categories | Account holders representing a paying customer organisation. |
-| Personal data categories | Plan code; billing cycle; subscription status; trial timestamps; payment-provider order/subscription references; payment status. **No payment card details are stored** — card data is handled by the payment provider (Flitt) under PCI DSS. |
-| Recipients / sub-processors | Supabase Postgres; **Flitt** (payment gateway, established in Georgia) — receives customer name, email, country, and payment details at checkout. HRHandle is the seller of record (Flitt is a gateway, **not** a Merchant of Record), so HRHandle carries sanctions-screening (see `docs/9-compliance/sanctions-screening.md`). |
-| Retention | Active for the life of the subscription. Invoicing records retained for the period required by Georgian tax law (commonly 6 years; verify with your accountant once billing is live). Other subscription state retained per [Privacy §7](../../app/privacy/page.tsx). |
+| Personal data categories | Plan code; billing cycle; subscription status; trial timestamps; payment-provider order/subscription references; payment status; per payment the payer's email, org name and country (snapshot), the masked card number (first 6 + last 4), card type, RRN, approval code, refunds; checkout consent (Terms version, time, IP). **No full card numbers are stored** — card data is handled by the payment provider (Flitt) under PCI DSS. |
+| Recipients / sub-processors | Supabase Postgres; **Flitt** (payment gateway operated in Georgia by TPAY LLC) — HRHandle sends it only the payer's **email** (`sender_email`) plus the order; the payer types card details (and possibly phone/email) on Flitt's page. **TBC Bank** (acquiring bank, an independent controller) authorises and settles the card payment. Each email sent to Flitt is logged in `data_disclosures`. HRHandle is the seller of record (Flitt is a gateway, **not** a Merchant of Record), so HRHandle carries sanctions-screening (see `docs/9-compliance/sanctions-screening.md`). |
+| Retention | Active for the life of the subscription. **Payment records: 5 years from each payment**, also after the account is deleted (merchant agreement + card-scheme rules; `PAYMENT_RECORD_RETENTION_YEARS`, purged by the purge-deleted cron after `retain_until`). If the accountant confirms a longer tax-law period, raise the constant. Disclosure register: as long as the data it describes. Other subscription state retained per [Privacy §7](../../app/privacy/page.tsx). |
 | Transfer mechanism | SCCs (as C-1). Flitt is established in Georgia; card data handled by Flitt under PCI DSS. |
 | Security (Art. 32) | RLS; no payment card details in HRHandle's database; payment provider handles PCI scope. |
 
@@ -205,7 +205,8 @@ The authoritative sub-processor list is in [Privacy Policy §5](../../app/privac
 | Microsoft (Graph, Outlook, Teams) | C-1 (sign-in), P-4 | Authentication and calendar integration | USA / Global |
 | Zoom | P-4 | Video meeting creation | USA / Global |
 | LinkedIn | (planned) | Vacancy posting | USA / Global |
-| Flitt | C-3 | Payment processing (gateway) | Georgia |
+| Flitt (TPAY LLC) | C-3 | Payment processing (gateway) | Georgia |
+| TBC Bank | C-3 | Acquiring bank (independent controller) | Georgia |
 
 ---
 

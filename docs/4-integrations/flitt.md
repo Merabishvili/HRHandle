@@ -1,6 +1,6 @@
 # Flitt — payment gateway (subscription billing)
 
-_Last updated: 2026-10-22_
+_Last updated: 2026-10-23_
 
 Flitt (portal.flitt.com — the rebranded Fondy engine) processes subscription
 payments for the paid plans. Multi-currency (**GEL / EUR / USD**), auto-recurring,
@@ -16,8 +16,14 @@ Flitt switches the merchant to production.
 
 Hosted checkout + server callback:
 
-1. Owner/admin clicks **Upgrade** → server action `startPlanCheckout` resolves the
-   org's currency + amount, records a pending `payment_orders` row, and asks Flitt
+1. Owner/admin clicks **Upgrade** → the **checkout confirmation**
+   (`components/subscription/checkout-dialog.tsx`) shows the plan, final price and
+   how renewal works, asks the residency question if unanswered, and requires the
+   consent checkbox (Terms + Refund Policy + automatic renewal charges). Then the
+   server action `startPlanCheckout` (refuses without `consent: true`) resolves the
+   org's currency + amount, records a pending `payment_orders` row with a snapshot
+   of who paid and the consent (Terms version, time, IP), logs the payer email it
+   sends Flitt in the disclosure register, and asks Flitt
    for a checkout URL (`Subscription()` — protocol 2.0, so nested `recurring_data`
    is signed correctly).
 2. The user is redirected to Flitt's hosted page (card / Google Pay / Apple Pay).
@@ -153,7 +159,7 @@ the same org inside the window raises a Sentry **error**
    select payment_provider_subscription_ref from subscriptions where organization_id = '<org_id>';
    ```
    ```bash
-   FLITT_MERCHANT_ID=4056901 FLITT_SECRET_KEY=<payment key> \
+   FLITT_MERCHANT_ID=<merchant id> FLITT_SECRET_KEY=<payment key> \
      node scripts/flitt-subscription.mjs stop <payment_provider_subscription_ref>
    ```
 4. **End access** (policy: a refund cancels the paid subscription):
@@ -184,7 +190,7 @@ off**, so Flitt's reply to the stop request is the only proof:
   linked), run — key inline, never committed:
 
   ```bash
-  FLITT_MERCHANT_ID=4056901 FLITT_SECRET_KEY=<payment key> \
+  FLITT_MERCHANT_ID=<merchant id> FLITT_SECRET_KEY=<payment key> \
     node scripts/flitt-subscription.mjs stop <order_id> [<order_id> …]
   ```
 
@@ -246,9 +252,10 @@ to GEL for the same reason. See [`lib/pricing/currency.ts`](../../lib/pricing/cu
 exceptions allow a foreign currency for non-residents. Before the first payment
 an owner/admin must answer **"I am a resident of Georgia (individual or legal
 entity)" — Yes / No** (nothing preselected; `setBillingResidency`, audited):
-- **Upgrade** stays clickable; if the org hasn't answered, it opens
-  `components/subscription/residency-dialog.tsx` (question, currency pick for a
-  "No", the final price) and then continues to checkout;
+- **Upgrade** stays clickable; if the org hasn't answered, the checkout
+  confirmation (`components/subscription/checkout-dialog.tsx`) asks it first
+  (question, currency pick for a "No", the final price) and then continues to
+  checkout;
 - the owner can also answer in **Settings → Organization**
   (`components/settings/residency-card.tsx`).
 
@@ -261,8 +268,9 @@ it then (update the org row with the admin client). `organizations.billing_ge_re
 read the column in a separate, graceful select, so they still render before the
 migration is applied. The Terms (§5, "Residency and
 currency") make the customer responsible for the answer. An existing recurring
-keeps the currency it was bought in. Flitt charges a 4% fee on EUR/USD payments
-(owner's note from Flitt, 2026-10-21). Prices live in
+keeps the currency it was bought in. Fees per currency are commercial terms of
+the merchant agreement: they live in the private knowledge base, never in this
+repo (see "Merchant agreement" below). Prices live in
 `PRICING_PLANS` ([`lib/types/subscription.ts`](../../lib/types/subscription.ts)),
 per-currency; amounts are converted to minor units (tetri/cents, ×100) for Flitt.
 
@@ -280,7 +288,17 @@ per-currency; amounts are converted to minor units (tetri/cents, ×100) for Flit
 | `app/api/payments/flitt/callback/route.ts` | Signed callback → updates `subscriptions` |
 | `lib/pricing/currency.ts` | Currency resolution + formatting |
 | `components/subscription/plan-cards.tsx` | Upgrade buttons (wired), currency picker |
-| `components/subscription/residency-dialog.tsx` | Georgian-residency question + final price, opened from Upgrade |
+| `components/subscription/checkout-dialog.tsx` | Checkout confirmation from every Upgrade: price, renewal, consent; residency question while unanswered |
+| `components/subscription/payment-history.tsx` | Billing → **Payments** list (paid, refunded, failed) with receipt links |
+| `app/receipts/[id]/page.tsx` | Printable receipt per paid charge (owner/admin; outside the dashboard layout for a clean print) |
+| `lib/billing/payment-records.ts` | Pure: retention (5 years), callback → receipt fields (`transactionDetails`, masked-card guard), row status |
+| `lib/billing/payment-history.ts` | Reads the org's payments (graceful before the `20261023` migration) |
+| `lib/billing/payments-pause.ts` | `BILLING_PAUSED_UNTIL` → no lockouts, no checkout, notice |
+| `lib/data-disclosures.ts` | `recordDisclosure` — register of personal data passed on |
+| `lib/legal/payment-provider.ts` | Provider brand / operator / acquirer names, used by legal pages, receipts and the register |
+| `lib/flitt/reconcile.ts` + `scripts/flitt-reconcile.ts` | Register CSV vs ledger; pending orders vs Flitt status |
+| `scripts/record-disclosure.ts` | Ad-hoc entries in the disclosure register |
+| `supabase/migrations/20261023_payment_records.sql` | Rows survive org purge, snapshot/consent/receipt columns, column grants, `data_disclosures` |
 | `components/settings/residency-card.tsx` | Residency answer in Settings → Organization (read-only after the first payment) |
 | `lib/billing/residency.ts` | `isResidencyLocked` |
 | `components/subscription/billing-controls.tsx` | Currency override + cancel |
@@ -324,8 +342,90 @@ Configured 2026-10-09 — replicate on the staging test merchant with
   the test merchant
 - [ ] Staging → its own **test merchant** creds on the staging Vercel env
 - [ ] Rotate the payment key if Flitt allows (it was shared in a screenshot)
+- [ ] Apply `20261023_payment_records.sql` on staging, then production (before
+  the live switch: from then on every payment must be kept 5 years)
+- [ ] Get written confirmation from the provider/bank that Google Pay, Apple Pay
+  and EUR/USD are covered by the acquiring agreement; otherwise remove them
+- [ ] Find out where the daily transaction register arrives (email / portal) and
+  in which CSV format; run the reconciliation once on test data
 - [x] Legal pages audited + available in EN/KA/RU (2026-10-09) — content in
   `components/legal/content/*`, shared facts in `lib/legal/documents.ts`
+
+## Payment records and receipts
+
+Every charge is a `payment_orders` row kept **5 years** from its last
+transaction (`PAYMENT_RECORD_RETENTION_YEARS`, `retain_until`), **also after the
+org is deleted**: the purge-deleted cron no longer cascades them (the org link
+becomes `NULL`, the who-paid snapshot stays) and deletes them only after
+`retain_until`. Owners/admins see them on Billing → **Payments**, each paid one
+with a printable **receipt** (`/receipts/<id>`: seller identity from
+`lib/legal/contact.ts`, buyer snapshot, masked card, payment ID, RRN, approval
+code, refund). The callback stores only non-sensitive fields; `safeMaskedCard`
+refuses anything that isn't masked, so a full card number can't land in the DB.
+Renewals charged under the same order id get their own row
+(`<order_id>:<payment_id>`), so each has its own receipt.
+
+## Disclosure register
+
+`data_disclosures` records what personal data HRHandle passed to whom, when, why
+and on what legal basis, kept as long as the data. The app records the payer
+email sent to Flitt on each checkout; ad-hoc disclosures (an authority's
+request) go in with `npm run disclosure:record` (see
+`docs/9-compliance/breach-response.md` → "Requests about personal data").
+Owners/admins see their org's entries on Settings → Audit log.
+
+## Daily reconciliation
+
+The provider sends a register of processed transactions every day, and payouts
+arrive **net of fees**, so the bank statement never matches our amounts. Once a
+day (or after any doubt):
+
+```bash
+# register vs ledger for a date range (Tbilisi dates)
+SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… npm run flitt:reconcile -- register <file.csv> --from 2026-11-01 --to 2026-11-01
+# orders still "pending" here: what does Flitt say?
+SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… FLITT_MERCHANT_ID=<merchant id> FLITT_SECRET_KEY=<payment key> \
+  npm run flitt:reconcile -- pending --days 3
+```
+
+Read-only; it reports `missing_in_ledger`, `not_activated` (lost callback →
+resend it from the portal), `amount_mismatch`, `refund_not_recorded` (resend the
+refund callback) and `missing_in_register`. The CSV header is matched loosely
+(order id / status / amount / currency / reversal amount, EN/RU/KA); amounts with
+decimals are read as major units, integers as minor (`--amount-unit` to force).
+The script prints which database it reads — production keys read production.
+
+## If payments stop (payments pause)
+
+If the provider suspends or ends the merchant account, or payments are down for
+days, set `BILLING_PAUSED_UNTIL=YYYY-MM-DD` on the Vercel environment and
+redeploy. Until that date: paid plans waiting for a renewal are **not locked**
+(trials, cancelled and refunded plans still are), checkout is refused, Upgrade
+is off and the billing page shows a notice with the date. Then tell customers
+(email from the owner), arrange manual payment (bank transfer + receipt), or move
+to another provider (card tokens can't be moved: every customer pays once
+again). Remove the variable to return to normal.
+
+## Merchant agreement: standing duties
+
+The signed agreement is confidential: its fees, bank details and text stay in
+the private knowledge base, never in this repo. What it means for the code and
+for operations:
+
+- Keep payment records 5 years (above). Don't add a delete path for them.
+- Tell the provider at once about data incidents and about outside requests
+  concerning payer or payment data, and soon about anything that stops payments
+  (outage, broken callback, domain or bank-account change):
+  `docs/9-compliance/breach-response.md` Template D.
+- Notices sent to the contract mailbox count as delivered: it is read daily.
+- Accept only the card types the bank agreed to (see the checklist above).
+- The provider may ask us to remove information about it that we publish: the
+  names live in `lib/legal/payment-provider.ts`; the guide pages
+  (`content/guides/{en,ka,ru}/billing.mdx`) and `components/subscription/payment-methods.tsx`
+  are edited by hand.
+- Disputes with customers are ours: the consent record, the receipt fields and
+  the audit log are the evidence. Terms §5 asks customers to contact us before
+  disputing a charge with their bank.
 
 ## Gotchas
 

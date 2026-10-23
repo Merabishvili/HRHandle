@@ -14,6 +14,7 @@ import {
 import { REFUND_LIMIT_MONTHS } from '@/lib/legal/documents'
 import { PRICING_PLANS } from '@/lib/types/subscription'
 import { writeAuditLog } from '@/lib/audit-log'
+import { transactionDetails } from '@/lib/billing/payment-records'
 
 // The Flitt SDK uses Node's `https`/`crypto`; keep this on the Node runtime.
 export const runtime = 'nodejs'
@@ -21,6 +22,24 @@ export const dynamic = 'force-dynamic'
 
 const ORDER_COLUMNS =
   'id, order_id, organization_id, plan_code, billing_cycle, currency, amount_minor, status, flitt_payment_id'
+
+/** Who-paid snapshot a renewal row copies from its root order. Read and
+ * written separately from ORDER_COLUMNS so the callback keeps working before
+ * migration 20261023_payment_records.sql is applied. */
+const SNAPSHOT_COLUMNS = 'org_name, billing_country, ge_resident, payer_email, terms_version, consent_at'
+
+type AdminClient = ReturnType<typeof createAdminClient>
+
+async function copySnapshot(admin: AdminClient, fromOrderId: string, toId: string): Promise<void> {
+  const { data, error } = await admin
+    .from('payment_orders')
+    .select(SNAPSHOT_COLUMNS)
+    .eq('order_id', fromOrderId)
+    .maybeSingle()
+  if (error || !data) return
+  const { error: upErr } = await admin.from('payment_orders').update(data).eq('id', toId)
+  if (upErr) console.warn('[flitt/callback] renewal snapshot not copied:', upErr.message)
+}
 
 /** Parse a Flitt callback body — JSON or form-encoded, with an optional
  * `{ request: … }` wrapper. */
@@ -109,6 +128,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         return new NextResponse('OK', { status: 200 })
       }
       order = child
+      if (child) await copySnapshot(admin, parentOrderId, child.id)
     }
   }
 
@@ -161,6 +181,50 @@ export async function POST(req: Request): Promise<NextResponse> {
       updated_at: nowIso,
     })
     .eq('id', order.id)
+
+  // Receipt + dispute details (masked card, RRN, approval code, refund) and the
+  // 5-year retention date. Best-effort: never blocks the subscription update.
+  // A renewal charged under the SAME order id gets its own ledger row
+  // (`<order_id>:<payment_id>`), so every charge has its own receipt and the
+  // root row keeps the first payment's details.
+  {
+    let detailsRowId: string | null = order.id
+    const paymentId = paymentIdOf(cb)
+    if (decision.kind === 'activate' && decision.renewal && parentOrderId === null && paymentId) {
+      const { data: ledger, error: ledgerErr } = await admin
+        .from('payment_orders')
+        .insert({
+          organization_id: order.organization_id,
+          order_id: `${order.order_id}:${paymentId}`,
+          plan_code: order.plan_code,
+          billing_cycle: order.billing_cycle,
+          currency: order.currency,
+          amount_minor: order.amount_minor,
+          status: 'approved',
+          flitt_payment_id: paymentId,
+        })
+        .select('id')
+        .single()
+      detailsRowId = ledgerErr ? null : (ledger?.id as string | undefined) ?? null
+      if (detailsRowId) await copySnapshot(admin, order.order_id, detailsRowId)
+    }
+    if (detailsRowId) {
+      const { error: detErr } = await admin
+        .from('payment_orders')
+        .update(transactionDetails(cb, now))
+        .eq('id', detailsRowId)
+      if (detErr) console.warn('[flitt/callback] transaction details not saved:', detErr.message)
+    }
+    // The root row anchors the recurring: keep it as long as its newest charge,
+    // or the retention purge would drop it under a live subscription.
+    if (detailsRowId !== order.id) {
+      const { error: rootErr } = await admin
+        .from('payment_orders')
+        .update({ retain_until: transactionDetails(cb, now).retain_until })
+        .eq('id', order.id)
+      if (rootErr) console.warn('[flitt/callback] root retention not moved:', rootErr.message)
+    }
+  }
 
   // A renewal / failure for a recurring the org has since replaced (e.g. a
   // plan change whose old recurring we couldn't stop) must not touch the

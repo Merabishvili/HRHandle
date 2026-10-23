@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ContactBlock, List, Mail, P, Section } from '../parts'
 import { BUSINESS_ID } from '@/lib/legal/contact'
+import { PAYMENT_PROVIDER, PAYMENT_PROVIDER_BRAND } from '@/lib/legal/payment-provider'
 import {
   REFUND_LIMIT_MONTHS,
   REFUND_PAYOUT_BUSINESS_DAYS,
@@ -120,8 +121,21 @@ export function TermsEn() {
           then, access is paused until you pay again.
         </P>
         <P>
-          Payments are processed securely by our payment provider, Flitt. We accept Visa and
-          Mastercard, as well as Google Pay and Apple Pay. We do not store your payment card details.
+          Payments are processed securely by our payment provider, {PAYMENT_PROVIDER_BRAND}{' '}
+          (operated in Georgia by {PAYMENT_PROVIDER.en.operator}); the acquiring bank is{' '}
+          {PAYMENT_PROVIDER.en.acquirer}. We accept Visa and Mastercard, as well as Google Pay and
+          Apple Pay. We do not store your payment card details.
+        </P>
+        <P>
+          <strong>Confirmation and receipts.</strong> Before each payment you confirm the plan,
+          the price and automatic renewal, and we keep a record of that confirmation. A receipt for
+          every payment is available under Settings → Billing → Payments.
+        </P>
+        <P>
+          <strong>Questions about a charge.</strong> If you don&apos;t recognise a charge or think
+          it is wrong, please contact us first at <Mail />. We will look into it and, where the
+          Refund Policy applies, refund you. Opening a dispute with your bank instead may suspend
+          your account until the dispute is resolved.
         </P>
       </Section>
 

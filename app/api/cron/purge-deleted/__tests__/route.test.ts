@@ -300,4 +300,24 @@ describe('GET /api/cron/purge-deleted', () => {
     expect(body.vacancies_purged).toBe(1)
     expect(body.vacancies_skipped_due_to_restrict).toBe(1)
   })
+  it('deletes payment records and disclosures only once their retention ends', async () => {
+    perTableResponses.set('payment_orders:delete', { data: [{ id: 'po-1' }, { id: 'po-2' }], error: null })
+    perTableResponses.set('data_disclosures:delete', { data: [{ id: 'dd-1' }], error: null })
+
+    const res = await GET(makeReq(`Bearer ${SECRET}`))
+    const body = await res.json()
+    expect(body.payment_records_purged).toBe(2)
+    expect(body.disclosures_purged).toBe(1)
+    // Payment rows are never removed together with the organization.
+    expect(fromMock).toHaveBeenCalledWith('payment_orders')
+  })
+
+  it('skips the retention purge when the columns are not there yet', async () => {
+    perTableResponses.set('payment_orders:delete', { data: null, error: { message: 'column "retain_until" does not exist' } })
+    const res = await GET(makeReq(`Bearer ${SECRET}`))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.ok).toBe(true)
+    expect(body.payment_records_purged).toBe(0)
+  })
 })
