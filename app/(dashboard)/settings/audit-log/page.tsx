@@ -11,6 +11,7 @@ import { AuditLogFilters } from '@/components/settings/audit-log-filters'
 import { AuditLogTable } from '@/components/settings/audit-log-table'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { Button } from '@/components/ui/button'
+import { DataDisclosures } from '@/components/settings/data-disclosures'
 
 type SearchParams = Promise<{
   action?: string
@@ -96,6 +97,8 @@ export default async function AuditLogPage({
         basePath="/settings/audit-log"
         preservedParams={paginationPreserved}
       />
+
+      <DataDisclosures supabase={supabase} />
     </div>
   )
 }

@@ -42,6 +42,8 @@ interface PurgeCounts {
   storage_files_deleted: number
   storage_errors: number
   offers_expired: number
+  payment_records_purged: number
+  disclosures_purged: number
 }
 
 export async function GET(req: NextRequest) {
@@ -66,6 +68,8 @@ export async function GET(req: NextRequest) {
     storage_files_deleted: 0,
     storage_errors: 0,
     offers_expired: 0,
+    payment_records_purged: 0,
+    disclosures_purged: 0,
   }
 
   // Collected across multiple steps below; deleted from the candidate-documents
@@ -351,6 +355,24 @@ export async function GET(req: NextRequest) {
     }
   } catch (err) {
     console.error('[cron/purge-deleted] offers expire threw:', err)
+  }
+
+  // ── Retention ends: payment records + disclosure register (5 years) ──────
+  // Payment rows survive an org purge (organization_id → NULL, migration
+  // 20261023_payment_records.sql); they are deleted here once retain_until
+  // passes. Before that migration the column doesn't exist — logged, skipped.
+  const nowIso = new Date().toISOString()
+  for (const [table, key] of [
+    ['payment_orders', 'payment_records_purged'],
+    ['data_disclosures', 'disclosures_purged'],
+  ] as const) {
+    const { data, error } = await supabase
+      .from(table)
+      .delete()
+      .lt('retain_until', nowIso)
+      .select('id')
+    if (error) console.warn(`[cron/purge-deleted] ${table} retention purge skipped:`, error.message)
+    else counts[key] = data?.length ?? 0
   }
 
   console.log('[cron/purge-deleted] done:', counts)

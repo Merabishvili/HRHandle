@@ -33,7 +33,7 @@ function cb(over: Partial<FlittCallback> = {}): FlittCallback {
     order_status: 'approved',
     amount: '4900',
     currency: 'GEL',
-    merchant_id: 4056901,
+    merchant_id: 1234567,
     payment_id: '111',
     ...over,
   }

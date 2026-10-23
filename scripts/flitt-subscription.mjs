@@ -6,7 +6,7 @@
  * how to check: stopping an already-stopped subscription is harmless, so
  * `stop` doubles as a status check.
  *
- *   FLITT_MERCHANT_ID=4056901 FLITT_SECRET_KEY=<payment key> \
+ *   FLITT_MERCHANT_ID=<merchant id> FLITT_SECRET_KEY=<payment key> \
  *     node scripts/flitt-subscription.mjs stop <order_id> [<order_id> …]
  *
  * Pass the key inline like this — never commit it or put it in a file. Uses the

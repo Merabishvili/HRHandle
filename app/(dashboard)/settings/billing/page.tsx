@@ -19,6 +19,9 @@ import {
   billingNoteKind,
 } from '@/lib/billing/access'
 import { REFUND_PAYOUT_BUSINESS_DAYS, REFUND_REQUEST_DAYS } from '@/lib/legal/documents'
+import { paymentsPausedUntil } from '@/lib/billing/payments-pause'
+import { listPayments } from '@/lib/billing/payment-history'
+import { PaymentHistory } from '@/components/subscription/payment-history'
 
 interface ProfileRow {
   id: string
@@ -194,13 +197,15 @@ export default async function BillingSettingsPage({
 
   // Locked = trial over, or the paid period ended without a renewal (past the
   // grace period). A locked or past_due org must be able to buy its plan again.
-  const isLocked = isSubscriptionLocked(typedSubscription)
+  // Payments paused (provider unavailable): renewals we can't take don't lock.
+  const pausedUntil = paymentsPausedUntil()
+  const isLocked = isSubscriptionLocked(typedSubscription, new Date(), pausedUntil)
   const canManage = typedProfile.role === 'owner' || typedProfile.role === 'admin'
   // Members get a read-only view only while the org is locked (see canViewBilling).
   if (!canViewBilling(typedProfile.role, isLocked)) {
     redirect('/pipeline')
   }
-  const displayStatus = displaySubscriptionStatus(typedSubscription)
+  const displayStatus = displaySubscriptionStatus(typedSubscription, new Date(), pausedUntil)
   const isPaidActive =
     typedSubscription.plan_code !== 'trial' && typedSubscription.status === 'active' && !isLocked
 
@@ -224,6 +229,7 @@ export default async function BillingSettingsPage({
   const remainingTrialDays = getRemainingTrialDays(typedSubscription.trial_end_at)
   const isTrial = typedSubscription.plan_code === 'trial'
   const t = await getTranslations()
+  const payments = canManage ? await listPayments(supabase, organizationId) : []
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -232,6 +238,17 @@ export default async function BillingSettingsPage({
           <p className="font-medium">{t('billing.checkoutThanks')}</p>
           <p className="mt-1">
             {t('billing.checkoutDesc')}
+          </p>
+        </div>
+      )}
+
+      {pausedUntil && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+          <p className="font-medium">{t('billing.paymentsPausedTitle')}</p>
+          <p className="mt-1">
+            {t('billing.paymentsPausedDesc', {
+              date: pausedUntil.toISOString().slice(0, 10),
+            })}
           </p>
         </div>
       )}
@@ -303,6 +320,7 @@ export default async function BillingSettingsPage({
         canManage={canManage}
         geResident={geResident}
         nonResidentCurrency={nonResidentCurrency}
+        paymentsPaused={pausedUntil !== null}
       />
 
       <BillingControls
@@ -325,6 +343,8 @@ export default async function BillingSettingsPage({
         </div>
         <PaymentMethods />
       </section>
+
+      {canManage && <PaymentHistory payments={payments} />}
 
       <p className="text-center text-xs text-muted-foreground">
         {t.rich(NOTE_KEY[billingNoteKind(typedSubscription)], {

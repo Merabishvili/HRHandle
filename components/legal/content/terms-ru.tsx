@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ContactBlock, List, Mail, P, Section } from '../parts'
 import { BUSINESS_ID } from '@/lib/legal/contact'
+import { PAYMENT_PROVIDER, PAYMENT_PROVIDER_BRAND } from '@/lib/legal/payment-provider'
 import {
   REFUND_LIMIT_MONTHS,
   REFUND_PAYOUT_BUSINESS_DAYS,
@@ -120,8 +121,21 @@ export function TermsRu() {
           оплата не пройдёт, доступ приостанавливается до повторной оплаты.
         </P>
         <P>
-          Платежи надёжно обрабатывает наш платёжный провайдер Flitt. Мы принимаем Visa и Mastercard,
-          а также Google Pay и Apple Pay. Мы не храним данные вашей банковской карты.
+          Платежи надёжно обрабатывает наш платёжный провайдер {PAYMENT_PROVIDER_BRAND} (в Грузии
+          его оператор — {PAYMENT_PROVIDER.ru.operator}); банк-эквайер —{' '}
+          {PAYMENT_PROVIDER.ru.acquirer}. Мы принимаем Visa и Mastercard, а также Google Pay и Apple
+          Pay. Мы не храним данные вашей банковской карты.
+        </P>
+        <P>
+          <strong>Подтверждение и квитанции.</strong> Перед каждым платежом вы подтверждаете тариф,
+          цену и автоматическое продление, а мы сохраняем запись об этом подтверждении. Квитанция по
+          каждому платежу доступна в разделе Настройки → Оплата → Платежи.
+        </P>
+        <P>
+          <strong>Вопросы о списании.</strong> Если вы не узнаёте списание или считаете его
+          ошибочным, сначала напишите нам: <Mail />. Мы разберёмся и, если применима Политика
+          возврата, вернём деньги. Если вместо этого вы откроете спор в своём банке, ваша учётная
+          запись может быть приостановлена до его завершения.
         </P>
       </Section>
 

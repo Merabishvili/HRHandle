@@ -12,6 +12,7 @@ import { SessionGuard } from '@/components/auth/session-guard'
 import { SubscriptionLockGate } from '@/components/billing/subscription-lock-gate'
 import { PostHogIdentify } from '@/components/analytics/posthog-identify'
 import { isSubscriptionLocked, shouldRedirectToBilling } from '@/lib/billing/access'
+import { paymentsPausedUntil } from '@/lib/billing/payments-pause'
 
 interface ProfileRow {
   id: string
@@ -277,8 +278,9 @@ export default async function DashboardLayout({
   }
 
   // Expired trial, or a paid period that ended without a renewal (after the
-  // grace period) — see lib/billing/access.ts.
-  const isExpired = isSubscriptionLocked(subscription)
+  // grace period) — see lib/billing/access.ts. Not while payments are paused
+  // (lib/billing/payments-pause.ts): a renewal we can't take mustn't lock anyone.
+  const isExpired = isSubscriptionLocked(subscription, new Date(), paymentsPausedUntil())
 
   // Locked: send them to the canonical billing page — except from billing (or
   // the legacy /subscription route) itself, which would loop forever.

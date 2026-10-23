@@ -28,10 +28,14 @@ export interface SubscriptionAccessFields {
  *     after the period end, so a late or failed renewal has time to recover;
  *   - auto-renew off (canceled) → locked right at the period end.
  * - No period end (manual / complimentary plan) → never locked.
+ * - Payments paused (`pausedUntil` in the future, lib/billing/payments-pause.ts)
+ *   → a paid plan with auto-renew on is not locked: the renewal it waits for
+ *   can't be taken. Trials, cancelled and `expired` plans lock as usual.
  */
 export function isSubscriptionLocked(
   sub: SubscriptionAccessFields | null | undefined,
   now: Date = new Date(),
+  pausedUntil: Date | null = null,
 ): boolean {
   if (!sub) return false
   if (sub.status === 'expired') return true
@@ -43,6 +47,7 @@ export function isSubscriptionLocked(
   if (!sub.current_period_end_at) return false
   const end = new Date(sub.current_period_end_at).getTime()
   const autoRenewOn = !!sub.next_billing_at && sub.status !== 'canceled'
+  if (autoRenewOn && pausedUntil && pausedUntil.getTime() > now.getTime()) return false
   const deadline = autoRenewOn ? end + RENEWAL_GRACE_DAYS * DAY_MS : end
   return now.getTime() > deadline
 }
@@ -54,8 +59,9 @@ export function isSubscriptionLocked(
 export function displaySubscriptionStatus<T extends string>(
   sub: SubscriptionAccessFields & { status: T; plan_code: string },
   now: Date = new Date(),
+  pausedUntil: Date | null = null,
 ): T | 'expired' {
-  return sub.plan_code !== 'trial' && isSubscriptionLocked(sub, now) ? 'expired' : sub.status
+  return sub.plan_code !== 'trial' && isSubscriptionLocked(sub, now, pausedUntil) ? 'expired' : sub.status
 }
 
 /**

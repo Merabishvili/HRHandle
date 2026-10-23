@@ -68,7 +68,10 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/interviews') ||
     pathname.startsWith('/reports') ||
     pathname.startsWith('/settings') ||
-    pathname.startsWith('/subscription')
+    pathname.startsWith('/subscription') ||
+    // Receipts live outside the dashboard layout (clean print) but show
+    // billing data, so they get the same MFA gate.
+    pathname.startsWith('/receipts')
 
   // The enrollment UI (TwoFactorSection) AND the org MFA-policy toggle both live
   // on /settings/security — it MUST be exempt, otherwise an admin who turns on

@@ -31,6 +31,10 @@ export const env = createEnv({
     // MERCHANT_ID is numeric but kept as a string here; coerced in the client.
     FLITT_MERCHANT_ID: z.string().min(1).optional(),
     FLITT_SECRET_KEY: z.string().min(1).optional(),
+    // Payments pause (lib/billing/payments-pause.ts): YYYY-MM-DD. While in the
+    // future, paid plans waiting for a renewal aren't locked and checkout is
+    // off. Deliberately loose — a bad value just means "not paused".
+    BILLING_PAUSED_UNTIL: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
@@ -64,6 +68,7 @@ export const env = createEnv({
     CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET,
     FLITT_MERCHANT_ID: process.env.FLITT_MERCHANT_ID,
     FLITT_SECRET_KEY: process.env.FLITT_SECRET_KEY,
+    BILLING_PAUSED_UNTIL: process.env.BILLING_PAUSED_UNTIL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,

@@ -115,6 +115,7 @@ Do these in order, regardless of severity:
   - Compromised user account → force a Supabase Auth sign-out for that user.
 - [ ] **Do not modify or delete logs.** They are evidence.
 - [ ] **Classify severity** using the [Severity classification](#severity-classification) table.
+- [ ] **Tell the payment provider at once** if payer or payment data may be involved (billing records, `payment_orders`, the payer emails sent at checkout, the payment key) or the site was tampered with. The merchant agreement requires notice **without delay**; use [Template D](#template-d--notice-to-the-payment-provider). Rotate the Flitt payment key if it may have leaked.
 
 If you cannot decide whether to act (e.g. rotating a key would break production), pick the option that **minimises further data exposure**, even at the cost of availability. GDPR doesn't care about your uptime SLA.
 
@@ -256,6 +257,47 @@ We are very sorry that this happened. If you have any questions, please
 contact: {your or customer's contact email}.
 ```
 
+### Template D — Notice to the payment provider
+
+Send from the contract mailbox (the address in the merchant agreement; see the
+private knowledge base) to the provider's official contact. Short and factual;
+follow up as facts become clear. Georgian first, English below.
+
+```
+თემა: ინციდენტის შეტყობინება — HRHandle (ი/მ ალექსანდრე მერაბიშვილი, ს/კ 01019062001)
+
+{date} {time} (თბილისის დროით) გავიგეთ ინციდენტის შესახებ: {რა მოხდა, ერთი-ორი წინადადება}.
+შესაძლოა შეეხოს: {გადამხდელთა იმეილები / გადახდის ჩანაწერები / გადახდის გასაღები / ვებგვერდი}.
+გადახდის ბარათის სრული მონაცემები HRHandle-ში არ ინახება.
+მიღებული ზომები: {რა გავაკეთეთ}. შემდეგი ინფორმაცია: {როდის}.
+საკონტაქტო პირი: ალექსანდრე მერაბიშვილი, {phone}.
+
+Subject: Incident notice — HRHandle (IE Aleksandre Merabishvili, ID 01019062001)
+
+On {date} at {time} (Tbilisi time) we became aware of an incident: {one or two
+sentences}. It may involve: {payer emails / payment records / the payment key /
+the website}. HRHandle does not store full card data. Steps taken: {what we did}.
+Next update: {when}. Contact: Aleksandre Merabishvili, {phone}.
+```
+
+---
+
+## Requests about personal data
+
+Any outside request about personal data (an authority, a court, a data
+subject's request, a bank's or card scheme's inquiry) that touches **payer or
+payment data** must be reported to the payment provider **at once** (merchant
+agreement), before answering it.
+
+1. Log the request in the internal breach log (time, who asked, what for).
+2. Tell the payment provider (adapt Template D: "We received a request from {who}
+   about {what}").
+3. Answer the request with only the data needed, and record the answer in the
+   disclosure register:
+   `SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… npm run disclosure:record -- --org <org id> --subject-type payer --subject <email> --data email,payment_data --recipient "<who>" --purpose "<why>" --basis legal_obligation --ref <request no.>`
+   (see `scripts/record-disclosure.ts`). The owner/admin of that org then sees
+   it on Settings → Audit log.
+
 ---
 
 ## Internal breach log
@@ -305,6 +347,7 @@ Once per quarter (set a recurring calendar reminder):
 | Resend incident & status | status.resend.com | Vendor breach notices |
 | Cloudflare Turnstile incident & status | www.cloudflarestatus.com | Vendor breach notices |
 | Google AI / Gemini | status.cloud.google.com | Vendor breach notices |
+| Payment provider (Flitt, operated by TPAY LLC) | Contract contacts in the private knowledge base | Incidents, data requests and anything that stops payments — see Template D |
 | Georgian Personal Data Protection Service | sda.gov.ge | [TODO: verify the current submission channel for breach notifications under the updated 2024 Georgian data protection law] |
 | EU representative | **Not yet appointed** — see [EU-rep item in audit plan](../issues-found.md) | When appointed, add address + email here |
 | HRHandle DPO / founder | Aleksandre Merabishvili | support@hrhandle.com |

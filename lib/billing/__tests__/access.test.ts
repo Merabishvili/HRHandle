@@ -67,6 +67,26 @@ describe('isSubscriptionLocked', () => {
   })
 })
 
+describe('isSubscriptionLocked while payments are paused', () => {
+  const pastGrace = { current_period_end_at: iso(-(RENEWAL_GRACE_DAYS + 5)), next_billing_at: iso(-(RENEWAL_GRACE_DAYS + 5)) }
+  const paused = new Date(NOW.getTime() + 7 * DAY)
+
+  it('keeps a paid plan waiting for a renewal open', () => {
+    expect(isSubscriptionLocked(sub(pastGrace), NOW, paused)).toBe(false)
+    expect(isSubscriptionLocked(sub({ ...pastGrace, status: 'past_due' }), NOW, paused)).toBe(false)
+  })
+
+  it('still locks trials, cancelled and expired plans', () => {
+    expect(isSubscriptionLocked(sub({ status: 'trial', trial_end_at: iso(-1) }), NOW, paused)).toBe(true)
+    expect(isSubscriptionLocked(sub({ current_period_end_at: iso(-1), next_billing_at: null }), NOW, paused)).toBe(true)
+    expect(isSubscriptionLocked(sub({ status: 'expired' }), NOW, paused)).toBe(true)
+  })
+
+  it('ignores a pause that has ended', () => {
+    expect(isSubscriptionLocked(sub(pastGrace), NOW, new Date(NOW.getTime() - DAY))).toBe(true)
+  })
+})
+
 describe('displaySubscriptionStatus', () => {
   it('shows expired for a locked paid plan whatever is stored', () => {
     const ended = { current_period_end_at: iso(-1), next_billing_at: null }

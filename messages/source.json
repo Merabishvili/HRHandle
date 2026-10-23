@@ -13888,5 +13888,305 @@
     "en": "Locked after the first payment. To change it, contact <support>Support</support>.",
     "ru": "Ответ закреплён после первой оплаты. Чтобы изменить его, обратитесь в <support>поддержку</support>.",
     "ka": "პირველი გადახდის შემდეგ პასუხი ჩაკეტილია. შესაცვლელად მიმართეთ <support>მხარდაჭერას</support>."
+  },
+  "checkout.title": {
+    "en": "Confirm your plan",
+    "ru": "Подтвердите тариф",
+    "ka": "დაადასტურეთ გეგმა"
+  },
+  "checkout.subtitle": {
+    "en": "Check the price and how renewal works before you pay.",
+    "ru": "Перед оплатой проверьте цену и условия продления.",
+    "ka": "გადახდამდე გადაამოწმეთ ფასი და განახლების პირობები."
+  },
+  "checkout.renewMonthly": {
+    "en": "Renews automatically every month at this price until you cancel. Cancel anytime in Settings → Billing; you keep access until the end of the paid period.",
+    "ru": "Продлевается автоматически каждый месяц по этой цене, пока вы не отмените. Отменить можно в любой момент в разделе Настройки → Оплата; доступ сохранится до конца оплаченного периода.",
+    "ka": "ავტომატურად განახლდება ყოველთვიურად ამავე ფასად, სანამ არ გააუქმებთ. გაუქმება ნებისმიერ დროს შეგიძლიათ: პარამეტრები → ბილინგი; წვდომა შეგრჩებათ გადახდილი პერიოდის ბოლომდე."
+  },
+  "checkout.renewAnnual": {
+    "en": "Renews automatically every year at this price until you cancel. Cancel anytime in Settings → Billing; you keep access until the end of the paid period.",
+    "ru": "Продлевается автоматически каждый год по этой цене, пока вы не отмените. Отменить можно в любой момент в разделе Настройки → Оплата; доступ сохранится до конца оплаченного периода.",
+    "ka": "ავტომატურად განახლდება ყოველწლიურად ამავე ფასად, სანამ არ გააუქმებთ. გაუქმება ნებისმიერ დროს შეგიძლიათ: პარამეტრები → ბილინგი; წვდომა შეგრჩებათ გადახდილი პერიოდის ბოლომდე."
+  },
+  "checkout.consent": {
+    "en": "I agree to the <terms>Terms and Conditions</terms> and the <refund>Refund Policy</refund>, and I authorise automatic renewal charges to my card until I cancel.",
+    "ru": "Я принимаю <terms>Условия использования</terms> и <refund>Политику возврата</refund> и разрешаю автоматически списывать оплату за продление с моей карты, пока я не отменю подписку.",
+    "ka": "ვეთანხმები <terms>წესებსა და პირობებს</terms> და <refund>თანხის დაბრუნების პოლიტიკას</refund> და ვთანხმდები, რომ ჩემი ბარათიდან ავტომატურად ჩამოიჭრება განახლების საფასური, სანამ არ გავაუქმებ."
+  },
+  "checkout.securePage": {
+    "en": "You pay on {provider}'s secure page; HRHandle never sees your card number.",
+    "ru": "Оплата проходит на защищённой странице {provider}; HRHandle не видит номер вашей карты.",
+    "ka": "გადახდა ხდება {provider}-ის დაცულ გვერდზე; HRHandle თქვენი ბარათის ნომერს ვერ ხედავს."
+  },
+  "billingErr.consentRequired": {
+    "en": "Please confirm that you agree to the Terms and automatic renewal.",
+    "ru": "Подтвердите, пожалуйста, согласие с условиями и автоматическим продлением.",
+    "ka": "გთხოვთ, დაადასტუროთ, რომ ეთანხმებით პირობებს და ავტომატურ განახლებას."
+  },
+  "billingErr.paymentsPaused": {
+    "en": "Payments are paused for now. Your plan keeps working; please try again later.",
+    "ru": "Оплата временно приостановлена. Ваш тариф продолжает работать; попробуйте позже.",
+    "ka": "გადახდები დროებით შეჩერებულია. თქვენი გეგმა აგრძელებს მუშაობას; გთხოვთ, სცადოთ მოგვიანებით."
+  },
+  "billing.paymentsPausedTitle": {
+    "en": "Payments are paused for now",
+    "ru": "Оплата временно приостановлена",
+    "ka": "გადახდები დროებით შეჩერებულია"
+  },
+  "billing.paymentsPausedDesc": {
+    "en": "We can't take card payments at the moment. Your plan keeps working at least until {date}, and nothing is charged meanwhile. We'll email you before anything changes.",
+    "ru": "Сейчас мы не можем принимать оплату картой. Ваш тариф работает как минимум до {date}, и за это время ничего не списывается. Мы напишем вам до любых изменений.",
+    "ka": "ამ ეტაპზე ბარათით გადახდებს ვერ ვიღებთ. თქვენი გეგმა მუშაობას აგრძელებს მინიმუმ {date}-მდე და ამ დროის განმავლობაში არაფერი ჩამოიჭრება. ცვლილებამდე იმეილით გაცნობებთ."
+  },
+  "paymentHistory.title": {
+    "en": "Payments",
+    "ru": "Платежи",
+    "ka": "გადახდები"
+  },
+  "paymentHistory.kept": {
+    "en": "Kept for 5 years",
+    "ru": "Хранятся 5 лет",
+    "ka": "ინახება 5 წელი"
+  },
+  "paymentHistory.empty": {
+    "en": "No payments yet.",
+    "ru": "Платежей пока нет.",
+    "ka": "გადახდები ჯერ არ არის."
+  },
+  "paymentHistory.date": {
+    "en": "Date",
+    "ru": "Дата",
+    "ka": "თარიღი"
+  },
+  "paymentHistory.plan": {
+    "en": "Plan",
+    "ru": "Тариф",
+    "ka": "გეგმა"
+  },
+  "paymentHistory.amount": {
+    "en": "Amount",
+    "ru": "Сумма",
+    "ka": "თანხა"
+  },
+  "paymentHistory.status": {
+    "en": "Status",
+    "ru": "Статус",
+    "ka": "სტატუსი"
+  },
+  "paymentHistory.receipt": {
+    "en": "Receipt",
+    "ru": "Квитанция",
+    "ka": "ქვითარი"
+  },
+  "paymentHistory.statusLabel.paid": {
+    "en": "Paid",
+    "ru": "Оплачено",
+    "ka": "გადახდილი"
+  },
+  "paymentHistory.statusLabel.refunded": {
+    "en": "Refunded",
+    "ru": "Возвращено",
+    "ka": "დაბრუნებული"
+  },
+  "paymentHistory.statusLabel.partly_refunded": {
+    "en": "Partly refunded",
+    "ru": "Частично возвращено",
+    "ka": "ნაწილობრივ დაბრუნებული"
+  },
+  "paymentHistory.statusLabel.failed": {
+    "en": "Failed",
+    "ru": "Не прошёл",
+    "ka": "წარუმატებელი"
+  },
+  "receipt.title": {
+    "en": "Payment receipt",
+    "ru": "Квитанция об оплате",
+    "ka": "გადახდის ქვითარი"
+  },
+  "receipt.number": {
+    "en": "Receipt no.",
+    "ru": "Квитанция №",
+    "ka": "ქვითრის №"
+  },
+  "receipt.paymentDate": {
+    "en": "Payment date",
+    "ru": "Дата оплаты",
+    "ka": "გადახდის თარიღი"
+  },
+  "receipt.item": {
+    "en": "Service",
+    "ru": "Услуга",
+    "ka": "მომსახურება"
+  },
+  "receipt.method": {
+    "en": "Payment method",
+    "ru": "Способ оплаты",
+    "ka": "გადახდის მეთოდი"
+  },
+  "receipt.paymentId": {
+    "en": "Payment ID",
+    "ru": "ID платежа",
+    "ka": "გადახდის ID"
+  },
+  "receipt.rrn": {
+    "en": "Bank reference (RRN)",
+    "ru": "Банковский референс (RRN)",
+    "ka": "ბანკის რეფერენსი (RRN)"
+  },
+  "receipt.approvalCode": {
+    "en": "Approval code",
+    "ru": "Код авторизации",
+    "ka": "ავტორიზაციის კოდი"
+  },
+  "receipt.seller": {
+    "en": "Seller",
+    "ru": "Продавец",
+    "ka": "გამყიდველი"
+  },
+  "receipt.sellerId": {
+    "en": "ID: {id}",
+    "ru": "ИН: {id}",
+    "ka": "ს/კ: {id}"
+  },
+  "receipt.billedTo": {
+    "en": "Billed to",
+    "ru": "Покупатель",
+    "ka": "მყიდველი"
+  },
+  "receipt.amountPaid": {
+    "en": "Amount paid",
+    "ru": "Оплачено",
+    "ka": "გადახდილი თანხა"
+  },
+  "receipt.refunded": {
+    "en": "Refunded",
+    "ru": "Возвращено",
+    "ka": "დაბრუნებული თანხა"
+  },
+  "receipt.processedBy": {
+    "en": "Payment processed by {brand} ({operator}); acquiring bank: {acquirer}.",
+    "ru": "Платёж обработан {brand} ({operator}); банк-эквайер: {acquirer}.",
+    "ka": "გადახდა დამუშავდა {brand}-ის ({operator}) მიერ; ექვაირერი ბანკი: {acquirer}."
+  },
+  "receipt.questions": {
+    "en": "Questions about this payment: {email}",
+    "ru": "Вопросы об этом платеже: {email}",
+    "ka": "კითხვები ამ გადახდასთან დაკავშირებით: {email}"
+  },
+  "receipt.print": {
+    "en": "Print or save as PDF",
+    "ru": "Распечатать или сохранить в PDF",
+    "ka": "ამობეჭდვა ან PDF-ად შენახვა"
+  },
+  "receipt.back": {
+    "en": "Back to billing",
+    "ru": "Назад к оплате",
+    "ka": "ბილინგზე დაბრუნება"
+  },
+  "disclosures.title": {
+    "en": "Personal data shared with third parties",
+    "ru": "Персональные данные, переданные третьим лицам",
+    "ka": "მესამე პირებისთვის გადაცემული პერსონალური მონაცემები"
+  },
+  "disclosures.sub": {
+    "en": "What HRHandle passed on for your organization, to whom, why and on what legal basis — for example the payer's email sent to the payment provider at checkout.",
+    "ru": "Что HRHandle передал от имени вашей организации, кому, зачем и на каком правовом основании — например, email плательщика, который при оплате получает платёжный провайдер.",
+    "ka": "რა გადასცა HRHandle-მა თქვენი ორგანიზაციის სახელით, ვის, რატომ და რა სამართლებრივი საფუძვლით. მაგალითად, გადამხდელის იმეილი, რომელიც გადახდისას ეგზავნება გადახდის პროვაიდერს."
+  },
+  "disclosures.empty": {
+    "en": "Nothing shared yet.",
+    "ru": "Пока ничего не передавалось.",
+    "ka": "ჯერ არაფერი გადაცემულა."
+  },
+  "disclosures.date": {
+    "en": "Date",
+    "ru": "Дата",
+    "ka": "თარიღი"
+  },
+  "disclosures.recipient": {
+    "en": "Recipient",
+    "ru": "Получатель",
+    "ka": "მიმღები"
+  },
+  "disclosures.data": {
+    "en": "Data",
+    "ru": "Данные",
+    "ka": "მონაცემები"
+  },
+  "disclosures.why": {
+    "en": "Purpose",
+    "ru": "Цель",
+    "ka": "მიზანი"
+  },
+  "disclosures.basisTitle": {
+    "en": "Legal basis",
+    "ru": "Правовое основание",
+    "ka": "სამართლებრივი საფუძველი"
+  },
+  "disclosures.purpose.payment_processing": {
+    "en": "Payment processing and receipt",
+    "ru": "Обработка платежа и квитанция",
+    "ka": "გადახდის დამუშავება და ქვითარი"
+  },
+  "disclosures.basis.contract": {
+    "en": "Contract",
+    "ru": "Договор",
+    "ka": "ხელშეკრულება"
+  },
+  "disclosures.basis.legal_obligation": {
+    "en": "Legal obligation",
+    "ru": "Требование закона",
+    "ka": "კანონისმიერი ვალდებულება"
+  },
+  "disclosures.basis.consent": {
+    "en": "Consent",
+    "ru": "Согласие",
+    "ka": "თანხმობა"
+  },
+  "disclosures.basis.legitimate_interest": {
+    "en": "Legitimate interest",
+    "ru": "Законный интерес",
+    "ka": "ლეგიტიმური ინტერესი"
+  },
+  "disclosures.basis.vital_interest": {
+    "en": "Vital interest",
+    "ru": "Жизненно важные интересы",
+    "ka": "სასიცოცხლო ინტერესი"
+  },
+  "disclosures.basis.public_task": {
+    "en": "Public task",
+    "ru": "Публичная задача",
+    "ka": "საჯარო ამოცანა"
+  },
+  "disclosures.category.email": {
+    "en": "Email",
+    "ru": "Email",
+    "ka": "იმეილი"
+  },
+  "disclosures.category.name": {
+    "en": "Name",
+    "ru": "Имя",
+    "ka": "სახელი"
+  },
+  "disclosures.category.phone": {
+    "en": "Phone",
+    "ru": "Телефон",
+    "ka": "ტელეფონი"
+  },
+  "disclosures.category.address": {
+    "en": "Address",
+    "ru": "Адрес",
+    "ka": "მისამართი"
+  },
+  "disclosures.category.id_number": {
+    "en": "ID number",
+    "ru": "Личный номер",
+    "ka": "პირადი ნომერი"
+  },
+  "disclosures.category.payment_data": {
+    "en": "Payment details",
+    "ru": "Платёжные данные",
+    "ka": "გადახდის მონაცემები"
   }
 }

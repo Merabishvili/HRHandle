@@ -23,7 +23,7 @@ import { planName, planFeatures } from '@/lib/pricing/plan-i18n'
 import { startPlanCheckout, setBillingCurrency, setBillingResidency } from '@/lib/actions/billing'
 import type { Campaign } from '@/lib/campaign'
 import { getCampaignPrice } from '@/lib/campaign'
-import { ResidencyDialog } from './residency-dialog'
+import { CheckoutDialog } from './checkout-dialog'
 
 interface PlanCardsProps {
   plans: PricingPlan[]
@@ -39,6 +39,8 @@ interface PlanCardsProps {
   geResident?: boolean | null | undefined
   /** Currency the org pays in if it answers "No" in the dialog. */
   nonResidentCurrency?: Currency | undefined
+  /** Payments are paused (lib/billing/payments-pause.ts): Upgrade is off. */
+  paymentsPaused?: boolean | undefined
 }
 
 export function PlanCards({
@@ -50,6 +52,7 @@ export function PlanCards({
   canManage = true,
   geResident = null,
   nonResidentCurrency = 'USD',
+  paymentsPaused = false,
 }: PlanCardsProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -67,13 +70,15 @@ export function PlanCards({
   }
 
   const currencies = allowedCurrencies(geResident)
-  const [residencyFor, setResidencyFor] = useState<PlanCode | null>(null)
+  // The plan the checkout confirmation is open for.
+  const [confirmFor, setConfirmFor] = useState<PlanCode | null>(null)
   const symbol = CURRENCY_SYMBOL[currency]
   const annualDiscount = Math.round(campaign.discounts.annual * 100)
   const monthlyDiscount = Math.round(campaign.discounts.monthly * 100)
 
   const goToCheckout = async (code: PlanCode) => {
-    const res = await startPlanCheckout({ planCode: code, cycle: billing })
+    // Reached only from the confirmation dialog, after the consent checkbox.
+    const res = await startPlanCheckout({ planCode: code, cycle: billing, consent: true })
     if (res.success) {
       window.location.href = res.data.checkoutUrl
     } else {
@@ -82,37 +87,33 @@ export function PlanCards({
     }
   }
 
-  const handleUpgrade = (code: PlanCode) => {
-    // Not answered yet → ask in the dialog first (it then continues to checkout).
-    if (geResident === null) {
-      setResidencyFor(code)
-      return
-    }
-    setPendingCode(code)
-    startTransition(() => goToCheckout(code))
-  }
+  // Every Upgrade opens the confirmation (price, renewal, consent); it also
+  // asks the residency question while unanswered, then continues to checkout.
+  const handleUpgrade = (code: PlanCode) => setConfirmFor(code)
 
-  const confirmResidency = (resident: boolean, chosen: Currency) => {
-    const code = residencyFor
+  const confirmCheckout = ({ geResident: resident, currency: chosen }: { geResident: boolean | null; currency: Currency }) => {
+    const code = confirmFor
     if (!code) return
     setPendingCode(code)
     startTransition(async () => {
-      const saved = await setBillingResidency(resident)
-      const currencySaved =
-        saved.success && !resident && chosen !== currency ? await setBillingCurrency(chosen) : saved
-      if (!saved.success || !currencySaved.success) {
-        toast.error(!saved.success ? saved.error : !currencySaved.success ? currencySaved.error : '')
-        setPendingCode(null)
-        return
+      if (resident !== null) {
+        const saved = await setBillingResidency(resident)
+        const currencySaved =
+          saved.success && !resident && chosen !== currency ? await setBillingCurrency(chosen) : saved
+        if (!saved.success || !currencySaved.success) {
+          toast.error(!saved.success ? saved.error : !currencySaved.success ? currencySaved.error : '')
+          setPendingCode(null)
+          return
+        }
+        router.refresh()
       }
-      router.refresh()
       await goToCheckout(code)
     })
   }
 
   /** "₾49/mo · billed monthly" for the plan the dialog is open for. */
   const priceLine = (c: Currency): string => {
-    const plan = plans.find((p) => p.code === residencyFor)
+    const plan = plans.find((p) => p.code === confirmFor)
     const base = plan ? getPlanMonthly(plan, c, billing) : null
     const price = campaignActive && base ? getCampaignPrice(base, billing) : base
     const billed = billing === 'annual' ? t('planCards.billedAnnually') : t('planCards.billedMonthly')
@@ -171,14 +172,18 @@ export function PlanCards({
         </div>
       </div>
 
-      <ResidencyDialog
-        key={residencyFor ?? 'closed'}
-        open={residencyFor !== null}
-        onOpenChange={(o) => !o && setResidencyFor(null)}
+      <CheckoutDialog
+        key={`${confirmFor ?? 'closed'}-${billing}`}
+        open={confirmFor !== null}
+        onOpenChange={(o) => !o && setConfirmFor(null)}
+        planLabel={confirmFor ? planName(t, confirmFor) : ''}
+        cycle={billing}
+        askResidency={geResident === null}
+        currency={currency}
         nonResidentCurrency={nonResidentCurrency}
         priceLine={priceLine}
         pending={pendingCode !== null}
-        onConfirm={confirmResidency}
+        onConfirm={confirmCheckout}
       />
 
       {campaignActive && (
@@ -262,7 +267,7 @@ export function PlanCards({
                 <Button
                   className="w-full"
                   variant={isCurrent ? 'outline' : plan.popular ? 'default' : 'outline'}
-                  disabled={isCurrent || isTrial || !canManage || pendingCode !== null}
+                  disabled={isCurrent || isTrial || !canManage || paymentsPaused || pendingCode !== null}
                   onClick={() => !isCurrent && !isTrial && handleUpgrade(plan.code)}
                 >
                   {pendingCode === plan.code && (

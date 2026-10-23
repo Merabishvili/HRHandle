@@ -2153,7 +2153,9 @@
     "refundedNote": "Your last payment was refunded. We send approved refunds within {payout} business days, minus payment processing fees; your bank may need a few more days to show it. See our <refund>Refund Policy</refund>.",
     "unlockCapacity": "Unlock more capacity",
     "upgradeDesc": "Upgrade to Individual or Organization to manage more vacancies and candidates.",
-    "upgradeNow": "Upgrade now"
+    "upgradeNow": "Upgrade now",
+    "paymentsPausedTitle": "Payments are paused for now",
+    "paymentsPausedDesc": "We can't take card payments at the moment. Your plan keeps working at least until {date}, and nothing is charged meanwhile. We'll email you before anything changes."
   },
   "billingCtl": {
     "currencyUpdated": "Billing currency updated.",
@@ -3182,7 +3184,9 @@
     "residencyRequired": "Answer whether you are a resident of Georgia before paying.",
     "residentGelOnly": "Residents of Georgia can only pay in GEL.",
     "residencyUpdateFailed": "Could not save your answer. Please try again.",
-    "residencyLocked": "Your residency answer is locked after the first payment. Contact Support to change it."
+    "residencyLocked": "Your residency answer is locked after the first payment. Contact Support to change it.",
+    "consentRequired": "Please confirm that you agree to the Terms and automatic renewal.",
+    "paymentsPaused": "Payments are paused for now. Your plan keeps working; please try again later."
   },
   "legal": {
     "back": "← Back to HRHandle",
@@ -3336,5 +3340,77 @@
     "continue": "Continue to payment",
     "cardTitle": "Residency",
     "lockedNote": "Locked after the first payment. To change it, contact <support>Support</support>."
+  },
+  "checkout": {
+    "title": "Confirm your plan",
+    "subtitle": "Check the price and how renewal works before you pay.",
+    "renewMonthly": "Renews automatically every month at this price until you cancel. Cancel anytime in Settings → Billing; you keep access until the end of the paid period.",
+    "renewAnnual": "Renews automatically every year at this price until you cancel. Cancel anytime in Settings → Billing; you keep access until the end of the paid period.",
+    "consent": "I agree to the <terms>Terms and Conditions</terms> and the <refund>Refund Policy</refund>, and I authorise automatic renewal charges to my card until I cancel.",
+    "securePage": "You pay on {provider}'s secure page; HRHandle never sees your card number."
+  },
+  "paymentHistory": {
+    "title": "Payments",
+    "kept": "Kept for 5 years",
+    "empty": "No payments yet.",
+    "date": "Date",
+    "plan": "Plan",
+    "amount": "Amount",
+    "status": "Status",
+    "receipt": "Receipt",
+    "statusLabel": {
+      "paid": "Paid",
+      "refunded": "Refunded",
+      "partly_refunded": "Partly refunded",
+      "failed": "Failed"
+    }
+  },
+  "receipt": {
+    "title": "Payment receipt",
+    "number": "Receipt no.",
+    "paymentDate": "Payment date",
+    "item": "Service",
+    "method": "Payment method",
+    "paymentId": "Payment ID",
+    "rrn": "Bank reference (RRN)",
+    "approvalCode": "Approval code",
+    "seller": "Seller",
+    "sellerId": "ID: {id}",
+    "billedTo": "Billed to",
+    "amountPaid": "Amount paid",
+    "refunded": "Refunded",
+    "processedBy": "Payment processed by {brand} ({operator}); acquiring bank: {acquirer}.",
+    "questions": "Questions about this payment: {email}",
+    "print": "Print or save as PDF",
+    "back": "Back to billing"
+  },
+  "disclosures": {
+    "title": "Personal data shared with third parties",
+    "sub": "What HRHandle passed on for your organization, to whom, why and on what legal basis — for example the payer's email sent to the payment provider at checkout.",
+    "empty": "Nothing shared yet.",
+    "date": "Date",
+    "recipient": "Recipient",
+    "data": "Data",
+    "why": "Purpose",
+    "basisTitle": "Legal basis",
+    "purpose": {
+      "payment_processing": "Payment processing and receipt"
+    },
+    "basis": {
+      "contract": "Contract",
+      "legal_obligation": "Legal obligation",
+      "consent": "Consent",
+      "legitimate_interest": "Legitimate interest",
+      "vital_interest": "Vital interest",
+      "public_task": "Public task"
+    },
+    "category": {
+      "email": "Email",
+      "name": "Name",
+      "phone": "Phone",
+      "address": "Address",
+      "id_number": "ID number",
+      "payment_data": "Payment details"
+    }
   }
 }
